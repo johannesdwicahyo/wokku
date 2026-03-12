@@ -19,23 +19,36 @@ It communicates with one or more Dokku servers over SSH, giving users a unified 
 ## Architecture
 
 ```
-┌─────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│  herodokku  │────▶│                  │────▶│  Dokku Server   │
-│  CLI (gem)  │ API │  Rails API/Web   │ SSH │  (one or many)  │
-└─────────────┘     │  (Hotwire/Turbo) │     └─────────────────┘
-                    │                  │
-│  Claude Code │    │  PostgreSQL      │
-│  via MCP     │───▶│  Action Cable    │
-└──────────────┘    │  Solid Queue     │
-                    └──────────────────┘
- Browser ──────────▶        ▲
+                         ┌──────────────────┐
+┌─────────────┐          │                  │     ┌─────────────────┐
+│  herodokku  │───API───▶│                  │─SSH─▶ Dokku Server   │
+│  CLI (gem)  │          │                  │     │  (one or many)  │
+└─────────────┘          │   Rails 8 App    │     └─────────────────┘
+                         │                  │
+┌──────────────┐         │  - Hotwire/Turbo │
+│  Claude Code │───API──▶│  - Action Cable  │
+│  (via MCP)   │         │  - Solid Queue   │
+└──────────────┘         │                  │
+                         │  PostgreSQL      │
+┌──────────────┐         │  Redis (cable)   │
+│   Browser    │──HTTP──▶│                  │
+└──────────────┘         └──────────────────┘
+                                │
+                         ┌──────────────────┐
+                         │  Git SSH Server  │
+┌──────────────┐         │  (port 2222)     │
+│  git push    │───SSH──▶│  Receives push,  │
+└──────────────┘         │  forwards to     │
+                         │  Dokku           │
+                         └──────────────────┘
 ```
 
 ### Key Technology Choices
 
 - **Rails 8** with Hotwire/Turbo/Stimulus for the dashboard (no separate frontend)
 - **Action Cable** for real-time log streaming and deploy progress
-- **Solid Queue** for background jobs (deploys, SSH commands, health checks)
+- **Redis** as Action Cable adapter (required for multi-process WebSocket support)
+- **Solid Queue** for background jobs (deploys, SSH commands, health checks) — uses the database, not Redis
 - **Thor-based Ruby gem** for the CLI (`gem install herodokku`)
 - **MCP server** in the same gem for Claude Code integration
 - **net-ssh** gem to communicate with Dokku servers over the network
@@ -61,14 +74,17 @@ All three clients hit the same Rails REST API (`/api/v1/*`).
 | **TeamMembership** | User-Team join with role | user_id, team_id, role (admin/member/viewer) |
 | **Server** | A Dokku host | name, host, port, ssh_key (encrypted), team_id, status |
 | **AppRecord** | A Dokku app ("App" conflicts with Rails) | name, server_id, team_id, status, created_by |
-| **Deploy** | Deploy history | app_record_id, status, commit_sha, log, started_at, finished_at |
+| **Release** | Versioned release (maps to "releases" in CLI) | app_record_id, version (auto-increment), deploy_id (nullable), description, created_at |
+| **Deploy** | Deploy execution record | app_record_id, release_id, status (pending/building/succeeded/failed), commit_sha, log, started_at, finished_at |
 | **Domain** | Custom domain | app_record_id, hostname, ssl_enabled |
 | **EnvVar** | Config/env variable | app_record_id, key, encrypted_value |
 | **DatabaseService** | Dokku service (postgres, redis, etc.) | server_id, service_type, name, status |
-| **AppDatabase** | Link between app and database | app_record_id, database_service_id |
+| **AppDatabase** | Link between app and database | app_record_id, database_service_id, alias (env var name, e.g. DATABASE_URL) |
 | **Certificate** | SSL cert | domain_id, expires_at, auto_renew |
 | **ProcessScale** | Dyno scaling | app_record_id, process_type (web/worker), count |
-| **Notification** | Alert config | team_id, channel (email/slack/webhook), events, config (JSON) |
+| **Notification** | Alert config | app_record_id (nullable), team_id, channel (email/slack/webhook), events, config (JSON) |
+| **ApiToken** | Auth token for CLI/MCP | user_id, token_digest (hashed), name, last_used_at, expires_at, revoked_at |
+| **SshPublicKey** | User's SSH key for git push auth | user_id, name, public_key, fingerprint |
 
 ### Security
 
@@ -80,13 +96,14 @@ All three clients hit the same Rails REST API (`/api/v1/*`).
 
 ```
 User ──▶ TeamMembership ──▶ Team ──▶ Server ──▶ AppRecord
-                                        │            │
-                                        ▼            ├──▶ Deploy
-                                  DatabaseService    ├──▶ Domain ──▶ Certificate
+  │                                     │            │
+  ├──▶ ApiToken                         ▼            ├──▶ Release ──▶ Deploy
+  └──▶ SshPublicKey             DatabaseService      ├──▶ Domain ──▶ Certificate
                                         │            ├──▶ EnvVar
-                                        ▼            └──▶ ProcessScale
-                                   AppDatabase
+                                        ▼            ├──▶ ProcessScale
+                                   AppDatabase       └──▶ Notification (optional)
                                   (links apps ↔ dbs)
+                                                     Team ──▶ Notification (team-wide)
 ```
 
 ## Feature Specifications
@@ -100,6 +117,7 @@ User ──▶ TeamMembership ──▶ Team ──▶ Server ──▶ AppRecor
 | Restart | `ps:restart <name>` |
 | Stop/Start | `ps:stop <name>` / `ps:start <name>` |
 | List | `apps:list` |
+| Rename | `apps:rename <old> <new>` |
 | Info | `apps:report <name>` |
 
 ### 2. Environment Variables
@@ -110,7 +128,7 @@ User ──▶ TeamMembership ──▶ Team ──▶ Server ──▶ AppRecor
 | Unset | `config:unset <app> KEY` |
 | List | `config:show <app>` |
 
-Values stored encrypted in Herodokku's DB and synced to Dokku.
+Values stored encrypted in Herodokku's DB. See "Data Synchronization Strategy" below.
 
 ### 3. Domains & SSL
 
@@ -160,7 +178,32 @@ Developer                 Herodokku                    Dokku Server
    │◀────────────────────────│                              │
 ```
 
-Herodokku runs a lightweight Git SSH server (port 2222). Users push to Herodokku, which forwards to Dokku, tracking deploy history and streaming logs back.
+#### Git SSH Server Details
+
+Herodokku runs a lightweight Git SSH server on port 2222 using the `sshd` approach (a small Ruby process using `net-ssh` that accepts incoming SSH connections).
+
+**Authentication:** Users register SSH public keys in their Herodokku account (stored in `SshPublicKey` model). The Git SSH server matches the incoming key fingerprint to a Herodokku user. No system-level `authorized_keys` needed.
+
+**Git URL format:** `ssh://herodokku@<herodokku-host>:2222/<app-name>.git`
+
+The `herodokku git:remote -a my-app` CLI command adds this remote automatically.
+
+**Push flow:**
+1. Developer pushes to Herodokku git server
+2. Server authenticates via SSH public key → resolves to User
+3. Server checks Pundit authorization (is this user allowed to deploy this app?)
+4. Creates a Release (incrementing version) and Deploy record (status: pending)
+5. Receives the git pack data into a temporary bare repo on Herodokku
+6. Pushes from the temporary repo to the Dokku server via SSH (`git push dokku main`)
+7. Streams Dokku's build output back to the developer AND stores it in Deploy.log
+8. Updates Deploy status (succeeded/failed) and broadcasts via Action Cable
+9. Fires notification jobs on completion
+
+**Branch handling:** Only pushes to `main` (or the app's configured deploy branch) trigger deploys. Other branches are rejected with a message.
+
+**Rollback:** Herodokku stores the commit SHA for each Release. Rolling back to a previous version re-deploys that commit by doing `dokku git:from-archive` or pushing the tagged commit to Dokku. The rollback creates a new Release record pointing to the old commit.
+
+**Temporary repos** are cleaned up after the deploy completes (success or failure).
 
 ### 7. Scaling
 
@@ -172,10 +215,12 @@ Herodokku runs a lightweight Git SSH server (port 2222). Users push to Herodokku
 ### 8. Metrics/Monitoring
 
 Dokku doesn't provide native metrics. Herodokku polls:
-- `docker stats <container>` via SSH for CPU/memory
+- `docker stats --no-stream --format '{{json .}}'` via SSH for CPU/memory (JSON output for stability across Docker versions)
 - `ps:report <app>` for process status
 
-Metrics stored in DB, displayed with Chartkick in the dashboard. Background job polls every 30-60 seconds.
+Metrics stored in DB, displayed with Chartkick in the dashboard. Background job polls every 60 seconds per server (not per app, to limit SSH overhead).
+
+**Known limitation:** Polling via SSH has overhead. For production use with many apps, consider installing a lightweight metrics agent (e.g., cAdvisor, Dokku's resource plugin) on Dokku servers. This is a v2 improvement.
 
 ### 9. Team/User Management
 
@@ -199,7 +244,7 @@ Deploy status changes trigger notifications via background jobs.
 | Slack | Incoming webhook |
 | Webhook | Generic HTTP POST |
 
-Configurable per-team, per-event (deploy success, deploy failure, app crash).
+Notifications can be scoped to a **team** (all events for all apps) or to a **specific app**. App-level notifications override team-level for the same channel. Configurable per-event (deploy success, deploy failure, app crash).
 
 ## CLI Design
 
@@ -403,7 +448,7 @@ services:
     depends_on: [db, redis]
   worker:
     build: .
-    command: bundle exec solid_queue:start
+    command: bin/jobs
   git:
     build: .
     command: bundle exec herodokku git:server
@@ -432,6 +477,172 @@ git clone <repo> && bundle install
 rails db:setup
 foreman start
 ```
+
+## API Endpoints
+
+All endpoints under `/api/v1/` use token auth (`Authorization: Bearer <token>`).
+Dashboard controllers under `/dashboard/` use Devise session auth and return Turbo Frame HTML.
+
+```
+# Auth & Tokens
+POST   /api/v1/auth/login              # Exchange email/password for API token
+DELETE /api/v1/auth/logout             # Revoke current token
+GET    /api/v1/auth/whoami             # Current user info
+POST   /api/v1/auth/tokens             # Create named API token
+DELETE /api/v1/auth/tokens/:id         # Revoke specific token
+GET    /api/v1/auth/tokens             # List user's tokens
+
+# SSH Keys
+GET    /api/v1/ssh_keys                # List user's SSH keys
+POST   /api/v1/ssh_keys               # Register SSH public key
+DELETE /api/v1/ssh_keys/:id            # Remove SSH key
+
+# Servers
+GET    /api/v1/servers                 # List servers
+POST   /api/v1/servers                 # Add server
+GET    /api/v1/servers/:id             # Server info + status
+DELETE /api/v1/servers/:id             # Remove server
+GET    /api/v1/servers/:id/status      # Health check result
+
+# Apps
+GET    /api/v1/apps                    # List apps (filterable by server)
+POST   /api/v1/apps                    # Create app
+GET    /api/v1/apps/:id                # App info
+PATCH  /api/v1/apps/:id                # Rename app
+DELETE /api/v1/apps/:id                # Destroy app
+POST   /api/v1/apps/:id/restart        # Restart
+POST   /api/v1/apps/:id/stop           # Stop
+POST   /api/v1/apps/:id/start          # Start
+
+# Config (env vars)
+GET    /api/v1/apps/:app_id/config     # List config vars
+PATCH  /api/v1/apps/:app_id/config     # Set one or more vars (merge)
+DELETE /api/v1/apps/:app_id/config     # Unset vars (keys in body)
+
+# Domains
+GET    /api/v1/apps/:app_id/domains
+POST   /api/v1/apps/:app_id/domains
+DELETE /api/v1/apps/:app_id/domains/:id
+POST   /api/v1/apps/:app_id/domains/:id/ssl  # Enable Let's Encrypt
+
+# Releases & Deploys
+GET    /api/v1/apps/:app_id/releases          # Release history
+GET    /api/v1/apps/:app_id/releases/:version  # Release detail
+POST   /api/v1/apps/:app_id/releases/:version/rollback  # Rollback
+
+# Scaling
+GET    /api/v1/apps/:app_id/ps                # Process list with scale
+PATCH  /api/v1/apps/:app_id/ps                # Scale processes
+
+# Logs
+GET    /api/v1/apps/:app_id/logs              # Recent logs (?lines=100)
+GET    /api/v1/apps/:app_id/logs/stream       # WebSocket upgrade for live tail
+
+# Databases (Addons)
+GET    /api/v1/databases                      # List all databases
+POST   /api/v1/databases                      # Create database
+GET    /api/v1/databases/:id                  # Database info
+DELETE /api/v1/databases/:id                  # Destroy database
+POST   /api/v1/databases/:id/link             # Link to app
+DELETE /api/v1/databases/:id/link             # Unlink from app
+
+# Teams
+GET    /api/v1/teams
+POST   /api/v1/teams
+GET    /api/v1/teams/:id/members
+POST   /api/v1/teams/:id/members              # Invite
+DELETE /api/v1/teams/:id/members/:user_id     # Remove member
+
+# Notifications
+GET    /api/v1/notifications                   # List (filterable by app/team)
+POST   /api/v1/notifications                   # Create
+DELETE /api/v1/notifications/:id               # Remove
+```
+
+## Authentication & Token Lifecycle
+
+### Login Flow (CLI & MCP)
+
+1. User runs `herodokku login` — prompted for email/password and Herodokku API URL
+2. CLI sends `POST /api/v1/auth/login` with credentials
+3. Server validates via Devise, generates a random token, stores `token_digest` (bcrypt) in `ApiToken` table
+4. Returns the plain token to the CLI (only time it's visible)
+5. CLI stores token + API URL in `~/.herodokku/config`
+
+### Token Properties
+
+- Tokens do not expire by default (personal use convenience), but have an optional `expires_at`
+- Users can create multiple named tokens (`herodokku auth:token:create --name "ci"`)
+- Tokens can be revoked individually or all at once
+- `last_used_at` is updated on each API request for audit visibility
+
+### MCP Auth
+
+The MCP server reads the same `~/.herodokku/config` file as the CLI. It uses whatever token was stored by `herodokku login`. No separate auth flow needed.
+
+## Data Synchronization Strategy
+
+**Dokku is the source of truth.** Herodokku's database is a cache/overlay.
+
+### Read-through Pattern
+
+When Herodokku displays data (apps list, config vars, domains, etc.), it:
+1. Checks if cached data exists and is fresh (< 5 minutes old)
+2. If stale or missing, fetches from Dokku via SSH and updates the local DB
+3. Returns the fresh data
+
+### Write-through Pattern
+
+When Herodokku modifies data (set config, add domain, scale, etc.), it:
+1. Executes the Dokku command via SSH
+2. If the command succeeds, updates the local DB to match
+3. If the command fails, returns the error without updating local DB
+
+### Sync Job
+
+A periodic background job (`SyncServerJob`) runs every 10 minutes per server:
+- Fetches `apps:list`, `config:show`, `domains:report`, etc.
+- Updates local DB to match Dokku's actual state
+- Detects apps/config created directly on Dokku (outside Herodokku)
+- Marks servers as unreachable if SSH fails
+
+This ensures Herodokku stays accurate even if someone modifies Dokku directly via SSH.
+
+## Error Handling & Failure Modes
+
+### SSH Connection Failures
+
+| Scenario | Behavior |
+|----------|----------|
+| Server unreachable | Mark `Server.status = "unreachable"`, retry 3 times with backoff. Show error in dashboard. |
+| SSH auth rejected | Mark `Server.status = "auth_failed"`, notify team admins. |
+| Connection drops mid-command | Retry idempotent commands (list, info). Non-idempotent commands (create, destroy) are marked failed and surfaced to user. |
+
+### Deploy Failures
+
+| Scenario | Behavior |
+|----------|----------|
+| Build fails on Dokku | Deploy.status = "failed", log captured, notification fired. |
+| SSH drops mid-deploy | Deploy.status = "failed", partial log saved. User can check Dokku directly. |
+| Deploy timeout (> 15 min) | Deploy.status = "timed_out", SSH channel closed, notification fired. |
+| Concurrent deploy to same app | Rejected with error — one deploy at a time per app (enforced by DB lock on AppRecord). |
+
+### Server Status States
+
+`Server.status` enum: `connected`, `unreachable`, `auth_failed`, `syncing`
+
+Health check job runs every 5 minutes: attempts SSH connection and runs `dokku version`. Updates status accordingly.
+
+## Monorepo & Packaging Strategy
+
+The project is a monorepo with two publishable artifacts:
+
+1. **Rails app** — deployed as a Docker image or directly via git push
+2. **CLI gem** (`herodokku-cli`) — published to RubyGems, includes the MCP server
+
+The `cli/` directory has its own gemspec and can be built/published independently. The Rails app does not depend on the CLI gem, and the CLI gem does not depend on Rails — they share only the API contract.
+
+Versioning: both use the same version number, bumped together. The CLI gem version must match a compatible API version.
 
 ## Non-Goals (for v1)
 
