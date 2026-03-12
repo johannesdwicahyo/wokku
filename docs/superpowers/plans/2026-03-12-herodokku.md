@@ -51,8 +51,7 @@ gem "mission_control-jobs"
 gem "redis"
 
 # Encryption
-gem "lockbox"
-gem "blind_index"
+# Rails 8 built-in Active Record Encryption is used instead of Lockbox
 
 # Charts
 gem "chartkick"
@@ -1299,11 +1298,11 @@ module Dokku
 
     def set(app_name, vars = {})
       pairs = vars.map { |k, v| "#{k}=#{Shellwords.escape(v)}" }.join(" ")
-      @client.run("config:set --no-restart #{app_name} #{pairs}")
+      @client.run("config:set #{app_name} #{pairs}")
     end
 
     def unset(app_name, *keys)
-      @client.run("config:unset --no-restart #{app_name} #{keys.join(' ')}")
+      @client.run("config:unset #{app_name} #{keys.join(' ')}")
     end
 
     def get(app_name, key)
@@ -2304,7 +2303,8 @@ class DeployJob < ApplicationJob
   DEPLOY_TIMEOUT = 15.minutes
 
   def perform(deploy_id, commit_sha: nil)
-    deploy = Deploy.find(deploy_id)
+    deploy = Deploy.find_by(id: deploy_id)
+    return unless deploy
     app = deploy.app_record
     server = app.server
 
@@ -2394,12 +2394,17 @@ class LogStreamJob < ApplicationJob
   queue_as :logs
 
   def perform(app_id, channel_id)
-    app = AppRecord.find(app_id)
+    app = AppRecord.find_by(id: app_id)
+    return unless app
     client = Dokku::Client.new(app.server)
 
-    client.run_streaming("logs #{app.name} --tail") do |data|
-      LogChannel.broadcast_to(app, { type: "log", data: data })
+    Timeout.timeout(30.minutes.to_i) do
+      client.run_streaming("logs #{app.name} --tail") do |data|
+        LogChannel.broadcast_to(app, { type: "log", data: data })
+      end
     end
+  rescue Timeout::Error
+    LogChannel.broadcast_to(app, { type: "info", data: "Log stream timed out. Refresh to reconnect." })
   rescue Dokku::Client::ConnectionError => e
     LogChannel.broadcast_to(app, { type: "error", data: e.message })
   end
@@ -2529,7 +2534,9 @@ class NotifyJob < ApplicationJob
     payload = {
       text: "[#{deploy.app_record.name}] Deploy #{event}: #{deploy.commit_sha&.first(7)} (v#{deploy.release&.version})"
     }
-    Net::HTTP.post(URI(url), payload.to_json, "Content-Type" => "application/json")
+    post_with_timeout(url, payload)
+  rescue StandardError => e
+    Rails.logger.warn("Slack notification failed: #{e.message}")
   end
 
   def send_webhook(notification, deploy, event)
@@ -2541,7 +2548,20 @@ class NotifyJob < ApplicationJob
       status: deploy.status,
       commit_sha: deploy.commit_sha
     }
-    Net::HTTP.post(URI(url), payload.to_json, "Content-Type" => "application/json")
+    post_with_timeout(url, payload)
+  rescue StandardError => e
+    Rails.logger.warn("Webhook notification failed: #{e.message}")
+  end
+
+  def post_with_timeout(url, payload)
+    uri = URI(url)
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = uri.scheme == "https"
+    http.open_timeout = 5
+    http.read_timeout = 10
+    request = Net::HTTP::Post.new(uri.path, "Content-Type" => "application/json")
+    request.body = payload.to_json
+    http.request(request)
   end
 end
 ```
@@ -3285,6 +3305,7 @@ module Herodokku
     end
 
     desc "apps:create NAME", "Create an app"
+    method_option :server, aliases: "-s", required: true, desc: "Server ID to deploy on"
     def apps_create(name)
       require "herodokku/commands/apps"
       Commands::Apps.new.create(name, options)
@@ -3723,7 +3744,7 @@ module Herodokku
 
       def start
         # Load all tools
-        Dir[File.join(__dir__, "mcp", "tools", "*.rb")].each { |f| require f }
+        Dir[File.join(__dir__, "tools", "*.rb")].each { |f| require f }
 
         $stderr.puts "Herodokku MCP server started"
 
