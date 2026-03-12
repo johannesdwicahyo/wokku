@@ -927,7 +927,7 @@ git commit -m "feat: add AppRecord model"
 bin/rails generate model Release app_record:references version:integer deploy:references description:string
 bin/rails generate model Deploy app_record:references release:references status:integer commit_sha:string log:text started_at:datetime finished_at:datetime
 bin/rails generate model Domain app_record:references hostname:string ssl_enabled:boolean
-bin/rails generate model EnvVar app_record:references key:string encrypted_value:text
+bin/rails generate model EnvVar app_record:references key:string value:text
 bin/rails generate model ProcessScale app_record:references process_type:string count:integer
 bin/rails generate model DatabaseService server:references service_type:string name:string status:integer
 bin/rails generate model AppDatabase app_record:references database_service:references alias_name:string
@@ -996,7 +996,7 @@ end
 class EnvVar < ApplicationRecord
   belongs_to :app_record
 
-  encrypts :encrypted_value
+  encrypts :value
 
   validates :key, presence: true, uniqueness: { scope: :app_record_id },
     format: { with: /\A[A-Z_][A-Z0-9_]*\z/, message: "must be uppercase with underscores" }
@@ -1173,11 +1173,7 @@ module Dokku
       }
 
       if @server.ssh_private_key.present?
-        key_file = Tempfile.new("dokku_key")
-        key_file.write(@server.ssh_private_key)
-        key_file.close
-        File.chmod(0600, key_file.path)
-        opts[:keys] = [key_file.path]
+        opts[:key_data] = [@server.ssh_private_key]
       end
 
       opts
@@ -1259,7 +1255,7 @@ module Dokku
     end
 
     def destroy(name)
-      @client.run("-- --force apps:destroy #{name}")
+      @client.run("apps:destroy #{name} --force")
     end
 
     def info(name)
@@ -1387,7 +1383,7 @@ module Dokku
 
     def destroy(service_type, name)
       validate_type!(service_type)
-      @client.run("-- --force #{service_type}:destroy #{name}")
+      @client.run("#{service_type}:destroy #{name} --force")
     end
 
     def info(service_type, name)
@@ -1640,7 +1636,7 @@ module Api
         authorize server
         client = Dokku::Client.new(server)
         connected = client.connected?
-        server.update_column(:status, connected ? :connected : :unreachable)
+        server.update_column(:status, Server.statuses[connected ? :connected : :unreachable])
         render json: { status: server.reload.status, connected: connected }
       end
 
@@ -1979,7 +1975,7 @@ module Api
         # Sync to local DB
         params[:vars].each do |key, value|
           env_var = @app.env_vars.find_or_initialize_by(key: key)
-          env_var.update!(encrypted_value: value)
+          env_var.update!(value: value)
         end
 
         render json: { message: "Config updated" }
@@ -2305,20 +2301,27 @@ end
 class DeployJob < ApplicationJob
   queue_as :deploys
 
-  def perform(deploy_id)
+  DEPLOY_TIMEOUT = 15.minutes
+
+  def perform(deploy_id, commit_sha: nil)
     deploy = Deploy.find(deploy_id)
     app = deploy.app_record
     server = app.server
 
-    deploy.update!(status: :building, started_at: Time.current)
+    deploy.update!(status: :building, started_at: Time.current, commit_sha: commit_sha)
     app.update!(status: :deploying)
 
     client = Dokku::Client.new(server)
     log = ""
 
-    client.run_streaming("logs #{app.name} --tail") do |data|
-      log << data
-      DeployChannel.broadcast_to(deploy, { type: "log", data: data })
+    # Trigger rebuild on Dokku using git:from-image or ps:rebuild
+    # For git-push deploys, the Git::DeployForwarder handles the actual push;
+    # this job is used for rollbacks and rebuild triggers.
+    Timeout.timeout(DEPLOY_TIMEOUT.to_i) do
+      client.run_streaming("ps:rebuild #{app.name}") do |data|
+        log << data
+        DeployChannel.broadcast_to(deploy, { type: "log", data: data })
+      end
     end
 
     deploy.update!(status: :succeeded, log: log, finished_at: Time.current)
@@ -2326,6 +2329,11 @@ class DeployJob < ApplicationJob
     DeployChannel.broadcast_to(deploy, { type: "status", data: "succeeded" })
 
     fire_notifications(deploy, :deploy_success)
+  rescue Timeout::Error
+    deploy.update!(status: :timed_out, log: log.to_s + "\nDeploy timed out after 15 minutes", finished_at: Time.current)
+    app.update!(status: :crashed)
+    DeployChannel.broadcast_to(deploy, { type: "status", data: "timed_out" })
+    fire_notifications(deploy, :deploy_failure)
   rescue Dokku::Client::CommandError => e
     deploy.update!(status: :failed, log: log.to_s + "\n#{e.message}", finished_at: Time.current)
     app.update!(status: :crashed)
@@ -2610,6 +2618,45 @@ end
 ```bash
 git add -A
 git commit -m "feat: add recurring job schedule for health checks, sync, and metrics"
+```
+
+---
+
+### Task 24b: Action Cable Connection Authentication
+
+**Files:**
+- Modify: `app/channels/application_cable/connection.rb`
+
+- [ ] **Step 1: Authenticate WebSocket connections**
+
+```ruby
+# app/channels/application_cable/connection.rb
+module ApplicationCable
+  class Connection < ActionCable::Connection::Base
+    identified_by :current_user
+
+    def connect
+      self.current_user = find_verified_user
+    end
+
+    private
+
+    def find_verified_user
+      if (user = env["warden"].user)
+        user
+      else
+        reject_unauthorized_connection
+      end
+    end
+  end
+end
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add -A
+git commit -m "feat: add Action Cable connection authentication"
 ```
 
 ---
@@ -2985,7 +3032,7 @@ git commit -m "feat: add Git SSH server and deploy forwarder"
 - [ ] **Step 1: Create gem structure**
 
 ```bash
-mkdir -p cli/{lib/herodokku/commands,mcp/tools,exe,spec}
+mkdir -p cli/{lib/herodokku/{commands,mcp/tools},exe,spec}
 ```
 
 - [ ] **Step 2: Create gemspec**
@@ -3002,7 +3049,7 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = ">= 3.1"
 
-  spec.files         = Dir["lib/**/*", "exe/*", "mcp/**/*"]
+  spec.files         = Dir["lib/**/*", "exe/*"]
   spec.bindir        = "exe"
   spec.executables   = ["herodokku"]
 
@@ -3369,6 +3416,126 @@ module Herodokku
       Commands::Git.new.add_remote(options[:app])
     end
 
+    desc "apps:rename OLD NEW", "Rename an app"
+    def apps_rename(old_name, new_name)
+      require "herodokku/commands/apps"
+      Commands::Apps.new.rename(old_name, new_name)
+    end
+
+    desc "config:get KEY", "Get a config var"
+    method_option :app, aliases: "-a", required: true
+    def config_get(key)
+      require "herodokku/commands/config"
+      Commands::Config.new.get(options[:app], key)
+    end
+
+    desc "certs:auto", "Enable Let's Encrypt SSL"
+    method_option :app, aliases: "-a", required: true
+    def certs_auto
+      require "herodokku/commands/domains"
+      Commands::Domains.new.enable_ssl(options[:app])
+    end
+
+    desc "addons:attach ADDON", "Attach addon to app"
+    method_option :app, aliases: "-a", required: true
+    def addons_attach(addon)
+      require "herodokku/commands/addons"
+      Commands::Addons.new.attach(addon, options[:app])
+    end
+
+    desc "addons:detach ADDON", "Detach addon from app"
+    method_option :app, aliases: "-a", required: true
+    def addons_detach(addon)
+      require "herodokku/commands/addons"
+      Commands::Addons.new.detach(addon, options[:app])
+    end
+
+    desc "addons:destroy ADDON", "Destroy addon"
+    def addons_destroy(addon)
+      require "herodokku/commands/addons"
+      Commands::Addons.new.destroy(addon)
+    end
+
+    desc "addons:info ADDON", "Show addon info"
+    def addons_info(addon)
+      require "herodokku/commands/addons"
+      Commands::Addons.new.info(addon)
+    end
+
+    desc "servers:remove NAME", "Remove server"
+    def servers_remove(name)
+      require "herodokku/commands/servers"
+      Commands::Servers.new.remove(name)
+    end
+
+    desc "servers:info NAME", "Show server info"
+    def servers_info(name)
+      require "herodokku/commands/servers"
+      Commands::Servers.new.info(name)
+    end
+
+    desc "ps:stop", "Stop app"
+    method_option :app, aliases: "-a", required: true
+    def ps_stop
+      require "herodokku/commands/ps"
+      Commands::Ps.new.stop(options[:app])
+    end
+
+    desc "ps:start", "Start app"
+    method_option :app, aliases: "-a", required: true
+    def ps_start
+      require "herodokku/commands/ps"
+      Commands::Ps.new.start(options[:app])
+    end
+
+    desc "rollback VERSION", "Rollback to a previous release"
+    method_option :app, aliases: "-a", required: true
+    def rollback(version)
+      require "herodokku/commands/releases"
+      Commands::Releases.new.rollback(options[:app], version)
+    end
+
+    desc "releases:info VERSION", "Show release details"
+    method_option :app, aliases: "-a", required: true
+    def releases_info(version)
+      require "herodokku/commands/releases"
+      Commands::Releases.new.info(options[:app], version)
+    end
+
+    desc "teams:create NAME", "Create a team"
+    def teams_create(name)
+      require "herodokku/commands/teams"
+      Commands::Teams.new.create(name)
+    end
+
+    desc "teams:members TEAM", "List team members"
+    def teams_members(team)
+      require "herodokku/commands/teams"
+      Commands::Teams.new.members(team)
+    end
+
+    desc "teams:invite EMAIL TEAM", "Invite user to team"
+    method_option :role, default: "member"
+    def teams_invite(email, team)
+      require "herodokku/commands/teams"
+      Commands::Teams.new.invite(email, team, options[:role])
+    end
+
+    desc "notifications", "List notifications"
+    method_option :app, aliases: "-a"
+    def notifications
+      require "herodokku/commands/notifications"
+      Commands::Notifications.new.list(options[:app])
+    end
+
+    desc "notifications:add CHANNEL", "Add notification channel"
+    method_option :url, required: true
+    method_option :app, aliases: "-a"
+    def notifications_add(channel)
+      require "herodokku/commands/notifications"
+      Commands::Notifications.new.add(channel, options)
+    end
+
     desc "mcp:start", "Start MCP server"
     def mcp_start
       require "herodokku/mcp/server"
@@ -3536,13 +3703,13 @@ git commit -m "feat: add CLI commands (auth, apps, config, domains, ps, logs, se
 ### Task 32: MCP Server
 
 **Files:**
-- Create: `cli/mcp/server.rb`
-- Create: `cli/mcp/tools/*.rb`
+- Create: `cli/lib/herodokku/mcp/server.rb`
+- Create: `cli/lib/herodokku/mcp/tools/*.rb`
 
 - [ ] **Step 1: Create MCP server**
 
 ```ruby
-# cli/mcp/server.rb
+# cli/lib/herodokku/mcp/server.rb
 require "json"
 
 module Herodokku
@@ -3556,7 +3723,7 @@ module Herodokku
 
       def start
         # Load all tools
-        Dir[File.join(__dir__, "tools", "*.rb")].each { |f| require f }
+        Dir[File.join(__dir__, "mcp", "tools", "*.rb")].each { |f| require f }
 
         $stderr.puts "Herodokku MCP server started"
 
@@ -3634,7 +3801,7 @@ end
 - [ ] **Step 2: Create tool definitions**
 
 ```ruby
-# cli/mcp/tools/apps.rb
+# cli/lib/herodokku/mcp/tools/apps.rb
 require "herodokku/api_client"
 
 Herodokku::MCP::Server.register_tool(
@@ -3698,7 +3865,7 @@ end
 
 - [ ] **Step 3: Create remaining tool files**
 
-Create `cli/mcp/tools/config.rb`, `domains.rb`, `databases.rb`, `ps.rb`, `logs.rb`, `deploys.rb`, `servers.rb`, `teams.rb`, `notifications.rb`.
+Create `cli/lib/herodokku/mcp/tools/config.rb`, `domains.rb`, `databases.rb`, `ps.rb`, `logs.rb`, `deploys.rb`, `servers.rb`, `teams.rb`, `notifications.rb`.
 
 Each file registers tools using the same `register_tool` pattern — calls `ApiClient` methods and returns formatted text.
 
@@ -3731,7 +3898,7 @@ RUN apt-get update -qq && apt-get install -y build-essential libpq-dev nodejs gi
 WORKDIR /app
 
 COPY Gemfile Gemfile.lock ./
-RUN bundle install --without development test
+RUN bundle config set --local without 'development test' && bundle install
 
 COPY . .
 
