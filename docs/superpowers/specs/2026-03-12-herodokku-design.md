@@ -11,9 +11,11 @@ It communicates with one or more Dokku servers over SSH, giving users a unified 
 
 ## Goals
 
-- Recreate the Heroku developer experience on top of Dokku
-- Personal use first, potential small-scale commercial offering later
-- Self-hostable via Docker Compose, plain VPS, or on Dokku itself
+- Commercial PaaS product from day one — compete with Heroku, Railway, Render
+- Heroku-like developer experience built on Dokku
+- Multi-server fleet management (each app on one Dokku server, customers distributed across servers)
+- Dyno-based pricing with tiered resource limits
+- Self-hostable open-source core may be added later as an additional offering
 - Pure Ruby stack (Rails + Ruby gem CLI)
 
 ## Architecture
@@ -72,11 +74,11 @@ All three clients hit the same Rails REST API (`/api/v1/*`).
 | **User** | Auth, profile | email, password, role |
 | **Team** | Group users | name, owner_id |
 | **TeamMembership** | User-Team join with role | user_id, team_id, role (admin/member/viewer) |
-| **Server** | A Dokku host | name, host, port, ssh_key (encrypted), team_id, status |
+| **Server** | A Dokku host | name, host, port, ssh_key (encrypted), team_id, status, region, capacity_total_mb, capacity_used_mb |
 | **AppRecord** | A Dokku app ("App" conflicts with Rails) | name, server_id, team_id, status, created_by |
 | **Release** | Versioned release (maps to "releases" in CLI) | app_record_id, version (auto-increment), deploy_id (nullable), description, created_at |
 | **Deploy** | Deploy execution record | app_record_id, release_id, status (pending/building/succeeded/failed), commit_sha, log, started_at, finished_at |
-| **Domain** | Custom domain | app_record_id, hostname, ssl_enabled |
+| **Domain** | Custom domain | app_record_id, hostname, ssl_enabled, verification_status (pending/verified/failed), verification_token, verified_at |
 | **EnvVar** | Config/env variable | app_record_id, key, encrypted_value |
 | **DatabaseService** | Dokku service (postgres, redis, etc.) | server_id, service_type, name, status |
 | **AppDatabase** | Link between app and database | app_record_id, database_service_id, alias (env var name, e.g. DATABASE_URL) |
@@ -85,6 +87,12 @@ All three clients hit the same Rails REST API (`/api/v1/*`).
 | **Notification** | Alert config | app_record_id (nullable), team_id, channel (email/slack/webhook), events, config (JSON) |
 | **ApiToken** | Auth token for CLI/MCP | user_id, token_digest (hashed), name, last_used_at, expires_at, revoked_at |
 | **SshPublicKey** | User's SSH key for git push auth | user_id, name, public_key, fingerprint |
+| **Plan** | Subscription plan definition | name (free/hobby/pro/business), monthly_price_cents, included_dyno_tier, included_dyno_count, max_apps, max_databases, max_db_size_mb, custom_domains, team_members |
+| **Subscription** | User's active plan | user_id, plan_id, stripe_subscription_id, stripe_customer_id, status (active/past_due/canceled), current_period_end |
+| **DynoTier** | Resource tier definition | name (eco/basic/standard-1x/standard-2x/performance), memory_mb, cpu_shares, price_cents_per_month, sleeps |
+| **DynoAllocation** | App's dyno configuration | app_record_id, dyno_tier_id, process_type, count |
+| **Invoice** | Monthly billing record | subscription_id, stripe_invoice_id, amount_cents, status (draft/open/paid/void), period_start, period_end |
+| **UsageEvent** | Tracks billable events | subscription_id, event_type (dyno_hour/db_provision/addon), quantity, recorded_at, metadata (JSON) |
 
 ### Security
 
@@ -95,12 +103,16 @@ All three clients hit the same Rails REST API (`/api/v1/*`).
 ### Relationships
 
 ```
-User ──▶ TeamMembership ──▶ Team ──▶ Server ──▶ AppRecord
+User ──▶ Subscription ──▶ Plan
+  │           │
+  │           └──▶ Invoice, UsageEvent
+  │
+  ├──▶ TeamMembership ──▶ Team ──▶ Server ──▶ AppRecord
   │                                     │            │
-  ├──▶ ApiToken                         ▼            ├──▶ Release ──▶ Deploy
-  └──▶ SshPublicKey             DatabaseService      ├──▶ Domain ──▶ Certificate
-                                        │            ├──▶ EnvVar
-                                        ▼            ├──▶ ProcessScale
+  ├──▶ ApiToken                         ▼            ├──▶ DynoAllocation ──▶ DynoTier
+  └──▶ SshPublicKey             DatabaseService      ├──▶ Release ──▶ Deploy
+                                        │            ├──▶ Domain ──▶ Certificate
+                                        ▼            ├──▶ EnvVar
                                    AppDatabase       └──▶ Notification (optional)
                                   (links apps ↔ dbs)
                                                      Team ──▶ Notification (team-wide)
@@ -245,6 +257,138 @@ Deploy status changes trigger notifications via background jobs.
 | Webhook | Generic HTTP POST |
 
 Notifications can be scoped to a **team** (all events for all apps) or to a **specific app**. App-level notifications override team-level for the same channel. Configurable per-event (deploy success, deploy failure, app crash).
+
+### 11. Dyno Tiers & Resource Management
+
+Each app's processes run on a specific dyno tier that controls resource limits via Dokku's resource plugin.
+
+#### Tier Definitions
+
+| Dyno Tier | RAM | CPU Share | Sleeps? | Price/dyno/mo |
+|-----------|-----|-----------|---------|---------------|
+| **Eco** | 256 MB | 1/4 vCPU | Yes (30min idle) | Free (included) |
+| **Basic** | 512 MB | 1/2 vCPU | No | $5 |
+| **Standard-1X** | 1 GB | 1 vCPU | No | $12 |
+| **Standard-2X** | 2 GB | 2 vCPU | No | $25 |
+| **Performance** | 4 GB | 4 vCPU | No | $50 |
+
+#### Dokku Commands (per dyno change)
+
+```bash
+dokku resource:limit --memory <MB> --cpu <shares> <app>
+dokku resource:reserve --memory <MB> <app>
+```
+
+When a user changes their dyno tier, Herodokku runs the resource commands and triggers a restart.
+
+#### Eco Dyno Sleep Mechanic
+
+For free-tier Eco dynos, a background job implements the sleep/wake cycle:
+
+1. **IdleCheckJob** runs every 5 minutes
+2. Checks container CPU activity via `docker stats --no-stream`
+3. If no meaningful activity for 30 minutes → `dokku ps:stop <app>`
+4. App status set to `sleeping`
+5. When a request arrives, an nginx-level health check detects the app is down
+6. A **WakeAppJob** runs `dokku ps:start <app>` and returns a "Starting up..." page
+7. Subsequent requests are served normally once the app is running
+
+### 12. Billing & Subscriptions
+
+#### Plans
+
+| Plan | Monthly Fee | Included | Extra Dynos | Databases | Custom Domains | Teams |
+|------|-------------|----------|-------------|-----------|---------------|-------|
+| **Free** | $0 | 1 Eco dyno | — | 1 shared Postgres (10 MB) | `*.herodokku.com` only | No |
+| **Hobby** | $7 | 1 Basic dyno | Buy at tier price | 1 Postgres (1 GB) | Yes + SSL | No |
+| **Pro** | $25 | 1 Standard-1X | Buy at tier price | 3 databases (10 GB each) | Yes + SSL | Up to 3 members |
+| **Business** | $49 | 2 Standard-1X | Buy at tier price | 5 databases (50 GB each) | Yes + SSL | Unlimited |
+
+Users pay **plan fee + extra dyno costs**. Example: Pro user with `web=3` Standard-1X pays $25 + (2 extra × $12) = $49/mo.
+
+#### Stripe Integration
+
+- **Stripe Checkout** for initial subscription signup
+- **Stripe Billing** for recurring payments with metered usage
+- **Stripe Webhooks** to handle payment events (invoice.paid, invoice.payment_failed, customer.subscription.updated, etc.)
+- **Usage records** pushed to Stripe for metered items (extra dynos, database overage)
+- Plan changes (upgrade/downgrade) handled via Stripe's proration
+
+#### Billing Flow
+
+```
+User signs up → Free plan (no card required)
+         │
+User upgrades → Stripe Checkout session → Card saved
+         │
+Monthly cycle:
+  1. Stripe generates invoice
+  2. Base plan fee + metered usage (extra dynos)
+  3. Webhook: invoice.paid → Subscription stays active
+  4. Webhook: invoice.payment_failed → Grace period (3 days) → Downgrade to Free
+```
+
+#### Enforcement
+
+- **App limit:** Cannot create apps beyond plan limit. API returns 402.
+- **Database limit:** Cannot create databases beyond plan limit.
+- **Dyno tier:** Free plan locked to Eco. Hobby locked to Basic max. Pro/Business can use any tier.
+- **Custom domains:** Free plan cannot add custom domains. API returns 402 with upgrade prompt.
+- **Team members:** Free/Hobby cannot invite team members.
+- Past-due subscriptions get 3-day grace period, then apps are stopped (not destroyed) and account is downgraded to Free limits.
+
+### 13. Custom Domains
+
+#### Default Subdomains
+
+Every app automatically gets `<app-name>.herodokku.com`. Requires:
+- Wildcard DNS: `*.herodokku.com` → load balancer IP
+- Wildcard SSL via Let's Encrypt or Cloudflare
+
+#### Custom Domain Flow
+
+1. User adds domain via dashboard or CLI: `herodokku domains:add -a my-app api.example.com`
+2. Herodokku checks plan allows custom domains (Hobby+ only)
+3. Domain record created with `verification_status: pending`
+4. User shown instructions: "Add a CNAME record pointing `api.example.com` to `domains.herodokku.com`"
+5. **DnsVerificationJob** polls DNS every 2 minutes (up to 48 hours)
+6. Once CNAME verified:
+   - `verification_status: verified`
+   - `dokku domains:add <app> api.example.com`
+   - `dokku letsencrypt:enable <app>` for SSL
+7. Domain is live
+
+#### DNS Verification
+
+```ruby
+# Check if CNAME points to domains.herodokku.com
+resolved = Resolv::DNS.new.getresources(hostname, Resolv::DNS::Resource::IN::CNAME)
+verified = resolved.any? { |r| r.name.to_s == "domains.herodokku.com" }
+```
+
+Alternative: A-record pointing directly to the Dokku server IP (for apex domains).
+
+### 14. Multi-Server Fleet Management
+
+Herodokku manages a pool of Dokku servers. Each app lives on one server. Customers are distributed across servers based on capacity.
+
+#### Server Placement
+
+When creating an app, Herodokku picks the best server:
+
+1. Filter servers by region (if user specified)
+2. Filter by available capacity (total memory - used memory > app's dyno tier memory)
+3. Pick the server with the most available capacity (bin-packing)
+
+#### Regions
+
+Servers are tagged with a `region` (e.g., `us-east`, `eu-west`). Users can choose a region when creating an app. Default region configurable per plan.
+
+#### Capacity Tracking
+
+- Each server tracks `capacity_total_mb` and `capacity_used_mb`
+- Updated by SyncServerJob based on actual `docker stats` data
+- Prevents over-provisioning: if no server has capacity, app creation is rejected with "No available capacity in region X"
 
 ## CLI Design
 
@@ -646,8 +790,8 @@ Versioning: both use the same version number, bumped together. The CLI gem versi
 
 ## Non-Goals (for v1)
 
-- Multi-region deployment
+- Auto-scaling based on metrics (manual scaling only)
 - Built-in CI/CD pipeline
 - Marketplace for third-party addons
-- Billing/payments system
-- Auto-scaling based on metrics
+- Multi-server horizontal scaling per app (each app lives on one server)
+- Open-source self-hosted edition (commercial-first, open-source may come later)
