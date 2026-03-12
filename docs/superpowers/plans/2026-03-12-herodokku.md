@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a full Heroku-like PaaS on top of Dokku with Rails 8 web dashboard, Ruby CLI gem, and MCP server.
+**Goal:** Build a commercial Heroku-like PaaS on top of Dokku with Rails 8 web dashboard, Ruby CLI gem, MCP server, Stripe billing, dyno tiers, and multi-server fleet management.
 
-**Architecture:** Rails 8 monolith communicates with Dokku servers via SSH. Three clients (browser, CLI, MCP) share a single REST API. Hotwire/Turbo for the dashboard, Action Cable for real-time features, Solid Queue for background jobs.
+**Architecture:** Rails 8 monolith communicates with a fleet of Dokku servers via SSH. Three clients (browser, CLI, MCP) share a single REST API. Hotwire/Turbo for the dashboard, Action Cable for real-time features, Solid Queue for background jobs. Stripe for billing.
 
-**Tech Stack:** Ruby 3.3+, Rails 8, PostgreSQL, Redis, Devise, Pundit, Thor, net-ssh, Hotwire/Turbo/Stimulus, Solid Queue, Action Cable, Chartkick
+**Tech Stack:** Ruby 3.3+, Rails 8, PostgreSQL, Redis, Devise, Pundit, Thor, net-ssh, Hotwire/Turbo/Stimulus, Solid Queue, Action Cable, Chartkick, Stripe (pay gem)
 
 **Spec:** `docs/superpowers/specs/2026-03-12-herodokku-design.md`
 
@@ -56,6 +56,10 @@ gem "redis"
 # Charts
 gem "chartkick"
 gem "groupdate"
+
+# Billing
+gem "pay", "~> 7.0"
+gem "stripe", "~> 12.0"
 
 # API
 gem "rack-cors"
@@ -4085,16 +4089,1223 @@ git commit -m "feat: add seeds and finalize v1 setup"
 
 ---
 
+## Chunk 10: Dyno Tiers & Resource Management
+
+### Task 36: DynoTier & DynoAllocation Models
+
+**Files:**
+- Create: `app/models/dyno_tier.rb`, `app/models/dyno_allocation.rb`, migrations, tests, seeds
+
+- [ ] **Step 1: Generate models**
+
+```bash
+bin/rails generate model DynoTier \
+  name:string \
+  memory_mb:integer \
+  cpu_shares:integer \
+  price_cents_per_month:integer \
+  sleeps:boolean
+
+bin/rails generate model DynoAllocation \
+  app_record:references \
+  dyno_tier:references \
+  process_type:string \
+  count:integer
+```
+
+- [ ] **Step 2: Edit migrations**
+
+DynoTier: `null: false` on all fields, unique index on `name`, `sleeps` default `false`.
+DynoAllocation: `null: false` on `process_type` and `count`, default `count: 1`, unique index on `[:app_record_id, :process_type]`.
+
+- [ ] **Step 3: Implement models**
+
+```ruby
+# app/models/dyno_tier.rb
+class DynoTier < ApplicationRecord
+  has_many :dyno_allocations
+
+  validates :name, presence: true, uniqueness: true
+  validates :memory_mb, :cpu_shares, :price_cents_per_month, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+
+  scope :paid, -> { where(sleeps: false) }
+
+  def price_per_month
+    price_cents_per_month / 100.0
+  end
+end
+
+# app/models/dyno_allocation.rb
+class DynoAllocation < ApplicationRecord
+  belongs_to :app_record
+  belongs_to :dyno_tier
+
+  validates :process_type, presence: true, uniqueness: { scope: :app_record_id }
+  validates :count, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+
+  def monthly_cost_cents
+    count * dyno_tier.price_cents_per_month
+  end
+end
+```
+
+- [ ] **Step 4: Seed dyno tiers**
+
+```ruby
+# db/seeds.rb (append)
+DynoTier.find_or_create_by!(name: "eco") do |t|
+  t.memory_mb = 256; t.cpu_shares = 25; t.price_cents_per_month = 0; t.sleeps = true
+end
+DynoTier.find_or_create_by!(name: "basic") do |t|
+  t.memory_mb = 512; t.cpu_shares = 50; t.price_cents_per_month = 500; t.sleeps = false
+end
+DynoTier.find_or_create_by!(name: "standard-1x") do |t|
+  t.memory_mb = 1024; t.cpu_shares = 100; t.price_cents_per_month = 1200; t.sleeps = false
+end
+DynoTier.find_or_create_by!(name: "standard-2x") do |t|
+  t.memory_mb = 2048; t.cpu_shares = 200; t.price_cents_per_month = 2500; t.sleeps = false
+end
+DynoTier.find_or_create_by!(name: "performance") do |t|
+  t.memory_mb = 4096; t.cpu_shares = 400; t.price_cents_per_month = 5000; t.sleeps = false
+end
+```
+
+- [ ] **Step 5: Add has_many to AppRecord**
+
+In `app/models/app_record.rb`:
+```ruby
+has_many :dyno_allocations, dependent: :destroy
+```
+
+- [ ] **Step 6: Run migrations, seed, and test**
+
+```bash
+bin/rails db:migrate
+bin/rails db:seed
+bin/rails test
+```
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add -A
+git commit -m "feat: add DynoTier and DynoAllocation models with seed data"
+```
+
+---
+
+### Task 37: Dyno Resource Enforcement Service
+
+**Files:**
+- Create: `app/services/dokku/resources.rb`
+- Create: `test/services/dokku/resources_test.rb`
+
+- [ ] **Step 1: Create service**
+
+```ruby
+# app/services/dokku/resources.rb
+module Dokku
+  class Resources
+    def initialize(client)
+      @client = client
+    end
+
+    def apply_limits(app_name, memory_mb:, cpu_shares:)
+      @client.run("resource:limit --memory #{memory_mb} --cpu #{cpu_shares} #{app_name}")
+    end
+
+    def apply_reservation(app_name, memory_mb:)
+      reserve_mb = memory_mb / 2  # Reserve half of limit
+      @client.run("resource:reserve --memory #{reserve_mb} #{app_name}")
+    end
+
+    def report(app_name)
+      output = @client.run("resource:report #{app_name}")
+      parse_report(output)
+    end
+
+    private
+
+    def parse_report(output)
+      result = {}
+      output.each_line do |line|
+        next if line.strip.blank? || line.start_with?("=")
+        key, value = line.split(":", 2).map(&:strip)
+        result[key.to_s.parameterize(separator: "_")] = value if key
+      end
+      result
+    end
+  end
+end
+```
+
+- [ ] **Step 2: Create ApplyDynoTierJob**
+
+```ruby
+# app/jobs/apply_dyno_tier_job.rb
+class ApplyDynoTierJob < ApplicationJob
+  queue_as :default
+
+  def perform(dyno_allocation_id)
+    allocation = DynoAllocation.find_by(id: dyno_allocation_id)
+    return unless allocation
+
+    app = allocation.app_record
+    tier = allocation.dyno_tier
+    client = Dokku::Client.new(app.server)
+    resources = Dokku::Resources.new(client)
+
+    resources.apply_limits(app.name, memory_mb: tier.memory_mb, cpu_shares: tier.cpu_shares)
+    resources.apply_reservation(app.name, memory_mb: tier.memory_mb)
+
+    # Scale the process type
+    Dokku::Processes.new(client).scale(app.name, { allocation.process_type => allocation.count })
+  end
+end
+```
+
+- [ ] **Step 3: Write test, run, commit**
+
+```bash
+git add -A
+git commit -m "feat: add Dokku resource enforcement and ApplyDynoTierJob"
+```
+
+---
+
+### Task 38: Eco Dyno Sleep/Wake
+
+**Files:**
+- Create: `app/jobs/idle_check_job.rb`
+- Create: `app/jobs/wake_app_job.rb`
+
+- [ ] **Step 1: Create IdleCheckJob**
+
+```ruby
+# app/jobs/idle_check_job.rb
+class IdleCheckJob < ApplicationJob
+  queue_as :default
+
+  IDLE_THRESHOLD = 30.minutes
+
+  def perform
+    eco_tier = DynoTier.find_by(name: "eco")
+    return unless eco_tier
+
+    AppRecord.joins(:dyno_allocations)
+      .where(dyno_allocations: { dyno_tier_id: eco_tier.id })
+      .where(status: :running)
+      .find_each do |app|
+        check_and_sleep(app)
+      end
+  end
+
+  private
+
+  def check_and_sleep(app)
+    client = Dokku::Client.new(app.server)
+
+    # Check container CPU usage — if near zero for IDLE_THRESHOLD, sleep it
+    output = client.run("-- docker stats --no-stream --format '{{json .}}' #{app.name}.web.1")
+    data = JSON.parse(output)
+    cpu = data["CPUPerc"].to_f
+
+    if cpu < 0.5  # Less than 0.5% CPU
+      last_active = app.metrics.where("cpu_percent > 0.5").order(recorded_at: :desc).first
+      if last_active.nil? || last_active.recorded_at < IDLE_THRESHOLD.ago
+        Dokku::Processes.new(client).stop(app.name)
+        app.update!(status: :sleeping)
+      end
+    end
+  rescue Dokku::Client::CommandError, JSON::ParserError => e
+    Rails.logger.warn("IdleCheckJob failed for #{app.name}: #{e.message}")
+  end
+end
+```
+
+- [ ] **Step 2: Create WakeAppJob**
+
+```ruby
+# app/jobs/wake_app_job.rb
+class WakeAppJob < ApplicationJob
+  queue_as :urgent
+
+  def perform(app_id)
+    app = AppRecord.find_by(id: app_id)
+    return unless app&.sleeping?
+
+    client = Dokku::Client.new(app.server)
+    Dokku::Processes.new(client).start(app.name)
+    app.update!(status: :running)
+  end
+end
+```
+
+- [ ] **Step 3: Add `sleeping` to AppRecord status enum**
+
+In `app/models/app_record.rb`, update the enum:
+```ruby
+enum :status, { running: 0, stopped: 1, crashed: 2, deploying: 3, sleeping: 4 }
+```
+
+- [ ] **Step 4: Add recurring schedule**
+
+Append to `config/recurring.yml`:
+```yaml
+idle_check:
+  class: IdleCheckJob
+  schedule: every 5 minutes
+  queue: default
+```
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add -A
+git commit -m "feat: add Eco dyno sleep/wake with idle detection"
+```
+
+---
+
+### Task 39: Dyno API Endpoints
+
+**Files:**
+- Create: `app/controllers/api/v1/dynos_controller.rb`
+- Modify: `config/routes.rb`
+
+- [ ] **Step 1: Add routes**
+
+```ruby
+# Inside apps resources
+resources :apps do
+  resources :dynos, only: [:index, :update], controller: "dynos"
+end
+```
+
+- [ ] **Step 2: Create controller**
+
+```ruby
+# app/controllers/api/v1/dynos_controller.rb
+module Api
+  module V1
+    class DynosController < BaseController
+      before_action :set_app
+
+      def index
+        authorize @app, :show?
+        allocations = @app.dyno_allocations.includes(:dyno_tier)
+        render json: allocations.map { |a|
+          {
+            process_type: a.process_type,
+            tier: a.dyno_tier.name,
+            count: a.count,
+            memory_mb: a.dyno_tier.memory_mb,
+            monthly_cost: a.monthly_cost_cents / 100.0
+          }
+        }
+      end
+
+      def update
+        authorize @app, :update?
+        tier = DynoTier.find_by!(name: params[:tier])
+
+        # Check plan allows this tier
+        subscription = current_user.subscription
+        enforce_plan_limits!(subscription, tier)
+
+        allocation = @app.dyno_allocations.find_or_initialize_by(process_type: params[:process_type] || "web")
+        allocation.dyno_tier = tier
+        allocation.count = params[:count] || 1
+        allocation.save!
+
+        ApplyDynoTierJob.perform_later(allocation.id)
+
+        render json: { message: "Dyno updated", tier: tier.name, count: allocation.count }
+      end
+
+      private
+
+      def set_app
+        @app = AppRecord.find(params[:app_id])
+      end
+
+      def enforce_plan_limits!(subscription, tier)
+        plan = subscription&.plan
+        return if plan.nil?  # No subscription = free plan
+
+        max_tier = plan.max_dyno_tier
+        if tier.price_cents_per_month > max_tier.price_cents_per_month
+          render json: { error: "Your plan does not allow #{tier.name} dynos. Upgrade at herodokku.com/billing" }, status: :payment_required
+          return
+        end
+      end
+    end
+  end
+end
+```
+
+- [ ] **Step 3: Add CLI commands for dyno management**
+
+In `cli/lib/herodokku/cli.rb` add:
+
+```ruby
+desc "dyno", "Show dyno configuration"
+method_option :app, aliases: "-a", required: true
+def dyno
+  require "herodokku/commands/dynos"
+  Commands::Dynos.new.list(options[:app])
+end
+
+desc "dyno:resize TIER", "Change dyno tier"
+method_option :app, aliases: "-a", required: true
+method_option :process_type, default: "web"
+def dyno_resize(tier)
+  require "herodokku/commands/dynos"
+  Commands::Dynos.new.resize(options[:app], tier, options[:process_type])
+end
+```
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add -A
+git commit -m "feat: add Dyno API controller and CLI commands"
+```
+
+---
+
+## Chunk 11: Billing & Subscriptions
+
+### Task 40: Plan & Subscription Models
+
+**Files:**
+- Create: `app/models/plan.rb`, `app/models/subscription.rb`, `app/models/invoice.rb`, `app/models/usage_event.rb`, migrations, seeds
+
+- [ ] **Step 1: Generate models**
+
+```bash
+bin/rails generate model Plan \
+  name:string \
+  monthly_price_cents:integer \
+  max_apps:integer \
+  max_databases:integer \
+  max_db_size_mb:integer \
+  custom_domains:boolean \
+  team_members:integer \
+  max_dyno_tier:string \
+  stripe_price_id:string
+
+bin/rails generate model Subscription \
+  user:references \
+  plan:references \
+  stripe_subscription_id:string \
+  stripe_customer_id:string \
+  status:integer \
+  current_period_end:datetime
+
+bin/rails generate model Invoice \
+  subscription:references \
+  stripe_invoice_id:string \
+  amount_cents:integer \
+  status:integer \
+  period_start:datetime \
+  period_end:datetime
+
+bin/rails generate model UsageEvent \
+  subscription:references \
+  event_type:string \
+  quantity:integer \
+  recorded_at:datetime \
+  metadata:json
+```
+
+- [ ] **Step 2: Edit migrations**
+
+Plan: unique index on `name`, `custom_domains` default false, `team_members` default 0.
+Subscription: unique index on `stripe_subscription_id`, `status` default 0 (active). Enum: `{ active: 0, past_due: 1, canceled: 2, trialing: 3 }`.
+Invoice: unique index on `stripe_invoice_id`, `status` enum: `{ draft: 0, open: 1, paid: 2, void: 3 }`.
+
+- [ ] **Step 3: Implement models**
+
+```ruby
+# app/models/plan.rb
+class Plan < ApplicationRecord
+  has_many :subscriptions
+
+  validates :name, presence: true, uniqueness: true
+  validates :monthly_price_cents, presence: true
+
+  def free?
+    monthly_price_cents == 0
+  end
+
+  def max_dyno_tier_record
+    DynoTier.find_by(name: max_dyno_tier)
+  end
+
+  def price_per_month
+    monthly_price_cents / 100.0
+  end
+end
+
+# app/models/subscription.rb
+class Subscription < ApplicationRecord
+  belongs_to :user
+  belongs_to :plan
+  has_many :invoices, dependent: :destroy
+  has_many :usage_events, dependent: :destroy
+
+  enum :status, { active: 0, past_due: 1, canceled: 2, trialing: 3 }
+
+  validates :user_id, uniqueness: true  # One active subscription per user
+
+  def active_or_trialing?
+    active? || trialing?
+  end
+end
+
+# app/models/invoice.rb
+class Invoice < ApplicationRecord
+  belongs_to :subscription
+  enum :status, { draft: 0, open: 1, paid: 2, void: 3 }
+end
+
+# app/models/usage_event.rb
+class UsageEvent < ApplicationRecord
+  belongs_to :subscription
+  validates :event_type, presence: true
+end
+```
+
+- [ ] **Step 4: Add to User model**
+
+```ruby
+# In app/models/user.rb
+has_one :subscription, dependent: :destroy
+delegate :plan, to: :subscription, allow_nil: true
+
+def on_free_plan?
+  subscription.nil? || plan&.free?
+end
+```
+
+- [ ] **Step 5: Seed plans**
+
+```ruby
+# db/seeds.rb (append)
+Plan.find_or_create_by!(name: "free") do |p|
+  p.monthly_price_cents = 0; p.max_apps = 1; p.max_databases = 1
+  p.max_db_size_mb = 10; p.custom_domains = false; p.team_members = 0
+  p.max_dyno_tier = "eco"
+end
+Plan.find_or_create_by!(name: "hobby") do |p|
+  p.monthly_price_cents = 700; p.max_apps = 5; p.max_databases = 1
+  p.max_db_size_mb = 1024; p.custom_domains = true; p.team_members = 0
+  p.max_dyno_tier = "basic"; p.stripe_price_id = "price_hobby"
+end
+Plan.find_or_create_by!(name: "pro") do |p|
+  p.monthly_price_cents = 2500; p.max_apps = 20; p.max_databases = 3
+  p.max_db_size_mb = 10240; p.custom_domains = true; p.team_members = 3
+  p.max_dyno_tier = "performance"; p.stripe_price_id = "price_pro"
+end
+Plan.find_or_create_by!(name: "business") do |p|
+  p.monthly_price_cents = 4900; p.max_apps = 100; p.max_databases = 5
+  p.max_db_size_mb = 51200; p.custom_domains = true; p.team_members = 999
+  p.max_dyno_tier = "performance"; p.stripe_price_id = "price_business"
+end
+```
+
+- [ ] **Step 6: Run migrations, seed, test, commit**
+
+```bash
+bin/rails db:migrate && bin/rails db:seed
+git add -A
+git commit -m "feat: add Plan, Subscription, Invoice, UsageEvent models"
+```
+
+---
+
+### Task 41: Plan Enforcement Concern
+
+**Files:**
+- Create: `app/controllers/concerns/plan_enforceable.rb`
+
+- [ ] **Step 1: Create concern**
+
+```ruby
+# app/controllers/concerns/plan_enforceable.rb
+module PlanEnforceable
+  extend ActiveSupport::Concern
+
+  private
+
+  def enforce_app_limit!
+    plan = current_user.plan || Plan.find_by!(name: "free")
+    current_count = policy_scope(AppRecord).count
+    if current_count >= plan.max_apps
+      render json: {
+        error: "App limit reached (#{plan.max_apps} on #{plan.name} plan). Upgrade at /billing",
+        upgrade_url: "/billing"
+      }, status: :payment_required
+    end
+  end
+
+  def enforce_database_limit!
+    plan = current_user.plan || Plan.find_by!(name: "free")
+    current_count = policy_scope(DatabaseService).count
+    if current_count >= plan.max_databases
+      render json: {
+        error: "Database limit reached (#{plan.max_databases} on #{plan.name} plan). Upgrade at /billing",
+        upgrade_url: "/billing"
+      }, status: :payment_required
+    end
+  end
+
+  def enforce_custom_domains!
+    plan = current_user.plan || Plan.find_by!(name: "free")
+    unless plan.custom_domains
+      render json: {
+        error: "Custom domains require Hobby plan or above. Upgrade at /billing",
+        upgrade_url: "/billing"
+      }, status: :payment_required
+    end
+  end
+
+  def enforce_team_members!
+    plan = current_user.plan || Plan.find_by!(name: "free")
+    team = Team.find(params[:team_id] || params[:id])
+    if team.team_memberships.count >= plan.team_members
+      render json: {
+        error: "Team member limit reached (#{plan.team_members} on #{plan.name} plan).",
+        upgrade_url: "/billing"
+      }, status: :payment_required
+    end
+  end
+end
+```
+
+- [ ] **Step 2: Include in API controllers**
+
+Add `include PlanEnforceable` to `Api::V1::BaseController`.
+
+Add `before_action :enforce_app_limit!, only: [:create]` in AppsController.
+Add `before_action :enforce_database_limit!, only: [:create]` in DatabasesController.
+Add `before_action :enforce_custom_domains!, only: [:create]` in DomainsController.
+Add `before_action :enforce_team_members!, only: [:create]` in TeamMembersController.
+
+- [ ] **Step 3: Write test**
+
+```ruby
+require "test_helper"
+
+class PlanEnforcementTest < ActionDispatch::IntegrationTest
+  setup do
+    @user = User.create!(email: "test@example.com", password: "password123456")
+    @free_plan = Plan.find_by!(name: "free")
+    Subscription.create!(user: @user, plan: @free_plan, status: :active)
+    @team = Team.create!(name: "Test", owner: @user)
+    TeamMembership.create!(user: @user, team: @team, role: :admin)
+    @server = Server.create!(name: "prod", host: "1.2.3.4", team: @team)
+    _, @token = ApiToken.create_with_token!(user: @user, name: "test")
+  end
+
+  test "free plan cannot exceed 1 app" do
+    AppRecord.create!(name: "first-app", server: @server, team: @team, creator: @user)
+
+    post api_v1_apps_path,
+      params: { name: "second-app", server_id: @server.id },
+      headers: { "Authorization" => "Bearer #{@token}" }
+
+    assert_response :payment_required
+    assert_includes JSON.parse(response.body)["error"], "App limit reached"
+  end
+end
+```
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add -A
+git commit -m "feat: add plan enforcement for apps, databases, domains, teams"
+```
+
+---
+
+### Task 42: Stripe Integration
+
+**Files:**
+- Create: `app/controllers/api/v1/billing_controller.rb`
+- Create: `app/controllers/webhooks/stripe_controller.rb`
+- Create: `config/initializers/stripe.rb`
+- Modify: `config/routes.rb`
+
+- [ ] **Step 1: Configure Stripe**
+
+```ruby
+# config/initializers/stripe.rb
+Stripe.api_key = ENV.fetch("STRIPE_SECRET_KEY", nil)
+```
+
+- [ ] **Step 2: Add routes**
+
+```ruby
+# In config/routes.rb
+namespace :api do
+  namespace :v1 do
+    resource :billing, only: [] do
+      get :current      # Current plan & usage
+      post :checkout     # Create Stripe Checkout session
+      post :portal       # Create Stripe Customer Portal session
+    end
+  end
+end
+
+namespace :webhooks do
+  post "stripe", to: "stripe#create"
+end
+```
+
+- [ ] **Step 3: Create Billing controller**
+
+```ruby
+# app/controllers/api/v1/billing_controller.rb
+module Api
+  module V1
+    class BillingController < BaseController
+      def current
+        subscription = current_user.subscription
+        plan = subscription&.plan || Plan.find_by!(name: "free")
+
+        # Calculate extra dyno costs
+        extra_dyno_cost = calculate_extra_dyno_cost(current_user)
+
+        render json: {
+          plan: plan.as_json(only: [:name, :monthly_price_cents, :max_apps, :max_databases, :custom_domains, :team_members]),
+          subscription_status: subscription&.status || "none",
+          current_period_end: subscription&.current_period_end,
+          extra_dyno_cost_cents: extra_dyno_cost,
+          total_monthly_cents: plan.monthly_price_cents + extra_dyno_cost
+        }
+      end
+
+      def checkout
+        plan = Plan.find_by!(name: params[:plan])
+        return render json: { error: "Cannot checkout free plan" }, status: :bad_request if plan.free?
+
+        # Create or retrieve Stripe customer
+        customer_id = ensure_stripe_customer(current_user)
+
+        session = Stripe::Checkout::Session.create(
+          customer: customer_id,
+          mode: "subscription",
+          line_items: [{ price: plan.stripe_price_id, quantity: 1 }],
+          success_url: "#{request.base_url}/dashboard/billing?success=true",
+          cancel_url: "#{request.base_url}/dashboard/billing?canceled=true",
+          metadata: { user_id: current_user.id, plan_name: plan.name }
+        )
+
+        render json: { checkout_url: session.url }
+      end
+
+      def portal
+        subscription = current_user.subscription
+        return render json: { error: "No active subscription" }, status: :bad_request unless subscription
+
+        session = Stripe::BillingPortal::Session.create(
+          customer: subscription.stripe_customer_id,
+          return_url: "#{request.base_url}/dashboard/billing"
+        )
+
+        render json: { portal_url: session.url }
+      end
+
+      private
+
+      def ensure_stripe_customer(user)
+        sub = user.subscription
+        return sub.stripe_customer_id if sub&.stripe_customer_id.present?
+
+        customer = Stripe::Customer.create(email: user.email, metadata: { user_id: user.id })
+        customer.id
+      end
+
+      def calculate_extra_dyno_cost(user)
+        plan = user.plan || Plan.find_by!(name: "free")
+        apps = policy_scope(AppRecord)
+
+        total = 0
+        apps.each do |app|
+          app.dyno_allocations.includes(:dyno_tier).each do |alloc|
+            total += alloc.monthly_cost_cents
+          end
+        end
+
+        # Subtract included dyno value
+        included_tier = DynoTier.find_by(name: plan.max_dyno_tier)
+        included_value = (included_tier&.price_cents_per_month || 0) * (plan.name == "business" ? 2 : 1)
+
+        [total - included_value, 0].max
+      end
+    end
+  end
+end
+```
+
+- [ ] **Step 4: Create Stripe webhook controller**
+
+```ruby
+# app/controllers/webhooks/stripe_controller.rb
+module Webhooks
+  class StripeController < ActionController::API
+    def create
+      payload = request.body.read
+      sig_header = request.env["HTTP_STRIPE_SIGNATURE"]
+      endpoint_secret = ENV.fetch("STRIPE_WEBHOOK_SECRET")
+
+      event = Stripe::Webhook.construct_event(payload, sig_header, endpoint_secret)
+
+      case event.type
+      when "checkout.session.completed"
+        handle_checkout_completed(event.data.object)
+      when "invoice.paid"
+        handle_invoice_paid(event.data.object)
+      when "invoice.payment_failed"
+        handle_payment_failed(event.data.object)
+      when "customer.subscription.updated"
+        handle_subscription_updated(event.data.object)
+      when "customer.subscription.deleted"
+        handle_subscription_deleted(event.data.object)
+      end
+
+      head :ok
+    rescue Stripe::SignatureVerificationError
+      head :bad_request
+    end
+
+    private
+
+    def handle_checkout_completed(session)
+      user = User.find(session.metadata.user_id)
+      plan = Plan.find_by!(name: session.metadata.plan_name)
+
+      stripe_sub = Stripe::Subscription.retrieve(session.subscription)
+
+      subscription = user.subscription || user.build_subscription
+      subscription.update!(
+        plan: plan,
+        stripe_subscription_id: stripe_sub.id,
+        stripe_customer_id: session.customer,
+        status: :active,
+        current_period_end: Time.at(stripe_sub.current_period_end)
+      )
+    end
+
+    def handle_invoice_paid(stripe_invoice)
+      subscription = Subscription.find_by(stripe_subscription_id: stripe_invoice.subscription)
+      return unless subscription
+
+      subscription.invoices.create!(
+        stripe_invoice_id: stripe_invoice.id,
+        amount_cents: stripe_invoice.amount_paid,
+        status: :paid,
+        period_start: Time.at(stripe_invoice.period_start),
+        period_end: Time.at(stripe_invoice.period_end)
+      )
+
+      subscription.update!(status: :active) if subscription.past_due?
+    end
+
+    def handle_payment_failed(stripe_invoice)
+      subscription = Subscription.find_by(stripe_subscription_id: stripe_invoice.subscription)
+      return unless subscription
+
+      subscription.update!(status: :past_due)
+
+      # Schedule downgrade if still past_due after 3 days
+      DowngradeAccountJob.set(wait: 3.days).perform_later(subscription.id)
+    end
+
+    def handle_subscription_updated(stripe_sub)
+      subscription = Subscription.find_by(stripe_subscription_id: stripe_sub.id)
+      return unless subscription
+
+      subscription.update!(
+        current_period_end: Time.at(stripe_sub.current_period_end),
+        status: stripe_sub.status == "active" ? :active : :past_due
+      )
+    end
+
+    def handle_subscription_deleted(stripe_sub)
+      subscription = Subscription.find_by(stripe_subscription_id: stripe_sub.id)
+      return unless subscription
+
+      subscription.update!(status: :canceled)
+      free_plan = Plan.find_by!(name: "free")
+      subscription.update!(plan: free_plan)
+    end
+  end
+end
+```
+
+- [ ] **Step 5: Create DowngradeAccountJob**
+
+```ruby
+# app/jobs/downgrade_account_job.rb
+class DowngradeAccountJob < ApplicationJob
+  queue_as :billing
+
+  def perform(subscription_id)
+    subscription = Subscription.find_by(id: subscription_id)
+    return unless subscription&.past_due?
+
+    # Stop all apps beyond free plan limit
+    free_plan = Plan.find_by!(name: "free")
+    user = subscription.user
+    apps = user.teams.flat_map(&:app_records).sort_by(&:created_at)
+
+    apps[free_plan.max_apps..].each do |app|
+      client = Dokku::Client.new(app.server)
+      Dokku::Processes.new(client).stop(app.name)
+      app.update!(status: :stopped)
+    rescue Dokku::Client::ConnectionError
+      # Best effort
+    end
+
+    subscription.update!(plan: free_plan)
+  end
+end
+```
+
+- [ ] **Step 6: Add .env vars**
+
+Append to `.env.example`:
+```
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add -A
+git commit -m "feat: add Stripe billing integration with checkout, webhooks, and downgrade"
+```
+
+---
+
+## Chunk 12: Custom Domains & Fleet Management
+
+### Task 43: Custom Domain Verification
+
+**Files:**
+- Modify: `app/models/domain.rb`
+- Create: `app/jobs/dns_verification_job.rb`
+- Modify: Domain migration
+
+- [ ] **Step 1: Update Domain migration**
+
+Add to the existing Domain migration or create a new one:
+
+```bash
+bin/rails generate migration AddVerificationToDomains \
+  verification_status:integer \
+  verification_token:string \
+  verified_at:datetime
+```
+
+Default `verification_status: 0`. Enum: `{ pending: 0, verified: 1, failed: 2 }`.
+
+- [ ] **Step 2: Update Domain model**
+
+```ruby
+# app/models/domain.rb
+class Domain < ApplicationRecord
+  belongs_to :app_record
+  has_one :certificate, dependent: :destroy
+
+  enum :verification_status, { pending: 0, verified: 1, failed: 2 }
+
+  validates :hostname, presence: true, uniqueness: true
+
+  before_create :generate_verification_token
+
+  def verification_instructions
+    "Add a CNAME record for #{hostname} pointing to domains.herodokku.com"
+  end
+
+  private
+
+  def generate_verification_token
+    self.verification_token ||= SecureRandom.hex(16)
+  end
+end
+```
+
+- [ ] **Step 3: Create DnsVerificationJob**
+
+```ruby
+# app/jobs/dns_verification_job.rb
+class DnsVerificationJob < ApplicationJob
+  queue_as :default
+
+  MAX_ATTEMPTS = 1440  # 48 hours at 2-minute intervals
+
+  def perform(domain_id, attempt: 1)
+    domain = Domain.find_by(id: domain_id)
+    return unless domain&.pending?
+
+    if dns_verified?(domain.hostname)
+      domain.update!(verification_status: :verified, verified_at: Time.current)
+
+      # Apply to Dokku
+      app = domain.app_record
+      client = Dokku::Client.new(app.server)
+      Dokku::Domains.new(client).add(app.name, domain.hostname)
+      Dokku::Domains.new(client).enable_ssl(app.name)
+      domain.update!(ssl_enabled: true)
+    elsif attempt < MAX_ATTEMPTS
+      DnsVerificationJob.set(wait: 2.minutes).perform_later(domain_id, attempt: attempt + 1)
+    else
+      domain.update!(verification_status: :failed)
+    end
+  end
+
+  private
+
+  def dns_verified?(hostname)
+    resolver = Resolv::DNS.new
+    records = resolver.getresources(hostname, Resolv::DNS::Resource::IN::CNAME)
+    records.any? { |r| r.name.to_s.downcase == "domains.herodokku.com" }
+  rescue Resolv::ResolvError
+    false
+  ensure
+    resolver&.close
+  end
+end
+```
+
+- [ ] **Step 4: Update DomainsController to trigger verification**
+
+In `Api::V1::DomainsController#create`, after saving the domain:
+
+```ruby
+def create
+  authorize @app, :update?
+  enforce_custom_domains!  # Plan check
+
+  domain = @app.domains.create!(hostname: params[:hostname])
+  DnsVerificationJob.perform_later(domain.id)
+
+  render json: {
+    domain: domain.as_json,
+    instructions: domain.verification_instructions
+  }, status: :created
+end
+```
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add -A
+git commit -m "feat: add custom domain DNS verification with auto-SSL"
+```
+
+---
+
+### Task 44: Server Fleet & App Placement
+
+**Files:**
+- Create: `app/services/server_placement.rb`
+- Modify: `app/models/server.rb`
+- Modify: `app/controllers/api/v1/apps_controller.rb`
+
+- [ ] **Step 1: Update Server migration**
+
+```bash
+bin/rails generate migration AddCapacityToServers \
+  region:string \
+  capacity_total_mb:integer \
+  capacity_used_mb:integer
+```
+
+Default `region: "us-east"`, `capacity_total_mb: 0`, `capacity_used_mb: 0`.
+
+- [ ] **Step 2: Create ServerPlacement service**
+
+```ruby
+# app/services/server_placement.rb
+class ServerPlacement
+  def initialize(team:, region: nil, required_memory_mb:)
+    @team = team
+    @region = region
+    @required_memory_mb = required_memory_mb
+  end
+
+  def find_best_server
+    servers = @team.servers.where(status: :connected)
+    servers = servers.where(region: @region) if @region.present?
+
+    # Find server with most available capacity that fits the requirement
+    best = servers
+      .where("capacity_total_mb - capacity_used_mb >= ?", @required_memory_mb)
+      .order(Arel.sql("capacity_total_mb - capacity_used_mb DESC"))
+      .first
+
+    unless best
+      raise NoCapacityError, "No available server with #{@required_memory_mb}MB free#{" in #{@region}" if @region}"
+    end
+
+    best
+  end
+
+  class NoCapacityError < StandardError; end
+end
+```
+
+- [ ] **Step 3: Update AppsController to use placement**
+
+Replace direct server selection with automatic placement:
+
+```ruby
+def create
+  enforce_app_limit!
+
+  tier = DynoTier.find_by!(name: params[:dyno_tier] || "eco")
+  server = if params[:server_id]
+    Server.find(params[:server_id])
+  else
+    ServerPlacement.new(
+      team: current_user.teams.first,
+      region: params[:region],
+      required_memory_mb: tier.memory_mb
+    ).find_best_server
+  end
+
+  @app = server.team.app_records.build(
+    name: params[:name], server: server, creator: current_user
+  )
+  authorize @app
+
+  client = Dokku::Client.new(server)
+  Dokku::Apps.new(client).create(params[:name])
+  @app.save!
+
+  # Create default dyno allocation
+  allocation = @app.dyno_allocations.create!(dyno_tier: tier, process_type: "web", count: 1)
+  ApplyDynoTierJob.perform_later(allocation.id)
+
+  render json: @app, status: :created
+rescue ServerPlacement::NoCapacityError => e
+  render json: { error: e.message }, status: :service_unavailable
+end
+```
+
+- [ ] **Step 4: Update SyncServerJob to track capacity**
+
+Add capacity tracking to the sync job:
+
+```ruby
+# In SyncServerJob#perform, after syncing apps:
+begin
+  output = client.run("-- docker info --format '{{json .}}'")
+  info = JSON.parse(output)
+  total_mem = info["MemTotal"].to_i / (1024 * 1024)  # Convert to MB
+
+  output = client.run("-- docker stats --no-stream --format '{{json .}}'")
+  used_mem = 0
+  output.each_line do |line|
+    data = JSON.parse(line)
+    used_mem += parse_mem_usage(data["MemUsage"])
+  end
+
+  server.update!(capacity_total_mb: total_mem, capacity_used_mb: used_mem)
+rescue StandardError => e
+  Rails.logger.warn("Capacity tracking failed: #{e.message}")
+end
+```
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add -A
+git commit -m "feat: add server fleet management with automatic app placement"
+```
+
+---
+
+### Task 45: Marketing & Onboarding Pages
+
+**Files:**
+- Create: `app/controllers/pages_controller.rb`
+- Create: `app/views/pages/home.html.erb`
+- Create: `app/views/pages/pricing.html.erb`
+- Create: `app/views/devise/registrations/new.html.erb` (override)
+
+- [ ] **Step 1: Create PagesController**
+
+```ruby
+class PagesController < ApplicationController
+  layout "marketing"
+
+  def home
+  end
+
+  def pricing
+    @plans = Plan.order(:monthly_price_cents)
+    @dyno_tiers = DynoTier.order(:price_cents_per_month)
+  end
+
+  def terms
+  end
+
+  def privacy
+  end
+end
+```
+
+- [ ] **Step 2: Add routes**
+
+```ruby
+root "pages#home"
+get "pricing", to: "pages#pricing"
+get "terms", to: "pages#terms"
+get "privacy", to: "pages#privacy"
+```
+
+- [ ] **Step 3: Create marketing layout and pages**
+
+Build with Tailwind:
+- **Home:** Hero section, feature highlights, pricing CTA, footer
+- **Pricing:** Plan comparison table, dyno tier table, FAQ
+- **Onboarding:** After signup, guided flow — add SSH key, create first app, deploy
+
+- [ ] **Step 4: Override Devise registration**
+
+Customize signup page to match the marketing design. After signup, redirect to onboarding flow instead of dashboard.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add -A
+git commit -m "feat: add marketing pages (home, pricing) and onboarding flow"
+```
+
+---
+
 ## Summary
 
 | Chunk | Tasks | What it delivers |
 |-------|-------|-----------------|
 | 1: Foundation | 1-7 | Rails app, Devise auth, API tokens, Pundit, SshPublicKey |
-| 2: Core Models & SSH | 8-13 | All 16 models, Dokku SSH client, service modules |
+| 2: Core Models & SSH | 8-13 | All core models, Dokku SSH client, service modules |
 | 3: API Controllers | 14-17 | Full REST API for all features |
-| 4: Background Jobs | 18-24 | Health checks, sync, deploys, metrics, notifications, scheduling |
+| 4: Background Jobs | 18-24b | Health checks, sync, deploys, metrics, notifications, Action Cable auth |
 | 5: Dashboard | 25-27 | Hotwire/Turbo dashboard with Stimulus for real-time |
 | 6: Git SSH Server | 28 | Git push to Herodokku with deploy forwarding |
 | 7: CLI Gem | 29-31 | Thor-based CLI with all commands |
 | 8: MCP Server | 32 | MCP server with tool definitions |
 | 9: Deployment | 33-35 | Docker, docker-compose, Procfile, seeds |
+| 10: Dyno Tiers | 36-39 | DynoTier/DynoAllocation models, resource enforcement, Eco sleep/wake |
+| 11: Billing | 40-42 | Plan/Subscription models, Stripe checkout/webhooks, plan enforcement |
+| 12: Domains & Fleet | 43-45 | Custom domain DNS verification, server placement, marketing pages |
