@@ -1,0 +1,7 @@
+Deploy <%= @event %>
+
+App "<%= @app.name %>" deploy <%= @event %>.
+<% if @deploy.commit_sha.present? %>
+Commit: <%= @deploy.commit_sha.first(7) %>
+<% end %>
+Status: <%= @deploy.status %>
