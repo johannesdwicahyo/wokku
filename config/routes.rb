@@ -9,6 +9,12 @@ Rails.application.routes.draw do
         get :whoami
         resources :tokens, only: [:index, :create, :destroy]
       end
+
+      resources :servers, only: [:index, :show, :create, :destroy] do
+        member do
+          get :status
+        end
+      end
     end
   end
 
