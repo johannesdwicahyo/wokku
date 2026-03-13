@@ -1,0 +1,117 @@
+<% content_for(:title, "Wokku - Deploy Your Apps in Seconds") %>
+
+<!-- Hero Section -->
+<div class="bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
+    <div class="text-center">
+      <h1 class="text-5xl lg:text-6xl font-extrabold text-gray-900 tracking-tight">
+        Deploy your apps<br>
+        <span class="text-indigo-600">in seconds</span>
+      </h1>
+      <p class="mt-6 text-xl text-gray-600 max-w-2xl mx-auto">
+        Wokku is the simplest way to deploy, manage, and scale your applications.
+        Push your code and we handle the rest.
+      </p>
+      <div class="mt-10 flex justify-center space-x-4">
+        <%= link_to "Get Started Free", new_user_registration_path, class: "inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm" %>
+        <%= link_to "View Pricing", pricing_path, class: "inline-flex items-center px-8 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 shadow-sm" %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Features Section -->
+<div class="py-24 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <h2 class="text-3xl font-bold text-gray-900">Everything you need to ship</h2>
+      <p class="mt-4 text-lg text-gray-600">From development to production, Wokku has you covered.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+      <div class="text-center">
+        <div class="w-12 h-12 mx-auto bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900">Instant Deploys</h3>
+        <p class="mt-2 text-gray-600">Push to Git and your app is live. Zero-downtime deployments with automatic rollbacks.</p>
+      </div>
+
+      <div class="text-center">
+        <div class="w-12 h-12 mx-auto bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900">Managed Databases</h3>
+        <p class="mt-2 text-gray-600">Postgres, Redis, MySQL, MongoDB, and more. Provisioned and linked in one command.</p>
+      </div>
+
+      <div class="text-center">
+        <div class="w-12 h-12 mx-auto bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900">Auto-Scaling</h3>
+        <p class="mt-2 text-gray-600">Scale dynos horizontally with a single command. Smart server placement handles the rest.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CLI Section -->
+<div class="py-24 bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="lg:grid lg:grid-cols-2 lg:gap-16 items-center">
+      <div>
+        <h2 class="text-3xl font-bold text-gray-900">Built for developers</h2>
+        <p class="mt-4 text-lg text-gray-600">
+          A powerful CLI, comprehensive API, and dashboard. Manage everything from the terminal or the browser.
+        </p>
+        <ul class="mt-8 space-y-4">
+          <li class="flex items-start">
+            <span class="flex-shrink-0 h-6 w-6 text-indigo-600">&#10003;</span>
+            <span class="ml-3 text-gray-600">Full-featured CLI with intuitive commands</span>
+          </li>
+          <li class="flex items-start">
+            <span class="flex-shrink-0 h-6 w-6 text-indigo-600">&#10003;</span>
+            <span class="ml-3 text-gray-600">RESTful API for CI/CD integration</span>
+          </li>
+          <li class="flex items-start">
+            <span class="flex-shrink-0 h-6 w-6 text-indigo-600">&#10003;</span>
+            <span class="ml-3 text-gray-600">Custom domains with automatic SSL</span>
+          </li>
+          <li class="flex items-start">
+            <span class="flex-shrink-0 h-6 w-6 text-indigo-600">&#10003;</span>
+            <span class="ml-3 text-gray-600">Real-time logs and metrics</span>
+          </li>
+        </ul>
+      </div>
+      <div class="mt-12 lg:mt-0">
+        <div class="bg-gray-900 rounded-lg p-6 font-mono text-sm text-gray-300">
+          <p class="text-gray-500">$ wokku apps:create my-app</p>
+          <p class="text-green-400">Creating my-app... done</p>
+          <p class="mt-2 text-gray-500">$ git push wokku main</p>
+          <p class="text-green-400">Deploying my-app... done</p>
+          <p class="text-green-400">https://my-app.wokku.dev</p>
+          <p class="mt-2 text-gray-500">$ wokku ps:scale web=3</p>
+          <p class="text-green-400">Scaling web to 3... done</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CTA Section -->
+<div class="bg-indigo-600 py-16">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <h2 class="text-3xl font-bold text-white">Ready to deploy?</h2>
+    <p class="mt-4 text-lg text-indigo-200">Start for free. No credit card required.</p>
+    <div class="mt-8">
+      <%= link_to "Get Started", new_user_registration_path, class: "inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-lg text-indigo-600 bg-white hover:bg-indigo-50 shadow-sm" %>
+    </div>
+  </div>
+</div>

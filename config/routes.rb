@@ -79,7 +79,11 @@ Rails.application.routes.draw do
     resource :profile, only: [:show, :edit, :update], controller: "profile"
   end
 
+  # Marketing pages
+  get "/pricing", to: "pages#pricing"
+  get "/docs", to: "pages#docs"
+
   get "up" => "rails/health#show", as: :rails_health_check
 
-  root "dashboard/apps#index"
+  root "pages#landing"
 end
