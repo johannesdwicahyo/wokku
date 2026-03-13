@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_13_060640) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_13_074610) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -106,6 +106,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_060640) do
     t.text "value"
     t.index ["app_record_id", "key"], name: "index_env_vars_on_app_record_id_and_key", unique: true
     t.index ["app_record_id"], name: "index_env_vars_on_app_record_id"
+  end
+
+  create_table "metrics", force: :cascade do |t|
+    t.bigint "app_record_id", null: false
+    t.float "cpu_percent"
+    t.datetime "created_at", null: false
+    t.bigint "memory_limit"
+    t.bigint "memory_usage"
+    t.datetime "recorded_at"
+    t.datetime "updated_at", null: false
+    t.index ["app_record_id", "recorded_at"], name: "index_metrics_on_app_record_id_and_recorded_at"
+    t.index ["app_record_id"], name: "index_metrics_on_app_record_id"
   end
 
   create_table "notifications", force: :cascade do |t|
@@ -211,6 +223,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_060640) do
   add_foreign_key "deploys", "app_records"
   add_foreign_key "domains", "app_records"
   add_foreign_key "env_vars", "app_records"
+  add_foreign_key "metrics", "app_records"
   add_foreign_key "notifications", "app_records"
   add_foreign_key "notifications", "teams"
   add_foreign_key "process_scales", "app_records"
