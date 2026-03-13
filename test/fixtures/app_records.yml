@@ -1,0 +1,17 @@
+one:
+  name: my-app-one
+  server: one
+  team: one
+  status: 0
+  created_by_id: <%= ActiveRecord::FixtureSet.identify(:one) %>
+  deploy_branch: main
+  synced_at: 2026-03-13 13:04:17
+
+two:
+  name: my-app-two
+  server: two
+  team: two
+  status: 0
+  created_by_id: <%= ActiveRecord::FixtureSet.identify(:two) %>
+  deploy_branch: main
+  synced_at: 2026-03-13 13:04:17

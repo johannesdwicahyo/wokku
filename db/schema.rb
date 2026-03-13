@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_13_060218) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_13_060417) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -25,6 +25,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_060218) do
     t.bigint "user_id", null: false
     t.index ["token_digest"], name: "index_api_tokens_on_token_digest", unique: true
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
+  end
+
+  create_table "app_records", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "created_by_id", null: false
+    t.string "deploy_branch", default: "main"
+    t.string "name", null: false
+    t.bigint "server_id", null: false
+    t.integer "status", default: 0
+    t.datetime "synced_at"
+    t.bigint "team_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_app_records_on_created_by_id"
+    t.index ["name", "server_id"], name: "index_app_records_on_name_and_server_id", unique: true
+    t.index ["server_id"], name: "index_app_records_on_server_id"
+    t.index ["team_id"], name: "index_app_records_on_team_id"
   end
 
   create_table "servers", force: :cascade do |t|
@@ -86,6 +102,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_060218) do
   end
 
   add_foreign_key "api_tokens", "users"
+  add_foreign_key "app_records", "servers"
+  add_foreign_key "app_records", "teams"
+  add_foreign_key "app_records", "users", column: "created_by_id"
   add_foreign_key "servers", "teams"
   add_foreign_key "ssh_public_keys", "users"
   add_foreign_key "team_memberships", "teams"
