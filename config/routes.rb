@@ -54,6 +54,20 @@ Rails.application.routes.draw do
     end
   end
 
+  namespace :dashboard do
+    resources :apps do
+      resources :config, only: [:index], controller: "config"
+      resources :domains, only: [:index, :create, :destroy], controller: "domains"
+      resources :releases, only: [:index], controller: "releases"
+      resource :logs, only: [:show], controller: "logs"
+      resource :metrics, only: [:show], controller: "metrics"
+    end
+    resources :servers
+    resources :databases
+    resources :teams
+    resource :profile, only: [:show, :edit, :update], controller: "profile"
+  end
+
   get "up" => "rails/health#show", as: :rails_health_check
 
   root "dashboard/apps#index"
