@@ -1,0 +1,15 @@
+one:
+  name: Server One
+  host: 10.0.0.1
+  port: 22
+  ssh_user: dokku
+  team: one
+  status: 0
+
+two:
+  name: Server Two
+  host: 10.0.0.2
+  port: 22
+  ssh_user: dokku
+  team: two
+  status: 0

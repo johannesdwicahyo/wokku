@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_13_060059) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_13_060218) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -25,6 +25,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_060059) do
     t.bigint "user_id", null: false
     t.index ["token_digest"], name: "index_api_tokens_on_token_digest", unique: true
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
+  end
+
+  create_table "servers", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "host", null: false
+    t.string "name", null: false
+    t.integer "port", default: 22
+    t.text "ssh_private_key"
+    t.string "ssh_user", default: "dokku"
+    t.integer "status", default: 0
+    t.bigint "team_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name", "team_id"], name: "index_servers_on_name_and_team_id", unique: true
+    t.index ["team_id"], name: "index_servers_on_team_id"
   end
 
   create_table "ssh_public_keys", force: :cascade do |t|
@@ -72,6 +86,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_060059) do
   end
 
   add_foreign_key "api_tokens", "users"
+  add_foreign_key "servers", "teams"
   add_foreign_key "ssh_public_keys", "users"
   add_foreign_key "team_memberships", "teams"
   add_foreign_key "team_memberships", "users"
