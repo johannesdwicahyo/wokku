@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_13_074610) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_13_083157) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -108,6 +108,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_074610) do
     t.index ["app_record_id"], name: "index_env_vars_on_app_record_id"
   end
 
+  create_table "invoices", force: :cascade do |t|
+    t.integer "amount_cents"
+    t.datetime "created_at", null: false
+    t.datetime "paid_at"
+    t.integer "status"
+    t.string "stripe_invoice_id"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id"], name: "index_invoices_on_user_id"
+  end
+
   create_table "metrics", force: :cascade do |t|
     t.bigint "app_record_id", null: false
     t.float "cpu_percent"
@@ -130,6 +141,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_074610) do
     t.datetime "updated_at", null: false
     t.index ["app_record_id"], name: "index_notifications_on_app_record_id"
     t.index ["team_id"], name: "index_notifications_on_team_id"
+  end
+
+  create_table "plans", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "max_apps"
+    t.integer "max_databases"
+    t.integer "max_dynos"
+    t.string "name"
+    t.integer "price_cents_per_month"
+    t.string "stripe_price_id"
+    t.datetime "updated_at", null: false
   end
 
   create_table "process_scales", force: :cascade do |t|
@@ -179,6 +201,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_074610) do
     t.index ["user_id"], name: "index_ssh_public_keys_on_user_id"
   end
 
+  create_table "subscriptions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "current_period_end"
+    t.bigint "plan_id", null: false
+    t.integer "status"
+    t.string "stripe_subscription_id"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["plan_id"], name: "index_subscriptions_on_plan_id"
+    t.index ["user_id"], name: "index_subscriptions_on_user_id"
+  end
+
   create_table "team_memberships", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "role", default: 0, null: false
@@ -197,6 +231,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_074610) do
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_teams_on_name", unique: true
     t.index ["owner_id"], name: "index_teams_on_owner_id"
+  end
+
+  create_table "usage_events", force: :cascade do |t|
+    t.bigint "app_record_id", null: false
+    t.datetime "created_at", null: false
+    t.string "event_type"
+    t.json "metadata"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["app_record_id"], name: "index_usage_events_on_app_record_id"
+    t.index ["user_id"], name: "index_usage_events_on_user_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -223,6 +268,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_074610) do
   add_foreign_key "deploys", "app_records"
   add_foreign_key "domains", "app_records"
   add_foreign_key "env_vars", "app_records"
+  add_foreign_key "invoices", "users"
   add_foreign_key "metrics", "app_records"
   add_foreign_key "notifications", "app_records"
   add_foreign_key "notifications", "teams"
@@ -231,7 +277,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_074610) do
   add_foreign_key "releases", "deploys"
   add_foreign_key "servers", "teams"
   add_foreign_key "ssh_public_keys", "users"
+  add_foreign_key "subscriptions", "plans"
+  add_foreign_key "subscriptions", "users"
   add_foreign_key "team_memberships", "teams"
   add_foreign_key "team_memberships", "users"
   add_foreign_key "teams", "users", column: "owner_id"
+  add_foreign_key "usage_events", "app_records"
+  add_foreign_key "usage_events", "users"
 end
