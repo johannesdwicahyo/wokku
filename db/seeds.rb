@@ -1,9 +1,11 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
+admin = User.find_or_create_by!(email: "admin@wokku.local") do |u|
+  u.password = "password123456"
+  u.role = :admin
+end
+team = Team.find_or_create_by!(name: "Default", owner: admin)
+TeamMembership.find_or_create_by!(user: admin, team: team) do |tm|
+  tm.role = :admin
+end
+
+puts "Created admin user: admin@wokku.local / password123456"
+puts "Created default team: Default"
