@@ -52,7 +52,17 @@ Rails.application.routes.draw do
       end
 
       resources :notifications, only: [:index, :create, :destroy]
+
+      resource :billing, only: [], controller: "billing" do
+        get :current_plan
+        post :create_checkout
+        post :portal
+      end
     end
+  end
+
+  namespace :webhooks do
+    post :stripe, to: "stripe#create"
   end
 
   namespace :dashboard do
