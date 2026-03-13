@@ -23,5 +23,10 @@ module Wokku
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+
+    # Active Record Encryption
+    config.active_record.encryption.primary_key = ENV.fetch("ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY", "QSNVYWnaiPjJZLuiLJpqltGrXF3OGlWT")
+    config.active_record.encryption.deterministic_key = ENV.fetch("ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY", "1ai2RRYzg1bYsPRdbAHf3b6Hr509K46u")
+    config.active_record.encryption.key_derivation_salt = ENV.fetch("ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT", "GUAhoy89MyftEpwL4lTNnkWGxLiWClU9")
   end
 end
