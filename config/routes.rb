@@ -22,6 +22,7 @@ Rails.application.routes.draw do
           post :stop
           post :start
         end
+        resource :config, only: [:show, :update, :destroy], controller: "config"
       end
     end
   end
