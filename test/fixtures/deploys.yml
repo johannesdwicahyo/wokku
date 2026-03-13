@@ -1,0 +1,15 @@
+one:
+  app_record: one
+  status: 0
+  commit_sha: abc123
+  log: Deploy log one
+  started_at: 2026-03-13 13:06:32
+  finished_at: 2026-03-13 13:07:32
+
+two:
+  app_record: two
+  status: 2
+  commit_sha: def456
+  log: Deploy log two
+  started_at: 2026-03-13 13:06:32
+  finished_at: 2026-03-13 13:08:32

@@ -1,0 +1,11 @@
+one:
+  app_record: one
+  version: 1
+  deploy: one
+  description: Initial release
+
+two:
+  app_record: two
+  version: 1
+  deploy: two
+  description: Initial release

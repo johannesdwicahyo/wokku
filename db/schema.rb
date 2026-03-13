@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_13_060417) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_13_060640) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -27,6 +27,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_060417) do
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
   end
 
+  create_table "app_databases", force: :cascade do |t|
+    t.string "alias_name"
+    t.bigint "app_record_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "database_service_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["app_record_id", "database_service_id"], name: "index_app_databases_on_app_record_id_and_database_service_id", unique: true
+    t.index ["app_record_id"], name: "index_app_databases_on_app_record_id"
+    t.index ["database_service_id"], name: "index_app_databases_on_database_service_id"
+  end
+
   create_table "app_records", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "created_by_id", null: false
@@ -41,6 +52,94 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_060417) do
     t.index ["name", "server_id"], name: "index_app_records_on_name_and_server_id", unique: true
     t.index ["server_id"], name: "index_app_records_on_server_id"
     t.index ["team_id"], name: "index_app_records_on_team_id"
+  end
+
+  create_table "certificates", force: :cascade do |t|
+    t.boolean "auto_renew", default: true
+    t.datetime "created_at", null: false
+    t.bigint "domain_id", null: false
+    t.datetime "expires_at"
+    t.datetime "updated_at", null: false
+    t.index ["domain_id"], name: "index_certificates_on_domain_id"
+  end
+
+  create_table "database_services", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name"
+    t.bigint "server_id", null: false
+    t.string "service_type"
+    t.integer "status", default: 0
+    t.datetime "updated_at", null: false
+    t.index ["server_id", "name"], name: "index_database_services_on_server_id_and_name", unique: true
+    t.index ["server_id"], name: "index_database_services_on_server_id"
+  end
+
+  create_table "deploys", force: :cascade do |t|
+    t.bigint "app_record_id", null: false
+    t.string "commit_sha"
+    t.datetime "created_at", null: false
+    t.datetime "finished_at"
+    t.text "log"
+    t.bigint "release_id"
+    t.datetime "started_at"
+    t.integer "status", default: 0
+    t.datetime "updated_at", null: false
+    t.index ["app_record_id"], name: "index_deploys_on_app_record_id"
+    t.index ["release_id"], name: "index_deploys_on_release_id"
+  end
+
+  create_table "domains", force: :cascade do |t|
+    t.bigint "app_record_id", null: false
+    t.datetime "created_at", null: false
+    t.string "hostname"
+    t.boolean "ssl_enabled", default: false
+    t.datetime "updated_at", null: false
+    t.index ["app_record_id"], name: "index_domains_on_app_record_id"
+    t.index ["hostname"], name: "index_domains_on_hostname", unique: true
+  end
+
+  create_table "env_vars", force: :cascade do |t|
+    t.bigint "app_record_id", null: false
+    t.datetime "created_at", null: false
+    t.string "key"
+    t.datetime "updated_at", null: false
+    t.text "value"
+    t.index ["app_record_id", "key"], name: "index_env_vars_on_app_record_id_and_key", unique: true
+    t.index ["app_record_id"], name: "index_env_vars_on_app_record_id"
+  end
+
+  create_table "notifications", force: :cascade do |t|
+    t.bigint "app_record_id"
+    t.integer "channel"
+    t.json "config"
+    t.datetime "created_at", null: false
+    t.json "events"
+    t.bigint "team_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["app_record_id"], name: "index_notifications_on_app_record_id"
+    t.index ["team_id"], name: "index_notifications_on_team_id"
+  end
+
+  create_table "process_scales", force: :cascade do |t|
+    t.bigint "app_record_id", null: false
+    t.integer "count", default: 1
+    t.datetime "created_at", null: false
+    t.string "process_type"
+    t.datetime "updated_at", null: false
+    t.index ["app_record_id", "process_type"], name: "index_process_scales_on_app_record_id_and_process_type", unique: true
+    t.index ["app_record_id"], name: "index_process_scales_on_app_record_id"
+  end
+
+  create_table "releases", force: :cascade do |t|
+    t.bigint "app_record_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "deploy_id"
+    t.string "description"
+    t.datetime "updated_at", null: false
+    t.integer "version"
+    t.index ["app_record_id", "version"], name: "index_releases_on_app_record_id_and_version", unique: true
+    t.index ["app_record_id"], name: "index_releases_on_app_record_id"
+    t.index ["deploy_id"], name: "index_releases_on_deploy_id"
   end
 
   create_table "servers", force: :cascade do |t|
@@ -102,9 +201,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_060417) do
   end
 
   add_foreign_key "api_tokens", "users"
+  add_foreign_key "app_databases", "app_records"
+  add_foreign_key "app_databases", "database_services"
   add_foreign_key "app_records", "servers"
   add_foreign_key "app_records", "teams"
   add_foreign_key "app_records", "users", column: "created_by_id"
+  add_foreign_key "certificates", "domains"
+  add_foreign_key "database_services", "servers"
+  add_foreign_key "deploys", "app_records"
+  add_foreign_key "domains", "app_records"
+  add_foreign_key "env_vars", "app_records"
+  add_foreign_key "notifications", "app_records"
+  add_foreign_key "notifications", "teams"
+  add_foreign_key "process_scales", "app_records"
+  add_foreign_key "releases", "app_records"
+  add_foreign_key "releases", "deploys"
   add_foreign_key "servers", "teams"
   add_foreign_key "ssh_public_keys", "users"
   add_foreign_key "team_memberships", "teams"

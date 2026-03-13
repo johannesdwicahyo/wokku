@@ -1,0 +1,9 @@
+one:
+  app_record: one
+  process_type: web
+  count: 1
+
+two:
+  app_record: two
+  process_type: worker
+  count: 2
