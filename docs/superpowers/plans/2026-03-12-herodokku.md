@@ -1,4 +1,4 @@
-# Herodokku Implementation Plan
+# Wokku Implementation Plan
 
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -8,7 +8,7 @@
 
 **Tech Stack:** Ruby 3.3+, Rails 8, PostgreSQL, Redis, Devise, Pundit, Thor, net-ssh, Hotwire/Turbo/Stimulus, Solid Queue, Action Cable, Chartkick, Stripe (pay gem)
 
-**Spec:** `docs/superpowers/specs/2026-03-12-herodokku-design.md`
+**Spec:** `docs/superpowers/specs/2026-03-12-wokku-design.md`
 
 ---
 
@@ -24,8 +24,8 @@
 
 ```bash
 cd /Users/johannesdwicahyo/Projects/2026
-rails new herodokku --database=postgresql --css=tailwind --skip-jbuilder --force
-cd herodokku
+rails new wokku --database=postgresql --css=tailwind --skip-jbuilder --force
+cd wokku
 ```
 
 Note: `--force` because the directory exists with docs already. Rails will not overwrite existing files in `docs/`.
@@ -73,7 +73,7 @@ Expected: Success, all gems resolved.
 - [ ] **Step 4: Create database**
 
 Run: `bin/rails db:create`
-Expected: `Created database 'herodokku_development'` and `'herodokku_test'`
+Expected: `Created database 'wokku_development'` and `'wokku_test'`
 
 - [ ] **Step 5: Commit**
 
@@ -2960,7 +2960,7 @@ Note: The full SSH server implementation requires `net-ssh` server-side capabili
 **Alternative (recommended) approach:**
 
 Run system `sshd` on port 2222 with:
-- `AuthorizedKeysCommand` pointing to a script that queries Herodokku DB for SSH keys
+- `AuthorizedKeysCommand` pointing to a script that queries Wokku DB for SSH keys
 - `ForceCommand` pointing to a script that handles `git-receive-pack`
 
 ```bash
@@ -3056,26 +3056,26 @@ git commit -m "feat: add Git SSH server and deploy forwarder"
 - [ ] **Step 1: Create gem structure**
 
 ```bash
-mkdir -p cli/{lib/herodokku/{commands,mcp/tools},exe,spec}
+mkdir -p cli/{lib/wokku/{commands,mcp/tools},exe,spec}
 ```
 
 - [ ] **Step 2: Create gemspec**
 
 ```ruby
-# cli/herodokku-cli.gemspec
+# cli/wokku-cli.gemspec
 Gem::Specification.new do |spec|
-  spec.name          = "herodokku-cli"
+  spec.name          = "wokku-cli"
   spec.version       = "0.1.0"
   spec.authors       = ["Johannes Dwicahyo"]
-  spec.summary       = "CLI for Herodokku - Heroku-like PaaS on Dokku"
-  spec.homepage      = "https://github.com/johannesdwicahyo/herodokku"
+  spec.summary       = "CLI for Wokku - Heroku-like PaaS on Dokku"
+  spec.homepage      = "https://github.com/johannesdwicahyo/wokku"
   spec.license       = "MIT"
 
   spec.required_ruby_version = ">= 3.1"
 
   spec.files         = Dir["lib/**/*", "exe/*"]
   spec.bindir        = "exe"
-  spec.executables   = ["herodokku"]
+  spec.executables   = ["wokku"]
 
   spec.add_dependency "thor", "~> 1.3"
   spec.add_dependency "faraday", "~> 2.0"
@@ -3096,33 +3096,33 @@ gemspec
 - [ ] **Step 4: Create entrypoint**
 
 ```ruby
-# cli/exe/herodokku
+# cli/exe/wokku
 #!/usr/bin/env ruby
-require "herodokku"
-Herodokku::CLI.start(ARGV)
+require "wokku"
+Wokku::CLI.start(ARGV)
 ```
 
 ```bash
-chmod +x cli/exe/herodokku
+chmod +x cli/exe/wokku
 ```
 
 - [ ] **Step 5: Create main module**
 
 ```ruby
-# cli/lib/herodokku.rb
-require "herodokku/version"
-require "herodokku/config_store"
-require "herodokku/api_client"
-require "herodokku/cli"
+# cli/lib/wokku.rb
+require "wokku/version"
+require "wokku/config_store"
+require "wokku/api_client"
+require "wokku/cli"
 
-module Herodokku
+module Wokku
   class Error < StandardError; end
 end
 ```
 
 ```ruby
-# cli/lib/herodokku/version.rb
-module Herodokku
+# cli/lib/wokku/version.rb
+module Wokku
   VERSION = "0.1.0"
 end
 ```
@@ -3139,19 +3139,19 @@ git commit -m "feat: scaffold CLI gem structure"
 ### Task 30: CLI Config Store & API Client
 
 **Files:**
-- Create: `cli/lib/herodokku/config_store.rb`
-- Create: `cli/lib/herodokku/api_client.rb`
+- Create: `cli/lib/wokku/config_store.rb`
+- Create: `cli/lib/wokku/api_client.rb`
 
 - [ ] **Step 1: Create config store**
 
 ```ruby
-# cli/lib/herodokku/config_store.rb
+# cli/lib/wokku/config_store.rb
 require "json"
 require "fileutils"
 
-module Herodokku
+module Wokku
   class ConfigStore
-    CONFIG_DIR = File.expand_path("~/.herodokku")
+    CONFIG_DIR = File.expand_path("~/.wokku")
     CONFIG_FILE = File.join(CONFIG_DIR, "config")
 
     def self.load
@@ -3195,11 +3195,11 @@ end
 - [ ] **Step 2: Create API client**
 
 ```ruby
-# cli/lib/herodokku/api_client.rb
+# cli/lib/wokku/api_client.rb
 require "faraday"
 require "json"
 
-module Herodokku
+module Wokku
   class ApiClient
     class ApiError < StandardError
       attr_reader :status
@@ -3213,7 +3213,7 @@ module Herodokku
       @url = ConfigStore.api_url
       @token = ConfigStore.token
 
-      raise Error, "Not logged in. Run: herodokku login" unless @url && @token
+      raise Error, "Not logged in. Run: wokku login" unless @url && @token
 
       @conn = Faraday.new(url: @url) do |f|
         f.request :json
@@ -3249,7 +3249,7 @@ module Herodokku
       when 200..299
         response.body
       when 401
-        raise ApiError.new("Unauthorized. Run: herodokku login", status: 401)
+        raise ApiError.new("Unauthorized. Run: wokku login", status: 401)
       when 404
         raise ApiError.new("Not found", status: 404)
       else
@@ -3273,79 +3273,79 @@ git commit -m "feat: add CLI config store and API client"
 ### Task 31: CLI Commands
 
 **Files:**
-- Create: `cli/lib/herodokku/cli.rb`
-- Create: all command files in `cli/lib/herodokku/commands/`
+- Create: `cli/lib/wokku/cli.rb`
+- Create: all command files in `cli/lib/wokku/commands/`
 
 - [ ] **Step 1: Create main CLI with Thor**
 
 ```ruby
-# cli/lib/herodokku/cli.rb
+# cli/lib/wokku/cli.rb
 require "thor"
 
-module Herodokku
+module Wokku
   class CLI < Thor
-    desc "login", "Log in to Herodokku"
+    desc "login", "Log in to Wokku"
     def login
-      require "herodokku/commands/auth"
+      require "wokku/commands/auth"
       Commands::Auth.new.login
     end
 
     desc "logout", "Log out"
     def logout
-      require "herodokku/commands/auth"
+      require "wokku/commands/auth"
       Commands::Auth.new.logout
     end
 
     desc "whoami", "Show current user"
     def whoami
-      require "herodokku/commands/auth"
+      require "wokku/commands/auth"
       Commands::Auth.new.whoami
     end
 
     desc "apps", "List apps"
     def apps
-      require "herodokku/commands/apps"
+      require "wokku/commands/apps"
       Commands::Apps.new.list
     end
 
     desc "apps:create NAME", "Create an app"
     method_option :server, aliases: "-s", required: true, desc: "Server ID to deploy on"
     def apps_create(name)
-      require "herodokku/commands/apps"
+      require "wokku/commands/apps"
       Commands::Apps.new.create(name, options)
     end
 
     desc "apps:destroy NAME", "Destroy an app"
     def apps_destroy(name)
-      require "herodokku/commands/apps"
+      require "wokku/commands/apps"
       Commands::Apps.new.destroy(name)
     end
 
     desc "apps:info", "Show app info"
     method_option :app, aliases: "-a", required: true
     def apps_info
-      require "herodokku/commands/apps"
+      require "wokku/commands/apps"
       Commands::Apps.new.info(options[:app])
     end
 
     desc "config", "Show config vars"
     method_option :app, aliases: "-a", required: true
     def config
-      require "herodokku/commands/config"
+      require "wokku/commands/config"
       Commands::Config.new.list(options[:app])
     end
 
     desc "config:set", "Set config vars"
     method_option :app, aliases: "-a", required: true
     def config_set(*pairs)
-      require "herodokku/commands/config"
+      require "wokku/commands/config"
       Commands::Config.new.set(options[:app], pairs)
     end
 
     desc "config:unset", "Unset config vars"
     method_option :app, aliases: "-a", required: true
     def config_unset(*keys)
-      require "herodokku/commands/config"
+      require "wokku/commands/config"
       Commands::Config.new.unset(options[:app], keys)
     end
 
@@ -3353,75 +3353,75 @@ module Herodokku
     method_option :app, aliases: "-a", required: true
     method_option :tail, type: :boolean, default: false
     def logs
-      require "herodokku/commands/logs"
+      require "wokku/commands/logs"
       Commands::Logs.new.show(options[:app], tail: options[:tail])
     end
 
     desc "ps", "Show process list"
     method_option :app, aliases: "-a", required: true
     def ps
-      require "herodokku/commands/ps"
+      require "wokku/commands/ps"
       Commands::Ps.new.list(options[:app])
     end
 
     desc "ps:scale", "Scale processes"
     method_option :app, aliases: "-a", required: true
     def ps_scale(*pairs)
-      require "herodokku/commands/ps"
+      require "wokku/commands/ps"
       Commands::Ps.new.scale(options[:app], pairs)
     end
 
     desc "ps:restart", "Restart app"
     method_option :app, aliases: "-a", required: true
     def ps_restart
-      require "herodokku/commands/ps"
+      require "wokku/commands/ps"
       Commands::Ps.new.restart(options[:app])
     end
 
     desc "domains", "List domains"
     method_option :app, aliases: "-a", required: true
     def domains
-      require "herodokku/commands/domains"
+      require "wokku/commands/domains"
       Commands::Domains.new.list(options[:app])
     end
 
     desc "domains:add DOMAIN", "Add domain"
     method_option :app, aliases: "-a", required: true
     def domains_add(domain)
-      require "herodokku/commands/domains"
+      require "wokku/commands/domains"
       Commands::Domains.new.add(options[:app], domain)
     end
 
     desc "domains:remove DOMAIN", "Remove domain"
     method_option :app, aliases: "-a", required: true
     def domains_remove(domain)
-      require "herodokku/commands/domains"
+      require "wokku/commands/domains"
       Commands::Domains.new.remove(options[:app], domain)
     end
 
     desc "addons", "List addons"
     method_option :app, aliases: "-a", required: true
     def addons
-      require "herodokku/commands/addons"
+      require "wokku/commands/addons"
       Commands::Addons.new.list(options[:app])
     end
 
     desc "addons:create TYPE", "Create addon"
     def addons_create(type)
-      require "herodokku/commands/addons"
+      require "wokku/commands/addons"
       Commands::Addons.new.create(type, options)
     end
 
     desc "releases", "Show release history"
     method_option :app, aliases: "-a", required: true
     def releases
-      require "herodokku/commands/releases"
+      require "wokku/commands/releases"
       Commands::Releases.new.list(options[:app])
     end
 
     desc "servers", "List servers"
     def servers
-      require "herodokku/commands/servers"
+      require "wokku/commands/servers"
       Commands::Servers.new.list
     end
 
@@ -3430,126 +3430,126 @@ module Herodokku
     method_option :key, desc: "Path to SSH private key"
     method_option :port, type: :numeric, default: 22
     def servers_add(name)
-      require "herodokku/commands/servers"
+      require "wokku/commands/servers"
       Commands::Servers.new.add(name, options)
     end
 
     desc "git:remote", "Add git remote"
     method_option :app, aliases: "-a", required: true
     def git_remote
-      require "herodokku/commands/git"
+      require "wokku/commands/git"
       Commands::Git.new.add_remote(options[:app])
     end
 
     desc "apps:rename OLD NEW", "Rename an app"
     def apps_rename(old_name, new_name)
-      require "herodokku/commands/apps"
+      require "wokku/commands/apps"
       Commands::Apps.new.rename(old_name, new_name)
     end
 
     desc "config:get KEY", "Get a config var"
     method_option :app, aliases: "-a", required: true
     def config_get(key)
-      require "herodokku/commands/config"
+      require "wokku/commands/config"
       Commands::Config.new.get(options[:app], key)
     end
 
     desc "certs:auto", "Enable Let's Encrypt SSL"
     method_option :app, aliases: "-a", required: true
     def certs_auto
-      require "herodokku/commands/domains"
+      require "wokku/commands/domains"
       Commands::Domains.new.enable_ssl(options[:app])
     end
 
     desc "addons:attach ADDON", "Attach addon to app"
     method_option :app, aliases: "-a", required: true
     def addons_attach(addon)
-      require "herodokku/commands/addons"
+      require "wokku/commands/addons"
       Commands::Addons.new.attach(addon, options[:app])
     end
 
     desc "addons:detach ADDON", "Detach addon from app"
     method_option :app, aliases: "-a", required: true
     def addons_detach(addon)
-      require "herodokku/commands/addons"
+      require "wokku/commands/addons"
       Commands::Addons.new.detach(addon, options[:app])
     end
 
     desc "addons:destroy ADDON", "Destroy addon"
     def addons_destroy(addon)
-      require "herodokku/commands/addons"
+      require "wokku/commands/addons"
       Commands::Addons.new.destroy(addon)
     end
 
     desc "addons:info ADDON", "Show addon info"
     def addons_info(addon)
-      require "herodokku/commands/addons"
+      require "wokku/commands/addons"
       Commands::Addons.new.info(addon)
     end
 
     desc "servers:remove NAME", "Remove server"
     def servers_remove(name)
-      require "herodokku/commands/servers"
+      require "wokku/commands/servers"
       Commands::Servers.new.remove(name)
     end
 
     desc "servers:info NAME", "Show server info"
     def servers_info(name)
-      require "herodokku/commands/servers"
+      require "wokku/commands/servers"
       Commands::Servers.new.info(name)
     end
 
     desc "ps:stop", "Stop app"
     method_option :app, aliases: "-a", required: true
     def ps_stop
-      require "herodokku/commands/ps"
+      require "wokku/commands/ps"
       Commands::Ps.new.stop(options[:app])
     end
 
     desc "ps:start", "Start app"
     method_option :app, aliases: "-a", required: true
     def ps_start
-      require "herodokku/commands/ps"
+      require "wokku/commands/ps"
       Commands::Ps.new.start(options[:app])
     end
 
     desc "rollback VERSION", "Rollback to a previous release"
     method_option :app, aliases: "-a", required: true
     def rollback(version)
-      require "herodokku/commands/releases"
+      require "wokku/commands/releases"
       Commands::Releases.new.rollback(options[:app], version)
     end
 
     desc "releases:info VERSION", "Show release details"
     method_option :app, aliases: "-a", required: true
     def releases_info(version)
-      require "herodokku/commands/releases"
+      require "wokku/commands/releases"
       Commands::Releases.new.info(options[:app], version)
     end
 
     desc "teams:create NAME", "Create a team"
     def teams_create(name)
-      require "herodokku/commands/teams"
+      require "wokku/commands/teams"
       Commands::Teams.new.create(name)
     end
 
     desc "teams:members TEAM", "List team members"
     def teams_members(team)
-      require "herodokku/commands/teams"
+      require "wokku/commands/teams"
       Commands::Teams.new.members(team)
     end
 
     desc "teams:invite EMAIL TEAM", "Invite user to team"
     method_option :role, default: "member"
     def teams_invite(email, team)
-      require "herodokku/commands/teams"
+      require "wokku/commands/teams"
       Commands::Teams.new.invite(email, team, options[:role])
     end
 
     desc "notifications", "List notifications"
     method_option :app, aliases: "-a"
     def notifications
-      require "herodokku/commands/notifications"
+      require "wokku/commands/notifications"
       Commands::Notifications.new.list(options[:app])
     end
 
@@ -3557,14 +3557,14 @@ module Herodokku
     method_option :url, required: true
     method_option :app, aliases: "-a"
     def notifications_add(channel)
-      require "herodokku/commands/notifications"
+      require "wokku/commands/notifications"
       Commands::Notifications.new.add(channel, options)
     end
 
     desc "mcp:start", "Start MCP server"
     def mcp_start
-      require "herodokku/mcp/server"
-      Herodokku::MCP::Server.new.start
+      require "wokku/mcp/server"
+      Wokku::MCP::Server.new.start
     end
   end
 end
@@ -3573,16 +3573,16 @@ end
 - [ ] **Step 2: Create Auth command**
 
 ```ruby
-# cli/lib/herodokku/commands/auth.rb
+# cli/lib/wokku/commands/auth.rb
 require "tty-prompt"
 
-module Herodokku
+module Wokku
   module Commands
     class Auth
       def login
         prompt = TTY::Prompt.new
 
-        url = prompt.ask("Herodokku API URL:", default: "http://localhost:3000")
+        url = prompt.ask("Wokku API URL:", default: "http://localhost:3000")
         email = prompt.ask("Email:")
         password = prompt.mask("Password:")
 
@@ -3626,11 +3626,11 @@ end
 - [ ] **Step 3: Create Apps command**
 
 ```ruby
-# cli/lib/herodokku/commands/apps.rb
+# cli/lib/wokku/commands/apps.rb
 require "tty-table"
 require "pastel"
 
-module Herodokku
+module Wokku
   module Commands
     class Apps
       def list
@@ -3638,7 +3638,7 @@ module Herodokku
         apps = client.get("apps")
 
         if apps.empty?
-          puts "No apps. Create one with: herodokku apps:create <name>"
+          puts "No apps. Create one with: wokku apps:create <name>"
           return
         end
 
@@ -3709,7 +3709,7 @@ cd cli && bundle install && cd ..
 - [ ] **Step 6: Test CLI locally**
 
 ```bash
-cd cli && bundle exec ruby exe/herodokku help && cd ..
+cd cli && bundle exec ruby exe/wokku help && cd ..
 ```
 
 Expected: Thor help output showing all commands.
@@ -3728,16 +3728,16 @@ git commit -m "feat: add CLI commands (auth, apps, config, domains, ps, logs, se
 ### Task 32: MCP Server
 
 **Files:**
-- Create: `cli/lib/herodokku/mcp/server.rb`
-- Create: `cli/lib/herodokku/mcp/tools/*.rb`
+- Create: `cli/lib/wokku/mcp/server.rb`
+- Create: `cli/lib/wokku/mcp/tools/*.rb`
 
 - [ ] **Step 1: Create MCP server**
 
 ```ruby
-# cli/lib/herodokku/mcp/server.rb
+# cli/lib/wokku/mcp/server.rb
 require "json"
 
-module Herodokku
+module Wokku
   module MCP
     class Server
       TOOLS = {}
@@ -3750,7 +3750,7 @@ module Herodokku
         # Load all tools
         Dir[File.join(__dir__, "tools", "*.rb")].each { |f| require f }
 
-        $stderr.puts "Herodokku MCP server started"
+        $stderr.puts "Wokku MCP server started"
 
         loop do
           line = $stdin.gets
@@ -3774,7 +3774,7 @@ module Herodokku
             result: {
               protocolVersion: "2024-11-05",
               capabilities: { tools: {} },
-              serverInfo: { name: "herodokku", version: Herodokku::VERSION }
+              serverInfo: { name: "wokku", version: Wokku::VERSION }
             }
           }
         when "tools/list"
@@ -3826,10 +3826,10 @@ end
 - [ ] **Step 2: Create tool definitions**
 
 ```ruby
-# cli/lib/herodokku/mcp/tools/apps.rb
-require "herodokku/api_client"
+# cli/lib/wokku/mcp/tools/apps.rb
+require "wokku/api_client"
 
-Herodokku::MCP::Server.register_tool(
+Wokku::MCP::Server.register_tool(
   "apps_list",
   description: "List all apps",
   input_schema: {
@@ -3837,12 +3837,12 @@ Herodokku::MCP::Server.register_tool(
     properties: { server: { type: "string", description: "Filter by server name" } }
   }
 ) do |args|
-  client = Herodokku::ApiClient.new
+  client = Wokku::ApiClient.new
   apps = client.get("apps")
   apps.map { |a| "#{a['name']} (#{a['status']})" }.join("\n")
 end
 
-Herodokku::MCP::Server.register_tool(
+Wokku::MCP::Server.register_tool(
   "app_create",
   description: "Create a new app on Dokku",
   input_schema: {
@@ -3854,12 +3854,12 @@ Herodokku::MCP::Server.register_tool(
     required: ["name", "server_id"]
   }
 ) do |args|
-  client = Herodokku::ApiClient.new
+  client = Wokku::ApiClient.new
   result = client.post("apps", args)
   "Created app: #{result['name']}"
 end
 
-Herodokku::MCP::Server.register_tool(
+Wokku::MCP::Server.register_tool(
   "app_info",
   description: "Get detailed info about an app",
   input_schema: {
@@ -3868,12 +3868,12 @@ Herodokku::MCP::Server.register_tool(
     required: ["app"]
   }
 ) do |args|
-  client = Herodokku::ApiClient.new
+  client = Wokku::ApiClient.new
   result = client.get("apps/#{args['app']}")
   JSON.pretty_generate(result)
 end
 
-Herodokku::MCP::Server.register_tool(
+Wokku::MCP::Server.register_tool(
   "app_restart",
   description: "Restart an app",
   input_schema: {
@@ -3882,7 +3882,7 @@ Herodokku::MCP::Server.register_tool(
     required: ["app"]
   }
 ) do |args|
-  client = Herodokku::ApiClient.new
+  client = Wokku::ApiClient.new
   client.post("apps/#{args['app']}/restart")
   "App restarted"
 end
@@ -3890,7 +3890,7 @@ end
 
 - [ ] **Step 3: Create remaining tool files**
 
-Create `cli/lib/herodokku/mcp/tools/config.rb`, `domains.rb`, `databases.rb`, `ps.rb`, `logs.rb`, `deploys.rb`, `servers.rb`, `teams.rb`, `notifications.rb`.
+Create `cli/lib/wokku/mcp/tools/config.rb`, `domains.rb`, `databases.rb`, `ps.rb`, `logs.rb`, `deploys.rb`, `servers.rb`, `teams.rb`, `notifications.rb`.
 
 Each file registers tools using the same `register_tool` pattern — calls `ApiClient` methods and returns formatted text.
 
@@ -3962,7 +3962,7 @@ services:
     image: postgres:16
     volumes: ["postgres_data:/var/lib/postgresql/data"]
     environment:
-      POSTGRES_PASSWORD: herodokku
+      POSTGRES_PASSWORD: wokku
 
   redis:
     image: redis:7
@@ -3984,7 +3984,7 @@ git: bin/rails git:server
 - [ ] **Step 4: Create .env.example**
 
 ```
-DATABASE_URL=postgres://postgres:herodokku@db:5432/herodokku
+DATABASE_URL=postgres://postgres:wokku@db:5432/wokku
 REDIS_URL=redis://redis:6379/0
 SECRET_KEY_BASE=generate-with-rails-secret
 GIT_HOST=0.0.0.0
@@ -4054,11 +4054,11 @@ git commit -m "feat: configure CORS and Action Cable with Redis"
 
 ```ruby
 # db/seeds.rb
-admin = User.create!(email: "admin@herodokku.local", password: "password123456", role: :admin)
+admin = User.create!(email: "admin@wokku.local", password: "password123456", role: :admin)
 team = Team.create!(name: "Default", owner: admin)
 TeamMembership.create!(user: admin, team: team, role: :admin)
 
-puts "Created admin user: admin@herodokku.local / password123456"
+puts "Created admin user: admin@wokku.local / password123456"
 puts "Created default team: Default"
 ```
 
@@ -4435,7 +4435,7 @@ module Api
 
         max_tier = plan.max_dyno_tier
         if tier.price_cents_per_month > max_tier.price_cents_per_month
-          render json: { error: "Your plan does not allow #{tier.name} dynos. Upgrade at herodokku.com/billing" }, status: :payment_required
+          render json: { error: "Your plan does not allow #{tier.name} dynos. Upgrade at wokku.dev/billing" }, status: :payment_required
           return
         end
       end
@@ -4446,13 +4446,13 @@ end
 
 - [ ] **Step 3: Add CLI commands for dyno management**
 
-In `cli/lib/herodokku/cli.rb` add:
+In `cli/lib/wokku/cli.rb` add:
 
 ```ruby
 desc "dyno", "Show dyno configuration"
 method_option :app, aliases: "-a", required: true
 def dyno
-  require "herodokku/commands/dynos"
+  require "wokku/commands/dynos"
   Commands::Dynos.new.list(options[:app])
 end
 
@@ -4460,7 +4460,7 @@ desc "dyno:resize TIER", "Change dyno tier"
 method_option :app, aliases: "-a", required: true
 method_option :process_type, default: "web"
 def dyno_resize(tier)
-  require "herodokku/commands/dynos"
+  require "wokku/commands/dynos"
   Commands::Dynos.new.resize(options[:app], tier, options[:process_type])
 end
 ```
@@ -5031,7 +5031,7 @@ class Domain < ApplicationRecord
   before_create :generate_verification_token
 
   def verification_instructions
-    "Add a CNAME record for #{hostname} pointing to domains.herodokku.com"
+    "Add a CNAME record for #{hostname} pointing to domains.wokku.dev"
   end
 
   private
@@ -5076,7 +5076,7 @@ class DnsVerificationJob < ApplicationJob
   def dns_verified?(hostname)
     resolver = Resolv::DNS.new
     records = resolver.getresources(hostname, Resolv::DNS::Resource::IN::CNAME)
-    records.any? { |r| r.name.to_s.downcase == "domains.herodokku.com" }
+    records.any? { |r| r.name.to_s.downcase == "domains.wokku.dev" }
   rescue Resolv::ResolvError
     false
   ensure
@@ -5302,7 +5302,7 @@ git commit -m "feat: add marketing pages (home, pricing) and onboarding flow"
 | 3: API Controllers | 14-17 | Full REST API for all features |
 | 4: Background Jobs | 18-24b | Health checks, sync, deploys, metrics, notifications, Action Cable auth |
 | 5: Dashboard | 25-27 | Hotwire/Turbo dashboard with Stimulus for real-time |
-| 6: Git SSH Server | 28 | Git push to Herodokku with deploy forwarding |
+| 6: Git SSH Server | 28 | Git push to Wokku with deploy forwarding |
 | 7: CLI Gem | 29-31 | Thor-based CLI with all commands |
 | 8: MCP Server | 32 | MCP server with tool definitions |
 | 9: Deployment | 33-35 | Docker, docker-compose, Procfile, seeds |

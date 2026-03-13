@@ -1,11 +1,11 @@
-# Herodokku Design Spec
+# Wokku Design Spec
 
 **Date:** 2026-03-12
 **Status:** Approved
 
 ## Overview
 
-Herodokku is a full Heroku-like PaaS built on top of Dokku. It provides a polished web dashboard (Rails 8 + Hotwire), a local CLI (Ruby gem), and an MCP server for AI-assisted infrastructure management via Claude Code.
+Wokku is a full Heroku-like PaaS built on top of Dokku. It provides a polished web dashboard (Rails 8 + Hotwire), a local CLI (Ruby gem), and an MCP server for AI-assisted infrastructure management via Claude Code.
 
 It communicates with one or more Dokku servers over SSH, giving users a unified interface to manage apps, databases, domains, scaling, logs, and more — without touching Dokku directly.
 
@@ -23,7 +23,7 @@ It communicates with one or more Dokku servers over SSH, giving users a unified 
 ```
                          ┌──────────────────┐
 ┌─────────────┐          │                  │     ┌─────────────────┐
-│  herodokku  │───API───▶│                  │─SSH─▶ Dokku Server   │
+│  wokku  │───API───▶│                  │─SSH─▶ Dokku Server   │
 │  CLI (gem)  │          │                  │     │  (one or many)  │
 └─────────────┘          │   Rails 8 App    │     └─────────────────┘
                          │                  │
@@ -51,7 +51,7 @@ It communicates with one or more Dokku servers over SSH, giving users a unified 
 - **Action Cable** for real-time log streaming and deploy progress
 - **Redis** as Action Cable adapter (required for multi-process WebSocket support)
 - **Solid Queue** for background jobs (deploys, SSH commands, health checks) — uses the database, not Redis
-- **Thor-based Ruby gem** for the CLI (`gem install herodokku`)
+- **Thor-based Ruby gem** for the CLI (`gem install wokku`)
 - **MCP server** in the same gem for Claude Code integration
 - **net-ssh** gem to communicate with Dokku servers over the network
 - **PostgreSQL** for all persistent data
@@ -61,7 +61,7 @@ It communicates with one or more Dokku servers over SSH, giving users a unified 
 
 1. **Web dashboard** — Hotwire/Turbo, session auth via Devise
 2. **CLI gem** — Thor, token auth via `Authorization: Bearer <token>`
-3. **MCP server** — JSON-RPC over stdio, reads auth from `~/.herodokku/config`
+3. **MCP server** — JSON-RPC over stdio, reads auth from `~/.wokku/config`
 
 All three clients hit the same Rails REST API (`/api/v1/*`).
 
@@ -140,7 +140,7 @@ User ──▶ Subscription ──▶ Plan
 | Unset | `config:unset <app> KEY` |
 | List | `config:show <app>` |
 
-Values stored encrypted in Herodokku's DB. See "Data Synchronization Strategy" below.
+Values stored encrypted in Wokku's DB. See "Data Synchronization Strategy" below.
 
 ### 3. Domains & SSL
 
@@ -174,9 +174,9 @@ Streamed via Action Cable to the browser. CLI pipes to stdout. Deploy logs are s
 ### 6. Git Deploy
 
 ```
-Developer                 Herodokku                    Dokku Server
+Developer                 Wokku                    Dokku Server
    │                         │                              │
-   │  git push herodokku main│                              │
+   │  git push wokku main│                              │
    │────────────────────────▶│                              │
    │                         │  Authenticates via SSH key   │
    │                         │  Creates Deploy record       │
@@ -192,20 +192,20 @@ Developer                 Herodokku                    Dokku Server
 
 #### Git SSH Server Details
 
-Herodokku runs a lightweight Git SSH server on port 2222 using the `sshd` approach (a small Ruby process using `net-ssh` that accepts incoming SSH connections).
+Wokku runs a lightweight Git SSH server on port 2222 using the `sshd` approach (a small Ruby process using `net-ssh` that accepts incoming SSH connections).
 
-**Authentication:** Users register SSH public keys in their Herodokku account (stored in `SshPublicKey` model). The Git SSH server matches the incoming key fingerprint to a Herodokku user. No system-level `authorized_keys` needed.
+**Authentication:** Users register SSH public keys in their Wokku account (stored in `SshPublicKey` model). The Git SSH server matches the incoming key fingerprint to a Wokku user. No system-level `authorized_keys` needed.
 
-**Git URL format:** `ssh://herodokku@<herodokku-host>:2222/<app-name>.git`
+**Git URL format:** `ssh://wokku@<wokku-host>:2222/<app-name>.git`
 
-The `herodokku git:remote -a my-app` CLI command adds this remote automatically.
+The `wokku git:remote -a my-app` CLI command adds this remote automatically.
 
 **Push flow:**
-1. Developer pushes to Herodokku git server
+1. Developer pushes to Wokku git server
 2. Server authenticates via SSH public key → resolves to User
 3. Server checks Pundit authorization (is this user allowed to deploy this app?)
 4. Creates a Release (incrementing version) and Deploy record (status: pending)
-5. Receives the git pack data into a temporary bare repo on Herodokku
+5. Receives the git pack data into a temporary bare repo on Wokku
 6. Pushes from the temporary repo to the Dokku server via SSH (`git push dokku main`)
 7. Streams Dokku's build output back to the developer AND stores it in Deploy.log
 8. Updates Deploy status (succeeded/failed) and broadcasts via Action Cable
@@ -213,7 +213,7 @@ The `herodokku git:remote -a my-app` CLI command adds this remote automatically.
 
 **Branch handling:** Only pushes to `main` (or the app's configured deploy branch) trigger deploys. Other branches are rejected with a message.
 
-**Rollback:** Herodokku stores the commit SHA for each Release. Rolling back to a previous version re-deploys that commit by doing `dokku git:from-archive` or pushing the tagged commit to Dokku. The rollback creates a new Release record pointing to the old commit.
+**Rollback:** Wokku stores the commit SHA for each Release. Rolling back to a previous version re-deploys that commit by doing `dokku git:from-archive` or pushing the tagged commit to Dokku. The rollback creates a new Release record pointing to the old commit.
 
 **Temporary repos** are cleaned up after the deploy completes (success or failure).
 
@@ -226,7 +226,7 @@ The `herodokku git:remote -a my-app` CLI command adds this remote automatically.
 
 ### 8. Metrics/Monitoring
 
-Dokku doesn't provide native metrics. Herodokku polls:
+Dokku doesn't provide native metrics. Wokku polls:
 - `docker stats --no-stream --format '{{json .}}'` via SSH for CPU/memory (JSON output for stability across Docker versions)
 - `ps:report <app>` for process status
 
@@ -236,7 +236,7 @@ Metrics stored in DB, displayed with Chartkick in the dashboard. Background job 
 
 ### 9. Team/User Management
 
-Handled entirely in Herodokku (not Dokku).
+Handled entirely in Wokku (not Dokku).
 
 | Role | Permissions |
 |------|------------|
@@ -279,7 +279,7 @@ dokku resource:limit --memory <MB> --cpu <shares> <app>
 dokku resource:reserve --memory <MB> <app>
 ```
 
-When a user changes their dyno tier, Herodokku runs the resource commands and triggers a restart.
+When a user changes their dyno tier, Wokku runs the resource commands and triggers a restart.
 
 #### Eco Dyno Sleep Mechanic
 
@@ -299,7 +299,7 @@ For free-tier Eco dynos, a background job implements the sleep/wake cycle:
 
 | Plan | Monthly Fee | Included | Extra Dynos | Databases | Custom Domains | Teams |
 |------|-------------|----------|-------------|-----------|---------------|-------|
-| **Free** | $0 | 1 Eco dyno | — | 1 shared Postgres (10 MB) | `*.herodokku.com` only | No |
+| **Free** | $0 | 1 Eco dyno | — | 1 shared Postgres (10 MB) | `*.wokku.dev` only | No |
 | **Hobby** | $7 | 1 Basic dyno | Buy at tier price | 1 Postgres (1 GB) | Yes + SSL | No |
 | **Pro** | $25 | 1 Standard-1X | Buy at tier price | 3 databases (10 GB each) | Yes + SSL | Up to 3 members |
 | **Business** | $49 | 2 Standard-1X | Buy at tier price | 5 databases (50 GB each) | Yes + SSL | Unlimited |
@@ -341,16 +341,16 @@ Monthly cycle:
 
 #### Default Subdomains
 
-Every app automatically gets `<app-name>.herodokku.com`. Requires:
-- Wildcard DNS: `*.herodokku.com` → load balancer IP
+Every app automatically gets `<app-name>.wokku.dev`. Requires:
+- Wildcard DNS: `*.wokku.dev` → load balancer IP
 - Wildcard SSL via Let's Encrypt or Cloudflare
 
 #### Custom Domain Flow
 
-1. User adds domain via dashboard or CLI: `herodokku domains:add -a my-app api.example.com`
-2. Herodokku checks plan allows custom domains (Hobby+ only)
+1. User adds domain via dashboard or CLI: `wokku domains:add -a my-app api.example.com`
+2. Wokku checks plan allows custom domains (Hobby+ only)
 3. Domain record created with `verification_status: pending`
-4. User shown instructions: "Add a CNAME record pointing `api.example.com` to `domains.herodokku.com`"
+4. User shown instructions: "Add a CNAME record pointing `api.example.com` to `domains.wokku.dev`"
 5. **DnsVerificationJob** polls DNS every 2 minutes (up to 48 hours)
 6. Once CNAME verified:
    - `verification_status: verified`
@@ -361,20 +361,20 @@ Every app automatically gets `<app-name>.herodokku.com`. Requires:
 #### DNS Verification
 
 ```ruby
-# Check if CNAME points to domains.herodokku.com
+# Check if CNAME points to domains.wokku.dev
 resolved = Resolv::DNS.new.getresources(hostname, Resolv::DNS::Resource::IN::CNAME)
-verified = resolved.any? { |r| r.name.to_s == "domains.herodokku.com" }
+verified = resolved.any? { |r| r.name.to_s == "domains.wokku.dev" }
 ```
 
 Alternative: A-record pointing directly to the Dokku server IP (for apex domains).
 
 ### 14. Multi-Server Fleet Management
 
-Herodokku manages a pool of Dokku servers. Each app lives on one server. Customers are distributed across servers based on capacity.
+Wokku manages a pool of Dokku servers. Each app lives on one server. Customers are distributed across servers based on capacity.
 
 #### Server Placement
 
-When creating an app, Herodokku picks the best server:
+When creating an app, Wokku picks the best server:
 
 1. Filter servers by region (if user specified)
 2. Filter by available capacity (total memory - used memory > app's dyno tier memory)
@@ -392,82 +392,82 @@ Servers are tagged with a `region` (e.g., `us-east`, `eu-west`). Users can choos
 
 ## CLI Design
 
-Built with Thor gem, distributed as a Ruby gem (`gem install herodokku`).
+Built with Thor gem, distributed as a Ruby gem (`gem install wokku`).
 
-Config stored in `~/.herodokku/config` (API URL + auth token). Supports `-a <app>` flag or auto-detection from git remote in current directory.
+Config stored in `~/.wokku/config` (API URL + auth token). Supports `-a <app>` flag or auto-detection from git remote in current directory.
 
 ### Command Reference
 
 ```bash
 # Auth
-herodokku login
-herodokku logout
-herodokku whoami
+wokku login
+wokku logout
+wokku whoami
 
 # Apps
-herodokku apps
-herodokku apps:create <name>
-herodokku apps:destroy <name>
-herodokku apps:info -a <app>
-herodokku apps:rename <old> <new>
+wokku apps
+wokku apps:create <name>
+wokku apps:destroy <name>
+wokku apps:info -a <app>
+wokku apps:rename <old> <new>
 
 # Git & Deploys
-herodokku git:remote -a <app>
-herodokku releases -a <app>
-herodokku releases:info <version> -a <app>
-herodokku rollback <version> -a <app>
+wokku git:remote -a <app>
+wokku releases -a <app>
+wokku releases:info <version> -a <app>
+wokku rollback <version> -a <app>
 
 # Config
-herodokku config -a <app>
-herodokku config:set -a <app> KEY=VAL ...
-herodokku config:unset -a <app> KEY ...
-herodokku config:get -a <app> KEY
+wokku config -a <app>
+wokku config:set -a <app> KEY=VAL ...
+wokku config:unset -a <app> KEY ...
+wokku config:get -a <app> KEY
 
 # Domains
-herodokku domains -a <app>
-herodokku domains:add -a <app> <domain>
-herodokku domains:remove -a <app> <domain>
-herodokku certs:auto -a <app>
+wokku domains -a <app>
+wokku domains:add -a <app> <domain>
+wokku domains:remove -a <app> <domain>
+wokku certs:auto -a <app>
 
 # Addons
-herodokku addons -a <app>
-herodokku addons:create <type>
-herodokku addons:attach <addon> -a <app>
-herodokku addons:detach <addon> -a <app>
-herodokku addons:destroy <addon>
-herodokku addons:info <addon>
+wokku addons -a <app>
+wokku addons:create <type>
+wokku addons:attach <addon> -a <app>
+wokku addons:detach <addon> -a <app>
+wokku addons:destroy <addon>
+wokku addons:info <addon>
 
 # Scaling
-herodokku ps -a <app>
-herodokku ps:scale -a <app> web=2 worker=3
-herodokku ps:restart -a <app>
-herodokku ps:stop -a <app>
-herodokku ps:start -a <app>
+wokku ps -a <app>
+wokku ps:scale -a <app> web=2 worker=3
+wokku ps:restart -a <app>
+wokku ps:stop -a <app>
+wokku ps:start -a <app>
 
 # Logs
-herodokku logs -a <app>
-herodokku logs -a <app> --tail
+wokku logs -a <app>
+wokku logs -a <app> --tail
 
 # Servers
-herodokku servers
-herodokku servers:add <name> --host <ip> --key <path>
-herodokku servers:remove <name>
-herodokku servers:info <name>
+wokku servers
+wokku servers:add <name> --host <ip> --key <path>
+wokku servers:remove <name>
+wokku servers:info <name>
 
 # Teams
-herodokku teams
-herodokku teams:create <name>
-herodokku teams:members <team>
-herodokku teams:invite <email> <team> --role <role>
+wokku teams
+wokku teams:create <name>
+wokku teams:members <team>
+wokku teams:invite <email> <team> --role <role>
 
 # Notifications
-herodokku notifications -a <app>
-herodokku notifications:add <channel> --url <url>
+wokku notifications -a <app>
+wokku notifications:add <channel> --url <url>
 ```
 
 ## MCP Server
 
-Ships inside the CLI gem. Launched via `herodokku mcp:start`.
+Ships inside the CLI gem. Launched via `wokku mcp:start`.
 
 ### Tools
 
@@ -519,8 +519,8 @@ notifications_list(app:)
 ```json
 {
   "mcpServers": {
-    "herodokku": {
-      "command": "herodokku",
+    "wokku": {
+      "command": "wokku",
       "args": ["mcp:start"]
     }
   }
@@ -530,7 +530,7 @@ notifications_list(app:)
 ## Project Structure
 
 ```
-herodokku/
+wokku/
 ├── Gemfile
 ├── Procfile                          # web + worker + git server
 ├── Dockerfile
@@ -567,8 +567,8 @@ herodokku/
 │   ├── policies/                     # Pundit
 │   └── javascript/controllers/      # Stimulus
 ├── cli/
-│   ├── herodokku-cli.gemspec
-│   ├── lib/herodokku/
+│   ├── wokku-cli.gemspec
+│   ├── lib/wokku/
 │   │   ├── cli.rb                    # Thor main
 │   │   ├── commands/                 # Subcommands
 │   │   ├── api_client.rb
@@ -576,7 +576,7 @@ herodokku/
 │   ├── mcp/
 │   │   ├── server.rb
 │   │   └── tools/
-│   └── exe/herodokku
+│   └── exe/wokku
 └── docs/
 ```
 
@@ -595,7 +595,7 @@ services:
     command: bin/jobs
   git:
     build: .
-    command: bundle exec herodokku git:server
+    command: bundle exec wokku git:server
     ports: ["2222:2222"]
   db:
     image: postgres:16
@@ -606,11 +606,11 @@ services:
 ### On Dokku
 
 ```bash
-dokku apps:create herodokku
-dokku postgres:create herodokku-db
-dokku postgres:link herodokku-db herodokku
-dokku config:set herodokku SECRET_KEY_BASE=... DOKKU_SSH_KEY=...
-dokku ports:add herodokku tcp:2222:2222
+dokku apps:create wokku
+dokku postgres:create wokku-db
+dokku postgres:link wokku-db wokku
+dokku config:set wokku SECRET_KEY_BASE=... DOKKU_SSH_KEY=...
+dokku ports:add wokku tcp:2222:2222
 git push dokku main
 ```
 
@@ -707,37 +707,37 @@ DELETE /api/v1/notifications/:id               # Remove
 
 ### Login Flow (CLI & MCP)
 
-1. User runs `herodokku login` — prompted for email/password and Herodokku API URL
+1. User runs `wokku login` — prompted for email/password and Wokku API URL
 2. CLI sends `POST /api/v1/auth/login` with credentials
 3. Server validates via Devise, generates a random token, stores `token_digest` (bcrypt) in `ApiToken` table
 4. Returns the plain token to the CLI (only time it's visible)
-5. CLI stores token + API URL in `~/.herodokku/config`
+5. CLI stores token + API URL in `~/.wokku/config`
 
 ### Token Properties
 
 - Tokens do not expire by default (personal use convenience), but have an optional `expires_at`
-- Users can create multiple named tokens (`herodokku auth:token:create --name "ci"`)
+- Users can create multiple named tokens (`wokku auth:token:create --name "ci"`)
 - Tokens can be revoked individually or all at once
 - `last_used_at` is updated on each API request for audit visibility
 
 ### MCP Auth
 
-The MCP server reads the same `~/.herodokku/config` file as the CLI. It uses whatever token was stored by `herodokku login`. No separate auth flow needed.
+The MCP server reads the same `~/.wokku/config` file as the CLI. It uses whatever token was stored by `wokku login`. No separate auth flow needed.
 
 ## Data Synchronization Strategy
 
-**Dokku is the source of truth.** Herodokku's database is a cache/overlay.
+**Dokku is the source of truth.** Wokku's database is a cache/overlay.
 
 ### Read-through Pattern
 
-When Herodokku displays data (apps list, config vars, domains, etc.), it:
+When Wokku displays data (apps list, config vars, domains, etc.), it:
 1. Checks if cached data exists and is fresh (< 5 minutes old)
 2. If stale or missing, fetches from Dokku via SSH and updates the local DB
 3. Returns the fresh data
 
 ### Write-through Pattern
 
-When Herodokku modifies data (set config, add domain, scale, etc.), it:
+When Wokku modifies data (set config, add domain, scale, etc.), it:
 1. Executes the Dokku command via SSH
 2. If the command succeeds, updates the local DB to match
 3. If the command fails, returns the error without updating local DB
@@ -747,10 +747,10 @@ When Herodokku modifies data (set config, add domain, scale, etc.), it:
 A periodic background job (`SyncServerJob`) runs every 10 minutes per server:
 - Fetches `apps:list`, `config:show`, `domains:report`, etc.
 - Updates local DB to match Dokku's actual state
-- Detects apps/config created directly on Dokku (outside Herodokku)
+- Detects apps/config created directly on Dokku (outside Wokku)
 - Marks servers as unreachable if SSH fails
 
-This ensures Herodokku stays accurate even if someone modifies Dokku directly via SSH.
+This ensures Wokku stays accurate even if someone modifies Dokku directly via SSH.
 
 ## Error Handling & Failure Modes
 
@@ -782,7 +782,7 @@ Health check job runs every 5 minutes: attempts SSH connection and runs `dokku v
 The project is a monorepo with two publishable artifacts:
 
 1. **Rails app** — deployed as a Docker image or directly via git push
-2. **CLI gem** (`herodokku-cli`) — published to RubyGems, includes the MCP server
+2. **CLI gem** (`wokku-cli`) — published to RubyGems, includes the MCP server
 
 The `cli/` directory has its own gemspec and can be built/published independently. The Rails app does not depend on the CLI gem, and the CLI gem does not depend on Rails — they share only the API contract.
 
