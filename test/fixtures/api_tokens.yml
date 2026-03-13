@@ -2,16 +2,16 @@
 
 one:
   user: one
-  token_digest: MyString
-  name: MyString
+  token_digest: digest_one
+  name: Token One
   last_used_at: 2026-03-13 12:52:44
   expires_at: 2026-03-13 12:52:44
   revoked_at: 2026-03-13 12:52:44
 
 two:
   user: two
-  token_digest: MyString
-  name: MyString
+  token_digest: digest_two
+  name: Token Two
   last_used_at: 2026-03-13 12:52:44
   expires_at: 2026-03-13 12:52:44
   revoked_at: 2026-03-13 12:52:44
