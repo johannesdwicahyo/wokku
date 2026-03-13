@@ -10,6 +10,7 @@ class AppRecord < ApplicationRecord
   has_many :process_scales, dependent: :destroy
   has_many :app_databases, dependent: :destroy
   has_many :database_services, through: :app_databases
+  has_many :metrics, dependent: :destroy
   has_many :notifications, dependent: :destroy
 
   enum :status, { running: 0, stopped: 1, crashed: 2, deploying: 3 }
