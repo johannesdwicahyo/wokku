@@ -1,0 +1,9 @@
+one:
+  app_record: one
+  key: DATABASE_URL
+  value: postgres://localhost/mydb
+
+two:
+  app_record: two
+  key: REDIS_URL
+  value: redis://localhost:6379
