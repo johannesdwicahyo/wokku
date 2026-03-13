@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_14_000006) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_14_000007) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -203,10 +203,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_14_000006) do
   end
 
   create_table "servers", force: :cascade do |t|
+    t.integer "capacity_total_mb", default: 0
+    t.integer "capacity_used_mb", default: 0
     t.datetime "created_at", null: false
     t.string "host", null: false
     t.string "name", null: false
     t.integer "port", default: 22
+    t.string "region"
     t.text "ssh_private_key"
     t.string "ssh_user", default: "dokku"
     t.integer "status", default: 0
