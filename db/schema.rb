@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_14_000005) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_14_000006) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -91,6 +91,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_14_000005) do
   create_table "domains", force: :cascade do |t|
     t.bigint "app_record_id", null: false
     t.datetime "created_at", null: false
+    t.boolean "dns_verified", default: false
     t.string "hostname"
     t.boolean "ssl_enabled", default: false
     t.datetime "updated_at", null: false
