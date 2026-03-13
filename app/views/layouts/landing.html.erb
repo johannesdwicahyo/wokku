@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html class="h-full">
+  <head>
+    <title><%= content_for(:title) || "Wokku - Deploy Your Apps in Seconds" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="Wokku is the simplest way to deploy, manage, and scale your applications. Push your code and we handle the rest.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Wokku">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body class="h-full bg-white">
+    <nav class="bg-white border-b border-gray-100">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16 items-center">
+          <div class="flex items-center">
+            <%= link_to root_path, class: "text-xl font-bold text-indigo-600" do %>
+              Wokku
+            <% end %>
+          </div>
+          <div class="flex items-center space-x-6">
+            <%= link_to "Pricing", pricing_path, class: "text-gray-600 hover:text-gray-900" %>
+            <%= link_to "Docs", docs_path, class: "text-gray-600 hover:text-gray-900" %>
+            <%= link_to "Log in", new_user_session_path, class: "text-gray-600 hover:text-gray-900" %>
+            <%= link_to "Sign up", new_user_registration_path, class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700" %>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main>
+      <%= yield %>
+    </main>
+
+    <footer class="bg-gray-50 border-t border-gray-100">
+      <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center">
+          <p class="text-gray-400 text-sm">&copy; <%= Date.current.year %> Wokku. All rights reserved.</p>
+          <div class="flex space-x-6">
+            <%= link_to "Pricing", pricing_path, class: "text-gray-400 hover:text-gray-600 text-sm" %>
+            <%= link_to "Docs", docs_path, class: "text-gray-400 hover:text-gray-600 text-sm" %>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

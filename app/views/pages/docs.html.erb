@@ -1,0 +1,67 @@
+<% content_for(:title, "Documentation - Wokku") %>
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+  <h1 class="text-4xl font-bold text-gray-900 mb-8">Documentation</h1>
+
+  <div class="prose prose-lg max-w-none">
+    <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">Getting Started</h2>
+    <p class="text-gray-600 mb-4">
+      Wokku makes it easy to deploy and manage your applications. Follow these steps to get started.
+    </p>
+
+    <h3 class="text-xl font-semibold text-gray-900 mt-6 mb-3">1. Install the CLI</h3>
+    <div class="bg-gray-900 rounded-lg p-4 font-mono text-sm text-gray-300 mb-4">
+      <p>$ gem install wokku</p>
+    </div>
+
+    <h3 class="text-xl font-semibold text-gray-900 mt-6 mb-3">2. Log in</h3>
+    <div class="bg-gray-900 rounded-lg p-4 font-mono text-sm text-gray-300 mb-4">
+      <p>$ wokku auth:login</p>
+    </div>
+
+    <h3 class="text-xl font-semibold text-gray-900 mt-6 mb-3">3. Create an app</h3>
+    <div class="bg-gray-900 rounded-lg p-4 font-mono text-sm text-gray-300 mb-4">
+      <p>$ wokku apps:create my-app --server prod</p>
+    </div>
+
+    <h3 class="text-xl font-semibold text-gray-900 mt-6 mb-3">4. Deploy</h3>
+    <div class="bg-gray-900 rounded-lg p-4 font-mono text-sm text-gray-300 mb-4">
+      <p>$ git push wokku main</p>
+    </div>
+
+    <h2 class="text-2xl font-semibold text-gray-900 mt-12 mb-4">CLI Reference</h2>
+
+    <div class="space-y-4">
+      <div class="border border-gray-200 rounded-lg p-4">
+        <h4 class="font-mono font-semibold text-gray-900">wokku apps:list</h4>
+        <p class="text-gray-600 text-sm mt-1">List all your applications</p>
+      </div>
+      <div class="border border-gray-200 rounded-lg p-4">
+        <h4 class="font-mono font-semibold text-gray-900">wokku apps:info APP</h4>
+        <p class="text-gray-600 text-sm mt-1">Show detailed information about an application</p>
+      </div>
+      <div class="border border-gray-200 rounded-lg p-4">
+        <h4 class="font-mono font-semibold text-gray-900">wokku ps:scale web=N</h4>
+        <p class="text-gray-600 text-sm mt-1">Scale dyno processes</p>
+      </div>
+      <div class="border border-gray-200 rounded-lg p-4">
+        <h4 class="font-mono font-semibold text-gray-900">wokku config:set KEY=VALUE</h4>
+        <p class="text-gray-600 text-sm mt-1">Set environment variables</p>
+      </div>
+      <div class="border border-gray-200 rounded-lg p-4">
+        <h4 class="font-mono font-semibold text-gray-900">wokku domains:add DOMAIN</h4>
+        <p class="text-gray-600 text-sm mt-1">Add a custom domain to your application</p>
+      </div>
+      <div class="border border-gray-200 rounded-lg p-4">
+        <h4 class="font-mono font-semibold text-gray-900">wokku logs --app APP</h4>
+        <p class="text-gray-600 text-sm mt-1">View application logs</p>
+      </div>
+    </div>
+
+    <h2 class="text-2xl font-semibold text-gray-900 mt-12 mb-4">API</h2>
+    <p class="text-gray-600 mb-4">
+      The Wokku API is available at <code class="bg-gray-100 px-2 py-1 rounded text-sm">https://wokku.dev/api/v1</code>.
+      Authenticate with a Bearer token in the Authorization header.
+    </p>
+  </div>
+</div>

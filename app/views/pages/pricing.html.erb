@@ -1,0 +1,90 @@
+<% content_for(:title, "Pricing - Wokku") %>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+  <div class="text-center mb-16">
+    <h1 class="text-4xl font-bold text-gray-900">Simple, transparent pricing</h1>
+    <p class="mt-4 text-xl text-gray-600">Start free, scale as you grow.</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+    <!-- Free -->
+    <div class="border border-gray-200 rounded-lg p-8">
+      <h3 class="text-lg font-semibold text-gray-900">Free</h3>
+      <p class="mt-4">
+        <span class="text-4xl font-bold text-gray-900">$0</span>
+        <span class="text-gray-500">/mo</span>
+      </p>
+      <ul class="mt-8 space-y-3 text-sm text-gray-600">
+        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> 5 apps</li>
+        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> 10 dynos</li>
+        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> 1 database</li>
+        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Custom domains</li>
+        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Auto SSL</li>
+      </ul>
+      <div class="mt-8">
+        <%= link_to "Get Started", new_user_registration_path, class: "block w-full text-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" %>
+      </div>
+    </div>
+
+    <!-- Hobby -->
+    <div class="border border-indigo-200 rounded-lg p-8 ring-2 ring-indigo-600 relative">
+      <span class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-indigo-600 text-white text-xs font-semibold px-3 py-1 rounded-full">Popular</span>
+      <h3 class="text-lg font-semibold text-gray-900">Hobby</h3>
+      <p class="mt-4">
+        <span class="text-4xl font-bold text-gray-900">$7</span>
+        <span class="text-gray-500">/mo</span>
+      </p>
+      <ul class="mt-8 space-y-3 text-sm text-gray-600">
+        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> 10 apps</li>
+        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> 25 dynos</li>
+        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> 5 databases</li>
+        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Custom domains</li>
+        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Auto SSL</li>
+      </ul>
+      <div class="mt-8">
+        <%= link_to "Get Started", new_user_registration_path, class: "block w-full text-center px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700" %>
+      </div>
+    </div>
+
+    <!-- Professional -->
+    <div class="border border-gray-200 rounded-lg p-8">
+      <h3 class="text-lg font-semibold text-gray-900">Professional</h3>
+      <p class="mt-4">
+        <span class="text-4xl font-bold text-gray-900">$25</span>
+        <span class="text-gray-500">/mo</span>
+      </p>
+      <ul class="mt-8 space-y-3 text-sm text-gray-600">
+        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> 50 apps</li>
+        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> 100 dynos</li>
+        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> 20 databases</li>
+        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Custom domains</li>
+        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Auto SSL</li>
+        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Priority support</li>
+      </ul>
+      <div class="mt-8">
+        <%= link_to "Get Started", new_user_registration_path, class: "block w-full text-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" %>
+      </div>
+    </div>
+
+    <!-- Enterprise -->
+    <div class="border border-gray-200 rounded-lg p-8">
+      <h3 class="text-lg font-semibold text-gray-900">Enterprise</h3>
+      <p class="mt-4">
+        <span class="text-4xl font-bold text-gray-900">$100</span>
+        <span class="text-gray-500">/mo</span>
+      </p>
+      <ul class="mt-8 space-y-3 text-sm text-gray-600">
+        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Unlimited apps</li>
+        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Unlimited dynos</li>
+        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> 100 databases</li>
+        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Custom domains</li>
+        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Auto SSL</li>
+        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Dedicated support</li>
+        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> SLA guarantee</li>
+      </ul>
+      <div class="mt-8">
+        <%= link_to "Contact Sales", "#", class: "block w-full text-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" %>
+      </div>
+    </div>
+  </div>
+</div>
