@@ -15,6 +15,14 @@ Rails.application.routes.draw do
           get :status
         end
       end
+
+      resources :apps, only: [:index, :show, :create, :update, :destroy] do
+        member do
+          post :restart
+          post :stop
+          post :start
+        end
+      end
     end
   end
 
