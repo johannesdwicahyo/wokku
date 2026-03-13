@@ -17,3 +17,8 @@ production:
     class: MetricsPollSchedulerJob
     schedule: every 1 minute
     queue: metrics
+
+  idle_check:
+    class: IdleCheckJob
+    schedule: every 5 minutes
+    queue: default
