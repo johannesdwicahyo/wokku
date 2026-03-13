@@ -34,6 +34,7 @@ Rails.application.routes.draw do
           end
         end
         resource :ps, only: [:show, :update], controller: "ps"
+        resources :dynos, only: [:index, :update], controller: "dynos"
         resources :logs, only: [:index]
       end
 
