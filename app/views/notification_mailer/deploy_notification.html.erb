@@ -1,0 +1,11 @@
+<h1>Deploy <%= @event %></h1>
+
+<p>
+  App <strong><%= @app.name %></strong> deploy <%= @event %>.
+</p>
+
+<% if @deploy.commit_sha.present? %>
+<p>Commit: <%= @deploy.commit_sha.first(7) %></p>
+<% end %>
+
+<p>Status: <%= @deploy.status %></p>
