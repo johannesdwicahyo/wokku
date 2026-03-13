@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_13_083315) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_14_000004) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -135,7 +135,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_083315) do
     t.integer "amount_cents"
     t.datetime "created_at", null: false
     t.datetime "paid_at"
-    t.integer "status"
+    t.integer "status", default: 0
     t.string "stripe_invoice_id"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
@@ -168,13 +168,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_083315) do
 
   create_table "plans", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.integer "max_apps"
+    t.integer "max_apps", null: false
     t.integer "max_databases"
     t.integer "max_dynos"
-    t.string "name"
+    t.string "name", null: false
     t.integer "price_cents_per_month"
     t.string "stripe_price_id"
     t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_plans_on_name", unique: true
+    t.index ["stripe_price_id"], name: "index_plans_on_stripe_price_id", unique: true
   end
 
   create_table "process_scales", force: :cascade do |t|
@@ -228,7 +230,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_083315) do
     t.datetime "created_at", null: false
     t.datetime "current_period_end"
     t.bigint "plan_id", null: false
-    t.integer "status"
+    t.integer "status", default: 0, null: false
     t.string "stripe_subscription_id"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
@@ -257,13 +259,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_083315) do
   end
 
   create_table "usage_events", force: :cascade do |t|
-    t.bigint "app_record_id", null: false
+    t.bigint "app_record_id"
     t.datetime "created_at", null: false
     t.string "event_type"
     t.json "metadata"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["app_record_id"], name: "index_usage_events_on_app_record_id"
+    t.index ["user_id", "created_at"], name: "index_usage_events_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_usage_events_on_user_id"
   end
 
