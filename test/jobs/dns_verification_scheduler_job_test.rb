@@ -10,8 +10,9 @@ class DnsVerificationSchedulerJobTest < ActiveSupport::TestCase
   end
 
   test "enqueues jobs for unverified domains" do
-    # Mark all existing fixture domains as verified
-    Domain.update_all(dns_verified: true)
+    # Clean slate
+    Certificate.delete_all
+    Domain.delete_all
 
     Domain.create!(hostname: "unverified.example.com", app_record: @app, dns_verified: false)
     Domain.create!(hostname: "verified.example.com", app_record: @app, dns_verified: true)
