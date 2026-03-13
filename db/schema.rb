@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_13_083157) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_13_083315) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -96,6 +96,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_083157) do
     t.datetime "updated_at", null: false
     t.index ["app_record_id"], name: "index_domains_on_app_record_id"
     t.index ["hostname"], name: "index_domains_on_hostname", unique: true
+  end
+
+  create_table "dyno_allocations", force: :cascade do |t|
+    t.bigint "app_record_id", null: false
+    t.integer "count", default: 1, null: false
+    t.datetime "created_at", null: false
+    t.bigint "dyno_tier_id", null: false
+    t.string "process_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["app_record_id", "process_type"], name: "index_dyno_allocations_on_app_record_id_and_process_type", unique: true
+    t.index ["app_record_id"], name: "index_dyno_allocations_on_app_record_id"
+    t.index ["dyno_tier_id"], name: "index_dyno_allocations_on_dyno_tier_id"
+  end
+
+  create_table "dyno_tiers", force: :cascade do |t|
+    t.integer "cpu_shares", null: false
+    t.datetime "created_at", null: false
+    t.integer "memory_mb", null: false
+    t.string "name", null: false
+    t.integer "price_cents_per_month", null: false
+    t.boolean "sleeps", default: false, null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_dyno_tiers_on_name", unique: true
   end
 
   create_table "env_vars", force: :cascade do |t|
@@ -267,6 +290,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_13_083157) do
   add_foreign_key "database_services", "servers"
   add_foreign_key "deploys", "app_records"
   add_foreign_key "domains", "app_records"
+  add_foreign_key "dyno_allocations", "app_records"
+  add_foreign_key "dyno_allocations", "dyno_tiers"
   add_foreign_key "env_vars", "app_records"
   add_foreign_key "invoices", "users"
   add_foreign_key "metrics", "app_records"
