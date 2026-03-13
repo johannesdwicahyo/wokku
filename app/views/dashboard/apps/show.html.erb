@@ -1,0 +1,103 @@
+<div class="mb-6">
+  <div class="flex items-center space-x-3 mb-1">
+    <%= link_to "Apps", dashboard_apps_path, class: "text-sm text-gray-500 hover:text-purple-600 transition" %>
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    <span class="text-sm text-gray-900 font-medium"><%= @app.name %></span>
+  </div>
+</div>
+
+<div class="flex items-center justify-between mb-6">
+  <div class="flex items-center space-x-4">
+    <h1 class="text-2xl font-bold text-gray-900"><%= @app.name %></h1>
+    <% case @app.status %>
+    <% when "running" %>
+      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Running</span>
+    <% when "crashed" %>
+      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Crashed</span>
+    <% when "stopped" %>
+      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Stopped</span>
+    <% when "deploying" %>
+      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Deploying</span>
+    <% end %>
+  </div>
+  <%= link_to "Delete", dashboard_app_path(@app), data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete #{@app.name}?" }, class: "text-sm text-red-600 hover:text-red-800 font-medium transition" %>
+</div>
+
+<%# Tabs %>
+<div class="border-b border-gray-200 mb-6">
+  <nav class="-mb-px flex space-x-6">
+    <%
+      tabs = [
+        { name: "Overview", path: dashboard_app_path(@app), exact: true },
+        { name: "Config", path: dashboard_app_config_index_path(@app) },
+        { name: "Domains", path: dashboard_app_domains_path(@app) },
+        { name: "Releases", path: dashboard_app_releases_path(@app) },
+        { name: "Logs", path: dashboard_app_logs_path(@app) },
+        { name: "Metrics", path: dashboard_app_metrics_path(@app) },
+      ]
+    %>
+    <% tabs.each do |tab| %>
+      <%
+        active = tab[:exact] ? request.path == tab[:path] : request.path.start_with?(tab[:path])
+        classes = active ?
+          "border-b-2 border-purple-500 text-purple-600 py-3 text-sm font-medium" :
+          "border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-3 text-sm font-medium transition"
+      %>
+      <%= link_to tab[:name], tab[:path], class: classes %>
+    <% end %>
+  </nav>
+</div>
+
+<%# Overview Content %>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Details</h3>
+    <dl class="space-y-3">
+      <div class="flex justify-between">
+        <dt class="text-sm text-gray-500">Server</dt>
+        <dd class="text-sm text-gray-900"><%= @app.server.name %></dd>
+      </div>
+      <div class="flex justify-between">
+        <dt class="text-sm text-gray-500">Branch</dt>
+        <dd class="text-sm text-gray-900"><%= @app.deploy_branch || "main" %></dd>
+      </div>
+      <div class="flex justify-between">
+        <dt class="text-sm text-gray-500">Team</dt>
+        <dd class="text-sm text-gray-900"><%= @app.team.name %></dd>
+      </div>
+      <div class="flex justify-between">
+        <dt class="text-sm text-gray-500">Created</dt>
+        <dd class="text-sm text-gray-900"><%= @app.created_at.strftime("%b %d, %Y") %></dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Recent Activity</h3>
+    <% recent_deploys = @app.deploys.recent.limit(5) %>
+    <% if recent_deploys.any? %>
+      <div class="space-y-3">
+        <% recent_deploys.each do |deploy| %>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <% case deploy.status %>
+              <% when "succeeded" %>
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+              <% when "failed" %>
+                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+              <% when "building" %>
+                <span class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
+              <% else %>
+                <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+              <% end %>
+              <span class="text-sm text-gray-700"><%= deploy.commit_sha&.first(7) || "manual" %></span>
+            </div>
+            <span class="text-xs text-gray-500"><%= time_ago_in_words(deploy.created_at) %> ago</span>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-sm text-gray-500">No deploys yet.</p>
+    <% end %>
+  </div>
+</div>

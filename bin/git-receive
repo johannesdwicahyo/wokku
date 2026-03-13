@@ -1,0 +1,30 @@
+#!/usr/bin/env ruby
+# Called as ForceCommand by sshd when a git push is received
+# Usage: git-receive <user_id>
+require_relative "../config/environment"
+
+user_id = ARGV[0]
+user = User.find(user_id)
+
+# SSH_ORIGINAL_COMMAND contains: git-receive-pack 'app-name.git'
+original_command = ENV["SSH_ORIGINAL_COMMAND"]
+unless original_command&.start_with?("git-receive-pack")
+  $stderr.puts "Only git push is supported"
+  exit 1
+end
+
+# Extract app name from 'app-name.git' or 'app-name'
+app_name = original_command.match(/git-receive-pack\s+'?([^']+?)(\.git)?'?$/)[1]
+
+begin
+  Git::DeployForwarder.new(user, app_name).forward
+rescue ActiveRecord::RecordNotFound
+  $stderr.puts "App '#{app_name}' not found"
+  exit 1
+rescue Pundit::NotAuthorizedError
+  $stderr.puts "Permission denied"
+  exit 1
+rescue StandardError => e
+  $stderr.puts "Deploy failed: #{e.message}"
+  exit 1
+end

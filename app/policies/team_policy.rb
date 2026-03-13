@@ -3,6 +3,10 @@ class TeamPolicy < ApplicationPolicy
     true
   end
 
+  def show?
+    record.team_memberships.exists?(user_id: user.id)
+  end
+
   def create?
     true
   end
