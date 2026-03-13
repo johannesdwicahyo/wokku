@@ -1,0 +1,35 @@
+<div class="mb-6">
+  <div class="flex items-center space-x-3 mb-1">
+    <%= link_to "Apps", dashboard_apps_path, class: "text-sm text-gray-500 hover:text-purple-600 transition" %>
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    <span class="text-sm text-gray-900 font-medium"><%= app.name %></span>
+  </div>
+</div>
+
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold text-gray-900"><%= app.name %></h1>
+</div>
+
+<div class="border-b border-gray-200 mb-6">
+  <nav class="-mb-px flex space-x-6">
+    <%
+      tabs = [
+        { name: "Overview", path: dashboard_app_path(app), exact: true },
+        { name: "Config", path: dashboard_app_config_index_path(app) },
+        { name: "Domains", path: dashboard_app_domains_path(app) },
+        { name: "Releases", path: dashboard_app_releases_path(app) },
+        { name: "Logs", path: dashboard_app_logs_path(app) },
+        { name: "Metrics", path: dashboard_app_metrics_path(app) },
+      ]
+    %>
+    <% tabs.each do |tab| %>
+      <%
+        active = tab[:exact] ? request.path == tab[:path] : request.path.start_with?(tab[:path])
+        classes = active ?
+          "border-b-2 border-purple-500 text-purple-600 py-3 text-sm font-medium" :
+          "border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-3 text-sm font-medium transition"
+      %>
+      <%= link_to tab[:name], tab[:path], class: classes %>
+    <% end %>
+  </nav>
+</div>

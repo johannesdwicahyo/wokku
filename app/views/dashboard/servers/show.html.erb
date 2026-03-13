@@ -1,0 +1,64 @@
+<div class="mb-6">
+  <div class="flex items-center space-x-3 mb-1">
+    <%= link_to "Servers", dashboard_servers_path, class: "text-sm text-gray-500 hover:text-purple-600 transition" %>
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    <span class="text-sm text-gray-900 font-medium"><%= @server.name %></span>
+  </div>
+</div>
+
+<div class="flex items-center justify-between mb-6">
+  <div class="flex items-center space-x-4">
+    <h1 class="text-2xl font-bold text-gray-900"><%= @server.name %></h1>
+    <% case @server.status %>
+    <% when "connected" %>
+      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Connected</span>
+    <% when "unreachable" %>
+      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Unreachable</span>
+    <% when "auth_failed" %>
+      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">Auth Failed</span>
+    <% when "syncing" %>
+      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Syncing</span>
+    <% end %>
+  </div>
+  <%= link_to "Delete", dashboard_server_path(@server), data: { turbo_method: :delete, turbo_confirm: "Are you sure?" }, class: "text-sm text-red-600 hover:text-red-800 font-medium transition" %>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+  <div class="bg-white rounded-xl border border-gray-200 p-5">
+    <p class="text-xs text-gray-500 uppercase tracking-wider font-medium">Host</p>
+    <p class="mt-1 text-lg font-semibold text-gray-900"><%= @server.host %>:<%= @server.port %></p>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 p-5">
+    <p class="text-xs text-gray-500 uppercase tracking-wider font-medium">SSH User</p>
+    <p class="mt-1 text-lg font-semibold text-gray-900"><%= @server.ssh_user %></p>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 p-5">
+    <p class="text-xs text-gray-500 uppercase tracking-wider font-medium">Apps</p>
+    <p class="mt-1 text-lg font-semibold text-gray-900"><%= @apps.size %></p>
+  </div>
+</div>
+
+<h2 class="text-lg font-semibold text-gray-900 mb-4">Apps on this server</h2>
+<% if @apps.any? %>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <% @apps.each do |app| %>
+      <%= link_to dashboard_app_path(app), class: "block bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md hover:border-purple-300 transition" do %>
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-900"><%= app.name %></span>
+          <% case app.status %>
+          <% when "running" %>
+            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+          <% when "crashed" %>
+            <span class="w-2 h-2 rounded-full bg-red-500"></span>
+          <% when "stopped" %>
+            <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+          <% when "deploying" %>
+            <span class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
+          <% end %>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+<% else %>
+  <p class="text-sm text-gray-500 bg-white rounded-xl border border-gray-200 p-6 text-center">No apps deployed to this server yet.</p>
+<% end %>

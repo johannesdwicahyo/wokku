@@ -1,0 +1,27 @@
+<%= render "dashboard/apps/tabs", app: @app %>
+
+<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+  <div class="px-6 py-4 border-b border-gray-200">
+    <h2 class="text-base font-semibold text-gray-900">Config Vars</h2>
+    <p class="text-sm text-gray-500 mt-1">Environment variables for <%= @app.name %></p>
+  </div>
+
+  <% if @env_vars.any? %>
+    <div class="divide-y divide-gray-200">
+      <% @env_vars.each do |var| %>
+        <div class="px-6 py-3 flex items-center justify-between hover:bg-gray-50">
+          <div>
+            <span class="text-sm font-mono font-medium text-gray-900"><%= var.key %></span>
+          </div>
+          <div class="flex items-center space-x-3">
+            <span class="text-sm font-mono text-gray-500">********</span>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="px-6 py-8 text-center">
+      <p class="text-sm text-gray-500">No config vars set.</p>
+    </div>
+  <% end %>
+</div>

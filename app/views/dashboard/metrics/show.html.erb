@@ -1,0 +1,19 @@
+<%= render "dashboard/apps/tabs", app: @app %>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">CPU Usage</h3>
+    <%= line_chart @metrics.map { |m| [m.recorded_at, m.cpu_percent] },
+                   xtitle: "Time", ytitle: "CPU %",
+                   colors: ["#7c3aed"],
+                   library: { scales: { y: { min: 0, max: 100 } } } %>
+  </div>
+
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Memory Usage</h3>
+    <%= line_chart @metrics.map { |m| [m.recorded_at, (m.memory_usage.to_f / 1024 / 1024).round(1)] },
+                   xtitle: "Time", ytitle: "MB",
+                   colors: ["#2563eb"],
+                   library: { scales: { y: { min: 0 } } } %>
+  </div>
+</div>

@@ -1,0 +1,20 @@
+<%= render "dashboard/apps/tabs", app: @app %>
+
+<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+  <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+    <div>
+      <h2 class="text-base font-semibold text-gray-900">Application Logs</h2>
+      <p class="text-sm text-gray-500 mt-1">Real-time log stream for <%= @app.name %></p>
+    </div>
+    <div class="flex items-center space-x-2">
+      <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+      <span class="text-xs text-gray-500">Live</span>
+    </div>
+  </div>
+
+  <div data-controller="log-stream" data-log-stream-app-id-value="<%= @app.id %>"
+       class="bg-[#0d1117] p-4 font-mono text-xs text-green-400 h-[500px] overflow-y-auto"
+       data-log-stream-target="output">
+    <p class="text-gray-500">Connecting to log stream...</p>
+  </div>
+</div>

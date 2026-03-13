@@ -1,0 +1,30 @@
+<div class="mb-6">
+  <div class="flex items-center space-x-3 mb-1">
+    <%= link_to "Databases", dashboard_databases_path, class: "text-sm text-gray-500 hover:text-purple-600 transition" %>
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    <span class="text-sm text-gray-900 font-medium"><%= @database.name %></span>
+  </div>
+</div>
+
+<div class="flex items-center justify-between mb-6">
+  <div class="flex items-center space-x-4">
+    <h1 class="text-2xl font-bold text-gray-900"><%= @database.name %></h1>
+    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"><%= @database.service_type %></span>
+  </div>
+  <%= link_to "Delete", dashboard_database_path(@database), data: { turbo_method: :delete, turbo_confirm: "Are you sure?" }, class: "text-sm text-red-600 hover:text-red-800 font-medium transition" %>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+  <div class="bg-white rounded-xl border border-gray-200 p-5">
+    <p class="text-xs text-gray-500 uppercase tracking-wider font-medium">Server</p>
+    <p class="mt-1 text-lg font-semibold text-gray-900"><%= @database.server.name %></p>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 p-5">
+    <p class="text-xs text-gray-500 uppercase tracking-wider font-medium">Type</p>
+    <p class="mt-1 text-lg font-semibold text-gray-900"><%= @database.service_type.capitalize %></p>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 p-5">
+    <p class="text-xs text-gray-500 uppercase tracking-wider font-medium">Linked Apps</p>
+    <p class="mt-1 text-lg font-semibold text-gray-900"><%= @database.app_records.size %></p>
+  </div>
+</div>
