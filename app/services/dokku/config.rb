@@ -27,7 +27,8 @@ module Dokku
     def parse_env(output)
       result = {}
       output.each_line do |line|
-        next if line.strip.blank? || line.start_with?("=")
+        line = line.strip
+        next if line.blank? || line.start_with?("=")
         if (match = line.match(/\A(\w+):\s*(.*)\z/))
           result[match[1]] = match[2]
         end
