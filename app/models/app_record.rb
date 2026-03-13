@@ -14,7 +14,7 @@ class AppRecord < ApplicationRecord
   has_many :notifications, dependent: :destroy
   has_many :dyno_allocations, dependent: :destroy
 
-  enum :status, { running: 0, stopped: 1, crashed: 2, deploying: 3 }
+  enum :status, { running: 0, stopped: 1, crashed: 2, deploying: 3, sleeping: 4 }
 
   validates :name, presence: true,
     uniqueness: { scope: :server_id },
