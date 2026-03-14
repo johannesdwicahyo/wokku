@@ -19,6 +19,10 @@ class ServerPolicy < ApplicationPolicy
     user_in_team?
   end
 
+  def sync?
+    user_in_team?
+  end
+
   class Scope < ApplicationPolicy::Scope
     def resolve
       scope.joins(team: :team_memberships).where(team_memberships: { user_id: user.id })

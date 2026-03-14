@@ -11,18 +11,27 @@
 
     <%= yield :head %>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
+
+    <style>
+      body { font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+      .font-mono, code, pre, .font-code { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    </style>
   </head>
 
-  <body class="h-full bg-gray-50">
+  <body class="h-full bg-[#0B1120]">
     <%= render "dashboard/shared/navbar" %>
 
-    <div class="flex h-[calc(100vh-57px)]">
+    <div class="flex h-[calc(100vh-49px)]">
       <%= render "dashboard/shared/sidebar" %>
 
       <main class="flex-1 overflow-y-auto">

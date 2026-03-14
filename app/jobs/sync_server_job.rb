@@ -7,6 +7,7 @@ class SyncServerJob < ApplicationJob
 
     client = Dokku::Client.new(server)
     dokku_apps = Dokku::Apps.new(client)
+    dokku_domains = Dokku::Domains.new(client)
 
     remote_app_names = dokku_apps.list
     local_app_names = server.app_records.pluck(:name)
@@ -23,9 +24,31 @@ class SyncServerJob < ApplicationJob
       server.app_records.find_by(name: name)&.destroy
     end
 
+    # Sync domains for each app
+    server.app_records.reload.each do |app_record|
+      sync_domains(dokku_domains, app_record)
+    end
+
     server.app_records.update_all(synced_at: Time.current)
     server.update_column(:status, Server.statuses[:connected])
   rescue Dokku::Client::ConnectionError
     server.update_column(:status, Server.statuses[:unreachable])
+  end
+
+  private
+
+  def sync_domains(dokku_domains, app_record)
+    remote_hostnames = dokku_domains.list(app_record.name)
+    local_hostnames = app_record.domains.pluck(:hostname)
+
+    (remote_hostnames - local_hostnames).each do |hostname|
+      app_record.domains.create!(hostname: hostname)
+    end
+
+    (local_hostnames - remote_hostnames).each do |hostname|
+      app_record.domains.find_by(hostname: hostname)&.destroy
+    end
+  rescue => e
+    Rails.logger.warn "Failed to sync domains for #{app_record.name}: #{e.message}"
   end
 end

@@ -10,7 +10,7 @@ module Dashboard
       if current_user.update(profile_params)
         redirect_to dashboard_profile_path, notice: "Profile updated successfully."
       else
-        render :edit, status: :unprocessable_entity
+        render :show, status: :unprocessable_entity
       end
     end
 

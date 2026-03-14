@@ -4,12 +4,23 @@ module Dashboard
 
     def show
       authorize @app, :show?
+      @logs = fetch_recent_logs
     end
 
     private
 
     def set_app
       @app = AppRecord.find(params[:app_id])
+    end
+
+    def fetch_recent_logs
+      client = Dokku::Client.new(@app.server)
+      raw = Dokku::Logs.new(client).recent(@app.name, lines: 200)
+      # Strip ANSI escape codes
+      raw&.gsub(/\e\[[0-9;]*m/, "")
+    rescue => e
+      Rails.logger.warn "Failed to fetch logs for #{@app.name}: #{e.message}"
+      nil
     end
   end
 end

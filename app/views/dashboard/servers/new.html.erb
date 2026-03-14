@@ -1,13 +1,18 @@
 <div class="max-w-lg">
-  <div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Add Server</h1>
-    <p class="mt-1 text-sm text-gray-500">Connect a new Dokku server</p>
+  <div class="mb-4">
+    <div class="flex items-center space-x-2 text-sm mb-4">
+      <%= link_to "Servers", dashboard_servers_path, class: "text-gray-500 hover:text-green-400 transition cursor-pointer" %>
+      <svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      <span class="text-gray-300">New</span>
+    </div>
+    <h1 class="text-xl font-semibold text-white">Add Server</h1>
+    <p class="mt-0.5 text-sm text-gray-500">Connect a Dokku server via SSH</p>
   </div>
 
-  <%= form_with(model: @server, url: dashboard_servers_path, class: "bg-white rounded-xl border border-gray-200 p-6 space-y-5") do |f| %>
+  <%= form_with(model: @server, url: dashboard_servers_path, class: "bg-[#1E293B]/60 rounded-lg border border-[#334155]/50 p-6 space-y-4") do |f| %>
     <% if @server.errors.any? %>
-      <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-        <ul class="list-disc list-inside text-sm text-red-800 space-y-1">
+      <div class="rounded-md bg-red-500/10 border border-red-500/20 p-3">
+        <ul class="text-xs text-red-400 space-y-1">
           <% @server.errors.full_messages.each do |msg| %>
             <li><%= msg %></li>
           <% end %>
@@ -16,29 +21,35 @@
     <% end %>
 
     <div>
-      <%= f.label :name, class: "block text-sm font-medium text-gray-700 mb-1" %>
-      <%= f.text_field :name, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 text-sm", placeholder: "production", autofocus: true %>
+      <%= f.label :name, class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
+      <%= f.text_field :name, class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 font-mono", placeholder: "production", autofocus: true %>
     </div>
 
     <div>
-      <%= f.label :host, class: "block text-sm font-medium text-gray-700 mb-1" %>
-      <%= f.text_field :host, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 text-sm", placeholder: "dokku.example.com" %>
+      <%= f.label :host, class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
+      <%= f.text_field :host, class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 font-mono", placeholder: "dokku.example.com" %>
     </div>
 
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid grid-cols-2 gap-3">
       <div>
-        <%= f.label :port, class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.number_field :port, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 text-sm", value: 22 %>
+        <%= f.label :port, class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
+        <%= f.number_field :port, class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 font-mono", value: 22 %>
       </div>
       <div>
-        <%= f.label :ssh_user, "SSH User", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.text_field :ssh_user, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 text-sm", value: "dokku" %>
+        <%= f.label :ssh_user, "SSH User", class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
+        <%= f.text_field :ssh_user, class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 font-mono", value: "dokku" %>
       </div>
+    </div>
+
+    <div>
+      <%= f.label :ssh_private_key, "SSH Private Key", class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
+      <%= f.text_area :ssh_private_key, class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 font-mono text-xs", rows: 5, placeholder: "-----BEGIN OPENSSH PRIVATE KEY-----\n..." %>
+      <p class="mt-1 text-xs text-gray-600">Stored encrypted at rest</p>
     </div>
 
     <div class="flex items-center space-x-3 pt-2">
-      <%= f.submit "Add Server", class: "px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition shadow-sm cursor-pointer" %>
-      <%= link_to "Cancel", dashboard_servers_path, class: "text-sm text-gray-500 hover:text-gray-700 transition" %>
+      <%= f.submit "Add Server", class: "px-4 py-2 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer" %>
+      <%= link_to "Cancel", dashboard_servers_path, class: "text-sm text-gray-500 hover:text-gray-300 transition cursor-pointer" %>
     </div>
   <% end %>
 </div>

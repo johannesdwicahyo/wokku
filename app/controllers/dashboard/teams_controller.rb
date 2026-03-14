@@ -2,6 +2,7 @@ module Dashboard
   class TeamsController < BaseController
     def index
       @teams = policy_scope(Team)
+      @team = Team.new
     end
 
     def show
@@ -22,7 +23,8 @@ module Dashboard
         TeamMembership.create!(user: current_user, team: @team, role: :admin)
         redirect_to dashboard_teams_path, notice: "Team created successfully."
       else
-        render :new, status: :unprocessable_entity
+        @teams = policy_scope(Team)
+        render :index, status: :unprocessable_entity
       end
     end
 

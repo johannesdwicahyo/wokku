@@ -1,28 +1,37 @@
 <%
   nav_items = [
-    { name: "Apps", path: dashboard_apps_path, icon: "M4 6h16M4 12h16M4 18h16", pattern: "apps" },
-    { name: "Servers", path: dashboard_servers_path, icon: "M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2", pattern: "servers" },
-    { name: "Databases", path: dashboard_databases_path, icon: "M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4", pattern: "databases" },
-    { name: "Teams", path: dashboard_teams_path, icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z", pattern: "teams" },
-    { name: "Profile", path: dashboard_profile_path, icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z", pattern: "profile" },
+    { name: "Apps", path: dashboard_apps_path, pattern: "apps", icon_path: "M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" },
+    { name: "Servers", path: dashboard_servers_path, pattern: "servers", icon_path: "M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" },
+    { name: "Databases", path: dashboard_databases_path, pattern: "databases", icon_path: "M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" },
+    { name: "Teams", path: dashboard_teams_path, pattern: "teams", icon_path: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" },
   ]
 %>
 
-<aside class="w-56 bg-[#16162a] min-h-screen border-r border-[#2d2d4a] flex-shrink-0">
-  <nav class="py-4 space-y-1">
+<aside class="w-52 bg-[#0B1120] border-r border-[#1E293B] flex-shrink-0 flex flex-col">
+  <nav class="py-3 px-2 space-y-0.5 flex-1">
     <% nav_items.each do |item| %>
       <%
         active = request.path.include?(item[:pattern])
         classes = active ?
-          "flex items-center space-x-3 px-4 py-2.5 text-white bg-[#2d2d4a] border-l-2 border-purple-500" :
-          "flex items-center space-x-3 px-4 py-2.5 text-gray-400 hover:text-white hover:bg-[#2d2d4a] border-l-2 border-transparent transition"
+          "flex items-center space-x-2.5 px-3 py-2 text-white bg-[#1E293B] rounded-md text-sm cursor-pointer" :
+          "flex items-center space-x-2.5 px-3 py-2 text-gray-500 hover:text-gray-200 hover:bg-[#1E293B]/50 rounded-md text-sm cursor-pointer transition"
       %>
       <a href="<%= item[:path] %>" class="<%= classes %>">
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="<%= item[:icon] %>"/>
+        <svg class="w-4 h-4 flex-shrink-0 <%= active ? 'text-green-400' : '' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="<%= item[:icon_path] %>"/>
         </svg>
-        <span class="text-sm font-medium"><%= item[:name] %></span>
+        <span class="font-medium"><%= item[:name] %></span>
       </a>
     <% end %>
   </nav>
+
+  <div class="px-2 py-3 border-t border-[#1E293B]">
+    <a href="<%= dashboard_profile_path %>" class="flex items-center space-x-2.5 px-3 py-2 text-gray-500 hover:text-gray-200 hover:bg-[#1E293B]/50 rounded-md text-sm cursor-pointer transition">
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+      <span class="font-medium">Settings</span>
+    </a>
+  </div>
 </aside>

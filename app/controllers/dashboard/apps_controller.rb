@@ -4,6 +4,8 @@ module Dashboard
 
     def index
       @apps = policy_scope(AppRecord).includes(:server, :team)
+      @app = AppRecord.new
+      @servers = policy_scope(Server)
     end
 
     def show
@@ -25,7 +27,8 @@ module Dashboard
         redirect_to dashboard_app_path(@app), notice: "App created successfully."
       else
         @servers = policy_scope(Server)
-        render :new, status: :unprocessable_entity
+        @apps = policy_scope(AppRecord).includes(:server, :team)
+        render :index, status: :unprocessable_entity
       end
     end
 

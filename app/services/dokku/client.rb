@@ -24,7 +24,7 @@ module Dokku
       begin
         Net::SSH.start(@server.host, @server.ssh_user || "dokku", ssh_options) do |ssh|
           channel = ssh.open_channel do |ch|
-            ch.exec("dokku #{command}") do |_ch, success|
+            ch.exec(shell_command(command)) do |_ch, success|
               raise ConnectionError, "Failed to execute command" unless success
 
               ch.on_data { |_, data| output << data }
@@ -56,7 +56,7 @@ module Dokku
     def run_streaming(command, &block)
       Net::SSH.start(@server.host, @server.ssh_user || "dokku", ssh_options) do |ssh|
         channel = ssh.open_channel do |ch|
-          ch.exec("dokku #{command}") do |_ch, success|
+          ch.exec(shell_command(command)) do |_ch, success|
             raise ConnectionError, "Failed to execute command" unless success
 
             ch.on_data { |_, data| block.call(data) }
@@ -75,6 +75,14 @@ module Dokku
     end
 
     private
+
+    def shell_command(command)
+      if (@server.ssh_user || "dokku") == "dokku"
+        command
+      else
+        "dokku #{command}"
+      end
+    end
 
     def ssh_options
       opts = {

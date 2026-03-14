@@ -2,6 +2,8 @@ module Dashboard
   class DatabasesController < BaseController
     def index
       @databases = policy_scope(DatabaseService).includes(:server)
+      @database = DatabaseService.new
+      @servers = policy_scope(Server)
     end
 
     def show
@@ -23,7 +25,8 @@ module Dashboard
         redirect_to dashboard_database_path(@database), notice: "Database created successfully."
       else
         @servers = policy_scope(Server)
-        render :new, status: :unprocessable_entity
+        @databases = policy_scope(DatabaseService).includes(:server)
+        render :index, status: :unprocessable_entity
       end
     end
 
