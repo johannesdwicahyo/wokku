@@ -1,9 +1,9 @@
 module Dashboard
   class AppsController < BaseController
-    before_action :set_app, only: [:show, :destroy]
+    before_action :set_app, only: [:show, :destroy, :restart, :stop, :start]
 
     def index
-      @apps = policy_scope(AppRecord).includes(:server, :team)
+      @apps = policy_scope(AppRecord).includes(:server, :team, :domains)
       @app = AppRecord.new
       @servers = policy_scope(Server)
     end
@@ -38,6 +38,33 @@ module Dashboard
       redirect_to dashboard_apps_path, notice: "App deleted successfully."
     end
 
+    def restart
+      authorize @app
+      dokku_processes.restart(@app.name)
+      @app.update(status: :running)
+      redirect_to dashboard_app_path(@app), notice: "#{@app.name} restarted."
+    rescue => e
+      redirect_to dashboard_app_path(@app), alert: "Restart failed: #{e.message}"
+    end
+
+    def stop
+      authorize @app
+      dokku_processes.stop(@app.name)
+      @app.update(status: :stopped)
+      redirect_to dashboard_app_path(@app), notice: "#{@app.name} stopped."
+    rescue => e
+      redirect_to dashboard_app_path(@app), alert: "Stop failed: #{e.message}"
+    end
+
+    def start
+      authorize @app
+      dokku_processes.start(@app.name)
+      @app.update(status: :running)
+      redirect_to dashboard_app_path(@app), notice: "#{@app.name} started."
+    rescue => e
+      redirect_to dashboard_app_path(@app), alert: "Start failed: #{e.message}"
+    end
+
     private
 
     def set_app
@@ -46,6 +73,11 @@ module Dashboard
 
     def app_params
       params.require(:app_record).permit(:name, :deploy_branch)
+    end
+
+    def dokku_processes
+      client = Dokku::Client.new(@app.server)
+      Dokku::Processes.new(client)
     end
   end
 end
