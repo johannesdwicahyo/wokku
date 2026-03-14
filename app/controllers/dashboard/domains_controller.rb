@@ -22,6 +22,20 @@ module Dashboard
       end
     end
 
+    def ssl
+      authorize @app, :update?
+      domain = @app.domains.find(params[:id])
+
+      client = Dokku::Client.new(@app.server)
+      Dokku::Domains.new(client).enable_ssl(@app.name)
+      domain.update!(ssl_enabled: true)
+      domain.create_certificate!(auto_renew: true, expires_at: 90.days.from_now) unless domain.certificate
+
+      redirect_to dashboard_app_domains_path(@app), notice: "SSL enabled for #{domain.hostname}."
+    rescue => e
+      redirect_to dashboard_app_domains_path(@app), alert: "SSL failed: #{e.message}"
+    end
+
     def destroy
       authorize @app, :update?
       domain = @app.domains.find(params[:id])

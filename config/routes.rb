@@ -73,7 +73,11 @@ Rails.application.routes.draw do
         post :start
       end
       resources :config, only: [:index, :create, :update, :destroy], controller: "config"
-      resources :domains, only: [:index, :create, :destroy], controller: "domains"
+      resources :domains, only: [:index, :create, :destroy], controller: "domains" do
+        member do
+          post :ssl
+        end
+      end
       resources :releases, only: [:index], controller: "releases" do
         collection do
           post :deploy
@@ -95,6 +99,8 @@ Rails.application.routes.draw do
       end
     end
     resources :teams
+    resources :notifications, only: [:index, :create, :destroy]
+    resource :billing, only: [:show], controller: "billing"
     resource :profile, only: [:show, :edit, :update], controller: "profile"
   end
 

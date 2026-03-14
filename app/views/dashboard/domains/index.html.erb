@@ -68,7 +68,12 @@
               <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-yellow-500"></span><span class="text-xs text-gray-400">Pending DNS</span></span>
             <% end %>
           </div>
-          <%= link_to "Remove", dashboard_app_domain_path(@app, domain), data: { turbo_method: :delete, turbo_confirm: "Remove #{domain.hostname}?" }, class: "text-sm text-red-400/70 hover:text-red-400 transition" %>
+          <div class="flex items-center space-x-3">
+            <% unless domain.ssl_enabled? %>
+              <%= button_to "Enable SSL", ssl_dashboard_app_domain_path(@app, domain), method: :post, class: "text-xs text-green-400 hover:text-green-300 transition cursor-pointer" %>
+            <% end %>
+            <%= link_to "Remove", dashboard_app_domain_path(@app, domain), data: { turbo_method: :delete, turbo_confirm: "Remove #{domain.hostname}?" }, class: "text-xs text-red-400/70 hover:text-red-400 transition" %>
+          </div>
         </div>
       <% end %>
     </div>
