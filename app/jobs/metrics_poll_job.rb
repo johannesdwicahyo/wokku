@@ -3,24 +3,34 @@ class MetricsPollJob < ApplicationJob
 
   def perform(server_id)
     server = Server.find(server_id)
-    client = Dokku::Client.new(server)
 
-    output = client.run("-- docker stats --no-stream --format '{{json .}}'")
-    output.each_line do |line|
+    # Use root SSH to access docker stats (dokku user can't run docker commands)
+    output = Net::SSH.start(
+      server.host,
+      "root",
+      port: server.port,
+      non_interactive: true,
+      timeout: 15
+    ) do |ssh|
+      ssh.exec!("docker stats --no-stream --format '{{json .}}'")
+    end
+
+    output.to_s.each_line do |line|
       data = JSON.parse(line)
       container_name = data["Name"]
       app_name = container_name.split(".").first
       app = server.app_records.find_by(name: app_name)
       next unless app
 
+      mem_parts = data["MemUsage"].split("/")
       app.metrics.create!(
         cpu_percent: data["CPUPerc"].to_f,
-        memory_usage: parse_bytes(data["MemUsage"].split("/").first.strip),
-        memory_limit: parse_bytes(data["MemUsage"].split("/").last.strip),
+        memory_usage: parse_bytes(mem_parts.first.strip),
+        memory_limit: parse_bytes(mem_parts.last.strip),
         recorded_at: Time.current
       )
     end
-  rescue Dokku::Client::ConnectionError, JSON::ParserError => e
+  rescue Net::SSH::Exception, Errno::ECONNREFUSED, JSON::ParserError => e
     Rails.logger.warn("MetricsPollJob failed for server #{server_id}: #{e.message}")
   end
 

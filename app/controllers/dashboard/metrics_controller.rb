@@ -7,6 +7,7 @@ module Dashboard
       @processes = fetch_processes
       @resources = fetch_resources
       @container_stats = fetch_container_stats
+      @metrics = @app.metrics.where("recorded_at > ?", 24.hours.ago).order(recorded_at: :asc)
     end
 
     private

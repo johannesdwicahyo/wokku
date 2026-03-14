@@ -1,0 +1,85 @@
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-xl font-semibold text-white">Notifications</h1>
+    <p class="mt-0.5 text-sm text-gray-500">Get notified about deploys, failures, and other events</p>
+  </div>
+</div>
+
+<%# Existing Rules %>
+<div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 overflow-hidden mb-6">
+  <div class="px-6 py-4 border-b border-[#334155]/50">
+    <h2 class="text-base font-semibold text-white">Notification Rules</h2>
+  </div>
+
+  <% if @notifications.any? %>
+    <div class="divide-y divide-[#334155]/50">
+      <% @notifications.each do |notification| %>
+        <div class="px-6 py-4 flex items-center justify-between hover:bg-[#334155]/20 transition">
+          <div class="flex items-center space-x-4">
+            <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-[#0B1120] border border-[#334155]">
+              <% case notification.channel %>
+              <% when "email" %>
+                <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+              <% when "slack" %>
+                <svg class="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 24 24"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zm1.271 0a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zm0 1.271a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zm10.122 2.521a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zm-1.268 0a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zm-2.523 10.122a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zm0-1.268a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg>
+              <% when "webhook" %>
+                <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+              <% end %>
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="text-sm font-semibold text-white capitalize"><%= notification.channel %></span>
+                <% if notification.app_record %>
+                  <span class="text-xs text-gray-500 font-mono bg-[#0B1120] px-1.5 py-0.5 rounded"><%= notification.app_record.name %></span>
+                <% else %>
+                  <span class="text-xs text-gray-500">All apps</span>
+                <% end %>
+              </div>
+              <div class="flex items-center space-x-2 mt-0.5">
+                <% (notification.events || []).each do |event| %>
+                  <span class="text-xs text-gray-400"><%= event.humanize %></span>
+                <% end %>
+              </div>
+            </div>
+          </div>
+          <%= link_to "Remove", dashboard_notification_path(notification), data: { turbo_method: :delete, turbo_confirm: "Remove this notification rule?" }, class: "text-xs text-red-400/70 hover:text-red-400 transition" %>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="px-6 py-8 text-center">
+      <svg class="mx-auto h-10 w-10 text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+      <p class="text-sm text-gray-400">No notification rules configured.</p>
+      <p class="text-xs text-gray-500 mt-1">Add a rule below to get notified about events.</p>
+    </div>
+  <% end %>
+</div>
+
+<%# Add Notification %>
+<div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 p-6">
+  <h3 class="text-sm font-semibold text-white mb-4">Add Notification Rule</h3>
+  <%= form_with(model: @notification, url: dashboard_notifications_path, class: "space-y-4") do |f| %>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-xs text-gray-400 uppercase tracking-wider mb-1">Channel</label>
+        <%= f.select :channel, [["Email", "email"], ["Slack", "slack"], ["Webhook", "webhook"]], {}, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white text-sm focus:ring-green-500 focus:border-green-500" %>
+      </div>
+      <div>
+        <label class="block text-xs text-gray-400 uppercase tracking-wider mb-1">App (optional)</label>
+        <%= f.collection_select :app_record_id, @apps, :id, :name, { prompt: "All apps", include_blank: false }, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white text-sm focus:ring-green-500 focus:border-green-500" %>
+      </div>
+      <div>
+        <label class="block text-xs text-gray-400 uppercase tracking-wider mb-1">Events</label>
+        <div class="space-y-1.5 mt-1">
+          <% ["deploy_succeeded", "deploy_failed", "app_crashed", "domain_added"].each do |event| %>
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" name="notification[events][]" value="<%= event %>" class="rounded bg-[#0B1120] border-[#334155] text-green-500 focus:ring-green-500">
+              <span class="text-xs text-gray-400"><%= event.humanize %></span>
+            </label>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    <%= f.submit "Add Rule", class: "px-4 py-2 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer" %>
+  <% end %>
+</div>

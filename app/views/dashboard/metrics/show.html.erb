@@ -177,3 +177,23 @@
     </div>
   <% end %>
 </div>
+
+<%# Historical Charts (24h) %>
+<% if @metrics.any? %>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+    <div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 p-6">
+      <h3 class="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-4">CPU Usage (24h)</h3>
+      <%= line_chart @metrics.map { |m| [m.recorded_at, m.cpu_percent] },
+                     xtitle: "Time", ytitle: "CPU %",
+                     colors: ["#22C55E"],
+                     library: { scales: { y: { min: 0, max: 100 } } } %>
+    </div>
+    <div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 p-6">
+      <h3 class="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-4">Memory Usage (24h)</h3>
+      <%= line_chart @metrics.map { |m| [m.recorded_at, (m.memory_usage.to_f / 1024 / 1024).round(1)] },
+                     xtitle: "Time", ytitle: "MB",
+                     colors: ["#22C55E"],
+                     library: { scales: { y: { min: 0 } } } %>
+    </div>
+  </div>
+<% end %>

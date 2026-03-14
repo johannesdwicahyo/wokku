@@ -27,3 +27,8 @@ production:
     class: DnsVerificationSchedulerJob
     schedule: every 5 minutes
     queue: default
+
+  ssl_auto_renew:
+    class: SslAutoRenewJob
+    schedule: every day at 3am
+    queue: default
