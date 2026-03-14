@@ -29,6 +29,10 @@ class SyncServerJob < ApplicationJob
       sync_domains(dokku_domains, app_record)
     end
 
+    # Sync databases
+    dokku_databases = Dokku::Databases.new(client)
+    sync_databases(dokku_databases, server)
+
     server.app_records.update_all(synced_at: Time.current)
     server.update_column(:status, Server.statuses[:connected])
   rescue Dokku::Client::ConnectionError
@@ -50,5 +54,22 @@ class SyncServerJob < ApplicationJob
     end
   rescue => e
     Rails.logger.warn "Failed to sync domains for #{app_record.name}: #{e.message}"
+  end
+
+  def sync_databases(dokku_databases, server)
+    Dokku::Databases::SUPPORTED_TYPES.each do |service_type|
+      remote_names = dokku_databases.list(service_type)
+      local_names = server.database_services.where(service_type: service_type).pluck(:name)
+
+      (remote_names - local_names).each do |name|
+        server.database_services.create!(name: name, service_type: service_type, status: :running)
+      end
+
+      (local_names - remote_names).each do |name|
+        server.database_services.find_by(name: name, service_type: service_type)&.destroy
+      end
+    end
+  rescue => e
+    Rails.logger.warn "Failed to sync databases for server #{server.name}: #{e.message}"
   end
 end

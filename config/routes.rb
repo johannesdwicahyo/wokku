@@ -67,6 +67,11 @@ Rails.application.routes.draw do
 
   namespace :dashboard do
     resources :apps do
+      member do
+        post :restart
+        post :stop
+        post :start
+      end
       resources :config, only: [:index, :create, :update, :destroy], controller: "config"
       resources :domains, only: [:index, :create, :destroy], controller: "domains"
       resources :releases, only: [:index], controller: "releases" do
@@ -76,13 +81,19 @@ Rails.application.routes.draw do
       end
       resource :logs, only: [:show], controller: "logs"
       resource :metrics, only: [:show], controller: "metrics"
+      resource :scaling, only: [:show, :update], controller: "scaling"
     end
     resources :servers do
       member do
         post :sync
       end
     end
-    resources :databases
+    resources :databases do
+      member do
+        post :link
+        post :unlink
+      end
+    end
     resources :teams
     resource :profile, only: [:show, :edit, :update], controller: "profile"
   end

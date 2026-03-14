@@ -9,22 +9,89 @@
 <div class="flex items-center justify-between mb-6">
   <div class="flex items-center space-x-4">
     <h1 class="text-2xl font-bold text-white font-mono"><%= @database.name %></h1>
-    <span class="text-sm text-gray-400 font-mono"><%= @database.service_type %></span>
+    <span class="px-2 py-0.5 text-xs font-mono text-gray-400 bg-[#0B1120] border border-[#334155] rounded"><%= @database.service_type %></span>
+    <% case @database.status %>
+    <% when "running" %>
+      <span class="flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-green-400"></span><span class="text-xs text-gray-400">Running</span></span>
+    <% when "stopped" %>
+      <span class="flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-gray-500"></span><span class="text-xs text-gray-400">Stopped</span></span>
+    <% when "error" %>
+      <span class="flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-red-400"></span><span class="text-xs text-gray-400">Error</span></span>
+    <% end %>
   </div>
-  <%= link_to "Delete", dashboard_database_path(@database), data: { turbo_method: :delete, turbo_confirm: "Are you sure?" }, class: "text-sm text-red-400/70 hover:text-red-400 font-medium transition" %>
+  <%= link_to "Delete", dashboard_database_path(@database), data: { turbo_method: :delete, turbo_confirm: "Destroy #{@database.name}? This will delete all data." }, class: "text-sm text-red-400/70 hover:text-red-400 font-medium transition" %>
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<%# Info Cards %>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
   <div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 p-5">
-    <p class="text-xs text-gray-400 uppercase tracking-wider">Server</p>
-    <p class="mt-1 text-lg font-semibold text-white font-mono"><%= @database.server.name %></p>
+    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Server</p>
+    <p class="text-lg font-semibold text-white font-mono"><%= @database.server.name %></p>
   </div>
   <div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 p-5">
-    <p class="text-xs text-gray-400 uppercase tracking-wider">Type</p>
-    <p class="mt-1 text-lg font-semibold text-white font-mono"><%= @database.service_type.capitalize %></p>
+    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Type</p>
+    <p class="text-lg font-semibold text-white font-mono"><%= @database.service_type.capitalize %></p>
   </div>
   <div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 p-5">
-    <p class="text-xs text-gray-400 uppercase tracking-wider">Linked Apps</p>
-    <p class="mt-1 text-lg font-semibold text-white"><%= @database.app_records.size %></p>
+    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Linked Apps</p>
+    <p class="text-lg font-semibold text-white"><%= @linked_apps.size %></p>
   </div>
 </div>
+
+<%# Database Info from Dokku %>
+<% if @info.any? %>
+  <div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 overflow-hidden mb-6">
+    <div class="px-6 py-4 border-b border-[#334155]/50">
+      <h2 class="text-base font-semibold text-white">Connection Info</h2>
+    </div>
+    <div class="divide-y divide-[#334155]/50">
+      <% @info.each do |key, value| %>
+        <% next if value.blank? %>
+        <div class="px-6 py-3 flex items-center justify-between hover:bg-[#334155]/20 transition">
+          <span class="text-xs text-gray-500 uppercase tracking-wider"><%= key.humanize %></span>
+          <span class="text-sm text-gray-300 font-mono truncate ml-4 max-w-md text-right"><%= value %></span>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<%# Linked Apps %>
+<div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 overflow-hidden mb-6">
+  <div class="px-6 py-4 border-b border-[#334155]/50">
+    <h2 class="text-base font-semibold text-white">Linked Apps</h2>
+    <p class="text-sm text-gray-500 mt-1">Apps connected to this database</p>
+  </div>
+
+  <% if @linked_apps.any? %>
+    <div class="divide-y divide-[#334155]/50">
+      <% @linked_apps.each do |app| %>
+        <div class="px-6 py-3 flex items-center justify-between hover:bg-[#334155]/20 transition">
+          <div class="flex items-center space-x-3">
+            <span class="w-2 h-2 rounded-full bg-green-400"></span>
+            <%= link_to app.name, dashboard_app_path(app), class: "text-sm font-mono text-green-400 hover:text-green-300 transition" %>
+          </div>
+          <%= button_to "Unlink", unlink_dashboard_database_path(@database, app_id: app.id), method: :post, data: { turbo_confirm: "Unlink #{app.name} from #{@database.name}?" }, class: "text-xs text-red-400/70 hover:text-red-400 transition cursor-pointer" %>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="px-6 py-6 text-center">
+      <p class="text-sm text-gray-500">No apps linked yet.</p>
+    </div>
+  <% end %>
+</div>
+
+<%# Link App %>
+<% if @available_apps.any? %>
+  <div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 p-6">
+    <h3 class="text-sm font-semibold text-white mb-4">Link App</h3>
+    <%= form_with(url: link_dashboard_database_path(@database), method: :post, class: "flex items-end space-x-3") do |f| %>
+      <div class="flex-1">
+        <label class="block text-xs text-gray-400 uppercase tracking-wider mb-1">Application</label>
+        <%= f.select :app_id, @available_apps.map { |a| [a.name, a.id] }, { prompt: "Select an app" }, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white text-sm focus:ring-green-500 focus:border-green-500" %>
+      </div>
+      <%= f.submit "Link", class: "px-4 py-2 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer" %>
+    <% end %>
+  </div>
+<% end %>
