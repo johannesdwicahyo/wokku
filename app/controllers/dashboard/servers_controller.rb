@@ -1,9 +1,10 @@
 module Dashboard
   class ServersController < BaseController
-    before_action :set_server, only: [:show, :destroy]
+    before_action :set_server, only: [:show, :destroy, :sync]
 
     def index
       @servers = policy_scope(Server).includes(:app_records)
+      @server = Server.new
     end
 
     def show
@@ -22,8 +23,15 @@ module Dashboard
       if @server.save
         redirect_to dashboard_server_path(@server), notice: "Server added successfully."
       else
-        render :new, status: :unprocessable_entity
+        @servers = policy_scope(Server).includes(:app_records)
+        render :index, status: :unprocessable_entity
       end
+    end
+
+    def sync
+      authorize @server
+      SyncServerJob.perform_later(@server.id)
+      redirect_to dashboard_server_path(@server), notice: "Server sync started. Apps will appear shortly."
     end
 
     def destroy
@@ -39,7 +47,7 @@ module Dashboard
     end
 
     def server_params
-      params.require(:server).permit(:name, :host, :port, :ssh_user)
+      params.require(:server).permit(:name, :host, :port, :ssh_user, :ssh_private_key)
     end
   end
 end

@@ -1,19 +1,127 @@
 <%= render "dashboard/apps/tabs", app: @app %>
 
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-  <div class="bg-white rounded-xl border border-gray-200 p-6">
-    <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">CPU Usage</h3>
-    <%= line_chart @metrics.map { |m| [m.recorded_at, m.cpu_percent] },
-                   xtitle: "Time", ytitle: "CPU %",
-                   colors: ["#7c3aed"],
-                   library: { scales: { y: { min: 0, max: 100 } } } %>
+<%# Processes %>
+<div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 overflow-hidden mb-6">
+  <div class="px-6 py-4 border-b border-[#334155]/50 flex items-center justify-between">
+    <div>
+      <h2 class="text-base font-semibold text-white">Processes</h2>
+      <p class="text-sm text-gray-500 mt-1">Running containers for <span class="font-mono"><%= @app.name %></span></p>
+    </div>
+    <a href="<%= dashboard_app_metrics_path(@app) %>" data-turbo-action="replace" class="inline-flex items-center px-2.5 py-1 text-xs text-gray-400 border border-[#334155] rounded-md hover:border-green-500/50 hover:text-green-400 transition cursor-pointer">
+      <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+      Refresh
+    </a>
   </div>
 
-  <div class="bg-white rounded-xl border border-gray-200 p-6">
-    <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Memory Usage</h3>
-    <%= line_chart @metrics.map { |m| [m.recorded_at, (m.memory_usage.to_f / 1024 / 1024).round(1)] },
-                   xtitle: "Time", ytitle: "MB",
-                   colors: ["#2563eb"],
-                   library: { scales: { y: { min: 0 } } } %>
+  <% if @processes.any? %>
+    <div class="divide-y divide-[#334155]/50">
+      <% @processes.each do |proc| %>
+        <div class="px-6 py-4 flex items-center justify-between hover:bg-[#334155]/20 transition">
+          <div class="flex items-center space-x-4">
+            <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-[#0B1120] border border-[#334155]">
+              <% if proc[:type] == "web" %>
+                <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+              <% else %>
+                <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <% end %>
+            </div>
+            <div>
+              <span class="text-sm font-semibold text-white font-mono"><%= proc[:type] %>.<%= proc[:index] %></span>
+              <div class="flex items-center space-x-2 mt-0.5">
+                <span class="text-xs text-gray-500 font-mono">CID: <%= proc[:container_id] %></span>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <% if proc[:status] == "running" %>
+              <span class="w-2 h-2 rounded-full bg-green-400"></span>
+              <span class="text-xs text-green-400">Running</span>
+            <% else %>
+              <span class="w-2 h-2 rounded-full bg-red-400"></span>
+              <span class="text-xs text-red-400"><%= proc[:status].capitalize %></span>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="px-6 py-8 text-center">
+      <p class="text-sm text-gray-500">No running processes.</p>
+    </div>
+  <% end %>
+</div>
+
+<%# Resource Limits %>
+<div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 overflow-hidden mb-6">
+  <div class="px-6 py-4 border-b border-[#334155]/50">
+    <h2 class="text-base font-semibold text-white">Resource Limits</h2>
+    <p class="text-sm text-gray-500 mt-1">CPU and memory allocation</p>
+  </div>
+
+  <%
+    mem_limit = @resources["resource_limits_memory"] || @resources["resource_limits-memory"]
+    cpu_limit = @resources["resource_limits_cpu"] || @resources["resource_limits-cpu"]
+    mem_reserve = @resources["resource_reservation_memory"] || @resources["resource_reservation-memory"]
+    has_limits = [mem_limit, cpu_limit, mem_reserve].any? { |v| v.present? && v != "" }
+  %>
+
+  <% if has_limits %>
+    <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#334155]/50">
+      <div class="px-6 py-5 text-center">
+        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Memory Limit</p>
+        <p class="text-2xl font-bold text-white font-mono"><%= mem_limit.present? ? mem_limit : "—" %></p>
+      </div>
+      <div class="px-6 py-5 text-center">
+        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">CPU Shares</p>
+        <p class="text-2xl font-bold text-white font-mono"><%= cpu_limit.present? ? cpu_limit : "—" %></p>
+      </div>
+      <div class="px-6 py-5 text-center">
+        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Memory Reserved</p>
+        <p class="text-2xl font-bold text-white font-mono"><%= mem_reserve.present? ? mem_reserve : "—" %></p>
+      </div>
+    </div>
+  <% else %>
+    <div class="px-6 py-8 text-center">
+      <p class="text-sm text-gray-500">No resource limits configured. The app is using shared server resources.</p>
+    </div>
+  <% end %>
+</div>
+
+<%# Usage Charts %>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 p-6">
+    <h3 class="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-4">CPU Usage</h3>
+    <% if @metrics.any? %>
+      <%= line_chart @metrics.map { |m| [m.recorded_at, m.cpu_percent] },
+                     xtitle: "Time", ytitle: "CPU %",
+                     colors: ["#22C55E"],
+                     library: { scales: { y: { min: 0, max: 100 } } } %>
+    <% else %>
+      <div class="h-48 flex items-center justify-center">
+        <div class="text-center">
+          <svg class="mx-auto h-8 w-8 text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <p class="text-xs text-gray-500">No CPU data collected yet.</p>
+          <p class="text-xs text-gray-600 mt-1">Metrics are collected periodically.</p>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 p-6">
+    <h3 class="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-4">Memory Usage</h3>
+    <% if @metrics.any? %>
+      <%= line_chart @metrics.map { |m| [m.recorded_at, (m.memory_usage.to_f / 1024 / 1024).round(1)] },
+                     xtitle: "Time", ytitle: "MB",
+                     colors: ["#22C55E"],
+                     library: { scales: { y: { min: 0 } } } %>
+    <% else %>
+      <div class="h-48 flex items-center justify-center">
+        <div class="text-center">
+          <svg class="mx-auto h-8 w-8 text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <p class="text-xs text-gray-500">No memory data collected yet.</p>
+          <p class="text-xs text-gray-600 mt-1">Metrics are collected periodically.</p>
+        </div>
+      </div>
+    <% end %>
   </div>
 </div>

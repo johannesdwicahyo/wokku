@@ -1,20 +1,21 @@
-<nav class="bg-[#1a1a2e] border-b border-[#2d2d4a] px-4 py-3 flex items-center justify-between">
+<nav class="bg-[#0B1120] border-b border-[#1E293B] px-4 py-2.5 flex items-center justify-between">
   <div class="flex items-center space-x-6">
-    <%# Logo %>
-    <a href="<%= root_path %>" class="flex items-center space-x-2">
-      <span class="text-xl font-bold text-white tracking-tight">Wokku</span>
+    <a href="<%= root_path %>" class="flex items-center space-x-2 cursor-pointer">
+      <div class="w-6 h-6 bg-green-500 rounded flex items-center justify-center">
+        <svg class="w-3.5 h-3.5 text-[#0B1120]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </div>
+      <span class="text-base font-semibold text-white tracking-tight">wokku</span>
     </a>
 
-    <%# Team Selector %>
     <% if user_teams.any? %>
       <div class="relative" data-controller="dropdown">
-        <button data-action="click->dropdown#toggle" class="flex items-center space-x-2 text-gray-300 hover:text-white text-sm bg-[#2d2d4a] rounded-lg px-3 py-1.5 transition">
-          <span><%= current_team&.name || "Select Team" %></span>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        <button data-action="click->dropdown#toggle" class="flex items-center space-x-2 text-gray-400 hover:text-white text-sm bg-[#1E293B] rounded-md px-2.5 py-1 border border-[#334155] transition cursor-pointer">
+          <span class="font-mono text-xs"><%= current_team&.name || "Select Team" %></span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
-        <div data-dropdown-target="menu" class="hidden absolute left-0 mt-2 w-48 bg-[#2d2d4a] rounded-lg shadow-lg border border-[#3d3d5c] z-50">
+        <div data-dropdown-target="menu" class="hidden absolute left-0 mt-1 w-48 bg-[#1E293B] rounded-md shadow-xl border border-[#334155] z-50">
           <% user_teams.each do |team| %>
-            <a href="<%= root_path(team_id: team.id) %>" class="block px-4 py-2 text-sm text-gray-300 hover:bg-[#3d3d5c] hover:text-white first:rounded-t-lg last:rounded-b-lg">
+            <a href="<%= root_path(team_id: team.id) %>" class="block px-3 py-2 text-sm text-gray-300 hover:bg-[#334155] hover:text-white first:rounded-t-md last:rounded-b-md cursor-pointer transition">
               <%= team.name %>
             </a>
           <% end %>
@@ -23,21 +24,20 @@
     <% end %>
   </div>
 
-  <%# User Menu %>
   <div class="relative" data-controller="dropdown">
-    <button data-action="click->dropdown#toggle" class="flex items-center space-x-2 text-gray-300 hover:text-white text-sm transition">
-      <div class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+    <button data-action="click->dropdown#toggle" class="flex items-center space-x-2 text-gray-400 hover:text-white text-sm transition cursor-pointer">
+      <div class="w-7 h-7 bg-[#334155] rounded-md flex items-center justify-center text-green-400 text-xs font-mono font-semibold">
         <%= current_user.email[0].upcase %>
       </div>
-      <span class="hidden md:inline"><%= current_user.email %></span>
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+      <span class="hidden md:inline text-xs font-mono text-gray-400"><%= current_user.email %></span>
     </button>
-    <div data-dropdown-target="menu" class="hidden absolute right-0 mt-2 w-56 bg-[#2d2d4a] rounded-lg shadow-lg border border-[#3d3d5c] z-50">
-      <div class="px-4 py-3 border-b border-[#3d3d5c]">
-        <p class="text-sm text-white font-medium truncate"><%= current_user.email %></p>
+    <div data-dropdown-target="menu" class="hidden absolute right-0 mt-1 w-56 bg-[#1E293B] rounded-md shadow-xl border border-[#334155] z-50">
+      <div class="px-3 py-2.5 border-b border-[#334155]">
+        <p class="text-xs text-white font-medium truncate"><%= current_user.email %></p>
+        <p class="text-xs text-gray-500 font-mono mt-0.5"><%= current_user.role %></p>
       </div>
-      <a href="<%= dashboard_profile_path %>" class="block px-4 py-2 text-sm text-gray-300 hover:bg-[#3d3d5c] hover:text-white">Profile</a>
-      <%= link_to "Sign out", destroy_user_session_path, data: { turbo_method: :delete }, class: "block px-4 py-2 text-sm text-gray-300 hover:bg-[#3d3d5c] hover:text-white rounded-b-lg" %>
+      <a href="<%= dashboard_profile_path %>" class="block px-3 py-2 text-sm text-gray-300 hover:bg-[#334155] hover:text-white cursor-pointer transition">Profile</a>
+      <%= link_to "Sign out", destroy_user_session_path, data: { turbo_method: :delete }, class: "block px-3 py-2 text-sm text-gray-300 hover:bg-[#334155] hover:text-white rounded-b-md cursor-pointer transition" %>
     </div>
   </div>
 </nav>

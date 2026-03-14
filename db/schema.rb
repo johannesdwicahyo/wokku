@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_14_000007) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_14_034149) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -42,6 +42,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_14_000007) do
     t.datetime "created_at", null: false
     t.bigint "created_by_id", null: false
     t.string "deploy_branch", default: "main"
+    t.string "git_repository_url"
     t.string "name", null: false
     t.bigint "server_id", null: false
     t.integer "status", default: 0

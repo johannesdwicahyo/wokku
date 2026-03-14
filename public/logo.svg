@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40" width="160" height="40">
+  <!-- Icon: lightning bolt in rounded square -->
+  <rect x="2" y="2" width="36" height="36" rx="8" fill="#0B1120" stroke="#1E293B" stroke-width="1"/>
+  <path d="M23 6L13 21h6L16.5 34L27 19h-6z" fill="#22C55E"/>
+
+  <!-- "wokku" text -->
+  <text x="48" y="27" fill="#F1F5F9" font-family="'IBM Plex Sans', 'JetBrains Mono', 'SF Pro Display', system-ui, sans-serif" font-size="20" font-weight="600" letter-spacing="0.5">wokku</text>
+</svg>

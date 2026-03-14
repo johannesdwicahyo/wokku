@@ -1,15 +1,15 @@
 <% flash.each do |type, message| %>
   <%
     colors = case type
-             when "notice", "success" then "bg-green-50 border-green-400 text-green-800"
-             when "alert", "error" then "bg-red-50 border-red-400 text-red-800"
-             else "bg-blue-50 border-blue-400 text-blue-800"
+             when "notice", "success" then "bg-green-500/10 border-green-500/30 text-green-400"
+             when "alert", "error" then "bg-red-500/10 border-red-500/30 text-red-400"
+             else "bg-blue-500/10 border-blue-500/30 text-blue-400"
              end
   %>
-  <div data-controller="flash" data-flash-dismiss-after-value="5000" class="border-l-4 p-4 mb-4 rounded-r-lg <%= colors %>" role="alert">
+  <div data-controller="flash" data-flash-dismiss-after-value="5000" class="border rounded-md px-4 py-3 mb-6 <%= colors %>" role="alert">
     <div class="flex items-center justify-between">
       <p class="text-sm font-medium"><%= message %></p>
-      <button data-action="click->flash#dismiss" class="ml-4 text-current opacity-50 hover:opacity-100 transition">
+      <button data-action="click->flash#dismiss" class="ml-4 text-current opacity-50 hover:opacity-100 transition cursor-pointer" aria-label="Dismiss">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>

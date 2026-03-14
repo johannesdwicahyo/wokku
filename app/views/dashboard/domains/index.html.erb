@@ -1,22 +1,74 @@
 <%= render "dashboard/apps/tabs", app: @app %>
 
-<div class="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
-  <div class="px-6 py-4 border-b border-gray-200">
-    <h2 class="text-base font-semibold text-gray-900">Custom Domains</h2>
-    <p class="text-sm text-gray-500 mt-1">Domains pointing to <%= @app.name %></p>
+<%
+  # Separate the auto-assigned Wokku domain from custom domains
+  server_global_domain = @app.server.host # fallback
+  begin
+    # Try to detect the wokku subdomain pattern (e.g. app-name.mochi.wokku.dev)
+  rescue
+  end
+  wokku_domain = @domains.find { |d| d.hostname.end_with?(".wokku.dev") }
+  custom_domains = @domains.reject { |d| d.hostname.end_with?(".wokku.dev") }
+%>
+
+<%# Wokku Domain (auto-assigned) %>
+<div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 overflow-hidden mb-6">
+  <div class="px-6 py-4 border-b border-[#334155]/50">
+    <h2 class="text-base font-semibold text-white">Wokku Domain</h2>
+    <p class="text-sm text-gray-500 mt-1">Your app is available at this auto-assigned URL</p>
   </div>
 
-  <% if @domains.any? %>
-    <div class="divide-y divide-gray-200">
-      <% @domains.each do |domain| %>
-        <div class="px-6 py-3 flex items-center justify-between hover:bg-gray-50">
+  <% if wokku_domain %>
+    <div class="px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-green-500/10 border border-green-500/20">
+          <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+        </div>
+        <div>
+          <%= link_to "https://#{wokku_domain.hostname}", "https://#{wokku_domain.hostname}", target: "_blank", rel: "noopener", class: "text-sm font-medium text-green-400 font-mono hover:text-green-300 transition" %>
+          <div class="flex items-center space-x-2 mt-0.5">
+            <% if wokku_domain.ssl_enabled? %>
+              <span class="flex items-center space-x-1 text-xs text-green-400/70"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg><span>SSL</span></span>
+            <% end %>
+            <span class="text-xs text-gray-500">Auto-managed</span>
+          </div>
+        </div>
+      </div>
+      <%= link_to "https://#{wokku_domain.hostname}", target: "_blank", rel: "noopener", class: "inline-flex items-center px-3 py-1.5 bg-[#0B1120] border border-[#334155] text-sm text-gray-300 rounded-md hover:border-green-500/50 hover:text-green-400 transition" do %>
+        <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        Open App
+      <% end %>
+    </div>
+  <% else %>
+    <div class="px-6 py-4 text-sm text-gray-500">
+      No Wokku domain assigned. Sync the server to detect domains.
+    </div>
+  <% end %>
+</div>
+
+<%# Custom Domains %>
+<div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 overflow-hidden mb-6">
+  <div class="px-6 py-4 border-b border-[#334155]/50">
+    <h2 class="text-base font-semibold text-white">Custom Domains</h2>
+    <p class="text-sm text-gray-500 mt-1">Domains pointing to <span class="font-mono"><%= @app.name %></span></p>
+  </div>
+
+  <% if custom_domains.any? %>
+    <div class="divide-y divide-[#334155]/50">
+      <% custom_domains.each do |domain| %>
+        <div class="px-6 py-3 flex items-center justify-between hover:bg-[#334155]/20">
           <div class="flex items-center space-x-3">
-            <span class="text-sm font-medium text-gray-900"><%= domain.hostname %></span>
+            <span class="text-sm font-medium text-white font-mono"><%= domain.hostname %></span>
             <% if domain.ssl_enabled? %>
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">SSL</span>
+              <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-green-400"></span><span class="text-xs text-gray-400">SSL</span></span>
+            <% end %>
+            <% if domain.dns_verified? %>
+              <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-green-400"></span><span class="text-xs text-gray-400">Verified</span></span>
+            <% else %>
+              <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-yellow-500"></span><span class="text-xs text-gray-400">Pending DNS</span></span>
             <% end %>
           </div>
-          <%= link_to "Remove", dashboard_app_domain_path(@app, domain), data: { turbo_method: :delete, turbo_confirm: "Remove #{domain.hostname}?" }, class: "text-sm text-red-600 hover:text-red-800 transition" %>
+          <%= link_to "Remove", dashboard_app_domain_path(@app, domain), data: { turbo_method: :delete, turbo_confirm: "Remove #{domain.hostname}?" }, class: "text-sm text-red-400/70 hover:text-red-400 transition" %>
         </div>
       <% end %>
     </div>
@@ -27,13 +79,15 @@
   <% end %>
 </div>
 
-<div class="bg-white rounded-xl border border-gray-200 p-6">
-  <h3 class="text-sm font-semibold text-gray-900 mb-4">Add Domain</h3>
+<%# Add Domain %>
+<div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 p-6">
+  <h3 class="text-sm font-semibold text-white mb-1">Add Domain</h3>
+  <p class="text-xs text-gray-500 mb-4">Point a CNAME record to <span class="font-mono text-gray-400"><%= wokku_domain&.hostname || "#{@app.name}.mochi.wokku.dev" %></span> then add the hostname below.</p>
   <%= form_with(model: Domain.new, url: dashboard_app_domains_path(@app), class: "flex items-end space-x-3") do |f| %>
     <div class="flex-1">
-      <%= f.label :hostname, class: "block text-sm font-medium text-gray-700 mb-1" %>
-      <%= f.text_field :hostname, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 text-sm", placeholder: "app.example.com" %>
+      <%= f.label :hostname, class: "block text-xs text-gray-400 uppercase tracking-wider mb-1" %>
+      <%= f.text_field :hostname, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white font-mono text-sm focus:ring-green-500 focus:border-green-500", placeholder: "app.example.com" %>
     </div>
-    <%= f.submit "Add", class: "px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition shadow-sm cursor-pointer" %>
+    <%= f.submit "Add", class: "px-4 py-2 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer" %>
   <% end %>
 </div>

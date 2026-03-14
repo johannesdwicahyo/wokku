@@ -1,61 +1,79 @@
-<div class="flex items-center justify-between mb-8">
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900">Servers</h1>
-    <p class="mt-1 text-sm text-gray-500">Manage your Dokku servers</p>
+<div data-controller="slide-panel">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-xl font-semibold text-white">Servers</h1>
+      <p class="mt-0.5 text-sm text-gray-500">Manage your Dokku servers</p>
+    </div>
+    <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer">
+      <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      Add Server
+    </button>
   </div>
-  <%= link_to new_dashboard_server_path, class: "inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition shadow-sm" do %>
-    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-    Add Server
+
+  <% if @servers.any? %>
+    <div class="bg-[#1E293B]/60 rounded-lg border border-[#334155]/50 overflow-hidden">
+      <table class="min-w-full">
+        <thead>
+          <tr class="border-b border-[#334155]/50">
+            <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+            <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Host</th>
+            <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Apps</th>
+            <th class="px-4 py-2.5"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @servers.each do |server| %>
+            <tr class="border-b border-[#334155]/30 last:border-b-0 hover:bg-[#334155]/20 transition">
+              <td class="px-4 py-3">
+                <%= link_to server.name, dashboard_server_path(server), class: "text-sm font-semibold text-white font-mono hover:text-green-400 transition cursor-pointer" %>
+              </td>
+              <td class="px-4 py-3 text-sm text-gray-400 font-mono"><%= server.host %>:<%= server.port %></td>
+              <td class="px-4 py-3">
+                <% case server.status %>
+                <% when "connected" %>
+                  <span class="inline-flex items-center space-x-1 text-xs text-green-400">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+                    <span>Connected</span>
+                  </span>
+                <% when "unreachable" %>
+                  <span class="inline-flex items-center space-x-1 text-xs text-red-400">
+                    <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+                    <span>Unreachable</span>
+                  </span>
+                <% when "auth_failed" %>
+                  <span class="inline-flex items-center space-x-1 text-xs text-orange-800">
+                    <span class="w-1.5 h-1.5 rounded-full bg-orange-800"></span>
+                    <span>Auth Failed</span>
+                  </span>
+                <% when "syncing" %>
+                  <span class="inline-flex items-center space-x-1 text-xs text-yellow-500">
+                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span>
+                    <span>Syncing</span>
+                  </span>
+                <% end %>
+              </td>
+              <td class="px-4 py-3 text-sm text-gray-400 font-mono"><%= server.app_records.size %></td>
+              <td class="px-4 py-3 text-right">
+                <%= link_to "View", dashboard_server_path(server), class: "text-xs text-gray-500 hover:text-green-400 transition cursor-pointer" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="text-center py-16 bg-[#1E293B]/40 rounded-lg border border-[#334155]/30">
+      <svg class="mx-auto h-10 w-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
+      <h3 class="mt-3 text-sm font-medium text-gray-300">No servers yet</h3>
+      <p class="mt-1 text-xs text-gray-500">Connect your first Dokku server to get started.</p>
+      <div class="mt-4">
+        <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer">Add Server</button>
+      </div>
+    </div>
+  <% end %>
+
+  <%= render layout: "dashboard/shared/slide_panel", locals: { title: "Add Server", subtitle: "Connect a Dokku server via SSH" } do %>
+    <%= render "form", server: @server %>
   <% end %>
 </div>
-
-<% if @servers.any? %>
-  <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Host</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Apps</th>
-          <th class="px-6 py-3"></th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-200">
-        <% @servers.each do |server| %>
-          <tr class="hover:bg-gray-50 transition">
-            <td class="px-6 py-4">
-              <%= link_to server.name, dashboard_server_path(server), class: "text-sm font-medium text-purple-600 hover:text-purple-800" %>
-            </td>
-            <td class="px-6 py-4 text-sm text-gray-500"><%= server.host %>:<%= server.port %></td>
-            <td class="px-6 py-4">
-              <% case server.status %>
-              <% when "connected" %>
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Connected</span>
-              <% when "unreachable" %>
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Unreachable</span>
-              <% when "auth_failed" %>
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">Auth Failed</span>
-              <% when "syncing" %>
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Syncing</span>
-              <% end %>
-            </td>
-            <td class="px-6 py-4 text-sm text-gray-500"><%= server.app_records.size %></td>
-            <td class="px-6 py-4 text-right">
-              <%= link_to "View", dashboard_server_path(server), class: "text-sm text-purple-600 hover:text-purple-800" %>
-            </td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </div>
-<% else %>
-  <div class="text-center py-16 bg-white rounded-xl border border-gray-200">
-    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/></svg>
-    <h3 class="mt-4 text-lg font-medium text-gray-900">No servers yet</h3>
-    <p class="mt-2 text-sm text-gray-500">Connect your first Dokku server to get started.</p>
-    <div class="mt-6">
-      <%= link_to "Add Server", new_dashboard_server_path, class: "inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition" %>
-    </div>
-  </div>
-<% end %>

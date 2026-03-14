@@ -1,0 +1,29 @@
+<%# Usage: render "dashboard/shared/slide_panel", title: "Add Server", subtitle: "Connect via SSH" do %>
+<%#   form content here %>
+<%# end %>
+
+<%# Backdrop %>
+<div data-slide-panel-target="backdrop"
+     data-action="click->slide-panel#backdropClick"
+     class="hidden fixed inset-0 z-40 bg-black/50 opacity-0 transition-opacity duration-300">
+</div>
+
+<%# Panel %>
+<div data-slide-panel-target="panel"
+     class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-[#0F1629] border-l border-[#1E293B] shadow-2xl transform translate-x-full transition-transform duration-300 ease-out overflow-y-auto">
+  <div class="flex items-center justify-between px-6 py-4 border-b border-[#1E293B]">
+    <div>
+      <h2 class="text-base font-semibold text-white"><%= title %></h2>
+      <% if local_assigns[:subtitle] %>
+        <p class="mt-0.5 text-xs text-gray-500"><%= subtitle %></p>
+      <% end %>
+    </div>
+    <button data-action="click->slide-panel#close" class="text-gray-500 hover:text-white transition cursor-pointer p-1" aria-label="Close panel">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+  </div>
+
+  <div class="px-6 py-5">
+    <%= yield %>
+  </div>
+</div>

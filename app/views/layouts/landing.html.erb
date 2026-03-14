@@ -12,28 +12,40 @@
 
     <%= yield :head %>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
+
+    <style>
+      body { font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+      .font-mono, code, pre { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    </style>
   </head>
 
-  <body class="h-full bg-white">
-    <nav class="bg-white border-b border-gray-100">
+  <body class="h-full bg-[#0B1120]">
+    <nav class="border-b border-[#1E293B]">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16 items-center">
-          <div class="flex items-center">
-            <%= link_to root_path, class: "text-xl font-bold text-indigo-600" do %>
-              Wokku
+        <div class="flex justify-between h-14 items-center">
+          <div class="flex items-center space-x-2">
+            <div class="w-6 h-6 bg-green-500 rounded flex items-center justify-center">
+              <svg class="w-3.5 h-3.5 text-[#0B1120]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </div>
+            <%= link_to root_path, class: "text-base font-semibold text-white tracking-tight cursor-pointer" do %>
+              wokku
             <% end %>
           </div>
           <div class="flex items-center space-x-6">
-            <%= link_to "Pricing", pricing_path, class: "text-gray-600 hover:text-gray-900" %>
-            <%= link_to "Docs", docs_path, class: "text-gray-600 hover:text-gray-900" %>
-            <%= link_to "Log in", new_user_session_path, class: "text-gray-600 hover:text-gray-900" %>
-            <%= link_to "Sign up", new_user_registration_path, class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700" %>
+            <%= link_to "Pricing", pricing_path, class: "text-sm text-gray-400 hover:text-white transition cursor-pointer" %>
+            <%= link_to "Docs", docs_path, class: "text-sm text-gray-400 hover:text-white transition cursor-pointer" %>
+            <%= link_to "Log in", new_user_session_path, class: "text-sm text-gray-400 hover:text-white transition cursor-pointer" %>
+            <%= link_to "Sign up", new_user_registration_path, class: "inline-flex items-center px-3 py-1.5 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer" %>
           </div>
         </div>
       </div>
@@ -43,13 +55,13 @@
       <%= yield %>
     </main>
 
-    <footer class="bg-gray-50 border-t border-gray-100">
-      <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+    <footer class="border-t border-[#1E293B]">
+      <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center">
-          <p class="text-gray-400 text-sm">&copy; <%= Date.current.year %> Wokku. All rights reserved.</p>
+          <p class="text-gray-600 text-xs">&copy; <%= Date.current.year %> Wokku. All rights reserved.</p>
           <div class="flex space-x-6">
-            <%= link_to "Pricing", pricing_path, class: "text-gray-400 hover:text-gray-600 text-sm" %>
-            <%= link_to "Docs", docs_path, class: "text-gray-400 hover:text-gray-600 text-sm" %>
+            <%= link_to "Pricing", pricing_path, class: "text-gray-600 hover:text-gray-400 text-xs transition cursor-pointer" %>
+            <%= link_to "Docs", docs_path, class: "text-gray-600 hover:text-gray-400 text-xs transition cursor-pointer" %>
           </div>
         </div>
       </div>

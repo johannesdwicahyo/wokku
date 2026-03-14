@@ -67,13 +67,21 @@ Rails.application.routes.draw do
 
   namespace :dashboard do
     resources :apps do
-      resources :config, only: [:index], controller: "config"
+      resources :config, only: [:index, :create, :update, :destroy], controller: "config"
       resources :domains, only: [:index, :create, :destroy], controller: "domains"
-      resources :releases, only: [:index], controller: "releases"
+      resources :releases, only: [:index], controller: "releases" do
+        collection do
+          post :deploy
+        end
+      end
       resource :logs, only: [:show], controller: "logs"
       resource :metrics, only: [:show], controller: "metrics"
     end
-    resources :servers
+    resources :servers do
+      member do
+        post :sync
+      end
+    end
     resources :databases
     resources :teams
     resource :profile, only: [:show, :edit, :update], controller: "profile"

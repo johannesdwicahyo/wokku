@@ -1,20 +1,36 @@
 <%= render "dashboard/apps/tabs", app: @app %>
 
-<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-  <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+<div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 overflow-hidden">
+  <div class="px-6 py-4 border-b border-[#334155]/50 flex items-center justify-between">
     <div>
-      <h2 class="text-base font-semibold text-gray-900">Application Logs</h2>
-      <p class="text-sm text-gray-500 mt-1">Real-time log stream for <%= @app.name %></p>
+      <h2 class="text-base font-semibold text-white">Application Logs</h2>
+      <p class="text-sm text-gray-500 mt-1">Recent logs for <span class="font-mono"><%= @app.name %></span></p>
     </div>
-    <div class="flex items-center space-x-2">
-      <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-      <span class="text-xs text-gray-500">Live</span>
+    <div class="flex items-center space-x-3">
+      <a href="<%= dashboard_app_logs_path(@app) %>" data-turbo-action="replace" class="inline-flex items-center px-2.5 py-1 text-xs text-gray-400 border border-[#334155] rounded-md hover:border-green-500/50 hover:text-green-400 transition cursor-pointer">
+        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        Refresh
+      </a>
     </div>
   </div>
 
-  <div data-controller="log-stream" data-log-stream-app-id-value="<%= @app.id %>"
-       class="bg-[#0d1117] p-4 font-mono text-xs text-green-400 h-[500px] overflow-y-auto"
-       data-log-stream-target="output">
-    <p class="text-gray-500">Connecting to log stream...</p>
+  <div class="bg-[#0B1120] p-4 font-mono text-xs leading-5 h-[600px] overflow-y-auto" id="log-output">
+    <% if @logs.present? %>
+      <% @logs.each_line do |line| %>
+        <div class="<%= log_line_class(line) %> whitespace-pre-wrap break-all"><%= line.rstrip %></div>
+      <% end %>
+    <% else %>
+      <p class="text-gray-600">No logs available. The app may not have been deployed yet.</p>
+    <% end %>
   </div>
 </div>
+
+<script>
+  // Auto-scroll to bottom on load
+  document.addEventListener("turbo:load", function() {
+    const output = document.getElementById("log-output");
+    if (output) output.scrollTop = output.scrollHeight;
+  });
+  const output = document.getElementById("log-output");
+  if (output) output.scrollTop = output.scrollHeight;
+</script>

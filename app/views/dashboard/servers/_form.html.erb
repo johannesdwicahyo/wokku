@@ -1,0 +1,43 @@
+<%= form_with(model: server, url: dashboard_servers_path, class: "space-y-4") do |f| %>
+  <% if server.errors.any? %>
+    <div class="rounded-md bg-red-500/10 border border-red-500/20 p-3">
+      <ul class="text-xs text-red-400 space-y-1">
+        <% server.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= f.label :name, class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
+    <%= f.text_field :name, class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 font-mono", placeholder: "production" %>
+  </div>
+
+  <div>
+    <%= f.label :host, class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
+    <%= f.text_field :host, class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 font-mono", placeholder: "dokku.example.com" %>
+  </div>
+
+  <div class="grid grid-cols-2 gap-3">
+    <div>
+      <%= f.label :port, class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
+      <%= f.number_field :port, class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 font-mono", value: server.port || 22 %>
+    </div>
+    <div>
+      <%= f.label :ssh_user, "SSH User", class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
+      <%= f.text_field :ssh_user, class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 font-mono", value: server.ssh_user || "dokku" %>
+    </div>
+  </div>
+
+  <div>
+    <%= f.label :ssh_private_key, "SSH Private Key", class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
+    <%= f.text_area :ssh_private_key, class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 font-mono text-xs", rows: 5, placeholder: "-----BEGIN OPENSSH PRIVATE KEY-----\n..." %>
+    <p class="mt-1 text-xs text-gray-600">Stored encrypted at rest</p>
+  </div>
+
+  <div class="flex items-center space-x-3 pt-2">
+    <%= f.submit "Add Server", class: "flex-1 py-2 px-4 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer text-center" %>
+    <button type="button" data-action="click->slide-panel#close" class="py-2 px-4 text-sm text-gray-400 hover:text-white transition cursor-pointer">Cancel</button>
+  </div>
+<% end %>
