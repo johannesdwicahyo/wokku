@@ -4,9 +4,9 @@ module Dashboard
 
     def show
       authorize @app, :show?
-      @metrics = @app.metrics.order(recorded_at: :asc).limit(100)
       @processes = fetch_processes
       @resources = fetch_resources
+      @container_stats = fetch_container_stats
     end
 
     private
@@ -51,6 +51,41 @@ module Dashboard
     rescue => e
       Rails.logger.warn "Failed to fetch resources for #{@app.name}: #{e.message}"
       {}
+    end
+
+    def fetch_container_stats
+      server = @app.server
+      output = Net::SSH.start(
+        server.host,
+        "root",
+        port: server.port,
+        non_interactive: true,
+        timeout: 10
+      ) do |ssh|
+        ssh.exec!("docker stats --no-stream --format '{{json .}}'")
+      end
+
+      stats = []
+      output.to_s.each_line do |line|
+        data = JSON.parse(line)
+        container_name = data["Name"]
+        # Match containers belonging to this app (e.g. "myapp.web.1")
+        next unless container_name.start_with?("#{@app.name}.")
+
+        stats << {
+          name: container_name,
+          cpu_percent: data["CPUPerc"].to_f,
+          mem_usage: data["MemUsage"],
+          mem_percent: data["MemPerc"].to_f,
+          net_io: data["NetIO"],
+          block_io: data["BlockIO"],
+          pids: data["PIDs"]
+        }
+      end
+      stats
+    rescue => e
+      Rails.logger.warn "Failed to fetch container stats for #{@app.name}: #{e.message}"
+      []
     end
   end
 end
