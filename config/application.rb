@@ -16,6 +16,17 @@ module Wokku
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
 
+    # Enterprise Edition autoloading
+    if File.directory?(Rails.root.join("ee"))
+      %w[app/models app/controllers app/policies app/services app/jobs app/mailers].each do |path|
+        full = Rails.root.join("ee", path)
+        config.autoload_paths << full.to_s if full.exist?
+        config.eager_load_paths << full.to_s if full.exist?
+      end
+      config.paths["app/views"].unshift(Rails.root.join("ee/app/views").to_s)
+      config.paths["db/migrate"] << Rails.root.join("ee/db/migrate").to_s if File.directory?(Rails.root.join("ee/db/migrate"))
+    end
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files

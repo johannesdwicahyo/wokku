@@ -12,7 +12,6 @@ class AppRecord < ApplicationRecord
   has_many :database_services, through: :app_databases
   has_many :metrics, dependent: :destroy
   has_many :notifications, dependent: :destroy
-  has_many :dyno_allocations, dependent: :destroy
 
   enum :status, { running: 0, stopped: 1, crashed: 2, deploying: 3, sleeping: 4 }
 

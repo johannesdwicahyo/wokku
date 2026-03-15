@@ -34,7 +34,6 @@ Rails.application.routes.draw do
           end
         end
         resource :ps, only: [:show, :update], controller: "ps"
-        resources :dynos, only: [:index, :update], controller: "dynos"
         resources :logs, only: [:index]
       end
 
@@ -52,17 +51,7 @@ Rails.application.routes.draw do
       end
 
       resources :notifications, only: [:index, :create, :destroy]
-
-      resource :billing, only: [], controller: "billing" do
-        get :current_plan
-        post :create_checkout
-        post :portal
-      end
     end
-  end
-
-  namespace :webhooks do
-    post :stripe, to: "stripe#create"
   end
 
   namespace :dashboard do
@@ -100,9 +89,12 @@ Rails.application.routes.draw do
     end
     resources :teams
     resources :notifications, only: [:index, :create, :destroy]
-    resource :billing, only: [:show], controller: "billing"
     resource :profile, only: [:show, :edit, :update], controller: "profile"
   end
+
+  # Load Enterprise Edition routes if available
+  ee_routes = Rails.root.join("ee/config/routes/ee.rb")
+  instance_eval(File.read(ee_routes)) if ee_routes.exist?
 
   # Marketing pages
   get "/pricing", to: "pages#pricing"
