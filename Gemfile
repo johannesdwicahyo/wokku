@@ -56,7 +56,7 @@ gem "chartkick"
 gem "groupdate"
 
 # Billing
-gem "pay", "~> 7.0"
+gem "pay", "~> 11.4"
 gem "stripe", "~> 12.0"
 
 # API
