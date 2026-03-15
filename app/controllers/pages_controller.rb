@@ -12,7 +12,7 @@ class PagesController < ApplicationController
   end
 
   def pricing
-    @plans = Plan.order(:price_cents_per_month)
+    @plans = Wokku.ee? && defined?(Plan) ? Plan.order(:price_cents_per_month) : []
   end
 
   def docs

@@ -55,10 +55,6 @@ gem "redis"
 gem "chartkick"
 gem "groupdate"
 
-# Billing
-gem "pay", "~> 7.0"
-gem "stripe", "~> 12.0"
-
 # API
 gem "rack-cors"
 
