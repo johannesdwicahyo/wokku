@@ -1,9 +1,6 @@
 module Api
   module V1
     class AppsController < BaseController
-      include PlanEnforceable
-
-      before_action :enforce_app_limit!, only: [:create]
 
       def index
         apps = policy_scope(AppRecord)

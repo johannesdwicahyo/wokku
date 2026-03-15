@@ -11,9 +11,9 @@ class NotifyJob < ApplicationJob
     when "email"
       NotificationMailer.deploy_notification(notification, deploy, event).deliver_later
     when "slack"
-      send_slack(notification, deploy, event)
+      send_slack(notification, deploy, event) if Wokku.ee?
     when "webhook"
-      send_webhook(notification, deploy, event)
+      send_webhook(notification, deploy, event) if Wokku.ee?
     end
   end
 

@@ -18,11 +18,6 @@ production:
     schedule: every 1 minute
     queue: metrics
 
-  idle_check:
-    class: IdleCheckJob
-    schedule: every 5 minutes
-    queue: default
-
   dns_verification:
     class: DnsVerificationSchedulerJob
     schedule: every 5 minutes

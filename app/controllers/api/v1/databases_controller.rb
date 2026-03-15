@@ -1,9 +1,6 @@
 module Api
   module V1
     class DatabasesController < BaseController
-      include PlanEnforceable
-
-      before_action :enforce_database_limit!, only: [:create]
 
       def index
         databases = policy_scope(DatabaseService)
