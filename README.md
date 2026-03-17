@@ -1,6 +1,6 @@
 # Wokku
 
-**Open-source Heroku alternative built on [Dokku](https://dokku.com).** Deploy apps with `git push`, manage databases, domains, SSL, scaling, and metrics — all from a beautiful dashboard, REST API, or CLI.
+**Web UI for [Dokku](https://dokku.com).** Open-source Heroku alternative — deploy apps with `git push`, manage databases, domains, SSL, scaling, and metrics from a beautiful dashboard, REST API, or CLI.
 
 > Self-host your own PaaS on any VPS. No vendor lock-in.
 
