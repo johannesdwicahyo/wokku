@@ -5,8 +5,6 @@
 # docker build -t wokku .
 # docker run -d -p 80:80 -e RAILS_MASTER_KEY=<value from config/master.key> --name wokku wokku
 
-# For a containerized dev environment, see Dev Containers: https://guides.rubyonrails.org/getting_started_with_devcontainer.html
-
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version
 ARG RUBY_VERSION=3.4.3
 FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
@@ -35,27 +33,33 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential git libpq-dev libyaml-dev pkg-config nodejs && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# Install application gems
+# Enterprise Edition: clone into /tmp/ee first, copy in as needed
+ARG WOKKU_EE_TOKEN=""
+RUN if [ -n "$WOKKU_EE_TOKEN" ]; then \
+    git clone https://${WOKKU_EE_TOKEN}@github.com/johannesdwicahyo/wokku-ee.git /tmp/ee && \
+    rm -rf /tmp/ee/.git; \
+    fi
+
+# Install application gems (copy EE Gemfile.ee if available)
 COPY vendor/* ./vendor/
 COPY Gemfile Gemfile.lock ./
+RUN if [ -d /tmp/ee ]; then cp /tmp/ee/Gemfile.ee ee/Gemfile.ee; mkdir -p ee; cp /tmp/ee/Gemfile.ee ee/Gemfile.ee; fi
 
 RUN bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
-    # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
     bundle exec bootsnap precompile -j 1 --gemfile
 
 # Copy application code
 COPY . .
 
+# Copy EE code into the app after COPY . .
+RUN if [ -d /tmp/ee ]; then cp -r /tmp/ee ee; fi
+
 # Precompile bootsnap code for faster boot times.
-# -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
 RUN bundle exec bootsnap precompile -j 1 app/ lib/
 
 # Precompiling assets for production without requiring secret RAILS_MASTER_KEY
 RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
-
-
-
 
 # Final stage for app image
 FROM base
