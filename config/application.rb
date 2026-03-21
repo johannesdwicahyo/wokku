@@ -25,9 +25,14 @@ module Wokku
     if File.directory?(Rails.root.join("ee"))
       %w[app/models app/controllers app/policies app/services app/jobs app/mailers].each do |path|
         full = Rails.root.join("ee", path)
-        config.autoload_paths << full.to_s if full.exist?
-        config.eager_load_paths << full.to_s if full.exist?
+        if full.exist?
+          config.autoload_paths << full.to_s
+          config.eager_load_paths << full.to_s
+        end
       end
+      # Collapse concerns/ subdirectories so Zeitwerk doesn't namespace them
+      Rails.autoloaders.main.collapse(Rails.root.join("ee/app/models/concerns").to_s)
+      Rails.autoloaders.main.collapse(Rails.root.join("ee/app/controllers/concerns").to_s)
       config.paths["app/views"].unshift(Rails.root.join("ee/app/views").to_s)
       config.paths["db/migrate"] << Rails.root.join("ee/db/migrate").to_s if File.directory?(Rails.root.join("ee/db/migrate"))
     end
