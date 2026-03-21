@@ -35,6 +35,8 @@ module Wokku
       Rails.autoloaders.main.collapse(Rails.root.join("ee/app/controllers/concerns").to_s)
       config.paths["app/views"].unshift(Rails.root.join("ee/app/views").to_s)
       config.paths["db/migrate"] << Rails.root.join("ee/db/migrate").to_s if File.directory?(Rails.root.join("ee/db/migrate"))
+      # Load EE initializers
+      config.paths["config/initializers"] << Rails.root.join("ee/config/initializers").to_s
     end
 
     # Configuration for the application, engines, and railties goes here.
