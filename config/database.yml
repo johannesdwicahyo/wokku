@@ -90,6 +90,7 @@ production:
     database: wokku_production
     username: wokku
     password: <%= ENV["WOKKU_DATABASE_PASSWORD"] %>
+    host: <%= ENV.fetch("DB_HOST", "localhost") %>
   cache:
     <<: *primary_production
     database: wokku_production_cache
