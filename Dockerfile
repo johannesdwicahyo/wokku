@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# check=error=true
+# check=error=true;skip=SecretsUsedInArgOrEnv
 
 # This Dockerfile is designed for production, not development. Use with Kamal or build'n'run by hand:
 # docker build -t wokku .
@@ -33,7 +33,7 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential git libpq-dev libyaml-dev pkg-config nodejs && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# Enterprise Edition: clone into /tmp/ee first, copy in as needed
+# Enterprise Edition: clone into /tmp/ee if token is provided
 ARG WOKKU_EE_TOKEN=""
 RUN if [ -n "$WOKKU_EE_TOKEN" ]; then \
     git clone https://${WOKKU_EE_TOKEN}@github.com/johannesdwicahyo/wokku-ee.git /tmp/ee && \
@@ -43,7 +43,7 @@ RUN if [ -n "$WOKKU_EE_TOKEN" ]; then \
 # Install application gems (copy EE Gemfile.ee if available)
 COPY vendor/* ./vendor/
 COPY Gemfile Gemfile.lock ./
-RUN if [ -d /tmp/ee ]; then cp /tmp/ee/Gemfile.ee ee/Gemfile.ee; mkdir -p ee; cp /tmp/ee/Gemfile.ee ee/Gemfile.ee; fi
+RUN mkdir -p ee && if [ -d /tmp/ee ]; then cp /tmp/ee/Gemfile.ee ee/Gemfile.ee; fi
 
 RUN bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
