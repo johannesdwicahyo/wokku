@@ -7,6 +7,11 @@ require "rails/all"
 Bundler.require(*Rails.groups)
 
 module Wokku
+  def self.ee?
+    @ee = File.directory?(Rails.root.join("ee")) unless defined?(@ee)
+    @ee
+  end
+
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.1
