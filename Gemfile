@@ -58,6 +58,9 @@ gem "groupdate"
 # API
 gem "rack-cors"
 
+# Enterprise Edition (loaded when ee/ directory exists)
+eval_gemfile "ee/Gemfile.ee" if File.exist?(File.expand_path("ee/Gemfile.ee", __dir__))
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
