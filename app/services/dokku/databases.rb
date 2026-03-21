@@ -1,6 +1,6 @@
 module Dokku
   class Databases
-    SUPPORTED_TYPES = %w[postgres redis mysql mongodb memcached rabbitmq].freeze
+    SUPPORTED_TYPES = %w[postgres redis mysql mongodb memcached rabbitmq elasticsearch mariadb minio].freeze
 
     def initialize(client)
       @client = client

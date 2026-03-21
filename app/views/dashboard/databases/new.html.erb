@@ -22,7 +22,7 @@
 
     <div>
       <%= f.label :service_type, "Type", class: "block text-xs text-gray-400 uppercase tracking-wider mb-1" %>
-      <%= f.select :service_type, %w[postgres redis mysql mongodb memcached rabbitmq].map { |t| [t.capitalize, t] }, { prompt: "Select type" }, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white text-sm focus:ring-green-500 focus:border-green-500" %>
+      <%= f.select :service_type, %w[postgres redis mysql mongodb memcached rabbitmq elasticsearch mariadb minio].map { |t| [t.capitalize, t] }, { prompt: "Select type" }, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white text-sm focus:ring-green-500 focus:border-green-500" %>
     </div>
 
     <div>

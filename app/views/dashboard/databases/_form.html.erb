@@ -16,7 +16,7 @@
 
   <div>
     <%= f.label :service_type, "Service Type", class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
-    <%= f.select :service_type, [["PostgreSQL", "postgres"], ["Redis", "redis"], ["MySQL", "mysql"], ["MongoDB", "mongodb"], ["Memcached", "memcached"], ["RabbitMQ", "rabbitmq"]], { prompt: "Select a service type" }, class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500" %>
+    <%= f.select :service_type, [["PostgreSQL", "postgres"], ["Redis", "redis"], ["MySQL", "mysql"], ["MongoDB", "mongodb"], ["Memcached", "memcached"], ["RabbitMQ", "rabbitmq"], ["Elasticsearch", "elasticsearch"], ["MariaDB", "mariadb"], ["MinIO", "minio"]], { prompt: "Select a service type" }, class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500" %>
   </div>
 
   <div>
