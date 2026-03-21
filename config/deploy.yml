@@ -3,7 +3,8 @@ image: johannesdwicahyo/wokku
 
 servers:
   web:
-    - 43.159.57.11
+    hosts:
+      - 43.159.57.11
     options:
       network: "kamal"
 
@@ -33,7 +34,11 @@ volumes:
 
 asset_path: /rails/public/assets
 
+ssh:
+  user: deploy
+
 builder:
+  remote: ssh://deploy@43.159.57.11
   arch: amd64
 
 aliases:
