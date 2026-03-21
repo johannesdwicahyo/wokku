@@ -53,7 +53,7 @@ RUN bundle install && \
 COPY . .
 
 # Copy EE code into the app after COPY . .
-RUN if [ -d /tmp/ee ]; then cp -r /tmp/ee ee; fi
+RUN if [ -d /tmp/ee ]; then rm -rf ee && cp -r /tmp/ee ee; fi
 
 # Precompile bootsnap code for faster boot times.
 RUN bundle exec bootsnap precompile -j 1 app/ lib/
