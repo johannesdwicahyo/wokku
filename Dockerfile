@@ -35,6 +35,7 @@ RUN apt-get update -qq && \
 
 # Enterprise Edition: clone into /tmp/ee if token is provided
 ARG WOKKU_EE_TOKEN=""
+ARG WOKKU_EE_VERSION=""
 RUN if [ -n "$WOKKU_EE_TOKEN" ]; then \
     git clone https://${WOKKU_EE_TOKEN}@github.com/johannesdwicahyo/wokku-ee.git /tmp/ee && \
     rm -rf /tmp/ee/.git; \
