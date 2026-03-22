@@ -1,0 +1,12 @@
+{
+  "name": "Langflow",
+  "description": "Visual framework for building LLM applications",
+  "category": "ai",
+  "icon": "ai",
+  "repo": "https://github.com/langflow-ai/langflow",
+  "branch": "main",
+  "tags": ["ai", "llm", "python", "workflow"],
+  "addons": [{ "type": "postgres", "tier": "mini" }],
+  "env": {},
+  "post_deploy": ""
+}

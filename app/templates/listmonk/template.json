@@ -1,0 +1,12 @@
+{
+  "name": "Listmonk",
+  "description": "Self-hosted newsletter and mailing list manager",
+  "category": "email",
+  "icon": "mail",
+  "repo": "https://github.com/knadh/listmonk",
+  "branch": "main",
+  "tags": ["newsletter", "email", "go"],
+  "addons": [{ "type": "postgres", "tier": "mini" }],
+  "env": {},
+  "post_deploy": ""
+}

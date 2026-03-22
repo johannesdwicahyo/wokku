@@ -1,0 +1,12 @@
+{
+  "name": "MinIO",
+  "description": "S3-compatible object storage",
+  "category": "storage",
+  "icon": "storage",
+  "repo": "https://github.com/minio/minio",
+  "branch": "main",
+  "tags": ["s3", "object-storage", "go"],
+  "addons": [],
+  "env": {},
+  "post_deploy": ""
+}

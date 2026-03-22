@@ -1,0 +1,12 @@
+{
+  "name": "NocoDB",
+  "description": "Airtable alternative — spreadsheet to smart database",
+  "category": "databases",
+  "icon": "db",
+  "repo": "https://github.com/nocodb/nocodb",
+  "branch": "main",
+  "tags": ["no-code", "spreadsheet", "node"],
+  "addons": [{ "type": "postgres", "tier": "mini" }],
+  "env": {},
+  "post_deploy": ""
+}

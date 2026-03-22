@@ -55,6 +55,7 @@ Rails.application.routes.draw do
   end
 
   namespace :dashboard do
+    resources :templates, only: [:index, :show, :create]
     resources :apps do
       member do
         post :restart

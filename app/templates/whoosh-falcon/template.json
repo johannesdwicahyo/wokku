@@ -1,0 +1,12 @@
+{
+  "name": "Whoosh + Falcon",
+  "description": "Async Ruby web framework with Falcon server",
+  "category": "frameworks",
+  "icon": "ruby",
+  "repo": "https://github.com/socketry/whoosh",
+  "branch": "main",
+  "tags": ["ruby", "whoosh", "falcon", "async"],
+  "addons": [{ "type": "postgres", "tier": "mini" }],
+  "env": {},
+  "post_deploy": ""
+}

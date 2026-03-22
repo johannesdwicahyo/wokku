@@ -1,0 +1,12 @@
+{
+  "name": "Shlink",
+  "description": "Self-hosted URL shortener with analytics",
+  "category": "links",
+  "icon": "link",
+  "repo": "https://github.com/shlinkio/shlink",
+  "branch": "main",
+  "tags": ["url-shortener", "links", "php"],
+  "addons": [{ "type": "postgres", "tier": "mini" }],
+  "env": {},
+  "post_deploy": ""
+}

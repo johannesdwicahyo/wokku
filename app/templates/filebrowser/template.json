@@ -1,0 +1,12 @@
+{
+  "name": "File Browser",
+  "description": "Web-based file manager",
+  "category": "storage",
+  "icon": "storage",
+  "repo": "https://github.com/filebrowser/filebrowser",
+  "branch": "main",
+  "tags": ["files", "browser", "go"],
+  "addons": [],
+  "env": {},
+  "post_deploy": ""
+}

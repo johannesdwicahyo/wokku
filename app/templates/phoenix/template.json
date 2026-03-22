@@ -1,0 +1,12 @@
+{
+  "name": "Phoenix",
+  "description": "Elixir web framework for productive and reliable apps",
+  "category": "frameworks",
+  "icon": "elixir",
+  "repo": "https://github.com/phoenixframework/phoenix",
+  "branch": "main",
+  "tags": ["elixir", "phoenix", "fullstack"],
+  "addons": [{ "type": "postgres", "tier": "mini" }],
+  "env": {},
+  "post_deploy": "mix ecto.migrate"
+}

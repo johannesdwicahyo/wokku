@@ -1,0 +1,37 @@
+categories:
+  - name: Frameworks
+    slug: frameworks
+  - name: Automation
+    slug: automation
+  - name: Communication
+    slug: communication
+  - name: Analytics
+    slug: analytics
+  - name: CMS & Content
+    slug: cms
+  - name: Productivity
+    slug: productivity
+  - name: E-Commerce
+    slug: ecommerce
+  - name: Developer Tools
+    slug: devtools
+  - name: AI
+    slug: ai
+  - name: Databases & Admin
+    slug: databases
+  - name: Media
+    slug: media
+  - name: Monitoring
+    slug: monitoring
+  - name: Security
+    slug: security
+  - name: File Storage
+    slug: storage
+  - name: Links & URL
+    slug: links
+  - name: Email
+    slug: email
+  - name: RSS & Reading
+    slug: rss
+  - name: Platform
+    slug: platform

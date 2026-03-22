@@ -1,0 +1,12 @@
+{
+  "name": "Spring Boot",
+  "description": "Java framework for production-grade applications",
+  "category": "frameworks",
+  "icon": "java",
+  "repo": "https://github.com/spring-guides/gs-spring-boot",
+  "branch": "main",
+  "tags": ["java", "spring", "api"],
+  "addons": [{ "type": "postgres", "tier": "mini" }],
+  "env": {},
+  "post_deploy": ""
+}

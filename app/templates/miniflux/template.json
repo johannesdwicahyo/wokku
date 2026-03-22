@@ -1,0 +1,12 @@
+{
+  "name": "Miniflux",
+  "description": "Minimalist RSS reader",
+  "category": "rss",
+  "icon": "rss",
+  "repo": "https://github.com/miniflux/v2",
+  "branch": "main",
+  "tags": ["rss", "reader", "go"],
+  "addons": [{ "type": "postgres", "tier": "mini" }],
+  "env": {},
+  "post_deploy": ""
+}

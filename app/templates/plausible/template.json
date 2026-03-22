@@ -1,0 +1,12 @@
+{
+  "name": "Plausible Analytics",
+  "description": "Privacy-friendly Google Analytics alternative",
+  "category": "analytics",
+  "icon": "analytics",
+  "repo": "https://github.com/plausible/analytics",
+  "branch": "main",
+  "tags": ["analytics", "privacy", "elixir"],
+  "addons": [{ "type": "postgres", "tier": "mini" }],
+  "env": {},
+  "post_deploy": ""
+}

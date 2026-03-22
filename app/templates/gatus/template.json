@@ -1,0 +1,12 @@
+{
+  "name": "Gatus",
+  "description": "Health dashboard with alerting",
+  "category": "monitoring",
+  "icon": "monitor",
+  "repo": "https://github.com/TwiN/gatus",
+  "branch": "main",
+  "tags": ["health", "monitoring", "go"],
+  "addons": [],
+  "env": {},
+  "post_deploy": ""
+}

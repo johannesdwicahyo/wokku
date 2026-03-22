@@ -1,0 +1,21 @@
+<%= link_to dashboard_template_path(template[:slug]), class: "block bg-[#1E293B]/60 rounded-lg border border-[#334155]/50 p-4 hover:bg-[#1E293B] hover:border-[#334155] transition group" do %>
+  <div class="flex items-start space-x-3">
+    <div class="w-10 h-10 rounded-lg bg-[#0B1120] border border-[#334155] flex items-center justify-center flex-shrink-0">
+      <span class="text-lg"><%= template_icon(template[:icon]) %></span>
+    </div>
+    <div class="flex-1 min-w-0">
+      <h3 class="text-sm font-semibold text-white group-hover:text-green-400 transition truncate"><%= template[:name] %></h3>
+      <p class="text-xs text-gray-500 mt-0.5 line-clamp-2"><%= template[:description] %></p>
+    </div>
+  </div>
+  <div class="mt-3 flex flex-wrap gap-1.5">
+    <% (template[:tags] || []).first(3).each do |tag| %>
+      <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#0B1120] text-gray-500"><%= tag %></span>
+    <% end %>
+    <% if template[:addons]&.any? %>
+      <% template[:addons].each do |addon| %>
+        <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-500/10 text-green-400"><%= addon["type"] %></span>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

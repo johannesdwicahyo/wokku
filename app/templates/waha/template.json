@@ -1,0 +1,12 @@
+{
+  "name": "Waha",
+  "description": "WhatsApp HTTP API for messaging automation",
+  "category": "communication",
+  "icon": "whatsapp",
+  "repo": "https://github.com/devlikeapro/waha",
+  "branch": "main",
+  "tags": ["whatsapp", "api", "messaging"],
+  "addons": [],
+  "env": {},
+  "post_deploy": ""
+}

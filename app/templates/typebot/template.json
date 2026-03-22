@@ -1,0 +1,12 @@
+{
+  "name": "Typebot",
+  "description": "Conversational form and chatbot builder",
+  "category": "communication",
+  "icon": "chat",
+  "repo": "https://github.com/baptisteArno/typebot.io",
+  "branch": "main",
+  "tags": ["chatbot", "forms", "node"],
+  "addons": [{ "type": "postgres", "tier": "mini" }],
+  "env": {},
+  "post_deploy": ""
+}

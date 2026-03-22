@@ -1,0 +1,12 @@
+{
+  "name": "Medusa",
+  "description": "Headless commerce engine for digital products",
+  "category": "ecommerce",
+  "icon": "ecommerce",
+  "repo": "https://github.com/medusajs/medusa",
+  "branch": "main",
+  "tags": ["ecommerce", "headless", "node"],
+  "addons": [{ "type": "postgres", "tier": "mini" }, { "type": "redis", "tier": "mini" }],
+  "env": {},
+  "post_deploy": ""
+}
