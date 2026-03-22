@@ -27,3 +27,13 @@ production:
     class: SslAutoRenewJob
     schedule: every day at 3am
     queue: default
+
+  billing_cycle:
+    class: BillingCycleJob
+    schedule: every month on the 1st at 2am
+    queue: billing
+
+  payment_failure_check:
+    class: PaymentFailureJob
+    schedule: every day at 6am
+    queue: billing

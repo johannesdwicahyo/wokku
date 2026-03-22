@@ -12,7 +12,10 @@ class PagesController < ApplicationController
   end
 
   def pricing
-    @plans = Wokku.ee? && defined?(Plan) ? Plan.order(:price_cents_per_month) : []
+    if Wokku.ee? && defined?(DynoTier)
+      @dyno_tiers = DynoTier.order(:price_cents_per_hour)
+      @service_tiers = ServiceTier.available.order(:service_type, :price_cents_per_hour)
+    end
   end
 
   def docs
