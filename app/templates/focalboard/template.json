@@ -1,0 +1,12 @@
+{
+  "name": "Focalboard",
+  "description": "Project management and kanban boards",
+  "category": "productivity",
+  "icon": "form",
+  "repo": "https://github.com/mattermost/focalboard",
+  "branch": "main",
+  "tags": ["project-management", "kanban", "go"],
+  "addons": [{ "type": "postgres", "tier": "mini" }],
+  "env": {},
+  "post_deploy": ""
+}

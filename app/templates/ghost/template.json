@@ -1,0 +1,12 @@
+{
+  "name": "Ghost",
+  "description": "Professional publishing and blogging platform",
+  "category": "cms",
+  "icon": "cms",
+  "repo": "https://github.com/TryGhost/Ghost",
+  "branch": "main",
+  "tags": ["blog", "cms", "node"],
+  "addons": [{ "type": "mysql", "tier": "mini" }],
+  "env": { "NODE_ENV": "production" },
+  "post_deploy": ""
+}

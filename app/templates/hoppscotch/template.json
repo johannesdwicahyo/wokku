@@ -1,0 +1,12 @@
+{
+  "name": "Hoppscotch",
+  "description": "Open-source API development ecosystem",
+  "category": "devtools",
+  "icon": "api",
+  "repo": "https://github.com/hoppscotch/hoppscotch",
+  "branch": "main",
+  "tags": ["api-testing", "http", "node"],
+  "addons": [{ "type": "postgres", "tier": "mini" }],
+  "env": {},
+  "post_deploy": ""
+}

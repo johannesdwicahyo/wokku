@@ -1,0 +1,12 @@
+{
+  "name": "Vaultwarden",
+  "description": "Lightweight Bitwarden-compatible password manager",
+  "category": "security",
+  "icon": "security",
+  "repo": "https://github.com/dani-garcia/vaultwarden",
+  "branch": "main",
+  "tags": ["passwords", "vault", "rust"],
+  "addons": [],
+  "env": {},
+  "post_deploy": ""
+}

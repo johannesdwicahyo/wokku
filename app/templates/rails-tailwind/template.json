@@ -1,0 +1,17 @@
+{
+  "name": "Rails + Tailwind",
+  "description": "Production-ready Rails 8 with Tailwind CSS and PostgreSQL",
+  "category": "frameworks",
+  "icon": "rails",
+  "repo": "https://github.com/rails/rails-new",
+  "branch": "main",
+  "tags": ["ruby", "rails", "fullstack", "tailwind"],
+  "addons": [
+    { "type": "postgres", "tier": "mini" }
+  ],
+  "env": {
+    "RAILS_ENV": "production",
+    "RAILS_LOG_TO_STDOUT": "true"
+  },
+  "post_deploy": "bin/rails db:migrate"
+}

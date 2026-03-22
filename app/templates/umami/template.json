@@ -1,0 +1,12 @@
+{
+  "name": "Umami",
+  "description": "Simple and fast website analytics",
+  "category": "analytics",
+  "icon": "analytics",
+  "repo": "https://github.com/umami-software/umami",
+  "branch": "main",
+  "tags": ["analytics", "node", "lightweight"],
+  "addons": [{ "type": "postgres", "tier": "mini" }],
+  "env": {},
+  "post_deploy": ""
+}

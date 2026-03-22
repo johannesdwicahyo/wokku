@@ -1,0 +1,12 @@
+{
+  "name": "Directus",
+  "description": "Instant REST and GraphQL API for any SQL database",
+  "category": "cms",
+  "icon": "cms",
+  "repo": "https://github.com/directus/directus",
+  "branch": "main",
+  "tags": ["headless-cms", "api", "node"],
+  "addons": [{ "type": "postgres", "tier": "mini" }],
+  "env": {},
+  "post_deploy": ""
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Grafana",
+  "description": "Metrics visualization and monitoring",
+  "category": "monitoring",
+  "icon": "monitor",
+  "repo": "https://github.com/grafana/grafana",
+  "branch": "main",
+  "tags": ["metrics", "dashboards", "go"],
+  "addons": [],
+  "env": {},
+  "post_deploy": ""
+}

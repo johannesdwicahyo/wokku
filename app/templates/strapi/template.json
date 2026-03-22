@@ -1,0 +1,12 @@
+{
+  "name": "Strapi",
+  "description": "Leading open-source headless CMS",
+  "category": "cms",
+  "icon": "cms",
+  "repo": "https://github.com/strapi/strapi",
+  "branch": "main",
+  "tags": ["headless-cms", "api", "node"],
+  "addons": [{ "type": "postgres", "tier": "mini" }],
+  "env": {},
+  "post_deploy": ""
+}

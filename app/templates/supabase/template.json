@@ -1,0 +1,12 @@
+{
+  "name": "Supabase",
+  "description": "Open-source Firebase alternative with PostgreSQL",
+  "category": "platform",
+  "icon": "platform",
+  "repo": "https://github.com/supabase/supabase",
+  "branch": "main",
+  "tags": ["baas", "firebase-alt", "postgres"],
+  "addons": [{ "type": "postgres", "tier": "mini" }],
+  "env": {},
+  "post_deploy": ""
+}

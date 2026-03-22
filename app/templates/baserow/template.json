@@ -1,0 +1,12 @@
+{
+  "name": "Baserow",
+  "description": "Open-source no-code database platform",
+  "category": "databases",
+  "icon": "db",
+  "repo": "https://github.com/baserow/baserow",
+  "branch": "main",
+  "tags": ["no-code", "database", "python"],
+  "addons": [{ "type": "postgres", "tier": "mini" }, { "type": "redis", "tier": "mini" }],
+  "env": {},
+  "post_deploy": ""
+}

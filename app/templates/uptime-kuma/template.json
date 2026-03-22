@@ -1,0 +1,12 @@
+{
+  "name": "Uptime Kuma",
+  "description": "Self-hosted uptime monitoring tool",
+  "category": "devtools",
+  "icon": "monitor",
+  "repo": "https://github.com/louislam/uptime-kuma",
+  "branch": "main",
+  "tags": ["monitoring", "uptime", "node"],
+  "addons": [],
+  "env": {},
+  "post_deploy": ""
+}

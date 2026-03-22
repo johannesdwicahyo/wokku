@@ -1,0 +1,12 @@
+{
+  "name": "Gitea",
+  "description": "Lightweight self-hosted Git service",
+  "category": "devtools",
+  "icon": "git",
+  "repo": "https://github.com/go-gitea/gitea",
+  "branch": "main",
+  "tags": ["git", "code-hosting", "go"],
+  "addons": [{ "type": "postgres", "tier": "mini" }],
+  "env": {},
+  "post_deploy": ""
+}

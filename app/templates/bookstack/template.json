@@ -1,0 +1,12 @@
+{
+  "name": "BookStack",
+  "description": "Simple wiki and documentation platform",
+  "category": "cms",
+  "icon": "wiki",
+  "repo": "https://github.com/BookStackApp/BookStack",
+  "branch": "main",
+  "tags": ["wiki", "docs", "php"],
+  "addons": [{ "type": "mysql", "tier": "mini" }],
+  "env": {},
+  "post_deploy": ""
+}

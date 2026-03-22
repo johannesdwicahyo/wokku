@@ -1,0 +1,12 @@
+{
+  "name": "Wallabag",
+  "description": "Read-it-later and bookmark manager",
+  "category": "rss",
+  "icon": "rss",
+  "repo": "https://github.com/wallabag/wallabag",
+  "branch": "main",
+  "tags": ["read-later", "bookmarks", "php"],
+  "addons": [{ "type": "postgres", "tier": "mini" }],
+  "env": {},
+  "post_deploy": ""
+}

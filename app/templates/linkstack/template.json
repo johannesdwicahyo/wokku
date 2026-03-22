@@ -1,0 +1,12 @@
+{
+  "name": "LinkStack",
+  "description": "Link-in-bio page builder",
+  "category": "links",
+  "icon": "link",
+  "repo": "https://github.com/LinkStackOrg/LinkStack",
+  "branch": "main",
+  "tags": ["link-in-bio", "links", "php"],
+  "addons": [],
+  "env": {},
+  "post_deploy": ""
+}

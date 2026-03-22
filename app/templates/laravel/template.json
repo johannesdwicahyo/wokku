@@ -1,0 +1,12 @@
+{
+  "name": "Laravel",
+  "description": "PHP framework with elegant syntax",
+  "category": "frameworks",
+  "icon": "php",
+  "repo": "https://github.com/laravel/laravel",
+  "branch": "main",
+  "tags": ["php", "laravel", "fullstack"],
+  "addons": [{ "type": "postgres", "tier": "mini" }, { "type": "redis", "tier": "mini" }],
+  "env": {},
+  "post_deploy": "php artisan migrate --force"
+}
