@@ -10,5 +10,6 @@
   "env": {},
   "post_deploy": "",
   "deploy_method": "docker_image",
-  "docker_image": "twinproduction/gatus"
+  "docker_image": "twinproduction/gatus",
+  "container_port": 8080
 }

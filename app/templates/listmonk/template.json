@@ -10,5 +10,6 @@
   "env": {},
   "post_deploy": "",
   "deploy_method": "docker_image",
-  "docker_image": "listmonk/listmonk"
+  "docker_image": "listmonk/listmonk",
+  "container_port": 9000
 }

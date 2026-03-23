@@ -10,5 +10,6 @@
   "env": {},
   "post_deploy": "",
   "deploy_method": "docker_image",
-  "docker_image": "directus/directus"
+  "docker_image": "directus/directus",
+  "container_port": 8055
 }

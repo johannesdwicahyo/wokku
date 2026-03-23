@@ -10,5 +10,6 @@
   "env": {},
   "post_deploy": "",
   "deploy_method": "docker_image",
-  "docker_image": "linkstackorg/linkstack"
+  "docker_image": "linkstackorg/linkstack",
+  "container_port": 80
 }

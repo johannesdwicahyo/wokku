@@ -10,5 +10,6 @@
   "env": {},
   "post_deploy": "",
   "deploy_method": "docker_image",
-  "docker_image": "grafana/grafana"
+  "docker_image": "grafana/grafana",
+  "container_port": 3000
 }

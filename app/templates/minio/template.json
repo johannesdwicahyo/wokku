@@ -10,5 +10,6 @@
   "env": {},
   "post_deploy": "",
   "deploy_method": "docker_image",
-  "docker_image": "minio/minio"
+  "docker_image": "minio/minio",
+  "container_port": 9000
 }

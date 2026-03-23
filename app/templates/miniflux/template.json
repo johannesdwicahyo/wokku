@@ -10,5 +10,6 @@
   "env": {},
   "post_deploy": "",
   "deploy_method": "docker_image",
-  "docker_image": "miniflux/miniflux"
+  "docker_image": "miniflux/miniflux",
+  "container_port": 8080
 }

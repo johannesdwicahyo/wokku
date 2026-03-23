@@ -56,8 +56,21 @@ class TemplateDeployer
     end
 
     if template[:deploy_method] == "docker_image" && template[:docker_image].present?
+      # Set port mapping before deploying (Docker images often expose non-standard ports)
+      container_port = template[:container_port] || 3000
+      step("Configuring port mapping (80 → #{container_port})...") do
+        client.run("ports:set #{app_name} http:80:#{container_port}")
+      end
+
       step("Deploying Docker image #{template[:docker_image]}...") do
         client.run("git:from-image #{app_name} #{template[:docker_image]}", timeout: 300)
+      end
+
+      # Enable Let's Encrypt SSL
+      step("Enabling SSL...") do
+        client.run("letsencrypt:enable #{app_name}", timeout: 120)
+      rescue Dokku::Client::CommandError => e
+        @log << { step: "SSL setup skipped: #{e.message}", at: Time.current }
       end
     else
       step("Cloning #{template[:repo]} and deploying...") do

@@ -10,5 +10,6 @@
   "env": {},
   "post_deploy": "",
   "deploy_method": "docker_image",
-  "docker_image": "nocodb/nocodb"
+  "docker_image": "nocodb/nocodb",
+  "container_port": 8080
 }

@@ -10,5 +10,6 @@
   "env": {},
   "post_deploy": "",
   "deploy_method": "docker_image",
-  "docker_image": "ghcr.io/umami-software/umami:postgresql-latest"
+  "docker_image": "ghcr.io/umami-software/umami:postgresql-latest",
+  "container_port": 3000
 }

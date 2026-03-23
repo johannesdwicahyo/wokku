@@ -10,5 +10,6 @@
   "env": {},
   "post_deploy": "",
   "deploy_method": "docker_image",
-  "docker_image": "filebrowser/filebrowser"
+  "docker_image": "filebrowser/filebrowser",
+  "container_port": 80
 }
