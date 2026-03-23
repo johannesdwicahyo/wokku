@@ -55,15 +55,21 @@ class TemplateDeployer
       end
     end
 
-    step("Cloning #{template[:repo]} and deploying...") do
-      begin
-        client.run(
-          "git:sync --build #{app_name} #{template[:repo]} #{template[:branch] || 'main'}",
-          timeout: 300
-        )
-      rescue Dokku::Client::CommandError => e
-        raise unless e.message.include?("is not a dokku command")
-        client.run("git:from-url #{app_name} #{template[:repo]}", timeout: 300)
+    if template[:deploy_method] == "docker_image" && template[:docker_image].present?
+      step("Deploying Docker image #{template[:docker_image]}...") do
+        client.run("git:from-image #{app_name} #{template[:docker_image]}", timeout: 300)
+      end
+    else
+      step("Cloning #{template[:repo]} and deploying...") do
+        begin
+          client.run(
+            "git:sync --build #{app_name} #{template[:repo]} #{template[:branch] || 'main'}",
+            timeout: 300
+          )
+        rescue Dokku::Client::CommandError => e
+          raise unless e.message.include?("is not a dokku command")
+          client.run("git:from-url #{app_name} #{template[:repo]}", timeout: 300)
+        end
       end
     end
 

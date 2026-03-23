@@ -8,5 +8,7 @@
   "tags": ["automation", "workflow", "node"],
   "addons": [{ "type": "postgres", "tier": "mini" }],
   "env": { "N8N_PORT": "5678", "DB_TYPE": "postgresdb" },
-  "post_deploy": ""
+  "post_deploy": "",
+  "deploy_method": "docker_image",
+  "docker_image": "n8nio/n8n"
 }

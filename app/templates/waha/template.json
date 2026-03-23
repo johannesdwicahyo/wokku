@@ -6,7 +6,11 @@
   "repo": "https://github.com/devlikeapro/waha",
   "branch": "main",
   "tags": ["whatsapp", "api", "messaging"],
+  "deploy_method": "docker_image",
+  "docker_image": "devlikeapro/waha",
   "addons": [],
-  "env": {},
+  "env": {
+    "WHATSAPP_DEFAULT_ENGINE": "WEBJS"
+  },
   "post_deploy": ""
 }

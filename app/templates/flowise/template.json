@@ -8,5 +8,7 @@
   "tags": ["ai", "llm", "chatbot", "node"],
   "addons": [{ "type": "postgres", "tier": "mini" }],
   "env": {},
-  "post_deploy": ""
+  "post_deploy": "",
+  "deploy_method": "docker_image",
+  "docker_image": "flowiseai/flowise"
 }

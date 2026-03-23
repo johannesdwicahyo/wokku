@@ -8,5 +8,7 @@
   "tags": ["blog", "cms", "node"],
   "addons": [{ "type": "mysql", "tier": "mini" }],
   "env": { "NODE_ENV": "production" },
-  "post_deploy": ""
+  "post_deploy": "",
+  "deploy_method": "docker_image",
+  "docker_image": "ghost:5"
 }
