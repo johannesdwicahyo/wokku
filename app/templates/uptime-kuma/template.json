@@ -10,5 +10,6 @@
   "env": {},
   "post_deploy": "",
   "deploy_method": "docker_image",
-  "docker_image": "louislam/uptime-kuma"
+  "docker_image": "louislam/uptime-kuma",
+  "container_port": 3001
 }

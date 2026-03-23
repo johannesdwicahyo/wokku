@@ -10,5 +10,6 @@
   "env": { "N8N_PORT": "5678", "DB_TYPE": "postgresdb" },
   "post_deploy": "",
   "deploy_method": "docker_image",
-  "docker_image": "n8nio/n8n"
+  "docker_image": "n8nio/n8n",
+  "container_port": 5678
 }

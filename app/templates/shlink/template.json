@@ -10,5 +10,6 @@
   "env": {},
   "post_deploy": "",
   "deploy_method": "docker_image",
-  "docker_image": "shlinkio/shlink"
+  "docker_image": "shlinkio/shlink",
+  "container_port": 8080
 }

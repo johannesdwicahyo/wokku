@@ -10,5 +10,6 @@
   "env": { "NODE_ENV": "production" },
   "post_deploy": "",
   "deploy_method": "docker_image",
-  "docker_image": "ghost:5"
+  "docker_image": "ghost:5",
+  "container_port": 2368
 }
