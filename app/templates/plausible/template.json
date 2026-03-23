@@ -8,5 +8,7 @@
   "tags": ["analytics", "privacy", "elixir"],
   "addons": [{ "type": "postgres", "tier": "mini" }],
   "env": {},
-  "post_deploy": ""
+  "post_deploy": "",
+  "deploy_method": "docker_image",
+  "docker_image": "ghcr.io/plausible/community-edition:v2.1"
 }

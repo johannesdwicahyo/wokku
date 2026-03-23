@@ -8,5 +8,7 @@
   "tags": ["monitoring", "uptime", "node"],
   "addons": [],
   "env": {},
-  "post_deploy": ""
+  "post_deploy": "",
+  "deploy_method": "docker_image",
+  "docker_image": "louislam/uptime-kuma"
 }

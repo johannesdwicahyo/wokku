@@ -8,5 +8,7 @@
   "tags": ["health", "monitoring", "go"],
   "addons": [],
   "env": {},
-  "post_deploy": ""
+  "post_deploy": "",
+  "deploy_method": "docker_image",
+  "docker_image": "twinproduction/gatus"
 }
