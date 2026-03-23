@@ -34,6 +34,12 @@ module Dashboard
 
     def destroy
       authorize @app
+      begin
+        client = Dokku::Client.new(@app.server)
+        Dokku::Apps.new(client).destroy(@app.name)
+      rescue Dokku::Client::CommandError, Dokku::Client::ConnectionError => e
+        Rails.logger.warn("Failed to destroy #{@app.name} on Dokku: #{e.message}")
+      end
       @app.destroy
       redirect_to dashboard_apps_path, notice: "App deleted successfully."
     end
