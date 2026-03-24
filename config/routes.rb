@@ -73,6 +73,7 @@ Rails.application.routes.draw do
           post :deploy
         end
       end
+      resources :deploys, only: [:show], controller: "deploys"
       resource :logs, only: [:show], controller: "logs"
       resource :metrics, only: [:show], controller: "metrics"
       resource :scaling, only: [:show, :update], controller: "scaling"
