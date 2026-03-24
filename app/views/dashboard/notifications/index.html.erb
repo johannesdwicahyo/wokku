@@ -62,7 +62,16 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div>
         <label class="block text-xs text-gray-400 uppercase tracking-wider mb-1">Channel</label>
-        <%= f.select :channel, [["Email", "email"], ["Slack", "slack"], ["Webhook", "webhook"]], {}, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white text-sm focus:ring-green-500 focus:border-green-500" %>
+        <%= f.select :channel, [
+          ["Email", "email"],
+          ["Slack", "slack"],
+          ["Discord", "discord"],
+          ["Telegram", "telegram"],
+          ["Webhook", "webhook"]
+        ], { prompt: "Select channel" }, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white text-sm focus:ring-green-500 focus:border-green-500" %>
+        <p class="mt-1 text-[10px] text-gray-600">
+          Slack/Discord: paste webhook URL. Telegram: set bot_token and chat_id in config.
+        </p>
       </div>
       <div>
         <label class="block text-xs text-gray-400 uppercase tracking-wider mb-1">App (optional)</label>
