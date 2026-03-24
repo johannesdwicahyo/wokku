@@ -48,6 +48,10 @@ gem "pundit"
 gem "net-ssh"
 gem "sshkit"
 
+# GitHub Integration
+gem "octokit"
+gem "jwt"
+
 # Real-time
 gem "redis"
 

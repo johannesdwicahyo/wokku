@@ -1,0 +1,63 @@
+<% content_for(:title, "Connect GitHub — #{@app.name}") %>
+
+<div class="max-w-2xl mx-auto space-y-6">
+  <%= link_to dashboard_app_releases_path(@app), class: "inline-flex items-center text-sm text-gray-500 hover:text-gray-300 transition" do %>
+    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    Back to Releases
+  <% end %>
+
+  <div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 p-6">
+    <h1 class="text-lg font-semibold text-white mb-1">Connect GitHub Repository</h1>
+    <p class="text-sm text-gray-500 mb-6">Select a repository to auto-deploy to <span class="font-mono text-gray-400"><%= @app.name %></span></p>
+
+    <% if @repos.any? %>
+      <div class="space-y-2 max-h-96 overflow-y-auto">
+        <% @repos.each do |repo| %>
+          <% selected = @selected_repo == repo.full_name %>
+          <%= link_to dashboard_app_github_repos_path(@app, repo: repo.full_name),
+              class: "block p-3 rounded-lg border transition #{selected ? 'bg-green-500/10 border-green-500/30' : 'bg-[#0B1120] border-[#334155]/50 hover:border-[#475569]'}" do %>
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-sm font-medium text-white"><%= repo.full_name %></span>
+                <% if repo.private %>
+                  <span class="ml-1.5 px-1.5 py-0.5 rounded text-[10px] bg-yellow-500/10 text-yellow-400">private</span>
+                <% end %>
+              </div>
+              <% if repo.language %>
+                <span class="text-[10px] text-gray-500"><%= repo.language %></span>
+              <% end %>
+            </div>
+            <% if repo.description %>
+              <p class="text-xs text-gray-500 mt-1 truncate"><%= repo.description %></p>
+            <% end %>
+          <% end %>
+        <% end %>
+      </div>
+
+      <% if @selected_repo && @branches.any? %>
+        <div class="mt-6 pt-6 border-t border-[#334155]/50">
+          <h3 class="text-sm font-medium text-white mb-3">Select branch for <span class="font-mono text-green-400"><%= @selected_repo %></span></h3>
+          <div class="space-y-2">
+            <% @branches.each do |branch| %>
+              <%= button_to dashboard_app_github_connect_path(@app, repo: @selected_repo, branch: branch),
+                  method: :post,
+                  class: "w-full text-left p-2.5 rounded-lg bg-[#0B1120] border border-[#334155]/50 hover:border-green-500/30 transition" do %>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-gray-300 font-mono"><%= branch %></span>
+                  <span class="text-xs text-green-400">Deploy &rarr;</span>
+                </div>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="text-center py-8">
+        <p class="text-gray-500 text-sm">No repositories found. Make sure the Wokku GitHub App has access to your repositories.</p>
+        <a href="<%= GitHubApp.installation_url %>" class="mt-4 inline-flex items-center text-sm text-green-400 hover:text-green-300">
+          Manage GitHub App permissions &rarr;
+        </a>
+      </div>
+    <% end %>
+  </div>
+</div>
