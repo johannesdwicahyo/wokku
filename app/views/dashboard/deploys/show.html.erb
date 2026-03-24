@@ -1,0 +1,53 @@
+<% content_for(:title, "Deploy — #{@app.name}") %>
+
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <%= link_to dashboard_app_path(@app), class: "text-sm text-gray-500 hover:text-gray-300 transition" do %>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      <% end %>
+      <h1 class="text-lg font-semibold text-white font-mono"><%= @app.name %></h1>
+      <span class="text-gray-600">&middot;</span>
+      <span class="text-sm text-gray-400">Deploy #<%= @deploy.id %></span>
+      <% if @deploy.description.present? %>
+        <span class="text-xs text-gray-600">(<%= @deploy.description %>)</span>
+      <% end %>
+    </div>
+    <div data-deploy-target="statusBadge">
+      <% case @deploy.status %>
+      <% when "pending" %>
+        <span class="inline-flex items-center space-x-1.5 text-xs text-gray-400"><span class="w-1.5 h-1.5 rounded-full bg-gray-400 animate-pulse"></span><span>Pending</span></span>
+      <% when "building" %>
+        <span class="inline-flex items-center space-x-1.5 text-xs text-yellow-400"><span class="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse"></span><span>Building</span></span>
+      <% when "succeeded" %>
+        <span class="inline-flex items-center space-x-1.5 text-xs text-green-400"><span class="w-1.5 h-1.5 rounded-full bg-green-400"></span><span>Succeeded</span></span>
+      <% when "failed" %>
+        <span class="inline-flex items-center space-x-1.5 text-xs text-red-400"><span class="w-1.5 h-1.5 rounded-full bg-red-400"></span><span>Failed</span></span>
+      <% when "timed_out" %>
+        <span class="inline-flex items-center space-x-1.5 text-xs text-red-400"><span class="w-1.5 h-1.5 rounded-full bg-red-400"></span><span>Timed Out</span></span>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-[#1E293B] bg-[#0B1120] overflow-hidden"
+       data-controller="deploy"
+       data-deploy-deploy-id-value="<%= @deploy.id %>">
+    <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#1E293B]">
+      <div class="flex items-center space-x-2">
+        <div class="flex space-x-1.5">
+          <div class="w-2.5 h-2.5 rounded-full bg-[#334155]"></div>
+          <div class="w-2.5 h-2.5 rounded-full bg-[#334155]"></div>
+          <div class="w-2.5 h-2.5 rounded-full bg-[#334155]"></div>
+        </div>
+        <span class="text-[10px] text-gray-600 font-mono">deploy log</span>
+      </div>
+      <% if @deploy.finished_at && @deploy.started_at %>
+        <span class="text-[10px] text-gray-600 font-mono">
+          Duration: <%= (@deploy.finished_at - @deploy.started_at).round(1) %>s
+        </span>
+      <% end %>
+    </div>
+    <div data-deploy-target="output"
+         class="p-4 font-mono text-xs text-gray-300 whitespace-pre-wrap overflow-y-auto h-[calc(100vh-250px)] leading-relaxed"><%= @deploy.log %></div>
+  </div>
+</div>

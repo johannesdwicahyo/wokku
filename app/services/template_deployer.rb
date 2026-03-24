@@ -1,11 +1,12 @@
 class TemplateDeployer
   attr_reader :template, :app_name, :server, :user, :log
 
-  def initialize(template:, app_name:, server:, user:)
+  def initialize(template:, app_name:, server:, user:, on_progress: nil)
     @template = template
     @app_name = app_name
     @server = server
     @user = user
+    @on_progress = on_progress
     @log = []
   end
 
@@ -14,15 +15,16 @@ class TemplateDeployer
 
     step("Creating app #{app_name}...") do
       Dokku::Apps.new(client).create(app_name)
-      AppRecord.create!(
-        name: app_name,
-        server: server,
-        team: server.team,
-        creator: user,
-        deploy_branch: template[:branch] || "main",
-        git_repository_url: template[:repo],
-        status: :deploying
-      )
+      AppRecord.find_or_initialize_by(name: app_name, server: server).tap do |a|
+        a.assign_attributes(
+          team: server.team,
+          creator: user,
+          deploy_branch: template[:branch] || "main",
+          git_repository_url: template[:repo],
+          status: :deploying
+        )
+        a.save!
+      end
     end
 
     app = AppRecord.find_by!(name: app_name, server: server)
@@ -94,6 +96,7 @@ class TemplateDeployer
 
     app.update!(status: :running)
     @log << { step: "Deploy complete!", at: Time.current }
+    @on_progress&.call("Deploy complete!")
 
     { success: true, app: app, log: @log }
   rescue => e
@@ -121,9 +124,11 @@ class TemplateDeployer
 
   def step(message)
     @log << { step: message, at: Time.current }
+    @on_progress&.call(message)
     yield
   rescue => e
     @log << { step: "Failed: #{message}", error: e.message, at: Time.current }
+    @on_progress&.call("FAILED: #{message} — #{e.message}")
     raise
   end
 end

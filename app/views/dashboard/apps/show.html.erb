@@ -51,6 +51,19 @@
   </div>
 </div>
 
+<% if @app.deploying? %>
+  <% latest_deploy = @app.deploys.order(created_at: :desc).first %>
+  <% if latest_deploy %>
+    <div class="mb-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+        <span class="text-sm text-yellow-400">Deploying...</span>
+      </div>
+      <%= link_to "View logs", dashboard_app_deploy_path(@app, latest_deploy), class: "text-xs text-yellow-400 hover:text-yellow-300 font-medium transition" %>
+    </div>
+  <% end %>
+<% end %>
+
 <%# Tabs %>
 <div class="border-b border-[#334155]/50 mb-6">
   <nav class="-mb-px flex space-x-6">

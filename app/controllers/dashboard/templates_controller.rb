@@ -36,14 +36,29 @@ module Dashboard
         return redirect_to dashboard_template_path(params[:template_slug]), alert: "App name already taken on this server"
       end
 
+      app = AppRecord.create!(
+        name: app_name,
+        server: server,
+        team: server.team,
+        creator: current_user,
+        deploy_branch: "main",
+        status: :deploying
+      )
+
+      deploy = app.deploys.create!(
+        status: :pending,
+        description: "Template deploy: #{template[:name]}"
+      )
+
       TemplateDeployJob.perform_later(
         template_slug: template[:slug],
         app_name: app_name,
         server_id: server.id,
-        user_id: current_user.id
+        user_id: current_user.id,
+        deploy_id: deploy.id
       )
 
-      redirect_to dashboard_apps_path, notice: "Deploying #{template[:name]} as '#{app_name}'... This may take a few minutes."
+      redirect_to dashboard_app_deploy_path(app, deploy), notice: "Deploying #{template[:name]}..."
     end
   end
 end
