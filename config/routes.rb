@@ -76,11 +76,13 @@ Rails.application.routes.draw do
       resource :logs, only: [:show], controller: "logs"
       resource :metrics, only: [:show], controller: "metrics"
       resource :scaling, only: [:show, :update], controller: "scaling"
+      resource :terminal, only: [:show], controller: "terminals"
     end
     resources :servers do
       member do
         post :sync
       end
+      resource :terminal, only: [:show], controller: "terminals"
     end
     resources :databases do
       member do
