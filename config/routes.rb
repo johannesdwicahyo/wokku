@@ -91,11 +91,18 @@ Rails.application.routes.draw do
         post :sync
       end
       resource :terminal, only: [:show], controller: "terminals"
+      resource :backup_destination, only: [:edit, :update], controller: "backup_destinations"
     end
     resources :databases do
       member do
         post :link
         post :unlink
+      end
+      resources :backups, only: [:index, :create], controller: "backups" do
+        member do
+          get :download
+          post :restore
+        end
       end
     end
     resources :teams

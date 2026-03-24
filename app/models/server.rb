@@ -7,6 +7,7 @@ class Server < ApplicationRecord
 
   has_many :app_records, dependent: :destroy
   has_many :database_services, dependent: :destroy
+  has_one :backup_destination, dependent: :destroy
 
   validates :name, presence: true, uniqueness: { scope: :team_id }
   validates :host, presence: true

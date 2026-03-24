@@ -19,7 +19,13 @@
       <span class="flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-red-400"></span><span class="text-xs text-gray-400">Error</span></span>
     <% end %>
   </div>
-  <%= link_to "Delete", dashboard_database_path(@database), data: { turbo_method: :delete, turbo_confirm: "Destroy #{@database.name}? This will delete all data." }, class: "text-sm text-red-400/70 hover:text-red-400 font-medium transition" %>
+  <div class="flex items-center space-x-3">
+    <%= link_to dashboard_database_backups_path(@database), class: "inline-flex items-center px-3 py-1.5 bg-[#1E293B] border border-[#334155] text-gray-300 text-sm font-medium rounded-md hover:bg-[#334155] hover:text-white transition" do %>
+      <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+      Backups
+    <% end %>
+    <%= link_to "Delete", dashboard_database_path(@database), data: { turbo_method: :delete, turbo_confirm: "Destroy #{@database.name}? This will delete all data." }, class: "text-sm text-red-400/70 hover:text-red-400 font-medium transition" %>
+  </div>
 </div>
 
 <%# Info Cards %>
