@@ -1,0 +1,33 @@
+<% content_for(:title, "Terminal — #{@server.name}") %>
+
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <% if @app %>
+        <%= link_to dashboard_app_path(@app), class: "text-sm text-gray-500 hover:text-gray-300 transition" do %>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        <% end %>
+        <h1 class="text-lg font-semibold text-white font-mono"><%= @app.name %></h1>
+        <span class="text-gray-600">on</span>
+        <span class="text-sm text-gray-400 font-mono"><%= @server.name %></span>
+      <% else %>
+        <%= link_to dashboard_server_path(@server), class: "text-sm text-gray-500 hover:text-gray-300 transition" do %>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        <% end %>
+        <h1 class="text-lg font-semibold text-white">Terminal</h1>
+        <span class="text-sm text-gray-400 font-mono"><%= @server.name %> (<%= @server.host %>)</span>
+      <% end %>
+    </div>
+    <div class="flex items-center space-x-3">
+      <span data-terminal-target="status" class="text-xs font-mono text-yellow-500">Connecting...</span>
+      <button data-action="click->terminal#reconnect" class="text-xs text-gray-500 hover:text-white transition px-2 py-1 rounded border border-[#334155] hover:border-[#475569]">Reconnect</button>
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-[#1E293B] bg-[#0B1120] overflow-hidden"
+       data-controller="terminal"
+       data-terminal-server-id-value="<%= @server.id %>"
+       <%= "data-terminal-app-name-value=#{@app.name}" if @app %>>
+    <div data-terminal-target="container" class="h-[calc(100vh-200px)] w-full"></div>
+  </div>
+</div>
