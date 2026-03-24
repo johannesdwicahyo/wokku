@@ -54,6 +54,10 @@ Rails.application.routes.draw do
     end
   end
 
+  # GitHub
+  get "/github/callback", to: "github/callbacks#create", as: :github_callback
+  post "/webhooks/github", to: "webhooks/github#create"
+
   namespace :dashboard do
     resources :templates, only: [:index, :show, :create]
     resources :apps do
@@ -78,6 +82,9 @@ Rails.application.routes.draw do
       resource :metrics, only: [:show], controller: "metrics"
       resource :scaling, only: [:show, :update], controller: "scaling"
       resource :terminal, only: [:show], controller: "terminals"
+      get "github/repos", to: "github#repos", as: :github_repos
+      post "github/connect", to: "github#connect", as: :github_connect
+      delete "github/disconnect", to: "github#disconnect", as: :github_disconnect
     end
     resources :servers do
       member do
