@@ -1,8 +1,8 @@
 require "test_helper"
 
-class GitHubAppTest < ActiveSupport::TestCase
+class GithubAppTest < ActiveSupport::TestCase
   test "installation_url returns correct URL" do
-    url = GitHubApp.installation_url
+    url = GithubApp.installation_url
     assert_includes url, "github.com/apps/"
   end
 
@@ -11,10 +11,10 @@ class GitHubAppTest < ActiveSupport::TestCase
     payload = '{"action":"push"}'
     signature = "sha256=" + OpenSSL::HMAC.hexdigest("SHA256", secret, payload)
 
-    assert GitHubApp.verify_webhook_signature(payload, signature, secret)
+    assert GithubApp.verify_webhook_signature(payload, signature, secret)
   end
 
   test "verify_webhook_signature returns false for invalid signature" do
-    refute GitHubApp.verify_webhook_signature("payload", "sha256=invalid", "secret")
+    refute GithubApp.verify_webhook_signature("payload", "sha256=invalid", "secret")
   end
 end

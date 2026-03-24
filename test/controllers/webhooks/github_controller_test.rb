@@ -11,7 +11,7 @@ class Webhooks::GithubControllerTest < ActionDispatch::IntegrationTest
     secret = "test_secret"
     signature = "sha256=" + OpenSSL::HMAC.hexdigest("SHA256", secret, payload)
 
-    stub_const_value(GitHubApp, :WEBHOOK_SECRET, secret) do
+    stub_const_value(GithubApp, :WEBHOOK_SECRET, secret) do
       post "/webhooks/github",
         params: payload,
         headers: {

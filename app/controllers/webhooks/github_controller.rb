@@ -57,7 +57,7 @@ module Webhooks
       @payload = request.body.read
       signature = request.headers["X-Hub-Signature-256"]
 
-      unless GitHubApp.verify_webhook_signature(@payload, signature)
+      unless GithubApp.verify_webhook_signature(@payload, signature)
         head :unauthorized
       end
     end

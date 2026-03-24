@@ -51,13 +51,13 @@
         <p class="text-xs text-gray-500 mt-1">Auto-deploys on push to <span class="font-mono"><%= @app.deploy_branch %></span></p>
       <% else %>
         <p class="text-xs text-gray-500 mb-3">Connect a GitHub repository for automatic deploys on push.</p>
-        <% if GitHubApp.configured? %>
+        <% if GithubApp.configured? %>
           <% if current_user.github_installation_id %>
             <%= link_to dashboard_app_github_repos_path(@app), class: "inline-flex items-center px-3 py-1.5 bg-[#0B1120] border border-[#334155] text-gray-300 text-xs font-medium rounded-md hover:bg-[#334155] hover:text-white transition" do %>
               Connect Repository
             <% end %>
           <% else %>
-            <a href="<%= GitHubApp.installation_url %>" class="inline-flex items-center px-3 py-1.5 bg-[#0B1120] border border-[#334155] text-gray-300 text-xs font-medium rounded-md hover:bg-[#334155] hover:text-white transition">
+            <a href="<%= GithubApp.installation_url %>" class="inline-flex items-center px-3 py-1.5 bg-[#0B1120] border border-[#334155] text-gray-300 text-xs font-medium rounded-md hover:bg-[#334155] hover:text-white transition">
               Install GitHub App
             </a>
           <% end %>

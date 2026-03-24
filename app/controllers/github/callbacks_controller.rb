@@ -19,12 +19,12 @@ module Github
     private
 
     def fetch_github_username(installation_id)
-      return nil unless GitHubApp.configured?
-      github = GitHubApp.new(installation_id)
+      return nil unless GithubApp.configured?
+      github = GithubApp.new(installation_id)
       result = github.repos(per_page: 1)
       result&.repositories&.first&.owner&.login
     rescue => e
-      Rails.logger.warn("GitHubApp: Failed to fetch username: #{e.message}")
+      Rails.logger.warn("GithubApp: Failed to fetch username: #{e.message}")
       nil
     end
   end
