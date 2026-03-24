@@ -2,6 +2,7 @@ class DatabaseService < ApplicationRecord
   belongs_to :server
 
   has_many :app_databases, dependent: :destroy
+  has_many :backups, dependent: :destroy
   has_many :app_records, through: :app_databases
 
   enum :status, { running: 0, stopped: 1, creating: 2, error: 3 }

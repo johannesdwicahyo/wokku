@@ -52,6 +52,9 @@ gem "sshkit"
 gem "octokit"
 gem "jwt"
 
+# S3 Backups (supports AWS S3, Cloudflare R2, MinIO, Backblaze B2, DO Spaces)
+gem "aws-sdk-s3", require: false
+
 # Real-time
 gem "redis"
 

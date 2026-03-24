@@ -1,0 +1,67 @@
+<% content_for(:title, "Backup Settings — #{@server.name}") %>
+
+<div class="max-w-2xl mx-auto space-y-6">
+  <%= link_to dashboard_server_path(@server), class: "inline-flex items-center text-sm text-gray-500 hover:text-gray-300 transition" do %>
+    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    Back to <%= @server.name %>
+  <% end %>
+
+  <div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 p-6">
+    <h1 class="text-lg font-semibold text-white mb-1">Backup Destination</h1>
+    <p class="text-sm text-gray-500 mb-6">Configure S3-compatible storage for database backups. Supports AWS S3, Cloudflare R2, MinIO, Backblaze B2, DigitalOcean Spaces, and Wasabi.</p>
+
+    <%= form_with model: @destination, url: dashboard_server_backup_destination_path(@server), method: :patch, class: "space-y-4" do |f| %>
+      <div>
+        <%= f.label :provider, "Provider", class: "block text-xs text-gray-400 uppercase tracking-wider mb-1" %>
+        <%= f.select :provider, BackupDestination::PROVIDERS.map { |k, v| [v[:name], k] }, {}, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white text-sm focus:ring-green-500 focus:border-green-500" %>
+      </div>
+
+      <div>
+        <%= f.label :endpoint_url, "Endpoint URL (leave blank for AWS S3)", class: "block text-xs text-gray-400 uppercase tracking-wider mb-1" %>
+        <%= f.text_field :endpoint_url, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white font-mono text-sm focus:ring-green-500 focus:border-green-500", placeholder: "https://account-id.r2.cloudflarestorage.com" %>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <%= f.label :bucket, class: "block text-xs text-gray-400 uppercase tracking-wider mb-1" %>
+          <%= f.text_field :bucket, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white font-mono text-sm focus:ring-green-500 focus:border-green-500", placeholder: "my-backups" %>
+        </div>
+        <div>
+          <%= f.label :region, class: "block text-xs text-gray-400 uppercase tracking-wider mb-1" %>
+          <%= f.text_field :region, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white font-mono text-sm focus:ring-green-500 focus:border-green-500", placeholder: "us-east-1" %>
+        </div>
+      </div>
+
+      <div>
+        <%= f.label :access_key_id, "Access Key ID", class: "block text-xs text-gray-400 uppercase tracking-wider mb-1" %>
+        <%= f.text_field :access_key_id, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white font-mono text-sm focus:ring-green-500 focus:border-green-500" %>
+      </div>
+
+      <div>
+        <%= f.label :secret_access_key, "Secret Access Key", class: "block text-xs text-gray-400 uppercase tracking-wider mb-1" %>
+        <%= f.password_field :secret_access_key, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white font-mono text-sm focus:ring-green-500 focus:border-green-500", placeholder: @destination.persisted? ? "••••••••" : "" %>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <%= f.label :path_prefix, "Path Prefix", class: "block text-xs text-gray-400 uppercase tracking-wider mb-1" %>
+          <%= f.text_field :path_prefix, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white font-mono text-sm focus:ring-green-500 focus:border-green-500", placeholder: "wokku-backups" %>
+        </div>
+        <div>
+          <%= f.label :retention_days, "Keep Backups (days)", class: "block text-xs text-gray-400 uppercase tracking-wider mb-1" %>
+          <%= f.number_field :retention_days, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white text-sm focus:ring-green-500 focus:border-green-500", min: 1, max: 365 %>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <%= f.check_box :enabled, class: "rounded bg-[#0B1120] border-[#334155] text-green-500 focus:ring-green-500" %>
+        <%= f.label :enabled, "Enable automatic daily backups", class: "text-sm text-gray-400" %>
+      </div>
+
+      <div class="flex items-center space-x-3 pt-2">
+        <%= f.submit "Save Backup Settings", class: "px-4 py-2 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer" %>
+        <%= link_to "Cancel", dashboard_server_path(@server), class: "text-sm text-gray-500 hover:text-gray-400 transition" %>
+      </div>
+    <% end %>
+  </div>
+</div>

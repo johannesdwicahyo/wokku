@@ -27,3 +27,13 @@ production:
     class: SslAutoRenewJob
     schedule: every day at 3am
     queue: default
+
+  backup_scheduler:
+    class: BackupSchedulerJob
+    schedule: every day at 2am
+    queue: backups
+
+  backup_retention:
+    class: BackupRetentionJob
+    schedule: every day at 4am
+    queue: backups
