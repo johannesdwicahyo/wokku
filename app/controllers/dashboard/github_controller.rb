@@ -5,10 +5,10 @@ module Dashboard
       authorize @app, :update?
 
       unless current_user.github_installation_id
-        return redirect_to GitHubApp.installation_url
+        return redirect_to GithubApp.installation_url
       end
 
-      github = GitHubApp.new(current_user.github_installation_id)
+      github = GithubApp.new(current_user.github_installation_id)
       @repos = github.repos(per_page: 50)&.repositories || []
       @branches = []
 
