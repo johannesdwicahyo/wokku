@@ -29,6 +29,7 @@ module Dashboard
         client = Dokku::Client.new(server)
         Dokku::Databases.new(client).create(@database.service_type, @database.name)
         @database.update!(status: :running)
+        track("database.created", target: @database)
         redirect_to dashboard_database_path(@database), notice: "Database #{@database.name} created."
       else
         @servers = policy_scope(Server)
@@ -48,6 +49,7 @@ module Dashboard
       client = Dokku::Client.new(@database.server)
       Dokku::Databases.new(client).destroy(@database.service_type, @database.name)
       @database.destroy
+      track("database.destroyed", target: @database)
       redirect_to dashboard_databases_path, notice: "Database #{@database.name} destroyed."
     rescue => e
       redirect_to dashboard_databases_path, alert: "Failed to destroy database: #{e.message}"

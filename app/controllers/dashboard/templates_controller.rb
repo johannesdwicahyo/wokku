@@ -57,6 +57,7 @@ module Dashboard
         user_id: current_user.id,
         deploy_id: deploy.id
       )
+      track("template.deployed", target: app, metadata: { template: template[:name] })
 
       redirect_to dashboard_app_deploy_path(app, deploy), notice: "Deploying #{template[:name]}..."
     end

@@ -1,5 +1,6 @@
 module Dashboard
   class BaseController < ApplicationController
+    include Trackable
     before_action :authenticate_user!
     layout "dashboard"
 
