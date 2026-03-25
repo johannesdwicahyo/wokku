@@ -1,0 +1,11 @@
+# documentation: https://github.com/devlikeapro/waha
+# slogan: WhatsApp HTTP API for messaging automation
+# category: communication
+# tags: whatsapp, api, messaging
+# icon: whatsapp
+
+services:
+  waha:
+    image: devlikeapro/waha:latest
+    environment:
+      - WHATSAPP_DEFAULT_ENGINE=WEBJS

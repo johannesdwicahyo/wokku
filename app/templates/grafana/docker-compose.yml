@@ -1,0 +1,12 @@
+# documentation: https://github.com/grafana/grafana
+# slogan: Metrics visualization and monitoring
+# category: monitoring
+# tags: metrics, dashboards, go
+# icon: monitor
+# port: 3000
+
+services:
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"

@@ -1,0 +1,23 @@
+# documentation: https://github.com/rails/rails-new
+# slogan: Production-ready Rails 8 with Tailwind CSS and PostgreSQL
+# category: frameworks
+# tags: ruby, rails, fullstack, tailwind
+# icon: rails
+# post_deploy: bin/rails db:migrate
+
+services:
+  rails_tailwind:
+    image: rails-tailwind:latest
+    environment:
+      - RAILS_ENV=production
+      - RAILS_LOG_TO_STDOUT=true
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

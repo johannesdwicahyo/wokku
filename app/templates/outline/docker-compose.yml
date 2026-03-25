@@ -1,0 +1,23 @@
+# documentation: https://github.com/outline/outline
+# slogan: Team wiki and knowledge base
+# category: databases
+# tags: wiki, knowledge-base, node
+# icon: wiki
+
+services:
+  outline:
+    image: outline:latest
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+
+volumes:
+  postgres-data:

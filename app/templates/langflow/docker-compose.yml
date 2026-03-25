@@ -1,0 +1,19 @@
+# documentation: https://github.com/langflow-ai/langflow
+# slogan: Visual framework for building LLM applications
+# category: ai
+# tags: ai, llm, python, workflow
+# icon: ai
+
+services:
+  langflow:
+    image: langflowai/langflow:latest
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

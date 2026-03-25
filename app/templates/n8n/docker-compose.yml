@@ -1,0 +1,25 @@
+# documentation: https://github.com/n8n-io/n8n
+# slogan: Workflow automation tool like Zapier
+# category: automation
+# tags: automation, workflow, node
+# icon: automation
+# port: 5678
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    environment:
+      - N8N_PORT=5678
+      - DB_TYPE=postgresdb
+    ports:
+      - "5678:5678"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

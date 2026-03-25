@@ -1,0 +1,24 @@
+# documentation: https://github.com/TryGhost/Ghost
+# slogan: Professional publishing and blogging platform
+# category: cms
+# tags: blog, cms, node
+# icon: cms
+# port: 2368
+
+services:
+  ghost:
+    image: ghost:5:latest
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "2368:2368"
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8
+    volumes:
+      - mysql-data:/var/lib/mysql/data
+
+volumes:
+  mysql-data:

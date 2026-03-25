@@ -1,0 +1,12 @@
+# documentation: https://github.com/filebrowser/filebrowser
+# slogan: Web-based file manager
+# category: storage
+# tags: files, browser, go
+# icon: storage
+# port: 80
+
+services:
+  filebrowser:
+    image: filebrowser/filebrowser:latest
+    ports:
+      - "80:80"

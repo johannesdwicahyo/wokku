@@ -1,0 +1,19 @@
+# documentation: https://github.com/metabase/metabase
+# slogan: Business intelligence and analytics dashboards
+# category: analytics
+# tags: bi, dashboards, java
+# icon: analytics
+
+services:
+  metabase:
+    image: metabase/metabase:latest
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

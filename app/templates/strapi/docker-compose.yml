@@ -1,0 +1,19 @@
+# documentation: https://github.com/strapi/strapi
+# slogan: Leading open-source headless CMS
+# category: cms
+# tags: headless-cms, api, node
+# icon: cms
+
+services:
+  strapi:
+    image: strapi/strapi:latest
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

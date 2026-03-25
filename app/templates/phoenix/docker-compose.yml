@@ -1,0 +1,20 @@
+# documentation: https://github.com/phoenixframework/phoenix
+# slogan: Elixir web framework for productive and reliable apps
+# category: frameworks
+# tags: elixir, phoenix, fullstack
+# icon: elixir
+# post_deploy: mix ecto.migrate
+
+services:
+  phoenix:
+    image: phoenix:latest
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

@@ -1,0 +1,12 @@
+# documentation: https://github.com/TwiN/gatus
+# slogan: Health dashboard with alerting
+# category: monitoring
+# tags: health, monitoring, go
+# icon: monitor
+# port: 8080
+
+services:
+  gatus:
+    image: twinproduction/gatus:latest
+    ports:
+      - "8080:8080"

@@ -1,0 +1,24 @@
+# documentation: https://github.com/laravel/laravel
+# slogan: PHP framework with elegant syntax
+# category: frameworks
+# tags: php, laravel, fullstack
+# icon: php
+# post_deploy: php artisan migrate --force
+
+services:
+  laravel:
+    image: laravel:latest
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+
+volumes:
+  postgres-data:
