@@ -9,6 +9,7 @@ class User < ApplicationRecord
   has_many :ssh_public_keys, dependent: :destroy
   has_many :team_memberships, dependent: :destroy
   has_many :teams, through: :team_memberships
+  has_many :device_tokens, dependent: :destroy
 
   def self.from_omniauth(auth)
     where(provider: auth.provider, uid: auth.uid).first_or_create do |user|

@@ -35,7 +35,16 @@ Rails.application.routes.draw do
         end
         resource :ps, only: [:show, :update], controller: "ps"
         resources :logs, only: [:index]
+        resources :deploys, only: [:index, :show]
       end
+
+      resources :templates, only: [:index, :show] do
+        collection do
+          post :deploy
+        end
+      end
+
+      resources :devices, only: [:create, :destroy]
 
       resources :databases, only: [:index, :show, :create, :destroy] do
         member do
