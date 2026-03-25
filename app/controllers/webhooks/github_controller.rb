@@ -8,6 +8,8 @@ module Webhooks
       case event
       when "push"
         handle_push(JSON.parse(@payload))
+      when "pull_request"
+        handle_pull_request(JSON.parse(@payload))
       when "ping"
         head :ok
       else
@@ -47,6 +49,44 @@ module Webhooks
           branch: branch,
           commit_sha: commit_sha
         )
+      end
+
+      head :ok
+    end
+
+    def handle_pull_request(payload)
+      action = payload["action"] # opened, synchronize, closed, reopened
+      pr_number = payload.dig("pull_request", "number")
+      repo_full_name = payload.dig("repository", "full_name")
+      branch = payload.dig("pull_request", "head", "ref")
+      commit_sha = payload.dig("pull_request", "head", "sha")
+      pr_title = payload.dig("pull_request", "title")
+
+      return head :ok unless repo_full_name && pr_number
+
+      # Find parent apps connected to this repo
+      parent_apps = AppRecord.where(github_repo_full_name: repo_full_name)
+      return head :ok unless parent_apps.any?
+
+      case action
+      when "opened", "reopened", "synchronize"
+        parent_apps.each do |parent_app|
+          PrPreviewDeployJob.perform_later(
+            parent_app_id: parent_app.id,
+            pr_number: pr_number,
+            branch: branch,
+            commit_sha: commit_sha,
+            pr_title: pr_title,
+            repo_full_name: repo_full_name
+          )
+        end
+      when "closed"
+        parent_apps.each do |parent_app|
+          PrPreviewCleanupJob.perform_later(
+            parent_app_id: parent_app.id,
+            pr_number: pr_number
+          )
+        end
       end
 
       head :ok
