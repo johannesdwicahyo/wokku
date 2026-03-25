@@ -1,5 +1,7 @@
 # Wokku
 
+[![Deploy to Wokku](https://img.shields.io/badge/Deploy%20to-Wokku-22C55E?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMyAxMFYzTDQgMTRoN3Y3bDktMTFoLTd6Ii8+PC9zdmc+)](https://wokku.dev/deploy)
+
 **Web UI for [Dokku](https://dokku.com).** Open-source cloud platform for developers and creators — deploy apps with `git push`, install popular open-source tools in one click, manage databases, domains, SSL, and more from a beautiful dashboard.
 
 > Self-host on your own servers or use our managed cloud at [wokku.dev](https://wokku.dev). No vendor lock-in.
