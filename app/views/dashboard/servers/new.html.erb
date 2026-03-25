@@ -9,6 +9,56 @@
     <p class="mt-0.5 text-sm text-gray-500">Connect a Dokku server via SSH</p>
   </div>
 
+  <%# Cloud Provisioning %>
+  <% if current_team.cloud_credentials.any? %>
+    <div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 p-6 mb-6">
+      <h2 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">Create with Cloud Provider</h2>
+
+      <%= form_with url: provision_dashboard_servers_path, method: :post, class: "space-y-4" do |f| %>
+        <div>
+          <%= f.label :cloud_credential_id, "Provider", class: "block text-xs text-gray-400 uppercase tracking-wider mb-1" %>
+          <%= f.select :cloud_credential_id, current_team.cloud_credentials.map { |c| ["#{c.provider.capitalize}#{c.name.present? ? " (#{c.name})" : ""}", c.id] }, { prompt: "Select provider" }, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white text-sm focus:ring-green-500 focus:border-green-500" %>
+        </div>
+
+        <div>
+          <%= f.label :name, "Server Name", class: "block text-xs text-gray-400 uppercase tracking-wider mb-1" %>
+          <%= f.text_field :name, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white font-mono text-sm focus:ring-green-500 focus:border-green-500", placeholder: "my-dokku-server" %>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <%= f.label :region, class: "block text-xs text-gray-400 uppercase tracking-wider mb-1" %>
+            <%= f.select :region, [["US East (Ashburn)", "ash"], ["EU Central (Falkenstein)", "fsn1"], ["EU West (Helsinki)", "hel1"], ["Singapore", "sgp"]], { prompt: "Select region" }, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white text-sm focus:ring-green-500 focus:border-green-500" %>
+          </div>
+          <div>
+            <%= f.label :size, class: "block text-xs text-gray-400 uppercase tracking-wider mb-1" %>
+            <%= f.select :size, [["2 vCPU / 4 GB — $4/mo", "cx22"], ["4 vCPU / 8 GB — $8/mo", "cx32"], ["8 vCPU / 16 GB — $16/mo", "cx42"]], { prompt: "Select size" }, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white text-sm focus:ring-green-500 focus:border-green-500" %>
+          </div>
+        </div>
+
+        <div class="pt-2">
+          <%= f.submit "Create Server", class: "px-4 py-2 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer" %>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="bg-[#1E293B]/40 rounded-xl border border-[#334155]/30 p-6 mb-6">
+      <h2 class="text-sm font-semibold text-white uppercase tracking-wider mb-2">Auto-Provision a Server</h2>
+      <p class="text-xs text-gray-500 mb-3">Connect a cloud provider API key to create Dokku servers with one click.</p>
+      <%= form_with url: dashboard_cloud_credentials_path, method: :post, class: "flex items-end space-x-3" do |f| %>
+        <%= f.select :provider, [["Hetzner", "hetzner"], ["Vultr", "vultr"], ["DigitalOcean", "digitalocean"], ["Linode", "linode"]], { prompt: "Provider" }, class: "rounded-md bg-[#0B1120] border-[#334155] text-white text-sm focus:ring-green-500 focus:border-green-500" %>
+        <%= f.text_field :api_key, placeholder: "API Key", class: "flex-1 rounded-md bg-[#0B1120] border-[#334155] text-white font-mono text-sm focus:ring-green-500 focus:border-green-500" %>
+        <%= f.submit "Connect", class: "px-3 py-2 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer" %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="flex items-center space-x-3 mb-6">
+    <div class="h-px flex-1 bg-[#334155]"></div>
+    <span class="text-xs text-gray-500 uppercase tracking-wider">or add existing server manually</span>
+    <div class="h-px flex-1 bg-[#334155]"></div>
+  </div>
+
   <%= form_with(model: @server, url: dashboard_servers_path, class: "bg-[#1E293B]/60 rounded-lg border border-[#334155]/50 p-6 space-y-4") do |f| %>
     <% if @server.errors.any? %>
       <div class="rounded-md bg-red-500/10 border border-red-500/20 p-3">
