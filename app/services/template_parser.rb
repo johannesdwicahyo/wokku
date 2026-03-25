@@ -27,9 +27,9 @@ class TemplateParser
     end
 
     {
-      name: metadata["slogan"] || slug.tr("-", " ").titleize,
+      name: metadata["name"] || slug.tr("-", " ").titleize,
       slug: slug,
-      description: metadata["slogan"] || "",
+      description: metadata["slogan"] || metadata["description"] || "",
       category: metadata["category"] || "uncategorized",
       icon: metadata["icon"] || "docker",
       repo: metadata["documentation"] || "",
