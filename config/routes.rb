@@ -107,6 +107,7 @@ Rails.application.routes.draw do
     end
     resources :teams
     resources :notifications, only: [:index, :create, :destroy]
+    resources :activities, only: [:index]
     resource :profile, only: [:show, :edit, :update], controller: "profile"
   end
 

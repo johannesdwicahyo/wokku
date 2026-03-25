@@ -21,6 +21,7 @@ module Dashboard
       authorize @server
 
       if @server.save
+        track("server.created", target: @server)
         redirect_to dashboard_server_path(@server), notice: "Server added successfully."
       else
         @servers = policy_scope(Server).includes(:app_records)
@@ -37,6 +38,7 @@ module Dashboard
     def destroy
       authorize @server
       @server.destroy
+      track("server.destroyed", target: @server)
       redirect_to dashboard_servers_path, notice: "Server removed successfully."
     end
 

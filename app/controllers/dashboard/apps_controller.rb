@@ -24,6 +24,7 @@ module Dashboard
       authorize @app
 
       if @app.save
+        track("app.created", target: @app)
         redirect_to dashboard_app_path(@app), notice: "App created successfully."
       else
         @servers = policy_scope(Server)
@@ -41,6 +42,7 @@ module Dashboard
         Rails.logger.warn("Failed to destroy #{@app.name} on Dokku: #{e.message}")
       end
       @app.destroy
+      track("app.destroyed", target: @app)
       redirect_to dashboard_apps_path, notice: "App deleted successfully."
     end
 
@@ -48,6 +50,7 @@ module Dashboard
       authorize @app
       dokku_processes.restart(@app.name)
       @app.update(status: :running)
+      track("app.restarted", target: @app)
       redirect_to dashboard_app_path(@app), notice: "#{@app.name} restarted."
     rescue => e
       redirect_to dashboard_app_path(@app), alert: "Restart failed: #{e.message}"
@@ -57,6 +60,7 @@ module Dashboard
       authorize @app
       dokku_processes.stop(@app.name)
       @app.update(status: :stopped)
+      track("app.stopped", target: @app)
       redirect_to dashboard_app_path(@app), notice: "#{@app.name} stopped."
     rescue => e
       redirect_to dashboard_app_path(@app), alert: "Stop failed: #{e.message}"
@@ -66,6 +70,7 @@ module Dashboard
       authorize @app
       dokku_processes.start(@app.name)
       @app.update(status: :running)
+      track("app.started", target: @app)
       redirect_to dashboard_app_path(@app), notice: "#{@app.name} started."
     rescue => e
       redirect_to dashboard_app_path(@app), alert: "Start failed: #{e.message}"
