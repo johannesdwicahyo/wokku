@@ -29,6 +29,47 @@ module Dashboard
       end
     end
 
+    def provision
+      credential = current_team.cloud_credentials.find(params[:cloud_credential_id])
+      provider = CloudProviders.const_get(credential.provider.capitalize).new(credential)
+
+      # Generate SSH key pair for this server
+      key = OpenSSL::PKey::RSA.new(4096)
+      ssh_private_key = key.to_pem
+      ssh_public_key = "ssh-rsa #{[key.public_key.to_blob].pack('m0')}"
+
+      # Create VPS via provider API
+      result = provider.create_server(
+        name: params[:name],
+        region: params[:region],
+        size: params[:size]
+      )
+
+      # Create server record
+      server = current_team.servers.create!(
+        name: params[:name],
+        host: result[:ip],
+        port: 22,
+        ssh_user: "root",
+        ssh_private_key: ssh_private_key,
+        cloud_provider: credential.provider,
+        cloud_server_id: result[:id],
+        monthly_cost_cents: params[:monthly_cost_cents].to_i,
+        status: :syncing
+      )
+
+      # Queue Dokku installation
+      ProvisionServerJob.perform_later(
+        server_id: server.id,
+        cloud_credential_id: credential.id,
+        cloud_server_id: result[:id]
+      )
+
+      redirect_to dashboard_server_path(server), notice: "Server provisioning started. Dokku will be installed automatically (~5 minutes)."
+    rescue => e
+      redirect_to new_dashboard_server_path, alert: "Provisioning failed: #{e.message}"
+    end
+
     def sync
       authorize @server
       SyncServerJob.perform_later(@server.id)

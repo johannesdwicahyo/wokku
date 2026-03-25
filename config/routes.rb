@@ -87,6 +87,9 @@ Rails.application.routes.draw do
       delete "github/disconnect", to: "github#disconnect", as: :github_disconnect
     end
     resources :servers do
+      collection do
+        post :provision
+      end
       member do
         post :sync
       end
@@ -105,10 +108,12 @@ Rails.application.routes.draw do
         end
       end
     end
+    resources :cloud_credentials, only: [:index, :create, :destroy]
     resources :teams
     resources :notifications, only: [:index, :create, :destroy]
     resources :activities, only: [:index]
     resource :profile, only: [:show, :edit, :update], controller: "profile"
+    post "locale", to: "locales#update", as: :locale
   end
 
   # Load Enterprise Edition routes if available

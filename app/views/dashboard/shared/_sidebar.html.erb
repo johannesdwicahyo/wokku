@@ -30,6 +30,13 @@
     <% end %>
   </nav>
 
+  <div class="px-2 py-2 border-t border-[#1E293B]">
+    <div class="flex items-center space-x-1 px-3 py-1">
+      <%= button_to dashboard_locale_path(locale: :en), method: :post, class: "text-[10px] px-1.5 py-0.5 rounded #{I18n.locale == :en ? 'bg-green-500/20 text-green-400' : 'text-gray-600 hover:text-gray-400'} transition" do %>EN<% end %>
+      <%= button_to dashboard_locale_path(locale: :id), method: :post, class: "text-[10px] px-1.5 py-0.5 rounded #{I18n.locale == :id ? 'bg-green-500/20 text-green-400' : 'text-gray-600 hover:text-gray-400'} transition" do %>ID<% end %>
+    </div>
+  </div>
+
   <div class="px-2 py-3 border-t border-[#1E293B]">
     <a href="<%= dashboard_profile_path %>" class="flex items-center space-x-2.5 px-3 py-2 text-gray-500 hover:text-gray-200 hover:bg-[#1E293B]/50 rounded-md text-sm cursor-pointer transition">
       <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
