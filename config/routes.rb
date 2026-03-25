@@ -116,6 +116,7 @@ Rails.application.routes.draw do
   instance_eval(File.read(ee_routes)) if ee_routes.exist?
 
   # Marketing pages
+  get "/deploy", to: "pages#deploy"
   get "/pricing", to: "pages#pricing"
   get "/docs", to: "pages#docs"
 

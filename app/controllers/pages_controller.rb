@@ -20,4 +20,8 @@ class PagesController < ApplicationController
 
   def docs
   end
+
+  def deploy
+    render layout: "landing"
+  end
 end

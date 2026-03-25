@@ -1,0 +1,118 @@
+<% content_for(:title, "Deploy Wokku — Get Started in Minutes") %>
+
+<div class="max-w-3xl mx-auto px-4 py-16 space-y-12">
+
+  <%# Header %>
+  <div class="text-center">
+    <h1 class="text-4xl font-bold text-white">Deploy Wokku</h1>
+    <p class="mt-3 text-lg text-gray-400">Your own cloud platform, running in minutes.</p>
+  </div>
+
+  <%# Wokku Cloud — Primary Option %>
+  <div class="relative bg-[#1E293B]/60 rounded-2xl border-2 border-green-500/30 p-8 overflow-hidden">
+    <div class="absolute top-4 right-4">
+      <span class="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-green-500/10 text-green-400 border border-green-500/20">RECOMMENDED</span>
+    </div>
+
+    <div class="flex items-center space-x-3 mb-4">
+      <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+        <svg class="w-5 h-5 text-[#0B1120]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </div>
+      <div>
+        <h2 class="text-xl font-bold text-white">Wokku Cloud</h2>
+        <p class="text-sm text-gray-400">Managed and updated for you. Ready in 2 minutes.</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+      <div class="flex items-center space-x-2">
+        <svg class="w-4 h-4 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        <span class="text-sm text-gray-300">Full Wokku dashboard</span>
+      </div>
+      <div class="flex items-center space-x-2">
+        <svg class="w-4 h-4 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        <span class="text-sm text-gray-300">PostgreSQL + Redis included</span>
+      </div>
+      <div class="flex items-center space-x-2">
+        <svg class="w-4 h-4 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        <span class="text-sm text-gray-300">Automatic updates &amp; backups</span>
+      </div>
+      <div class="flex items-center space-x-2">
+        <svg class="w-4 h-4 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        <span class="text-sm text-gray-300">SSL + custom domain</span>
+      </div>
+      <div class="flex items-center space-x-2">
+        <svg class="w-4 h-4 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        <span class="text-sm text-gray-300">Connect your own Dokku servers</span>
+      </div>
+      <div class="flex items-center space-x-2">
+        <svg class="w-4 h-4 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        <span class="text-sm text-gray-300">50+ app templates</span>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between">
+      <div>
+        <span class="text-3xl font-bold text-white">$8</span>
+        <span class="text-gray-500 text-sm">/month</span>
+        <p class="text-xs text-gray-600 mt-0.5">10% supports Wokku + open-source development</p>
+      </div>
+      <%= link_to new_user_registration_path, class: "inline-flex items-center px-6 py-3 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-lg hover:bg-green-400 transition shadow-lg shadow-green-500/20" do %>
+        Deploy Now
+        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Self-Host Options %>
+  <div>
+    <div class="flex items-center space-x-3 mb-4">
+      <div class="h-px flex-1 bg-[#334155]"></div>
+      <span class="text-xs text-gray-500 uppercase tracking-wider">or self-host (free forever)</span>
+      <div class="h-px flex-1 bg-[#334155]"></div>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <a href="https://www.hetzner.com/cloud" target="_blank" rel="noopener" class="bg-[#1E293B]/40 rounded-xl border border-[#334155]/40 p-4 text-center hover:border-[#475569] transition group">
+        <p class="text-sm font-medium text-gray-300 group-hover:text-white transition">Hetzner</p>
+        <p class="text-xs text-gray-600 mt-0.5">From $4/mo</p>
+      </a>
+      <a href="https://www.vultr.com" target="_blank" rel="noopener" class="bg-[#1E293B]/40 rounded-xl border border-[#334155]/40 p-4 text-center hover:border-[#475569] transition group">
+        <p class="text-sm font-medium text-gray-300 group-hover:text-white transition">Vultr</p>
+        <p class="text-xs text-gray-600 mt-0.5">From $6/mo</p>
+      </a>
+      <a href="https://www.digitalocean.com" target="_blank" rel="noopener" class="bg-[#1E293B]/40 rounded-xl border border-[#334155]/40 p-4 text-center hover:border-[#475569] transition group">
+        <p class="text-sm font-medium text-gray-300 group-hover:text-white transition">DigitalOcean</p>
+        <p class="text-xs text-gray-600 mt-0.5">From $6/mo</p>
+      </a>
+      <a href="https://www.linode.com" target="_blank" rel="noopener" class="bg-[#1E293B]/40 rounded-xl border border-[#334155]/40 p-4 text-center hover:border-[#475569] transition group">
+        <p class="text-sm font-medium text-gray-300 group-hover:text-white transition">Linode</p>
+        <p class="text-xs text-gray-600 mt-0.5">From $5/mo</p>
+      </a>
+    </div>
+
+    <div class="mt-4 text-center">
+      <p class="text-xs text-gray-600">Requires a VPS with 2GB+ RAM and Ubuntu 22.04+. <a href="https://github.com/johannesdwicahyo/wokku#quick-start" target="_blank" class="text-gray-400 hover:text-white transition underline">Setup guide &rarr;</a></p>
+    </div>
+  </div>
+
+  <%# FAQ %>
+  <div class="space-y-4">
+    <h3 class="text-sm font-semibold text-white uppercase tracking-wider">FAQ</h3>
+
+    <div class="space-y-3">
+      <div class="bg-[#1E293B]/30 rounded-lg p-4">
+        <p class="text-sm font-medium text-gray-300">What's the difference between Wokku Cloud and self-hosting?</p>
+        <p class="text-xs text-gray-500 mt-1">Wokku Cloud is fully managed — we handle updates, backups, and infrastructure. Self-hosting gives you full control but requires manual server setup. Both connect to your own Dokku servers for deploying apps.</p>
+      </div>
+      <div class="bg-[#1E293B]/30 rounded-lg p-4">
+        <p class="text-sm font-medium text-gray-300">Can I switch from self-hosted to Wokku Cloud later?</p>
+        <p class="text-xs text-gray-500 mt-1">Yes. Your Dokku servers work with any Wokku instance. Just connect them to your Wokku Cloud account.</p>
+      </div>
+      <div class="bg-[#1E293B]/30 rounded-lg p-4">
+        <p class="text-sm font-medium text-gray-300">Where does the 10% go?</p>
+        <p class="text-xs text-gray-500 mt-1">10% of Wokku Cloud revenue is shared with the open-source projects hosted on our platform (like n8n, Ghost, Uptime Kuma) and with Dokku development. We believe in giving back.</p>
+      </div>
+    </div>
+  </div>
+</div>
