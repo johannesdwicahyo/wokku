@@ -2,88 +2,130 @@
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
   <div class="text-center mb-16">
-    <h1 class="text-4xl font-bold text-gray-900">Simple, transparent pricing</h1>
-    <p class="mt-4 text-xl text-gray-600">Start free, scale as you grow.</p>
+    <h1 class="text-4xl font-bold text-white">Simple, transparent pricing</h1>
+    <p class="mt-4 text-xl text-gray-400">Pay per resource, per hour. No hidden fees. Start free.</p>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-    <!-- Free -->
-    <div class="border border-gray-200 rounded-lg p-8">
-      <h3 class="text-lg font-semibold text-gray-900">Free</h3>
-      <p class="mt-4">
-        <span class="text-4xl font-bold text-gray-900">$0</span>
-        <span class="text-gray-500">/mo</span>
-      </p>
-      <ul class="mt-8 space-y-3 text-sm text-gray-600">
-        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> 5 apps</li>
-        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> 10 dynos</li>
-        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> 1 database</li>
-        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Custom domains</li>
-        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Auto SSL</li>
-      </ul>
-      <div class="mt-8">
-        <%= link_to "Get Started", new_user_registration_path, class: "block w-full text-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" %>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+    <!-- Containers -->
+    <div class="bg-[#1E293B]/40 rounded-xl border border-[#334155]/40 overflow-hidden">
+      <div class="px-6 py-4 border-b border-[#334155]/40">
+        <h3 class="text-sm font-semibold text-white uppercase tracking-wider">Containers</h3>
+        <p class="text-xs text-gray-500 mt-1">Run your apps and workers</p>
+      </div>
+      <div class="p-6">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-xs text-gray-500 uppercase tracking-wider">
+              <th class="pb-3 text-left font-medium">Tier</th>
+              <th class="pb-3 text-left font-medium">RAM</th>
+              <th class="pb-3 text-right font-medium">Price</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#334155]/30">
+            <% [
+              ["Free", "256 MB", "Free"],
+              ["Starter", "512 MB", "$1.50/mo"],
+              ["Basic", "1 GB", "$2.50/mo"],
+              ["Standard", "2 GB", "$7/mo"],
+              ["Pro", "4 GB", "$14/mo"]
+            ].each do |name, ram, price| %>
+              <tr>
+                <td class="py-2.5 text-gray-300 font-medium"><%= name %></td>
+                <td class="py-2.5 text-gray-500"><%= ram %></td>
+                <td class="py-2.5 text-right font-mono <%= price == 'Free' ? 'text-green-400' : 'text-white' %>"><%= price %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
       </div>
     </div>
 
-    <!-- Hobby -->
-    <div class="border border-indigo-200 rounded-lg p-8 ring-2 ring-indigo-600 relative">
-      <span class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-indigo-600 text-white text-xs font-semibold px-3 py-1 rounded-full">Popular</span>
-      <h3 class="text-lg font-semibold text-gray-900">Hobby</h3>
-      <p class="mt-4">
-        <span class="text-4xl font-bold text-gray-900">$7</span>
-        <span class="text-gray-500">/mo</span>
-      </p>
-      <ul class="mt-8 space-y-3 text-sm text-gray-600">
-        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> 10 apps</li>
-        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> 25 dynos</li>
-        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> 5 databases</li>
-        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Custom domains</li>
-        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Auto SSL</li>
-      </ul>
-      <div class="mt-8">
-        <%= link_to "Get Started", new_user_registration_path, class: "block w-full text-center px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700" %>
+    <!-- Databases -->
+    <div class="bg-[#1E293B]/40 rounded-xl border border-[#334155]/40 overflow-hidden">
+      <div class="px-6 py-4 border-b border-[#334155]/40">
+        <h3 class="text-sm font-semibold text-white uppercase tracking-wider">Databases</h3>
+        <p class="text-xs text-gray-500 mt-1">Postgres, MySQL, MariaDB</p>
+      </div>
+      <div class="p-6">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-xs text-gray-500 uppercase tracking-wider">
+              <th class="pb-3 text-left font-medium">Tier</th>
+              <th class="pb-3 text-left font-medium">Storage</th>
+              <th class="pb-3 text-right font-medium">Price</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#334155]/30">
+            <% [
+              ["Mini", "1 GB", "Free"],
+              ["Basic", "10 GB", "$2/mo"],
+              ["Standard", "50 GB", "$8/mo"]
+            ].each do |name, storage, price| %>
+              <tr>
+                <td class="py-2.5 text-gray-300 font-medium"><%= name %></td>
+                <td class="py-2.5 text-gray-500"><%= storage %></td>
+                <td class="py-2.5 text-right font-mono <%= price == 'Free' ? 'text-green-400' : 'text-white' %>"><%= price %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
       </div>
     </div>
 
-    <!-- Professional -->
-    <div class="border border-gray-200 rounded-lg p-8">
-      <h3 class="text-lg font-semibold text-gray-900">Professional</h3>
-      <p class="mt-4">
-        <span class="text-4xl font-bold text-gray-900">$25</span>
-        <span class="text-gray-500">/mo</span>
-      </p>
-      <ul class="mt-8 space-y-3 text-sm text-gray-600">
-        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> 50 apps</li>
-        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> 100 dynos</li>
-        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> 20 databases</li>
-        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Custom domains</li>
-        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Auto SSL</li>
-        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Priority support</li>
-      </ul>
-      <div class="mt-8">
-        <%= link_to "Get Started", new_user_registration_path, class: "block w-full text-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" %>
+    <!-- Cache -->
+    <div class="bg-[#1E293B]/40 rounded-xl border border-[#334155]/40 overflow-hidden">
+      <div class="px-6 py-4 border-b border-[#334155]/40">
+        <h3 class="text-sm font-semibold text-white uppercase tracking-wider">Cache</h3>
+        <p class="text-xs text-gray-500 mt-1">Redis, Memcached</p>
+      </div>
+      <div class="p-6">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-xs text-gray-500 uppercase tracking-wider">
+              <th class="pb-3 text-left font-medium">Tier</th>
+              <th class="pb-3 text-left font-medium">Memory</th>
+              <th class="pb-3 text-right font-medium">Price</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#334155]/30">
+            <% [
+              ["Mini", "25 MB", "Free"],
+              ["Basic", "100 MB", "$1/mo"]
+            ].each do |name, memory, price| %>
+              <tr>
+                <td class="py-2.5 text-gray-300 font-medium"><%= name %></td>
+                <td class="py-2.5 text-gray-500"><%= memory %></td>
+                <td class="py-2.5 text-right font-mono <%= price == 'Free' ? 'text-green-400' : 'text-white' %>"><%= price %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
       </div>
     </div>
 
-    <!-- Enterprise -->
-    <div class="border border-gray-200 rounded-lg p-8">
-      <h3 class="text-lg font-semibold text-gray-900">Enterprise</h3>
-      <p class="mt-4">
-        <span class="text-4xl font-bold text-gray-900">$100</span>
-        <span class="text-gray-500">/mo</span>
-      </p>
-      <ul class="mt-8 space-y-3 text-sm text-gray-600">
-        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Unlimited apps</li>
-        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Unlimited dynos</li>
-        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> 100 databases</li>
-        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Custom domains</li>
-        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Auto SSL</li>
-        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> Dedicated support</li>
-        <li class="flex items-center"><span class="text-green-500 mr-2">&#10003;</span> SLA guarantee</li>
+    <!-- vs Heroku -->
+    <div class="bg-green-500/5 rounded-xl border border-green-500/20 p-6 flex flex-col justify-center">
+      <h3 class="text-sm font-semibold text-white">Save 60-80% vs Heroku</h3>
+      <p class="text-xs text-gray-500 mt-1 leading-relaxed">Same workflow, same experience — fraction of the cost. All resources billed per hour, so you only pay for what you use.</p>
+      <ul class="mt-4 space-y-2">
+        <% [
+          "Free tier included — no credit card needed",
+          "Unlimited apps on all tiers",
+          "Custom domains + auto SSL on every app",
+          "Pay per hour, cancel anytime"
+        ].each do |item| %>
+          <li class="flex items-center text-xs text-gray-400">
+            <svg class="w-3.5 h-3.5 text-green-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            <%= item %>
+          </li>
+        <% end %>
       </ul>
-      <div class="mt-8">
-        <%= link_to "Contact Sales", "#", class: "block w-full text-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" %>
+      <div class="mt-6">
+        <%= link_to new_user_registration_path, class: "inline-flex items-center justify-center px-5 py-2.5 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-lg hover:bg-green-400 transition" do %>
+          Get Started Free
+          <svg class="w-4 h-4 ml-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        <% end %>
       </div>
     </div>
   </div>

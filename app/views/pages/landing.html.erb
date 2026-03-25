@@ -235,11 +235,11 @@
           <table class="w-full text-sm">
             <tbody class="divide-y divide-[#334155]/30">
               <% [
-                ["Eco", "256 MB", "Free"],
-                ["Basic", "512 MB", "$3/mo"],
-                ["Standard-1x", "1 GB", "$10/mo"],
-                ["Standard-2x", "2 GB", "$20/mo"],
-                ["Performance", "4 GB", "$40/mo"]
+                ["Free", "256 MB", "Free"],
+                ["Starter", "512 MB", "$1.50/mo"],
+                ["Basic", "1 GB", "$2.50/mo"],
+                ["Standard", "2 GB", "$7/mo"],
+                ["Pro", "4 GB", "$14/mo"]
               ].each do |name, ram, price| %>
                 <tr>
                   <td class="py-2.5 text-gray-300 font-medium"><%= name %></td>
@@ -262,9 +262,8 @@
             <tbody class="divide-y divide-[#334155]/30">
               <% [
                 ["Mini", "1 GB", "Free"],
-                ["Basic", "10 GB", "$5/mo"],
-                ["Standard", "50 GB", "$20/mo"],
-                ["Premium", "200 GB", "$75/mo"]
+                ["Basic", "10 GB", "$2/mo"],
+                ["Standard", "50 GB", "$8/mo"]
               ].each do |name, storage, price| %>
                 <tr>
                   <td class="py-2.5 text-gray-300 font-medium"><%= name %></td>
