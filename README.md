@@ -1,26 +1,29 @@
 # Wokku
 
-**Web UI for [Dokku](https://dokku.com).** Open-source Heroku alternative — deploy apps with `git push`, manage databases, domains, SSL, scaling, and metrics from a beautiful dashboard, REST API, or CLI.
+**Web UI for [Dokku](https://dokku.com).** Open-source cloud platform for developers and creators — deploy apps with `git push`, install popular open-source tools in one click, manage databases, domains, SSL, and more from a beautiful dashboard.
 
-> Self-host your own PaaS on any VPS. No vendor lock-in.
+> Self-host on your own servers or use our managed cloud at [wokku.dev](https://wokku.dev). No vendor lock-in.
 
 ## Features
 
-| | Feature | Description |
-|---|---|---|
-| **Apps** | Deploy & manage | `git push` deploys, restart/stop/start, release history, rollback |
-| **Databases** | 6 engines | PostgreSQL, MySQL, Redis, MongoDB, Memcached, RabbitMQ |
-| **Domains** | Custom domains | Add domains, automatic Let's Encrypt SSL, auto-renewal |
-| **Config** | Env variables | Set, edit, delete environment variables per app |
-| **Scaling** | Process scaling | Scale web, worker, and custom process types independently |
-| **Metrics** | Live monitoring | Real-time CPU/memory stats, 24-hour history charts |
-| **Logs** | Log streaming | Live log tailing with color-coded output |
-| **Servers** | Multi-server | Connect multiple Dokku servers, health checks, auto-sync |
-| **Teams** | Collaboration | Invite members with viewer/member/admin roles |
-| **Notifications** | Email alerts | Deploy notifications via email |
-| **API** | Full REST API | 16 resource endpoints with token authentication |
-| **CLI** | `wokku` command | 50+ commands mirroring the Heroku CLI experience |
-| **DNS** | Auto-verification | Background DNS verification before SSL provisioning |
+| Feature | Description |
+|---|---|
+| **1-Click App Templates** | 50+ curated templates — deploy n8n, Ghost, Uptime Kuma, Grafana, and more instantly |
+| **Git Push Deploys** | Push to deploy with automatic builds, zero-downtime deployments, rollbacks |
+| **GitHub Integration** | Connect repos, auto-deploy on push, browse branches from dashboard |
+| **Web Terminal** | Browser-based SSH terminal (xterm.js) for your Dokku servers |
+| **Real-time Deploy Logs** | Stream build output live during deployments |
+| **9 Database Engines** | PostgreSQL, MySQL, MariaDB, Redis, MongoDB, Memcached, RabbitMQ, Elasticsearch, MinIO |
+| **Database Backups** | Scheduled + on-demand backups to S3, Cloudflare R2, MinIO, Backblaze B2, DO Spaces |
+| **Custom Domains + SSL** | Automatic Let's Encrypt certificates, auto-renewal |
+| **Multi-Server** | Connect multiple Dokku servers across regions, health checks, auto-sync |
+| **Live Metrics** | Real-time CPU/memory stats, 24-hour history charts |
+| **Notifications** | Email, Slack, Discord, Telegram, Webhook — deploy alerts and more |
+| **Activity Log** | Track all actions — deploys, config changes, team activity |
+| **OAuth Sign-in** | GitHub and Google login |
+| **Teams & RBAC** | Invite members with viewer/member/admin roles |
+| **REST API** | 16 resource endpoints with token authentication |
+| **CLI** | `wokku` command — 50+ commands mirroring the Heroku experience |
 
 ## Quick Start
 
@@ -36,7 +39,7 @@ docker compose up -d
 docker compose exec web bin/rails db:setup
 ```
 
-Open `http://localhost:3000` — default login: `admin@wokku.local` / `password123456`
+Open `http://localhost:3000` — default login: `admin@wokku.dev` / `password123456`
 
 ### Manual Setup
 
@@ -62,6 +65,14 @@ Or via CLI:
 wokku servers:add my-server --host dokku.example.com --ssh-key ~/.ssh/id_ed25519
 ```
 
+## 1-Click App Templates
+
+Deploy popular open-source tools with a single click. Browse from the dashboard or the [template gallery](https://wokku.dev/dashboard/templates).
+
+**Popular templates:** n8n, Waha, Ghost, Uptime Kuma, Umami, Vaultwarden, NocoDB, Grafana, Cal.com, Listmonk, Miniflux, Supabase, and 40+ more.
+
+Templates use standard Docker Compose YAML format. Community contributions welcome — just add a `docker-compose.yml` to `app/templates/<name>/` and open a PR.
+
 ## Architecture
 
 ```
@@ -69,8 +80,10 @@ wokku (Rails 8.1)
 ├── Dashboard UI        Tailwind + Hotwire (Turbo + Stimulus)
 ├── REST API v1         Token-authenticated JSON API
 ├── CLI                 Thor-based gem, mirrors Heroku CLI
-├── Background Jobs     Solid Queue (health checks, metrics, DNS, SSL, deploys)
+├── Web Terminal        xterm.js + ActionCable + SSH
+├── Background Jobs     Solid Queue (deploys, backups, health checks, metrics)
 ├── Dokku Integration   SSH-based command execution via net-ssh
+├── GitHub Integration  GitHub App for auto-deploy on push
 └── Git Receiver        Accept git push deploys on port 2222
 ```
 
@@ -78,22 +91,15 @@ wokku (Rails 8.1)
 
 ## CLI
 
-Install the CLI gem:
-
 ```bash
 gem install wokku
-```
 
-```bash
 wokku login
 wokku apps:create my-app --server my-server
 wokku config:set my-app DATABASE_URL=postgres://...
 wokku domains:add my-app app.example.com
-wokku domains:ssl my-app app.example.com
 wokku ps:scale my-app web=2 worker=1
 wokku logs my-app --tail
-wokku releases my-app
-wokku releases:rollback my-app v3
 ```
 
 ## API
@@ -101,36 +107,61 @@ wokku releases:rollback my-app v3
 All endpoints are under `/api/v1/` with Bearer token authentication.
 
 ```bash
-# Get an API token
 curl -X POST localhost:3000/api/v1/auth/login \
-  -d '{"email":"admin@wokku.local","password":"password123456"}'
+  -d '{"email":"admin@wokku.dev","password":"password123456"}'
 
-# List apps
 curl -H "Authorization: Bearer <token>" localhost:3000/api/v1/apps
-
-# Create an app
-curl -X POST -H "Authorization: Bearer <token>" localhost:3000/api/v1/apps \
-  -d '{"name":"my-app","server_id":1}'
 ```
 
 **Resources:** apps, servers, databases, domains, releases, config, logs, ps, ssh_keys, teams, members, notifications
 
+## Database Backups
+
+Configure S3-compatible backup destinations per server. Supports:
+- **AWS S3** — default
+- **Cloudflare R2** — no egress fees
+- **MinIO** — self-hosted
+- **Backblaze B2** — cheapest storage
+- **DigitalOcean Spaces**
+- **Wasabi** — no egress fees
+
+Automatic daily backups with configurable retention. On-demand backup and one-click restore from the dashboard.
+
 ## Deployment
 
-Wokku ships with [Kamal](https://kamal-deploy.org) configuration for production deployment:
+Deploy with [Kamal](https://kamal-deploy.org):
 
 ```bash
-# Edit config/deploy.yml with your server details
 kamal setup
 ```
 
-Or deploy with Docker on any VPS:
+Or with Docker on any VPS:
 
 ```bash
 docker compose -f docker-compose.yml up -d
 ```
 
-## Testing
+## Contributing
+
+### Adding Templates
+
+1. Create `app/templates/<name>/docker-compose.yml` with metadata comments:
+```yaml
+# documentation: https://example.com
+# slogan: Short description of the app
+# category: automation
+# tags: workflow, node
+# icon: automation
+# port: 5678
+
+services:
+  myapp:
+    image: myapp:latest
+```
+
+2. Open a PR to this repo
+
+### Development
 
 ```bash
 bin/rails test
@@ -138,16 +169,15 @@ bin/rails test
 
 ## Enterprise Edition
 
-Wokku follows an open-core model. The community edition (this repo) is a fully functional PaaS under AGPL-3.0. The Enterprise Edition adds:
+Wokku follows an open-core model. The community edition (this repo) is fully functional under AGPL-3.0. The Enterprise Edition adds:
 
-- Billing & Stripe integration
-- Usage-based plan limits
+- Usage-based hourly billing (Stripe)
 - Dyno tiers with resource management
 - Eco dynos (auto-sleep idle apps)
 - Auto-placement (bin-packing server selection)
-- Slack & webhook notifications
+- Mobile companion app
 
-See [wokku.dev](https://wokku.dev) for details.
+See [wokku.dev](https://wokku.dev) for the managed cloud and enterprise features.
 
 ## License
 
