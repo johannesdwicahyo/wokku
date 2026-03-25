@@ -34,13 +34,26 @@ class TemplateRegistry
   private
 
   def load_templates
-    Dir[TEMPLATES_PATH.join("*/template.json")].filter_map do |path|
-      data = JSON.parse(File.read(path))
-      data.symbolize_keys.merge(slug: File.basename(File.dirname(path)))
-    rescue JSON::ParserError => e
-      Rails.logger.warn("Failed to parse template: #{path} — #{e.message}")
-      nil
-    end.sort_by { |t| t[:name] }
+    templates = []
+
+    Dir[TEMPLATES_PATH.join("*/")].each do |dir|
+      slug = File.basename(dir)
+      yaml_path = File.join(dir, "docker-compose.yml")
+      json_path = File.join(dir, "template.json")
+
+      template = if File.exist?(yaml_path)
+        TemplateParser.parse(File.read(yaml_path), slug: slug)
+      elsif File.exist?(json_path)
+        data = JSON.parse(File.read(json_path))
+        data.symbolize_keys.merge(slug: slug)
+      end
+
+      templates << template if template
+    rescue => e
+      Rails.logger.warn("Failed to parse template in #{dir}: #{e.message}")
+    end
+
+    templates.sort_by { |t| t[:name] }
   end
 
   def load_registry

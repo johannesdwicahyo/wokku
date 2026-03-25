@@ -1,0 +1,11 @@
+# documentation: https://github.com/vercel/next.js
+# slogan: React framework with SSR and static generation
+# category: frameworks
+# tags: node, react, nextjs, frontend
+# icon: node
+
+services:
+  nextjs:
+    image: nextjs:latest
+    environment:
+      - NODE_ENV=production

@@ -1,0 +1,22 @@
+# documentation: https://github.com/miniflux/v2
+# slogan: Minimalist RSS reader
+# category: rss
+# tags: rss, reader, go
+# icon: rss
+# port: 8080
+
+services:
+  miniflux:
+    image: miniflux/miniflux:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

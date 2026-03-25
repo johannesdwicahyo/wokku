@@ -1,0 +1,20 @@
+# documentation: https://github.com/tiangolo/full-stack-fastapi-template
+# slogan: Modern Python API framework with automatic docs
+# category: frameworks
+# tags: python, fastapi, api
+# icon: python
+# post_deploy: alembic upgrade head
+
+services:
+  fastapi:
+    image: fastapi:latest
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

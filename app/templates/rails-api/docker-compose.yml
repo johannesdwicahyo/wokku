@@ -1,0 +1,22 @@
+# documentation: https://github.com/rails/rails-new
+# slogan: Rails 8 API-only with PostgreSQL
+# category: frameworks
+# tags: ruby, rails, api
+# icon: rails
+# post_deploy: bin/rails db:migrate
+
+services:
+  rails_api:
+    image: rails-api:latest
+    environment:
+      - RAILS_ENV=production
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

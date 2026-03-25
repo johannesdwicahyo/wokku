@@ -1,0 +1,19 @@
+# documentation: https://github.com/documenso/documenso
+# slogan: Digital document signing platform
+# category: productivity
+# tags: e-signature, documents, node
+# icon: form
+
+services:
+  documenso:
+    image: documenso:latest
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

@@ -1,0 +1,19 @@
+# documentation: https://github.com/prisma/prisma-examples
+# slogan: Node.js REST API with Prisma ORM
+# category: frameworks
+# tags: node, express, prisma, api
+# icon: node
+
+services:
+  express_prisma:
+    image: express-prisma:latest
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

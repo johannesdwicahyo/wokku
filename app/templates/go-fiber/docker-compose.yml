@@ -1,0 +1,19 @@
+# documentation: https://github.com/gofiber/boilerplate
+# slogan: Fast Go web framework inspired by Express
+# category: frameworks
+# tags: go, fiber, api
+# icon: go
+
+services:
+  go_fiber:
+    image: go-fiber:latest
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

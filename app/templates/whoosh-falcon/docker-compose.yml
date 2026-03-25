@@ -1,0 +1,19 @@
+# documentation: https://github.com/socketry/whoosh
+# slogan: Async Ruby web framework with Falcon server
+# category: frameworks
+# tags: ruby, whoosh, falcon, async
+# icon: ruby
+
+services:
+  whoosh_falcon:
+    image: whoosh-falcon:latest
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

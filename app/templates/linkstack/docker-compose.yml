@@ -1,0 +1,12 @@
+# documentation: https://github.com/LinkStackOrg/LinkStack
+# slogan: Link-in-bio page builder
+# category: links
+# tags: link-in-bio, links, php
+# icon: link
+# port: 80
+
+services:
+  linkstack:
+    image: linkstackorg/linkstack:latest
+    ports:
+      - "80:80"

@@ -1,0 +1,24 @@
+# documentation: https://github.com/chatwoot/chatwoot
+# slogan: Open-source customer support platform
+# category: communication
+# tags: chat, support, customer-service, ruby
+# icon: chat
+# post_deploy: bundle exec rails db:migrate
+
+services:
+  chatwoot:
+    image: chatwoot:latest
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+
+volumes:
+  postgres-data:

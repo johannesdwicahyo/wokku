@@ -1,0 +1,12 @@
+# documentation: https://github.com/dani-garcia/vaultwarden
+# slogan: Lightweight Bitwarden-compatible password manager
+# category: security
+# tags: passwords, vault, rust
+# icon: security
+# port: 80
+
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    ports:
+      - "80:80"

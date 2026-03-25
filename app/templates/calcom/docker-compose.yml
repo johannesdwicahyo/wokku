@@ -1,0 +1,19 @@
+# documentation: https://github.com/calcom/cal.com
+# slogan: Scheduling platform like Calendly
+# category: productivity
+# tags: scheduling, calendar, node
+# icon: calendar
+
+services:
+  calcom:
+    image: calcom:latest
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

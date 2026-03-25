@@ -1,0 +1,19 @@
+# documentation: https://github.com/wallabag/wallabag
+# slogan: Read-it-later and bookmark manager
+# category: rss
+# tags: read-later, bookmarks, php
+# icon: rss
+
+services:
+  wallabag:
+    image: wallabag:latest
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

@@ -1,0 +1,23 @@
+# documentation: https://github.com/baserow/baserow
+# slogan: Open-source no-code database platform
+# category: databases
+# tags: no-code, database, python
+# icon: db
+
+services:
+  baserow:
+    image: baserow:latest
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+
+volumes:
+  postgres-data:

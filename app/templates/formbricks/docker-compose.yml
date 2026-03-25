@@ -1,0 +1,19 @@
+# documentation: https://github.com/formbricks/formbricks
+# slogan: Survey and experience management platform
+# category: productivity
+# tags: surveys, forms, node
+# icon: form
+
+services:
+  formbricks:
+    image: formbricks:latest
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

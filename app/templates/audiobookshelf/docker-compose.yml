@@ -1,0 +1,9 @@
+# documentation: https://github.com/advplyr/audiobookshelf
+# slogan: Self-hosted audiobook and podcast server
+# category: media
+# tags: audiobooks, podcasts, node
+# icon: media
+
+services:
+  audiobookshelf:
+    image: ghcr.io/advplyr/audiobookshelf:latest
