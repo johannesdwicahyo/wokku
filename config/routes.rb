@@ -92,7 +92,9 @@ Rails.application.routes.draw do
       resources :deploys, only: [:show], controller: "deploys"
       resource :logs, only: [:show], controller: "logs"
       resource :metrics, only: [:show], controller: "metrics"
-      resource :scaling, only: [:show, :update], controller: "scaling"
+      resource :scaling, only: [:show, :update], controller: "scaling" do
+        post :change_tier
+      end
       resource :terminal, only: [:show], controller: "terminals"
       get "github/repos", to: "github#repos", as: :github_repos
       post "github/connect", to: "github#connect", as: :github_connect

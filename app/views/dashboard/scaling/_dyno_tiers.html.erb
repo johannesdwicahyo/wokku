@@ -1,0 +1,45 @@
+<div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 overflow-hidden mb-6">
+  <div class="px-6 py-4 border-b border-[#334155]/50">
+    <h2 class="text-base font-semibold text-white">Container Size</h2>
+    <p class="text-sm text-gray-500 mt-1">Choose the resource allocation for your containers</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 p-6">
+    <% @dyno_tiers.each do |tier| %>
+      <% is_current = @current_allocation&.dyno_tier_id == tier.id %>
+      <div class="relative rounded-lg border p-4 <%= is_current ? 'border-green-500 bg-green-500/5' : 'border-[#334155] bg-[#0B1120] hover:border-[#475569]' %> transition">
+        <% if is_current %>
+          <div class="absolute -top-2 right-3">
+            <span class="text-[10px] font-semibold uppercase tracking-wider bg-green-500 text-[#0B1120] px-1.5 py-0.5 rounded">Current</span>
+          </div>
+        <% end %>
+
+        <h3 class="text-sm font-bold text-white capitalize"><%= tier.name %></h3>
+        <div class="mt-2 space-y-1">
+          <p class="text-xs text-gray-400"><span class="text-white font-mono font-bold"><%= tier.memory_mb %></span> MB RAM</p>
+          <p class="text-xs text-gray-400"><span class="text-white font-mono font-bold"><%= tier.cpu_shares %></span> CPU shares</p>
+          <% if tier.sleeps %>
+            <p class="text-xs text-yellow-500">Sleeps after idle</p>
+          <% end %>
+        </div>
+
+        <div class="mt-3 border-t border-[#334155]/50 pt-3">
+          <% if tier.free? %>
+            <p class="text-sm font-bold text-white">Free</p>
+          <% else %>
+            <p class="text-sm font-bold text-white">$<%= "%.2f" % tier.monthly_price_dollars %><span class="text-xs text-gray-500 font-normal">/mo</span></p>
+          <% end %>
+        </div>
+
+        <% unless is_current %>
+          <%= button_to "Select",
+                change_tier_dashboard_app_scaling_path(@app),
+                params: { dyno_tier_id: tier.id, process_type: "web" },
+                method: :post,
+                data: { turbo_confirm: "Change container to #{tier.name} (#{tier.memory_mb}MB)?" },
+                class: "mt-3 w-full text-center px-3 py-1.5 text-xs font-semibold rounded-md border border-[#334155] text-gray-300 hover:bg-[#334155] hover:text-white transition cursor-pointer" %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
