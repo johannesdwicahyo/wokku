@@ -42,11 +42,13 @@ module Dashboard
       output = client.run("resource:report #{@app.name}")
       result = {}
       output.each_line do |line|
-        next if line.strip.blank? || line.start_with?("=")
-        if (match = line.match(/\A\s+(.+?):\s+(.*)\z/))
-          key = match[1].strip.parameterize(separator: "_")
-          result[key] = match[2].strip
-        end
+        stripped = line.strip
+        next if stripped.blank? || stripped.start_with?("=")
+        idx = stripped.rindex(":")
+        next unless idx
+        key = stripped[0...idx].strip.parameterize(separator: "_")
+        value = stripped[(idx + 1)..].strip
+        result[key] = value
       end
       result
     rescue => e
