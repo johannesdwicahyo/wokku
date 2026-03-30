@@ -22,6 +22,8 @@ module Api
         new_release = @app_record.releases.create!(
           description: "Rollback to v#{release.version}"
         )
+        deploy = @app_record.deploys.create!(release: new_release, status: :pending)
+        DeployJob.perform_later(deploy.id)
 
         render json: new_release, status: :created
       end

@@ -85,6 +85,9 @@ Rails.application.routes.draw do
         collection do
           post :deploy
         end
+        member do
+          post :rollback
+        end
       end
       resources :deploys, only: [:show], controller: "deploys"
       resource :logs, only: [:show], controller: "logs"
