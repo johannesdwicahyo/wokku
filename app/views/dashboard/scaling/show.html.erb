@@ -1,5 +1,9 @@
 <%= render "dashboard/apps/tabs", app: @app %>
 
+<% if @dyno_tiers.any? %>
+  <%= render "dashboard/scaling/dyno_tiers" %>
+<% end %>
+
 <div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 overflow-hidden">
   <div class="px-6 py-4 border-b border-[#334155]/50">
     <h2 class="text-base font-semibold text-white">Process Scaling</h2>
