@@ -150,9 +150,9 @@
   </div>
 
   <%
-    mem_limit_cfg = @resources["resource_limits_memory"] || @resources["resource_limits-memory"]
-    cpu_limit_cfg = @resources["resource_limits_cpu"] || @resources["resource_limits-cpu"]
-    mem_reserve = @resources["resource_reservation_memory"] || @resources["resource_reservation-memory"]
+    mem_limit_cfg = @resources["default_limit_memory"] || @resources["resource_limits_memory"]
+    cpu_limit_cfg = @resources["default_limit_cpu"] || @resources["resource_limits_cpu"]
+    mem_reserve = @resources["default_reservation_memory"] || @resources["resource_reservation_memory"]
     has_limits = [mem_limit_cfg, cpu_limit_cfg, mem_reserve].any? { |v| v.present? && v != "" }
   %>
 
