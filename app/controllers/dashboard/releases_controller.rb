@@ -17,6 +17,17 @@ module Dashboard
       redirect_to dashboard_app_releases_path(@app), notice: "Deploy triggered. Building..."
     end
 
+    def rollback
+      authorize @app, :update?
+
+      target_release = @app.releases.find(params[:id])
+      new_release = @app.releases.create!(description: "Rollback to v#{target_release.version}")
+      deploy = @app.deploys.create!(release: new_release, status: :pending)
+      DeployJob.perform_later(deploy.id)
+
+      redirect_to dashboard_app_releases_path(@app), notice: "Rolling back to v#{target_release.version}..."
+    end
+
     private
 
     def set_app

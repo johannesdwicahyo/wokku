@@ -150,7 +150,15 @@
             </div>
           </div>
 
-          <span class="text-xs text-gray-500"><%= time_ago_in_words(release.created_at) %> ago</span>
+          <div class="flex items-center space-x-3">
+            <% if release.deploy&.succeeded? %>
+              <%= button_to "Rollback", rollback_dashboard_app_release_path(@app, release),
+                    method: :post,
+                    data: { turbo_confirm: "Rollback to v#{release.version}?" },
+                    class: "text-xs text-gray-400 hover:text-yellow-400 border border-[#334155] px-2 py-1 rounded transition cursor-pointer" %>
+            <% end %>
+            <span class="text-xs text-gray-500"><%= time_ago_in_words(release.created_at) %> ago</span>
+          </div>
         </div>
       <% end %>
     </div>
