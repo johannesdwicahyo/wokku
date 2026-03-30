@@ -84,8 +84,15 @@ module Dashboard
         }
       end
       stats
+    rescue Net::SSH::AuthenticationFailed
+      @metrics_error = "Authentication failed. Root SSH access is required for container metrics. The server is configured with user '#{@app.server.ssh_user || 'dokku'}' — add a root SSH key to enable metrics."
+      []
+    rescue Errno::ECONNREFUSED, Errno::ETIMEDOUT, Net::SSH::ConnectionTimeout
+      @metrics_error = "Could not connect to server #{@app.server.host}. Check that the server is online and SSH port #{@app.server.port} is accessible."
+      []
     rescue => e
       Rails.logger.warn "Failed to fetch container stats for #{@app.name}: #{e.message}"
+      @metrics_error = "Failed to fetch metrics: #{e.message}"
       []
     end
   end
