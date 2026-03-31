@@ -1,69 +1,161 @@
 <div data-controller="slide-panel">
+  <%# Header %>
   <div class="flex items-center justify-between mb-8">
     <div>
-      <h1 class="text-2xl font-headline text-on-surface">Databases</h1>
-      <p class="mt-1 text-sm text-outline">Manage your database services</p>
+      <h1 class="text-2xl font-bold text-on-surface font-headline">Resources</h1>
+      <p class="text-[10px] text-outline uppercase tracking-wider font-bold mt-1">All add-ons across your apps</p>
     </div>
     <button data-action="click->slide-panel#open" class="inline-flex items-center px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">
       <span class="material-symbols-outlined text-[18px] mr-1.5">add</span>
-      New Database
+      New Resource
     </button>
   </div>
 
   <% if @databases.any? %>
-    <div class="bg-surface-container-low rounded-xl border border-outline-variant/15 overflow-hidden">
-      <table class="min-w-full divide-y divide-outline-variant/15">
-        <thead class="bg-surface-container-highest">
-          <tr>
-            <th class="px-6 py-3 text-left text-xs text-outline uppercase tracking-wider">Name</th>
-            <th class="px-6 py-3 text-left text-xs text-outline uppercase tracking-wider">Type</th>
-            <th class="px-6 py-3 text-left text-xs text-outline uppercase tracking-wider">Server</th>
-            <th class="px-6 py-3 text-left text-xs text-outline uppercase tracking-wider">Status</th>
-            <th class="px-6 py-3"></th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-outline-variant/15">
-          <% @databases.each do |db| %>
-            <tr class="hover:bg-surface-container-highest transition">
-              <td class="px-6 py-4">
-                <%= link_to db.name, dashboard_resource_path(db), class: "text-sm font-medium font-mono text-primary hover:text-primary" %>
-              </td>
-              <td class="px-6 py-4">
-                <span class="text-sm text-on-surface-variant font-mono"><%= db.service_type %></span>
-              </td>
-              <td class="px-6 py-4 text-sm text-outline font-mono"><%= db.server.name %></td>
-              <td class="px-6 py-4">
-                <% case db.status %>
-                <% when "running" %>
-                  <span class="flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-primary"></span><span class="text-xs text-on-surface-variant">Running</span></span>
-                <% when "stopped" %>
-                  <span class="flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-outline"></span><span class="text-xs text-on-surface-variant">Stopped</span></span>
-                <% when "creating" %>
-                  <span class="flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span><span class="text-xs text-on-surface-variant">Creating</span></span>
-                <% when "error" %>
-                  <span class="flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-error"></span><span class="text-xs text-on-surface-variant">Error</span></span>
-                <% end %>
-              </td>
-              <td class="px-6 py-4 text-right">
-                <%= link_to "View", dashboard_resource_path(db), class: "text-sm text-primary hover:text-primary" %>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
+    <%# Group toggle %>
+    <div class="flex items-center gap-2 mb-6">
+      <span class="text-xs text-outline">Group by:</span>
+      <%= link_to "Type", dashboard_resources_path(group: "type"), class: "px-3 py-1 text-xs font-semibold rounded-md transition #{@group_by == 'type' ? 'technical-gradient text-on-primary' : 'bg-surface-container-low text-outline hover:text-on-surface-variant'}" %>
+      <%= link_to "App", dashboard_resources_path(group: "app"), class: "px-3 py-1 text-xs font-semibold rounded-md transition #{@group_by == 'app' ? 'technical-gradient text-on-primary' : 'bg-surface-container-low text-outline hover:text-on-surface-variant'}" %>
     </div>
+
+    <%# Stats %>
+    <div class="grid grid-cols-4 gap-4 mb-8">
+      <div class="bg-surface-container-low p-4 rounded-md">
+        <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Total Resources</p>
+        <span class="text-2xl font-bold text-on-surface font-headline"><%= @databases.size %></span>
+      </div>
+      <div class="bg-surface-container-low p-4 rounded-md">
+        <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Running</p>
+        <span class="text-2xl font-bold text-primary font-headline"><%= @databases.count(&:running?) %></span>
+      </div>
+      <div class="bg-surface-container-low p-4 rounded-md">
+        <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Types</p>
+        <span class="text-2xl font-bold text-on-surface font-headline"><%= @by_type.keys.size %></span>
+      </div>
+      <div class="bg-surface-container-low p-4 rounded-md">
+        <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Linked Apps</p>
+        <span class="text-2xl font-bold text-on-surface font-headline"><%= @databases.sum { |d| d.app_records.size } %></span>
+      </div>
+    </div>
+
+    <% if @group_by == "type" %>
+      <%# Grouped by Type %>
+      <div class="space-y-6">
+        <% @by_type.each do |type, resources| %>
+          <div class="bg-surface-container-low rounded-md overflow-hidden">
+            <div class="px-6 py-3 border-b border-outline-variant/10 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <% case type %>
+                <% when "postgres", "mysql", "mariadb", "mongodb", "clickhouse" %>
+                  <span class="material-symbols-outlined text-secondary text-[20px]">database</span>
+                <% when "redis", "memcached" %>
+                  <span class="material-symbols-outlined text-tertiary text-[20px]">bolt</span>
+                <% when "elasticsearch", "meilisearch" %>
+                  <span class="material-symbols-outlined text-tertiary-fixed-dim text-[20px]">search</span>
+                <% when "rabbitmq", "nats" %>
+                  <span class="material-symbols-outlined text-primary text-[20px]">forum</span>
+                <% else %>
+                  <span class="material-symbols-outlined text-outline text-[20px]">dns</span>
+                <% end %>
+                <h3 class="text-sm font-bold text-on-surface font-headline capitalize"><%= type %></h3>
+                <span class="text-[10px] text-outline bg-surface-container-highest px-2 py-0.5 rounded-full font-mono"><%= resources.size %></span>
+              </div>
+            </div>
+            <div class="divide-y divide-outline-variant/10">
+              <% resources.each do |db| %>
+                <div class="px-6 py-3 flex items-center justify-between hover:bg-surface-container-high/30 transition">
+                  <div class="flex items-center gap-4">
+                    <div>
+                      <%= link_to db.name, dashboard_resource_path(db), class: "text-sm font-semibold font-mono text-primary hover:underline" %>
+                      <div class="flex items-center gap-2 mt-0.5">
+                        <span class="text-[10px] text-outline font-mono"><%= db.server.name %></span>
+                        <% db.app_records.each do |app| %>
+                          <span class="text-[10px] bg-primary-container/30 text-on-primary-container px-1.5 py-0.5 rounded font-mono"><%= app.name %></span>
+                        <% end %>
+                        <% if db.app_records.empty? %>
+                          <span class="text-[10px] text-outline-variant italic">not linked</span>
+                        <% end %>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <% case db.status %>
+                    <% when "running" %>
+                      <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-secondary glow-running"></span><span class="text-[10px] text-outline uppercase font-bold">Running</span></span>
+                    <% when "error" %>
+                      <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-error glow-error"></span><span class="text-[10px] text-error uppercase font-bold">Error</span></span>
+                    <% when "stopped" %>
+                      <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-outline"></span><span class="text-[10px] text-outline uppercase font-bold">Stopped</span></span>
+                    <% end %>
+                    <%= link_to dashboard_resource_path(db), class: "text-outline hover:text-primary transition" do %>
+                      <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+    <% else %>
+      <%# Grouped by App %>
+      <div class="space-y-6">
+        <% @by_app.each do |app_name, resources| %>
+          <div class="bg-surface-container-low rounded-md overflow-hidden">
+            <div class="px-6 py-3 border-b border-outline-variant/10 flex items-center gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">terminal</span>
+              <h3 class="text-sm font-bold text-on-surface font-headline"><%= app_name %></h3>
+              <span class="text-[10px] text-outline bg-surface-container-highest px-2 py-0.5 rounded-full font-mono"><%= resources.size %> add-on<%= resources.size == 1 ? '' : 's' %></span>
+            </div>
+            <div class="divide-y divide-outline-variant/10">
+              <% resources.each do |db| %>
+                <div class="px-6 py-3 flex items-center justify-between hover:bg-surface-container-high/30 transition">
+                  <div class="flex items-center gap-3">
+                    <% case db.service_type %>
+                    <% when "postgres", "mysql", "mariadb", "mongodb", "clickhouse" %>
+                      <span class="material-symbols-outlined text-secondary text-[16px]">database</span>
+                    <% when "redis", "memcached" %>
+                      <span class="material-symbols-outlined text-tertiary text-[16px]">bolt</span>
+                    <% when "elasticsearch", "meilisearch" %>
+                      <span class="material-symbols-outlined text-tertiary-fixed-dim text-[16px]">search</span>
+                    <% when "rabbitmq", "nats" %>
+                      <span class="material-symbols-outlined text-primary text-[16px]">forum</span>
+                    <% end %>
+                    <div>
+                      <%= link_to db.name, dashboard_resource_path(db), class: "text-sm font-semibold font-mono text-primary hover:underline" %>
+                      <span class="text-[10px] text-outline ml-2"><%= db.service_type %></span>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <% if db.running? %>
+                      <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-secondary glow-running"></span><span class="text-[10px] text-outline uppercase font-bold">Running</span></span>
+                    <% end %>
+                    <%= link_to dashboard_resource_path(db), class: "text-outline hover:text-primary transition" do %>
+                      <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
   <% else %>
-    <div class="text-center py-16 bg-surface-container-low rounded-xl border border-outline-variant/15">
-      <span class="material-symbols-outlined text-[48px] text-outline-variant mb-2">database</span>
-      <h3 class="mt-4 text-lg font-medium text-on-surface">No databases yet</h3>
-      <p class="mt-2 text-sm text-outline">Provision your first database service.</p>
+    <div class="bg-surface-container-low rounded-md p-16 text-center">
+      <span class="material-symbols-outlined text-outline-variant text-[48px] mb-4">dns</span>
+      <h3 class="text-lg font-medium text-on-surface font-headline">No resources yet</h3>
+      <p class="text-sm text-outline mt-2">Add databases, caches, and services from any app's Resources tab.</p>
       <div class="mt-6">
-        <button data-action="click->slide-panel#open" class="inline-flex items-center px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">New Database</button>
+        <button data-action="click->slide-panel#open" class="inline-flex items-center px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">New Resource</button>
       </div>
     </div>
   <% end %>
 
-  <%= render layout: "dashboard/shared/slide_panel", locals: { title: "New Database", subtitle: "Provision a database service" } do %>
+  <%= render layout: "dashboard/shared/slide_panel", locals: { title: "New Resource", subtitle: "Provision a database or service" } do %>
     <%= render "form", database: @database, servers: @servers %>
   <% end %>
 </div>
