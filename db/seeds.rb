@@ -22,34 +22,38 @@ if Wokku.ee?
   puts "Created dyno tiers: free ($0), basic ($1.50), standard ($4), performance ($8), performance-2x ($15)"
 
   # Service Tiers — Postgres/MySQL/MariaDB
+  # Pricing: mini=free, basic=$1/mo, standard=$4/mo
   %w[postgres mysql mariadb].each do |db_type|
     ServiceTier.find_or_create_by!(name: "mini", service_type: db_type) { |t| t.price_cents_per_hour = 0; t.spec = { storage_gb: 1, connections: 20 } }
-    ServiceTier.find_or_create_by!(name: "basic", service_type: db_type) { |t| t.price_cents_per_hour = 0.27; t.spec = { storage_gb: 10, connections: 20, backups: "daily" } }
-    ServiceTier.find_or_create_by!(name: "standard", service_type: db_type) { |t| t.price_cents_per_hour = 1.10; t.spec = { storage_gb: 50, connections: 120, backups: "daily" } }
+    ServiceTier.find_or_create_by!(name: "basic", service_type: db_type) { |t| t.price_cents_per_hour = 0.137; t.spec = { storage_gb: 10, connections: 50, backups: "daily" } }
+    ServiceTier.find_or_create_by!(name: "standard", service_type: db_type) { |t| t.price_cents_per_hour = 0.5479; t.spec = { storage_gb: 50, connections: 120, backups: "daily" } }
   end
 
   # Service Tiers — Redis/Memcached
+  # Pricing: mini=free, basic=$0.50/mo
   %w[redis memcached].each do |cache_type|
     ServiceTier.find_or_create_by!(name: "mini", service_type: cache_type) { |t| t.price_cents_per_hour = 0; t.spec = { memory_mb: 25 } }
-    ServiceTier.find_or_create_by!(name: "basic", service_type: cache_type) { |t| t.price_cents_per_hour = 0.14; t.spec = { memory_mb: 100 } }
+    ServiceTier.find_or_create_by!(name: "basic", service_type: cache_type) { |t| t.price_cents_per_hour = 0.0685; t.spec = { memory_mb: 100 } }
   end
 
   # Service Tiers — Elasticsearch
-  ServiceTier.find_or_create_by!(name: "basic", service_type: "elasticsearch") { |t| t.price_cents_per_hour = 1.1; t.spec = { memory_mb: 512, storage_gb: 5 } }
-  ServiceTier.find_or_create_by!(name: "standard", service_type: "elasticsearch") { |t| t.price_cents_per_hour = 2.7; t.spec = { memory_mb: 1024, storage_gb: 20 } }
+  # Pricing: basic=$4/mo, standard=$10/mo
+  ServiceTier.find_or_create_by!(name: "basic", service_type: "elasticsearch") { |t| t.price_cents_per_hour = 0.5479; t.spec = { memory_mb: 512, storage_gb: 5 } }
+  ServiceTier.find_or_create_by!(name: "standard", service_type: "elasticsearch") { |t| t.price_cents_per_hour = 1.3699; t.spec = { memory_mb: 1024, storage_gb: 20 } }
 
   # Service Tiers — MinIO (S3-compatible object storage)
-  # Users buy MinIO instances for persistent storage beyond what's included in their dyno tier
+  # Pricing: mini=free (1GB), basic=$0.50/mo (5GB), standard=$2/mo (25GB), performance=$5/mo (100GB)
   ServiceTier.find_or_create_by!(name: "mini", service_type: "minio") { |t| t.price_cents_per_hour = 0; t.spec = { storage_gb: 1 } }
-  ServiceTier.find_or_create_by!(name: "basic", service_type: "minio") { |t| t.price_cents_per_hour = 0.14; t.spec = { storage_gb: 5 } }
-  ServiceTier.find_or_create_by!(name: "standard", service_type: "minio") { |t| t.price_cents_per_hour = 0.55; t.spec = { storage_gb: 25 } }
-  ServiceTier.find_or_create_by!(name: "performance", service_type: "minio") { |t| t.price_cents_per_hour = 1.37; t.spec = { storage_gb: 100 } }
+  ServiceTier.find_or_create_by!(name: "basic", service_type: "minio") { |t| t.price_cents_per_hour = 0.0685; t.spec = { storage_gb: 5 } }
+  ServiceTier.find_or_create_by!(name: "standard", service_type: "minio") { |t| t.price_cents_per_hour = 0.274; t.spec = { storage_gb: 25 } }
+  ServiceTier.find_or_create_by!(name: "performance", service_type: "minio") { |t| t.price_cents_per_hour = 0.6849; t.spec = { storage_gb: 100 } }
 
   # Service Tiers — MongoDB/RabbitMQ
+  # Pricing: mini=free, basic=$2/mo, standard=$6/mo
   %w[mongodb rabbitmq].each do |type|
     ServiceTier.find_or_create_by!(name: "mini", service_type: type) { |t| t.price_cents_per_hour = 0; t.spec = { memory_mb: 64 } }
-    ServiceTier.find_or_create_by!(name: "basic", service_type: type) { |t| t.price_cents_per_hour = 0.7; t.spec = { memory_mb: 256 } }
-    ServiceTier.find_or_create_by!(name: "standard", service_type: type) { |t| t.price_cents_per_hour = 2.1; t.spec = { memory_mb: 1024 } }
+    ServiceTier.find_or_create_by!(name: "basic", service_type: type) { |t| t.price_cents_per_hour = 0.274; t.spec = { memory_mb: 256 } }
+    ServiceTier.find_or_create_by!(name: "standard", service_type: type) { |t| t.price_cents_per_hour = 0.8219; t.spec = { memory_mb: 1024 } }
   end
 
   puts "Created service tiers for all database types"
