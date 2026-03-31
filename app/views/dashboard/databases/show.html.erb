@@ -1,6 +1,6 @@
 <div class="mb-6">
   <div class="flex items-center space-x-3 mb-1">
-    <%= link_to "Databases", dashboard_databases_path, class: "text-sm text-outline hover:text-primary transition" %>
+    <%= link_to "Resources", dashboard_resources_path, class: "text-sm text-outline hover:text-primary transition" %>
     <span class="material-symbols-outlined text-[16px] text-outline-variant">chevron_right</span>
     <span class="text-sm text-on-surface font-medium font-mono"><%= @database.name %></span>
   </div>
@@ -20,11 +20,11 @@
     <% end %>
   </div>
   <div class="flex items-center space-x-3">
-    <%= link_to dashboard_database_backups_path(@database), class: "inline-flex items-center px-3 py-1.5 bg-surface-container-low border border-outline-variant/15 text-on-surface-variant text-sm font-medium rounded-md hover:bg-surface-container-highest hover:text-on-surface transition" do %>
+    <%= link_to dashboard_resource_backups_path(@database), class: "inline-flex items-center px-3 py-1.5 bg-surface-container-low border border-outline-variant/15 text-on-surface-variant text-sm font-medium rounded-md hover:bg-surface-container-highest hover:text-on-surface transition" do %>
       <span class="material-symbols-outlined text-[18px] mr-1.5">backup</span>
       Backups
     <% end %>
-    <%= link_to "Delete", dashboard_database_path(@database), data: { turbo_method: :delete, turbo_confirm: "Destroy #{@database.name}? This will delete all data." }, class: "text-sm text-error/70 hover:text-error font-medium transition" %>
+    <%= link_to "Delete", dashboard_resource_path(@database), data: { turbo_method: :delete, turbo_confirm: "Destroy #{@database.name}? This will delete all data." }, class: "text-sm text-error/70 hover:text-error font-medium transition" %>
   </div>
 </div>
 
@@ -77,7 +77,7 @@
             <span class="w-2 h-2 rounded-full bg-primary"></span>
             <%= link_to app.name, dashboard_app_path(app), class: "text-sm font-mono text-primary hover:text-primary transition" %>
           </div>
-          <%= button_to "Unlink", unlink_dashboard_database_path(@database, app_id: app.id), method: :post, data: { turbo_confirm: "Unlink #{app.name} from #{@database.name}?" }, class: "text-xs text-error/70 hover:text-error transition cursor-pointer" %>
+          <%= button_to "Unlink", unlink_dashboard_resource_path(@database, app_id: app.id), method: :post, data: { turbo_confirm: "Unlink #{app.name} from #{@database.name}?" }, class: "text-xs text-error/70 hover:text-error transition cursor-pointer" %>
         </div>
       <% end %>
     </div>
@@ -92,7 +92,7 @@
 <% if @available_apps.any? %>
   <div class="bg-surface-container-low rounded-xl border border-outline-variant/15 p-6">
     <h3 class="text-sm font-semibold text-on-surface mb-4">Link App</h3>
-    <%= form_with(url: link_dashboard_database_path(@database), method: :post, class: "flex items-end space-x-3") do |f| %>
+    <%= form_with(url: link_dashboard_resource_path(@database), method: :post, class: "flex items-end space-x-3") do |f| %>
       <div class="flex-1">
         <label class="block text-xs text-on-surface-variant uppercase tracking-wider mb-1">Application</label>
         <%= f.select :app_id, @available_apps.map { |a| [a.name, a.id] }, { prompt: "Select an app" }, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary" %>

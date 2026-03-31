@@ -49,7 +49,7 @@
               </div>
             </div>
             <div class="flex items-center space-x-3">
-              <%= link_to "Info", dashboard_database_path(addon), class: "text-xs text-on-surface-variant hover:text-primary border border-outline-variant/15 px-2 py-1 rounded transition" %>
+              <%= link_to "Info", dashboard_resource_path(addon), class: "text-xs text-on-surface-variant hover:text-primary border border-outline-variant/15 px-2 py-1 rounded transition" %>
               <%= button_to "Remove",
                     dashboard_app_resources_path(@app, addon_id: addon.id),
                     method: :delete,

@@ -26,7 +26,7 @@
           <% @databases.each do |db| %>
             <tr class="hover:bg-surface-container-highest transition">
               <td class="px-6 py-4">
-                <%= link_to db.name, dashboard_database_path(db), class: "text-sm font-medium font-mono text-primary hover:text-primary" %>
+                <%= link_to db.name, dashboard_resource_path(db), class: "text-sm font-medium font-mono text-primary hover:text-primary" %>
               </td>
               <td class="px-6 py-4">
                 <span class="text-sm text-on-surface-variant font-mono"><%= db.service_type %></span>
@@ -45,7 +45,7 @@
                 <% end %>
               </td>
               <td class="px-6 py-4 text-right">
-                <%= link_to "View", dashboard_database_path(db), class: "text-sm text-primary hover:text-primary" %>
+                <%= link_to "View", dashboard_resource_path(db), class: "text-sm text-primary hover:text-primary" %>
               </td>
             </tr>
           <% end %>

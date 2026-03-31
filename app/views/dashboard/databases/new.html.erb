@@ -4,7 +4,7 @@
     <p class="mt-1 text-sm text-outline">Provision a new database service</p>
   </div>
 
-  <%= form_with(model: @database, url: dashboard_databases_path, class: "bg-surface-container-low rounded-xl border border-outline-variant/15 p-6 space-y-5") do |f| %>
+  <%= form_with(model: @database, url: dashboard_resources_path, class: "bg-surface-container-low rounded-xl border border-outline-variant/15 p-6 space-y-5") do |f| %>
     <% if @database.errors.any? %>
       <div class="bg-error-container/20 border border-error/20 rounded-lg p-4">
         <ul class="list-disc list-inside text-sm text-error space-y-1">
@@ -32,7 +32,7 @@
 
     <div class="flex items-center space-x-3 pt-2">
       <%= f.submit "Create Database", class: "px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
-      <%= link_to "Cancel", dashboard_databases_path, class: "text-sm text-outline hover:text-on-surface-variant transition" %>
+      <%= link_to "Cancel", dashboard_resources_path, class: "text-sm text-outline hover:text-on-surface-variant transition" %>
     </div>
   <% end %>
 </div>

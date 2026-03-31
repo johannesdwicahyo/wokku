@@ -12,7 +12,7 @@ module Dashboard
       authorize @database, :update?
 
       BackupJob.perform_later(@database.id)
-      redirect_to dashboard_database_backups_path(@database), notice: "Backup started..."
+      redirect_to dashboard_resource_backups_path(@database), notice: "Backup started..."
     end
 
     def download
@@ -28,9 +28,9 @@ module Dashboard
 
       begin
         RestoreService.new(backup).perform!
-        redirect_to dashboard_database_backups_path(backup.database_service), notice: "Restore completed"
+        redirect_to dashboard_resource_backups_path(backup.database_service), notice: "Restore completed"
       rescue => e
-        redirect_to dashboard_database_backups_path(backup.database_service), alert: "Restore failed: #{e.message}"
+        redirect_to dashboard_resource_backups_path(backup.database_service), alert: "Restore failed: #{e.message}"
       end
     end
   end
