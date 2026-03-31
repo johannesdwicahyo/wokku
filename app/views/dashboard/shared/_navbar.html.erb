@@ -21,12 +21,14 @@
         </div>
       </div>
     <% end %>
-    <button class="text-outline hover:bg-surface-container-high p-2 rounded-md transition-colors">
-      <span class="material-symbols-outlined text-[20px]">terminal</span>
-    </button>
-    <button class="text-outline hover:bg-surface-container-high p-2 rounded-md transition-colors">
+    <% if (first_server = policy_scope(Server).first) %>
+      <%= link_to dashboard_server_terminal_path(first_server), class: "text-outline hover:bg-surface-container-high p-2 rounded-md transition-colors" do %>
+        <span class="material-symbols-outlined text-[20px]">terminal</span>
+      <% end %>
+    <% end %>
+    <%= link_to dashboard_notifications_path, class: "text-outline hover:bg-surface-container-high p-2 rounded-md transition-colors" do %>
       <span class="material-symbols-outlined text-[20px]">notifications</span>
-    </button>
+    <% end %>
     <%= link_to dashboard_templates_path, class: "technical-gradient text-on-primary font-bold px-5 py-1.5 rounded-md hover:opacity-90 active:scale-95 transition-all text-sm" do %>
       Deploy
     <% end %>
