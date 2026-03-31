@@ -1,46 +1,33 @@
 <!DOCTYPE html>
-<html class="h-full">
+<html class="dark h-full" lang="en">
   <head>
     <title><%= content_for(:title) || "Wokku" %></title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="application-name" content="Wokku">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-
     <%= yield :head %>
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
-
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css">
     <%= javascript_importmap_tags %>
-
-    <style>
-      body { font-family: 'IBM Plex Sans', system-ui, sans-serif; }
-      .font-mono, code, pre, .font-code { font-family: 'JetBrains Mono', ui-monospace, monospace; }
-    </style>
   </head>
-
-  <body class="h-full bg-[#0B1120]">
+  <body class="h-full bg-surface text-on-surface font-body selection:bg-primary-container selection:text-primary">
+    <%= render "dashboard/shared/sidebar" %>
     <%= render "dashboard/shared/navbar" %>
-
-    <div class="flex h-[calc(100vh-49px)]">
-      <%= render "dashboard/shared/sidebar" %>
-
-      <main class="flex-1 overflow-y-auto">
-        <div class="max-w-7xl mx-auto px-6 py-8">
-          <%= render "dashboard/shared/flash" %>
-          <%= yield %>
-        </div>
-      </main>
-    </div>
+    <main class="ml-64 pt-16 min-h-screen">
+      <div class="px-8 py-8">
+        <%= render "dashboard/shared/flash" %>
+        <%= yield %>
+      </div>
+    </main>
   </body>
 </html>
