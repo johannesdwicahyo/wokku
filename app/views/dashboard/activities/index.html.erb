@@ -2,38 +2,39 @@
 
 <div class="space-y-6">
   <div>
-    <h1 class="text-xl font-semibold text-white">Activity Log</h1>
-    <p class="mt-0.5 text-sm text-gray-500">Recent actions across your team</p>
+    <h1 class="text-xl font-headline text-on-surface">Activity Log</h1>
+    <p class="mt-0.5 text-sm text-outline">Recent actions across your team</p>
   </div>
 
   <% if @activities.any? %>
-    <div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 overflow-hidden divide-y divide-[#334155]/30">
+    <div class="bg-surface-container-low rounded-xl border border-outline-variant/15 overflow-hidden divide-y divide-outline-variant/15">
       <% @activities.each do |activity| %>
         <div class="px-5 py-3 flex items-center justify-between">
           <div class="flex items-center space-x-3 min-w-0">
-            <div class="w-7 h-7 rounded-full bg-[#0B1120] border border-[#334155] flex items-center justify-center flex-shrink-0">
-              <span class="text-xs text-gray-400 font-semibold"><%= activity.user.email[0].upcase %></span>
+            <div class="w-7 h-7 rounded-full bg-surface border border-outline-variant/15 flex items-center justify-center flex-shrink-0">
+              <span class="text-xs text-on-surface-variant font-semibold"><%= activity.user.email[0].upcase %></span>
             </div>
             <div class="min-w-0">
-              <p class="text-sm text-gray-300 truncate">
-                <span class="font-medium text-white"><%= activity.user.email.split("@").first %></span>
-                <span class="text-gray-500"><%= activity.description %></span>
+              <p class="text-sm text-on-surface-variant truncate">
+                <span class="font-medium text-on-surface"><%= activity.user.email.split("@").first %></span>
+                <span class="text-outline"><%= activity.description %></span>
                 <% if activity.target_name.present? %>
-                  <span class="font-mono text-green-400"><%= activity.target_name %></span>
+                  <span class="font-mono text-primary"><%= activity.target_name %></span>
                 <% end %>
               </p>
               <% if activity.metadata.present? && activity.metadata.any? %>
-                <p class="text-[10px] text-gray-600 font-mono truncate"><%= activity.metadata.to_json.truncate(80) %></p>
+                <p class="text-[10px] text-outline-variant font-mono truncate"><%= activity.metadata.to_json.truncate(80) %></p>
               <% end %>
             </div>
           </div>
-          <span class="text-[10px] text-gray-600 flex-shrink-0 ml-4"><%= time_ago_in_words(activity.created_at) %> ago</span>
+          <span class="text-[10px] text-outline-variant flex-shrink-0 ml-4"><%= time_ago_in_words(activity.created_at) %> ago</span>
         </div>
       <% end %>
     </div>
   <% else %>
-    <div class="text-center py-16 bg-[#1E293B]/40 rounded-lg border border-[#334155]/30">
-      <p class="text-gray-500">No activity yet.</p>
+    <div class="text-center py-16 bg-surface-container-low rounded-lg border border-outline-variant/15">
+      <span class="material-symbols-outlined text-[40px] text-outline-variant mb-2">history</span>
+      <p class="text-outline">No activity yet.</p>
     </div>
   <% end %>
 </div>

@@ -1,23 +1,23 @@
 <div class="mb-4">
   <div class="flex items-center space-x-2 text-sm">
-    <%= link_to "Servers", dashboard_servers_path, class: "text-gray-500 hover:text-green-400 transition cursor-pointer" %>
-    <svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-    <span class="text-gray-300 font-mono"><%= @server.name %></span>
+    <%= link_to "Servers", dashboard_servers_path, class: "text-outline hover:text-primary transition cursor-pointer" %>
+    <span class="material-symbols-outlined text-[16px] text-outline-variant">chevron_right</span>
+    <span class="text-on-surface-variant font-mono"><%= @server.name %></span>
   </div>
 </div>
 
 <div class="flex items-center justify-between mb-6">
   <div class="flex items-center space-x-3">
-    <h1 class="text-xl font-semibold text-white"><%= @server.name %></h1>
+    <h1 class="text-xl font-headline text-on-surface"><%= @server.name %></h1>
     <% case @server.status %>
     <% when "connected" %>
-      <span class="inline-flex items-center space-x-1 text-xs text-green-400 bg-green-500/10 px-2 py-0.5 rounded-md border border-green-500/20">
-        <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+      <span class="inline-flex items-center space-x-1 text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">
+        <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
         <span>Connected</span>
       </span>
     <% when "unreachable" %>
-      <span class="inline-flex items-center space-x-1 text-xs text-red-400 bg-red-500/10 px-2 py-0.5 rounded-md border border-red-500/20">
-        <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+      <span class="inline-flex items-center space-x-1 text-xs text-error bg-error-container/20 px-2 py-0.5 rounded-md border border-error/20">
+        <span class="w-1.5 h-1.5 rounded-full bg-error"></span>
         <span>Unreachable</span>
       </span>
     <% when "auth_failed" %>
@@ -33,48 +33,48 @@
     <% end %>
   </div>
   <div class="flex items-center space-x-3">
-    <%= link_to dashboard_server_terminal_path(@server), class: "inline-flex items-center px-3 py-1.5 bg-[#1E293B] border border-[#334155] text-gray-300 text-sm font-medium rounded-md hover:bg-[#334155] hover:text-white transition" do %>
-      <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+    <%= link_to dashboard_server_terminal_path(@server), class: "inline-flex items-center px-3 py-1.5 bg-surface-container-low border border-outline-variant/15 text-on-surface-variant text-sm font-medium rounded-md hover:bg-surface-container-highest hover:text-on-surface transition" do %>
+      <span class="material-symbols-outlined text-[18px] mr-1.5">terminal</span>
       Terminal
     <% end %>
-    <%= link_to edit_dashboard_server_backup_destination_path(@server), class: "inline-flex items-center px-3 py-1.5 bg-[#1E293B] border border-[#334155] text-gray-300 text-sm font-medium rounded-md hover:bg-[#334155] hover:text-white transition" do %>
-      <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+    <%= link_to edit_dashboard_server_backup_destination_path(@server), class: "inline-flex items-center px-3 py-1.5 bg-surface-container-low border border-outline-variant/15 text-on-surface-variant text-sm font-medium rounded-md hover:bg-surface-container-highest hover:text-on-surface transition" do %>
+      <span class="material-symbols-outlined text-[18px] mr-1.5">backup</span>
       Backups
     <% end %>
-    <%= button_to "Sync Now", sync_dashboard_server_path(@server), method: :post, class: "inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-300 bg-[#1E293B] border border-[#334155] rounded-md hover:bg-[#334155] hover:text-white transition cursor-pointer" %>
-    <%= link_to "Delete", dashboard_server_path(@server), data: { turbo_method: :delete, turbo_confirm: "Are you sure? This will remove the server and all associated apps." }, class: "text-sm text-red-400/70 hover:text-red-400 font-medium transition cursor-pointer" %>
+    <%= button_to "Sync Now", sync_dashboard_server_path(@server), method: :post, class: "inline-flex items-center px-3 py-1.5 text-sm font-medium text-on-surface-variant bg-surface-container-low border border-outline-variant/15 rounded-md hover:bg-surface-container-highest hover:text-on-surface transition cursor-pointer" %>
+    <%= link_to "Delete", dashboard_server_path(@server), data: { turbo_method: :delete, turbo_confirm: "Are you sure? This will remove the server and all associated apps." }, class: "text-sm text-error/70 hover:text-error font-medium transition cursor-pointer" %>
   </div>
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
-  <div class="bg-[#1E293B]/60 rounded-lg border border-[#334155]/50 p-4">
-    <p class="text-xs text-gray-500 uppercase tracking-wider font-medium mb-1">Host</p>
-    <p class="text-sm font-semibold text-white font-mono"><%= @server.host %>:<%= @server.port %></p>
+  <div class="bg-surface-container-low rounded-lg border border-outline-variant/15 p-4">
+    <p class="text-xs text-outline uppercase tracking-wider font-medium mb-1">Host</p>
+    <p class="text-sm font-semibold text-on-surface font-mono"><%= @server.host %>:<%= @server.port %></p>
   </div>
-  <div class="bg-[#1E293B]/60 rounded-lg border border-[#334155]/50 p-4">
-    <p class="text-xs text-gray-500 uppercase tracking-wider font-medium mb-1">SSH User</p>
-    <p class="text-sm font-semibold text-white font-mono"><%= @server.ssh_user %></p>
+  <div class="bg-surface-container-low rounded-lg border border-outline-variant/15 p-4">
+    <p class="text-xs text-outline uppercase tracking-wider font-medium mb-1">SSH User</p>
+    <p class="text-sm font-semibold text-on-surface font-mono"><%= @server.ssh_user %></p>
   </div>
-  <div class="bg-[#1E293B]/60 rounded-lg border border-[#334155]/50 p-4">
-    <p class="text-xs text-gray-500 uppercase tracking-wider font-medium mb-1">Apps</p>
-    <p class="text-sm font-semibold text-white"><%= @apps.size %></p>
+  <div class="bg-surface-container-low rounded-lg border border-outline-variant/15 p-4">
+    <p class="text-xs text-outline uppercase tracking-wider font-medium mb-1">Apps</p>
+    <p class="text-sm font-semibold text-on-surface"><%= @apps.size %></p>
   </div>
 </div>
 
-<h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">Apps on this server</h2>
+<h2 class="text-sm font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Apps on this server</h2>
 <% if @apps.any? %>
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
     <% @apps.each do |app| %>
-      <%= link_to dashboard_app_path(app), class: "block bg-[#1E293B]/60 rounded-lg border border-[#334155]/50 p-4 hover:bg-[#1E293B] hover:border-[#334155] transition cursor-pointer group" do %>
+      <%= link_to dashboard_app_path(app), class: "block bg-surface-container-low rounded-lg border border-outline-variant/15 p-4 hover:bg-surface-container hover:border-outline-variant/30 transition cursor-pointer group" do %>
         <div class="flex items-center justify-between">
-          <span class="text-sm font-medium text-white font-mono group-hover:text-green-400 transition"><%= app.name %></span>
+          <span class="text-sm font-medium text-on-surface font-mono group-hover:text-primary transition"><%= app.name %></span>
           <% case app.status %>
           <% when "running" %>
-            <span class="w-2 h-2 rounded-full bg-green-400"></span>
+            <span class="w-2 h-2 rounded-full bg-primary"></span>
           <% when "crashed" %>
-            <span class="w-2 h-2 rounded-full bg-red-400"></span>
+            <span class="w-2 h-2 rounded-full bg-error"></span>
           <% when "stopped" %>
-            <span class="w-2 h-2 rounded-full bg-gray-500"></span>
+            <span class="w-2 h-2 rounded-full bg-outline"></span>
           <% when "deploying" %>
             <span class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
           <% end %>
@@ -83,5 +83,5 @@
     <% end %>
   </div>
 <% else %>
-  <p class="text-sm text-gray-500 bg-[#1E293B]/40 rounded-lg border border-[#334155]/30 p-6 text-center">No apps deployed to this server yet.</p>
+  <p class="text-sm text-outline bg-surface-container-low rounded-lg border border-outline-variant/15 p-6 text-center">No apps deployed to this server yet.</p>
 <% end %>

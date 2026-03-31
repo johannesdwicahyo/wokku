@@ -1,61 +1,61 @@
 <div class="mb-6">
   <div class="flex items-center space-x-3 mb-1">
-    <%= link_to "Databases", dashboard_databases_path, class: "text-sm text-gray-500 hover:text-green-400 transition" %>
-    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-    <span class="text-sm text-white font-medium font-mono"><%= @database.name %></span>
+    <%= link_to "Databases", dashboard_databases_path, class: "text-sm text-outline hover:text-primary transition" %>
+    <span class="material-symbols-outlined text-[16px] text-outline-variant">chevron_right</span>
+    <span class="text-sm text-on-surface font-medium font-mono"><%= @database.name %></span>
   </div>
 </div>
 
 <div class="flex items-center justify-between mb-6">
   <div class="flex items-center space-x-4">
-    <h1 class="text-2xl font-bold text-white font-mono"><%= @database.name %></h1>
-    <span class="px-2 py-0.5 text-xs font-mono text-gray-400 bg-[#0B1120] border border-[#334155] rounded"><%= @database.service_type %></span>
+    <h1 class="text-2xl font-headline text-on-surface font-mono"><%= @database.name %></h1>
+    <span class="px-2 py-0.5 text-xs font-mono text-on-surface-variant bg-surface border border-outline-variant/15 rounded"><%= @database.service_type %></span>
     <% case @database.status %>
     <% when "running" %>
-      <span class="flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-green-400"></span><span class="text-xs text-gray-400">Running</span></span>
+      <span class="flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-primary"></span><span class="text-xs text-on-surface-variant">Running</span></span>
     <% when "stopped" %>
-      <span class="flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-gray-500"></span><span class="text-xs text-gray-400">Stopped</span></span>
+      <span class="flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-outline"></span><span class="text-xs text-on-surface-variant">Stopped</span></span>
     <% when "error" %>
-      <span class="flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-red-400"></span><span class="text-xs text-gray-400">Error</span></span>
+      <span class="flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-error"></span><span class="text-xs text-on-surface-variant">Error</span></span>
     <% end %>
   </div>
   <div class="flex items-center space-x-3">
-    <%= link_to dashboard_database_backups_path(@database), class: "inline-flex items-center px-3 py-1.5 bg-[#1E293B] border border-[#334155] text-gray-300 text-sm font-medium rounded-md hover:bg-[#334155] hover:text-white transition" do %>
-      <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+    <%= link_to dashboard_database_backups_path(@database), class: "inline-flex items-center px-3 py-1.5 bg-surface-container-low border border-outline-variant/15 text-on-surface-variant text-sm font-medium rounded-md hover:bg-surface-container-highest hover:text-on-surface transition" do %>
+      <span class="material-symbols-outlined text-[18px] mr-1.5">backup</span>
       Backups
     <% end %>
-    <%= link_to "Delete", dashboard_database_path(@database), data: { turbo_method: :delete, turbo_confirm: "Destroy #{@database.name}? This will delete all data." }, class: "text-sm text-red-400/70 hover:text-red-400 font-medium transition" %>
+    <%= link_to "Delete", dashboard_database_path(@database), data: { turbo_method: :delete, turbo_confirm: "Destroy #{@database.name}? This will delete all data." }, class: "text-sm text-error/70 hover:text-error font-medium transition" %>
   </div>
 </div>
 
 <%# Info Cards %>
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-  <div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 p-5">
-    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Server</p>
-    <p class="text-lg font-semibold text-white font-mono"><%= @database.server.name %></p>
+  <div class="bg-surface-container-low rounded-xl border border-outline-variant/15 p-5">
+    <p class="text-xs text-outline uppercase tracking-wider mb-1">Server</p>
+    <p class="text-lg font-semibold text-on-surface font-mono"><%= @database.server.name %></p>
   </div>
-  <div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 p-5">
-    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Type</p>
-    <p class="text-lg font-semibold text-white font-mono"><%= @database.service_type.capitalize %></p>
+  <div class="bg-surface-container-low rounded-xl border border-outline-variant/15 p-5">
+    <p class="text-xs text-outline uppercase tracking-wider mb-1">Type</p>
+    <p class="text-lg font-semibold text-on-surface font-mono"><%= @database.service_type.capitalize %></p>
   </div>
-  <div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 p-5">
-    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Linked Apps</p>
-    <p class="text-lg font-semibold text-white"><%= @linked_apps.size %></p>
+  <div class="bg-surface-container-low rounded-xl border border-outline-variant/15 p-5">
+    <p class="text-xs text-outline uppercase tracking-wider mb-1">Linked Apps</p>
+    <p class="text-lg font-semibold text-on-surface"><%= @linked_apps.size %></p>
   </div>
 </div>
 
 <%# Database Info from Dokku %>
 <% if @info.any? %>
-  <div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 overflow-hidden mb-6">
-    <div class="px-6 py-4 border-b border-[#334155]/50">
-      <h2 class="text-base font-semibold text-white">Connection Info</h2>
+  <div class="bg-surface-container-low rounded-xl border border-outline-variant/15 overflow-hidden mb-6">
+    <div class="px-6 py-4 border-b border-outline-variant/15">
+      <h2 class="text-base font-semibold text-on-surface">Connection Info</h2>
     </div>
-    <div class="divide-y divide-[#334155]/50">
+    <div class="divide-y divide-outline-variant/15">
       <% @info.each do |key, value| %>
         <% next if value.blank? %>
-        <div class="px-6 py-3 flex items-center justify-between hover:bg-[#334155]/20 transition">
-          <span class="text-xs text-gray-500 uppercase tracking-wider"><%= key.humanize %></span>
-          <span class="text-sm text-gray-300 font-mono truncate ml-4 max-w-md text-right"><%= value %></span>
+        <div class="px-6 py-3 flex items-center justify-between hover:bg-surface-container-highest transition">
+          <span class="text-xs text-outline uppercase tracking-wider"><%= key.humanize %></span>
+          <span class="text-sm text-on-surface-variant font-mono truncate ml-4 max-w-md text-right"><%= value %></span>
         </div>
       <% end %>
     </div>
@@ -63,41 +63,41 @@
 <% end %>
 
 <%# Linked Apps %>
-<div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 overflow-hidden mb-6">
-  <div class="px-6 py-4 border-b border-[#334155]/50">
-    <h2 class="text-base font-semibold text-white">Linked Apps</h2>
-    <p class="text-sm text-gray-500 mt-1">Apps connected to this database</p>
+<div class="bg-surface-container-low rounded-xl border border-outline-variant/15 overflow-hidden mb-6">
+  <div class="px-6 py-4 border-b border-outline-variant/15">
+    <h2 class="text-base font-semibold text-on-surface">Linked Apps</h2>
+    <p class="text-sm text-outline mt-1">Apps connected to this database</p>
   </div>
 
   <% if @linked_apps.any? %>
-    <div class="divide-y divide-[#334155]/50">
+    <div class="divide-y divide-outline-variant/15">
       <% @linked_apps.each do |app| %>
-        <div class="px-6 py-3 flex items-center justify-between hover:bg-[#334155]/20 transition">
+        <div class="px-6 py-3 flex items-center justify-between hover:bg-surface-container-highest transition">
           <div class="flex items-center space-x-3">
-            <span class="w-2 h-2 rounded-full bg-green-400"></span>
-            <%= link_to app.name, dashboard_app_path(app), class: "text-sm font-mono text-green-400 hover:text-green-300 transition" %>
+            <span class="w-2 h-2 rounded-full bg-primary"></span>
+            <%= link_to app.name, dashboard_app_path(app), class: "text-sm font-mono text-primary hover:text-primary transition" %>
           </div>
-          <%= button_to "Unlink", unlink_dashboard_database_path(@database, app_id: app.id), method: :post, data: { turbo_confirm: "Unlink #{app.name} from #{@database.name}?" }, class: "text-xs text-red-400/70 hover:text-red-400 transition cursor-pointer" %>
+          <%= button_to "Unlink", unlink_dashboard_database_path(@database, app_id: app.id), method: :post, data: { turbo_confirm: "Unlink #{app.name} from #{@database.name}?" }, class: "text-xs text-error/70 hover:text-error transition cursor-pointer" %>
         </div>
       <% end %>
     </div>
   <% else %>
     <div class="px-6 py-6 text-center">
-      <p class="text-sm text-gray-500">No apps linked yet.</p>
+      <p class="text-sm text-outline">No apps linked yet.</p>
     </div>
   <% end %>
 </div>
 
 <%# Link App %>
 <% if @available_apps.any? %>
-  <div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 p-6">
-    <h3 class="text-sm font-semibold text-white mb-4">Link App</h3>
+  <div class="bg-surface-container-low rounded-xl border border-outline-variant/15 p-6">
+    <h3 class="text-sm font-semibold text-on-surface mb-4">Link App</h3>
     <%= form_with(url: link_dashboard_database_path(@database), method: :post, class: "flex items-end space-x-3") do |f| %>
       <div class="flex-1">
-        <label class="block text-xs text-gray-400 uppercase tracking-wider mb-1">Application</label>
-        <%= f.select :app_id, @available_apps.map { |a| [a.name, a.id] }, { prompt: "Select an app" }, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white text-sm focus:ring-green-500 focus:border-green-500" %>
+        <label class="block text-xs text-on-surface-variant uppercase tracking-wider mb-1">Application</label>
+        <%= f.select :app_id, @available_apps.map { |a| [a.name, a.id] }, { prompt: "Select an app" }, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary" %>
       </div>
-      <%= f.submit "Link", class: "px-4 py-2 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer" %>
+      <%= f.submit "Link", class: "px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
     <% end %>
   </div>
 <% end %>
