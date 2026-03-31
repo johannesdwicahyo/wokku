@@ -167,11 +167,8 @@
         <p class="text-2xl font-bold text-white font-mono"><%= mem_limit_cfg.present? ? "#{mem_limit_cfg} MB" : "—" %></p>
       </div>
       <div class="px-6 py-5 text-center">
-        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">CPU Shares</p>
-        <p class="text-2xl font-bold text-white font-mono"><%= cpu_limit_cfg.present? ? cpu_limit_cfg : "—" %></p>
-        <% if cpu_limit_cfg.present? %>
-          <p class="text-xs text-gray-500 mt-1"><%= "%.1f" % (cpu_limit_cfg.to_f / 1024 * 100) %>% relative priority</p>
-        <% end %>
+        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">CPU Limit</p>
+        <p class="text-2xl font-bold text-white font-mono"><%= cpu_limit_cfg.present? ? "#{cpu_limit_cfg} vCPU" : "—" %></p>
       </div>
       <div class="px-6 py-5 text-center">
         <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Memory Reserved</p>
