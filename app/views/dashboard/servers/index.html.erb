@@ -1,44 +1,44 @@
 <div data-controller="slide-panel">
   <div class="flex items-center justify-between mb-6">
     <div>
-      <h1 class="text-xl font-semibold text-white">Servers</h1>
-      <p class="mt-0.5 text-sm text-gray-500">Manage your Dokku servers</p>
+      <h1 class="text-xl font-headline text-on-surface">Servers</h1>
+      <p class="mt-0.5 text-sm text-outline">Manage your Dokku servers</p>
     </div>
-    <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer">
-      <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+    <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">
+      <span class="material-symbols-outlined text-[18px] mr-1.5">add</span>
       Add Server
     </button>
   </div>
 
   <% if @servers.any? %>
-    <div class="bg-[#1E293B]/60 rounded-lg border border-[#334155]/50 overflow-hidden">
+    <div class="bg-surface-container-low rounded-lg border border-outline-variant/15 overflow-hidden">
       <table class="min-w-full">
         <thead>
-          <tr class="border-b border-[#334155]/50">
-            <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-            <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Host</th>
-            <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-            <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Apps</th>
+          <tr class="border-b border-outline-variant/15 bg-surface-container-highest">
+            <th class="px-4 py-2.5 text-left text-xs font-medium text-outline uppercase tracking-wider">Name</th>
+            <th class="px-4 py-2.5 text-left text-xs font-medium text-outline uppercase tracking-wider">Host</th>
+            <th class="px-4 py-2.5 text-left text-xs font-medium text-outline uppercase tracking-wider">Status</th>
+            <th class="px-4 py-2.5 text-left text-xs font-medium text-outline uppercase tracking-wider">Apps</th>
             <th class="px-4 py-2.5"></th>
           </tr>
         </thead>
         <tbody>
           <% @servers.each do |server| %>
-            <tr class="border-b border-[#334155]/30 last:border-b-0 hover:bg-[#334155]/20 transition">
+            <tr class="border-b border-outline-variant/15 last:border-b-0 hover:bg-surface-container-highest transition">
               <td class="px-4 py-3">
-                <%= link_to server.name, dashboard_server_path(server), class: "text-sm font-semibold text-white font-mono hover:text-green-400 transition cursor-pointer" %>
+                <%= link_to server.name, dashboard_server_path(server), class: "text-sm font-semibold text-on-surface font-mono hover:text-primary transition cursor-pointer" %>
               </td>
-              <td class="px-4 py-3 text-sm text-gray-400 font-mono"><%= server.host %>:<%= server.port %></td>
+              <td class="px-4 py-3 text-sm text-on-surface-variant font-mono"><%= server.host %>:<%= server.port %></td>
               <td class="px-4 py-3">
                 <% case server.status %>
                 <% when "connected" %>
-                  <span class="inline-flex items-center space-x-1 text-xs text-green-400">
-                    <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+                  <span class="inline-flex items-center space-x-1 text-xs text-primary">
+                    <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
                     <span>Connected</span>
                   </span>
                 <% when "unreachable" %>
-                  <span class="inline-flex items-center space-x-1 text-xs text-red-400">
-                    <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+                  <span class="inline-flex items-center space-x-1 text-xs text-error">
+                    <span class="w-1.5 h-1.5 rounded-full bg-error"></span>
                     <span>Unreachable</span>
                   </span>
                 <% when "auth_failed" %>
@@ -53,9 +53,9 @@
                   </span>
                 <% end %>
               </td>
-              <td class="px-4 py-3 text-sm text-gray-400 font-mono"><%= server.app_records.size %></td>
+              <td class="px-4 py-3 text-sm text-on-surface-variant font-mono"><%= server.app_records.size %></td>
               <td class="px-4 py-3 text-right">
-                <%= link_to "View", dashboard_server_path(server), class: "text-xs text-gray-500 hover:text-green-400 transition cursor-pointer" %>
+                <%= link_to "View", dashboard_server_path(server), class: "text-xs text-outline hover:text-primary transition cursor-pointer" %>
               </td>
             </tr>
           <% end %>
@@ -63,12 +63,12 @@
       </table>
     </div>
   <% else %>
-    <div class="text-center py-16 bg-[#1E293B]/40 rounded-lg border border-[#334155]/30">
-      <svg class="mx-auto h-10 w-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
-      <h3 class="mt-3 text-sm font-medium text-gray-300">No servers yet</h3>
-      <p class="mt-1 text-xs text-gray-500">Connect your first Dokku server to get started.</p>
+    <div class="text-center py-16 bg-surface-container-low rounded-lg border border-outline-variant/15">
+      <span class="material-symbols-outlined text-[40px] text-outline-variant mb-2">dns</span>
+      <h3 class="mt-3 text-sm font-medium text-on-surface-variant">No servers yet</h3>
+      <p class="mt-1 text-xs text-outline">Connect your first Dokku server to get started.</p>
       <div class="mt-4">
-        <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer">Add Server</button>
+        <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">Add Server</button>
       </div>
     </div>
   <% end %>

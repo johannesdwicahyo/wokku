@@ -1,68 +1,68 @@
 <div class="max-w-lg">
   <div class="mb-4">
     <div class="flex items-center space-x-2 text-sm mb-4">
-      <%= link_to "Servers", dashboard_servers_path, class: "text-gray-500 hover:text-green-400 transition cursor-pointer" %>
-      <svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-      <span class="text-gray-300">New</span>
+      <%= link_to "Servers", dashboard_servers_path, class: "text-outline hover:text-primary transition cursor-pointer" %>
+      <span class="material-symbols-outlined text-[16px] text-outline-variant">chevron_right</span>
+      <span class="text-on-surface-variant">New</span>
     </div>
-    <h1 class="text-xl font-semibold text-white">Add Server</h1>
-    <p class="mt-0.5 text-sm text-gray-500">Connect a Dokku server via SSH</p>
+    <h1 class="text-xl font-headline text-on-surface">Add Server</h1>
+    <p class="mt-0.5 text-sm text-outline">Connect a Dokku server via SSH</p>
   </div>
 
   <%# Cloud Provisioning %>
   <% if current_team.cloud_credentials.any? %>
-    <div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 p-6 mb-6">
-      <h2 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">Create with Cloud Provider</h2>
+    <div class="bg-surface-container-low rounded-xl border border-outline-variant/15 p-6 mb-6">
+      <h2 class="text-sm font-semibold text-on-surface uppercase tracking-wider mb-4">Create with Cloud Provider</h2>
 
       <%= form_with url: provision_dashboard_servers_path, method: :post, class: "space-y-4" do |f| %>
         <div>
-          <%= f.label :cloud_credential_id, "Provider", class: "block text-xs text-gray-400 uppercase tracking-wider mb-1" %>
-          <%= f.select :cloud_credential_id, current_team.cloud_credentials.map { |c| ["#{c.provider.capitalize}#{c.name.present? ? " (#{c.name})" : ""}", c.id] }, { prompt: "Select provider" }, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white text-sm focus:ring-green-500 focus:border-green-500" %>
+          <%= f.label :cloud_credential_id, "Provider", class: "block text-xs text-on-surface-variant uppercase tracking-wider mb-1" %>
+          <%= f.select :cloud_credential_id, current_team.cloud_credentials.map { |c| ["#{c.provider.capitalize}#{c.name.present? ? " (#{c.name})" : ""}", c.id] }, { prompt: "Select provider" }, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary" %>
         </div>
 
         <div>
-          <%= f.label :name, "Server Name", class: "block text-xs text-gray-400 uppercase tracking-wider mb-1" %>
-          <%= f.text_field :name, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white font-mono text-sm focus:ring-green-500 focus:border-green-500", placeholder: "my-dokku-server" %>
+          <%= f.label :name, "Server Name", class: "block text-xs text-on-surface-variant uppercase tracking-wider mb-1" %>
+          <%= f.text_field :name, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface font-mono text-sm focus:ring-primary focus:border-primary", placeholder: "my-dokku-server" %>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <%= f.label :region, class: "block text-xs text-gray-400 uppercase tracking-wider mb-1" %>
-            <%= f.select :region, [["US East (Ashburn)", "ash"], ["EU Central (Falkenstein)", "fsn1"], ["EU West (Helsinki)", "hel1"], ["Singapore", "sgp"]], { prompt: "Select region" }, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white text-sm focus:ring-green-500 focus:border-green-500" %>
+            <%= f.label :region, class: "block text-xs text-on-surface-variant uppercase tracking-wider mb-1" %>
+            <%= f.select :region, [["US East (Ashburn)", "ash"], ["EU Central (Falkenstein)", "fsn1"], ["EU West (Helsinki)", "hel1"], ["Singapore", "sgp"]], { prompt: "Select region" }, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary" %>
           </div>
           <div>
-            <%= f.label :size, class: "block text-xs text-gray-400 uppercase tracking-wider mb-1" %>
-            <%= f.select :size, [["2 vCPU / 4 GB — $4/mo", "cx22"], ["4 vCPU / 8 GB — $8/mo", "cx32"], ["8 vCPU / 16 GB — $16/mo", "cx42"]], { prompt: "Select size" }, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white text-sm focus:ring-green-500 focus:border-green-500" %>
+            <%= f.label :size, class: "block text-xs text-on-surface-variant uppercase tracking-wider mb-1" %>
+            <%= f.select :size, [["2 vCPU / 4 GB — $4/mo", "cx22"], ["4 vCPU / 8 GB — $8/mo", "cx32"], ["8 vCPU / 16 GB — $16/mo", "cx42"]], { prompt: "Select size" }, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary" %>
           </div>
         </div>
 
         <div class="pt-2">
-          <%= f.submit "Create Server", class: "px-4 py-2 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer" %>
+          <%= f.submit "Create Server", class: "px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
         </div>
       <% end %>
     </div>
   <% else %>
-    <div class="bg-[#1E293B]/40 rounded-xl border border-[#334155]/30 p-6 mb-6">
-      <h2 class="text-sm font-semibold text-white uppercase tracking-wider mb-2">Auto-Provision a Server</h2>
-      <p class="text-xs text-gray-500 mb-3">Connect a cloud provider API key to create Dokku servers with one click.</p>
+    <div class="bg-surface-container-low rounded-xl border border-outline-variant/15 p-6 mb-6">
+      <h2 class="text-sm font-semibold text-on-surface uppercase tracking-wider mb-2">Auto-Provision a Server</h2>
+      <p class="text-xs text-outline mb-3">Connect a cloud provider API key to create Dokku servers with one click.</p>
       <%= form_with url: dashboard_cloud_credentials_path, method: :post, class: "flex items-end space-x-3" do |f| %>
-        <%= f.select :provider, [["Hetzner", "hetzner"], ["Vultr", "vultr"], ["DigitalOcean", "digitalocean"], ["Linode", "linode"]], { prompt: "Provider" }, class: "rounded-md bg-[#0B1120] border-[#334155] text-white text-sm focus:ring-green-500 focus:border-green-500" %>
-        <%= f.text_field :api_key, placeholder: "API Key", class: "flex-1 rounded-md bg-[#0B1120] border-[#334155] text-white font-mono text-sm focus:ring-green-500 focus:border-green-500" %>
-        <%= f.submit "Connect", class: "px-3 py-2 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer" %>
+        <%= f.select :provider, [["Hetzner", "hetzner"], ["Vultr", "vultr"], ["DigitalOcean", "digitalocean"], ["Linode", "linode"]], { prompt: "Provider" }, class: "rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary" %>
+        <%= f.text_field :api_key, placeholder: "API Key", class: "flex-1 rounded-md bg-surface border-outline-variant/15 text-on-surface font-mono text-sm focus:ring-primary focus:border-primary" %>
+        <%= f.submit "Connect", class: "px-3 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
       <% end %>
     </div>
   <% end %>
 
   <div class="flex items-center space-x-3 mb-6">
-    <div class="h-px flex-1 bg-[#334155]"></div>
-    <span class="text-xs text-gray-500 uppercase tracking-wider">or add existing server manually</span>
-    <div class="h-px flex-1 bg-[#334155]"></div>
+    <div class="h-px flex-1 bg-outline-variant/15"></div>
+    <span class="text-xs text-outline uppercase tracking-wider">or add existing server manually</span>
+    <div class="h-px flex-1 bg-outline-variant/15"></div>
   </div>
 
-  <%= form_with(model: @server, url: dashboard_servers_path, class: "bg-[#1E293B]/60 rounded-lg border border-[#334155]/50 p-6 space-y-4") do |f| %>
+  <%= form_with(model: @server, url: dashboard_servers_path, class: "bg-surface-container-low rounded-lg border border-outline-variant/15 p-6 space-y-4") do |f| %>
     <% if @server.errors.any? %>
-      <div class="rounded-md bg-red-500/10 border border-red-500/20 p-3">
-        <ul class="text-xs text-red-400 space-y-1">
+      <div class="rounded-md bg-error-container/20 border border-error/20 p-3">
+        <ul class="text-xs text-error space-y-1">
           <% @server.errors.full_messages.each do |msg| %>
             <li><%= msg %></li>
           <% end %>
@@ -71,35 +71,35 @@
     <% end %>
 
     <div>
-      <%= f.label :name, class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
-      <%= f.text_field :name, class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 font-mono", placeholder: "production", autofocus: true %>
+      <%= f.label :name, class: "block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider" %>
+      <%= f.text_field :name, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline-variant focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-mono", placeholder: "production", autofocus: true %>
     </div>
 
     <div>
-      <%= f.label :host, class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
-      <%= f.text_field :host, class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 font-mono", placeholder: "dokku.example.com" %>
+      <%= f.label :host, class: "block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider" %>
+      <%= f.text_field :host, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline-variant focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-mono", placeholder: "dokku.example.com" %>
     </div>
 
     <div class="grid grid-cols-2 gap-3">
       <div>
-        <%= f.label :port, class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
-        <%= f.number_field :port, class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 font-mono", value: 22 %>
+        <%= f.label :port, class: "block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider" %>
+        <%= f.number_field :port, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline-variant focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-mono", value: 22 %>
       </div>
       <div>
-        <%= f.label :ssh_user, "SSH User", class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
-        <%= f.text_field :ssh_user, class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 font-mono", value: "dokku" %>
+        <%= f.label :ssh_user, "SSH User", class: "block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider" %>
+        <%= f.text_field :ssh_user, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline-variant focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-mono", value: "dokku" %>
       </div>
     </div>
 
     <div>
-      <%= f.label :ssh_private_key, "SSH Private Key", class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
-      <%= f.text_area :ssh_private_key, class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 font-mono text-xs", rows: 5, placeholder: "-----BEGIN OPENSSH PRIVATE KEY-----\n..." %>
-      <p class="mt-1 text-xs text-gray-600">Stored encrypted at rest</p>
+      <%= f.label :ssh_private_key, "SSH Private Key", class: "block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider" %>
+      <%= f.text_area :ssh_private_key, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline-variant focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-mono text-xs", rows: 5, placeholder: "-----BEGIN OPENSSH PRIVATE KEY-----\n..." %>
+      <p class="mt-1 text-xs text-outline-variant">Stored encrypted at rest</p>
     </div>
 
     <div class="flex items-center space-x-3 pt-2">
-      <%= f.submit "Add Server", class: "px-4 py-2 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer" %>
-      <%= link_to "Cancel", dashboard_servers_path, class: "text-sm text-gray-500 hover:text-gray-300 transition cursor-pointer" %>
+      <%= f.submit "Add Server", class: "px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
+      <%= link_to "Cancel", dashboard_servers_path, class: "text-sm text-outline hover:text-on-surface-variant transition cursor-pointer" %>
     </div>
   <% end %>
 </div>
