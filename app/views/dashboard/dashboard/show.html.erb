@@ -211,6 +211,6 @@
   <% end %>
 
   <%= render layout: "dashboard/shared/slide_panel", locals: { title: "New App", subtitle: "Deploy a new application" } do %>
-    <%= render "form", app: @app, servers: @servers %>
+    <%= render "dashboard/apps/form", app: AppRecord.new, servers: @servers %>
   <% end %>
 </div>
