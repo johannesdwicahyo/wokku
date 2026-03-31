@@ -11,14 +11,15 @@ puts "Created admin user: admin@wokku.dev / password123456"
 puts "Created default team: Default"
 
 if Wokku.ee?
-  # Dyno Tiers (5 tiers with new pricing)
-  DynoTier.find_or_create_by!(name: "eco") { |t| t.memory_mb = 256; t.cpu_shares = 25; t.price_cents_per_month = 0; t.price_cents_per_hour = 0; t.sleeps = true }
-  DynoTier.find_or_create_by!(name: "starter") { |t| t.memory_mb = 512; t.cpu_shares = 50; t.price_cents_per_month = 150; t.price_cents_per_hour = 0.21; t.sleeps = false }
-  DynoTier.find_or_create_by!(name: "basic") { |t| t.memory_mb = 1024; t.cpu_shares = 100; t.price_cents_per_month = 250; t.price_cents_per_hour = 0.34; t.sleeps = false }
-  DynoTier.find_or_create_by!(name: "standard") { |t| t.memory_mb = 2048; t.cpu_shares = 100; t.price_cents_per_month = 700; t.price_cents_per_hour = 0.96; t.sleeps = false }
-  DynoTier.find_or_create_by!(name: "pro") { |t| t.memory_mb = 4096; t.cpu_shares = 200; t.price_cents_per_month = 1400; t.price_cents_per_hour = 1.92; t.sleeps = false }
+  # Dyno Tiers — container sizes with vCPU and included storage
+  # Hourly rate calculated from monthly: cents_per_hour = dollars_per_month * 100 / 730
+  DynoTier.find_or_create_by!(name: "free") { |t| t.memory_mb = 256; t.cpu_shares = 0.15; t.price_cents_per_hour = 0; t.sleeps = true }
+  DynoTier.find_or_create_by!(name: "basic") { |t| t.memory_mb = 512; t.cpu_shares = 0.3; t.price_cents_per_hour = 0.2055; t.sleeps = false }
+  DynoTier.find_or_create_by!(name: "standard") { |t| t.memory_mb = 1024; t.cpu_shares = 0.5; t.price_cents_per_hour = 0.5479; t.sleeps = false }
+  DynoTier.find_or_create_by!(name: "performance") { |t| t.memory_mb = 2048; t.cpu_shares = 1.0; t.price_cents_per_hour = 1.0959; t.sleeps = false }
+  DynoTier.find_or_create_by!(name: "performance-2x") { |t| t.memory_mb = 4096; t.cpu_shares = 2.0; t.price_cents_per_hour = 2.0548; t.sleeps = false }
 
-  puts "Created dyno tiers: eco, starter, basic, standard, pro"
+  puts "Created dyno tiers: free ($0), basic ($1.50), standard ($4), performance ($8), performance-2x ($15)"
 
   # Service Tiers — Postgres/MySQL/MariaDB
   %w[postgres mysql mariadb].each do |db_type|
@@ -37,10 +38,12 @@ if Wokku.ee?
   ServiceTier.find_or_create_by!(name: "basic", service_type: "elasticsearch") { |t| t.price_cents_per_hour = 1.1; t.spec = { memory_mb: 512, storage_gb: 5 } }
   ServiceTier.find_or_create_by!(name: "standard", service_type: "elasticsearch") { |t| t.price_cents_per_hour = 2.7; t.spec = { memory_mb: 1024, storage_gb: 20 } }
 
-  # Service Tiers — MinIO
-  ServiceTier.find_or_create_by!(name: "starter", service_type: "minio") { |t| t.price_cents_per_hour = 0; t.spec = { storage_gb: 5 } }
-  ServiceTier.find_or_create_by!(name: "basic", service_type: "minio") { |t| t.price_cents_per_hour = 0.7; t.spec = { storage_gb: 50 } }
-  ServiceTier.find_or_create_by!(name: "standard", service_type: "minio") { |t| t.price_cents_per_hour = 2.7; t.spec = { storage_gb: 500 } }
+  # Service Tiers — MinIO (S3-compatible object storage)
+  # Users buy MinIO instances for persistent storage beyond what's included in their dyno tier
+  ServiceTier.find_or_create_by!(name: "mini", service_type: "minio") { |t| t.price_cents_per_hour = 0; t.spec = { storage_gb: 1 } }
+  ServiceTier.find_or_create_by!(name: "basic", service_type: "minio") { |t| t.price_cents_per_hour = 0.14; t.spec = { storage_gb: 5 } }
+  ServiceTier.find_or_create_by!(name: "standard", service_type: "minio") { |t| t.price_cents_per_hour = 0.55; t.spec = { storage_gb: 25 } }
+  ServiceTier.find_or_create_by!(name: "performance", service_type: "minio") { |t| t.price_cents_per_hour = 1.37; t.spec = { storage_gb: 100 } }
 
   # Service Tiers — MongoDB/RabbitMQ
   %w[mongodb rabbitmq].each do |type|
