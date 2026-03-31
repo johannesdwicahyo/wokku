@@ -68,6 +68,7 @@ Rails.application.routes.draw do
   post "/webhooks/github", to: "webhooks/github#create"
 
   namespace :dashboard do
+    get "/", to: "dashboard#show", as: :root
     resources :templates, only: [:index, :show, :create]
     resources :apps do
       member do
