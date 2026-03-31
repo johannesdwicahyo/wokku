@@ -1,7 +1,7 @@
 <%= form_with(model: app, url: dashboard_apps_path, class: "space-y-4") do |f| %>
   <% if app.errors.any? %>
-    <div class="rounded-md bg-red-500/10 border border-red-500/20 p-3">
-      <ul class="text-xs text-red-400 space-y-1">
+    <div class="rounded-md bg-error-container/20 border border-error/20 p-3">
+      <ul class="text-xs text-error space-y-1">
         <% app.errors.full_messages.each do |msg| %>
           <li><%= msg %></li>
         <% end %>
@@ -10,22 +10,22 @@
   <% end %>
 
   <div>
-    <%= f.label :name, class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
-    <%= f.text_field :name, class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 font-mono", placeholder: "my-app" %>
+    <%= f.label :name, class: "block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider" %>
+    <%= f.text_field :name, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-mono", placeholder: "my-app" %>
   </div>
 
   <div>
-    <%= f.label :server_id, "Server", class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
-    <%= f.collection_select :server_id, servers, :id, :name, { prompt: "Select a server" }, class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500" %>
+    <%= f.label :server_id, "Server", class: "block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider" %>
+    <%= f.collection_select :server_id, servers, :id, :name, { prompt: "Select a server" }, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary" %>
   </div>
 
   <div>
-    <%= f.label :deploy_branch, "Deploy Branch", class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
-    <%= f.text_field :deploy_branch, class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 font-mono", placeholder: "main", value: app.deploy_branch || "main" %>
+    <%= f.label :deploy_branch, "Deploy Branch", class: "block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider" %>
+    <%= f.text_field :deploy_branch, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-mono", placeholder: "main", value: app.deploy_branch || "main" %>
   </div>
 
   <div class="flex items-center space-x-3 pt-2">
-    <%= f.submit "Create App", class: "flex-1 py-2 px-4 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer text-center" %>
-    <button type="button" data-action="click->slide-panel#close" class="py-2 px-4 text-sm text-gray-400 hover:text-white transition cursor-pointer">Cancel</button>
+    <%= f.submit "Create App", class: "flex-1 py-2 px-4 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer text-center" %>
+    <button type="button" data-action="click->slide-panel#close" class="py-2 px-4 text-sm text-on-surface-variant hover:text-on-surface transition cursor-pointer">Cancel</button>
   </div>
 <% end %>
