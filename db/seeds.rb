@@ -41,20 +41,24 @@ if Wokku.ee?
   ServiceTier.find_or_create_by!(name: "basic", service_type: "elasticsearch") { |t| t.price_cents_per_hour = 0.5479; t.spec = { memory_mb: 512, storage_gb: 5 } }
   ServiceTier.find_or_create_by!(name: "standard", service_type: "elasticsearch") { |t| t.price_cents_per_hour = 1.3699; t.spec = { memory_mb: 1024, storage_gb: 20 } }
 
-  # Service Tiers — MinIO (S3-compatible object storage)
-  # Pricing: mini=free (1GB), basic=$0.50/mo (5GB), standard=$2/mo (25GB), performance=$5/mo (100GB)
-  ServiceTier.find_or_create_by!(name: "mini", service_type: "minio") { |t| t.price_cents_per_hour = 0; t.spec = { storage_gb: 1 } }
-  ServiceTier.find_or_create_by!(name: "basic", service_type: "minio") { |t| t.price_cents_per_hour = 0.0685; t.spec = { storage_gb: 5 } }
-  ServiceTier.find_or_create_by!(name: "standard", service_type: "minio") { |t| t.price_cents_per_hour = 0.274; t.spec = { storage_gb: 25 } }
-  ServiceTier.find_or_create_by!(name: "performance", service_type: "minio") { |t| t.price_cents_per_hour = 0.6849; t.spec = { storage_gb: 100 } }
-
-  # Service Tiers — MongoDB/RabbitMQ
+  # Service Tiers — MongoDB/RabbitMQ/NATS
   # Pricing: mini=free, basic=$2/mo, standard=$6/mo
-  %w[mongodb rabbitmq].each do |type|
+  %w[mongodb rabbitmq nats].each do |type|
     ServiceTier.find_or_create_by!(name: "mini", service_type: type) { |t| t.price_cents_per_hour = 0; t.spec = { memory_mb: 64 } }
     ServiceTier.find_or_create_by!(name: "basic", service_type: type) { |t| t.price_cents_per_hour = 0.274; t.spec = { memory_mb: 256 } }
     ServiceTier.find_or_create_by!(name: "standard", service_type: type) { |t| t.price_cents_per_hour = 0.8219; t.spec = { memory_mb: 1024 } }
   end
+
+  # Service Tiers — Meilisearch
+  # Pricing: mini=free, basic=$2/mo, standard=$6/mo
+  ServiceTier.find_or_create_by!(name: "mini", service_type: "meilisearch") { |t| t.price_cents_per_hour = 0; t.spec = { memory_mb: 128 } }
+  ServiceTier.find_or_create_by!(name: "basic", service_type: "meilisearch") { |t| t.price_cents_per_hour = 0.274; t.spec = { memory_mb: 512 } }
+  ServiceTier.find_or_create_by!(name: "standard", service_type: "meilisearch") { |t| t.price_cents_per_hour = 0.8219; t.spec = { memory_mb: 2048 } }
+
+  # Service Tiers — ClickHouse
+  # Pricing: basic=$4/mo, standard=$10/mo (heavier, analytics workloads)
+  ServiceTier.find_or_create_by!(name: "basic", service_type: "clickhouse") { |t| t.price_cents_per_hour = 0.5479; t.spec = { memory_mb: 512, storage_gb: 10 } }
+  ServiceTier.find_or_create_by!(name: "standard", service_type: "clickhouse") { |t| t.price_cents_per_hour = 1.3699; t.spec = { memory_mb: 2048, storage_gb: 50 } }
 
   puts "Created service tiers for all database types"
 

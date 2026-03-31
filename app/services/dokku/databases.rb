@@ -1,6 +1,6 @@
 module Dokku
   class Databases
-    SUPPORTED_TYPES = %w[postgres redis mysql mongodb memcached rabbitmq elasticsearch mariadb].freeze
+    SUPPORTED_TYPES = %w[postgres redis mysql mongodb memcached rabbitmq elasticsearch mariadb meilisearch clickhouse nats].freeze
 
     # Map internal type names to Dokku plugin command names
     DOKKU_PLUGIN_NAME = {
