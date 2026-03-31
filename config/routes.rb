@@ -112,7 +112,7 @@ Rails.application.routes.draw do
       resource :terminal, only: [:show], controller: "terminals"
       resource :backup_destination, only: [:edit, :update], controller: "backup_destinations"
     end
-    resources :databases do
+    resources :databases, path: "resources", as: "databases" do
       member do
         post :link
         post :unlink
