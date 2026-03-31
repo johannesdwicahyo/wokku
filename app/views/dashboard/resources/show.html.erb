@@ -3,69 +3,69 @@
 <div data-controller="slide-panel">
 
   <%# Attached Add-ons %>
-  <div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 overflow-hidden mb-6">
-    <div class="px-6 py-4 border-b border-[#334155]/50 flex items-center justify-between">
+  <div class="bg-surface-container-low rounded-md overflow-hidden mb-6">
+    <div class="px-6 py-4 border-b border-outline-variant/15 flex items-center justify-between">
       <div>
-        <h2 class="text-base font-semibold text-white">Add-ons</h2>
-        <p class="text-sm text-gray-500 mt-1">Databases, caches, and services attached to this app</p>
+        <h2 class="text-base font-semibold text-on-surface font-headline">Add-ons</h2>
+        <p class="text-sm text-outline mt-1">Databases, caches, and services attached to this app</p>
       </div>
-      <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer">
-        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">
+        <span class="material-symbols-outlined text-[16px] mr-1.5">add</span>
         Add
       </button>
     </div>
 
     <% if @addons.any? %>
-      <div class="divide-y divide-[#334155]/50">
+      <div class="divide-y divide-outline-variant/15">
         <% @addons.each do |addon| %>
-          <div class="px-6 py-4 flex items-center justify-between hover:bg-[#334155]/20 transition">
+          <div class="px-6 py-4 flex items-center justify-between hover:bg-surface-container-high/30 transition">
             <div class="flex items-center space-x-4">
-              <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-[#0B1120] border border-[#334155]">
+              <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-surface border border-outline-variant/15">
                 <% case addon.service_type %>
                 <% when "postgres", "mysql", "mariadb", "mongodb", "clickhouse" %>
-                  <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+                  <span class="material-symbols-outlined text-secondary text-[20px]">database</span>
                 <% when "redis", "memcached" %>
-                  <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  <span class="material-symbols-outlined text-tertiary text-[20px]">bolt</span>
                 <% when "rabbitmq", "nats" %>
-                  <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                  <span class="material-symbols-outlined text-primary text-[20px]">forum</span>
                 <% when "elasticsearch", "meilisearch" %>
-                  <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                  <span class="material-symbols-outlined text-tertiary-fixed-dim text-[20px]">search</span>
                 <% end %>
               </div>
               <div>
                 <div class="flex items-center space-x-2">
-                  <span class="text-sm font-semibold text-white font-mono"><%= addon.name %></span>
-                  <span class="px-1.5 py-0.5 text-[10px] font-mono text-gray-400 bg-[#0B1120] border border-[#334155] rounded"><%= addon.service_type %></span>
+                  <span class="text-sm font-semibold text-on-surface font-mono"><%= addon.name %></span>
+                  <span class="px-1.5 py-0.5 text-[10px] font-mono text-on-surface-variant bg-surface-container-highest rounded"><%= addon.service_type %></span>
                 </div>
                 <div class="flex items-center space-x-2 mt-0.5">
                   <% case addon.status %>
                   <% when "running" %>
-                    <span class="flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-green-400"></span><span class="text-xs text-gray-500">Running</span></span>
+                    <span class="flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-secondary glow-running"></span><span class="text-xs text-outline">Running</span></span>
                   <% when "error" %>
-                    <span class="flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-red-400"></span><span class="text-xs text-gray-500">Error</span></span>
+                    <span class="flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-error glow-error"></span><span class="text-xs text-outline">Error</span></span>
                   <% end %>
-                  <span class="text-xs text-gray-600">on <%= addon.server.name %></span>
+                  <span class="text-xs text-outline-variant">on <%= addon.server.name %></span>
                 </div>
               </div>
             </div>
             <div class="flex items-center space-x-3">
-              <%= link_to "Info", dashboard_database_path(addon), class: "text-xs text-gray-400 hover:text-green-400 border border-[#334155] px-2 py-1 rounded transition" %>
+              <%= link_to "Info", dashboard_database_path(addon), class: "text-xs text-on-surface-variant hover:text-primary border border-outline-variant/15 px-2 py-1 rounded transition" %>
               <%= button_to "Remove",
                     dashboard_app_resources_path(@app, addon_id: addon.id),
                     method: :delete,
                     data: { turbo_confirm: "Remove #{addon.name}? This will delete all data in this service." },
-                    class: "text-xs text-gray-500 hover:text-red-400 transition cursor-pointer" %>
+                    class: "text-xs text-outline hover:text-error transition cursor-pointer" %>
             </div>
           </div>
         <% end %>
       </div>
     <% else %>
       <div class="px-6 py-12 text-center">
-        <svg class="mx-auto h-10 w-10 text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-        <h3 class="text-sm font-medium text-gray-300">No add-ons yet</h3>
-        <p class="text-xs text-gray-500 mt-1">Add a database, cache, or other service to get started.</p>
+        <span class="material-symbols-outlined text-outline-variant text-[40px] mb-3">widgets</span>
+        <h3 class="text-sm font-medium text-on-surface-variant">No add-ons yet</h3>
+        <p class="text-xs text-outline mt-1">Add a database, cache, or other service to get started.</p>
         <div class="mt-4">
-          <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer">Add an Add-on</button>
+          <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">Add an Add-on</button>
         </div>
       </div>
     <% end %>
@@ -76,38 +76,38 @@
     <div class="space-y-5">
       <% @available_types.group_by { |a| a[:category] }.each do |category, addons| %>
         <div>
-          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"><%= category %></h3>
+          <h3 class="text-[10px] font-bold text-outline uppercase tracking-widest mb-2"><%= category %></h3>
           <div class="space-y-2">
             <% addons.each do |addon| %>
               <% already_has = @addons.any? { |a| a.service_type == addon[:type] } %>
-              <div class="rounded-lg border border-[#334155] bg-[#0B1120] p-3 <%= 'opacity-50' if already_has %>">
+              <div class="rounded-md border border-outline-variant/15 bg-surface p-3 <%= 'opacity-50' if already_has %>">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center space-x-3">
-                    <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-[#1E293B] border border-[#334155]">
+                    <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-surface-container-low border border-outline-variant/15">
                       <% case category %>
                       <% when "Databases" %>
-                        <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+                        <span class="material-symbols-outlined text-secondary text-[16px]">database</span>
                       <% when "Caching" %>
-                        <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        <span class="material-symbols-outlined text-tertiary text-[16px]">bolt</span>
                       <% when "Search" %>
-                        <svg class="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <span class="material-symbols-outlined text-tertiary-fixed-dim text-[16px]">search</span>
                       <% when "Messaging" %>
-                        <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                        <span class="material-symbols-outlined text-primary text-[16px]">forum</span>
                       <% end %>
                     </div>
                     <div>
-                      <h4 class="text-sm font-semibold text-white"><%= addon[:label] %></h4>
-                      <p class="text-xs text-gray-500"><%= addon[:description] %></p>
+                      <h4 class="text-sm font-semibold text-on-surface"><%= addon[:label] %></h4>
+                      <p class="text-xs text-outline"><%= addon[:description] %></p>
                     </div>
                   </div>
                   <% if already_has %>
-                    <span class="text-[10px] text-gray-500 font-mono">Attached</span>
+                    <span class="text-[10px] text-outline font-mono">Attached</span>
                   <% else %>
                     <%= button_to "Add",
                           dashboard_app_resources_path(@app, service_type: addon[:type]),
                           method: :post,
                           data: { turbo_confirm: "Add #{addon[:label]} to #{@app.name}?" },
-                          class: "px-3 py-1 text-xs font-semibold rounded-md bg-green-500 text-[#0B1120] hover:bg-green-400 transition cursor-pointer" %>
+                          class: "px-3 py-1 text-xs font-semibold rounded-md technical-gradient text-on-primary hover:opacity-90 transition cursor-pointer" %>
                   <% end %>
                 </div>
               </div>
