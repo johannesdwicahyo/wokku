@@ -1,17 +1,26 @@
 <% flash.each do |type, message| %>
+  <% next if message.blank? %>
   <%
-    colors = case type
-             when "notice", "success" then "bg-green-500/10 border-green-500/30 text-green-400"
-             when "alert", "error" then "bg-red-500/10 border-red-500/30 text-red-400"
-             else "bg-blue-500/10 border-blue-500/30 text-blue-400"
-             end
+    classes = case type.to_s
+    when "notice", "success"
+      "bg-secondary-container/20 border-secondary/30 text-on-secondary-container"
+    when "alert", "error"
+      "bg-error-container/20 border-error/30 text-on-error-container"
+    else
+      "bg-surface-container-high border-outline-variant/30 text-on-surface"
+    end
   %>
-  <div data-controller="flash" data-flash-dismiss-after-value="5000" class="border rounded-md px-4 py-3 mb-6 <%= colors %>" role="alert">
-    <div class="flex items-center justify-between">
-      <p class="text-sm font-medium"><%= message %></p>
-      <button data-action="click->flash#dismiss" class="ml-4 text-current opacity-50 hover:opacity-100 transition cursor-pointer" aria-label="Dismiss">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
+  <div class="mb-6 px-4 py-3 rounded-md border <%= classes %> flex items-center justify-between" data-controller="flash" data-flash-target="message">
+    <div class="flex items-center gap-3">
+      <% if type.to_s.in?(["notice", "success"]) %>
+        <span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span>
+      <% else %>
+        <span class="material-symbols-outlined text-error text-[20px]">error</span>
+      <% end %>
+      <p class="text-sm"><%= message %></p>
     </div>
+    <button data-action="click->flash#dismiss" class="text-outline hover:text-on-surface transition cursor-pointer">
+      <span class="material-symbols-outlined text-[18px]">close</span>
+    </button>
   </div>
 <% end %>
