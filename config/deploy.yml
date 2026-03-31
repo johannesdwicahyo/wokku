@@ -5,16 +5,14 @@ servers:
   web:
     hosts:
       - 43.159.57.11
-    options:
-      network: "kamal"
 
 proxy:
   ssl: true
   host: wokku.dev
 
 registry:
-  server: ghcr.io
-  username: johannesdwicahyo
+  server: localhost:5000
+  username: _
   password:
     - KAMAL_REGISTRY_PASSWORD
 
@@ -40,6 +38,8 @@ ssh:
 builder:
   remote: ssh://deploy@43.159.57.11
   arch: amd64
+  args:
+    WOKKU_EE_TOKEN: WOKKU_EE_TOKEN_PLACEHOLDER
 
 aliases:
   console: app exec --interactive --reuse "bin/rails console"

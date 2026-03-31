@@ -1,30 +1,26 @@
 <%= render "dashboard/apps/tabs", app: @app %>
 
-<% if @dyno_tiers.any? %>
-  <%= render "dashboard/scaling/dyno_tiers" %>
-<% end %>
-
-<div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 overflow-hidden">
-  <div class="px-6 py-4 border-b border-[#334155]/50">
-    <h2 class="text-base font-semibold text-white">Process Scaling</h2>
-    <p class="text-sm text-gray-500 mt-1">Scale the number of dynos for each process type</p>
+<div class="bg-surface-container-low rounded-xl overflow-hidden">
+  <div class="px-6 py-4 border-b border-outline-variant/15">
+    <h2 class="text-base font-semibold text-on-surface font-headline">Process Scaling</h2>
+    <p class="text-sm text-outline mt-1">Scale the number of dynos for each process type</p>
   </div>
 
   <% if @process_scales.any? %>
-    <%= form_with(url: dashboard_app_scaling_path(@app), method: :patch, class: "divide-y divide-[#334155]/50") do |f| %>
+    <%= form_with(url: dashboard_app_scaling_path(@app), method: :patch, class: "divide-y divide-outline-variant/15") do |f| %>
       <% @process_scales.each do |ps| %>
         <div class="px-6 py-5 flex items-center justify-between">
           <div class="flex items-center space-x-4">
-            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-[#0B1120] border border-[#334155]">
+            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-surface border border-outline-variant/15">
               <% if ps.process_type == "web" %>
-                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+                <span class="material-symbols-outlined text-primary">language</span>
               <% else %>
-                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <span class="material-symbols-outlined text-secondary">settings</span>
               <% end %>
             </div>
             <div>
-              <span class="text-sm font-semibold text-white font-mono"><%= ps.process_type %></span>
-              <p class="text-xs text-gray-500 mt-0.5">
+              <span class="text-sm font-semibold text-on-surface font-mono"><%= ps.process_type %></span>
+              <p class="text-xs text-outline mt-0.5">
                 <% if ps.process_type == "web" %>
                   Handles HTTP requests
                 <% elsif ps.process_type == "worker" %>
@@ -36,31 +32,31 @@
             </div>
           </div>
           <div class="flex items-center space-x-3">
-            <div class="flex items-center bg-[#0B1120] border border-[#334155] rounded-lg overflow-hidden" data-controller="counter">
+            <div class="flex items-center bg-surface border border-outline-variant/15 rounded-lg overflow-hidden" data-controller="counter">
               <button type="button" data-action="click->counter#decrement"
-                      class="px-3 py-2 text-gray-400 hover:text-white hover:bg-[#334155]/50 transition cursor-pointer">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
+                      class="px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/50 transition cursor-pointer">
+                <span class="material-symbols-outlined text-[18px]">remove</span>
               </button>
               <input type="number" name="scaling[<%= ps.process_type %>]" value="<%= ps.count %>"
                      min="0" max="10" data-counter-target="input"
-                     class="w-12 text-center bg-transparent border-x border-[#334155] text-white font-mono text-sm py-2 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                     class="w-12 text-center bg-transparent border-x border-outline-variant/15 text-on-surface font-mono text-sm py-2 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
               <button type="button" data-action="click->counter#increment"
-                      class="px-3 py-2 text-gray-400 hover:text-white hover:bg-[#334155]/50 transition cursor-pointer">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                      class="px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/50 transition cursor-pointer">
+                <span class="material-symbols-outlined text-[18px]">add</span>
               </button>
             </div>
-            <span class="text-xs text-gray-500 w-12"><%= ps.count == 1 ? "1 dyno" : "#{ps.count} dynos" %></span>
+            <span class="text-xs text-outline w-12"><%= ps.count == 1 ? "1 dyno" : "#{ps.count} dynos" %></span>
           </div>
         </div>
       <% end %>
 
-      <div class="px-6 py-4 bg-[#0B1120]/50">
-        <%= f.submit "Apply Changes", class: "px-4 py-2 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer" %>
+      <div class="px-6 py-4 bg-surface/50">
+        <%= f.submit "Apply Changes", class: "px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
       </div>
     <% end %>
   <% else %>
     <div class="px-6 py-8 text-center">
-      <p class="text-sm text-gray-500">No process types found. Deploy the app first to see available processes.</p>
+      <p class="text-sm text-outline">No process types found. Deploy the app first to see available processes.</p>
     </div>
   <% end %>
 </div>
