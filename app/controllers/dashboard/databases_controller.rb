@@ -30,7 +30,7 @@ module Dashboard
         Dokku::Databases.new(client).create(@database.service_type, @database.name)
         @database.update!(status: :running)
         track("database.created", target: @database)
-        redirect_to dashboard_database_path(@database), notice: "Database #{@database.name} created."
+        redirect_to dashboard_resource_path(@database), notice: "Database #{@database.name} created."
       else
         @servers = policy_scope(Server)
         @databases = policy_scope(DatabaseService).includes(:server)
@@ -38,7 +38,7 @@ module Dashboard
       end
     rescue => e
       @database&.update(status: :error)
-      redirect_to dashboard_databases_path, alert: "Failed to create database: #{e.message}"
+      redirect_to dashboard_resources_path, alert: "Failed to create database: #{e.message}"
     end
 
     def destroy
@@ -50,9 +50,9 @@ module Dashboard
       Dokku::Databases.new(client).destroy(@database.service_type, @database.name)
       @database.destroy
       track("database.destroyed", target: @database)
-      redirect_to dashboard_databases_path, notice: "Database #{@database.name} destroyed."
+      redirect_to dashboard_resources_path, notice: "Database #{@database.name} destroyed."
     rescue => e
-      redirect_to dashboard_databases_path, alert: "Failed to destroy database: #{e.message}"
+      redirect_to dashboard_resources_path, alert: "Failed to destroy database: #{e.message}"
     end
 
     def link
@@ -64,9 +64,9 @@ module Dashboard
       Dokku::Databases.new(client).link(@database.service_type, @database.name, app.name)
       @database.app_databases.create!(app_record: app)
 
-      redirect_to dashboard_database_path(@database), notice: "Linked #{app.name} to #{@database.name}."
+      redirect_to dashboard_resource_path(@database), notice: "Linked #{app.name} to #{@database.name}."
     rescue => e
-      redirect_to dashboard_database_path(@database), alert: "Link failed: #{e.message}"
+      redirect_to dashboard_resource_path(@database), alert: "Link failed: #{e.message}"
     end
 
     def unlink
@@ -78,9 +78,9 @@ module Dashboard
       Dokku::Databases.new(client).unlink(@database.service_type, @database.name, app.name)
       @database.app_databases.find_by(app_record: app)&.destroy
 
-      redirect_to dashboard_database_path(@database), notice: "Unlinked #{app.name} from #{@database.name}."
+      redirect_to dashboard_resource_path(@database), notice: "Unlinked #{app.name} from #{@database.name}."
     rescue => e
-      redirect_to dashboard_database_path(@database), alert: "Unlink failed: #{e.message}"
+      redirect_to dashboard_resource_path(@database), alert: "Unlink failed: #{e.message}"
     end
 
     private

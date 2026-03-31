@@ -3,14 +3,14 @@
 <div class="space-y-6">
   <div class="flex items-center justify-between">
     <div class="flex items-center space-x-3">
-      <%= link_to dashboard_database_path(@database), class: "text-sm text-gray-500 hover:text-gray-300 transition" do %>
+      <%= link_to dashboard_resource_path(@database), class: "text-sm text-gray-500 hover:text-gray-300 transition" do %>
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       <% end %>
       <h1 class="text-lg font-semibold text-white">Backups</h1>
       <span class="text-sm text-gray-400 font-mono"><%= @database.name %> (<%= @database.service_type %>)</span>
     </div>
     <% if @destination&.enabled? %>
-      <%= button_to "Backup Now", dashboard_database_backups_path(@database), method: :post, class: "inline-flex items-center px-3 py-1.5 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer" %>
+      <%= button_to "Backup Now", dashboard_resource_backups_path(@database), method: :post, class: "inline-flex items-center px-3 py-1.5 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer" %>
     <% else %>
       <span class="text-xs text-gray-600">No backup destination configured. <%= link_to "Configure", edit_dashboard_server_backup_destination_path(@database.server), class: "text-green-400 hover:text-green-300" %></span>
     <% end %>
@@ -49,8 +49,8 @@
               <td class="px-5 py-3 text-right">
                 <% if backup.status == "completed" %>
                   <div class="flex items-center justify-end space-x-3">
-                    <%= link_to "Download", download_dashboard_database_backup_path(@database, backup), class: "text-xs text-gray-400 hover:text-white transition" %>
-                    <%= button_to "Restore", restore_dashboard_database_backup_path(@database, backup), method: :post, class: "text-xs text-yellow-400 hover:text-yellow-300 transition", data: { turbo_confirm: "Restore #{@database.name} from this backup? Current data will be overwritten." } %>
+                    <%= link_to "Download", download_dashboard_resource_backup_path(@database, backup), class: "text-xs text-gray-400 hover:text-white transition" %>
+                    <%= button_to "Restore", restore_dashboard_resource_backup_path(@database, backup), method: :post, class: "text-xs text-yellow-400 hover:text-yellow-300 transition", data: { turbo_confirm: "Restore #{@database.name} from this backup? Current data will be overwritten." } %>
                   </div>
                 <% end %>
               </td>
