@@ -27,6 +27,7 @@ class GithubDeployJob < ApplicationJob
     deploy.update!(status: :succeeded, log: log, finished_at: Time.current, commit_sha: commit_sha)
     app.update!(status: :running)
     app.track_resource_usage! if app.respond_to?(:track_resource_usage!)
+    Activity.log(user: app.creator, team: app.team, action: "app.deployed", target: app, metadata: { commit: commit_sha }) rescue nil
     DeployChannel.broadcast_to(deploy, { type: "status", data: "succeeded" })
 
   rescue Timeout::Error
