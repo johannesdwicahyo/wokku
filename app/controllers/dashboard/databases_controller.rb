@@ -1,9 +1,12 @@
 module Dashboard
   class DatabasesController < BaseController
     def index
-      @databases = policy_scope(DatabaseService).includes(:server, :app_records)
+      @databases = policy_scope(DatabaseService).includes(:server, :app_records).order(:service_type, :name)
+      @by_type = @databases.group_by(&:service_type)
+      @by_app = @databases.group_by { |db| db.app_records.map(&:name).join(", ").presence || "Unlinked" }
       @database = DatabaseService.new
       @servers = policy_scope(Server)
+      @group_by = params[:group] || "type"
     end
 
     def show
