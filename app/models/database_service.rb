@@ -9,6 +9,6 @@ class DatabaseService < ApplicationRecord
 
   validates :name, presence: true, uniqueness: { scope: :server_id }
   validates :service_type, presence: true, inclusion: {
-    in: %w[postgres redis mysql mongodb memcached rabbitmq elasticsearch mariadb]
+    in: %w[postgres redis mysql mongodb memcached rabbitmq elasticsearch mariadb meilisearch clickhouse nats]
   }
 end

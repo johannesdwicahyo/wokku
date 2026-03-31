@@ -65,14 +65,21 @@ module Dashboard
 
     def addon_types
       [
-        { type: "postgres", label: "Heroku Postgres", icon: "database", description: "Reliable and powerful database", color: "blue" },
-        { type: "mysql", label: "MySQL", icon: "database", description: "Popular open source database", color: "orange" },
-        { type: "mariadb", label: "MariaDB", icon: "database", description: "MySQL-compatible database", color: "sky" },
-        { type: "mongodb", label: "MongoDB", icon: "database", description: "Document database for modern apps", color: "green" },
-        { type: "redis", label: "Redis", icon: "zap", description: "In-memory data store and cache", color: "red" },
-        { type: "memcached", label: "Memcached", icon: "zap", description: "High-performance memory cache", color: "gray" },
-        { type: "rabbitmq", label: "RabbitMQ", icon: "message", description: "Message broker for async processing", color: "orange" },
-        { type: "elasticsearch", label: "Elasticsearch", icon: "search", description: "Full-text search and analytics", color: "yellow" }
+        # Databases
+        { type: "postgres", label: "PostgreSQL", category: "Databases", description: "Reliable and powerful relational database" },
+        { type: "mysql", label: "MySQL", category: "Databases", description: "Popular open source relational database" },
+        { type: "mariadb", label: "MariaDB", category: "Databases", description: "MySQL-compatible database" },
+        { type: "mongodb", label: "MongoDB", category: "Databases", description: "Document database for modern apps" },
+        { type: "clickhouse", label: "ClickHouse", category: "Databases", description: "Column-oriented analytics database" },
+        # Caching
+        { type: "redis", label: "Redis", category: "Caching", description: "In-memory data store and cache" },
+        { type: "memcached", label: "Memcached", category: "Caching", description: "High-performance memory cache" },
+        # Search
+        { type: "elasticsearch", label: "Elasticsearch", category: "Search", description: "Full-text search and analytics engine" },
+        { type: "meilisearch", label: "Meilisearch", category: "Search", description: "Fast, typo-tolerant search engine" },
+        # Messaging
+        { type: "rabbitmq", label: "RabbitMQ", category: "Messaging", description: "Message broker for async processing" },
+        { type: "nats", label: "NATS", category: "Messaging", description: "High-performance message streaming" }
       ]
     end
 
