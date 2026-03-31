@@ -1,28 +1,28 @@
 <div class="mb-6">
   <div class="flex items-center space-x-3 mb-1">
-    <%= link_to "Teams", dashboard_teams_path, class: "text-sm text-gray-500 hover:text-green-400 transition" %>
-    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-    <span class="text-sm text-white font-medium"><%= @team.name %></span>
+    <%= link_to "Teams", dashboard_teams_path, class: "text-sm text-outline hover:text-primary transition" %>
+    <span class="material-symbols-outlined text-[16px] text-outline-variant">chevron_right</span>
+    <span class="text-sm text-on-surface font-medium"><%= @team.name %></span>
   </div>
 </div>
 
-<h1 class="text-2xl font-bold text-white mb-6"><%= @team.name %></h1>
+<h1 class="text-2xl font-headline text-on-surface mb-6"><%= @team.name %></h1>
 
-<div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 overflow-hidden">
-  <div class="px-6 py-4 border-b border-[#334155]/50">
-    <h2 class="text-base font-semibold text-white">Members</h2>
+<div class="bg-surface-container-low rounded-xl border border-outline-variant/15 overflow-hidden">
+  <div class="px-6 py-4 border-b border-outline-variant/15">
+    <h2 class="text-base font-semibold text-on-surface">Members</h2>
   </div>
 
-  <div class="divide-y divide-[#334155]/50">
+  <div class="divide-y divide-outline-variant/15">
     <% @members.each do |membership| %>
-      <div class="px-6 py-3 flex items-center justify-between hover:bg-[#334155]/20">
+      <div class="px-6 py-3 flex items-center justify-between hover:bg-surface-container-highest transition">
         <div class="flex items-center space-x-3">
-          <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-[#0B1120] text-sm font-semibold">
+          <div class="w-8 h-8 technical-gradient rounded-full flex items-center justify-center text-on-primary text-sm font-semibold">
             <%= membership.user.email[0].upcase %>
           </div>
-          <span class="text-sm font-medium text-white"><%= membership.user.email %></span>
+          <span class="text-sm font-medium text-on-surface"><%= membership.user.email %></span>
         </div>
-        <span class="text-xs text-gray-400 uppercase tracking-wider"><%= membership.role.capitalize %></span>
+        <span class="text-xs text-on-surface-variant uppercase tracking-wider"><%= membership.role.capitalize %></span>
       </div>
     <% end %>
   </div>
