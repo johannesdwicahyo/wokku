@@ -16,10 +16,18 @@
 
         <h3 class="text-sm font-bold text-white capitalize"><%= tier.name %></h3>
         <div class="mt-2 space-y-1">
-          <p class="text-xs text-gray-400"><span class="text-white font-mono font-bold"><%= tier.memory_mb %></span> MB RAM</p>
-          <p class="text-xs text-gray-400"><span class="text-white font-mono font-bold"><%= tier.cpu_shares %></span> CPU shares</p>
+          <p class="text-xs text-gray-400"><span class="text-white font-mono font-bold"><%= tier.memory_mb >= 1024 ? "#{tier.memory_mb / 1024} GB" : "#{tier.memory_mb} MB" %></span> RAM</p>
+          <p class="text-xs text-gray-400"><span class="text-white font-mono font-bold"><%= tier.cpu_shares %></span> vCPU</p>
+          <% if tier.respond_to?(:storage_mb) && tier.storage_mb > 0 %>
+            <p class="text-xs text-gray-400"><span class="text-white font-mono font-bold"><%= tier.storage_mb >= 1024 ? "#{tier.storage_mb / 1024} GB" : "#{tier.storage_mb} MB" %></span> storage</p>
+          <% elsif tier.respond_to?(:storage_mb) %>
+            <p class="text-xs text-gray-500">No storage</p>
+          <% end %>
           <% if tier.sleeps %>
             <p class="text-xs text-yellow-500">Sleeps after idle</p>
+          <% end %>
+          <% if tier.respond_to?(:max_per_user) && tier.max_per_user.present? %>
+            <p class="text-xs text-gray-500">Max <%= tier.max_per_user %> per user</p>
           <% end %>
         </div>
 

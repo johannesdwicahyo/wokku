@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_31_023938) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_31_065340) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -186,11 +186,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_31_023938) do
   create_table "dyno_tiers", force: :cascade do |t|
     t.decimal "cpu_shares", precision: 4, scale: 2, default: "0.0", null: false
     t.datetime "created_at", null: false
+    t.integer "max_per_user"
     t.integer "memory_mb", null: false
     t.string "name", null: false
     t.decimal "price_cents_per_hour", precision: 10, scale: 4, default: "0.0", null: false
     t.integer "price_cents_per_month"
     t.boolean "sleeps", default: false, null: false
+    t.integer "storage_mb", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_dyno_tiers_on_name", unique: true
   end
