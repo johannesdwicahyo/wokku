@@ -34,6 +34,9 @@ class SyncServerJob < ApplicationJob
     dokku_databases = Dokku::Databases.new(client)
     sync_databases(dokku_databases, server)
 
+    # Sync database-to-app links
+    sync_database_links(dokku_databases, server)
+
     server.app_records.update_all(synced_at: Time.current)
     server.update_column(:status, Server.statuses[:connected])
   rescue Dokku::Client::ConnectionError
@@ -55,6 +58,33 @@ class SyncServerJob < ApplicationJob
     end
   rescue => e
     Rails.logger.warn "Failed to sync domains for #{app_record.name}: #{e.message}"
+  end
+
+  def sync_database_links(dokku_databases, server)
+    server.database_services.find_each do |db|
+      info = dokku_databases.info(db.service_type, db.name)
+      links_value = info["links"] || info["Links"] || ""
+      remote_app_names = links_value.split(/[\s,]+/).reject(&:blank?)
+
+      local_app_names = db.app_records.pluck(:name)
+
+      # Add missing links
+      (remote_app_names - local_app_names).each do |app_name|
+        app = server.app_records.find_by(name: app_name)
+        next unless app
+        db.app_databases.find_or_create_by!(app_record: app) do |ad|
+          ad.alias_name = db.service_type.upcase
+        end
+      end
+
+      # Remove stale links
+      (local_app_names - remote_app_names).each do |app_name|
+        app = server.app_records.find_by(name: app_name)
+        db.app_databases.where(app_record: app).destroy_all if app
+      end
+    end
+  rescue => e
+    Rails.logger.warn "Failed to sync database links for server #{server.name}: #{e.message}"
   end
 
   def sync_databases(dokku_databases, server)
