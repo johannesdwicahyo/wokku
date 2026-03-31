@@ -92,6 +92,7 @@ Rails.application.routes.draw do
       resources :deploys, only: [:show], controller: "deploys"
       resource :logs, only: [:show], controller: "logs"
       resource :metrics, only: [:show], controller: "metrics"
+      resource :resources, only: [:show, :create, :destroy], controller: "resources"
       resource :scaling, only: [:show, :update], controller: "scaling" do
         post :change_tier
       end
