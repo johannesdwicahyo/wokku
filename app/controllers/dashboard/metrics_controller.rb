@@ -58,12 +58,14 @@ module Dashboard
 
     def fetch_container_stats
       server = @app.server
+      ssh_user = server.ssh_user.presence || "dokku"
       output = Net::SSH.start(
         server.host,
-        "root",
+        ssh_user,
         port: server.port,
         non_interactive: true,
-        timeout: 10
+        timeout: 10,
+        key_data: server.ssh_private_key.present? ? [server.ssh_private_key] : nil
       ) do |ssh|
         ssh.exec!("docker stats --no-stream --format '{{json .}}'")
       end
