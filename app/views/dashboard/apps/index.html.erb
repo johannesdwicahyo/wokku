@@ -1,15 +1,18 @@
 <div data-controller="slide-panel">
+  <%# Compute stats %>
+  <% running_count = @apps.count { |a| a.running? } %>
+  <% crashed_count = @apps.count { |a| a.crashed? } %>
+  <% recent_apps = @apps.sort_by(&:updated_at).reverse.first(6) %>
+  <%# TODO: move this query to the controller %>
+  <% recent_activities = Activity.where(team: current_team).order(created_at: :desc).limit(10) %>
+
   <%# Page Header %>
   <div class="flex items-center justify-between mb-8">
     <div>
-      <h1 class="text-2xl font-bold text-on-surface font-headline">Apps</h1>
-      <p class="mt-1 text-xs text-outline uppercase tracking-wider font-bold">Manage your deployed applications</p>
+      <h1 class="text-2xl font-bold text-on-surface font-headline">Dashboard</h1>
+      <p class="mt-1 text-[10px] text-outline uppercase tracking-wider font-bold">Overview of your platform</p>
     </div>
     <div class="flex items-center gap-3">
-      <%= link_to dashboard_templates_path, class: "inline-flex items-center gap-2 px-4 py-2 bg-surface-container-low text-on-surface-variant text-sm font-bold rounded-md hover:bg-surface-container transition-colors" do %>
-        <span class="material-symbols-outlined text-base">grid_view</span>
-        Templates
-      <% end %>
       <button data-action="click->slide-panel#open" class="inline-flex items-center gap-2 px-5 py-2 technical-gradient text-on-primary text-sm font-bold rounded-md hover:opacity-90 active:scale-95 transition-all cursor-pointer">
         <span class="material-symbols-outlined text-base">add</span>
         New App
@@ -17,10 +20,7 @@
     </div>
   </div>
 
-  <%# Stats Bar %>
-  <% running_count = @apps.count { |a| a.running? } %>
-  <% crashed_count = @apps.count { |a| a.crashed? } %>
-  <% server_ids = @apps.map(&:server_id).uniq %>
+  <%# Stats Bar — 4 cards %>
   <div class="grid grid-cols-4 gap-4 mb-8">
     <div class="bg-surface-container-low p-5 rounded-md flex items-center justify-between group hover:bg-surface-container transition-colors">
       <div>
@@ -28,22 +28,22 @@
         <h3 class="font-headline text-2xl font-bold text-on-surface"><%= @apps.size %></h3>
       </div>
       <div class="w-10 h-10 rounded bg-primary-container/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-        <span class="material-symbols-outlined">apps</span>
+        <span class="material-symbols-outlined">terminal</span>
       </div>
     </div>
     <div class="bg-surface-container-low p-5 rounded-md flex items-center justify-between group hover:bg-surface-container transition-colors">
       <div>
-        <p class="text-outline uppercase tracking-wider text-[10px] font-bold mb-1">Running</p>
+        <p class="text-outline uppercase tracking-wider text-[10px] font-bold mb-1">Active Resources</p>
         <h3 class="font-headline text-2xl font-bold text-on-surface"><%= running_count %></h3>
       </div>
       <div class="w-10 h-10 rounded bg-secondary-container/20 flex items-center justify-center text-secondary group-hover:scale-110 transition-transform">
-        <span class="material-symbols-outlined">check_circle</span>
+        <span class="material-symbols-outlined">dns</span>
       </div>
     </div>
     <div class="bg-surface-container-low p-5 rounded-md flex items-center justify-between group hover:bg-surface-container transition-colors">
       <div>
-        <p class="text-outline uppercase tracking-wider text-[10px] font-bold mb-1">Crashed</p>
-        <h3 class="font-headline text-2xl font-bold text-on-surface"><%= crashed_count %></h3>
+        <p class="text-outline uppercase tracking-wider text-[10px] font-bold mb-1">Errors</p>
+        <h3 class="font-headline text-2xl font-bold <%= crashed_count > 0 ? 'text-error' : 'text-on-surface' %>"><%= crashed_count %></h3>
       </div>
       <div class="w-10 h-10 rounded bg-error-container/20 flex items-center justify-center text-error group-hover:scale-110 transition-transform">
         <span class="material-symbols-outlined">error</span>
@@ -51,24 +51,27 @@
     </div>
     <div class="bg-surface-container-low p-5 rounded-md flex items-center justify-between group hover:bg-surface-container transition-colors">
       <div>
-        <p class="text-outline uppercase tracking-wider text-[10px] font-bold mb-1">Servers</p>
-        <h3 class="font-headline text-2xl font-bold text-on-surface"><%= server_ids.size %></h3>
+        <p class="text-outline uppercase tracking-wider text-[10px] font-bold mb-1">Cost (MTD)</p>
+        <h3 class="font-headline text-2xl font-bold text-on-surface">$0.00</h3>
       </div>
       <div class="w-10 h-10 rounded bg-tertiary-container/20 flex items-center justify-center text-tertiary group-hover:scale-110 transition-transform">
-        <span class="material-symbols-outlined">dns</span>
+        <span class="material-symbols-outlined">payments</span>
       </div>
     </div>
   </div>
 
   <% if @apps.any? %>
-    <%# App Cards Grid %>
     <div class="grid grid-cols-12 gap-8">
+      <%# Main Content — Recent Apps %>
       <div class="col-span-8">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="font-headline text-xl font-bold text-on-surface">Deployments</h2>
+          <h2 class="font-headline text-xl font-bold text-on-surface">Recent Apps</h2>
+          <%= link_to dashboard_apps_path, class: "text-xs text-primary hover:text-on-surface-variant font-medium transition-colors" do %>
+            View All
+          <% end %>
         </div>
         <div class="grid grid-cols-2 gap-4">
-          <% @apps.each do |app| %>
+          <% recent_apps.each do |app| %>
             <%= link_to dashboard_app_path(app), class: "block bg-surface-container-low rounded-md overflow-hidden relative group hover:bg-surface-container transition-colors" do %>
               <%# Gradient progress bar at top %>
               <% if app.deploying? %>
@@ -84,11 +87,16 @@
               <div class="p-5">
                 <%# Header: name + status badge %>
                 <div class="flex justify-between items-start mb-4">
-                  <div>
-                    <h4 class="font-headline text-lg leading-none mb-1.5 text-on-surface group-hover:text-primary transition-colors"><%= app.name %></h4>
-                    <div class="flex items-center gap-1.5">
-                      <span class="material-symbols-outlined text-outline text-xs">dns</span>
-                      <span class="font-mono text-[10px] text-outline"><%= app.server.name %></span>
+                  <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded bg-primary-container/20 flex items-center justify-center text-primary mt-0.5">
+                      <span class="material-symbols-outlined text-[18px]">terminal</span>
+                    </div>
+                    <div>
+                      <h4 class="font-headline text-lg leading-none mb-1.5 text-on-surface group-hover:text-primary transition-colors"><%= app.name %></h4>
+                      <div class="flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-outline text-xs">dns</span>
+                        <span class="font-mono text-[10px] text-outline"><%= app.server.name %></span>
+                      </div>
                     </div>
                   </div>
                   <% case app.status %>
@@ -117,7 +125,7 @@
                 <div class="flex items-center justify-between pt-3 border-t border-outline-variant/10">
                   <div class="flex items-center gap-1.5">
                     <span class="material-symbols-outlined text-outline text-xs">schedule</span>
-                    <span class="text-[10px] text-outline"><%= time_ago_in_words(app.created_at) %> ago</span>
+                    <span class="text-[10px] text-outline"><%= time_ago_in_words(app.updated_at) %> ago</span>
                   </div>
                   <% if app.deploying? %>
                     <div class="flex items-center gap-1.5 text-primary">
@@ -132,86 +140,53 @@
         </div>
       </div>
 
-      <%# Right Sidebar: Quick Actions %>
+      <%# Right Sidebar %>
       <div class="col-span-4 space-y-8">
+        <%# Activity Log %>
         <section class="bg-surface-container-lowest rounded-md p-6">
-          <h3 class="font-headline text-lg font-bold text-on-surface mb-4">Quick Actions</h3>
-          <div class="space-y-3">
-            <button data-action="click->slide-panel#open" class="w-full flex items-center gap-3 p-3 bg-surface-container rounded hover:bg-surface-container-high transition-colors text-left">
-              <div class="w-8 h-8 rounded bg-primary-container/20 flex items-center justify-center text-primary">
-                <span class="material-symbols-outlined text-sm">add_circle</span>
+          <h3 class="font-headline text-lg font-bold text-on-surface mb-4">Recent Activity</h3>
+          <% if recent_activities.any? %>
+            <div class="relative">
+              <%# Vertical timeline line %>
+              <div class="absolute left-[7px] top-2 bottom-2 w-px bg-outline-variant/20"></div>
+              <div class="space-y-4">
+                <% recent_activities.each do |activity| %>
+                  <div class="flex items-start gap-3 relative">
+                    <div class="w-[15px] h-[15px] rounded-full bg-surface-container-high border-2 border-primary/40 flex-shrink-0 mt-0.5 z-10"></div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2 mb-0.5">
+                        <span class="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant"><%= activity.action.split('.').first %></span>
+                      </div>
+                      <p class="text-xs text-on-surface-variant truncate">
+                        <%= activity.description %> <span class="text-primary font-medium"><%= activity.target_name %></span>
+                      </p>
+                      <p class="text-[10px] text-outline font-mono mt-0.5"><%= time_ago_in_words(activity.created_at) %> ago</p>
+                    </div>
+                  </div>
+                <% end %>
               </div>
-              <div>
-                <span class="text-xs font-bold text-on-surface">Create App</span>
-                <p class="text-[10px] text-outline">Deploy a new application</p>
-              </div>
-            </button>
-            <%= link_to dashboard_templates_path, class: "w-full flex items-center gap-3 p-3 bg-surface-container rounded hover:bg-surface-container-high transition-colors text-left" do %>
-              <div class="w-8 h-8 rounded bg-secondary-container/20 flex items-center justify-center text-secondary">
-                <span class="material-symbols-outlined text-sm">grid_view</span>
-              </div>
-              <div>
-                <span class="text-xs font-bold text-on-surface">Browse Templates</span>
-                <p class="text-[10px] text-outline">Start from a template</p>
-              </div>
-            <% end %>
-            <%= link_to dashboard_servers_path, class: "w-full flex items-center gap-3 p-3 bg-surface-container rounded hover:bg-surface-container-high transition-colors text-left" do %>
-              <div class="w-8 h-8 rounded bg-tertiary-container/20 flex items-center justify-center text-tertiary">
-                <span class="material-symbols-outlined text-sm">dns</span>
-              </div>
-              <div>
-                <span class="text-xs font-bold text-on-surface">Manage Servers</span>
-                <p class="text-[10px] text-outline">View server infrastructure</p>
-              </div>
-            <% end %>
-          </div>
+            </div>
+          <% else %>
+            <p class="text-sm text-outline">No recent activity.</p>
+          <% end %>
         </section>
 
-        <%# Status Breakdown %>
-        <section class="bg-surface-container-high rounded-md p-6">
-          <h3 class="font-headline text-lg font-bold text-on-surface mb-4">Status Overview</h3>
-          <div class="space-y-4">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="w-2 h-2 rounded-full bg-secondary glow-running"></div>
-                <span class="text-xs text-on-surface">Running</span>
-              </div>
-              <span class="font-mono text-xs text-on-surface font-bold"><%= running_count %></span>
+        <%# News & Insights %>
+        <section class="bg-surface-container-low rounded-md p-6">
+          <h3 class="font-headline text-lg font-bold text-on-surface mb-4">Platform Updates</h3>
+          <div class="space-y-3">
+            <div class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[18px] mt-0.5">new_releases</span>
+              <p class="text-xs text-on-surface-variant">Wokku CE v1.0 — Now with 11 add-on services</p>
             </div>
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="w-2 h-2 rounded-full bg-error"></div>
-                <span class="text-xs text-on-surface">Crashed</span>
-              </div>
-              <span class="font-mono text-xs text-on-surface font-bold"><%= crashed_count %></span>
+            <div class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-secondary text-[18px] mt-0.5">upgrade</span>
+              <p class="text-xs text-on-surface-variant">Dokku v0.37.2 — Latest stable release</p>
             </div>
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-                <span class="text-xs text-on-surface">Deploying</span>
-              </div>
-              <span class="font-mono text-xs text-on-surface font-bold"><%= @apps.count { |a| a.deploying? } %></span>
+            <div class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-tertiary text-[18px] mt-0.5">add_circle</span>
+              <p class="text-xs text-on-surface-variant">New: Meilisearch and ClickHouse add-ons available</p>
             </div>
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="w-2 h-2 rounded-full bg-outline-variant"></div>
-                <span class="text-xs text-on-surface">Stopped / Sleeping</span>
-              </div>
-              <span class="font-mono text-xs text-on-surface font-bold"><%= @apps.count { |a| a.stopped? || a.sleeping? } %></span>
-            </div>
-            <% if @apps.any? %>
-              <div class="pt-3 border-t border-outline-variant/10">
-                <div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden flex">
-                  <% total = @apps.size.to_f %>
-                  <% if running_count > 0 %>
-                    <div class="h-full bg-secondary" style="width: <%= (running_count / total * 100).round %>%"></div>
-                  <% end %>
-                  <% if crashed_count > 0 %>
-                    <div class="h-full bg-error" style="width: <%= (crashed_count / total * 100).round %>%"></div>
-                  <% end %>
-                </div>
-              </div>
-            <% end %>
           </div>
         </section>
       </div>
@@ -220,7 +195,7 @@
     <%# Empty State %>
     <div class="text-center py-20 bg-surface-container-low rounded-md">
       <div class="w-16 h-16 rounded-full bg-primary-container/20 flex items-center justify-center mx-auto mb-4">
-        <span class="material-symbols-outlined text-3xl text-primary">apps</span>
+        <span class="material-symbols-outlined text-3xl text-primary">terminal</span>
       </div>
       <h3 class="font-headline text-lg font-bold text-on-surface mb-1">No apps yet</h3>
       <p class="text-sm text-outline mb-6">Get started by creating your first application.</p>
@@ -230,8 +205,8 @@
           Create App
         </button>
         <%= link_to dashboard_templates_path, class: "inline-flex items-center gap-2 px-4 py-2 bg-surface-container text-on-surface-variant text-sm font-bold rounded-md hover:bg-surface-container-high transition-colors" do %>
-          <span class="material-symbols-outlined text-base">grid_view</span>
-          Browse Templates
+          <span class="material-symbols-outlined text-base">rocket_launch</span>
+          1 Click Deploy
         <% end %>
       </div>
     </div>
