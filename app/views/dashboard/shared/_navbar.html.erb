@@ -1,43 +1,51 @@
-<nav class="bg-[#0B1120] border-b border-[#1E293B] px-4 py-2.5 flex items-center justify-between">
-  <div class="flex items-center space-x-6">
-    <a href="<%= root_path %>" class="flex items-center space-x-2 cursor-pointer">
-      <div class="w-6 h-6 bg-green-500 rounded flex items-center justify-center">
-        <svg class="w-3.5 h-3.5 text-[#0B1120]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-      </div>
-      <span class="text-base font-semibold text-white tracking-tight">wokku</span>
-    </a>
-
-    <% if user_teams.any? %>
+<header class="fixed top-0 right-0 left-64 h-16 bg-surface border-b border-surface-container-high/30 flex items-center justify-between px-8 z-10">
+  <div class="flex items-center gap-4">
+    <div class="relative">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
+      <input type="text" placeholder="Search resources..." class="bg-surface-container-low border-none rounded-md pl-10 pr-4 py-1.5 text-sm focus:ring-1 focus:ring-primary w-64 text-on-surface placeholder:text-outline font-body">
+    </div>
+  </div>
+  <div class="flex items-center gap-4">
+    <% if user_teams.size > 1 %>
       <div class="relative" data-controller="dropdown">
-        <button data-action="click->dropdown#toggle" class="flex items-center space-x-2 text-gray-400 hover:text-white text-sm bg-[#1E293B] rounded-md px-2.5 py-1 border border-[#334155] transition cursor-pointer">
-          <span class="font-mono text-xs"><%= current_team&.name || "Select Team" %></span>
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        <button data-action="click->dropdown#toggle" class="flex items-center gap-2 text-outline hover:text-on-surface-variant text-xs bg-surface-container rounded-md px-3 py-1.5 transition cursor-pointer font-mono">
+          <%= current_team&.name || "Team" %>
+          <span class="material-symbols-outlined text-[16px]">expand_more</span>
         </button>
-        <div data-dropdown-target="menu" class="hidden absolute left-0 mt-1 w-48 bg-[#1E293B] rounded-md shadow-xl border border-[#334155] z-50">
+        <div data-dropdown-target="menu" class="hidden absolute right-0 mt-1 w-48 bg-surface-container-high rounded-md shadow-xl border border-outline-variant/20 z-50">
           <% user_teams.each do |team| %>
-            <a href="<%= root_path(team_id: team.id) %>" class="block px-3 py-2 text-sm text-gray-300 hover:bg-[#334155] hover:text-white first:rounded-t-md last:rounded-b-md cursor-pointer transition">
+            <a href="<%= root_path(team_id: team.id) %>" class="block px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface first:rounded-t-md last:rounded-b-md cursor-pointer transition">
               <%= team.name %>
             </a>
           <% end %>
         </div>
       </div>
     <% end %>
-  </div>
-
-  <div class="relative" data-controller="dropdown">
-    <button data-action="click->dropdown#toggle" class="flex items-center space-x-2 text-gray-400 hover:text-white text-sm transition cursor-pointer">
-      <div class="w-7 h-7 bg-[#334155] rounded-md flex items-center justify-center text-green-400 text-xs font-mono font-semibold">
-        <%= current_user.email[0].upcase %>
-      </div>
-      <span class="hidden md:inline text-xs font-mono text-gray-400"><%= current_user.email %></span>
+    <button class="text-outline hover:bg-surface-container-high p-2 rounded-md transition-colors">
+      <span class="material-symbols-outlined text-[20px]">terminal</span>
     </button>
-    <div data-dropdown-target="menu" class="hidden absolute right-0 mt-1 w-56 bg-[#1E293B] rounded-md shadow-xl border border-[#334155] z-50">
-      <div class="px-3 py-2.5 border-b border-[#334155]">
-        <p class="text-xs text-white font-medium truncate"><%= current_user.email %></p>
-        <p class="text-xs text-gray-500 font-mono mt-0.5"><%= current_user.role %></p>
+    <button class="text-outline hover:bg-surface-container-high p-2 rounded-md transition-colors">
+      <span class="material-symbols-outlined text-[20px]">notifications</span>
+    </button>
+    <%= link_to dashboard_templates_path, class: "technical-gradient text-on-primary font-bold px-5 py-1.5 rounded-md hover:opacity-90 active:scale-95 transition-all text-sm" do %>
+      Deploy
+    <% end %>
+    <div class="relative" data-controller="dropdown">
+      <button data-action="click->dropdown#toggle" class="h-8 w-8 rounded-lg bg-primary-container flex items-center justify-center overflow-hidden border border-outline-variant/30 cursor-pointer">
+        <% if current_user.avatar_url.present? %>
+          <img src="<%= current_user.avatar_url %>" alt="Avatar" class="w-full h-full object-cover">
+        <% else %>
+          <span class="text-primary text-xs font-bold font-headline"><%= current_user.email[0].upcase %></span>
+        <% end %>
+      </button>
+      <div data-dropdown-target="menu" class="hidden absolute right-0 mt-1 w-56 bg-surface-container-high rounded-md shadow-xl border border-outline-variant/20 z-50">
+        <div class="px-3 py-2.5 border-b border-outline-variant/20">
+          <p class="text-xs text-on-surface font-medium truncate"><%= current_user.email %></p>
+          <p class="text-xs text-outline font-mono mt-0.5"><%= current_user.role %></p>
+        </div>
+        <a href="<%= dashboard_profile_path %>" class="block px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface cursor-pointer transition">Profile</a>
+        <%= link_to "Sign out", destroy_user_session_path, data: { turbo_method: :delete }, class: "block px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface rounded-b-md cursor-pointer transition" %>
       </div>
-      <a href="<%= dashboard_profile_path %>" class="block px-3 py-2 text-sm text-gray-300 hover:bg-[#334155] hover:text-white cursor-pointer transition">Profile</a>
-      <%= link_to "Sign out", destroy_user_session_path, data: { turbo_method: :delete }, class: "block px-3 py-2 text-sm text-gray-300 hover:bg-[#334155] hover:text-white rounded-b-md cursor-pointer transition" %>
     </div>
   </div>
-</nav>
+</header>
