@@ -136,6 +136,13 @@ Rails.application.routes.draw do
   ee_routes = Rails.root.join("ee/config/routes/ee.rb")
   instance_eval(File.read(ee_routes)) if ee_routes.exist?
 
+  # Clean URL shortcuts
+  get "/apps", to: redirect("/dashboard/apps")
+  get "/apps/*path", to: redirect("/dashboard/apps/%{path}")
+  get "/templates", to: redirect("/dashboard/templates")
+  get "/servers", to: redirect("/dashboard/servers")
+  get "/activity", to: redirect("/dashboard/activities")
+
   # Marketing pages
   get "/deploy", to: "pages#deploy"
   get "/pricing", to: "pages#pricing"

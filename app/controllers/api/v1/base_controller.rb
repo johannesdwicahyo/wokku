@@ -3,6 +3,7 @@ module Api
     class BaseController < ActionController::API
       include ApiAuthenticatable
       include Pundit::Authorization
+      include Trackable
 
       rescue_from Pundit::NotAuthorizedError do |_exception|
         render json: { error: "Not authorized" }, status: :forbidden

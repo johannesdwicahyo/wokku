@@ -27,6 +27,7 @@ module Api
           client = Dokku::Client.new(server)
           Dokku::Apps.new(client).create(app.name)
           app.save!
+          track("app.created", target: app)
           render json: app, status: :created
         rescue Dokku::Client::CommandError => e
           render json: { error: e.message }, status: :unprocessable_entity
@@ -60,6 +61,7 @@ module Api
         begin
           client = Dokku::Client.new(app.server)
           Dokku::Apps.new(client).destroy(app.name)
+          track("app.destroyed", target: app)
           app.destroy!
           render json: { message: "App destroyed" }
         rescue Dokku::Client::CommandError => e
@@ -96,6 +98,7 @@ module Api
       def dokku_process_action(app, action)
         client = Dokku::Client.new(app.server)
         Dokku::Processes.new(client).public_send(action, app.name)
+        track("app.#{action}ed", target: app)
         render json: { message: "App #{action}ed" }
       rescue Dokku::Client::CommandError => e
         render json: { error: e.message }, status: :unprocessable_entity
