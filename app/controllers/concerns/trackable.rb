@@ -4,11 +4,14 @@ module Trackable
   private
 
   def track(action, target: nil, metadata: {})
-    return unless current_user && current_team
+    user = respond_to?(:current_user, true) ? current_user : nil
+    team = respond_to?(:current_team, true) ? current_team : nil
+    team ||= user&.teams&.first
+    return unless user && team
 
     Activity.log(
-      user: current_user,
-      team: current_team,
+      user: user,
+      team: team,
       action: action,
       target: target,
       metadata: metadata

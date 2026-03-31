@@ -13,11 +13,12 @@ class SyncServerJob < ApplicationJob
     local_app_names = server.app_records.pluck(:name)
 
     (remote_app_names - local_app_names).each do |name|
-      server.app_records.create!(
+      app = server.app_records.create!(
         name: name,
         team: server.team,
         creator: server.team.owner
       )
+      Activity.log(user: server.team.owner, team: server.team, action: "app.created", target: app, metadata: { source: "sync" }) rescue nil
     end
 
     (local_app_names - remote_app_names).each do |name|
