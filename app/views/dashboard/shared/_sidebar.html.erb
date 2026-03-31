@@ -1,49 +1,43 @@
-<%
-  nav_items = [
-    { name: "Apps", path: dashboard_apps_path, pattern: "apps", icon_path: "M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" },
-    { name: "Servers", path: dashboard_servers_path, pattern: "servers", icon_path: "M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" },
-    { name: "Databases", path: dashboard_databases_path, pattern: "databases", icon_path: "M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" },
-    { name: "Teams", path: dashboard_teams_path, pattern: "teams", icon_path: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" },
-    { name: "Notifications", path: dashboard_notifications_path, pattern: "notifications", icon_path: "M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" },
-    { name: "Activity", path: dashboard_activities_path, pattern: "activities", icon_path: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
-  ]
-%>
-
-<aside class="w-52 bg-[#0B1120] border-r border-[#1E293B] flex-shrink-0 flex flex-col">
-  <nav class="py-3 px-2 space-y-0.5 flex-1">
+<aside class="fixed left-0 top-0 bottom-0 w-64 bg-surface-container-lowest flex flex-col h-full py-6 z-20">
+  <div class="px-6 mb-8">
+    <a href="<%= root_path %>" class="block">
+      <h1 class="text-lg font-black text-white font-headline tracking-tight">Wokku</h1>
+      <p class="text-xs text-outline font-label mt-0.5"><%= current_team&.name || "Dashboard" %></p>
+    </a>
+  </div>
+  <%
+    nav_items = [
+      { name: "Apps", path: dashboard_apps_path, pattern: "/dashboard/apps", icon: "apps" },
+      { name: "Templates", path: dashboard_templates_path, pattern: "/dashboard/templates", icon: "storefront" },
+      { name: "Servers", path: dashboard_servers_path, pattern: "/dashboard/servers", icon: "dns" },
+      { name: "Activity", path: dashboard_activities_path, pattern: "/dashboard/activities", icon: "history" },
+    ]
+  %>
+  <nav class="flex-1 space-y-0.5">
     <% nav_items.each do |item| %>
       <%
-        active = request.path.include?(item[:pattern])
-        classes = active ?
-          "flex items-center space-x-2.5 px-3 py-2 text-white bg-[#1E293B] rounded-md text-sm cursor-pointer" :
-          "flex items-center space-x-2.5 px-3 py-2 text-gray-500 hover:text-gray-200 hover:bg-[#1E293B]/50 rounded-md text-sm cursor-pointer transition"
+        active = request.path.start_with?(item[:pattern])
+        active_classes = "text-primary bg-surface-container-high border-r-2 border-primary font-semibold"
+        inactive_classes = "text-outline hover:text-on-surface-variant hover:bg-surface transition-all"
       %>
-      <a href="<%= item[:path] %>" class="<%= classes %>">
-        <svg class="w-4 h-4 flex-shrink-0 <%= active ? 'text-green-400' : '' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="<%= item[:icon_path] %>"/>
-        </svg>
+      <a href="<%= item[:path] %>" class="flex items-center px-6 py-3 text-sm font-label <%= active ? active_classes : inactive_classes %>">
+        <span class="material-symbols-outlined mr-3 text-[20px]"><%= item[:icon] %></span>
         <span class="font-medium"><%= item[:name] %></span>
       </a>
     <% end %>
-    <% if Wokku.ee? %>
-      <%= render "dashboard/shared/ee_sidebar_items" %>
-    <% end %>
   </nav>
-
-  <div class="px-2 py-2 border-t border-[#1E293B]">
-    <div class="flex items-center space-x-1 px-3 py-1">
-      <%= button_to dashboard_locale_path(locale: :en), method: :post, class: "text-[10px] px-1.5 py-0.5 rounded #{I18n.locale == :en ? 'bg-green-500/20 text-green-400' : 'text-gray-600 hover:text-gray-400'} transition" do %>EN<% end %>
-      <%= button_to dashboard_locale_path(locale: :id), method: :post, class: "text-[10px] px-1.5 py-0.5 rounded #{I18n.locale == :id ? 'bg-green-500/20 text-green-400' : 'text-gray-600 hover:text-gray-400'} transition" do %>ID<% end %>
-    </div>
-  </div>
-
-  <div class="px-2 py-3 border-t border-[#1E293B]">
-    <a href="<%= dashboard_profile_path %>" class="flex items-center space-x-2.5 px-3 py-2 text-gray-500 hover:text-gray-200 hover:bg-[#1E293B]/50 rounded-md text-sm cursor-pointer transition">
-      <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-      </svg>
-      <span class="font-medium">Settings</span>
+  <div class="mt-auto px-6 pt-6 border-t border-outline-variant/10 space-y-1">
+    <a href="<%= dashboard_notifications_path %>" class="flex items-center py-2 text-outline hover:text-on-surface-variant transition-all">
+      <span class="material-symbols-outlined mr-3 text-[18px]">notifications</span>
+      <span class="text-xs font-medium font-label">Notifications</span>
+    </a>
+    <a href="<%= dashboard_teams_path %>" class="flex items-center py-2 text-outline hover:text-on-surface-variant transition-all">
+      <span class="material-symbols-outlined mr-3 text-[18px]">group</span>
+      <span class="text-xs font-medium font-label">Teams</span>
+    </a>
+    <a href="<%= dashboard_profile_path %>" class="flex items-center py-2 text-outline hover:text-on-surface-variant transition-all">
+      <span class="material-symbols-outlined mr-3 text-[18px]">settings</span>
+      <span class="text-xs font-medium font-label">Settings</span>
     </a>
   </div>
 </aside>
