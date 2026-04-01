@@ -1,36 +1,105 @@
-<% content_for(:title, "Marketplace - Wokku") %>
+<% content_for(:title, "1 Click Deploy - Wokku") %>
 
-<div class="space-y-8">
-  <div class="mb-8">
-    <h1 class="font-headline text-3xl font-bold text-on-surface mb-2">Marketplace</h1>
-    <p class="text-sm text-outline">Deploy production-ready stacks in seconds. Each template is optimized for high-performance orchestration and auto-scaling.</p>
+<%# Header %>
+<div class="mb-8">
+  <h1 class="font-headline text-3xl font-bold text-on-surface mb-2">1 Click Deploy</h1>
+  <p class="text-sm text-outline">Deploy production-ready stacks in seconds. Each template is optimized for high-performance orchestration.</p>
+</div>
+
+<%# Search %>
+<div class="mb-8">
+  <%= form_with url: dashboard_templates_path, method: :get, data: { turbo_frame: "_top" } do |f| %>
+    <div class="relative">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
+      <%= f.search_field :q, value: params[:q], placeholder: "Search templates...", class: "w-full pl-10 pr-4 py-2.5 rounded-md bg-surface-container-low border-none text-sm text-on-surface placeholder-outline/50 focus:ring-1 focus:ring-primary", autofocus: params[:q].present? %>
+    </div>
+  <% end %>
+</div>
+
+<div class="grid grid-cols-12 gap-8">
+  <%# Left Sidebar — Categories %>
+  <div class="col-span-3">
+    <div class="sticky top-24 space-y-6">
+      <div>
+        <p class="text-[10px] text-outline uppercase tracking-widest font-bold mb-3">Categories</p>
+        <div class="space-y-0.5">
+          <%= link_to dashboard_templates_path, class: "flex items-center justify-between px-3 py-2 rounded-md text-sm transition #{params[:category].blank? && params[:q].blank? ? 'bg-surface-container-high text-primary font-semibold' : 'text-on-surface-variant hover:bg-surface-container-high/50 hover:text-on-surface'}" do %>
+            <span>All Templates</span>
+            <span class="text-[10px] font-mono bg-surface-container-highest px-1.5 py-0.5 rounded"><%= @templates.size %></span>
+          <% end %>
+          <% @categories.each do |cat| %>
+            <% cat_count = TemplateRegistry.new.by_category(cat["slug"]).size rescue 0 %>
+            <%= link_to dashboard_templates_path(category: cat["slug"]), class: "flex items-center justify-between px-3 py-2 rounded-md text-sm transition #{params[:category] == cat['slug'] ? 'bg-surface-container-high text-primary font-semibold' : 'text-on-surface-variant hover:bg-surface-container-high/50 hover:text-on-surface'}" do %>
+              <span><%= cat["name"] %></span>
+              <span class="text-[10px] font-mono text-outline"><%= cat_count %></span>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+
+      <%# Promo Card %>
+      <div class="bg-primary-container/20 rounded-md p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="material-symbols-outlined text-primary text-[18px]">auto_awesome</span>
+          <span class="text-xs font-bold text-primary uppercase tracking-wider">Custom Deploy</span>
+        </div>
+        <p class="text-[10px] text-on-surface-variant leading-relaxed">Deploy any app from a GitHub repo or Docker image using the API or CLI.</p>
+        <a href="/docs" target="_blank" class="text-[10px] text-primary hover:underline mt-2 inline-block">Learn more →</a>
+      </div>
+    </div>
   </div>
 
-  <div class="flex items-center space-x-3">
-    <%= form_with url: dashboard_templates_path, method: :get, class: "flex-1", data: { turbo_frame: "_top" } do |f| %>
-      <div class="relative">
-        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-lg">search</span>
-        <%= f.search_field :q, value: params[:q], placeholder: "Search templates...", class: "w-full pl-10 pr-4 py-2 rounded-md bg-surface-container-low border-none text-sm text-on-surface placeholder-outline/50 focus:ring-1 focus:ring-primary", autofocus: params[:q].present? %>
+  <%# Right Content — Template Grid %>
+  <div class="col-span-9">
+    <% if @templates.any? %>
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <% @templates.each do |template| %>
+          <div class="bg-surface-container-low rounded-md overflow-hidden hover:bg-surface-container-high/60 transition group">
+            <div class="p-5">
+              <%# Icon + Category Badge %>
+              <div class="flex items-start justify-between mb-4">
+                <div class="w-11 h-11 rounded-lg bg-surface border border-outline-variant/15 flex items-center justify-center flex-shrink-0">
+                  <span class="text-xl"><%= template_icon(template[:icon]) %></span>
+                </div>
+                <% if (template[:tags] || []).first %>
+                  <span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider"><%= template[:tags].first %></span>
+                <% elsif template[:category].present? %>
+                  <span class="bg-surface-container-highest text-on-surface-variant px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider"><%= template[:category] %></span>
+                <% end %>
+              </div>
+
+              <%# Name + Description %>
+              <h3 class="font-headline text-base font-bold text-on-surface group-hover:text-primary transition mb-1"><%= template[:name] %></h3>
+              <p class="text-xs text-outline leading-relaxed mb-4 h-8 overflow-hidden"><%= template[:description] %></p>
+
+              <%# Footer: Cost + Deploy Button %>
+              <div class="flex items-center justify-between pt-3 border-t border-outline-variant/10">
+                <div>
+                  <p class="text-[9px] text-outline uppercase tracking-wider font-bold">Est. Cost</p>
+                  <p class="text-xs font-bold text-on-surface font-mono">
+                    <% if template[:addons]&.any? %>
+                      From $1.50<span class="text-outline font-normal">/mo</span>
+                    <% else %>
+                      Free Tier
+                    <% end %>
+                  </p>
+                </div>
+                <%= link_to dashboard_template_path(template[:slug]), class: "px-4 py-2 rounded-md text-xs font-bold bg-surface-variant text-on-surface-variant group-hover:technical-gradient group-hover:text-on-primary transition-all" do %>
+                  Deploy Now
+                <% end %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="text-center py-16 bg-surface-container-low rounded-md">
+        <span class="material-symbols-outlined text-outline-variant text-[40px] mb-3">search_off</span>
+        <p class="text-sm text-outline">No templates found<%= " for '#{params[:q]}'" if params[:q].present? %>.</p>
+        <% if params[:q].present? || params[:category].present? %>
+          <%= link_to "Clear filters", dashboard_templates_path, class: "text-xs text-primary hover:underline mt-2 inline-block" %>
+        <% end %>
       </div>
     <% end %>
   </div>
-
-  <div class="flex flex-wrap gap-2">
-    <%= link_to "All", dashboard_templates_path, class: "px-3 py-1 rounded-full text-xs font-medium transition #{params[:category].blank? ? 'technical-gradient text-on-primary' : 'bg-surface-container-low text-outline hover:text-on-surface'}" %>
-    <% @categories.each do |cat| %>
-      <%= link_to cat["name"], dashboard_templates_path(category: cat["slug"]), class: "px-3 py-1 rounded-full text-xs font-medium transition #{params[:category] == cat['slug'] ? 'technical-gradient text-on-primary' : 'bg-surface-container-low text-outline hover:text-on-surface'}" %>
-    <% end %>
-  </div>
-
-  <% if @templates.any? %>
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-      <% @templates.each do |template| %>
-        <%= render "dashboard/templates/card", template: template %>
-      <% end %>
-    </div>
-  <% else %>
-    <div class="text-center py-16 bg-surface-container-low/40 rounded-lg border border-outline-variant/15">
-      <p class="text-outline">No templates found<%= " for '#{params[:q]}'" if params[:q].present? %>.</p>
-    </div>
-  <% end %>
 </div>
