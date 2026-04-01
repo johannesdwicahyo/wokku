@@ -12,12 +12,7 @@ class TerminalChannel < ApplicationCable::Channel
     @stream_name = "terminal_#{@server.id}_#{current_user.id}_#{SecureRandom.hex(4)}"
     stream_from @stream_name
 
-    # If app_name is provided, enter the app container instead of Dokku shell
-    command = if params[:app_name].present?
-      "enter #{params[:app_name]} web"
-    end
-
-    @session = TerminalSession.new(server: @server, command: command)
+    @session = TerminalSession.new(server: @server, app_name: params[:app_name].presence)
     @mutex = Mutex.new
     @running = true
 
