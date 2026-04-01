@@ -31,7 +31,15 @@ module Dashboard
       end
 
       client = Dokku::Client.new(@app.server)
-      Dokku::Processes.new(client).scale(@app.name, scaling)
+      begin
+        Dokku::Processes.new(client).scale(@app.name, scaling)
+      rescue Dokku::Client::CommandError => e
+        if e.message.include?("formations")
+          redirect_to dashboard_app_scaling_path(@app), alert: "This app uses app.json formations for scaling. Update the formations key in your app.json to change process counts."
+          return
+        end
+        raise
+      end
 
       scaling.each do |type, count|
         ps = @app.process_scales.find_or_initialize_by(process_type: type)
@@ -71,12 +79,16 @@ module Dashboard
 
       # If downgrading to non-scalable tier, scale workers to 0
       unless tier.scalable
-        client = Dokku::Client.new(@app.server)
-        @app.process_scales.where.not(process_type: "web").each do |ps|
-          if ps.count > 0
-            Dokku::Processes.new(client).scale(@app.name, { ps.process_type => 0 })
-            ps.update!(count: 0)
+        begin
+          client = Dokku::Client.new(@app.server)
+          @app.process_scales.where.not(process_type: "web").each do |ps|
+            if ps.count > 0
+              Dokku::Processes.new(client).scale(@app.name, { ps.process_type => 0 })
+              ps.update!(count: 0)
+            end
           end
+        rescue Dokku::Client::CommandError => e
+          Rails.logger.info "Skipping worker scale-down for #{@app.name}: #{e.message}" if e.message.include?("formations")
         end
       end
 
