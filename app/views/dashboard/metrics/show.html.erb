@@ -150,9 +150,9 @@
   </div>
 
   <%
-    mem_limit_cfg = @resources["resource_limits_memory"] || @resources["resource_limits-memory"]
-    cpu_limit_cfg = @resources["resource_limits_cpu"] || @resources["resource_limits-cpu"]
-    mem_reserve = @resources["resource_reservation_memory"] || @resources["resource_reservation-memory"]
+    mem_limit_cfg = @resources["default_limit_memory"] || @resources["resource_limits_memory"]
+    cpu_limit_cfg = @resources["default_limit_cpu"] || @resources["resource_limits_cpu"]
+    mem_reserve = @resources["default_reserve_memory"] || @resources["resource_reservation_memory"]
     has_limits = [mem_limit_cfg, cpu_limit_cfg, mem_reserve].any? { |v| v.present? && v != "" }
   %>
 
@@ -160,15 +160,15 @@
     <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-outline-variant/15">
       <div class="px-6 py-5 text-center">
         <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Memory Limit</p>
-        <p class="text-2xl font-bold text-on-surface font-mono"><%= mem_limit_cfg.present? ? mem_limit_cfg : "—" %></p>
+        <p class="text-2xl font-bold text-on-surface font-mono"><%= mem_limit_cfg.present? ? "#{mem_limit_cfg} MB" : "—" %></p>
       </div>
       <div class="px-6 py-5 text-center">
-        <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">CPU Shares</p>
-        <p class="text-2xl font-bold text-on-surface font-mono"><%= cpu_limit_cfg.present? ? cpu_limit_cfg : "—" %></p>
+        <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">CPU Limit</p>
+        <p class="text-2xl font-bold text-on-surface font-mono"><%= cpu_limit_cfg.present? ? "#{cpu_limit_cfg} vCPU" : "—" %></p>
       </div>
       <div class="px-6 py-5 text-center">
         <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Memory Reserved</p>
-        <p class="text-2xl font-bold text-on-surface font-mono"><%= mem_reserve.present? ? mem_reserve : "—" %></p>
+        <p class="text-2xl font-bold text-on-surface font-mono"><%= mem_reserve.present? ? "#{mem_reserve} MB" : "—" %></p>
       </div>
     </div>
   <% else %>
