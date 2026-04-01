@@ -1,33 +1,47 @@
-<% content_for(:title, "Terminal — #{@server.name}") %>
+<% content_for(:title, @app ? "Console — #{@app.name}" : "Terminal — #{@server.name}") %>
 
 <div class="space-y-4">
   <div class="flex items-center justify-between">
-    <div class="flex items-center space-x-3">
+    <div class="flex items-center gap-3">
       <% if @app %>
-        <%= link_to dashboard_app_path(@app), class: "text-sm text-gray-500 hover:text-gray-300 transition" do %>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        <%= link_to dashboard_app_path(@app), class: "text-outline hover:text-primary transition" do %>
+          <span class="material-symbols-outlined text-[18px]">arrow_back</span>
         <% end %>
-        <h1 class="text-lg font-semibold text-white font-mono"><%= @app.name %></h1>
-        <span class="text-gray-600">on</span>
-        <span class="text-sm text-gray-400 font-mono"><%= @server.name %></span>
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-[20px]">terminal</span>
+          <h1 class="text-lg font-semibold text-on-surface font-headline"><%= @app.name %></h1>
+        </div>
+        <span class="text-[10px] text-outline uppercase tracking-widest font-bold bg-surface-container-highest px-2 py-1 rounded">App Console</span>
+        <span class="text-xs text-outline font-mono">on <%= @server.name %></span>
       <% else %>
-        <%= link_to dashboard_server_path(@server), class: "text-sm text-gray-500 hover:text-gray-300 transition" do %>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        <%= link_to dashboard_server_path(@server), class: "text-outline hover:text-primary transition" do %>
+          <span class="material-symbols-outlined text-[18px]">arrow_back</span>
         <% end %>
-        <h1 class="text-lg font-semibold text-white">Terminal</h1>
-        <span class="text-sm text-gray-400 font-mono"><%= @server.name %> (<%= @server.host %>)</span>
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-tertiary text-[20px]">dns</span>
+          <h1 class="text-lg font-semibold text-on-surface font-headline">Server Terminal</h1>
+        </div>
+        <span class="text-[10px] text-error uppercase tracking-widest font-bold bg-error-container/20 px-2 py-1 rounded">Admin Only</span>
+        <span class="text-xs text-outline font-mono"><%= @server.name %> (<%= @server.host %>)</span>
       <% end %>
     </div>
-    <div class="flex items-center space-x-3">
-      <span data-terminal-target="status" class="text-xs font-mono text-yellow-500">Connecting...</span>
-      <button data-action="click->terminal#reconnect" class="text-xs text-gray-500 hover:text-white transition px-2 py-1 rounded border border-[#334155] hover:border-[#475569]">Reconnect</button>
+    <div class="flex items-center gap-3">
+      <span data-terminal-target="status" class="text-xs font-mono text-tertiary">Connecting...</span>
+      <button data-action="click->terminal#reconnect" class="text-xs text-outline hover:text-on-surface transition px-2 py-1 rounded border border-outline-variant/15 hover:border-outline cursor-pointer">Reconnect</button>
     </div>
   </div>
 
-  <div class="rounded-xl border border-[#1E293B] bg-[#0B1120] overflow-hidden"
+  <% if @app %>
+    <div class="flex items-center gap-2 px-3 py-2 bg-surface-container-low rounded-md">
+      <span class="material-symbols-outlined text-outline text-[14px]">info</span>
+      <span class="text-[10px] text-outline">This console runs inside your app's <span class="font-mono text-on-surface-variant">web</span> container. You can run commands like <span class="font-mono text-primary">rails console</span>, <span class="font-mono text-primary">ls</span>, or <span class="font-mono text-primary">cat config/database.yml</span>.</span>
+    </div>
+  <% end %>
+
+  <div class="rounded-md border border-outline-variant/15 bg-surface-container-lowest overflow-hidden"
        data-controller="terminal"
        data-terminal-server-id-value="<%= @server.id %>"
        <%= "data-terminal-app-name-value=#{@app.name}" if @app %>>
-    <div data-terminal-target="container" class="h-[calc(100vh-200px)] w-full"></div>
+    <div data-terminal-target="container" class="h-[calc(100vh-220px)] w-full"></div>
   </div>
 </div>
