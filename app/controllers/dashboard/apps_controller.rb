@@ -10,6 +10,15 @@ module Dashboard
 
     def show
       authorize @app
+      @releases = @app.releases.includes(:deploy).order(version: :desc).limit(5)
+      @addons = @app.database_services.includes(:server)
+      @domains = @app.domains
+      @env_vars = @app.env_vars.order(:key)
+      @processes = fetch_processes
+      @container_stats = fetch_container_stats
+      @resources = fetch_resources
+      @current_allocation = defined?(DynoAllocation) ? @app.dyno_allocations.includes(:dyno_tier).find_by(process_type: "web") : nil
+      @logs = fetch_logs
     end
 
     def new
@@ -89,6 +98,66 @@ module Dashboard
     def dokku_processes
       client = Dokku::Client.new(@app.server)
       Dokku::Processes.new(client)
+    end
+
+    def fetch_processes
+      client = Dokku::Client.new(@app.server)
+      output = client.run("ps:report #{@app.name}")
+      processes = []
+      output.each_line do |line|
+        if (match = line.strip.match(/Status (\w+) (\d+):\s+(\w+)\s*\(CID:\s*(\w+)\)/))
+          processes << { type: match[1], index: match[2].to_i, status: match[3], container_id: match[4] }
+        end
+      end
+      processes
+    rescue => e
+      Rails.logger.warn "Failed to fetch processes: #{e.message}"
+      []
+    end
+
+    def fetch_container_stats
+      server = @app.server
+      output = Net::SSH.start(server.host, "deploy", port: server.port, non_interactive: true, timeout: 10,
+        key_data: server.ssh_private_key.present? ? [server.ssh_private_key] : nil) do |ssh|
+        ssh.exec!("docker stats --no-stream --format '{{json .}}'")
+      end
+      stats = []
+      output.to_s.each_line do |line|
+        data = JSON.parse(line)
+        next unless data["Name"].start_with?("#{@app.name}.")
+        stats << { name: data["Name"], cpu_percent: data["CPUPerc"].to_f, mem_usage: data["MemUsage"],
+                   mem_percent: data["MemPerc"].to_f, net_io: data["NetIO"], block_io: data["BlockIO"], pids: data["PIDs"] }
+      end
+      stats
+    rescue => e
+      Rails.logger.warn "Failed to fetch container stats: #{e.message}"
+      []
+    end
+
+    def fetch_resources
+      client = Dokku::Client.new(@app.server)
+      output = client.run("resource:report #{@app.name}")
+      result = {}
+      output.each_line do |line|
+        line = line.strip
+        next if line.blank? || line.start_with?("=")
+        idx = line.rindex(":")
+        next unless idx
+        key = line[0...idx].strip.parameterize(separator: "_")
+        value = line[(idx + 1)..].strip
+        result[key] = value if value.present?
+      end
+      result
+    rescue => e
+      {}
+    end
+
+    def fetch_logs
+      client = Dokku::Client.new(@app.server)
+      output = client.run("logs #{@app.name} --num 15")
+      output.to_s.lines.map(&:strip).reject(&:blank?)
+    rescue => e
+      []
     end
   end
 end
