@@ -100,6 +100,10 @@ export default class extends Controller {
         received: (data) => {
           switch (data.type) {
             case "output":
+              if (!this._connected) {
+                this._connected = true
+                this.setStatus("connected")
+              }
               this.term.write(data.data)
               break
             case "error":
