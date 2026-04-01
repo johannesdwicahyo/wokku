@@ -14,19 +14,20 @@ class TerminalSession
 
   def connect!
     if @app_name
-      # App console: SSH as deploy user, docker exec into the container
-      @ssh = Net::SSH.start(server.host, "deploy", ssh_options)
-      container = "#{@app_name}.web.1"
+      # App console: use dokku user, exec 'enter <app> web' command
+      # The dokku SSH wrapper prepends 'dokku' to the command
+      @ssh = Net::SSH.start(server.host, server.ssh_user || "dokku", ssh_options)
       @channel = @ssh.open_channel do |ch|
         ch.request_pty(term: "xterm-256color", chars_wide: 120, chars_high: 30) do |_ch, success|
           raise "Failed to get PTY" unless success
         end
-        ch.exec("docker exec #{container} script -qc /bin/bash /dev/null 2>/dev/null || docker exec #{container} /bin/sh") do |_ch, success|
+        # dokku SSH shell prepends 'dokku' to this, so it runs: dokku enter <app> web
+        ch.exec("enter #{@app_name} web") do |_ch, success|
           raise "Failed to enter container" unless success
         end
       end
     else
-      # Server terminal: SSH as dokku user, get Dokku shell
+      # Server terminal: dokku shell for admins
       @ssh = Net::SSH.start(server.host, server.ssh_user || "dokku", ssh_options)
       @channel = @ssh.open_channel do |ch|
         ch.request_pty(term: "xterm-256color", chars_wide: 120, chars_high: 30) do |_ch, success|

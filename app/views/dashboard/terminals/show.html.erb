@@ -41,7 +41,7 @@
   <div class="rounded-md border border-outline-variant/15 bg-surface-container-lowest overflow-hidden"
        data-controller="terminal"
        data-terminal-server-id-value="<%= @server.id %>"
-       <%= "data-terminal-app-name-value=#{@app.name}" if @app %>>
+       <% if @app %>data-terminal-app-name-value="<%= @app.name %>"<% end %>>
     <div data-terminal-target="container" class="h-[calc(100vh-220px)] w-full"></div>
   </div>
 </div>
