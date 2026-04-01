@@ -22,7 +22,11 @@
 
     <script>
       // Custom Turbo confirm dialog — replaces ugly browser native confirm()
-      Turbo.setConfirmMethod((message, element) => {
+      // Wait for Turbo to be available before overriding
+      document.addEventListener("turbo:load", function initConfirm() {
+        if (typeof Turbo === "undefined") return;
+        document.removeEventListener("turbo:load", initConfirm);
+        Turbo.setConfirmMethod((message, element) => {
         const dialog = document.createElement('div');
         dialog.innerHTML = `
           <div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -43,6 +47,7 @@
           dialog.querySelector('.fixed').addEventListener('click', (e) => { if (e.target === e.currentTarget) { dialog.remove(); resolve(false); } });
         });
       });
+      }, { once: true });
     </script>
   </head>
   <body class="h-full bg-surface text-on-surface font-body selection:bg-primary-container selection:text-primary">
