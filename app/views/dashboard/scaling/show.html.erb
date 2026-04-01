@@ -70,17 +70,33 @@
 
     <%# Pricing preview %>
     <% if @current_allocation %>
+      <%
+        tier = @current_allocation.dyno_tier
+        total_dynos = @process_scales.any? ? @process_scales.sum(&:count) : 1
+        monthly_cost = total_dynos * tier.monthly_price_dollars
+      %>
       <div class="px-6 py-4 bg-surface/50 border-t border-outline-variant/10">
         <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <span class="text-xs text-outline">Current plan:</span>
-            <span class="text-sm font-bold text-on-surface font-headline capitalize"><%= @current_allocation.dyno_tier.name %></span>
-            <span class="text-xs text-outline">×</span>
-            <span class="text-sm font-mono text-on-surface"><%= @current_allocation.count %> dyno<%= @current_allocation.count == 1 ? '' : 's' %></span>
+          <div class="flex items-center gap-6">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-outline">Container:</span>
+              <span class="text-sm font-bold text-on-surface font-headline capitalize"><%= tier.name %></span>
+              <span class="text-xs text-outline">(<%= tier.memory_mb >= 1024 ? "#{tier.memory_mb / 1024}GB" : "#{tier.memory_mb}MB" %>, <%= tier.cpu_shares %> vCPU)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-outline">Dynos:</span>
+              <% @process_scales.each do |ps| %>
+                <span class="text-xs font-mono bg-surface-container-highest px-2 py-0.5 rounded"><%= ps.process_type %> × <%= ps.count %></span>
+              <% end %>
+              <span class="text-xs text-outline">= <%= total_dynos %> total</span>
+            </div>
           </div>
           <div class="text-right">
-            <span class="text-xs text-outline">Estimated monthly cost:</span>
-            <span class="text-sm font-bold text-primary font-mono ml-2">$<%= "%.2f" % (@current_allocation.count * @current_allocation.dyno_tier.monthly_price_dollars) %>/mo</span>
+            <span class="text-xs text-outline">Estimated cost:</span>
+            <span class="text-sm font-bold text-primary font-mono ml-2">$<%= "%.2f" % monthly_cost %>/mo</span>
+            <% if total_dynos > 1 %>
+              <span class="text-[10px] text-outline ml-1">(<%= total_dynos %> × $<%= "%.2f" % tier.monthly_price_dollars %>)</span>
+            <% end %>
           </div>
         </div>
       </div>
