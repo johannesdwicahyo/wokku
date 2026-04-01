@@ -25,26 +25,26 @@ export default class extends Controller {
       fontSize: 13,
       fontFamily: "'JetBrains Mono', monospace",
       theme: {
-        background: "#0B1120",
-        foreground: "#e2e8f0",
-        cursor: "#22C55E",
-        selectionBackground: "#334155",
-        black: "#0B1120",
-        red: "#ef4444",
-        green: "#22C55E",
-        yellow: "#eab308",
-        blue: "#3b82f6",
-        magenta: "#a855f7",
-        cyan: "#06b6d4",
-        white: "#e2e8f0",
-        brightBlack: "#475569",
-        brightRed: "#f87171",
-        brightGreen: "#4ade80",
-        brightYellow: "#facc15",
-        brightBlue: "#60a5fa",
-        brightMagenta: "#c084fc",
-        brightCyan: "#22d3ee",
-        brightWhite: "#f8fafc"
+        background: "#0c0c1f",
+        foreground: "#e2e0fc",
+        cursor: "#c0c1ff",
+        selectionBackground: "#333348",
+        black: "#0c0c1f",
+        red: "#ffb4ab",
+        green: "#c0c1ff",
+        yellow: "#ffb694",
+        blue: "#d2bbff",
+        magenta: "#c0c1ff",
+        cyan: "#d2bbff",
+        white: "#e2e0fc",
+        brightBlack: "#4a4453",
+        brightRed: "#ffb4ab",
+        brightGreen: "#c0c1ff",
+        brightYellow: "#ffb694",
+        brightBlue: "#d2bbff",
+        brightMagenta: "#c0c1ff",
+        brightCyan: "#d2bbff",
+        brightWhite: "#e2e0fc"
       },
       allowProposedApi: true
     })
@@ -77,21 +77,17 @@ export default class extends Controller {
     this.setStatus("connecting")
     this.consumer = createConsumer()
 
+    const params = { channel: "TerminalChannel", server_id: this.serverIdValue }
+    if (this.appNameValue) {
+      params.app_name = this.appNameValue
+    }
+
     this.subscription = this.consumer.subscriptions.create(
-      { channel: "TerminalChannel", server_id: this.serverIdValue },
+      params,
       {
         connected: () => {
           this.setStatus("connected")
           this.term.focus()
-
-          if (this.appNameValue) {
-            setTimeout(() => {
-              this.subscription.send({
-                type: "input",
-                data: `dokku enter ${this.appNameValue}\r`
-              })
-            }, 500)
-          }
         },
         disconnected: () => {
           this.setStatus("disconnected")
