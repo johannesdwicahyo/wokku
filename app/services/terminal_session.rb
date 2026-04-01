@@ -3,9 +3,9 @@ class TerminalSession
 
   TIMEOUT = 15.minutes
 
-  def initialize(server:, command: nil, timeout: TIMEOUT)
+  def initialize(server:, app_name: nil, timeout: TIMEOUT)
     @server = server
-    @command = command
+    @app_name = app_name
     @timeout = timeout
     @ssh = nil
     @channel = nil
@@ -13,20 +13,25 @@ class TerminalSession
   end
 
   def connect!
-    @ssh = Net::SSH.start(
-      server.host,
-      server.ssh_user || "dokku",
-      ssh_options
-    )
-    @channel = @ssh.open_channel do |ch|
-      ch.request_pty(term: "xterm-256color", chars_wide: 120, chars_high: 30) do |_ch, success|
-        raise "Failed to get PTY" unless success
-      end
-      if @command
-        ch.exec(@command) do |_ch, success|
-          raise "Failed to execute command" unless success
+    if @app_name
+      # App console: SSH as deploy user, docker exec into the container
+      @ssh = Net::SSH.start(server.host, "deploy", ssh_options)
+      container = "#{@app_name}.web.1"
+      @channel = @ssh.open_channel do |ch|
+        ch.request_pty(term: "xterm-256color", chars_wide: 120, chars_high: 30) do |_ch, success|
+          raise "Failed to get PTY" unless success
         end
-      else
+        ch.exec("docker exec -it #{container} /bin/bash 2>/dev/null || docker exec -it #{container} /bin/sh") do |_ch, success|
+          raise "Failed to enter container" unless success
+        end
+      end
+    else
+      # Server terminal: SSH as dokku user, get Dokku shell
+      @ssh = Net::SSH.start(server.host, server.ssh_user || "dokku", ssh_options)
+      @channel = @ssh.open_channel do |ch|
+        ch.request_pty(term: "xterm-256color", chars_wide: 120, chars_high: 30) do |_ch, success|
+          raise "Failed to get PTY" unless success
+        end
         ch.send_channel_request("shell") do |_ch, success|
           raise "Failed to open shell" unless success
         end
