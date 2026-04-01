@@ -105,10 +105,32 @@
 <% end %>
 
 <%# Process Scaling %>
+<%
+  can_scale = @current_allocation&.dyno_tier&.scalable
+  current_tier_name = @current_allocation&.dyno_tier&.name&.capitalize || "Unknown"
+%>
 <div class="bg-surface-container-low rounded-md overflow-hidden">
   <div class="px-6 py-4 border-b border-outline-variant/15">
-    <h2 class="text-base font-semibold text-on-surface font-headline">Process Scaling</h2>
-    <p class="text-sm text-outline mt-1">Scale the number of dynos for each process type</p>
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-base font-semibold text-on-surface font-headline">Process Scaling</h2>
+        <p class="text-sm text-outline mt-1">Scale the number of dynos for each process type</p>
+      </div>
+      <% unless can_scale %>
+        <div class="flex items-center gap-2 bg-surface-container-highest/50 px-3 py-1.5 rounded-md" title="Upgrade to Standard or higher to enable horizontal scaling">
+          <span class="material-symbols-outlined text-tertiary text-[16px]">lock</span>
+          <span class="text-[10px] text-outline font-bold uppercase tracking-wider">Upgrade to scale</span>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Procfile info %>
+  <div class="px-6 py-3 bg-surface/30 border-b border-outline-variant/10">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-outline text-[14px]">info</span>
+      <span class="text-[10px] text-outline">Process types are defined in your app's <span class="font-mono text-on-surface-variant">Procfile</span>. Deploy to add or change process types.</span>
+    </div>
   </div>
 
   <% if @process_scales.any? %>
@@ -137,27 +159,45 @@
             </div>
           </div>
           <div class="flex items-center space-x-3">
-            <div class="flex items-center bg-surface border border-outline-variant/15 rounded-lg overflow-hidden" data-controller="counter">
-              <button type="button" data-action="click->counter#decrement"
-                      class="px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/50 transition cursor-pointer">
-                <span class="material-symbols-outlined text-[18px]">remove</span>
-              </button>
-              <input type="number" name="scaling[<%= ps.process_type %>]" value="<%= ps.count %>"
-                     min="0" max="10" data-counter-target="input"
-                     class="w-12 text-center bg-transparent border-x border-outline-variant/15 text-on-surface font-mono text-sm py-2 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-              <button type="button" data-action="click->counter#increment"
-                      class="px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/50 transition cursor-pointer">
+            <% if can_scale %>
+              <div class="flex items-center bg-surface border border-outline-variant/15 rounded-lg overflow-hidden" data-controller="counter">
+                <button type="button" data-action="click->counter#decrement"
+                        class="px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/50 transition cursor-pointer">
+                  <span class="material-symbols-outlined text-[18px]">remove</span>
+                </button>
+                <input type="number" name="scaling[<%= ps.process_type %>]" value="<%= ps.count %>"
+                       min="0" max="10" data-counter-target="input"
+                       class="w-12 text-center bg-transparent border-x border-outline-variant/15 text-on-surface font-mono text-sm py-2 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                <button type="button" data-action="click->counter#increment"
+                        class="px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/50 transition cursor-pointer">
                 <span class="material-symbols-outlined text-[18px]">add</span>
               </button>
             </div>
             <span class="text-xs text-outline w-12"><%= ps.count == 1 ? "1 dyno" : "#{ps.count} dynos" %></span>
+            <% else %>
+              <%# Non-scalable tier: show disabled controls with tooltip %>
+              <div class="flex items-center bg-surface border border-outline-variant/10 rounded-lg overflow-hidden opacity-40 cursor-not-allowed" title="Upgrade to Standard or higher to scale horizontally">
+                <div class="px-3 py-2">
+                  <span class="material-symbols-outlined text-[18px] text-outline-variant">remove</span>
+                </div>
+                <input type="number" name="scaling[<%= ps.process_type %>]" value="<%= ps.count %>"
+                       readonly
+                       class="w-12 text-center bg-transparent border-x border-outline-variant/10 text-outline font-mono text-sm py-2 cursor-not-allowed">
+                <div class="px-3 py-2">
+                  <span class="material-symbols-outlined text-[18px] text-outline-variant">add</span>
+                </div>
+              </div>
+              <span class="text-xs text-outline w-12"><%= ps.count == 1 ? "1 dyno" : "#{ps.count} dynos" %></span>
+            <% end %>
           </div>
         </div>
       <% end %>
 
-      <div class="px-6 py-4 bg-surface/50">
-        <%= f.submit "Apply Changes", class: "px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
-      </div>
+      <% if can_scale %>
+        <div class="px-6 py-4 bg-surface/50">
+          <%= f.submit "Apply Changes", class: "px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
+        </div>
+      <% end %>
     <% end %>
   <% else %>
     <div class="px-6 py-8 text-center">
