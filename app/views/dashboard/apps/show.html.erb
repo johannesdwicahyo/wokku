@@ -1,146 +1,380 @@
-<div class="mb-6">
-  <div class="flex items-center space-x-3 mb-1">
-    <%= link_to "Apps", dashboard_apps_path, class: "text-sm text-outline hover:text-primary transition" %>
-    <span class="material-symbols-outlined text-[16px] text-outline-variant">chevron_right</span>
-    <span class="text-sm text-on-surface font-medium font-mono"><%= @app.name %></span>
-  </div>
-</div>
-
-<div class="flex items-center justify-between mb-6">
-  <div class="flex items-center space-x-4">
-    <h1 class="text-2xl font-bold text-on-surface font-headline"><%= @app.name %></h1>
+<%# App Header %>
+<div class="flex items-center justify-between mb-8">
+  <div class="flex items-center gap-4">
+    <div class="flex items-center gap-3">
+      <%= link_to "Apps", dashboard_apps_path, class: "text-sm text-outline hover:text-primary transition" %>
+      <span class="material-symbols-outlined text-outline-variant text-[16px]">chevron_right</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <span class="material-symbols-outlined text-primary text-[24px]">terminal</span>
+      <h1 class="text-2xl font-bold text-on-surface font-headline"><%= @app.name %></h1>
+    </div>
     <% case @app.status %>
     <% when "running" %>
-      <span class="flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-primary"></span><span class="text-xs text-on-surface-variant">Running</span></span>
+      <span class="bg-secondary-container text-on-secondary-container text-[10px] px-2.5 py-1 rounded-full font-bold uppercase glow-running">Running</span>
     <% when "crashed" %>
-      <span class="flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-error"></span><span class="text-xs text-on-surface-variant">Crashed</span></span>
+      <span class="bg-error-container text-on-error-container text-[10px] px-2.5 py-1 rounded-full font-bold uppercase glow-error">Crashed</span>
     <% when "stopped" %>
-      <span class="flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-outline"></span><span class="text-xs text-on-surface-variant">Stopped</span></span>
+      <span class="bg-surface-variant text-outline text-[10px] px-2.5 py-1 rounded-full font-bold uppercase">Stopped</span>
     <% when "deploying" %>
-      <span class="flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span><span class="text-xs text-on-surface-variant">Deploying</span></span>
+      <span class="bg-surface-variant text-on-surface-variant text-[10px] px-2.5 py-1 rounded-full font-bold uppercase">Deploying</span>
     <% end %>
   </div>
-  <div class="flex items-center space-x-3">
-    <% if (primary_domain = @app.domains.first) %>
-      <%= link_to "https://#{primary_domain.hostname}", target: "_blank", rel: "noopener", class: "inline-flex items-center space-x-1.5 text-sm text-on-surface-variant hover:text-primary transition" do %>
-        <span class="material-symbols-outlined text-[16px]">open_in_new</span>
-        <span class="font-mono"><%= primary_domain.hostname %></span>
+  <div class="flex items-center gap-2">
+    <% if @app.stopped? %>
+      <%= button_to start_dashboard_app_path(@app), method: :post, class: "inline-flex items-center px-3 py-1.5 text-xs text-primary border border-primary/30 rounded-md hover:bg-secondary-container/20 transition cursor-pointer" do %>
+        <span class="material-symbols-outlined text-[16px] mr-1">play_arrow</span> Start
+      <% end %>
+    <% else %>
+      <%= button_to restart_dashboard_app_path(@app), method: :post, class: "inline-flex items-center px-3 py-1.5 text-xs text-on-surface-variant border border-outline-variant/15 rounded-md hover:border-primary/50 hover:text-primary transition cursor-pointer" do %>
+        <span class="material-symbols-outlined text-[16px] mr-1">refresh</span> Restart
+      <% end %>
+      <%= button_to stop_dashboard_app_path(@app), method: :post, data: { turbo_confirm: "Stop #{@app.name}?" }, class: "inline-flex items-center px-3 py-1.5 text-xs text-on-surface-variant border border-outline-variant/15 rounded-md hover:border-error/50 hover:text-error transition cursor-pointer" do %>
+        <span class="material-symbols-outlined text-[16px] mr-1">stop_circle</span> Stop
       <% end %>
     <% end %>
-
-    <%# Lifecycle Buttons %>
-    <div class="flex items-center space-x-1 border-l border-outline-variant/15 pl-3">
-      <% if @app.stopped? %>
-        <%= button_to start_dashboard_app_path(@app), method: :post, class: "inline-flex items-center px-2.5 py-1 text-xs text-primary border border-primary/30 rounded-md hover:bg-secondary-container/20 transition cursor-pointer", title: "Start" do %>
-          <span class="material-symbols-outlined text-[16px] mr-1">play_arrow</span>
-          Start
-        <% end %>
-      <% else %>
-        <%= button_to restart_dashboard_app_path(@app), method: :post, class: "inline-flex items-center px-2.5 py-1 text-xs text-on-surface-variant border border-outline-variant/15 rounded-md hover:border-primary/50 hover:text-primary transition cursor-pointer", title: "Restart" do %>
-          <span class="material-symbols-outlined text-[16px] mr-1">refresh</span>
-          Restart
-        <% end %>
-        <%= button_to stop_dashboard_app_path(@app), method: :post, data: { turbo_confirm: "Stop #{@app.name}?" }, class: "inline-flex items-center px-2.5 py-1 text-xs text-on-surface-variant border border-outline-variant/15 rounded-md hover:border-error/50 hover:text-error transition cursor-pointer", title: "Stop" do %>
-          <span class="material-symbols-outlined text-[16px] mr-1">stop_circle</span>
-          Stop
-        <% end %>
-      <% end %>
-    </div>
-
-    <%= link_to "Delete", dashboard_app_path(@app), data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete #{@app.name}?" }, class: "text-sm text-error/70 hover:text-error font-medium transition" %>
   </div>
 </div>
 
-<% if @app.deploying? %>
-  <% latest_deploy = @app.deploys.order(created_at: :desc).first %>
-  <% if latest_deploy %>
-    <div class="mb-4 bg-tertiary-container/20 border border-tertiary/20 rounded-lg p-3 flex items-center justify-between">
-      <div class="flex items-center space-x-2">
-        <span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
-        <span class="text-sm text-tertiary">Deploying...</span>
-      </div>
-      <%= link_to "View logs", dashboard_app_deploy_path(@app, latest_deploy), class: "text-xs text-tertiary hover:text-tertiary/80 font-medium transition" %>
-    </div>
-  <% end %>
-<% end %>
+<div class="grid grid-cols-12 gap-6">
+  <%# ===== LEFT COLUMN (8-col) ===== %>
+  <div class="col-span-8 space-y-6">
 
-<%# Tabs — reuse shared partial but skip breadcrumb/title since show.html.erb has its own %>
-<div class="border-b border-outline-variant/15 mb-6">
-  <nav class="-mb-px flex space-x-6">
-    <%
-      tabs = [
-        { name: "Overview", path: dashboard_app_path(@app), exact: true },
-        { name: "Resources", path: dashboard_app_resources_path(@app) },
-        { name: "Config", path: dashboard_app_config_index_path(@app) },
-        { name: "Domains", path: dashboard_app_domains_path(@app) },
-        { name: "Releases", path: dashboard_app_releases_path(@app) },
-        { name: "Scaling", path: dashboard_app_scaling_path(@app) },
-        { name: "Logs", path: dashboard_app_logs_path(@app) },
-        { name: "Metrics", path: dashboard_app_metrics_path(@app) },
-      ]
-    %>
-    <% tabs.each do |tab| %>
+    <%# Live Metrics %>
+    <% if @container_stats.any? %>
       <%
-        active = tab[:exact] ? request.path == tab[:path] : request.path.start_with?(tab[:path])
-        classes = active ?
-          "border-b-2 border-primary text-primary py-3 text-sm font-medium font-label" :
-          "border-b-2 border-transparent text-outline hover:text-primary hover:border-outline-variant/30 py-3 text-sm font-medium font-label transition"
+        total_cpu = @container_stats.sum { |s| s[:cpu_percent] }
+        total_mem_mb = @container_stats.sum { |s|
+          u = s[:mem_usage].split("/").first.strip
+          u.include?("GiB") ? u.to_f * 1024 : u.to_f
+        }
+        configured_limit = @resources["default_limit_memory"].to_i
+        total_limit = configured_limit > 0 ? configured_limit * @container_stats.size : nil
+        mem_pct = total_limit ? (total_mem_mb / total_limit * 100).round(1) : @container_stats.sum { |s| s[:mem_percent] }
       %>
-      <%= link_to tab[:name], tab[:path], class: classes %>
+      <div class="grid grid-cols-3 gap-4">
+        <div class="bg-surface-container-low rounded-md p-5">
+          <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-2">CPU Usage</p>
+          <span class="text-3xl font-bold text-on-surface font-headline"><%= "%.1f" % total_cpu %>%</span>
+          <div class="mt-3 h-1.5 bg-surface rounded-full overflow-hidden">
+            <div class="h-full bg-primary rounded-full" style="width: <%= [total_cpu, 100].min %>%"></div>
+          </div>
+        </div>
+        <div class="bg-surface-container-low rounded-md p-5">
+          <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-2">Memory Usage</p>
+          <div class="flex items-end gap-2">
+            <span class="text-3xl font-bold text-on-surface font-headline"><%= "%.0f" % total_mem_mb %></span>
+            <span class="text-sm text-outline mb-1">MB<%= total_limit ? " / #{total_limit} MB" : "" %></span>
+          </div>
+          <% if total_limit %>
+            <div class="mt-3 h-1.5 bg-surface rounded-full overflow-hidden">
+              <div class="h-full rounded-full <%= mem_pct > 80 ? 'bg-error' : mem_pct > 60 ? 'bg-tertiary' : 'bg-primary' %>" style="width: <%= [mem_pct, 100].min %>%"></div>
+            </div>
+          <% end %>
+        </div>
+        <div class="bg-surface-container-low rounded-md p-5">
+          <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-2">Containers</p>
+          <span class="text-3xl font-bold text-on-surface font-headline"><%= @container_stats.size %></span>
+          <p class="text-xs text-outline mt-1">
+            <% @container_stats.each_with_index do |s, i| %>
+              <span class="font-mono"><%= s[:name].sub("#{@app.name}.", "") %></span><%= i < @container_stats.size - 1 ? ", " : "" %>
+            <% end %>
+          </p>
+        </div>
+      </div>
     <% end %>
-  </nav>
-</div>
 
-<%# Overview Content %>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-  <div class="bg-surface-container-low rounded-xl p-6">
-    <h3 class="text-[10px] text-outline uppercase tracking-wider font-bold mb-4">Details</h3>
-    <dl class="space-y-3">
-      <div class="flex justify-between">
-        <dt class="text-sm text-outline">Server</dt>
-        <dd class="text-sm text-on-surface font-mono"><%= @app.server.name %></dd>
+    <%# Live Logs %>
+    <div class="bg-surface-container-lowest rounded-md overflow-hidden">
+      <div class="px-6 py-3 border-b border-outline-variant/10 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <h2 class="font-headline text-sm font-bold text-on-surface">Logs</h2>
+          <% if @processes.any? %>
+            <span class="text-[10px] text-outline font-mono">
+              STREAMS: <%= @processes.map { |p| "#{p[:type]}.#{p[:index]}" }.join(", ") %>
+            </span>
+          <% end %>
+          <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span><span class="text-[10px] text-secondary uppercase font-bold">Live</span></span>
+        </div>
+        <%= link_to dashboard_app_logs_path(@app), class: "text-xs text-outline hover:text-primary transition" do %>
+          Full Logs <span class="material-symbols-outlined text-[14px] align-middle">open_in_new</span>
+        <% end %>
       </div>
-      <div class="flex justify-between">
-        <dt class="text-sm text-outline">Branch</dt>
-        <dd class="text-sm text-on-surface font-mono"><%= @app.deploy_branch || "main" %></dd>
+      <div class="p-4 font-mono text-xs leading-relaxed max-h-80 overflow-y-auto">
+        <% if @logs.any? %>
+          <% @logs.each do |line| %>
+            <div class="py-0.5 text-on-surface-variant hover:text-on-surface transition">
+              <% if line.include?("ERROR") || line.include?("error") %>
+                <span class="text-error"><%= line %></span>
+              <% elsif line.include?("WARN") || line.include?("warn") %>
+                <span class="text-tertiary"><%= line %></span>
+              <% else %>
+                <%= line %>
+              <% end %>
+            </div>
+          <% end %>
+        <% else %>
+          <p class="text-outline py-4 text-center">No recent logs.</p>
+        <% end %>
       </div>
-      <div class="flex justify-between">
-        <dt class="text-sm text-outline">Team</dt>
-        <dd class="text-sm text-on-surface"><%= @app.team.name %></dd>
+    </div>
+
+    <%# Environment Variables %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-6 py-3 border-b border-outline-variant/10 flex items-center justify-between">
+        <h2 class="font-headline text-sm font-bold text-on-surface">Environment Variables</h2>
+        <%= link_to dashboard_app_config_index_path(@app), class: "text-xs text-outline hover:text-primary transition flex items-center gap-1" do %>
+          <span class="material-symbols-outlined text-[14px]">edit</span> Manage
+        <% end %>
       </div>
-      <div class="flex justify-between">
-        <dt class="text-sm text-outline">Created</dt>
-        <dd class="text-sm text-on-surface-variant"><%= @app.created_at.strftime("%b %d, %Y") %></dd>
+      <% if @env_vars.any? %>
+        <div class="divide-y divide-outline-variant/10">
+          <% @env_vars.first(8).each do |var| %>
+            <div class="px-6 py-2.5 flex items-center justify-between hover:bg-surface-container-high/20 transition">
+              <span class="text-xs font-mono font-bold text-primary"><%= var.key %></span>
+              <span class="text-xs font-mono text-outline">••••••••</span>
+            </div>
+          <% end %>
+          <% if @env_vars.size > 8 %>
+            <div class="px-6 py-2.5 text-center">
+              <%= link_to "+#{@env_vars.size - 8} more", dashboard_app_config_index_path(@app), class: "text-xs text-outline hover:text-primary transition" %>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="px-6 py-6 text-center">
+          <p class="text-xs text-outline">No environment variables configured.</p>
+        </div>
+      <% end %>
+    </div>
+
+    <%# Domains %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-6 py-3 border-b border-outline-variant/10 flex items-center justify-between">
+        <h2 class="font-headline text-sm font-bold text-on-surface">Domains</h2>
+        <%= link_to dashboard_app_domains_path(@app), class: "text-xs text-outline hover:text-primary transition flex items-center gap-1" do %>
+          <span class="material-symbols-outlined text-[14px]">edit</span> Manage
+        <% end %>
       </div>
-    </dl>
+      <% if @domains.any? %>
+        <div class="divide-y divide-outline-variant/10">
+          <% @domains.each do |domain| %>
+            <div class="px-6 py-2.5 flex items-center justify-between hover:bg-surface-container-high/20 transition">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-[14px]">language</span>
+                <a href="https://<%= domain.hostname %>" target="_blank" class="text-xs font-mono text-primary hover:underline"><%= domain.hostname %></a>
+              </div>
+              <% if domain.ssl_enabled? rescue false %>
+                <span class="flex items-center gap-1 text-[10px] text-secondary"><span class="material-symbols-outlined text-[12px]">lock</span>SSL</span>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="px-6 py-6 text-center">
+          <p class="text-xs text-outline">No custom domains.</p>
+        </div>
+      <% end %>
+    </div>
+
+    <%# Add-ons %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-6 py-3 border-b border-outline-variant/10 flex items-center justify-between">
+        <h2 class="font-headline text-sm font-bold text-on-surface">Add-ons</h2>
+        <%= link_to dashboard_app_resources_path(@app), class: "text-xs text-outline hover:text-primary transition flex items-center gap-1" do %>
+          <span class="material-symbols-outlined text-[14px]">add</span> Manage
+        <% end %>
+      </div>
+      <% if @addons.any? %>
+        <div class="divide-y divide-outline-variant/10">
+          <% @addons.each do |addon| %>
+            <div class="px-6 py-2.5 flex items-center justify-between hover:bg-surface-container-high/20 transition">
+              <div class="flex items-center gap-3">
+                <% case addon.service_type %>
+                <% when "postgres", "mysql", "mariadb", "mongodb", "clickhouse" %>
+                  <span class="material-symbols-outlined text-secondary text-[16px]">database</span>
+                <% when "redis", "memcached" %>
+                  <span class="material-symbols-outlined text-tertiary text-[16px]">bolt</span>
+                <% else %>
+                  <span class="material-symbols-outlined text-primary text-[16px]">dns</span>
+                <% end %>
+                <span class="text-xs font-mono font-bold text-on-surface"><%= addon.name %></span>
+                <span class="text-[10px] text-outline"><%= addon.service_type %></span>
+              </div>
+              <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-secondary glow-running"></span><span class="text-[10px] text-outline">Running</span></span>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="px-6 py-6 text-center">
+          <p class="text-xs text-outline">No add-ons attached.</p>
+          <%= link_to "Add an add-on", dashboard_app_resources_path(@app), class: "text-xs text-primary hover:underline" %>
+        </div>
+      <% end %>
+    </div>
   </div>
 
-  <div class="bg-surface-container-low rounded-xl p-6">
-    <h3 class="text-[10px] text-outline uppercase tracking-wider font-bold mb-4">Recent Activity</h3>
-    <% recent_deploys = @app.deploys.recent.limit(5) %>
-    <% if recent_deploys.any? %>
-      <div class="space-y-3">
-        <% recent_deploys.each do |deploy| %>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-              <% case deploy.status %>
-              <% when "succeeded" %>
-                <span class="w-2 h-2 rounded-full bg-primary"></span>
-              <% when "failed" %>
-                <span class="w-2 h-2 rounded-full bg-error"></span>
-              <% when "building" %>
-                <span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
-              <% else %>
-                <span class="w-2 h-2 rounded-full bg-outline"></span>
-              <% end %>
-              <span class="text-sm text-on-surface-variant font-mono"><%= deploy.commit_sha&.first(7) || "manual" %></span>
-            </div>
-            <span class="text-xs text-outline"><%= time_ago_in_words(deploy.created_at) %> ago</span>
+  <%# ===== RIGHT COLUMN (4-col) ===== %>
+  <div class="col-span-4 space-y-6">
+
+    <%# App Information %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-5 py-3 border-b border-outline-variant/10">
+        <p class="text-[10px] text-outline uppercase tracking-widest font-bold">App Information</p>
+      </div>
+      <div class="divide-y divide-outline-variant/10">
+        <div class="px-5 py-3 flex items-center justify-between">
+          <span class="text-xs text-outline">Server</span>
+          <span class="text-xs font-mono font-bold text-on-surface"><%= @app.server.name %></span>
+        </div>
+        <div class="px-5 py-3 flex items-center justify-between">
+          <span class="text-xs text-outline">Branch</span>
+          <span class="text-xs font-mono font-bold text-on-surface"><%= @app.deploy_branch || "main" %></span>
+        </div>
+        <div class="px-5 py-3 flex items-center justify-between">
+          <span class="text-xs text-outline">Team</span>
+          <span class="text-xs font-bold text-on-surface"><%= @app.team.name %></span>
+        </div>
+        <% if @current_allocation %>
+          <div class="px-5 py-3 flex items-center justify-between">
+            <span class="text-xs text-outline">Container</span>
+            <span class="text-xs font-bold text-on-surface capitalize"><%= @current_allocation.dyno_tier.name %></span>
           </div>
         <% end %>
+        <% if (last_deploy = @app.deploys.order(created_at: :desc).first) && last_deploy.commit_sha.present? %>
+          <div class="px-5 py-3 flex items-center justify-between">
+            <span class="text-xs text-outline">Commit</span>
+            <span class="text-xs font-mono font-bold text-primary">#<%= last_deploy.commit_sha.first(7) %></span>
+          </div>
+        <% end %>
+        <div class="px-5 py-3 flex items-center justify-between">
+          <span class="text-xs text-outline">Created</span>
+          <span class="text-xs text-on-surface-variant"><%= @app.created_at.strftime("%b %d, %Y") %></span>
+        </div>
       </div>
-    <% else %>
-      <p class="text-sm text-outline">No deploys yet.</p>
+    </div>
+
+    <%# Resource Limits %>
+    <% if @resources.any? %>
+      <%
+        mem_limit = @resources["default_limit_memory"]
+        cpu_limit = @resources["default_limit_cpu"]
+      %>
+      <% if mem_limit.present? || cpu_limit.present? %>
+        <div class="bg-surface-container-low rounded-md overflow-hidden">
+          <div class="px-5 py-3 border-b border-outline-variant/10">
+            <p class="text-[10px] text-outline uppercase tracking-widest font-bold">Resource Limits</p>
+          </div>
+          <div class="grid grid-cols-2 divide-x divide-outline-variant/10">
+            <div class="p-4 text-center">
+              <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Memory</p>
+              <span class="text-lg font-bold text-on-surface font-mono"><%= mem_limit || "—" %> MB</span>
+            </div>
+            <div class="p-4 text-center">
+              <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">CPU</p>
+              <span class="text-lg font-bold text-on-surface font-mono"><%= cpu_limit || "—" %> vCPU</span>
+            </div>
+          </div>
+          <div class="px-5 py-2.5 bg-surface/30 text-center">
+            <%= link_to "Change Plan", dashboard_app_scaling_path(@app), class: "text-xs text-primary hover:underline font-semibold" %>
+          </div>
+        </div>
+      <% end %>
     <% end %>
+
+    <%# Pipeline Status — Recent Deploys %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-5 py-3 border-b border-outline-variant/10 flex items-center justify-between">
+        <p class="text-[10px] text-outline uppercase tracking-widest font-bold">Pipeline Status</p>
+        <%= link_to dashboard_app_releases_path(@app), class: "text-xs text-outline hover:text-primary transition" do %>
+          All Releases
+        <% end %>
+      </div>
+      <% if @releases.any? %>
+        <div class="px-5 py-4">
+          <div class="space-y-4">
+            <% @releases.first(3).each do |release| %>
+              <div class="flex gap-3">
+                <div class="flex flex-col items-center">
+                  <% if release.deploy&.succeeded? %>
+                    <span class="w-2 h-2 rounded-full bg-secondary mt-1"></span>
+                  <% elsif release.deploy&.failed? %>
+                    <span class="w-2 h-2 rounded-full bg-error mt-1"></span>
+                  <% else %>
+                    <span class="w-2 h-2 rounded-full bg-outline mt-1"></span>
+                  <% end %>
+                  <div class="w-px flex-1 bg-outline-variant/20 my-1"></div>
+                </div>
+                <div class="pb-2">
+                  <p class="text-xs font-bold text-on-surface">
+                    <% if release.deploy&.succeeded? %>Build Succeeded
+                    <% elsif release.deploy&.failed? %>Build Failed
+                    <% elsif release.deploy&.building? %>Building...
+                    <% else %><%= release.description || "Release" %>
+                    <% end %>
+                  </p>
+                  <p class="text-[10px] text-outline mt-0.5">
+                    v<%= release.version %>
+                    <% if release.deploy&.commit_sha.present? %> · <%= release.deploy.commit_sha.first(7) %><% end %>
+                    · <%= time_ago_in_words(release.created_at) %> ago
+                  </p>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% else %>
+        <div class="px-5 py-6 text-center">
+          <p class="text-xs text-outline">No deploys yet.</p>
+        </div>
+      <% end %>
+    </div>
+
+    <%# Quick Links %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-5 py-3 border-b border-outline-variant/10">
+        <p class="text-[10px] text-outline uppercase tracking-widest font-bold">Quick Links</p>
+      </div>
+      <div class="divide-y divide-outline-variant/10">
+        <%= link_to dashboard_app_config_index_path(@app), class: "px-5 py-2.5 flex items-center gap-3 text-xs text-on-surface-variant hover:bg-surface-container-high/30 hover:text-on-surface transition" do %>
+          <span class="material-symbols-outlined text-[16px]">tune</span> Config Vars
+        <% end %>
+        <%= link_to dashboard_app_scaling_path(@app), class: "px-5 py-2.5 flex items-center gap-3 text-xs text-on-surface-variant hover:bg-surface-container-high/30 hover:text-on-surface transition" do %>
+          <span class="material-symbols-outlined text-[16px]">swap_vert</span> Scaling & Plan
+        <% end %>
+        <%= link_to dashboard_app_metrics_path(@app), class: "px-5 py-2.5 flex items-center gap-3 text-xs text-on-surface-variant hover:bg-surface-container-high/30 hover:text-on-surface transition" do %>
+          <span class="material-symbols-outlined text-[16px]">monitoring</span> Full Metrics
+        <% end %>
+        <%= link_to dashboard_app_logs_path(@app), class: "px-5 py-2.5 flex items-center gap-3 text-xs text-on-surface-variant hover:bg-surface-container-high/30 hover:text-on-surface transition" do %>
+          <span class="material-symbols-outlined text-[16px]">receipt_long</span> Full Logs
+        <% end %>
+        <% if @app.server %>
+          <%= link_to dashboard_app_terminal_path(@app), class: "px-5 py-2.5 flex items-center gap-3 text-xs text-on-surface-variant hover:bg-surface-container-high/30 hover:text-on-surface transition" do %>
+            <span class="material-symbols-outlined text-[16px]">terminal</span> Console
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+
+    <%# Ownership %>
+    <div class="bg-surface-container-low rounded-md p-5">
+      <p class="text-[10px] text-outline uppercase tracking-widest font-bold mb-3">Ownership</p>
+      <div class="flex items-center gap-3">
+        <div class="h-8 w-8 rounded-lg bg-primary-container flex items-center justify-center">
+          <span class="text-primary text-xs font-bold"><%= @app.creator&.email&.first&.upcase || "?" %></span>
+        </div>
+        <div>
+          <p class="text-xs font-bold text-on-surface"><%= @app.team.name %></p>
+          <p class="text-[10px] text-outline"><%= @app.creator&.email %></p>
+        </div>
+      </div>
+    </div>
+
+    <%# Danger Zone %>
+    <div class="bg-error-container/10 border border-error/20 rounded-md p-5 text-center">
+      <%= link_to "Delete Application", dashboard_app_path(@app),
+            data: { turbo_method: :delete, turbo_confirm: "Permanently delete #{@app.name}? This cannot be undone." },
+            class: "text-sm text-error hover:text-error font-semibold transition" %>
+    </div>
   </div>
 </div>
