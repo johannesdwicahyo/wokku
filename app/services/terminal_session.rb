@@ -21,7 +21,7 @@ class TerminalSession
         ch.request_pty(term: "xterm-256color", chars_wide: 120, chars_high: 30) do |_ch, success|
           raise "Failed to get PTY" unless success
         end
-        ch.exec("docker exec -i #{container} /bin/bash 2>/dev/null || docker exec -i #{container} /bin/sh") do |_ch, success|
+        ch.exec("docker exec #{container} script -qc /bin/bash /dev/null 2>/dev/null || docker exec #{container} /bin/sh") do |_ch, success|
           raise "Failed to enter container" unless success
         end
       end
