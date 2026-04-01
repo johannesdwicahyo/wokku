@@ -58,10 +58,12 @@ module Dashboard
 
     def fetch_container_stats
       server = @app.server
-      ssh_user = server.ssh_user.presence || "dokku"
+      # Use 'deploy' user for docker stats since 'dokku' user is a restricted shell
+      # that only accepts dokku commands, not arbitrary docker commands
+      stats_user = "deploy"
       output = Net::SSH.start(
         server.host,
-        ssh_user,
+        stats_user,
         port: server.port,
         non_interactive: true,
         timeout: 10,
