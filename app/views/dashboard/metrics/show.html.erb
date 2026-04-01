@@ -56,9 +56,20 @@
   <%# Summary Cards %>
   <%
     total_cpu = @container_stats.sum { |s| s[:cpu_percent] }
-    total_mem_percent = @container_stats.sum { |s| s[:mem_percent] }
-    mem_parts = @container_stats.first[:mem_usage].split("/")
-    mem_limit = mem_parts.last.strip
+    # Calculate total memory usage in MB from each container's mem_usage string
+    total_mem_mb = @container_stats.sum { |s|
+      usage_str = s[:mem_usage].split("/").first.strip
+      if usage_str.include?("GiB")
+        usage_str.to_f * 1024
+      else
+        usage_str.to_f
+      end
+    }
+    # Use configured limit if available, otherwise fall back to Docker's reported limit
+    configured_limit_mb = @resources["default_limit_memory"].to_i
+    per_container_limit = configured_limit_mb > 0 ? configured_limit_mb : nil
+    total_limit_mb = per_container_limit ? per_container_limit * @container_stats.size : nil
+    mem_percent = total_limit_mb ? (total_mem_mb / total_limit_mb * 100).round(1) : total_mem_percent = @container_stats.sum { |s| s[:mem_percent] }
   %>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
     <div class="bg-surface-container-low rounded-xl p-5">
@@ -71,19 +82,23 @@
       </div>
     </div>
     <div class="bg-surface-container-low rounded-xl p-5">
-      <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-2">Total Memory</p>
+      <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-2">Memory Usage</p>
       <div class="flex items-end space-x-2">
-        <span class="text-3xl font-bold text-on-surface font-mono"><%= "%.1f" % total_mem_percent %>%</span>
-        <span class="text-sm text-outline mb-1">of <%= mem_limit %></span>
+        <span class="text-3xl font-bold text-on-surface font-mono"><%= "%.0f" % total_mem_mb %> MB</span>
+        <% if total_limit_mb %>
+          <span class="text-sm text-outline mb-1">/ <%= total_limit_mb >= 1024 ? "#{(total_limit_mb / 1024.0).round(1)} GB" : "#{total_limit_mb} MB" %></span>
+        <% end %>
       </div>
-      <div class="mt-3 h-2 bg-surface rounded-full overflow-hidden">
-        <div class="h-full rounded-full transition-all <%= total_mem_percent > 80 ? 'bg-error' : total_mem_percent > 60 ? 'bg-tertiary' : 'bg-primary' %>" style="width: <%= [total_mem_percent, 100].min %>%"></div>
-      </div>
+      <% if total_limit_mb %>
+        <div class="mt-3 h-2 bg-surface rounded-full overflow-hidden">
+          <div class="h-full rounded-full transition-all <%= mem_percent > 80 ? 'bg-error' : mem_percent > 60 ? 'bg-tertiary' : 'bg-primary' %>" style="width: <%= [mem_percent, 100].min %>%"></div>
+        </div>
+      <% end %>
     </div>
     <div class="bg-surface-container-low rounded-xl p-5">
       <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-2">Containers</p>
       <span class="text-3xl font-bold text-on-surface font-mono"><%= @container_stats.size %></span>
-      <p class="text-xs text-outline mt-2"><%= @container_stats.size %> running</p>
+      <p class="text-xs text-outline mt-2"><%= @container_stats.size %> running<%= per_container_limit ? " · #{per_container_limit} MB each" : "" %></p>
     </div>
   </div>
 
@@ -119,11 +134,16 @@
               </div>
             </td>
             <td class="px-6 py-3">
+              <%
+                container_mem_str = stat[:mem_usage].split("/").first.strip
+                container_mem_mb = container_mem_str.include?("GiB") ? (container_mem_str.to_f * 1024).round(0) : container_mem_str.to_f.round(0)
+                container_mem_pct = per_container_limit ? (container_mem_mb.to_f / per_container_limit * 100).round(1) : stat[:mem_percent]
+              %>
               <div class="flex items-center space-x-2">
                 <div class="w-16 h-1.5 bg-surface rounded-full overflow-hidden">
-                  <div class="h-full rounded-full <%= stat[:mem_percent] > 80 ? 'bg-error' : stat[:mem_percent] > 60 ? 'bg-tertiary' : 'bg-primary' %>" style="width: <%= [stat[:mem_percent], 100].min %>%"></div>
+                  <div class="h-full rounded-full <%= container_mem_pct > 80 ? 'bg-error' : container_mem_pct > 60 ? 'bg-tertiary' : 'bg-primary' %>" style="width: <%= [container_mem_pct, 100].min %>%"></div>
                 </div>
-                <span class="text-sm font-mono text-on-surface-variant"><%= stat[:mem_usage] %></span>
+                <span class="text-sm font-mono text-on-surface-variant"><%= container_mem_mb %> MB<%= per_container_limit ? " / #{per_container_limit} MB" : "" %></span>
               </div>
             </td>
             <td class="px-6 py-3 text-sm font-mono text-on-surface-variant"><%= stat[:net_io] %></td>
