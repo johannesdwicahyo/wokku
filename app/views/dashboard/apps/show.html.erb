@@ -164,7 +164,7 @@
                 <span class="material-symbols-outlined text-primary text-[14px]">language</span>
                 <a href="https://<%= domain.hostname %>" target="_blank" class="text-xs font-mono text-primary hover:underline"><%= domain.hostname %></a>
               </div>
-              <% if domain.ssl_enabled? rescue false %>
+              <% if domain.respond_to?(:ssl_enabled?) && domain.ssl_enabled? %>
                 <span class="flex items-center gap-1 text-[10px] text-secondary"><span class="material-symbols-outlined text-[12px]">lock</span>SSL</span>
               <% end %>
             </div>
