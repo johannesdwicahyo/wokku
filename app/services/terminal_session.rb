@@ -3,8 +3,9 @@ class TerminalSession
 
   TIMEOUT = 15.minutes
 
-  def initialize(server:, timeout: TIMEOUT)
+  def initialize(server:, command: nil, timeout: TIMEOUT)
     @server = server
+    @command = command
     @timeout = timeout
     @ssh = nil
     @channel = nil
@@ -21,8 +22,14 @@ class TerminalSession
       ch.request_pty(term: "xterm-256color", chars_wide: 120, chars_high: 30) do |_ch, success|
         raise "Failed to get PTY" unless success
       end
-      ch.send_channel_request("shell") do |_ch, success|
-        raise "Failed to open shell" unless success
+      if @command
+        ch.exec(@command) do |_ch, success|
+          raise "Failed to execute command" unless success
+        end
+      else
+        ch.send_channel_request("shell") do |_ch, success|
+          raise "Failed to open shell" unless success
+        end
       end
     end
     touch!
