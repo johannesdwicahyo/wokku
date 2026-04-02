@@ -1,0 +1,46 @@
+<div class="max-w-lg mx-auto">
+  <div class="mb-6">
+    <%= link_to dashboard_profile_path, class: "flex items-center gap-2 text-sm text-outline hover:text-primary transition" do %>
+      <span class="material-symbols-outlined text-[18px]">arrow_back</span> Settings
+    <% end %>
+  </div>
+
+  <h1 class="font-headline text-2xl font-bold text-on-surface mb-2">Two-Factor Authentication</h1>
+  <p class="text-sm text-outline mb-8">Add an extra layer of security to your account.</p>
+
+  <% if current_user.two_factor_enabled? %>
+    <div class="bg-secondary-container/20 border border-secondary/30 rounded-md p-6 mb-6">
+      <div class="flex items-center gap-3 mb-3">
+        <span class="material-symbols-outlined text-secondary text-[24px]">verified_user</span>
+        <h2 class="text-sm font-bold text-on-surface">2FA is Enabled</h2>
+      </div>
+      <p class="text-xs text-outline mb-4">Your account is protected with two-factor authentication.</p>
+      <%= form_with url: disable_dashboard_two_factor_path, method: :delete, class: "space-y-3" do |f| %>
+        <div>
+          <label class="block text-xs text-on-surface-variant mb-1 uppercase tracking-wider font-bold">Enter code to disable</label>
+          <%= f.text_field :otp_code, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface font-mono focus:ring-1 focus:ring-primary", placeholder: "000000", maxlength: 6, autocomplete: "one-time-code" %>
+        </div>
+        <%= f.submit "Disable 2FA", class: "px-4 py-2 text-sm font-semibold text-error border border-error/30 rounded-md hover:bg-error/10 transition cursor-pointer" %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="bg-surface-container-low rounded-md p-6 mb-6">
+      <h2 class="text-sm font-bold text-on-surface mb-4">1. Scan QR Code</h2>
+      <p class="text-xs text-outline mb-4">Scan this code with Google Authenticator, Authy, or any TOTP app.</p>
+      <div class="bg-white rounded-md p-4 inline-block mb-4">
+        <%= raw @qr_code %>
+      </div>
+    </div>
+
+    <div class="bg-surface-container-low rounded-md p-6">
+      <h2 class="text-sm font-bold text-on-surface mb-4">2. Enter Verification Code</h2>
+      <%= form_with url: enable_dashboard_two_factor_path, method: :post, class: "space-y-4" do |f| %>
+        <div>
+          <label class="block text-xs text-on-surface-variant mb-1 uppercase tracking-wider font-bold">6-digit code</label>
+          <%= f.text_field :otp_code, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface font-mono text-center text-lg tracking-[0.5em] focus:ring-1 focus:ring-primary", placeholder: "000000", maxlength: 6, autocomplete: "one-time-code" %>
+        </div>
+        <%= f.submit "Enable 2FA", class: "w-full py-2 px-4 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer text-center" %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

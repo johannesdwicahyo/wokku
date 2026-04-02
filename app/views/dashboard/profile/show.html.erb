@@ -147,6 +147,31 @@
   <%# ===== RIGHT COLUMN (4-col) ===== %>
   <div class="col-span-4 space-y-6">
 
+    <%# Security — 2FA %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-5 py-3 border-b border-outline-variant/10">
+        <p class="text-[10px] text-outline uppercase tracking-widest font-bold">Security</p>
+      </div>
+      <div class="p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px] <%= current_user.respond_to?(:two_factor_enabled?) && current_user.two_factor_enabled? ? 'text-secondary' : 'text-outline' %>">
+              <%= current_user.respond_to?(:two_factor_enabled?) && current_user.two_factor_enabled? ? 'verified_user' : 'shield' %>
+            </span>
+            <span class="text-xs font-bold text-on-surface">Two-Factor Auth</span>
+          </div>
+          <% if current_user.respond_to?(:two_factor_enabled?) && current_user.two_factor_enabled? %>
+            <span class="text-[10px] font-bold text-secondary uppercase tracking-wider bg-secondary-container/20 px-2 py-0.5 rounded">Enabled</span>
+          <% else %>
+            <span class="text-[10px] font-bold text-outline uppercase tracking-wider">Disabled</span>
+          <% end %>
+        </div>
+        <%= link_to dashboard_two_factor_path, class: "block w-full text-center py-2 text-xs font-semibold border border-outline-variant/15 rounded-md text-on-surface-variant hover:text-on-surface hover:border-outline transition" do %>
+          <%= current_user.respond_to?(:two_factor_enabled?) && current_user.two_factor_enabled? ? "Manage 2FA" : "Enable 2FA" %>
+        <% end %>
+      </div>
+    </div>
+
     <%# API Credentials %>
     <div class="bg-surface-container-low rounded-md overflow-hidden">
       <div class="px-5 py-3 border-b border-outline-variant/10">
