@@ -6,11 +6,13 @@
   @keyframes float-up { from { opacity: 0; transform: translateY(20px) } to { opacity: 1; transform: translateY(0) } }
   @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(192, 193, 255, 0.1) } 50% { box-shadow: 0 0 40px rgba(192, 193, 255, 0.2) } }
   @keyframes grid-fade { from { opacity: 0 } to { opacity: 0.03 } }
+  @keyframes count-up { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: translateY(0) } }
   .animate-float { animation: float-up 0.6s ease-out both; }
   .animate-float-1 { animation-delay: 0.1s; }
   .animate-float-2 { animation-delay: 0.2s; }
   .animate-float-3 { animation-delay: 0.3s; }
   .animate-float-4 { animation-delay: 0.4s; }
+  .animate-float-5 { animation-delay: 0.5s; }
   .terminal-line { overflow: hidden; white-space: nowrap; animation: terminal-type 0.8s steps(40) both; }
   .terminal-line-2 { animation-delay: 1s; }
   .terminal-line-3 { animation-delay: 1.8s; }
@@ -22,6 +24,11 @@
   .glow-border { position: relative; }
   .glow-border::before { content: ''; position: absolute; inset: -1px; border-radius: inherit; background: linear-gradient(135deg, rgba(192, 193, 255, 0.3), transparent 50%, rgba(192, 193, 255, 0.1)); z-index: -1; opacity: 0; transition: opacity 0.3s; }
   .glow-border:hover::before { opacity: 1; }
+  .feature-card { transition: all 0.2s ease; }
+  .feature-card:hover { transform: translateY(-2px); background: rgba(30, 41, 59, 0.7); }
+  .pricing-card { transition: all 0.2s ease; }
+  .pricing-card:hover { transform: translateY(-3px); }
+  .comparison-strike { text-decoration: line-through; color: #958e9e; }
 </style>
 
 <!-- Hero -->
@@ -34,30 +41,30 @@
     <div class="text-center max-w-4xl mx-auto">
       <div class="animate-float inline-flex items-center px-3 py-1 rounded-full bg-[#c0c1ff]/10 border border-[#c0c1ff]/20 mb-8">
         <span class="w-1.5 h-1.5 rounded-full bg-[#c0c1ff] mr-2"></span>
-        <span class="text-xs text-[#c0c1ff] font-medium tracking-wide">Open Source &middot; 50+ Apps &middot; Free Tier Available</span>
+        <span class="text-xs text-[#c0c1ff] font-medium tracking-wide">Open Source &middot; Built on Dokku &middot; Deploy in 30 seconds</span>
       </div>
 
-      <h1 class="animate-float animate-float-1 text-5xl sm:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-[1.1]">
-        Deploy anything<br>
-        <span class="bg-gradient-to-r from-[#c0c1ff] to-[#a78bfa] bg-clip-text text-transparent">in one click</span>
+      <h1 class="animate-float animate-float-1 text-5xl sm:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-[1.1]" style="font-family: 'Space Grotesk', sans-serif;">
+        Your own cloud.<br>
+        <span class="bg-gradient-to-r from-[#c0c1ff] to-[#a78bfa] bg-clip-text text-transparent">60% cheaper than Heroku.</span>
       </h1>
 
       <p class="animate-float animate-float-2 mt-6 text-lg sm:text-xl text-[#958e9e] max-w-2xl mx-auto leading-relaxed">
-        Open-source cloud platform for developers and creators. Run popular apps or push your own code — 60% cheaper than Heroku.
+        Open-source PaaS with <span class="text-white font-medium">50+ templates</span>, <span class="text-white font-medium">11 managed add-ons</span>, and containers starting at <span class="text-white font-medium">$1.50/mo</span>. The Heroku experience on your own servers.
       </p>
 
       <div class="animate-float animate-float-3 mt-10 flex flex-col sm:flex-row justify-center gap-4">
-        <%= link_to dashboard_templates_path, class: "inline-flex items-center justify-center px-8 py-3.5 technical-gradient text-[#282a64] text-sm font-semibold rounded-lg hover:opacity-90 transition shadow-lg shadow-[#c0c1ff]/20" do %>
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
-          Browse Apps
+        <%= link_to new_user_registration_path, class: "inline-flex items-center justify-center px-8 py-3.5 text-sm font-semibold rounded-lg hover:opacity-90 transition shadow-lg shadow-[#c0c1ff]/20 text-[#282a64]", style: "background: linear-gradient(135deg, #c0c1ff 0%, #5625ab 100%);" do %>
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          Start Free
         <% end %>
-        <%= link_to new_user_registration_path, class: "inline-flex items-center justify-center px-8 py-3.5 border border-[#334155] text-white text-sm font-semibold rounded-lg hover:bg-[#1E293B] hover:border-[#475569] transition" do %>
-          Start Building
+        <%= link_to dashboard_templates_path, class: "inline-flex items-center justify-center px-8 py-3.5 border border-[#c0c1ff]/30 text-[#c0c1ff] text-sm font-semibold rounded-lg hover:bg-[#c0c1ff]/10 transition" do %>
+          View Templates
           <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
         <% end %>
       </div>
 
-      <p class="animate-float animate-float-4 mt-6 text-xs text-[#4a4453]">Free tier included. No credit card required.</p>
+      <p class="animate-float animate-float-4 mt-6 text-xs text-[#4a4453]">Free tier included &middot; No credit card required &middot; Deploy in under 5 minutes</p>
     </div>
 
     <!-- Terminal Preview -->
@@ -83,232 +90,345 @@
   </div>
 </div>
 
-<!-- Popular Apps -->
+<!-- Why Wokku — Comparison -->
 <div class="border-t border-[#28283d]/30">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-    <div class="text-center mb-12">
-      <h2 class="text-3xl font-bold text-white">Deploy popular apps instantly</h2>
-      <p class="mt-3 text-[#958e9e]">One click. No server knowledge needed. Pick an app and it's live.</p>
+    <div class="text-center mb-16">
+      <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;">Why Wokku?</h2>
+      <p class="mt-3 text-[#958e9e] text-lg">Same developer experience. Fraction of the cost.</p>
     </div>
 
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+    <div class="max-w-3xl mx-auto">
+      <div class="bg-[#1e1e32] rounded-2xl overflow-hidden">
+        <div class="p-8">
+          <p class="text-sm text-[#958e9e] font-mono mb-6">PostgreSQL + Redis + Your App</p>
+
+          <div class="space-y-4">
+            <!-- Heroku -->
+            <div class="flex items-center justify-between p-4 rounded-xl bg-[#111125] border border-[#28283d]/50">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-lg bg-[#6762A6]/20 flex items-center justify-center">
+                  <span class="text-xs font-bold text-[#958e9e]">H</span>
+                </div>
+                <div>
+                  <span class="text-sm font-medium text-[#958e9e]">Heroku</span>
+                  <p class="text-xs text-[#4a4453]">Basic dyno + Mini Postgres + Mini Redis</p>
+                </div>
+              </div>
+              <span class="text-lg font-mono font-bold text-[#958e9e] comparison-strike">$32/mo</span>
+            </div>
+
+            <!-- Wokku -->
+            <div class="flex items-center justify-between p-4 rounded-xl bg-[#c0c1ff]/5 border border-[#c0c1ff]/20">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-lg bg-[#c0c1ff]/20 flex items-center justify-center">
+                  <span class="text-xs font-bold text-[#c0c1ff]">W</span>
+                </div>
+                <div>
+                  <span class="text-sm font-medium text-white">Wokku</span>
+                  <p class="text-xs text-[#958e9e]">Starter container + free Postgres + free Redis</p>
+                </div>
+              </div>
+              <span class="text-lg font-mono font-bold text-[#c0c1ff]">$1.50/mo</span>
+            </div>
+          </div>
+
+          <div class="mt-6 text-center">
+            <span class="inline-flex items-center px-4 py-2 rounded-full bg-[#c0c1ff]/10 border border-[#c0c1ff]/20">
+              <span class="text-sm font-semibold text-[#c0c1ff]">Save 95% on your infrastructure</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Features Grid -->
+<div class="border-t border-[#28283d]/30 bg-[#0D1424]">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+    <div class="text-center mb-16">
+      <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;">Everything you need to ship</h2>
+      <p class="mt-3 text-[#958e9e] text-lg">Production-ready infrastructure without the complexity.</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <%
-        popular_apps = [
-          { name: "n8n", icon: "🔄", desc: "Workflow automation" },
-          { name: "Waha", icon: "📱", desc: "WhatsApp API" },
-          { name: "Ghost", icon: "📝", desc: "Publishing platform" },
-          { name: "Uptime Kuma", icon: "📈", desc: "Uptime monitoring" },
-          { name: "Umami", icon: "📊", desc: "Web analytics" },
-          { name: "Vaultwarden", icon: "🔒", desc: "Password manager" },
-          { name: "NocoDB", icon: "🗄️", desc: "Airtable alternative" },
-          { name: "Grafana", icon: "📈", desc: "Metrics dashboards" },
-          { name: "Cal.com", icon: "📅", desc: "Scheduling" },
-          { name: "Listmonk", icon: "📧", desc: "Email newsletters" },
-          { name: "Miniflux", icon: "📰", desc: "RSS reader" },
-          { name: "Supabase", icon: "🏗️", desc: "Firebase alternative" },
+        features = [
+          {
+            icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>',
+            title: "1-Click Deploy",
+            desc: "50+ templates ready to go. n8n, Ghost, Uptime Kuma, WordPress — deploy any app in under 30 seconds."
+          },
+          {
+            icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"/></svg>',
+            title: "GitHub Auto-Deploy",
+            desc: "Push to deploy. Connect your repo, and every git push triggers an automatic build and zero-downtime deploy."
+          },
+          {
+            icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"/></svg>',
+            title: "11 Managed Add-ons",
+            desc: "Postgres, Redis, MongoDB, MySQL, MariaDB, Memcached, RabbitMQ, ClickHouse, Elasticsearch, Grafana, Loki."
+          },
+          {
+            icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z"/></svg>',
+            title: "Container Console",
+            desc: "Browser-based terminal. SSH into any container directly from the dashboard — no local tools needed."
+          },
+          {
+            icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>',
+            title: "Custom Domains + SSL",
+            desc: "Free Let's Encrypt certificates, auto-renewed. Add unlimited custom domains to any app."
+          },
+          {
+            icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>',
+            title: "Team Collaboration",
+            desc: "Role-based access control, activity logs, and team management. Built for small teams and agencies."
+          },
+          {
+            icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 9.75L16.5 12l-2.25 2.25m-4.5 0L7.5 12l2.25-2.25M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z"/></svg>',
+            title: "API + CLI + MCP",
+            desc: "Full REST API, Ruby CLI gem, and MCP server for AI-assisted deployments. Automate everything."
+          },
+          {
+            icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/></svg>',
+            title: "5 Container Sizes",
+            desc: "From 256 MB free tier to 4 GB Pro. Scale vertically and horizontally as your app grows."
+          },
+          {
+            icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>',
+            title: "Server Security",
+            desc: "UFW firewall, fail2ban, hardened SSH, and automatic security updates. Your servers, locked down."
+          }
         ]
       %>
-      <% popular_apps.each do |app| %>
-        <div class="app-card glow-border bg-[#1E293B]/50 rounded-lg border border-[#334155]/50 p-4 transition-all duration-200 cursor-pointer">
-          <div class="text-2xl mb-2"><%= app[:icon] %></div>
-          <h3 class="text-sm font-semibold text-white"><%= app[:name] %></h3>
-          <p class="text-[11px] text-[#958e9e] mt-0.5"><%= app[:desc] %></p>
+      <% features.each do |feature| %>
+        <div class="feature-card bg-[#1e1e32] rounded-xl p-6">
+          <div class="w-10 h-10 rounded-lg bg-[#c0c1ff]/10 flex items-center justify-center text-[#c0c1ff] mb-4">
+            <%= feature[:icon].html_safe %>
+          </div>
+          <h3 class="text-base font-semibold text-white mb-2"><%= feature[:title] %></h3>
+          <p class="text-sm text-[#958e9e] leading-relaxed"><%= feature[:desc] %></p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Templates Showcase -->
+<div class="border-t border-[#28283d]/30">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+    <div class="text-center mb-16">
+      <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;">Popular templates</h2>
+      <p class="mt-3 text-[#958e9e] text-lg">Deploy production-ready apps with a single click.</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <%
+        templates = [
+          { name: "n8n", emoji: "🔄", desc: "Workflow automation platform. Connect APIs, build automations, no code required.", category: "Automation" },
+          { name: "Uptime Kuma", emoji: "📈", desc: "Self-hosted monitoring tool. Track uptime for websites, APIs, and TCP services.", category: "Monitoring" },
+          { name: "Ghost", emoji: "📝", desc: "Professional publishing platform. Memberships, newsletters, and content monetization.", category: "CMS" },
+          { name: "WordPress", emoji: "🌐", desc: "The world's most popular CMS. Themes, plugins, and full customization.", category: "CMS" },
+          { name: "Strapi", emoji: "🏗️", desc: "Headless CMS with a visual content editor. Build APIs without writing code.", category: "CMS" },
+          { name: "Redis Stack", emoji: "🔴", desc: "Redis with JSON, search, time series, and graph modules built in.", category: "Database" }
+        ]
+      %>
+      <% templates.each do |template| %>
+        <div class="app-card glow-border bg-[#1e1e32] rounded-xl p-6 transition-all duration-200">
+          <div class="flex items-start justify-between mb-4">
+            <div class="text-3xl"><%= template[:emoji] %></div>
+            <span class="text-[10px] font-mono text-[#958e9e] bg-[#111125] px-2 py-0.5 rounded"><%= template[:category] %></span>
+          </div>
+          <h3 class="text-base font-semibold text-white mb-2"><%= template[:name] %></h3>
+          <p class="text-sm text-[#958e9e] leading-relaxed mb-4"><%= template[:desc] %></p>
+          <%= link_to dashboard_templates_path, class: "inline-flex items-center text-xs font-medium text-[#c0c1ff] hover:text-white transition" do %>
+            Deploy
+            <svg class="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="text-center mt-10">
+      <%= link_to dashboard_templates_path, class: "inline-flex items-center px-6 py-3 border border-[#c0c1ff]/30 text-[#c0c1ff] text-sm font-medium rounded-lg hover:bg-[#c0c1ff]/10 transition" do %>
+        View all 50+ templates
+        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Developer Experience — 4 Ways to Interact -->
+<div class="border-t border-[#28283d]/30 bg-[#0D1424]">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+    <div class="text-center mb-16">
+      <div class="inline-flex items-center px-2.5 py-1 rounded-md bg-[#1e1e32] border border-[#c0c1ff]/20 mb-6">
+        <span class="text-[10px] text-[#c0c1ff] font-mono font-medium tracking-wider uppercase">For Developers</span>
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;">4 ways to deploy</h2>
+      <p class="mt-3 text-[#958e9e] text-lg">Dashboard, CLI, API, or AI. Pick what fits your workflow.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Web Dashboard -->
+      <div class="bg-[#1e1e32] rounded-xl p-6">
+        <div class="flex items-center space-x-3 mb-4">
+          <div class="w-10 h-10 rounded-lg bg-[#c0c1ff]/10 flex items-center justify-center">
+            <svg class="w-5 h-5 text-[#c0c1ff]" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25"/></svg>
+          </div>
+          <h3 class="text-base font-semibold text-white">Web Dashboard</h3>
+        </div>
+        <p class="text-sm text-[#958e9e] leading-relaxed mb-4">Point-and-click interface. Deploy apps, manage databases, view logs, and scale containers — all from your browser.</p>
+        <div class="rounded-lg bg-[#111125] border border-[#28283d]/50 p-4">
+          <div class="flex items-center space-x-2 text-xs text-[#958e9e]">
+            <span class="w-2 h-2 rounded-full bg-[#c0c1ff]"></span>
+            <span>my-app</span>
+            <span class="text-[#4a4453]">&middot;</span>
+            <span class="text-[#c0c1ff]">Running</span>
+            <span class="text-[#4a4453]">&middot;</span>
+            <span>512 MB</span>
+            <span class="text-[#4a4453]">&middot;</span>
+            <span>my-app.wokku.dev</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLI -->
+      <div class="bg-[#1e1e32] rounded-xl p-6">
+        <div class="flex items-center space-x-3 mb-4">
+          <div class="w-10 h-10 rounded-lg bg-[#c0c1ff]/10 flex items-center justify-center">
+            <svg class="w-5 h-5 text-[#c0c1ff]" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z"/></svg>
+          </div>
+          <h3 class="text-base font-semibold text-white">CLI</h3>
+        </div>
+        <p class="text-sm text-[#958e9e] leading-relaxed mb-4">Heroku-compatible command line. Install with <code class="text-[#c0c1ff] text-xs">gem install wokku</code> and manage everything from your terminal.</p>
+        <div class="rounded-lg bg-[#111125] border border-[#28283d]/50 p-4 font-mono text-xs text-[#958e9e]">
+          <div><span class="text-[#4a4453]">$</span> wokku apps:create my-app --server prod</div>
+          <div class="text-[#c0c1ff]">Creating my-app on prod... done</div>
+        </div>
+      </div>
+
+      <!-- API -->
+      <div class="bg-[#1e1e32] rounded-xl p-6">
+        <div class="flex items-center space-x-3 mb-4">
+          <div class="w-10 h-10 rounded-lg bg-[#c0c1ff]/10 flex items-center justify-center">
+            <svg class="w-5 h-5 text-[#c0c1ff]" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 9.75L16.5 12l-2.25 2.25m-4.5 0L7.5 12l2.25-2.25M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z"/></svg>
+          </div>
+          <h3 class="text-base font-semibold text-white">REST API</h3>
+        </div>
+        <p class="text-sm text-[#958e9e] leading-relaxed mb-4">Full API for CI/CD pipelines, custom dashboards, and automation. Token-based authentication.</p>
+        <div class="rounded-lg bg-[#111125] border border-[#28283d]/50 p-4 font-mono text-xs text-[#958e9e] overflow-x-auto">
+          <div>curl -X POST https://wokku.dev/api/v1/apps \</div>
+          <div class="pl-4">-H "Authorization: Bearer $TOKEN" \</div>
+          <div class="pl-4">-d '{"name": "my-app"}'</div>
+        </div>
+      </div>
+
+      <!-- MCP -->
+      <div class="bg-[#1e1e32] rounded-xl p-6">
+        <div class="flex items-center space-x-3 mb-4">
+          <div class="w-10 h-10 rounded-lg bg-[#c0c1ff]/10 flex items-center justify-center">
+            <svg class="w-5 h-5 text-[#c0c1ff]" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"/></svg>
+          </div>
+          <h3 class="text-base font-semibold text-white">MCP Server</h3>
+        </div>
+        <p class="text-sm text-[#958e9e] leading-relaxed mb-4">Deploy from Claude Code, Cursor, or any MCP-compatible AI assistant. Natural language infrastructure.</p>
+        <div class="rounded-lg bg-[#111125] border border-[#28283d]/50 p-4 text-xs text-[#958e9e]">
+          <div class="flex items-start space-x-2">
+            <span class="text-[#c0c1ff]">You:</span>
+            <span>"Deploy my Rails app to production with Postgres"</span>
+          </div>
+          <div class="flex items-start space-x-2 mt-1">
+            <span class="text-[#c0c1ff]">AI:</span>
+            <span>Creating app, provisioning database, deploying... done.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pricing -->
+<div class="border-t border-[#28283d]/30">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+    <div class="text-center mb-16">
+      <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;">Simple, transparent pricing</h2>
+      <p class="mt-3 text-[#958e9e] text-lg">Pay per resource, per hour. No hidden fees. Start free.</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
+      <%
+        tiers = [
+          { name: "Free", price: "$0", period: "/mo", ram: "256 MB", vcpu: "Shared", storage: "1 GB", badge: "Free", badge_color: "bg-[#c0c1ff]/10 text-[#c0c1ff]", highlight: false },
+          { name: "Starter", price: "$1.50", period: "/mo", ram: "512 MB", vcpu: "Shared", storage: "5 GB", badge: nil, badge_color: nil, highlight: false },
+          { name: "Basic", price: "$2.50", period: "/mo", ram: "1 GB", vcpu: "1 vCPU", storage: "10 GB", badge: nil, badge_color: nil, highlight: false },
+          { name: "Standard", price: "$7", period: "/mo", ram: "2 GB", vcpu: "2 vCPU", storage: "25 GB", badge: "Popular", badge_color: "bg-[#c0c1ff]/20 text-[#c0c1ff]", highlight: true },
+          { name: "Pro", price: "$14", period: "/mo", ram: "4 GB", vcpu: "4 vCPU", storage: "50 GB", badge: nil, badge_color: nil, highlight: false }
+        ]
+      %>
+      <% tiers.each do |tier| %>
+        <div class="pricing-card rounded-xl p-6 <%= tier[:highlight] ? 'bg-[#c0c1ff]/5 border-2 border-[#c0c1ff]/30 ring-1 ring-[#c0c1ff]/10' : 'bg-[#1e1e32] border border-[#28283d]/50' %>">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-semibold text-white uppercase tracking-wider"><%= tier[:name] %></h3>
+            <% if tier[:badge] %>
+              <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full <%= tier[:badge_color] %>"><%= tier[:badge] %></span>
+            <% end %>
+          </div>
+
+          <div class="mb-6">
+            <span class="text-3xl font-bold text-white font-mono"><%= tier[:price] %></span>
+            <span class="text-sm text-[#958e9e]"><%= tier[:period] %></span>
+          </div>
+
+          <ul class="space-y-2 mb-6 text-sm text-[#958e9e]">
+            <li class="flex items-center">
+              <svg class="w-3.5 h-3.5 text-[#c0c1ff] mr-2 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              <%= tier[:ram] %> RAM
+            </li>
+            <li class="flex items-center">
+              <svg class="w-3.5 h-3.5 text-[#c0c1ff] mr-2 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              <%= tier[:vcpu] %>
+            </li>
+            <li class="flex items-center">
+              <svg class="w-3.5 h-3.5 text-[#c0c1ff] mr-2 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              <%= tier[:storage] %> disk
+            </li>
+          </ul>
+
+          <%= link_to new_user_registration_path, class: "block w-full text-center py-2.5 text-sm font-medium rounded-lg transition #{tier[:highlight] ? 'text-[#282a64] hover:opacity-90' : 'text-[#c0c1ff] border border-[#c0c1ff]/30 hover:bg-[#c0c1ff]/10'}", style: tier[:highlight] ? "background: linear-gradient(135deg, #c0c1ff 0%, #5625ab 100%);" : "" do %>
+            Get started
+          <% end %>
         </div>
       <% end %>
     </div>
 
     <div class="text-center mt-8">
-      <%= link_to dashboard_templates_path, class: "inline-flex items-center text-sm text-[#c0c1ff] hover:text-[#c0c1ff] transition font-medium" do %>
-        View all 50+ templates
+      <p class="text-sm text-[#958e9e]">All tiers include free SSL, custom domains, and managed add-ons. <span class="text-[#4a4453]">Databases start free (1 GB).</span></p>
+      <%= link_to pricing_path, class: "inline-flex items-center text-sm text-[#c0c1ff] hover:text-white transition font-medium mt-2" do %>
+        Full pricing details
         <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
       <% end %>
     </div>
   </div>
 </div>
 
-<!-- Developer Experience -->
-<div class="border-t border-[#28283d]/30 bg-[#0D1424]">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-    <div class="lg:grid lg:grid-cols-2 lg:gap-16 items-center">
-      <div>
-        <div class="inline-flex items-center px-2.5 py-1 rounded-md bg-[#1E293B] border border-[#334155] mb-6">
-          <span class="text-[10px] text-[#c0c1ff] font-mono font-medium tracking-wider uppercase">For Developers</span>
-        </div>
-        <h2 class="text-3xl font-bold text-white">Heroku workflow.<br><span class="text-[#c0c1ff]">Your servers.</span></h2>
-        <p class="mt-4 text-[#958e9e] leading-relaxed">
-          Push code with git, manage with CLI, scale with a command. Everything you love about Heroku, running on infrastructure you control.
-        </p>
-        <ul class="mt-8 space-y-4">
-          <% [
-            ["Git push deploys", "Push to deploy. Automatic builds, zero-downtime."],
-            ["Powerful CLI", "wokku apps:create, config:set, ps:scale — all from your terminal."],
-            ["REST API", "Full API for CI/CD integration and automation."],
-            ["Custom domains + SSL", "Automatic Let's Encrypt certificates for every app."],
-            ["Multi-server", "Connect multiple Dokku servers across regions."]
-          ].each do |title, desc| %>
-            <li class="flex items-start">
-              <div class="flex-shrink-0 w-5 h-5 rounded bg-[#c0c1ff]/10 flex items-center justify-center mt-0.5">
-                <svg class="w-3 h-3 text-[#c0c1ff]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-              </div>
-              <div class="ml-3">
-                <span class="text-sm font-medium text-white"><%= title %></span>
-                <p class="text-xs text-[#958e9e] mt-0.5"><%= desc %></p>
-              </div>
-            </li>
-          <% end %>
-        </ul>
-      </div>
-
-      <div class="mt-12 lg:mt-0">
-        <div class="rounded-xl border border-[#28283d]/30 bg-[#111125] overflow-hidden">
-          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#28283d]/30">
-            <div class="flex items-center space-x-2">
-              <div class="flex space-x-1.5">
-                <div class="w-2.5 h-2.5 rounded-full bg-[#334155]"></div>
-                <div class="w-2.5 h-2.5 rounded-full bg-[#334155]"></div>
-                <div class="w-2.5 h-2.5 rounded-full bg-[#334155]"></div>
-              </div>
-              <span class="text-[10px] text-[#4a4453] font-mono">deploy.sh</span>
-            </div>
-          </div>
-          <div class="p-5 font-mono text-xs leading-6 text-[#958e9e]">
-            <div><span class="text-[#4a4453]"># Create app and database</span></div>
-            <div><span class="text-[#958e9e]">$</span> wokku apps:create <span class="text-[#c0c1ff]">my-saas</span></div>
-            <div><span class="text-[#958e9e]">$</span> wokku addons:create <span class="text-[#c0c1ff]">postgres</span> --app my-saas</div>
-            <div class="mt-2"><span class="text-[#4a4453]"># Configure and deploy</span></div>
-            <div><span class="text-[#958e9e]">$</span> wokku config:set <span class="text-[#c0c1ff]">RAILS_ENV=production</span></div>
-            <div><span class="text-[#958e9e]">$</span> git push wokku main</div>
-            <div class="mt-2"><span class="text-[#4a4453]"># Scale and add domain</span></div>
-            <div><span class="text-[#958e9e]">$</span> wokku ps:scale <span class="text-[#c0c1ff]">web=2 worker=1</span></div>
-            <div><span class="text-[#958e9e]">$</span> wokku domains:add <span class="text-[#c0c1ff]">app.example.com</span></div>
-            <div><span class="text-[#c0c1ff]">✓ SSL certificate issued</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- How It Works -->
-<div class="border-t border-[#28283d]/30">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-    <div class="text-center mb-16">
-      <h2 class="text-3xl font-bold text-white">Live in 3 steps</h2>
-      <p class="mt-3 text-[#958e9e]">From zero to deployed in under 5 minutes.</p>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <% [
-        ["1", "Pick an app or push code", "Choose from 50+ templates or connect your own Git repository. Rails, Django, Node, Go — we build it all.", "M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"],
-        ["2", "Name it, pick a server", "Enter an app name and select your server. Databases, env vars, and domains are configured automatically.", "M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"],
-        ["3", "Live with SSL", "Your app is deployed with a custom subdomain and automatic HTTPS. Monitor logs, scale, and manage from the dashboard.", "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"]
-      ].each do |num, title, desc, icon| %>
-        <div class="relative bg-[#1E293B]/40 rounded-xl border border-[#334155]/40 p-6">
-          <div class="flex items-center space-x-3 mb-4">
-            <div class="w-8 h-8 rounded-lg bg-[#c0c1ff]/10 border border-[#c0c1ff]/20 flex items-center justify-center">
-              <span class="text-sm font-bold text-[#c0c1ff] font-mono"><%= num %></span>
-            </div>
-            <h3 class="text-base font-semibold text-white"><%= title %></h3>
-          </div>
-          <p class="text-sm text-[#958e9e] leading-relaxed"><%= desc %></p>
-        </div>
-      <% end %>
-    </div>
-  </div>
-</div>
-
-<!-- Pricing -->
-<div class="border-t border-[#28283d]/30 bg-[#0D1424]">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-    <div class="text-center mb-12">
-      <h2 class="text-3xl font-bold text-white">Simple, transparent pricing</h2>
-      <p class="mt-3 text-[#958e9e]">Pay per resource, per hour. No hidden fees. Start free.</p>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-      <!-- Containers -->
-      <div class="bg-[#1E293B]/40 rounded-xl border border-[#334155]/40 overflow-hidden">
-        <div class="px-6 py-4 border-b border-[#334155]/40">
-          <h3 class="text-sm font-semibold text-white uppercase tracking-wider">Containers</h3>
-        </div>
-        <div class="p-6">
-          <table class="w-full text-sm">
-            <tbody class="divide-y divide-[#334155]/30">
-              <% [
-                ["Free", "256 MB", "Free"],
-                ["Starter", "512 MB", "$1.50/mo"],
-                ["Basic", "1 GB", "$2.50/mo"],
-                ["Standard", "2 GB", "$7/mo"],
-                ["Pro", "4 GB", "$14/mo"]
-              ].each do |name, ram, price| %>
-                <tr>
-                  <td class="py-2.5 text-gray-300 font-medium"><%= name %></td>
-                  <td class="py-2.5 text-[#958e9e]"><%= ram %></td>
-                  <td class="py-2.5 text-right font-mono <%= price == 'Free' ? 'text-[#c0c1ff]' : 'text-white' %>"><%= price %></td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Databases -->
-      <div class="bg-[#1E293B]/40 rounded-xl border border-[#334155]/40 overflow-hidden">
-        <div class="px-6 py-4 border-b border-[#334155]/40">
-          <h3 class="text-sm font-semibold text-white uppercase tracking-wider">Databases</h3>
-        </div>
-        <div class="p-6">
-          <table class="w-full text-sm">
-            <tbody class="divide-y divide-[#334155]/30">
-              <% [
-                ["Mini", "1 GB", "Free"],
-                ["Basic", "10 GB", "$2/mo"],
-                ["Standard", "50 GB", "$8/mo"]
-              ].each do |name, storage, price| %>
-                <tr>
-                  <td class="py-2.5 text-gray-300 font-medium"><%= name %></td>
-                  <td class="py-2.5 text-[#958e9e]"><%= storage %></td>
-                  <td class="py-2.5 text-right font-mono <%= price == 'Free' ? 'text-[#c0c1ff]' : 'text-white' %>"><%= price %></td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- vs Heroku -->
-    <div class="max-w-2xl mx-auto mt-8 bg-[#c0c1ff]/5 rounded-xl border border-[#c0c1ff]/20 p-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <h3 class="text-sm font-semibold text-white">Save 60-80% vs Heroku</h3>
-          <p class="text-xs text-[#958e9e] mt-1">Same workflow, same experience — fraction of the cost.</p>
-        </div>
-        <%= link_to pricing_path, class: "inline-flex items-center px-4 py-2 text-sm font-medium text-[#c0c1ff] border border-[#c0c1ff]/30 rounded-lg hover:bg-[#c0c1ff]/10 transition" do %>
-          Compare pricing
-          <svg class="w-3.5 h-3.5 ml-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-        <% end %>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- Open Source -->
-<div class="border-t border-[#28283d]/30">
+<div class="border-t border-[#28283d]/30 bg-[#0D1424]">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
     <div class="max-w-3xl mx-auto text-center">
-      <div class="inline-flex items-center px-3 py-1 rounded-full bg-[#1E293B] border border-[#334155] mb-6">
+      <div class="inline-flex items-center px-3 py-1 rounded-full bg-[#1e1e32] border border-[#28283d]/50 mb-6">
         <svg class="w-3.5 h-3.5 text-[#958e9e] mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
         <span class="text-xs text-[#958e9e] font-medium">Open Source on GitHub</span>
       </div>
 
-      <h2 class="text-3xl font-bold text-white">Built in the open.<br>Run it <span class="text-[#c0c1ff]">anywhere</span>.</h2>
-      <p class="mt-4 text-[#958e9e] leading-relaxed">
+      <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;">Built in the open.<br>Run it <span class="text-[#c0c1ff]">anywhere</span>.</h2>
+      <p class="mt-4 text-[#958e9e] leading-relaxed text-lg">
         Wokku is open-source, built on <span class="text-white font-medium">Dokku</span>. Use our managed cloud at wokku.dev, or self-host on your own servers. No vendor lock-in, ever.
       </p>
 
       <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-        <a href="https://github.com/johannesdwicahyo/wokku" target="_blank" rel="noopener" class="inline-flex items-center justify-center px-6 py-3 bg-[#1E293B] border border-[#334155] text-white text-sm font-medium rounded-lg hover:bg-[#334155] transition">
+        <a href="https://github.com/johannesdwicahyo/wokku" target="_blank" rel="noopener" class="inline-flex items-center justify-center px-6 py-3 bg-[#1e1e32] border border-[#28283d]/50 text-white text-sm font-medium rounded-lg hover:bg-[#28283d] transition">
           <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
           Star on GitHub
         </a>
@@ -325,14 +445,14 @@
 <div class="border-t border-[#28283d]/30">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
     <div class="max-w-2xl mx-auto text-center">
-      <h2 class="text-3xl font-bold text-white">Ready to deploy?</h2>
-      <p class="mt-3 text-[#958e9e]">Start for free. Deploy your first app in minutes.</p>
+      <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;">Ready to deploy?</h2>
+      <p class="mt-3 text-[#958e9e] text-lg">Start for free. Deploy your first app in minutes.</p>
       <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-        <%= link_to dashboard_templates_path, class: "inline-flex items-center justify-center px-8 py-3.5 technical-gradient text-[#282a64] text-sm font-semibold rounded-lg hover:opacity-90 transition shadow-lg shadow-[#c0c1ff]/20" do %>
-          Browse Apps
+        <%= link_to new_user_registration_path, class: "inline-flex items-center justify-center px-8 py-3.5 text-sm font-semibold rounded-lg hover:opacity-90 transition shadow-lg shadow-[#c0c1ff]/20 text-[#282a64]", style: "background: linear-gradient(135deg, #c0c1ff 0%, #5625ab 100%);" do %>
+          Start Free
         <% end %>
-        <%= link_to new_user_registration_path, class: "inline-flex items-center justify-center px-8 py-3.5 border border-[#334155] text-white text-sm font-semibold rounded-lg hover:bg-[#1E293B] transition" do %>
-          Create Account
+        <%= link_to dashboard_templates_path, class: "inline-flex items-center justify-center px-8 py-3.5 border border-[#c0c1ff]/30 text-[#c0c1ff] text-sm font-semibold rounded-lg hover:bg-[#c0c1ff]/10 transition" do %>
+          Browse Templates
         <% end %>
       </div>
     </div>
