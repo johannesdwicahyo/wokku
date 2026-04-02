@@ -255,6 +255,24 @@
           <span class="text-xs text-outline">Created</span>
           <span class="text-xs text-on-surface-variant"><%= @app.created_at.strftime("%b %d, %Y") %></span>
         </div>
+        <div class="px-5 py-3 flex items-center justify-between border-t border-outline-variant/10">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[14px] text-outline">lock</span>
+            <span class="text-xs text-outline">Force HTTPS</span>
+          </div>
+          <%= button_to toggle_https_dashboard_app_path(@app), method: :post, class: "text-xs text-primary hover:underline cursor-pointer" do %>
+            Enable
+          <% end %>
+        </div>
+        <div class="px-5 py-3 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[14px] text-outline">construction</span>
+            <span class="text-xs text-outline">Maintenance Mode</span>
+          </div>
+          <%= button_to toggle_maintenance_dashboard_app_path(@app), method: :post, data: { turbo_confirm: "Toggle maintenance mode for #{@app.name}?" }, class: "text-xs text-primary hover:underline cursor-pointer" do %>
+            Toggle
+          <% end %>
+        </div>
       </div>
     </div>
 

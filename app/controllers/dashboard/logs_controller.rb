@@ -15,7 +15,8 @@ module Dashboard
 
     def fetch_recent_logs
       client = Dokku::Client.new(@app.server)
-      raw = Dokku::Logs.new(client).recent(@app.name, lines: 200)
+      lines = (params[:lines] || 200).to_i
+      raw = Dokku::Logs.new(client).recent(@app.name, lines: lines)
       # Strip ANSI escape codes
       raw&.gsub(/\e\[[0-9;]*m/, "")
     rescue => e
