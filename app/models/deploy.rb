@@ -8,6 +8,10 @@ class Deploy < ApplicationRecord
 
   scope :recent, -> { order(created_at: :desc).limit(20) }
 
+  def description
+    nil
+  end
+
   def duration
     return nil unless started_at && finished_at
     finished_at - started_at

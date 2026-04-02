@@ -5,7 +5,7 @@ module Dashboard
       authorize @app, :update?
 
       unless current_user.github_installation_id
-        return redirect_to GithubApp.installation_url
+        return redirect_to GithubApp.installation_url, allow_other_host: true
       end
 
       github = GithubApp.new(current_user.github_installation_id)

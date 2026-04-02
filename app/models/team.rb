@@ -5,6 +5,7 @@ class Team < ApplicationRecord
   has_many :servers, dependent: :destroy
   has_many :app_records, dependent: :destroy
   has_many :notifications, dependent: :destroy
+  has_many :cloud_credentials, dependent: :destroy
 
   validates :name, presence: true, uniqueness: true
 end
