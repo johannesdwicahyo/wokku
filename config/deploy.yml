@@ -26,6 +26,10 @@ env:
     REDIS_URL: redis://wokku-redis:6379/0
     RAILS_LOG_LEVEL: info
     WEB_CONCURRENCY: 2
+    IPAYMU_VA: "0000001914914286"
+    IPAYMU_API_KEY: "SANDBOX2BAE12F9-82A3-49CA-B1B2-6BF9ACD0D8A9"
+    IPAYMU_URL: "https://sandbox.ipaymu.com"
+    APP_URL: "https://wokku.dev"
 
 volumes:
   - "wokku_storage:/rails/storage"
