@@ -232,6 +232,10 @@
           <span class="text-xs font-mono font-bold text-on-surface"><%= @app.deploy_branch || "main" %></span>
         </div>
         <div class="px-5 py-3 flex items-center justify-between">
+          <span class="text-xs text-outline">Git Remote</span>
+          <code class="text-xs font-mono text-primary">dokku@<%= @app.server.host %>:<%= @app.name %></code>
+        </div>
+        <div class="px-5 py-3 flex items-center justify-between">
           <span class="text-xs text-outline">Team</span>
           <span class="text-xs font-bold text-on-surface"><%= @app.team.name %></span>
         </div>
