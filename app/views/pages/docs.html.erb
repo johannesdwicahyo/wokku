@@ -1,67 +1,184 @@
 <% content_for(:title, "Documentation - Wokku") %>
 
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-  <h1 class="text-4xl font-bold text-gray-900 mb-8">Documentation</h1>
-
-  <div class="prose prose-lg max-w-none">
-    <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">Getting Started</h2>
-    <p class="text-gray-600 mb-4">
-      Wokku makes it easy to deploy and manage your applications. Follow these steps to get started.
-    </p>
-
-    <h3 class="text-xl font-semibold text-gray-900 mt-6 mb-3">1. Install the CLI</h3>
-    <div class="bg-gray-900 rounded-lg p-4 font-mono text-sm text-gray-300 mb-4">
-      <p>$ gem install wokku</p>
+<div class="min-h-screen bg-surface text-on-surface">
+  <div class="max-w-4xl mx-auto px-6 py-16">
+    <div class="mb-12">
+      <a href="/" class="text-sm text-primary hover:underline mb-4 inline-block">← Back to Wokku</a>
+      <h1 class="font-headline text-4xl font-bold text-on-surface mb-3">Documentation</h1>
+      <p class="text-outline">Everything you need to deploy and manage applications on Wokku.</p>
     </div>
 
-    <h3 class="text-xl font-semibold text-gray-900 mt-6 mb-3">2. Log in</h3>
-    <div class="bg-gray-900 rounded-lg p-4 font-mono text-sm text-gray-300 mb-4">
-      <p>$ wokku auth:login</p>
+    <div class="grid grid-cols-12 gap-8">
+      <%# Sidebar Nav %>
+      <nav class="col-span-3 sticky top-8">
+        <p class="text-[10px] text-outline uppercase tracking-widest font-bold mb-3">On This Page</p>
+        <div class="space-y-1">
+          <a href="#getting-started" class="block text-sm text-on-surface-variant hover:text-primary transition py-1">Getting Started</a>
+          <a href="#deploy-methods" class="block text-sm text-on-surface-variant hover:text-primary transition py-1">Deploy Methods</a>
+          <a href="#cli" class="block text-sm text-on-surface-variant hover:text-primary transition py-1">CLI Reference</a>
+          <a href="#api" class="block text-sm text-on-surface-variant hover:text-primary transition py-1">API</a>
+          <a href="#addons" class="block text-sm text-on-surface-variant hover:text-primary transition py-1">Add-ons</a>
+          <a href="#pricing" class="block text-sm text-on-surface-variant hover:text-primary transition py-1">Pricing</a>
+        </div>
+      </nav>
+
+      <%# Content %>
+      <div class="col-span-9 space-y-12">
+
+        <%# Getting Started %>
+        <section id="getting-started">
+          <h2 class="font-headline text-2xl font-bold text-on-surface mb-4">Getting Started</h2>
+          <p class="text-sm text-on-surface-variant mb-6">Wokku makes it easy to deploy and manage your applications. Follow these steps to get started.</p>
+
+          <div class="space-y-6">
+            <div>
+              <h3 class="text-sm font-bold text-on-surface mb-2">1. Connect via GitHub</h3>
+              <p class="text-xs text-outline mb-3">Sign in with GitHub OAuth and connect your repository for automatic deployments.</p>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-bold text-on-surface mb-2">2. Create an app</h3>
+              <p class="text-xs text-outline mb-2">Create a new app from the dashboard or use the API.</p>
+              <div class="bg-surface-container-lowest rounded-md p-4 font-mono text-sm text-primary">
+                <span class="text-outline">$</span> curl -X POST https://wokku.dev/api/v1/apps \<br>
+                <span class="text-outline pl-4">-H</span> "Authorization: Bearer YOUR_TOKEN" \<br>
+                <span class="text-outline pl-4">-d</span> '{"name": "my-app", "server_id": 1}'
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-bold text-on-surface mb-2">3. Deploy</h3>
+              <p class="text-xs text-outline mb-2">Push to your connected GitHub repo or use git push to deploy.</p>
+              <div class="bg-surface-container-lowest rounded-md p-4 font-mono text-sm text-primary">
+                <span class="text-outline">$</span> git push dokku main
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-bold text-on-surface mb-2">4. Configure</h3>
+              <p class="text-xs text-outline mb-2">Set environment variables, add domains, and attach add-ons from the dashboard.</p>
+            </div>
+          </div>
+        </section>
+
+        <%# Deploy Methods %>
+        <section id="deploy-methods">
+          <h2 class="font-headline text-2xl font-bold text-on-surface mb-4">Deploy Methods</h2>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="bg-surface-container-low rounded-md p-5">
+              <span class="material-symbols-outlined text-primary text-[24px] mb-3">code</span>
+              <h3 class="text-sm font-bold text-on-surface mb-1">GitHub Auto-Deploy</h3>
+              <p class="text-xs text-outline">Connect a repo and deploy automatically on push. Supports PR preview deployments.</p>
+            </div>
+            <div class="bg-surface-container-low rounded-md p-5">
+              <span class="material-symbols-outlined text-secondary text-[24px] mb-3">terminal</span>
+              <h3 class="text-sm font-bold text-on-surface mb-1">Git Push</h3>
+              <p class="text-xs text-outline">Add the Dokku remote and push directly. Supports Buildpacks and Dockerfiles.</p>
+            </div>
+            <div class="bg-surface-container-low rounded-md p-5">
+              <span class="material-symbols-outlined text-tertiary text-[24px] mb-3">rocket_launch</span>
+              <h3 class="text-sm font-bold text-on-surface mb-1">1 Click Deploy</h3>
+              <p class="text-xs text-outline">Deploy from 50+ pre-built templates — databases, CMS, monitoring, and more.</p>
+            </div>
+            <div class="bg-surface-container-low rounded-md p-5">
+              <span class="material-symbols-outlined text-primary text-[24px] mb-3">deployed_code</span>
+              <h3 class="text-sm font-bold text-on-surface mb-1">Docker Image</h3>
+              <p class="text-xs text-outline">Deploy any Docker image directly using <code class="text-primary">git:from-image</code>.</p>
+            </div>
+          </div>
+        </section>
+
+        <%# API %>
+        <section id="api">
+          <h2 class="font-headline text-2xl font-bold text-on-surface mb-4">API</h2>
+          <p class="text-sm text-on-surface-variant mb-4">
+            The Wokku API is available at <code class="bg-surface-container-highest px-2 py-0.5 rounded text-xs font-mono text-primary">https://wokku.dev/api/v1</code>.
+            Authenticate with a Bearer token.
+          </p>
+
+          <div class="space-y-3">
+            <% [
+              ["POST /api/v1/auth/login", "Authenticate and get API token"],
+              ["GET /api/v1/apps", "List all applications"],
+              ["POST /api/v1/apps", "Create a new application"],
+              ["GET /api/v1/apps/:id", "Get app details"],
+              ["POST /api/v1/apps/:id/restart", "Restart an application"],
+              ["GET /api/v1/apps/:id/logs", "View application logs"],
+              ["PUT /api/v1/apps/:id/config", "Update environment variables"],
+              ["GET /api/v1/apps/:id/domains", "List domains"],
+              ["POST /api/v1/templates/deploy", "Deploy a template"],
+            ].each do |endpoint, desc| %>
+              <div class="bg-surface-container-lowest rounded-md px-4 py-3 flex items-center justify-between">
+                <code class="text-xs font-mono text-primary"><%= endpoint %></code>
+                <span class="text-xs text-outline"><%= desc %></span>
+              </div>
+            <% end %>
+          </div>
+        </section>
+
+        <%# Add-ons %>
+        <section id="addons">
+          <h2 class="font-headline text-2xl font-bold text-on-surface mb-4">Add-ons</h2>
+          <p class="text-sm text-on-surface-variant mb-4">Provision managed databases, caches, and services from the Resources tab on any app.</p>
+
+          <div class="grid grid-cols-3 gap-3">
+            <% [
+              ["PostgreSQL", "database", "Relational DB"],
+              ["MySQL", "database", "Relational DB"],
+              ["Redis", "bolt", "Cache"],
+              ["MongoDB", "database", "Document DB"],
+              ["Elasticsearch", "search", "Search"],
+              ["Meilisearch", "search", "Search"],
+              ["RabbitMQ", "forum", "Messaging"],
+              ["NATS", "forum", "Messaging"],
+              ["ClickHouse", "database", "Analytics"],
+            ].each do |name, icon, type| %>
+              <div class="bg-surface-container-low rounded-md p-3 flex items-center gap-3">
+                <span class="material-symbols-outlined text-secondary text-[16px]"><%= icon %></span>
+                <div>
+                  <span class="text-xs font-bold text-on-surface"><%= name %></span>
+                  <span class="text-[10px] text-outline ml-1"><%= type %></span>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </section>
+
+        <%# Pricing %>
+        <section id="pricing">
+          <h2 class="font-headline text-2xl font-bold text-on-surface mb-4">Pricing</h2>
+          <div class="bg-surface-container-low rounded-md overflow-hidden">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-surface-container-highest">
+                  <th class="px-4 py-3 text-left text-[10px] text-outline uppercase tracking-wider font-bold">Plan</th>
+                  <th class="px-4 py-3 text-left text-[10px] text-outline uppercase tracking-wider font-bold">RAM</th>
+                  <th class="px-4 py-3 text-left text-[10px] text-outline uppercase tracking-wider font-bold">vCPU</th>
+                  <th class="px-4 py-3 text-left text-[10px] text-outline uppercase tracking-wider font-bold">Storage</th>
+                  <th class="px-4 py-3 text-right text-[10px] text-outline uppercase tracking-wider font-bold">Price</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-outline-variant/10">
+                <% [
+                  ["Free", "256 MB", "0.15", "—", "Free"],
+                  ["Basic", "512 MB", "0.3", "512 MB", "$1.50/mo"],
+                  ["Standard", "1 GB", "0.5", "1 GB", "$4/mo"],
+                  ["Performance", "2 GB", "1.0", "2 GB", "$8/mo"],
+                  ["Performance 2x", "4 GB", "2.0", "5 GB", "$15/mo"],
+                ].each do |name, ram, cpu, storage, price| %>
+                  <tr class="hover:bg-surface-container-high/30 transition">
+                    <td class="px-4 py-3 font-bold text-on-surface font-headline"><%= name %></td>
+                    <td class="px-4 py-3 font-mono text-on-surface-variant"><%= ram %></td>
+                    <td class="px-4 py-3 font-mono text-on-surface-variant"><%= cpu %></td>
+                    <td class="px-4 py-3 font-mono text-on-surface-variant"><%= storage %></td>
+                    <td class="px-4 py-3 text-right font-bold text-primary"><%= price %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
     </div>
-
-    <h3 class="text-xl font-semibold text-gray-900 mt-6 mb-3">3. Create an app</h3>
-    <div class="bg-gray-900 rounded-lg p-4 font-mono text-sm text-gray-300 mb-4">
-      <p>$ wokku apps:create my-app --server prod</p>
-    </div>
-
-    <h3 class="text-xl font-semibold text-gray-900 mt-6 mb-3">4. Deploy</h3>
-    <div class="bg-gray-900 rounded-lg p-4 font-mono text-sm text-gray-300 mb-4">
-      <p>$ git push wokku main</p>
-    </div>
-
-    <h2 class="text-2xl font-semibold text-gray-900 mt-12 mb-4">CLI Reference</h2>
-
-    <div class="space-y-4">
-      <div class="border border-gray-200 rounded-lg p-4">
-        <h4 class="font-mono font-semibold text-gray-900">wokku apps:list</h4>
-        <p class="text-gray-600 text-sm mt-1">List all your applications</p>
-      </div>
-      <div class="border border-gray-200 rounded-lg p-4">
-        <h4 class="font-mono font-semibold text-gray-900">wokku apps:info APP</h4>
-        <p class="text-gray-600 text-sm mt-1">Show detailed information about an application</p>
-      </div>
-      <div class="border border-gray-200 rounded-lg p-4">
-        <h4 class="font-mono font-semibold text-gray-900">wokku ps:scale web=N</h4>
-        <p class="text-gray-600 text-sm mt-1">Scale dyno processes</p>
-      </div>
-      <div class="border border-gray-200 rounded-lg p-4">
-        <h4 class="font-mono font-semibold text-gray-900">wokku config:set KEY=VALUE</h4>
-        <p class="text-gray-600 text-sm mt-1">Set environment variables</p>
-      </div>
-      <div class="border border-gray-200 rounded-lg p-4">
-        <h4 class="font-mono font-semibold text-gray-900">wokku domains:add DOMAIN</h4>
-        <p class="text-gray-600 text-sm mt-1">Add a custom domain to your application</p>
-      </div>
-      <div class="border border-gray-200 rounded-lg p-4">
-        <h4 class="font-mono font-semibold text-gray-900">wokku logs --app APP</h4>
-        <p class="text-gray-600 text-sm mt-1">View application logs</p>
-      </div>
-    </div>
-
-    <h2 class="text-2xl font-semibold text-gray-900 mt-12 mb-4">API</h2>
-    <p class="text-gray-600 mb-4">
-      The Wokku API is available at <code class="bg-gray-100 px-2 py-1 rounded text-sm">https://wokku.dev/api/v1</code>.
-      Authenticate with a Bearer token in the Authorization header.
-    </p>
   </div>
 </div>
