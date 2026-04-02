@@ -1,0 +1,375 @@
+#!/usr/bin/env ruby
+# Wokku CLI — manage your Wokku apps from the terminal
+# Install: curl -sL https://wokku.dev/cli/install.sh | bash
+# Or:      cp cli/wokku /usr/local/bin/wokku && chmod +x /usr/local/bin/wokku
+
+require "json"
+require "net/http"
+require "uri"
+require "io/console"
+require "fileutils"
+
+VERSION = "1.0.0"
+CONFIG_DIR = File.expand_path("~/.wokku")
+CONFIG_FILE = File.join(CONFIG_DIR, "config.json")
+
+# === Config ===
+def load_config
+  return {} unless File.exist?(CONFIG_FILE)
+  JSON.parse(File.read(CONFIG_FILE))
+rescue
+  {}
+end
+
+def save_config(config)
+  FileUtils.mkdir_p(CONFIG_DIR)
+  File.write(CONFIG_FILE, JSON.pretty_generate(config))
+  File.chmod(0600, CONFIG_FILE)
+end
+
+def api_url
+  load_config["api_url"] || ENV["WOKKU_API_URL"] || "https://wokku.dev/api/v1"
+end
+
+def api_token
+  load_config["token"] || ENV["WOKKU_API_TOKEN"]
+end
+
+# === API Client ===
+def api(method, path, body = nil)
+  token = api_token
+  abort "Not logged in. Run: wokku auth:login" unless token
+
+  uri = URI("#{api_url}#{path}")
+  http = Net::HTTP.new(uri.host, uri.port)
+  http.use_ssl = uri.scheme == "https"
+  http.open_timeout = 10
+  http.read_timeout = 30
+
+  req = case method
+  when :get then Net::HTTP::Get.new(uri)
+  when :post then Net::HTTP::Post.new(uri)
+  when :put then Net::HTTP::Put.new(uri)
+  when :patch then Net::HTTP::Patch.new(uri)
+  when :delete then Net::HTTP::Delete.new(uri)
+  end
+
+  req["Authorization"] = "Bearer #{token}"
+  req["Content-Type"] = "application/json"
+  req["User-Agent"] = "WokkuCLI/#{VERSION}"
+  req.body = body.to_json if body
+
+  resp = http.request(req)
+  data = JSON.parse(resp.body) rescue resp.body
+
+  unless resp.is_a?(Net::HTTPSuccess)
+    error = data.is_a?(Hash) ? (data["error"] || data["errors"]&.join(", ") || resp.code) : resp.code
+    abort "Error: #{error}"
+  end
+
+  data
+end
+
+# === Formatting ===
+def table(rows, headers: nil)
+  return if rows.empty?
+  cols = (headers || rows.first.keys).map(&:to_s)
+  widths = cols.map { |c| c.length }
+  rows.each { |r| cols.each_with_index { |c, i| widths[i] = [widths[i], r[c].to_s.length].max } }
+
+  fmt = widths.map { |w| "%-#{w}s" }.join("  ")
+  puts fmt % cols.map(&:upcase)
+  puts widths.map { |w| "-" * w }.join("  ")
+  rows.each { |r| puts fmt % cols.map { |c| r[c] } }
+end
+
+def puts_json(data)
+  puts JSON.pretty_generate(data)
+end
+
+# === Commands ===
+COMMANDS = {}
+
+def register(name, desc, &block)
+  COMMANDS[name] = { desc: desc, handler: block }
+end
+
+# --- Auth ---
+register "auth:login", "Authenticate with Wokku" do
+  print "Wokku API URL [https://wokku.dev/api/v1]: "
+  url = $stdin.gets.strip
+  url = "https://wokku.dev/api/v1" if url.empty?
+
+  print "Email: "
+  email = $stdin.gets.strip
+  print "Password: "
+  password = $stdin.noecho(&:gets).strip
+  puts
+
+  uri = URI("#{url}/auth/login")
+  http = Net::HTTP.new(uri.host, uri.port)
+  http.use_ssl = uri.scheme == "https"
+  req = Net::HTTP::Post.new(uri)
+  req["Content-Type"] = "application/json"
+  req.body = { email: email, password: password }.to_json
+
+  resp = http.request(req)
+  data = JSON.parse(resp.body) rescue {}
+
+  if resp.is_a?(Net::HTTPSuccess) && data["token"]
+    save_config({ "api_url" => url, "token" => data["token"], "email" => email })
+    puts "Logged in as #{email}"
+  else
+    abort "Login failed: #{data['error'] || resp.code}"
+  end
+end
+
+register "auth:logout", "Log out" do
+  if File.exist?(CONFIG_FILE)
+    File.delete(CONFIG_FILE)
+    puts "Logged out."
+  else
+    puts "Not logged in."
+  end
+end
+
+register "auth:whoami", "Show current user" do
+  data = api(:get, "/auth/whoami")
+  puts "Email: #{data['email']}"
+  puts "Role:  #{data['role']}"
+end
+
+# --- Apps ---
+register "apps", "List all apps" do
+  apps = api(:get, "/apps")
+  table(apps.map { |a| { "name" => a["name"], "status" => a["status"], "server" => a["server_id"] } })
+end
+
+register "apps:info", "Show app details (usage: wokku apps:info APP_ID)" do
+  id = ARGV.shift || abort("Usage: wokku apps:info APP_ID")
+  puts_json api(:get, "/apps/#{id}")
+end
+
+register "apps:create", "Create app (usage: wokku apps:create NAME --server ID)" do
+  name = ARGV.shift || abort("Usage: wokku apps:create NAME --server ID")
+  server_id = nil
+  branch = "main"
+  while arg = ARGV.shift
+    case arg
+    when "--server" then server_id = ARGV.shift
+    when "--branch" then branch = ARGV.shift
+    end
+  end
+  abort "Missing --server ID" unless server_id
+  data = api(:post, "/apps", { name: name, server_id: server_id.to_i, deploy_branch: branch })
+  puts "Created app: #{data['name']} (id: #{data['id']})"
+end
+
+register "apps:destroy", "Delete app (usage: wokku apps:destroy APP_ID)" do
+  id = ARGV.shift || abort("Usage: wokku apps:destroy APP_ID")
+  print "Are you sure you want to delete this app? (y/N): "
+  confirm = $stdin.gets.strip
+  abort "Cancelled." unless confirm.downcase == "y"
+  api(:delete, "/apps/#{id}")
+  puts "App deleted."
+end
+
+register "ps:restart", "Restart app (usage: wokku ps:restart APP_ID)" do
+  id = ARGV.shift || abort("Usage: wokku ps:restart APP_ID")
+  api(:post, "/apps/#{id}/restart")
+  puts "Restarting..."
+end
+
+register "ps:stop", "Stop app (usage: wokku ps:stop APP_ID)" do
+  id = ARGV.shift || abort("Usage: wokku ps:stop APP_ID")
+  api(:post, "/apps/#{id}/stop")
+  puts "Stopped."
+end
+
+register "ps:start", "Start app (usage: wokku ps:start APP_ID)" do
+  id = ARGV.shift || abort("Usage: wokku ps:start APP_ID")
+  api(:post, "/apps/#{id}/start")
+  puts "Started."
+end
+
+register "ps:scale", "Scale processes (usage: wokku ps:scale APP_ID web=2 worker=1)" do
+  id = ARGV.shift || abort("Usage: wokku ps:scale APP_ID web=N worker=N")
+  scaling = {}
+  ARGV.each do |pair|
+    type, count = pair.split("=")
+    scaling[type] = count.to_i if type && count
+  end
+  ARGV.clear
+  abort "No scaling pairs given. Example: web=2 worker=1" if scaling.empty?
+  api(:patch, "/apps/#{id}/ps", { scaling: scaling })
+  puts "Scaled: #{scaling.map { |t, c| "#{t}=#{c}" }.join(' ')}"
+end
+
+# --- Config ---
+register "config", "Show config vars (usage: wokku config APP_ID)" do
+  id = ARGV.shift || abort("Usage: wokku config APP_ID")
+  data = api(:get, "/apps/#{id}/config")
+  if data.is_a?(Hash)
+    data.each { |k, v| puts "#{k}=#{v}" }
+  else
+    puts_json data
+  end
+end
+
+register "config:set", "Set config vars (usage: wokku config:set APP_ID KEY=VAL ...)" do
+  id = ARGV.shift || abort("Usage: wokku config:set APP_ID KEY=VALUE ...")
+  vars = {}
+  ARGV.each do |pair|
+    key, val = pair.split("=", 2)
+    vars[key] = val if key && val
+  end
+  ARGV.clear
+  abort "No KEY=VALUE pairs given." if vars.empty?
+  api(:put, "/apps/#{id}/config", vars)
+  puts "Config updated: #{vars.keys.join(', ')}"
+end
+
+# --- Domains ---
+register "domains", "List domains (usage: wokku domains APP_ID)" do
+  id = ARGV.shift || abort("Usage: wokku domains APP_ID")
+  data = api(:get, "/apps/#{id}/domains")
+  if data.is_a?(Array)
+    data.each { |d| puts d["hostname"] || d }
+  else
+    puts_json data
+  end
+end
+
+register "domains:add", "Add domain (usage: wokku domains:add APP_ID DOMAIN)" do
+  id = ARGV.shift || abort("Usage: wokku domains:add APP_ID DOMAIN")
+  domain = ARGV.shift || abort("Missing domain name")
+  api(:post, "/apps/#{id}/domains", { hostname: domain })
+  puts "Added domain: #{domain}"
+end
+
+# --- Logs ---
+register "logs", "View logs (usage: wokku logs APP_ID [--lines N])" do
+  id = ARGV.shift || abort("Usage: wokku logs APP_ID")
+  lines = 100
+  while arg = ARGV.shift
+    lines = ARGV.shift.to_i if arg == "--lines"
+  end
+  data = api(:get, "/apps/#{id}/logs?lines=#{lines}")
+  if data.is_a?(Array)
+    data.each { |l| puts l }
+  elsif data.is_a?(Hash) && data["logs"]
+    puts data["logs"]
+  else
+    puts_json data
+  end
+end
+
+# --- Releases ---
+register "releases", "List releases (usage: wokku releases APP_ID)" do
+  id = ARGV.shift || abort("Usage: wokku releases APP_ID")
+  data = api(:get, "/apps/#{id}/releases")
+  if data.is_a?(Array)
+    table(data.map { |r| { "version" => "v#{r['version']}", "description" => r["description"].to_s[0..40], "created" => r["created_at"].to_s[0..18] } })
+  else
+    puts_json data
+  end
+end
+
+register "rollback", "Rollback to release (usage: wokku rollback APP_ID RELEASE_ID)" do
+  id = ARGV.shift || abort("Usage: wokku rollback APP_ID RELEASE_ID")
+  release_id = ARGV.shift || abort("Missing release ID")
+  api(:post, "/apps/#{id}/releases/#{release_id}/rollback")
+  puts "Rolling back..."
+end
+
+# --- Add-ons ---
+register "addons", "List add-ons (usage: wokku addons APP_ID)" do
+  id = ARGV.shift || abort("Usage: wokku addons APP_ID")
+  data = api(:get, "/apps/#{id}/addons")
+  if data.is_a?(Array)
+    table(data.map { |a| { "name" => a["name"], "type" => a["service_type"], "status" => a["status"] } })
+  else
+    puts_json data
+  end
+end
+
+register "addons:add", "Add add-on (usage: wokku addons:add APP_ID postgres)" do
+  id = ARGV.shift || abort("Usage: wokku addons:add APP_ID SERVICE_TYPE")
+  service_type = ARGV.shift || abort("Missing service type (postgres, redis, mysql, etc)")
+  name = nil
+  while arg = ARGV.shift
+    name = ARGV.shift if arg == "--name"
+  end
+  body = { service_type: service_type }
+  body[:name] = name if name
+  data = api(:post, "/apps/#{id}/addons", body)
+  puts "Added #{service_type}: #{data['name'] || data['id']}"
+end
+
+# --- Templates ---
+register "templates", "List available templates" do
+  data = api(:get, "/templates")
+  if data.is_a?(Array)
+    data.each { |t| puts "#{t['slug'] || t['name']}  #{t['description'].to_s[0..60]}" }
+  else
+    puts_json data
+  end
+end
+
+register "deploy", "Deploy template (usage: wokku deploy TEMPLATE --server ID [--name NAME])" do
+  slug = ARGV.shift || abort("Usage: wokku deploy TEMPLATE_SLUG --server ID")
+  server_id = nil
+  name = nil
+  while arg = ARGV.shift
+    case arg
+    when "--server" then server_id = ARGV.shift
+    when "--name" then name = ARGV.shift
+    end
+  end
+  abort "Missing --server ID" unless server_id
+  body = { slug: slug, server_id: server_id.to_i }
+  body[:name] = name if name
+  data = api(:post, "/templates/deploy", body)
+  puts "Deploying #{slug}..."
+  puts_json data
+end
+
+# --- Activity ---
+register "activity", "Show recent activity" do
+  data = api(:get, "/activities?limit=20")
+  if data.is_a?(Array)
+    data.each { |a| puts "#{a['created_at'].to_s[0..18]}  #{a['action']}  #{a['target_name']}" }
+  else
+    puts_json data
+  end
+end
+
+# --- Help ---
+register "version", "Show CLI version" do
+  puts "wokku/#{VERSION}"
+end
+
+def show_help
+  puts "Wokku CLI v#{VERSION}"
+  puts "Usage: wokku COMMAND [args]"
+  puts
+  puts "Commands:"
+  COMMANDS.sort_by { |k, _| k }.each do |name, cmd|
+    puts "  %-20s %s" % [name, cmd[:desc]]
+  end
+  puts
+  puts "Run 'wokku auth:login' to get started."
+end
+
+# === Main ===
+command = ARGV.shift
+
+if command.nil? || command == "help" || command == "--help" || command == "-h"
+  show_help
+elsif COMMANDS[command]
+  COMMANDS[command][:handler].call
+else
+  puts "Unknown command: #{command}"
+  puts "Run 'wokku help' for available commands."
+  exit 1
+end
