@@ -41,3 +41,4 @@
 # Enterprise Edition (private repo)
 /ee/
 .claude/worktrees/
+.kamal/secrets
