@@ -50,7 +50,7 @@
     <div class="bg-surface-container-low p-5 rounded-md flex items-center justify-between group hover:bg-surface-container transition-colors">
       <div>
         <p class="text-outline uppercase tracking-wider text-[10px] font-bold mb-1">Cost (MTD)</p>
-        <h3 class="font-headline text-2xl font-bold text-on-surface">$0.00</h3>
+        <h3 class="font-headline text-2xl font-bold text-on-surface">$<%= "%.2f" % @stats[:cost_mtd] %></h3>
       </div>
       <div class="w-10 h-10 rounded bg-tertiary-container/20 flex items-center justify-center text-tertiary group-hover:scale-110 transition-transform">
         <span class="material-symbols-outlined">payments</span>
