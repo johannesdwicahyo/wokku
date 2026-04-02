@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_02_085232) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_02_150429) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -528,9 +528,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_02_085232) do
     t.string "currency", default: "usd"
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
+    t.integer "failed_attempts", default: 0, null: false
     t.bigint "github_installation_id"
     t.string "github_username"
     t.string "locale", default: "en"
+    t.datetime "locked_at"
     t.string "name"
     t.boolean "otp_required_for_login", default: false, null: false
     t.string "otp_secret"
@@ -542,12 +544,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_02_085232) do
     t.string "stripe_customer_id"
     t.string "stripe_payment_method_id"
     t.string "uid"
+    t.string "unlock_token"
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["github_installation_id"], name: "index_users_on_github_installation_id"
     t.index ["otp_secret"], name: "index_users_on_otp_secret", unique: true
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
+    t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true
   end
 
   add_foreign_key "activities", "teams"
