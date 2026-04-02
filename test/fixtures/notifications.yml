@@ -2,11 +2,14 @@ one:
   app_record: one
   team: one
   channel: 0
-  events: '["deploy.succeeded", "deploy.failed"]'
-  config: '{"notify_on_failure": true}'
+  events:
+    - deploy.succeeded
+    - deploy.failed
+  config: {}
 
 two:
   team: two
   channel: 1
-  events: '["deploy.succeeded"]'
-  config: '{}'
+  events:
+    - deploy.succeeded
+  config: {}
