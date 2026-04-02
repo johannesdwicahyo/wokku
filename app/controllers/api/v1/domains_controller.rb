@@ -17,6 +17,7 @@ module Api
         Dokku::Domains.new(client).add(@app_record.name, params[:hostname])
 
         if domain.save
+          track("domain.added", target: domain)
           render json: domain, status: :created
         else
           render json: { errors: domain.errors.full_messages }, status: :unprocessable_entity
@@ -34,6 +35,7 @@ module Api
         client = Dokku::Client.new(@app_record.server)
         Dokku::Domains.new(client).remove(@app_record.name, domain.hostname)
         domain.destroy!
+        track("domain.removed", target: domain)
 
         render json: { message: "Domain removed" }
       rescue Dokku::Client::CommandError => e
