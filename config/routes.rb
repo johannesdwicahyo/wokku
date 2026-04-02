@@ -140,9 +140,6 @@ Rails.application.routes.draw do
       post :enable
       delete :disable
     end
-    resource :billing, only: [:show], controller: "billing" do
-      post :pay
-    end
     post "locale", to: "locales#update", as: :locale
   end
 
