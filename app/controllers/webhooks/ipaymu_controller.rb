@@ -1,5 +1,7 @@
 module Webhooks
   class IpaymuController < ActionController::API
+    before_action :verify_signature!
+
     def create
       trx_id = params[:trx_id]
       status = params[:status]
@@ -32,6 +34,27 @@ module Webhooks
       end
 
       head :ok
+    end
+
+    private
+
+    def verify_signature!
+      request.body.rewind
+      body = request.body.read
+
+      signature = request.headers["signature"]
+      return head :unauthorized if signature.blank?
+
+      api_key = ENV.fetch("IPAYMU_API_KEY", "SANDBOX2BAE12F9-82A3-49CA-B1B2-6BF9ACD0D8A9")
+      va      = ENV.fetch("IPAYMU_VA", "0000001914914286")
+
+      body_hash      = Digest::SHA256.hexdigest(body).downcase
+      string_to_sign = "POST:#{va}:#{body_hash}:#{api_key}"
+      expected       = OpenSSL::HMAC.hexdigest("sha256", api_key, string_to_sign)
+
+      unless ActiveSupport::SecurityUtils.secure_compare(expected, signature)
+        head :unauthorized
+      end
     end
   end
 end
