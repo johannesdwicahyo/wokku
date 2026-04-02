@@ -172,6 +172,25 @@
       </div>
     </div>
 
+    <%# SSH Keys %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-5 py-3 border-b border-outline-variant/10 flex items-center justify-between">
+        <p class="text-[10px] text-outline uppercase tracking-widest font-bold">SSH Keys</p>
+      </div>
+      <div class="p-5">
+        <p class="text-xs text-outline mb-3">Add your SSH public key to enable <code class="text-primary font-mono">git push</code> deployments.</p>
+        <div class="bg-surface-container-lowest rounded-md p-3 mb-3">
+          <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Git Remote</p>
+          <code class="text-xs font-mono text-primary">dokku@<%= policy_scope(Server).first&.host || 'server' %>:APP_NAME</code>
+        </div>
+        <div class="bg-surface-container-lowest rounded-md p-3">
+          <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Deploy Command</p>
+          <code class="text-xs font-mono text-on-surface-variant">git remote add dokku dokku@<%= policy_scope(Server).first&.host || 'server' %>:APP_NAME</code><br>
+          <code class="text-xs font-mono text-on-surface-variant">git push dokku main</code>
+        </div>
+      </div>
+    </div>
+
     <%# API Credentials %>
     <div class="bg-surface-container-low rounded-md overflow-hidden">
       <div class="px-5 py-3 border-b border-outline-variant/10">
