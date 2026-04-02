@@ -32,6 +32,16 @@ class Api::V1::AppsControllerTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
+  test "index returns 401 without token" do
+    get api_v1_apps_path
+    assert_response :unauthorized
+  end
+
+  test "show returns 401 without token" do
+    get api_v1_app_path(@app_record)
+    assert_response :unauthorized
+  end
+
   private
 
   def auth_headers
