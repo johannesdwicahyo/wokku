@@ -11,7 +11,7 @@ module Api
         authorize key
 
         if key.save
-          render json: key.as_json(only: [:id, :name, :fingerprint, :created_at]), status: :created
+          render json: key.as_json(only: [ :id, :name, :fingerprint, :created_at ]), status: :created
         else
           render json: { errors: key.errors.full_messages }, status: :unprocessable_entity
         end

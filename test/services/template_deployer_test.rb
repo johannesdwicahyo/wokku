@@ -7,7 +7,7 @@ class TemplateDeployerTest < ActiveSupport::TestCase
       name: "Rails + Tailwind",
       repo: "https://github.com/rails/rails-new",
       branch: "main",
-      addons: [{ "type" => "postgres", "tier" => "mini" }],
+      addons: [ { "type" => "postgres", "tier" => "mini" } ],
       env: { "RAILS_ENV" => "production" },
       post_deploy: "bin/rails db:migrate"
     }

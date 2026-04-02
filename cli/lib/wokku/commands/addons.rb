@@ -16,15 +16,15 @@ module Wokku
         header = %w[ID Name Service Status]
         rows = databases.map do |db|
           status = case db["status"]
-                   when "running" then pastel.green(db["status"])
-                   when "stopped" then pastel.red(db["status"])
-                   else pastel.yellow(db["status"] || "unknown")
-                   end
-          [db["id"], db["name"], db["service_type"], status]
+          when "running" then pastel.green(db["status"])
+          when "stopped" then pastel.red(db["status"])
+          else pastel.yellow(db["status"] || "unknown")
+          end
+          [ db["id"], db["name"], db["service_type"], status ]
         end
 
         table = TTY::Table.new(header: header, rows: rows)
-        puts table.render(:unicode, padding: [0, 1])
+        puts table.render(:unicode, padding: [ 0, 1 ])
       end
 
       def create(name, service_type:, server_id:)

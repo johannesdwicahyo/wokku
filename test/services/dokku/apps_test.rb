@@ -19,14 +19,14 @@ class Dokku::AppsTest < ActiveSupport::TestCase
     client = MockClient.new("apps:list" => "=====> My Apps\napp-one\napp-two\n")
     apps = Dokku::Apps.new(client)
     result = apps.list
-    assert_equal ["app-one", "app-two"], result
-    assert_equal ["apps:list"], client.commands
+    assert_equal [ "app-one", "app-two" ], result
+    assert_equal [ "apps:list" ], client.commands
   end
 
   test "create calls apps:create" do
     client = MockClient.new("apps:create app-one" => "Creating app-one...")
     apps = Dokku::Apps.new(client)
     apps.create("app-one")
-    assert_equal ["apps:create app-one"], client.commands
+    assert_equal [ "apps:create app-one" ], client.commands
   end
 end

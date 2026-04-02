@@ -16,15 +16,15 @@ module Wokku
         header = %w[ID Name Host Status]
         rows = servers.map do |s|
           status = case s["status"]
-                   when "active", "online" then pastel.green(s["status"])
-                   when "offline" then pastel.red(s["status"])
-                   else pastel.yellow(s["status"] || "unknown")
-                   end
-          [s["id"], s["name"], s["host"], status]
+          when "active", "online" then pastel.green(s["status"])
+          when "offline" then pastel.red(s["status"])
+          else pastel.yellow(s["status"] || "unknown")
+          end
+          [ s["id"], s["name"], s["host"], status ]
         end
 
         table = TTY::Table.new(header: header, rows: rows)
-        puts table.render(:unicode, padding: [0, 1])
+        puts table.render(:unicode, padding: [ 0, 1 ])
       end
 
       def add(name, host:, ssh_port: 22, team_id: nil)

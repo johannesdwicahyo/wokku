@@ -18,7 +18,7 @@ class ApiToken < ApplicationRecord
   def self.create_with_token!(attributes = {})
     plain_token = generate_token
     token = create!(attributes.merge(token_digest: Digest::SHA256.hexdigest(plain_token)))
-    [token, plain_token]
+    [ token, plain_token ]
   end
 
   def revoke!

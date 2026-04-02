@@ -18,7 +18,7 @@ class RestoreService
     cmd = IMPORT_COMMANDS[@db.service_type]
     raise "Unsupported database type for restore: #{@db.service_type}" unless cmd
 
-    gz_tempfile = Tempfile.new(["restore", ".gz"], binmode: true)
+    gz_tempfile = Tempfile.new([ "restore", ".gz" ], binmode: true)
     @destination.s3_client.get_object(
       bucket: @destination.bucket,
       key: @backup.s3_key,
@@ -30,7 +30,7 @@ class RestoreService
       non_interactive: true,
       timeout: 10
     }
-    ssh_options[:key_data] = [@server.ssh_private_key] if @server.ssh_private_key.present?
+    ssh_options[:key_data] = [ @server.ssh_private_key ] if @server.ssh_private_key.present?
 
     ssh_user = @server.ssh_user || "dokku"
     import_cmd = ssh_user == "dokku" ? "#{cmd} #{@db.name}" : "dokku #{cmd} #{@db.name}"

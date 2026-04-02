@@ -10,7 +10,7 @@ class CreateActivities < ActiveRecord::Migration[8.1]
       t.jsonb :metadata, default: {}         # Additional context
       t.datetime :created_at, null: false
     end
-    add_index :activities, [:team_id, :created_at]
-    add_index :activities, [:target_type, :target_id]
+    add_index :activities, [ :team_id, :created_at ]
+    add_index :activities, [ :target_type, :target_id ]
   end
 end

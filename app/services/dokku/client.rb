@@ -92,7 +92,7 @@ module Dokku
       }
 
       if @server.ssh_private_key.present?
-        opts[:key_data] = [@server.ssh_private_key]
+        opts[:key_data] = [ @server.ssh_private_key ]
       end
 
       opts

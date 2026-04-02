@@ -43,6 +43,8 @@ class TerminalChannel < ApplicationCable::Channel
   end
 
   def unsubscribed
+    return unless @mutex
+
     @mutex.synchronize { @running = false }
     @thread&.join(5)
     @thread&.kill if @thread&.alive?

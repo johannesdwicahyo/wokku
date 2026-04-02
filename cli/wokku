@@ -75,7 +75,7 @@ def table(rows, headers: nil)
   return if rows.empty?
   cols = (headers || rows.first.keys).map(&:to_s)
   widths = cols.map { |c| c.length }
-  rows.each { |r| cols.each_with_index { |c, i| widths[i] = [widths[i], r[c].to_s.length].max } }
+  rows.each { |r| cols.each_with_index { |c, i| widths[i] = [ widths[i], r[c].to_s.length ].max } }
 
   fmt = widths.map { |w| "%-#{w}s" }.join("  ")
   puts fmt % cols.map(&:upcase)
@@ -355,7 +355,7 @@ def show_help
   puts
   puts "Commands:"
   COMMANDS.sort_by { |k, _| k }.each do |name, cmd|
-    puts "  %-20s %s" % [name, cmd[:desc]]
+    puts "  %-20s %s" % [ name, cmd[:desc] ]
   end
   puts
   puts "Run 'wokku auth:login' to get started."

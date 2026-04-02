@@ -25,6 +25,6 @@ class DomainPolicy < ApplicationPolicy
   private
 
   def team_member_or_above?
-    record.app_record.team.team_memberships.exists?(user_id: user.id, role: [:member, :admin])
+    record.app_record.team.team_memberships.exists?(user_id: user.id, role: [ :member, :admin ])
   end
 end

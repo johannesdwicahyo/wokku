@@ -15,9 +15,9 @@ module Wokku
         end
 
         header = %w[Key Value]
-        rows = config.map { |k, v| [k, v] }
+        rows = config.map { |k, v| [ k, v ] }
         table = TTY::Table.new(header: header, rows: rows)
-        puts table.render(:unicode, padding: [0, 1])
+        puts table.render(:unicode, padding: [ 0, 1 ])
       end
 
       def set(app_id, pairs)
