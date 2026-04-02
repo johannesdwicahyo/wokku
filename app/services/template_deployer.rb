@@ -107,7 +107,7 @@ class TemplateDeployer
   end
 
   def build_steps
-    steps = [{ action: :create_app, detail: app_name }]
+    steps = [ { action: :create_app, detail: app_name } ]
 
     (template[:addons] || []).each do |addon|
       steps << { action: :provision_addon, detail: addon }

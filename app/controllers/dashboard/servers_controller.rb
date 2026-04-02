@@ -1,6 +1,6 @@
 module Dashboard
   class ServersController < BaseController
-    before_action :set_server, only: [:show, :destroy, :sync]
+    before_action :set_server, only: [ :show, :destroy, :sync ]
 
     def index
       @servers = policy_scope(Server).includes(:app_records)
@@ -36,7 +36,7 @@ module Dashboard
       # Generate SSH key pair for this server
       key = OpenSSL::PKey::RSA.new(4096)
       ssh_private_key = key.to_pem
-      ssh_public_key = "ssh-rsa #{[key.public_key.to_blob].pack('m0')}"
+      ssh_public_key = "ssh-rsa #{[ key.public_key.to_blob ].pack('m0')}"
 
       # Create VPS via provider API
       result = provider.create_server(

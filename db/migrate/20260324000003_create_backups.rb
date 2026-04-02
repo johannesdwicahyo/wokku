@@ -11,6 +11,6 @@ class CreateBackups < ActiveRecord::Migration[8.1]
       t.datetime :completed_at
       t.timestamps
     end
-    add_index :backups, [:database_service_id, :created_at]
+    add_index :backups, [ :database_service_id, :created_at ]
   end
 end

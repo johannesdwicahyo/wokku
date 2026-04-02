@@ -90,7 +90,7 @@ class PrPreviewDeployJob < ApplicationJob
   private
 
   def comment_on_pr(parent_app, pr_number, preview_url, commit_sha)
-    user = User.find_by(github_installation_id: [nil].compact)
+    user = User.find_by(github_installation_id: [ nil ].compact)
     # Find any user with a GitHub installation for this repo's owner
     user = User.where.not(github_installation_id: nil).first
     return unless user&.github_installation_id

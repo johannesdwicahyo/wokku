@@ -25,8 +25,8 @@ class BackupService
 
     begin
       client = Dokku::Client.new(@server)
-      raw_tempfile = Tempfile.new(["backup_raw", ".dump"], binmode: true)
-      gz_tempfile = Tempfile.new(["backup", ".gz"], binmode: true)
+      raw_tempfile = Tempfile.new([ "backup_raw", ".dump" ], binmode: true)
+      gz_tempfile = Tempfile.new([ "backup", ".gz" ], binmode: true)
 
       client.run_streaming(export_command) do |data|
         raw_tempfile.write(data)

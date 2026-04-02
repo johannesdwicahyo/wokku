@@ -8,6 +8,6 @@ class CreateEnvVars < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :env_vars, [:app_record_id, :key], unique: true
+    add_index :env_vars, [ :app_record_id, :key ], unique: true
   end
 end

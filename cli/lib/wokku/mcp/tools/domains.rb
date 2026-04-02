@@ -6,7 +6,7 @@ Wokku::MCP::Server.register_tool(
   input_schema: {
     type: "object",
     properties: { app_id: { type: "integer", description: "App ID" } },
-    required: ["app_id"]
+    required: [ "app_id" ]
   }
 ) do |args|
   client = Wokku::ApiClient.new
@@ -23,7 +23,7 @@ Wokku::MCP::Server.register_tool(
       app_id: { type: "integer", description: "App ID" },
       hostname: { type: "string", description: "Domain name" }
     },
-    required: ["app_id", "hostname"]
+    required: [ "app_id", "hostname" ]
   }
 ) do |args|
   client = Wokku::ApiClient.new

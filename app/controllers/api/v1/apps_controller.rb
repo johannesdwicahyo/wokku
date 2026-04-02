@@ -1,7 +1,6 @@
 module Api
   module V1
     class AppsController < BaseController
-
       def index
         apps = policy_scope(AppRecord)
         render json: apps.select(:id, :name, :server_id, :team_id, :status, :created_at)

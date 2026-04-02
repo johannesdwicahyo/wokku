@@ -56,7 +56,7 @@ module Api
           deploy_id: deploy.id
         )
 
-        render json: { app: app.as_json(only: [:id, :name, :status]), deploy: deploy.as_json(only: [:id, :status]) }, status: :created
+        render json: { app: app.as_json(only: [ :id, :name, :status ]), deploy: deploy.as_json(only: [ :id, :status ]) }, status: :created
       end
     end
   end

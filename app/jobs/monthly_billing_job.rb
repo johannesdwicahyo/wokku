@@ -35,7 +35,7 @@ class MonthlyBillingJob < ApplicationJob
       result = client.create_redirect_payment(
         amount_idr: amount_idr,
         reference_id: ref,
-        products: ["Wokku #{period_label} - #{user.email}"]
+        products: [ "Wokku #{period_label} - #{user.email}" ]
       )
 
       if result["Status"] == 200 && result["Data"]

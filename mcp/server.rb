@@ -135,7 +135,7 @@ loop do
       $stdout.puts JSON.generate({
         jsonrpc: "2.0", id: id,
         result: {
-          content: [{ type: "text", text: JSON.pretty_generate(result) }]
+          content: [ { type: "text", text: JSON.pretty_generate(result) } ]
         }
       })
     else

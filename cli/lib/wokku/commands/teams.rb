@@ -23,11 +23,11 @@ module Wokku
         header = %w[ID Email Role]
         rows = members.map do |m|
           user = m["user"] || m
-          [user["id"] || m["id"], user["email"] || m["email"], m["role"] || "-"]
+          [ user["id"] || m["id"], user["email"] || m["email"], m["role"] || "-" ]
         end
 
         table = TTY::Table.new(header: header, rows: rows)
-        puts table.render(:unicode, padding: [0, 1])
+        puts table.render(:unicode, padding: [ 0, 1 ])
       end
 
       def invite(team_id, email:, role: "member")

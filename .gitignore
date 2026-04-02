@@ -42,3 +42,4 @@
 /ee/
 .claude/worktrees/
 .kamal/secrets
+coverage/

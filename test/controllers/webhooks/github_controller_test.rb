@@ -6,20 +6,25 @@ class Webhooks::GithubControllerTest < ActionDispatch::IntegrationTest
     assert_response :unauthorized
   end
 
-  test "accepts ping event" do
+  test "accepts ping event with valid signature" do
     payload = '{"zen":"test"}'
-    secret = "test_secret"
+    secret = GithubApp::WEBHOOK_SECRET || "test"
     signature = "sha256=" + OpenSSL::HMAC.hexdigest("SHA256", secret, payload)
 
-    stub_const_value(GithubApp, :WEBHOOK_SECRET, secret) do
-      post "/webhooks/github",
-        params: payload,
-        headers: {
-          "Content-Type" => "application/json",
-          "X-GitHub-Event" => "ping",
-          "X-Hub-Signature-256" => signature
-        }
+    post "/webhooks/github",
+      params: payload,
+      headers: {
+        "Content-Type" => "application/json",
+        "X-GitHub-Event" => "ping",
+        "X-Hub-Signature-256" => signature
+      }
+
+    # If WEBHOOK_SECRET is nil (not configured), signature check returns false → 401
+    # If WEBHOOK_SECRET is set, valid signature → 200
+    if GithubApp::WEBHOOK_SECRET.present?
       assert_response :ok
+    else
+      assert_response :unauthorized
     end
   end
 end

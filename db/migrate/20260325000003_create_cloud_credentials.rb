@@ -7,7 +7,7 @@ class CreateCloudCredentials < ActiveRecord::Migration[8.1]
       t.string :api_key
       t.timestamps
     end
-    add_index :cloud_credentials, [:team_id, :provider]
+    add_index :cloud_credentials, [ :team_id, :provider ]
 
     add_column :servers, :cloud_provider, :string
     add_column :servers, :cloud_server_id, :string
