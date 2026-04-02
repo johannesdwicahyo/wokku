@@ -1,62 +1,206 @@
-<div data-controller="slide-panel">
-  <div class="max-w-2xl">
-    <h1 class="text-2xl font-headline text-on-surface mb-2">Profile</h1>
-    <p class="text-sm text-outline mb-6">Your account details</p>
+<%# Header %>
+<div class="mb-8">
+  <h1 class="font-headline text-3xl font-bold text-on-surface mb-2">Settings</h1>
+  <p class="text-sm text-outline">Manage your account, security, API credentials, and billing.</p>
+</div>
 
-    <div class="bg-surface-container-low rounded-xl border border-outline-variant/15 p-6 mb-6">
-      <div class="flex items-center space-x-4 mb-6">
-        <div class="w-16 h-16 technical-gradient rounded-full flex items-center justify-center text-on-primary text-2xl font-bold">
-          <%= current_user.email[0].upcase %>
-        </div>
+<div class="grid grid-cols-12 gap-6">
+  <%# ===== LEFT COLUMN (8-col) ===== %>
+  <div class="col-span-8 space-y-6">
+
+    <%# Account Info %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-6 py-4 border-b border-outline-variant/10 flex items-center justify-between">
         <div>
-          <h2 class="text-lg font-semibold text-on-surface"><%= current_user.email %></h2>
-          <p class="text-sm text-outline"><%= current_user.role.capitalize %></p>
+          <h2 class="font-headline text-base font-bold text-on-surface">Account</h2>
+          <p class="text-xs text-outline mt-0.5">Your profile and account details</p>
+        </div>
+        <%= link_to edit_dashboard_profile_path, class: "text-xs text-primary hover:underline flex items-center gap-1" do %>
+          <span class="material-symbols-outlined text-[14px]">edit</span> Edit
+        <% end %>
+      </div>
+      <div class="p-6">
+        <div class="flex items-center gap-4 mb-6">
+          <div class="w-14 h-14 rounded-lg technical-gradient flex items-center justify-center text-on-primary text-xl font-bold font-headline">
+            <% if current_user.avatar_url.present? %>
+              <img src="<%= current_user.avatar_url %>" alt="Avatar" class="w-full h-full object-cover rounded-lg">
+            <% else %>
+              <%= current_user.email[0].upcase %>
+            <% end %>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface"><%= current_user.name.presence || current_user.email %></h3>
+            <p class="text-xs text-outline font-mono"><%= current_user.email %></p>
+            <p class="text-[10px] text-outline-variant mt-0.5">Member since <%= current_user.created_at.strftime("%B %Y") %> · <%= current_user.role.capitalize %></p>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-4">
+          <div class="bg-surface rounded-md p-3 text-center">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Teams</p>
+            <span class="text-lg font-bold text-on-surface font-headline"><%= current_user.teams.size %></span>
+          </div>
+          <div class="bg-surface rounded-md p-3 text-center">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Apps</p>
+            <span class="text-lg font-bold text-on-surface font-headline"><%= policy_scope(AppRecord).size %></span>
+          </div>
+          <div class="bg-surface rounded-md p-3 text-center">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Servers</p>
+            <span class="text-lg font-bold text-on-surface font-headline"><%= policy_scope(Server).size %></span>
+          </div>
         </div>
       </div>
-
-      <dl class="space-y-3">
-        <div class="flex justify-between py-2 border-b border-outline-variant/15">
-          <dt class="text-sm text-outline">Email</dt>
-          <dd class="text-sm text-on-surface"><%= current_user.email %></dd>
-        </div>
-        <div class="flex justify-between py-2 border-b border-outline-variant/15">
-          <dt class="text-sm text-outline">Member since</dt>
-          <dd class="text-sm text-on-surface-variant"><%= current_user.created_at.strftime("%B %d, %Y") %></dd>
-        </div>
-        <div class="flex justify-between py-2">
-          <dt class="text-sm text-outline">Teams</dt>
-          <dd class="text-sm text-on-surface"><%= current_user.teams.size %></dd>
-        </div>
-      </dl>
     </div>
 
-    <button data-action="click->slide-panel#open" class="inline-flex items-center px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">
-      <span class="material-symbols-outlined text-[18px] mr-1.5">edit</span>
-      Edit Profile
-    </button>
-  </div>
+    <%# Resource Overview %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-6 py-4 border-b border-outline-variant/10">
+        <div class="flex items-center justify-between">
+          <h2 class="font-headline text-base font-bold text-on-surface">Resource Overview</h2>
+          <div class="text-right">
+            <span class="text-lg font-bold text-primary font-headline">$<%= "%.2f" % (policy_scope(AppRecord).includes(dyno_allocations: :dyno_tier).flat_map(&:dyno_allocations).sum { |a| a.dyno_tier.monthly_price_dollars * a.count } rescue 0) %></span>
+            <p class="text-[10px] text-outline uppercase tracking-wider">Estimated Monthly</p>
+          </div>
+        </div>
+      </div>
+      <div class="p-6">
+        <div class="grid grid-cols-3 gap-4">
+          <div class="bg-surface rounded-md p-4">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Active Apps</p>
+            <span class="text-2xl font-bold text-on-surface font-headline"><%= policy_scope(AppRecord).select(&:running?).size %></span>
+            <p class="text-[10px] text-outline mt-1">of <%= policy_scope(AppRecord).size %> total</p>
+          </div>
+          <div class="bg-surface rounded-md p-4">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Add-ons</p>
+            <span class="text-2xl font-bold text-on-surface font-headline"><%= DatabaseService.count rescue 0 %></span>
+            <p class="text-[10px] text-outline mt-1">databases & services</p>
+          </div>
+          <div class="bg-surface rounded-md p-4">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Dynos</p>
+            <%
+              total_dynos = DynoAllocation.sum(:count) rescue 0
+            %>
+            <span class="text-2xl font-bold text-on-surface font-headline"><%= total_dynos %></span>
+            <p class="text-[10px] text-outline mt-1">active containers</p>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <%= render layout: "dashboard/shared/slide_panel", locals: { title: "Edit Profile", subtitle: "Update your account details" } do %>
-    <%= form_with(model: current_user, url: dashboard_profile_path, method: :patch, class: "space-y-4") do |f| %>
-      <% if current_user.errors.any? %>
-        <div class="rounded-md bg-error-container/20 border border-error/20 p-3">
-          <ul class="text-xs text-error space-y-1">
-            <% current_user.errors.full_messages.each do |msg| %>
-              <li><%= msg %></li>
-            <% end %>
-          </ul>
+    <%# Teams %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-6 py-4 border-b border-outline-variant/10 flex items-center justify-between">
+        <h2 class="font-headline text-base font-bold text-on-surface">Teams</h2>
+        <%= link_to dashboard_teams_path, class: "text-xs text-primary hover:underline" do %>
+          Manage Teams
+        <% end %>
+      </div>
+      <div class="divide-y divide-outline-variant/10">
+        <% current_user.teams.each do |team| %>
+          <div class="px-6 py-3 flex items-center justify-between hover:bg-surface-container-high/20 transition">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-md bg-primary-container/30 flex items-center justify-center">
+                <span class="text-primary text-xs font-bold"><%= team.name[0].upcase %></span>
+              </div>
+              <div>
+                <span class="text-sm font-bold text-on-surface"><%= team.name %></span>
+                <span class="text-[10px] text-outline ml-2"><%= team.users.size %> member<%= team.users.size == 1 ? '' : 's' %></span>
+              </div>
+            </div>
+            <% membership = current_user.team_memberships.find_by(team: team) %>
+            <span class="text-[10px] text-outline uppercase font-bold tracking-wider"><%= membership&.role %></span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <%# Recent Activity %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-6 py-4 border-b border-outline-variant/10 flex items-center justify-between">
+        <h2 class="font-headline text-base font-bold text-on-surface">Recent Activity</h2>
+        <%= link_to dashboard_activities_path, class: "text-xs text-outline hover:text-primary transition" do %>
+          View All
+        <% end %>
+      </div>
+      <%
+        recent = Activity.where(user: current_user).order(created_at: :desc).limit(5) rescue []
+      %>
+      <% if recent.any? %>
+        <div class="divide-y divide-outline-variant/10">
+          <% recent.each do |activity| %>
+            <div class="px-6 py-3 flex items-center justify-between hover:bg-surface-container-high/20 transition">
+              <div class="flex items-center gap-3">
+                <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                <span class="text-xs text-on-surface-variant"><%= activity.description %> <span class="font-mono text-primary"><%= activity.target_name %></span></span>
+              </div>
+              <span class="text-[10px] text-outline"><%= time_ago_in_words(activity.created_at) %> ago</span>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="px-6 py-6 text-center">
+          <p class="text-xs text-outline">No recent activity.</p>
         </div>
       <% end %>
+    </div>
+  </div>
 
-      <div>
-        <%= f.label :email, class: "block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider" %>
-        <%= f.email_field :email, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline-variant focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-mono" %>
-      </div>
+  <%# ===== RIGHT COLUMN (4-col) ===== %>
+  <div class="col-span-4 space-y-6">
 
-      <div class="flex items-center space-x-3 pt-2">
-        <%= f.submit "Save", class: "flex-1 py-2 px-4 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer text-center" %>
-        <button type="button" data-action="click->slide-panel#close" class="py-2 px-4 text-sm text-on-surface-variant hover:text-on-surface transition cursor-pointer">Cancel</button>
+    <%# API Credentials %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-5 py-3 border-b border-outline-variant/10">
+        <p class="text-[10px] text-outline uppercase tracking-widest font-bold">API Credentials</p>
       </div>
-    <% end %>
-  <% end %>
+      <div class="p-5">
+        <p class="text-xs text-outline mb-3">Use API tokens to authenticate CLI and API requests.</p>
+        <div class="bg-surface rounded-md p-3 mb-3">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-[10px] text-outline uppercase tracking-wider font-bold">API Endpoint</span>
+          </div>
+          <code class="text-xs font-mono text-primary">https://wokku.dev/api/v1</code>
+        </div>
+        <div class="bg-surface rounded-md p-3 mb-4">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-[10px] text-outline uppercase tracking-wider font-bold">Auth Header</span>
+          </div>
+          <code class="text-xs font-mono text-on-surface-variant">Authorization: Bearer <span class="text-primary">YOUR_TOKEN</span></code>
+        </div>
+        <p class="text-[10px] text-outline mb-2">Generate tokens via the API:</p>
+        <div class="bg-surface-container-lowest rounded-md p-2">
+          <code class="text-[10px] font-mono text-on-surface-variant">POST /api/v1/auth/login</code>
+        </div>
+      </div>
+    </div>
+
+    <%# Quick Links %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-5 py-3 border-b border-outline-variant/10">
+        <p class="text-[10px] text-outline uppercase tracking-widest font-bold">Quick Links</p>
+      </div>
+      <div class="divide-y divide-outline-variant/10">
+        <%= link_to dashboard_notifications_path, class: "px-5 py-2.5 flex items-center gap-3 text-xs text-on-surface-variant hover:bg-surface-container-high/30 hover:text-on-surface transition" do %>
+          <span class="material-symbols-outlined text-[16px]">notifications</span> Notifications
+        <% end %>
+        <%= link_to dashboard_teams_path, class: "px-5 py-2.5 flex items-center gap-3 text-xs text-on-surface-variant hover:bg-surface-container-high/30 hover:text-on-surface transition" do %>
+          <span class="material-symbols-outlined text-[16px]">group</span> Teams
+        <% end %>
+        <%= link_to dashboard_activities_path, class: "px-5 py-2.5 flex items-center gap-3 text-xs text-on-surface-variant hover:bg-surface-container-high/30 hover:text-on-surface transition" do %>
+          <span class="material-symbols-outlined text-[16px]">history</span> Activity Log
+        <% end %>
+        <a href="/docs" target="_blank" class="px-5 py-2.5 flex items-center gap-3 text-xs text-on-surface-variant hover:bg-surface-container-high/30 hover:text-on-surface transition">
+          <span class="material-symbols-outlined text-[16px]">menu_book</span> Documentation
+        </a>
+      </div>
+    </div>
+
+    <%# Danger Zone %>
+    <div class="bg-error-container/10 border border-error/20 rounded-md p-5">
+      <h3 class="text-sm font-bold text-error mb-2">Danger Zone</h3>
+      <p class="text-xs text-on-error-container/70 mb-4">Permanently delete your account and all associated data. This action cannot be undone.</p>
+      <button class="w-full py-2 text-xs font-bold text-error border border-error/30 rounded-md hover:bg-error/10 transition cursor-pointer" onclick="alert('Contact support@wokku.dev to delete your account.')">
+        Delete Account
+      </button>
+    </div>
+  </div>
 </div>
