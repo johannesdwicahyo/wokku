@@ -42,8 +42,13 @@ Once configured, you can tell Claude Code:
 - "Show logs for my-app"
 - "Set DATABASE_URL for my-app"
 - "Restart my-app"
+- "Delete my-app"
 - "Scale my-app to 2 web dynos"
 - "Show domains for my-app"
+- "Enable SSL for my domain"
+- "Add a Postgres database to my-app"
+- "List add-ons for my-app"
+- "Show recent activity"
 - "Create a new app called blog on server 1"
 
 ### 4. API Reference
@@ -61,3 +66,9 @@ Once configured, you can tell Claude Code:
 | `wokku_deploy_template` | Deploy from template |
 | `wokku_list_domains` | List app domains |
 | `wokku_scale_app` | Scale app processes |
+| `wokku_delete_app` | Delete an application |
+| `wokku_enable_ssl` | Enable SSL for an app domain |
+| `wokku_list_addons` | List add-ons for an app |
+| `wokku_add_addon` | Add a database add-on to an app |
+| `wokku_remove_addon` | Remove an add-on from an app |
+| `wokku_list_activities` | List recent activity log |

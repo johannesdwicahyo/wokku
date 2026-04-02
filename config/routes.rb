@@ -36,6 +36,7 @@ Rails.application.routes.draw do
         resource :ps, only: [:show, :update], controller: "ps"
         resources :logs, only: [:index]
         resources :deploys, only: [:index, :show]
+        resources :addons, only: [:index, :create, :destroy]
       end
 
       resources :templates, only: [:index, :show] do
@@ -51,7 +52,10 @@ Rails.application.routes.draw do
           post :link
           post :unlink
         end
+        resources :backups, only: [:index, :create]
       end
+
+      resources :activities, only: [:index]
 
       resources :ssh_keys, only: [:index, :create, :destroy]
 
