@@ -59,14 +59,14 @@ Rails.application.configure do
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: ENV.fetch("APP_HOST", "wokku.dev"), protocol: "https" }
 
-  # Outgoing SMTP server (configure via environment variables).
+  # Outgoing SMTP via Resend (https://resend.com).
   config.action_mailer.smtp_settings = {
-    user_name: ENV["SMTP_USERNAME"],
-    password: ENV["SMTP_PASSWORD"],
-    address: ENV.fetch("SMTP_ADDRESS", "smtp.gmail.com"),
-    port: ENV.fetch("SMTP_PORT", 587).to_i,
+    user_name: "resend",
+    password: ENV["RESEND_API_KEY"],
+    address: "smtp.resend.com",
+    port: 465,
     authentication: :plain,
-    enable_starttls_auto: true
+    tls: true
   }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
