@@ -4,7 +4,7 @@
   @keyframes terminal-type { from { width: 0 } to { width: 100% } }
   @keyframes blink { 50% { border-color: transparent } }
   @keyframes float-up { from { opacity: 0; transform: translateY(20px) } to { opacity: 1; transform: translateY(0) } }
-  @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(34, 197, 94, 0.1) } 50% { box-shadow: 0 0 40px rgba(34, 197, 94, 0.2) } }
+  @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(192, 193, 255, 0.1) } 50% { box-shadow: 0 0 40px rgba(192, 193, 255, 0.2) } }
   @keyframes grid-fade { from { opacity: 0 } to { opacity: 0.03 } }
   .animate-float { animation: float-up 0.6s ease-out both; }
   .animate-float-1 { animation-delay: 0.1s; }
@@ -16,38 +16,38 @@
   .terminal-line-3 { animation-delay: 1.8s; }
   .terminal-line-4 { animation-delay: 2.6s; }
   .terminal-line-5 { animation-delay: 3.2s; }
-  .terminal-cursor { border-right: 2px solid #22C55E; animation: blink 0.8s step-end infinite; padding-right: 2px; }
-  .hero-grid { background-image: linear-gradient(rgba(34, 197, 94, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(34, 197, 94, 0.05) 1px, transparent 1px); background-size: 60px 60px; animation: grid-fade 1s ease-out both; }
-  .app-card:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(34, 197, 94, 0.08); }
+  .terminal-cursor { border-right: 2px solid #c0c1ff; animation: blink 0.8s step-end infinite; padding-right: 2px; }
+  .hero-grid { background-image: linear-gradient(rgba(192, 193, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(192, 193, 255, 0.05) 1px, transparent 1px); background-size: 60px 60px; animation: grid-fade 1s ease-out both; }
+  .app-card:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(192, 193, 255, 0.08); }
   .glow-border { position: relative; }
-  .glow-border::before { content: ''; position: absolute; inset: -1px; border-radius: inherit; background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), transparent 50%, rgba(34, 197, 94, 0.1)); z-index: -1; opacity: 0; transition: opacity 0.3s; }
+  .glow-border::before { content: ''; position: absolute; inset: -1px; border-radius: inherit; background: linear-gradient(135deg, rgba(192, 193, 255, 0.3), transparent 50%, rgba(192, 193, 255, 0.1)); z-index: -1; opacity: 0; transition: opacity 0.3s; }
   .glow-border:hover::before { opacity: 1; }
 </style>
 
 <!-- Hero -->
 <div class="relative overflow-hidden">
   <div class="hero-grid absolute inset-0"></div>
-  <div class="absolute top-20 left-1/4 w-96 h-96 bg-green-500/5 rounded-full blur-[120px]"></div>
-  <div class="absolute bottom-0 right-1/4 w-80 h-80 bg-green-500/3 rounded-full blur-[100px]"></div>
+  <div class="absolute top-20 left-1/4 w-96 h-96 bg-[#c0c1ff]/5 rounded-full blur-[120px]"></div>
+  <div class="absolute bottom-0 right-1/4 w-80 h-80 bg-[#c0c1ff]/3 rounded-full blur-[100px]"></div>
 
   <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-28">
     <div class="text-center max-w-4xl mx-auto">
-      <div class="animate-float inline-flex items-center px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 mb-8">
-        <span class="w-1.5 h-1.5 rounded-full bg-green-400 mr-2"></span>
-        <span class="text-xs text-green-400 font-medium tracking-wide">Open Source &middot; 50+ Apps &middot; Free Tier Available</span>
+      <div class="animate-float inline-flex items-center px-3 py-1 rounded-full bg-[#c0c1ff]/10 border border-[#c0c1ff]/20 mb-8">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#c0c1ff] mr-2"></span>
+        <span class="text-xs text-[#c0c1ff] font-medium tracking-wide">Open Source &middot; 50+ Apps &middot; Free Tier Available</span>
       </div>
 
       <h1 class="animate-float animate-float-1 text-5xl sm:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-[1.1]">
         Deploy anything<br>
-        <span class="bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">in one click</span>
+        <span class="bg-gradient-to-r from-[#c0c1ff] to-[#a78bfa] bg-clip-text text-transparent">in one click</span>
       </h1>
 
-      <p class="animate-float animate-float-2 mt-6 text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
+      <p class="animate-float animate-float-2 mt-6 text-lg sm:text-xl text-[#958e9e] max-w-2xl mx-auto leading-relaxed">
         Open-source cloud platform for developers and creators. Run popular apps or push your own code — 60% cheaper than Heroku.
       </p>
 
       <div class="animate-float animate-float-3 mt-10 flex flex-col sm:flex-row justify-center gap-4">
-        <%= link_to dashboard_templates_path, class: "inline-flex items-center justify-center px-8 py-3.5 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-lg hover:bg-green-400 transition shadow-lg shadow-green-500/20" do %>
+        <%= link_to dashboard_templates_path, class: "inline-flex items-center justify-center px-8 py-3.5 technical-gradient text-[#282a64] text-sm font-semibold rounded-lg hover:opacity-90 transition shadow-lg shadow-[#c0c1ff]/20" do %>
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
           Browse Apps
         <% end %>
@@ -57,26 +57,26 @@
         <% end %>
       </div>
 
-      <p class="animate-float animate-float-4 mt-6 text-xs text-gray-600">Free tier included. No credit card required.</p>
+      <p class="animate-float animate-float-4 mt-6 text-xs text-[#4a4453]">Free tier included. No credit card required.</p>
     </div>
 
     <!-- Terminal Preview -->
     <div class="animate-float animate-float-4 mt-16 max-w-2xl mx-auto">
-      <div class="rounded-xl border border-[#1E293B] bg-[#0D1424] overflow-hidden shadow-2xl shadow-black/40">
-        <div class="flex items-center px-4 py-2.5 border-b border-[#1E293B] bg-[#0B1120]">
+      <div class="rounded-xl border border-[#28283d]/30 bg-[#0D1424] overflow-hidden shadow-2xl shadow-black/40">
+        <div class="flex items-center px-4 py-2.5 border-b border-[#28283d]/30 bg-[#111125]">
           <div class="flex space-x-1.5">
             <div class="w-2.5 h-2.5 rounded-full bg-[#334155]"></div>
             <div class="w-2.5 h-2.5 rounded-full bg-[#334155]"></div>
             <div class="w-2.5 h-2.5 rounded-full bg-[#334155]"></div>
           </div>
-          <span class="ml-3 text-[10px] text-gray-600 font-mono">terminal</span>
+          <span class="ml-3 text-[10px] text-[#4a4453] font-mono">terminal</span>
         </div>
         <div class="p-5 font-mono text-sm space-y-1">
-          <div class="terminal-line"><span class="text-gray-500">$</span> <span class="text-gray-300">wokku apps:create my-app</span></div>
-          <div class="terminal-line terminal-line-2"><span class="text-green-400">Creating my-app... done</span></div>
-          <div class="terminal-line terminal-line-3 mt-1"><span class="text-gray-500">$</span> <span class="text-gray-300">git push wokku main</span></div>
-          <div class="terminal-line terminal-line-4"><span class="text-green-400">Deploying...</span> <span class="text-gray-500">build succeeded</span></div>
-          <div class="terminal-line terminal-line-5"><span class="text-green-400">Live at</span> <span class="text-green-300 underline">https://my-app.wokku.dev</span><span class="terminal-cursor"></span></div>
+          <div class="terminal-line"><span class="text-[#958e9e]">$</span> <span class="text-gray-300">wokku apps:create my-app</span></div>
+          <div class="terminal-line terminal-line-2"><span class="text-[#c0c1ff]">Creating my-app... done</span></div>
+          <div class="terminal-line terminal-line-3 mt-1"><span class="text-[#958e9e]">$</span> <span class="text-gray-300">git push wokku main</span></div>
+          <div class="terminal-line terminal-line-4"><span class="text-[#c0c1ff]">Deploying...</span> <span class="text-[#958e9e]">build succeeded</span></div>
+          <div class="terminal-line terminal-line-5"><span class="text-[#c0c1ff]">Live at</span> <span class="text-[#c0c1ff] underline">https://my-app.wokku.dev</span><span class="terminal-cursor"></span></div>
         </div>
       </div>
     </div>
@@ -84,11 +84,11 @@
 </div>
 
 <!-- Popular Apps -->
-<div class="border-t border-[#1E293B]">
+<div class="border-t border-[#28283d]/30">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
     <div class="text-center mb-12">
       <h2 class="text-3xl font-bold text-white">Deploy popular apps instantly</h2>
-      <p class="mt-3 text-gray-500">One click. No server knowledge needed. Pick an app and it's live.</p>
+      <p class="mt-3 text-[#958e9e]">One click. No server knowledge needed. Pick an app and it's live.</p>
     </div>
 
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
@@ -112,13 +112,13 @@
         <div class="app-card glow-border bg-[#1E293B]/50 rounded-lg border border-[#334155]/50 p-4 transition-all duration-200 cursor-pointer">
           <div class="text-2xl mb-2"><%= app[:icon] %></div>
           <h3 class="text-sm font-semibold text-white"><%= app[:name] %></h3>
-          <p class="text-[11px] text-gray-500 mt-0.5"><%= app[:desc] %></p>
+          <p class="text-[11px] text-[#958e9e] mt-0.5"><%= app[:desc] %></p>
         </div>
       <% end %>
     </div>
 
     <div class="text-center mt-8">
-      <%= link_to dashboard_templates_path, class: "inline-flex items-center text-sm text-green-400 hover:text-green-300 transition font-medium" do %>
+      <%= link_to dashboard_templates_path, class: "inline-flex items-center text-sm text-[#c0c1ff] hover:text-[#c0c1ff] transition font-medium" do %>
         View all 50+ templates
         <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
       <% end %>
@@ -127,15 +127,15 @@
 </div>
 
 <!-- Developer Experience -->
-<div class="border-t border-[#1E293B] bg-[#0D1424]">
+<div class="border-t border-[#28283d]/30 bg-[#0D1424]">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
     <div class="lg:grid lg:grid-cols-2 lg:gap-16 items-center">
       <div>
         <div class="inline-flex items-center px-2.5 py-1 rounded-md bg-[#1E293B] border border-[#334155] mb-6">
-          <span class="text-[10px] text-green-400 font-mono font-medium tracking-wider uppercase">For Developers</span>
+          <span class="text-[10px] text-[#c0c1ff] font-mono font-medium tracking-wider uppercase">For Developers</span>
         </div>
-        <h2 class="text-3xl font-bold text-white">Heroku workflow.<br><span class="text-green-400">Your servers.</span></h2>
-        <p class="mt-4 text-gray-400 leading-relaxed">
+        <h2 class="text-3xl font-bold text-white">Heroku workflow.<br><span class="text-[#c0c1ff]">Your servers.</span></h2>
+        <p class="mt-4 text-[#958e9e] leading-relaxed">
           Push code with git, manage with CLI, scale with a command. Everything you love about Heroku, running on infrastructure you control.
         </p>
         <ul class="mt-8 space-y-4">
@@ -147,12 +147,12 @@
             ["Multi-server", "Connect multiple Dokku servers across regions."]
           ].each do |title, desc| %>
             <li class="flex items-start">
-              <div class="flex-shrink-0 w-5 h-5 rounded bg-green-500/10 flex items-center justify-center mt-0.5">
-                <svg class="w-3 h-3 text-green-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              <div class="flex-shrink-0 w-5 h-5 rounded bg-[#c0c1ff]/10 flex items-center justify-center mt-0.5">
+                <svg class="w-3 h-3 text-[#c0c1ff]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
               </div>
               <div class="ml-3">
                 <span class="text-sm font-medium text-white"><%= title %></span>
-                <p class="text-xs text-gray-500 mt-0.5"><%= desc %></p>
+                <p class="text-xs text-[#958e9e] mt-0.5"><%= desc %></p>
               </div>
             </li>
           <% end %>
@@ -160,28 +160,28 @@
       </div>
 
       <div class="mt-12 lg:mt-0">
-        <div class="rounded-xl border border-[#1E293B] bg-[#0B1120] overflow-hidden">
-          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#1E293B]">
+        <div class="rounded-xl border border-[#28283d]/30 bg-[#111125] overflow-hidden">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#28283d]/30">
             <div class="flex items-center space-x-2">
               <div class="flex space-x-1.5">
                 <div class="w-2.5 h-2.5 rounded-full bg-[#334155]"></div>
                 <div class="w-2.5 h-2.5 rounded-full bg-[#334155]"></div>
                 <div class="w-2.5 h-2.5 rounded-full bg-[#334155]"></div>
               </div>
-              <span class="text-[10px] text-gray-600 font-mono">deploy.sh</span>
+              <span class="text-[10px] text-[#4a4453] font-mono">deploy.sh</span>
             </div>
           </div>
-          <div class="p-5 font-mono text-xs leading-6 text-gray-400">
-            <div><span class="text-gray-600"># Create app and database</span></div>
-            <div><span class="text-gray-500">$</span> wokku apps:create <span class="text-green-300">my-saas</span></div>
-            <div><span class="text-gray-500">$</span> wokku addons:create <span class="text-green-300">postgres</span> --app my-saas</div>
-            <div class="mt-2"><span class="text-gray-600"># Configure and deploy</span></div>
-            <div><span class="text-gray-500">$</span> wokku config:set <span class="text-green-300">RAILS_ENV=production</span></div>
-            <div><span class="text-gray-500">$</span> git push wokku main</div>
-            <div class="mt-2"><span class="text-gray-600"># Scale and add domain</span></div>
-            <div><span class="text-gray-500">$</span> wokku ps:scale <span class="text-green-300">web=2 worker=1</span></div>
-            <div><span class="text-gray-500">$</span> wokku domains:add <span class="text-green-300">app.example.com</span></div>
-            <div><span class="text-green-400">✓ SSL certificate issued</span></div>
+          <div class="p-5 font-mono text-xs leading-6 text-[#958e9e]">
+            <div><span class="text-[#4a4453]"># Create app and database</span></div>
+            <div><span class="text-[#958e9e]">$</span> wokku apps:create <span class="text-[#c0c1ff]">my-saas</span></div>
+            <div><span class="text-[#958e9e]">$</span> wokku addons:create <span class="text-[#c0c1ff]">postgres</span> --app my-saas</div>
+            <div class="mt-2"><span class="text-[#4a4453]"># Configure and deploy</span></div>
+            <div><span class="text-[#958e9e]">$</span> wokku config:set <span class="text-[#c0c1ff]">RAILS_ENV=production</span></div>
+            <div><span class="text-[#958e9e]">$</span> git push wokku main</div>
+            <div class="mt-2"><span class="text-[#4a4453]"># Scale and add domain</span></div>
+            <div><span class="text-[#958e9e]">$</span> wokku ps:scale <span class="text-[#c0c1ff]">web=2 worker=1</span></div>
+            <div><span class="text-[#958e9e]">$</span> wokku domains:add <span class="text-[#c0c1ff]">app.example.com</span></div>
+            <div><span class="text-[#c0c1ff]">✓ SSL certificate issued</span></div>
           </div>
         </div>
       </div>
@@ -190,11 +190,11 @@
 </div>
 
 <!-- How It Works -->
-<div class="border-t border-[#1E293B]">
+<div class="border-t border-[#28283d]/30">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
     <div class="text-center mb-16">
       <h2 class="text-3xl font-bold text-white">Live in 3 steps</h2>
-      <p class="mt-3 text-gray-500">From zero to deployed in under 5 minutes.</p>
+      <p class="mt-3 text-[#958e9e]">From zero to deployed in under 5 minutes.</p>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -205,12 +205,12 @@
       ].each do |num, title, desc, icon| %>
         <div class="relative bg-[#1E293B]/40 rounded-xl border border-[#334155]/40 p-6">
           <div class="flex items-center space-x-3 mb-4">
-            <div class="w-8 h-8 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center">
-              <span class="text-sm font-bold text-green-400 font-mono"><%= num %></span>
+            <div class="w-8 h-8 rounded-lg bg-[#c0c1ff]/10 border border-[#c0c1ff]/20 flex items-center justify-center">
+              <span class="text-sm font-bold text-[#c0c1ff] font-mono"><%= num %></span>
             </div>
             <h3 class="text-base font-semibold text-white"><%= title %></h3>
           </div>
-          <p class="text-sm text-gray-500 leading-relaxed"><%= desc %></p>
+          <p class="text-sm text-[#958e9e] leading-relaxed"><%= desc %></p>
         </div>
       <% end %>
     </div>
@@ -218,11 +218,11 @@
 </div>
 
 <!-- Pricing -->
-<div class="border-t border-[#1E293B] bg-[#0D1424]">
+<div class="border-t border-[#28283d]/30 bg-[#0D1424]">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
     <div class="text-center mb-12">
       <h2 class="text-3xl font-bold text-white">Simple, transparent pricing</h2>
-      <p class="mt-3 text-gray-500">Pay per resource, per hour. No hidden fees. Start free.</p>
+      <p class="mt-3 text-[#958e9e]">Pay per resource, per hour. No hidden fees. Start free.</p>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
@@ -243,8 +243,8 @@
               ].each do |name, ram, price| %>
                 <tr>
                   <td class="py-2.5 text-gray-300 font-medium"><%= name %></td>
-                  <td class="py-2.5 text-gray-500"><%= ram %></td>
-                  <td class="py-2.5 text-right font-mono <%= price == 'Free' ? 'text-green-400' : 'text-white' %>"><%= price %></td>
+                  <td class="py-2.5 text-[#958e9e]"><%= ram %></td>
+                  <td class="py-2.5 text-right font-mono <%= price == 'Free' ? 'text-[#c0c1ff]' : 'text-white' %>"><%= price %></td>
                 </tr>
               <% end %>
             </tbody>
@@ -267,8 +267,8 @@
               ].each do |name, storage, price| %>
                 <tr>
                   <td class="py-2.5 text-gray-300 font-medium"><%= name %></td>
-                  <td class="py-2.5 text-gray-500"><%= storage %></td>
-                  <td class="py-2.5 text-right font-mono <%= price == 'Free' ? 'text-green-400' : 'text-white' %>"><%= price %></td>
+                  <td class="py-2.5 text-[#958e9e]"><%= storage %></td>
+                  <td class="py-2.5 text-right font-mono <%= price == 'Free' ? 'text-[#c0c1ff]' : 'text-white' %>"><%= price %></td>
                 </tr>
               <% end %>
             </tbody>
@@ -278,13 +278,13 @@
     </div>
 
     <!-- vs Heroku -->
-    <div class="max-w-2xl mx-auto mt-8 bg-green-500/5 rounded-xl border border-green-500/20 p-6">
+    <div class="max-w-2xl mx-auto mt-8 bg-[#c0c1ff]/5 rounded-xl border border-[#c0c1ff]/20 p-6">
       <div class="flex items-center justify-between">
         <div>
           <h3 class="text-sm font-semibold text-white">Save 60-80% vs Heroku</h3>
-          <p class="text-xs text-gray-500 mt-1">Same workflow, same experience — fraction of the cost.</p>
+          <p class="text-xs text-[#958e9e] mt-1">Same workflow, same experience — fraction of the cost.</p>
         </div>
-        <%= link_to pricing_path, class: "inline-flex items-center px-4 py-2 text-sm font-medium text-green-400 border border-green-500/30 rounded-lg hover:bg-green-500/10 transition" do %>
+        <%= link_to pricing_path, class: "inline-flex items-center px-4 py-2 text-sm font-medium text-[#c0c1ff] border border-[#c0c1ff]/30 rounded-lg hover:bg-[#c0c1ff]/10 transition" do %>
           Compare pricing
           <svg class="w-3.5 h-3.5 ml-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
         <% end %>
@@ -294,16 +294,16 @@
 </div>
 
 <!-- Open Source -->
-<div class="border-t border-[#1E293B]">
+<div class="border-t border-[#28283d]/30">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
     <div class="max-w-3xl mx-auto text-center">
       <div class="inline-flex items-center px-3 py-1 rounded-full bg-[#1E293B] border border-[#334155] mb-6">
-        <svg class="w-3.5 h-3.5 text-gray-400 mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-        <span class="text-xs text-gray-400 font-medium">Open Source on GitHub</span>
+        <svg class="w-3.5 h-3.5 text-[#958e9e] mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        <span class="text-xs text-[#958e9e] font-medium">Open Source on GitHub</span>
       </div>
 
-      <h2 class="text-3xl font-bold text-white">Built in the open.<br>Run it <span class="text-green-400">anywhere</span>.</h2>
-      <p class="mt-4 text-gray-400 leading-relaxed">
+      <h2 class="text-3xl font-bold text-white">Built in the open.<br>Run it <span class="text-[#c0c1ff]">anywhere</span>.</h2>
+      <p class="mt-4 text-[#958e9e] leading-relaxed">
         Wokku is open-source, built on <span class="text-white font-medium">Dokku</span>. Use our managed cloud at wokku.dev, or self-host on your own servers. No vendor lock-in, ever.
       </p>
 
@@ -312,7 +312,7 @@
           <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
           Star on GitHub
         </a>
-        <%= link_to docs_path, class: "inline-flex items-center justify-center px-6 py-3 text-sm text-gray-400 font-medium hover:text-white transition" do %>
+        <%= link_to docs_path, class: "inline-flex items-center justify-center px-6 py-3 text-sm text-[#958e9e] font-medium hover:text-white transition" do %>
           Read the docs
           <svg class="w-4 h-4 ml-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
         <% end %>
@@ -322,13 +322,13 @@
 </div>
 
 <!-- Final CTA -->
-<div class="border-t border-[#1E293B]">
+<div class="border-t border-[#28283d]/30">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
     <div class="max-w-2xl mx-auto text-center">
       <h2 class="text-3xl font-bold text-white">Ready to deploy?</h2>
-      <p class="mt-3 text-gray-500">Start for free. Deploy your first app in minutes.</p>
+      <p class="mt-3 text-[#958e9e]">Start for free. Deploy your first app in minutes.</p>
       <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-        <%= link_to dashboard_templates_path, class: "inline-flex items-center justify-center px-8 py-3.5 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-lg hover:bg-green-400 transition shadow-lg shadow-green-500/20" do %>
+        <%= link_to dashboard_templates_path, class: "inline-flex items-center justify-center px-8 py-3.5 technical-gradient text-[#282a64] text-sm font-semibold rounded-lg hover:opacity-90 transition shadow-lg shadow-[#c0c1ff]/20" do %>
           Browse Apps
         <% end %>
         <%= link_to new_user_registration_path, class: "inline-flex items-center justify-center px-8 py-3.5 border border-[#334155] text-white text-sm font-semibold rounded-lg hover:bg-[#1E293B] transition" do %>
