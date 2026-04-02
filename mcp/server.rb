@@ -80,6 +80,18 @@ def handle_tool(name, args)
     scaling["web"] = args["web"] if args["web"]
     scaling["worker"] = args["worker"] if args["worker"]
     api_request(:put, "/apps/#{args['app_id']}/ps", { scaling: scaling })
+  when "wokku_delete_app"
+    api_request(:delete, "/apps/#{args['app_id']}")
+  when "wokku_enable_ssl"
+    api_request(:post, "/apps/#{args['app_id']}/domains/#{args['domain_id']}/ssl")
+  when "wokku_list_addons"
+    api_request(:get, "/apps/#{args['app_id']}/addons")
+  when "wokku_add_addon"
+    api_request(:post, "/apps/#{args['app_id']}/addons", { service_type: args["service_type"], name: args["name"] })
+  when "wokku_remove_addon"
+    api_request(:delete, "/apps/#{args['app_id']}/addons/#{args['addon_id']}")
+  when "wokku_list_activities"
+    api_request(:get, "/activities?limit=#{args['limit'] || 20}")
   else
     { error: "Unknown tool: #{name}" }
   end

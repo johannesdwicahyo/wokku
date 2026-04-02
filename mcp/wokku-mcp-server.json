@@ -128,6 +128,75 @@
         },
         "required": ["app_id"]
       }
+    },
+    {
+      "name": "wokku_delete_app",
+      "description": "Delete an application",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "app_id": { "type": "string", "description": "The app ID" }
+        },
+        "required": ["app_id"]
+      }
+    },
+    {
+      "name": "wokku_enable_ssl",
+      "description": "Enable SSL for an app domain",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "app_id": { "type": "string", "description": "The app ID" },
+          "domain_id": { "type": "string", "description": "The domain ID" }
+        },
+        "required": ["app_id", "domain_id"]
+      }
+    },
+    {
+      "name": "wokku_list_addons",
+      "description": "List add-ons (linked databases) for an app",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "app_id": { "type": "string", "description": "The app ID" }
+        },
+        "required": ["app_id"]
+      }
+    },
+    {
+      "name": "wokku_add_addon",
+      "description": "Add a database add-on to an app",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "app_id": { "type": "string", "description": "The app ID" },
+          "service_type": { "type": "string", "description": "Database type (postgres, mysql, redis, mongodb)" },
+          "name": { "type": "string", "description": "Optional name for the database service" }
+        },
+        "required": ["app_id", "service_type"]
+      }
+    },
+    {
+      "name": "wokku_remove_addon",
+      "description": "Remove an add-on from an app",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "app_id": { "type": "string", "description": "The app ID" },
+          "addon_id": { "type": "string", "description": "The add-on (database service) ID" }
+        },
+        "required": ["app_id", "addon_id"]
+      }
+    },
+    {
+      "name": "wokku_list_activities",
+      "description": "List recent activity log entries",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "limit": { "type": "integer", "description": "Number of entries to return (default: 20)" }
+        }
+      }
     }
   ]
 }

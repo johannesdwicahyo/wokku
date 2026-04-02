@@ -29,6 +29,7 @@ module Api
           env_var.update!(value: value)
         end
 
+        track("config.updated", target: @app_record)
         render json: { message: "Config updated", vars: vars.keys }
       rescue Dokku::Client::CommandError => e
         render json: { error: e.message }, status: :unprocessable_entity
