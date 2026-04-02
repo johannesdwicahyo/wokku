@@ -1,14 +1,11 @@
 <div class="min-h-screen flex items-center justify-center px-4">
   <div class="max-w-sm w-full">
     <div class="text-center mb-8">
-      <div class="inline-flex items-center justify-center w-10 h-10 bg-green-500 rounded-lg mb-4">
-        <svg class="w-5 h-5 text-[#0B1120]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-      </div>
-      <h1 class="text-xl font-semibold text-white">Reset your password</h1>
-      <p class="mt-1 text-sm text-gray-500">We'll send you reset instructions</p>
+      <h1 class="text-xl font-semibold text-[#e2e0fc]">Reset your password</h1>
+      <p class="mt-1 text-sm text-[#958e9e]">We'll send you reset instructions</p>
     </div>
 
-    <div class="bg-[#1E293B]/60 rounded-lg border border-[#334155]/50 p-6">
+    <div class="bg-[#1e1e32]/60 rounded-lg border border-[#4a4453]/30 p-6">
       <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :post, class: "space-y-4" }) do |f| %>
         <% if resource.errors.any? %>
           <div class="rounded-md bg-red-500/10 border border-red-500/20 p-3">
@@ -21,19 +18,19 @@
         <% end %>
 
         <div>
-          <%= f.label :email, class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
-          <%= f.email_field :email, autofocus: true, autocomplete: "email", placeholder: "you@example.com", class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 font-mono" %>
+          <%= f.label :email, class: "block text-xs font-medium text-[#958e9e] mb-1.5 uppercase tracking-wider" %>
+          <%= f.email_field :email, autofocus: true, autocomplete: "email", placeholder: "you@example.com", class: "w-full rounded-md bg-[#111125] border border-[#4a4453]/30 px-3 py-2 text-sm text-[#e2e0fc] placeholder-[#4a4453] focus:outline-none focus:ring-1 focus:ring-[#c0c1ff] focus:border-[#c0c1ff] font-mono" %>
         </div>
 
         <div>
-          <%= f.submit "Send reset instructions", class: "w-full py-2 px-4 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 cursor-pointer transition" %>
+          <%= f.submit "Send reset instructions", class: "w-full py-2 px-4 text-[#282a64] text-sm font-semibold rounded-md hover:opacity-90 cursor-pointer transition", style: "background: linear-gradient(135deg, #c0c1ff 0%, #5625ab 100%);" %>
         </div>
       <% end %>
     </div>
 
-    <p class="mt-6 text-center text-xs text-gray-600">
+    <p class="mt-6 text-center text-xs text-[#4a4453]">
       Remember your password?
-      <%= link_to "Sign in", new_session_path(resource_name), class: "text-green-400 hover:text-green-300 font-medium ml-1 cursor-pointer transition" %>
+      <%= link_to "Sign in", new_session_path(resource_name), class: "text-[#c0c1ff] hover:text-[#c0c1ff] font-medium ml-1 cursor-pointer transition" %>
     </p>
   </div>
 </div>
