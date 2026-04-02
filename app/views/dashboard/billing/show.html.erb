@@ -1,0 +1,144 @@
+<div class="mb-8">
+  <h1 class="font-headline text-3xl font-bold text-on-surface mb-2">Billing</h1>
+  <p class="text-sm text-outline">View your usage, invoices, and payment history.</p>
+</div>
+
+<% if @unpaid.any? %>
+  <div class="mb-6 bg-error-container/20 border border-error/30 rounded-md p-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <span class="material-symbols-outlined text-error text-[24px]">warning</span>
+      <div>
+        <p class="text-sm font-bold text-on-error-container">You have unpaid invoices</p>
+        <p class="text-xs text-on-error-container/70">Please pay within the due date to avoid service interruption.</p>
+      </div>
+    </div>
+    <%= link_to pay_dashboard_billing_path(@unpaid.first), class: "px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition", data: { turbo_method: :post } do %>Pay Now<% end %>
+  </div>
+<% end %>
+
+<div class="grid grid-cols-12 gap-6">
+  <div class="col-span-8 space-y-6">
+    <%# Current Usage %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-6 py-4 border-b border-outline-variant/10 flex items-center justify-between">
+        <div>
+          <h2 class="font-headline text-base font-bold text-on-surface">Current Period Usage</h2>
+          <p class="text-xs text-outline mt-0.5"><%= @current_usage[:period] %></p>
+        </div>
+        <div class="text-right">
+          <span class="text-2xl font-bold text-primary font-headline">$<%= "%.2f" % @current_usage[:total_dollars] %></span>
+          <p class="text-[10px] text-outline">≈ Rp <%= @current_usage[:total_idr].to_s.reverse.gsub(/(\d{3})(?=\d)/, '\\1.').reverse %></p>
+        </div>
+      </div>
+      <div class="p-6">
+        <div class="bg-surface rounded-md p-3 space-y-2">
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-outline">Billing cycle</span>
+            <span class="text-on-surface-variant">Monthly, billed at end of month</span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-outline">Payment due</span>
+            <span class="text-on-surface-variant">3 days after invoice</span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-outline">Payment methods</span>
+            <span class="text-on-surface-variant">QRIS, Bank Transfer (VA), Credit Card</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%# Invoices %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-6 py-4 border-b border-outline-variant/10">
+        <h2 class="font-headline text-base font-bold text-on-surface">Invoices</h2>
+      </div>
+      <% if @invoices.any? %>
+        <table class="w-full">
+          <thead>
+            <tr class="bg-surface-container-highest/50">
+              <th class="px-6 py-3 text-left text-[10px] text-outline uppercase tracking-wider font-bold">Invoice</th>
+              <th class="px-6 py-3 text-left text-[10px] text-outline uppercase tracking-wider font-bold">Period</th>
+              <th class="px-6 py-3 text-left text-[10px] text-outline uppercase tracking-wider font-bold">Amount</th>
+              <th class="px-6 py-3 text-left text-[10px] text-outline uppercase tracking-wider font-bold">Status</th>
+              <th class="px-6 py-3 text-right text-[10px] text-outline uppercase tracking-wider font-bold">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant/10">
+            <% @invoices.each do |invoice| %>
+              <tr class="hover:bg-surface-container-high/20 transition">
+                <td class="px-6 py-3 text-xs font-mono text-primary"><%= invoice.reference_id %></td>
+                <td class="px-6 py-3 text-xs text-on-surface-variant"><%= invoice.period_label %></td>
+                <td class="px-6 py-3 text-xs font-bold text-on-surface">$<%= "%.2f" % invoice.amount_dollars %></td>
+                <td class="px-6 py-3">
+                  <% if invoice.respond_to?(:paid?) && invoice.paid? %>
+                    <span class="text-[10px] font-bold text-secondary uppercase bg-secondary-container/20 px-2 py-0.5 rounded">Paid</span>
+                  <% elsif invoice.respond_to?(:pending?) && invoice.pending? %>
+                    <span class="text-[10px] font-bold text-tertiary uppercase bg-tertiary-container/20 px-2 py-0.5 rounded">Pending</span>
+                  <% else %>
+                    <span class="text-[10px] font-bold text-error uppercase bg-error-container/20 px-2 py-0.5 rounded">Expired</span>
+                  <% end %>
+                </td>
+                <td class="px-6 py-3 text-right">
+                  <% if invoice.respond_to?(:pending?) && invoice.pending? %>
+                    <%= link_to "Pay", pay_dashboard_billing_path(invoice), class: "text-xs text-primary hover:underline font-semibold", data: { turbo_method: :post } %>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <div class="px-6 py-8 text-center">
+          <span class="material-symbols-outlined text-outline-variant text-[32px] mb-2">receipt_long</span>
+          <p class="text-xs text-outline">No invoices yet. Your first invoice will be generated at the end of the month.</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="col-span-4 space-y-6">
+    <%# Payment Methods %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-5 py-3 border-b border-outline-variant/10">
+        <p class="text-[10px] text-outline uppercase tracking-widest font-bold">Payment Methods</p>
+      </div>
+      <div class="p-5 space-y-3">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined text-primary text-[20px]">qr_code_2</span>
+          <div>
+            <p class="text-xs font-bold text-on-surface">QRIS</p>
+            <p class="text-[10px] text-outline">Scan with any e-wallet or banking app</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined text-secondary text-[20px]">account_balance</span>
+          <div>
+            <p class="text-xs font-bold text-on-surface">Bank Transfer</p>
+            <p class="text-[10px] text-outline">BCA, BNI, BRI, Mandiri + more</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined text-tertiary text-[20px]">credit_card</span>
+          <div>
+            <p class="text-xs font-bold text-on-surface">Credit Card</p>
+            <p class="text-[10px] text-outline">Visa, Mastercard</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%# Billing Policy %>
+    <div class="bg-surface-container-low rounded-md p-5">
+      <p class="text-[10px] text-outline uppercase tracking-widest font-bold mb-3">Billing Policy</p>
+      <div class="space-y-2 text-xs text-outline">
+        <p>• Usage billed hourly, capped at monthly max</p>
+        <p>• Invoice generated at end of each month</p>
+        <p>• <span class="text-on-surface-variant font-semibold">3 days</span> to pay after invoice</p>
+        <p>• <span class="text-tertiary font-semibold">Grace period:</span> 4 days after due date</p>
+        <p>• <span class="text-error font-semibold">Suspension:</span> apps stopped after grace</p>
+        <p>• Free tier never billed</p>
+      </div>
+    </div>
+  </div>
+</div>
