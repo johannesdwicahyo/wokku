@@ -1,0 +1,133 @@
+{
+  "name": "wokku",
+  "description": "Manage Wokku PaaS apps, databases, and deployments",
+  "version": "1.0.0",
+  "tools": [
+    {
+      "name": "wokku_list_apps",
+      "description": "List all applications on Wokku",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "wokku_get_app",
+      "description": "Get details of a specific application",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "app_id": { "type": "string", "description": "The app ID or name" }
+        },
+        "required": ["app_id"]
+      }
+    },
+    {
+      "name": "wokku_create_app",
+      "description": "Create a new application",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "App name (lowercase, alphanumeric with hyphens)" },
+          "server_id": { "type": "integer", "description": "Server ID to deploy to" },
+          "deploy_branch": { "type": "string", "description": "Git branch to deploy from (default: main)" }
+        },
+        "required": ["name", "server_id"]
+      }
+    },
+    {
+      "name": "wokku_restart_app",
+      "description": "Restart an application",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "app_id": { "type": "string", "description": "The app ID" }
+        },
+        "required": ["app_id"]
+      }
+    },
+    {
+      "name": "wokku_stop_app",
+      "description": "Stop an application",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "app_id": { "type": "string", "description": "The app ID" }
+        },
+        "required": ["app_id"]
+      }
+    },
+    {
+      "name": "wokku_get_logs",
+      "description": "Get application logs",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "app_id": { "type": "string", "description": "The app ID" },
+          "lines": { "type": "integer", "description": "Number of log lines (default: 100)" }
+        },
+        "required": ["app_id"]
+      }
+    },
+    {
+      "name": "wokku_get_config",
+      "description": "Get environment variables for an app",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "app_id": { "type": "string", "description": "The app ID" }
+        },
+        "required": ["app_id"]
+      }
+    },
+    {
+      "name": "wokku_set_config",
+      "description": "Set environment variables for an app",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "app_id": { "type": "string", "description": "The app ID" },
+          "vars": { "type": "object", "description": "Key-value pairs of environment variables" }
+        },
+        "required": ["app_id", "vars"]
+      }
+    },
+    {
+      "name": "wokku_deploy_template",
+      "description": "Deploy a one-click template",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "template_slug": { "type": "string", "description": "Template slug (e.g., 'ghost', 'wordpress')" },
+          "server_id": { "type": "integer", "description": "Server ID to deploy to" },
+          "app_name": { "type": "string", "description": "Name for the new app" }
+        },
+        "required": ["template_slug", "server_id"]
+      }
+    },
+    {
+      "name": "wokku_list_domains",
+      "description": "List domains for an app",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "app_id": { "type": "string", "description": "The app ID" }
+        },
+        "required": ["app_id"]
+      }
+    },
+    {
+      "name": "wokku_scale_app",
+      "description": "Scale app processes",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "app_id": { "type": "string", "description": "The app ID" },
+          "web": { "type": "integer", "description": "Number of web dynos" },
+          "worker": { "type": "integer", "description": "Number of worker dynos" }
+        },
+        "required": ["app_id"]
+      }
+    }
+  ]
+}
