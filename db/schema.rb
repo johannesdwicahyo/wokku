@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_01_093413) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_02_022539) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -515,6 +515,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_01_093413) do
     t.string "avatar_url"
     t.datetime "billing_grace_period_ends_at"
     t.integer "billing_status", default: 0, null: false
+    t.integer "consumed_timestep"
     t.datetime "created_at", null: false
     t.string "currency", default: "usd"
     t.string "email", default: "", null: false
@@ -523,6 +524,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_01_093413) do
     t.string "github_username"
     t.string "locale", default: "en"
     t.string "name"
+    t.boolean "otp_required_for_login", default: false, null: false
+    t.string "otp_secret"
     t.string "provider"
     t.datetime "remember_created_at"
     t.datetime "reset_password_sent_at"
@@ -534,6 +537,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_01_093413) do
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["github_installation_id"], name: "index_users_on_github_installation_id"
+    t.index ["otp_secret"], name: "index_users_on_otp_secret", unique: true
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end

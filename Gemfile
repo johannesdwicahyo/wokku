@@ -42,6 +42,8 @@ gem "image_processing", "~> 1.2"
 
 # Auth & Authorization
 gem "devise"
+gem "devise-two-factor"
+gem "rqrcode" # For QR code generation
 gem "pundit"
 gem "omniauth-github", "~> 2.0"
 gem "omniauth-google-oauth2"
