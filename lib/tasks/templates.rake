@@ -100,12 +100,12 @@ def build_compose_yaml(data, slug)
     data["addons"].each do |addon|
       type = addon["type"]
       image = case type
-        when "postgres" then "postgres:16"
-        when "redis" then "redis:7"
-        when "mysql" then "mysql:8"
-        when "mariadb" then "mariadb:11"
-        when "mongodb" then "mongo:7"
-        else "#{type}:latest"
+      when "postgres" then "postgres:16"
+      when "redis" then "redis:7"
+      when "mysql" then "mysql:8"
+      when "mariadb" then "mariadb:11"
+      when "mongodb" then "mongo:7"
+      else "#{type}:latest"
       end
       lines << "  #{type}:"
       lines << "    image: #{image}"

@@ -170,7 +170,7 @@ class Api::V1::NotificationsControllerTest < ActionDispatch::IntegrationTest
     @notification = Notification.create!(
       team: @team,
       channel: :email,
-      events: ["deploy"],
+      events: [ "deploy" ],
       config: { email: "alert@example.com" }
     )
     _, @plain_token = ApiToken.create_with_token!(user: @user, name: "test")

@@ -16,11 +16,11 @@ module Wokku
         header = %w[ID Domain SSL Created]
         rows = domains.map do |d|
           ssl = d["ssl_enabled"] ? pastel.green("enabled") : pastel.yellow("disabled")
-          [d["id"], d["domain"], ssl, d["created_at"]&.slice(0, 10)]
+          [ d["id"], d["domain"], ssl, d["created_at"]&.slice(0, 10) ]
         end
 
         table = TTY::Table.new(header: header, rows: rows)
-        puts table.render(:unicode, padding: [0, 1])
+        puts table.render(:unicode, padding: [ 0, 1 ])
       end
 
       def add(app_id, domain)

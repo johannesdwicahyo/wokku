@@ -25,7 +25,7 @@ class Api::V1::ConfigControllerTest < ActionDispatch::IntegrationTest
 
     mock_dokku(:destroy) do
       delete api_v1_app_config_path(@app_record),
-        params: { keys: ["OLD_VAR"] },
+        params: { keys: [ "OLD_VAR" ] },
         headers: auth_headers
       assert_response :success
       assert_equal 0, @app_record.env_vars.count

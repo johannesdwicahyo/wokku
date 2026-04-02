@@ -1,7 +1,7 @@
 class ProvisionServerJob < ApplicationJob
   queue_as :default
 
-  DOKKU_INSTALL = 'wget -NqO- https://dokku.com/bootstrap.sh | sudo DOKKU_TAG=v0.37.2 bash'
+  DOKKU_INSTALL = "wget -NqO- https://dokku.com/bootstrap.sh | sudo DOKKU_TAG=v0.37.2 bash"
   MAX_WAIT = 120 # seconds to wait for server to boot
 
   def perform(server_id:, cloud_credential_id:, cloud_server_id:)
@@ -26,7 +26,7 @@ class ProvisionServerJob < ApplicationJob
 
     # Install Dokku via SSH
     ssh_options = { port: 22, non_interactive: true, timeout: 15 }
-    ssh_options[:key_data] = [server.ssh_private_key] if server.ssh_private_key.present?
+    ssh_options[:key_data] = [ server.ssh_private_key ] if server.ssh_private_key.present?
 
     Net::SSH.start(server.host, "root", ssh_options) do |ssh|
       # Install Dokku (takes 2-5 minutes)

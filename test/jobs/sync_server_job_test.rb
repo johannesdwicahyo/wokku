@@ -14,7 +14,7 @@ class SyncServerJobTest < ActiveJob::TestCase
     Dokku::Apps.class_eval do
       alias_method :original_initialize, :initialize
       define_method(:initialize) { |_client| }
-      define_method(:list) { ["my-app-one"] }
+      define_method(:list) { [ "my-app-one" ] }
     end
 
     SyncServerJob.perform_now(@server.id)
@@ -40,7 +40,7 @@ class SyncServerJobTest < ActiveJob::TestCase
     Dokku::Apps.class_eval do
       alias_method :original_initialize, :initialize
       define_method(:initialize) { |_client| }
-      define_method(:list) { ["my-app-one", "new-remote-app"] }
+      define_method(:list) { [ "my-app-one", "new-remote-app" ] }
     end
 
     assert_difference -> { @server.app_records.count }, 1 do

@@ -24,7 +24,7 @@ module CloudProviders
         image: "ubuntu-24.04",
         start_after_create: true
       }
-      body[:ssh_keys] = [ssh_key] if ssh_key
+      body[:ssh_keys] = [ ssh_key ] if ssh_key
 
       data = api_post("/servers", body)
       server = data["server"]

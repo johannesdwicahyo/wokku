@@ -19,7 +19,7 @@ Wokku::MCP::Server.register_tool(
       name: { type: "string", description: "App name (lowercase alphanumeric with hyphens)" },
       server_id: { type: "integer", description: "Server ID to deploy on" }
     },
-    required: ["name", "server_id"]
+    required: [ "name", "server_id" ]
   }
 ) do |args|
   client = Wokku::ApiClient.new
@@ -33,7 +33,7 @@ Wokku::MCP::Server.register_tool(
   input_schema: {
     type: "object",
     properties: { app_id: { type: "integer", description: "App ID" } },
-    required: ["app_id"]
+    required: [ "app_id" ]
   }
 ) do |args|
   client = Wokku::ApiClient.new
@@ -47,7 +47,7 @@ Wokku::MCP::Server.register_tool(
   input_schema: {
     type: "object",
     properties: { app_id: { type: "integer", description: "App ID" } },
-    required: ["app_id"]
+    required: [ "app_id" ]
   }
 ) do |args|
   client = Wokku::ApiClient.new

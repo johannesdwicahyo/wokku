@@ -9,7 +9,7 @@ class TemplateParser
 
   def self.parse(yaml_content, slug:)
     metadata = extract_metadata(yaml_content)
-    compose = YAML.safe_load(yaml_content, permitted_classes: [Symbol]) || {}
+    compose = YAML.safe_load(yaml_content, permitted_classes: [ Symbol ]) || {}
     services = compose["services"] || {}
 
     main_service_name, main_service = find_main_service(services)
@@ -59,9 +59,9 @@ class TemplateParser
     services.each do |name, config|
       image = config&.dig("image").to_s.split(":").first.to_s.split("/").last
       next if ADDON_IMAGES.key?(image)
-      return [name, config]
+      return [ name, config ]
     end
-    services.first || [nil, nil]
+    services.first || [ nil, nil ]
   end
 
   def self.extract_addons(services, main_service_name)

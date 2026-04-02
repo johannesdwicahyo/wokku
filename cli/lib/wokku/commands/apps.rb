@@ -17,15 +17,15 @@ module Wokku
         header = %w[Name Status Server Created]
         rows = apps.map do |app|
           status = case app["status"]
-                   when "running" then pastel.green(app["status"])
-                   when "stopped" then pastel.red(app["status"])
-                   else pastel.yellow(app["status"] || "unknown")
-                   end
-          [app["name"], status, app["server_id"], app["created_at"]&.slice(0, 10)]
+          when "running" then pastel.green(app["status"])
+          when "stopped" then pastel.red(app["status"])
+          else pastel.yellow(app["status"] || "unknown")
+          end
+          [ app["name"], status, app["server_id"], app["created_at"]&.slice(0, 10) ]
         end
 
         table = TTY::Table.new(header: header, rows: rows)
-        puts table.render(:unicode, padding: [0, 1])
+        puts table.render(:unicode, padding: [ 0, 1 ])
       end
 
       def create(name, server_id:, branch: "main")

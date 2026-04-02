@@ -44,7 +44,7 @@ class AppRecordPolicy < ApplicationPolicy
   end
 
   def team_member_or_above?
-    record.team.team_memberships.exists?(user_id: user.id, role: [:member, :admin])
+    record.team.team_memberships.exists?(user_id: user.id, role: [ :member, :admin ])
   end
 
   def team_admin?

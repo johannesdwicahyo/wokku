@@ -1,6 +1,6 @@
 module Dashboard
   class AppsController < BaseController
-    before_action :set_app, only: [:show, :destroy, :restart, :stop, :start, :toggle_https, :toggle_maintenance]
+    before_action :set_app, only: [ :show, :destroy, :restart, :stop, :start, :toggle_https, :toggle_maintenance ]
 
     def index
       @apps = policy_scope(AppRecord).includes(:server, :team, :domains)
@@ -148,7 +148,7 @@ module Dashboard
     def fetch_container_stats
       server = @app.server
       output = Net::SSH.start(server.host, "deploy", port: server.port, non_interactive: true, timeout: 10,
-        key_data: server.ssh_private_key.present? ? [server.ssh_private_key] : nil) do |ssh|
+        key_data: server.ssh_private_key.present? ? [ server.ssh_private_key ] : nil) do |ssh|
         ssh.exec!("docker stats --no-stream --format '{{json .}}'")
       end
       stats = []

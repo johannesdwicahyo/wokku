@@ -16,9 +16,9 @@ module Wokku
 
         if processes.is_a?(Hash)
           header = %w[Type Qty]
-          rows = processes.map { |type, count| [type, count] }
+          rows = processes.map { |type, count| [ type, count ] }
           table = TTY::Table.new(header: header, rows: rows)
-          puts table.render(:unicode, padding: [0, 1])
+          puts table.render(:unicode, padding: [ 0, 1 ])
         else
           processes.each do |proc|
             puts "#{pastel.bold(proc["type"])}.#{proc["num"] || 1}: #{proc["state"] || "unknown"}"

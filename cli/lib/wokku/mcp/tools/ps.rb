@@ -9,7 +9,7 @@ Wokku::MCP::Server.register_tool(
       app_id: { type: "integer", description: "App ID" },
       scaling: { type: "object", description: "Process type to count mapping, e.g. {web: 2, worker: 1}" }
     },
-    required: ["app_id", "scaling"]
+    required: [ "app_id", "scaling" ]
   }
 ) do |args|
   client = Wokku::ApiClient.new
@@ -23,7 +23,7 @@ Wokku::MCP::Server.register_tool(
   input_schema: {
     type: "object",
     properties: { app_id: { type: "integer", description: "App ID" } },
-    required: ["app_id"]
+    required: [ "app_id" ]
   }
 ) do |args|
   client = Wokku::ApiClient.new

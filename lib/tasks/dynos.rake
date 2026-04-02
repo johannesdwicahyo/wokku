@@ -1,6 +1,6 @@
 namespace :dynos do
   desc "Apply a dyno tier to all apps that don't have one (default: basic)"
-  task :apply_defaults, [:tier_name] => :environment do |_t, args|
+  task :apply_defaults, [ :tier_name ] => :environment do |_t, args|
     tier_name = args[:tier_name] || "basic"
     tier = DynoTier.find_by!(name: tier_name)
 
@@ -29,7 +29,7 @@ namespace :dynos do
   end
 
   desc "Apply a dyno tier to ALL apps, replacing existing allocations (default: basic)"
-  task :apply_all, [:tier_name] => :environment do |_t, args|
+  task :apply_all, [ :tier_name ] => :environment do |_t, args|
     tier_name = args[:tier_name] || "basic"
     tier = DynoTier.find_by!(name: tier_name)
 

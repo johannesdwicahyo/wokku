@@ -12,6 +12,6 @@ class CreateAppRecords < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :app_records, [:name, :server_id], unique: true
+    add_index :app_records, [ :name, :server_id ], unique: true
   end
 end

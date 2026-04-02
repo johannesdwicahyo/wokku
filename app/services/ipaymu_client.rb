@@ -25,8 +25,8 @@ class IpaymuClient
   def create_redirect_payment(amount_idr:, reference_id:, products:)
     body = {
       product: products,
-      qty: [1],
-      price: [amount_idr.to_i],
+      qty: [ 1 ],
+      price: [ amount_idr.to_i ],
       returnUrl: "#{ENV.fetch('APP_URL', 'https://wokku.dev')}/dashboard/billing?status=success",
       cancelUrl: "#{ENV.fetch('APP_URL', 'https://wokku.dev')}/dashboard/billing?status=cancelled",
       notifyUrl: "#{ENV.fetch('APP_URL', 'https://wokku.dev')}/webhooks/ipaymu",

@@ -15,11 +15,11 @@ module Wokku
 
         header = %w[ID Channel Target]
         rows = notifications.map do |n|
-          [n["id"], n["channel"], n["target"] || n["url"] || "-"]
+          [ n["id"], n["channel"], n["target"] || n["url"] || "-" ]
         end
 
         table = TTY::Table.new(header: header, rows: rows)
-        puts table.render(:unicode, padding: [0, 1])
+        puts table.render(:unicode, padding: [ 0, 1 ])
       end
 
       def add(channel, target:)

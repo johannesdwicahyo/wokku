@@ -3,7 +3,7 @@ module Api
     class AuthController < ActionController::API
       include ApiAuthenticatable
 
-      skip_before_action :authenticate_api_token!, only: [:login]
+      skip_before_action :authenticate_api_token!, only: [ :login ]
 
       def login
         user = User.find_by(email: params[:email])

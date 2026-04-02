@@ -10,6 +10,6 @@ class CreateMetrics < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :metrics, [:app_record_id, :recorded_at]
+    add_index :metrics, [ :app_record_id, :recorded_at ]
   end
 end

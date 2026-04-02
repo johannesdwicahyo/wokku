@@ -13,7 +13,7 @@ class NotificationTest < ActiveSupport::TestCase
   end
 
   test "app_record is optional" do
-    n = Notification.new(team: teams(:one), channel: :slack, events: ["deploy.succeeded"])
+    n = Notification.new(team: teams(:one), channel: :slack, events: [ "deploy.succeeded" ])
     assert n.valid?
   end
 end

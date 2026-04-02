@@ -9,7 +9,7 @@ module Api
       def show
         server = Server.find(params[:id])
         authorize server
-        render json: server.as_json(except: [:ssh_private_key])
+        render json: server.as_json(except: [ :ssh_private_key ])
       end
 
       def create
@@ -18,7 +18,7 @@ module Api
         authorize server
 
         if server.save
-          render json: server.as_json(except: [:ssh_private_key]), status: :created
+          render json: server.as_json(except: [ :ssh_private_key ]), status: :created
         else
           render json: { errors: server.errors.full_messages }, status: :unprocessable_entity
         end

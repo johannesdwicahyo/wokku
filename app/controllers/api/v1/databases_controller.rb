@@ -1,7 +1,6 @@
 module Api
   module V1
     class DatabasesController < BaseController
-
       def index
         databases = policy_scope(DatabaseService)
         render json: databases

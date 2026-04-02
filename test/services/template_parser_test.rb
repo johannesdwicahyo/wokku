@@ -22,11 +22,11 @@ class TemplateParserTest < ActiveSupport::TestCase
     template = TemplateParser.parse(yaml, slug: "n8n")
     assert_equal "Workflow automation tool", template[:description]
     assert_equal "automation", template[:category]
-    assert_equal ["automation", "workflow", "node"], template[:tags]
+    assert_equal [ "automation", "workflow", "node" ], template[:tags]
     assert_equal 5678, template[:container_port]
     assert_equal "n8nio/n8n:latest", template[:docker_image]
     assert_equal "docker_image", template[:deploy_method]
-    assert_equal [{"type" => "postgres", "tier" => "mini"}], template[:addons]
+    assert_equal [ { "type" => "postgres", "tier" => "mini" } ], template[:addons]
   end
 
   test "parses template with no database services" do

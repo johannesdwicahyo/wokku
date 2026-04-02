@@ -63,7 +63,7 @@ module Wokku
             {
               jsonrpc: "2.0",
               id: request["id"],
-              result: { content: [{ type: "text", text: result.to_s }] }
+              result: { content: [ { type: "text", text: result.to_s } ] }
             }
           rescue StandardError => e
             error_response(request["id"], e.message)

@@ -67,7 +67,7 @@ module Dashboard
         port: server.port,
         non_interactive: true,
         timeout: 10,
-        key_data: server.ssh_private_key.present? ? [server.ssh_private_key] : nil
+        key_data: server.ssh_private_key.present? ? [ server.ssh_private_key ] : nil
       ) do |ssh|
         ssh.exec!("docker stats --no-stream --format '{{json .}}'")
       end

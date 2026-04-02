@@ -15,11 +15,11 @@ module Wokku
 
         header = %w[ID Version Description Created]
         rows = releases.map do |r|
-          [r["id"], "v#{r["version"]}", r["description"] || "-", r["created_at"]&.slice(0, 16)]
+          [ r["id"], "v#{r["version"]}", r["description"] || "-", r["created_at"]&.slice(0, 16) ]
         end
 
         table = TTY::Table.new(header: header, rows: rows)
-        puts table.render(:unicode, padding: [0, 1])
+        puts table.render(:unicode, padding: [ 0, 1 ])
       end
 
       def info(app_id, release_id)

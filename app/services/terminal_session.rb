@@ -98,7 +98,7 @@ class TerminalSession
       non_interactive: true,
       timeout: 10
     }
-    opts[:key_data] = [server.ssh_private_key] if server.ssh_private_key.present?
+    opts[:key_data] = [ server.ssh_private_key ] if server.ssh_private_key.present?
     opts
   end
 end

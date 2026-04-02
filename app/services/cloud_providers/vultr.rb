@@ -24,7 +24,7 @@ module CloudProviders
         os_id: 2284,  # Ubuntu 24.04
         hostname: name
       }
-      body[:sshkey_id] = [ssh_key] if ssh_key
+      body[:sshkey_id] = [ ssh_key ] if ssh_key
 
       data = api_post("/instances", body)
       instance = data["instance"]
