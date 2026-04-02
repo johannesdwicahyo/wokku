@@ -51,6 +51,16 @@ class Api::V1::DatabasesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "postgres", body["service_type"]
   end
 
+  test "index returns 401 without token" do
+    get api_v1_databases_path
+    assert_response :unauthorized
+  end
+
+  test "show returns 401 without token" do
+    get api_v1_database_path(@database)
+    assert_response :unauthorized
+  end
+
   private
 
   def auth_headers
