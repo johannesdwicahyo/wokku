@@ -48,6 +48,12 @@
       <span class="material-symbols-outlined mr-3 text-[18px]">contact_support</span>
       <span class="text-xs font-medium font-label">Support</span>
     </a>
+    <% if defined?(dashboard_billing_path) %>
+      <a href="<%= dashboard_billing_path %>" class="flex items-center py-2 text-outline hover:text-on-surface-variant transition-all">
+        <span class="material-symbols-outlined mr-3 text-[18px]">payments</span>
+        <span class="text-xs font-medium font-label">Billing</span>
+      </a>
+    <% end %>
     <a href="<%= dashboard_profile_path %>" class="flex items-center py-2 text-outline hover:text-on-surface-variant transition-all">
       <span class="material-symbols-outlined mr-3 text-[18px]">settings</span>
       <span class="text-xs font-medium font-label">Settings</span>
