@@ -43,8 +43,8 @@ ssh:
 builder:
   remote: ssh://deploy@43.159.57.11
   arch: amd64
-  args:
-    WOKKU_EE_TOKEN: WOKKU_EE_TOKEN_PLACEHOLDER
+  secrets:
+    - WOKKU_EE_TOKEN
 
 aliases:
   console: app exec --interactive --reuse "bin/rails console"
