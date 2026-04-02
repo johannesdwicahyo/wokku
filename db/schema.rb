@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_02_022539) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_02_085232) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -210,12 +210,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_02_022539) do
 
   create_table "invoices", force: :cascade do |t|
     t.integer "amount_cents"
+    t.integer "amount_idr", default: 0
     t.datetime "created_at", null: false
+    t.datetime "due_date"
+    t.string "ipaymu_payment_url"
+    t.string "ipaymu_transaction_id"
     t.datetime "paid_at"
+    t.string "payment_method"
+    t.string "period_label"
+    t.string "reference_id"
     t.integer "status", default: 0
     t.string "stripe_invoice_id"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.index ["reference_id"], name: "index_invoices_on_reference_id", unique: true
     t.index ["user_id"], name: "index_invoices_on_user_id"
   end
 
