@@ -166,8 +166,10 @@
             <span class="text-[10px] font-bold text-outline uppercase tracking-wider">Disabled</span>
           <% end %>
         </div>
-        <%= link_to dashboard_two_factor_path, class: "block w-full text-center py-2 text-xs font-semibold border border-outline-variant/15 rounded-md text-on-surface-variant hover:text-on-surface hover:border-outline transition" do %>
-          <%= current_user.respond_to?(:two_factor_enabled?) && current_user.two_factor_enabled? ? "Manage 2FA" : "Enable 2FA" %>
+        <% if respond_to?(:dashboard_two_factor_path) %>
+          <%= link_to dashboard_two_factor_path, class: "block w-full text-center py-2 text-xs font-semibold border border-outline-variant/15 rounded-md text-on-surface-variant hover:text-on-surface hover:border-outline transition" do %>
+            <%= current_user.respond_to?(:two_factor_enabled?) && current_user.two_factor_enabled? ? "Manage 2FA" : "Enable 2FA" %>
+          <% end %>
         <% end %>
       </div>
     </div>

@@ -136,6 +136,13 @@ Rails.application.routes.draw do
     resources :notifications, only: [:index, :create, :destroy]
     resources :activities, only: [:index]
     resource :profile, only: [:show, :edit, :update], controller: "profile"
+    resource :two_factor, only: [:show], controller: "two_factor" do
+      post :enable
+      delete :disable
+    end
+    resource :billing, only: [:show], controller: "billing" do
+      post :pay
+    end
     post "locale", to: "locales#update", as: :locale
   end
 
