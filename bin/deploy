@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -e
+
+echo "Running CI checks before deploy..."
+bin/ci
+
+echo ""
+echo "CI passed. Deploying with Kamal..."
+kamal deploy "$@"
