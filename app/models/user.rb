@@ -1,6 +1,6 @@
 class User < ApplicationRecord
   devise :two_factor_authenticatable, :registerable,
-         :recoverable, :rememberable, :validatable,
+         :recoverable, :rememberable, :validatable, :lockable,
          :omniauthable, omniauth_providers: [:github, :google_oauth2],
          otp_secret_encryption_key: Rails.application.credentials.secret_key_base
 
