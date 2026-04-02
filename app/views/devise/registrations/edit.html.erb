@@ -1,10 +1,10 @@
 <div class="min-h-screen flex items-center justify-center px-4 py-12">
   <div class="max-w-sm w-full">
     <div class="text-center mb-8">
-      <h1 class="text-xl font-semibold text-white">Edit account</h1>
+      <h1 class="text-xl font-semibold text-[#e2e0fc]">Edit account</h1>
     </div>
 
-    <div class="bg-[#1E293B]/60 rounded-lg border border-[#334155]/50 p-6">
+    <div class="bg-[#1e1e32]/60 rounded-lg border border-[#4a4453]/30 p-6">
       <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put, class: "space-y-4" }) do |f| %>
         <% if resource.errors.any? %>
           <div class="rounded-md bg-red-500/10 border border-red-500/20 p-3">
@@ -17,36 +17,36 @@
         <% end %>
 
         <div>
-          <%= f.label :email, class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
-          <%= f.email_field :email, autofocus: true, autocomplete: "email", class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 font-mono" %>
+          <%= f.label :email, class: "block text-xs font-medium text-[#958e9e] mb-1.5 uppercase tracking-wider" %>
+          <%= f.email_field :email, autofocus: true, autocomplete: "email", class: "w-full rounded-md bg-[#111125] border border-[#4a4453]/30 px-3 py-2 text-sm text-[#e2e0fc] placeholder-[#4a4453] focus:outline-none focus:ring-1 focus:ring-[#c0c1ff] focus:border-[#c0c1ff] font-mono" %>
         </div>
 
         <div>
-          <%= f.label :password, "New password", class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
-          <%= f.password_field :password, autocomplete: "new-password", class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500" %>
-          <p class="mt-1 text-xs text-gray-600">Leave blank if you don't want to change it</p>
+          <%= f.label :password, "New password", class: "block text-xs font-medium text-[#958e9e] mb-1.5 uppercase tracking-wider" %>
+          <%= f.password_field :password, autocomplete: "new-password", class: "w-full rounded-md bg-[#111125] border border-[#4a4453]/30 px-3 py-2 text-sm text-[#e2e0fc] placeholder-[#4a4453] focus:outline-none focus:ring-1 focus:ring-[#c0c1ff] focus:border-[#c0c1ff]" %>
+          <p class="mt-1 text-xs text-[#4a4453]">Leave blank if you don't want to change it</p>
         </div>
 
         <div>
-          <%= f.label :password_confirmation, "Confirm new password", class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
-          <%= f.password_field :password_confirmation, autocomplete: "new-password", class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500" %>
+          <%= f.label :password_confirmation, "Confirm new password", class: "block text-xs font-medium text-[#958e9e] mb-1.5 uppercase tracking-wider" %>
+          <%= f.password_field :password_confirmation, autocomplete: "new-password", class: "w-full rounded-md bg-[#111125] border border-[#4a4453]/30 px-3 py-2 text-sm text-[#e2e0fc] placeholder-[#4a4453] focus:outline-none focus:ring-1 focus:ring-[#c0c1ff] focus:border-[#c0c1ff]" %>
         </div>
 
-        <div class="border-t border-[#334155]/50 pt-4">
-          <%= f.label :current_password, class: "block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wider" %>
-          <%= f.password_field :current_password, autocomplete: "current-password", class: "w-full rounded-md bg-[#0B1120] border border-[#334155] px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500" %>
-          <p class="mt-1 text-xs text-gray-600">Required to confirm changes</p>
+        <div class="border-t border-[#4a4453]/30 pt-4">
+          <%= f.label :current_password, class: "block text-xs font-medium text-[#958e9e] mb-1.5 uppercase tracking-wider" %>
+          <%= f.password_field :current_password, autocomplete: "current-password", class: "w-full rounded-md bg-[#111125] border border-[#4a4453]/30 px-3 py-2 text-sm text-[#e2e0fc] placeholder-[#4a4453] focus:outline-none focus:ring-1 focus:ring-[#c0c1ff] focus:border-[#c0c1ff]" %>
+          <p class="mt-1 text-xs text-[#4a4453]">Required to confirm changes</p>
         </div>
 
         <div>
-          <%= f.submit "Update", class: "w-full py-2 px-4 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 cursor-pointer transition" %>
+          <%= f.submit "Update", class: "w-full py-2 px-4 text-[#282a64] text-sm font-semibold rounded-md hover:opacity-90 cursor-pointer transition", style: "background: linear-gradient(135deg, #c0c1ff 0%, #5625ab 100%);" %>
         </div>
       <% end %>
     </div>
 
-    <div class="mt-6 bg-[#1E293B]/60 rounded-lg border border-red-500/20 p-6">
+    <div class="mt-6 bg-[#1e1e32]/60 rounded-lg border border-red-500/20 p-6">
       <h3 class="text-sm font-medium text-red-400 mb-2">Delete account</h3>
-      <p class="text-xs text-gray-500 mb-3">This action cannot be undone.</p>
+      <p class="text-xs text-[#958e9e] mb-3">This action cannot be undone.</p>
       <%= button_to "Delete my account", registration_path(resource_name), method: :delete, data: { turbo_confirm: "Are you sure? This cannot be undone." }, class: "inline-flex items-center px-3 py-1.5 border border-red-500/30 text-xs font-medium rounded-md text-red-400 hover:bg-red-500/10 cursor-pointer transition" %>
     </div>
   </div>
