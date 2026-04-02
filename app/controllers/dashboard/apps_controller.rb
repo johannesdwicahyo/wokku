@@ -1,6 +1,6 @@
 module Dashboard
   class AppsController < BaseController
-    before_action :set_app, only: [:show, :destroy, :restart, :stop, :start]
+    before_action :set_app, only: [:show, :destroy, :restart, :stop, :start, :toggle_https, :toggle_maintenance]
 
     def index
       @apps = policy_scope(AppRecord).includes(:server, :team, :domains)
@@ -83,6 +83,36 @@ module Dashboard
       redirect_to dashboard_app_path(@app), notice: "#{@app.name} started."
     rescue => e
       redirect_to dashboard_app_path(@app), alert: "Start failed: #{e.message}"
+    end
+
+    def toggle_https
+      authorize @app, :update?
+      client = Dokku::Client.new(@app.server)
+      client.run("redirect:set #{@app.name} https://#{@app.domains.first&.hostname || @app.name + '.wokku.dev'}")
+      track("app.https_enabled", target: @app)
+      redirect_to dashboard_app_path(@app), notice: "HTTPS redirect enabled."
+    rescue => e
+      redirect_to dashboard_app_path(@app), alert: "Failed: #{e.message}"
+    end
+
+    def toggle_maintenance
+      authorize @app, :update?
+      client = Dokku::Client.new(@app.server)
+      begin
+        output = client.run("maintenance:report #{@app.name}")
+        enabled = output.include?("true")
+        if enabled
+          client.run("maintenance:disable #{@app.name}")
+          track("app.maintenance_disabled", target: @app)
+          redirect_to dashboard_app_path(@app), notice: "Maintenance mode disabled."
+        else
+          client.run("maintenance:enable #{@app.name}")
+          track("app.maintenance_enabled", target: @app)
+          redirect_to dashboard_app_path(@app), notice: "Maintenance mode enabled."
+        end
+      rescue => e
+        redirect_to dashboard_app_path(@app), alert: "Failed: #{e.message}"
+      end
     end
 
     private

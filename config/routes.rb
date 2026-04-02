@@ -79,6 +79,8 @@ Rails.application.routes.draw do
         post :restart
         post :stop
         post :start
+        post :toggle_https
+        post :toggle_maintenance
       end
       resources :config, only: [:index, :create, :update, :destroy], controller: "config"
       resources :domains, only: [:index, :create, :destroy], controller: "domains" do
