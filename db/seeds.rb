@@ -1,13 +1,24 @@
-admin = User.find_or_create_by!(email: "admin@wokku.dev") do |u|
-  u.password = "password123456"
-  u.role = :admin
+if Rails.env.development? || Rails.env.test?
+  password = "password123456"
+  admin = User.find_or_create_by!(email: "admin@wokku.dev") do |u|
+    u.password = password
+    u.role = :admin
+  end
+  puts "Created admin user: admin@wokku.dev / #{password}"
+else
+  admin_email = ENV.fetch("ADMIN_EMAIL") { raise "ADMIN_EMAIL required for production seeds" }
+  admin_password = ENV.fetch("ADMIN_PASSWORD") { raise "ADMIN_PASSWORD required for production seeds" }
+  admin = User.find_or_create_by!(email: admin_email) do |u|
+    u.password = admin_password
+    u.role = :admin
+  end
+  puts "Created admin user: #{admin_email}"
 end
+
 team = Team.find_or_create_by!(name: "Default", owner: admin)
 TeamMembership.find_or_create_by!(user: admin, team: team) do |tm|
   tm.role = :admin
 end
-
-puts "Created admin user: admin@wokku.dev / password123456"
 puts "Created default team: Default"
 
 if Wokku.ee?
