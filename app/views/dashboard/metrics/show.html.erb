@@ -204,16 +204,29 @@
     <div class="bg-surface-container-low rounded-xl p-6">
       <h3 class="text-[10px] text-outline uppercase tracking-wider font-bold mb-4">CPU Usage (24h)</h3>
       <%= line_chart @metrics.map { |m| [m.recorded_at, m.cpu_percent] },
-                     xtitle: "Time", ytitle: "CPU %",
                      colors: ["#c0c1ff"],
-                     library: { scales: { y: { min: 0, max: 100 } } } %>
+                     library: {
+                       scales: { y: { min: 0, max: 100, grid: { color: "rgba(74,68,83,0.15)" }, ticks: { color: "#958e9e" } },
+                                 x: { grid: { color: "rgba(74,68,83,0.15)" }, ticks: { color: "#958e9e" } } },
+                       plugins: { legend: { display: false } },
+                       elements: { point: { radius: 0 }, line: { tension: 0.3 } }
+                     } %>
     </div>
     <div class="bg-surface-container-low rounded-xl p-6">
       <h3 class="text-[10px] text-outline uppercase tracking-wider font-bold mb-4">Memory Usage (24h)</h3>
       <%= line_chart @metrics.map { |m| [m.recorded_at, (m.memory_usage.to_f / 1024 / 1024).round(1)] },
-                     xtitle: "Time", ytitle: "MB",
-                     colors: ["#c0c1ff"],
-                     library: { scales: { y: { min: 0 } } } %>
+                     colors: ["#d2bbff"],
+                     library: {
+                       scales: { y: { min: 0, grid: { color: "rgba(74,68,83,0.15)" }, ticks: { color: "#958e9e" } },
+                                 x: { grid: { color: "rgba(74,68,83,0.15)" }, ticks: { color: "#958e9e" } } },
+                       plugins: { legend: { display: false } },
+                       elements: { point: { radius: 0 }, line: { tension: 0.3 } }
+                     } %>
     </div>
+  </div>
+<% else %>
+  <div class="mt-6 bg-surface-container-low rounded-xl p-6 text-center">
+    <span class="material-symbols-outlined text-outline-variant text-[32px] mb-2">timeline</span>
+    <p class="text-xs text-outline">No historical data yet. Metrics are collected every 5 minutes.</p>
   </div>
 <% end %>
