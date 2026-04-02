@@ -8,7 +8,7 @@
 
 <%# Search %>
 <div class="mb-8">
-  <%= form_with url: dashboard_templates_path, method: :get, data: { turbo_frame: "_top" } do |f| %>
+  <%= form_with url: dashboard_templates_path, method: :get do |f| %>
     <div class="relative">
       <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
       <%= f.search_field :q, value: params[:q], placeholder: "Search templates...", class: "w-full pl-10 pr-4 py-2.5 rounded-md bg-surface-container-low border-none text-sm text-on-surface placeholder-outline/50 focus:ring-1 focus:ring-primary", autofocus: params[:q].present? %>
