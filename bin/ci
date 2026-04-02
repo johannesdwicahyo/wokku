@@ -1,6 +1,42 @@
-#!/usr/bin/env ruby
-require_relative "../config/boot"
-require "active_support/continuous_integration"
+#!/usr/bin/env bash
+set -e
 
-CI = ActiveSupport::ContinuousIntegration
-require_relative "../config/ci.rb"
+echo "=== Wokku CI ==="
+echo ""
+
+echo "→ Step 1/5: Rubocop (style)"
+bundle exec rubocop --parallel
+echo "✓ Rubocop passed"
+echo ""
+
+echo "→ Step 2/5: Brakeman (security)"
+bundle exec brakeman --quiet --no-pager
+echo "✓ Brakeman passed"
+echo ""
+
+echo "→ Step 3/5: Bundle audit (gem vulnerabilities)"
+bundle exec bundler-audit check --update 2>/dev/null || bundle exec bundler-audit check
+echo "✓ Bundle audit passed"
+echo ""
+
+echo "→ Step 4/5: Importmap audit (JS vulnerabilities)"
+bin/importmap audit
+echo "✓ Importmap audit passed"
+echo ""
+
+echo "→ Step 5/5: Tests + Coverage"
+bin/rails test
+echo "✓ Tests passed"
+echo ""
+
+# Check coverage minimum
+COVERAGE=$(ruby -e "require 'json'; puts JSON.parse(File.read('coverage/.last_run.json'))['result']['line']")
+MIN_COVERAGE=80
+echo "Line coverage: ${COVERAGE}%"
+if [ "$(echo "$COVERAGE < $MIN_COVERAGE" | bc -l)" -eq 1 ]; then
+  echo "✗ Coverage ${COVERAGE}% is below minimum ${MIN_COVERAGE}%"
+  exit 1
+fi
+echo "✓ Coverage above ${MIN_COVERAGE}%"
+echo ""
+echo "=== CI PASSED ==="
