@@ -88,6 +88,43 @@
           </div>
         </section>
 
+        <%# CLI %>
+        <section id="cli">
+          <h2 class="font-headline text-2xl font-bold text-on-surface mb-4">CLI</h2>
+          <p class="text-sm text-on-surface-variant mb-4">Manage apps from the terminal.</p>
+
+          <div class="bg-surface-container-lowest rounded-md p-4 font-mono text-sm text-primary mb-4">
+            <span class="text-outline">$</span> curl -sL https://wokku.dev/cli/install.sh | bash
+          </div>
+
+          <div class="space-y-3 mb-6">
+            <% [
+              ["wokku auth:login", "Log in to your account"],
+              ["wokku apps", "List all apps"],
+              ["wokku apps:create NAME --server ID", "Create a new app"],
+              ["wokku apps:destroy APP_ID", "Delete an app"],
+              ["wokku ps:restart APP_ID", "Restart an app"],
+              ["wokku ps:scale APP_ID web=2", "Scale processes"],
+              ["wokku config APP_ID", "Show config vars"],
+              ["wokku config:set APP_ID KEY=VAL", "Set config vars"],
+              ["wokku domains APP_ID", "List domains"],
+              ["wokku domains:add APP_ID example.com", "Add a domain"],
+              ["wokku logs APP_ID", "View logs"],
+              ["wokku addons APP_ID", "List add-ons"],
+              ["wokku addons:add APP_ID postgres", "Add a database"],
+              ["wokku deploy ghost --server 1", "Deploy a template"],
+              ["wokku releases APP_ID", "List releases"],
+              ["wokku rollback APP_ID RELEASE_ID", "Rollback to release"],
+              ["wokku activity", "Recent activity"],
+            ].each do |cmd, desc| %>
+              <div class="bg-surface-container-lowest rounded-md px-4 py-2.5 flex items-center justify-between">
+                <code class="text-xs font-mono text-primary"><%= cmd %></code>
+                <span class="text-xs text-outline"><%= desc %></span>
+              </div>
+            <% end %>
+          </div>
+        </section>
+
         <%# API %>
         <section id="api">
           <h2 class="font-headline text-2xl font-bold text-on-surface mb-4">API</h2>
