@@ -26,16 +26,22 @@ class PushNotificationService
     tokens = device_tokens
     return if tokens.empty?
 
-    messages = tokens.map { |dt| build_message(dt) }
-    tickets = @client.publish(messages)
+    notifications = tokens.map { |dt| build_notification(dt) }
+    tickets = @client.send(notifications)
 
-    tickets.each_with_index do |ticket, i|
-      next unless ticket.id.present?
-      PushTicket.create!(
-        device_token: tokens[i],
-        ticket_id: ticket.id,
-        status: ticket.status
-      )
+    tokens_by_index = tokens.index_by.with_index { |dt, i| i }
+    ticket_index = 0
+
+    tickets.each do |ticket|
+      dt = tokens[ticket_index]
+      if dt
+        PushTicket.create!(
+          device_token: dt,
+          ticket_id: ticket.id,
+          status: "ok"
+        )
+      end
+      ticket_index += 1
     end
   rescue StandardError => e
     Rails.logger.warn("Push notification failed: #{e.message}")
@@ -45,24 +51,23 @@ class PushNotificationService
 
   def device_tokens
     user_ids = @notification.team.users.pluck(:id)
-    DeviceToken.where(user_id: user_ids)
+    DeviceToken.where(user_id: user_ids).to_a
   end
 
-  def build_message(device_token)
+  def build_notification(device_token)
     app = @deploy.app_record
-    {
-      to: device_token.token,
-      title: TITLES[@event] || @event.titleize,
-      body: build_body(app),
-      data: {
+    Expo::Push::Notification.new
+      .to(device_token.token)
+      .title(TITLES[@event] || @event.titleize)
+      .body(build_body(app))
+      .data({
         type: "deploy",
         app_id: app.id,
         deploy_id: @deploy.id,
         event: @event
-      },
-      sound: "default",
-      categoryId: CATEGORIES[@event] || "default"
-    }
+      })
+      .sound("default")
+      .category_id(CATEGORIES[@event] || "default")
   end
 
   def build_body(app)
