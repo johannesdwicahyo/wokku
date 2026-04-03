@@ -70,8 +70,6 @@ Rails.application.routes.draw do
   # GitHub
   get "/github/callback", to: "github/callbacks#create", as: :github_callback
   post "/webhooks/github", to: "webhooks/github#create"
-  post "/webhooks/ipaymu", to: "webhooks/ipaymu#create"
-
   namespace :dashboard do
     get "/", to: "dashboard#show", as: :root
     resources :templates, only: [ :index, :show, :create ]

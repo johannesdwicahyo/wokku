@@ -13,14 +13,16 @@ module Dashboard
     def update
       authorize @app, :update?
 
-      # Check if current tier allows horizontal scaling
-      current_tier = @app.dyno_allocations.find_by(process_type: "web")&.dyno_tier
-      if current_tier && !current_tier.scalable
-        # Non-scalable tiers: only allow setting count to 0 or 1
-        params[:scaling].each do |type, count|
-          if count.to_i > 1
-            redirect_to dashboard_app_scaling_path(@app), alert: "#{current_tier.name.capitalize} tier doesn't support horizontal scaling. Upgrade to Standard or higher."
-            return
+      if defined?(DynoAllocation)
+        # Check if current tier allows horizontal scaling
+        current_tier = @app.dyno_allocations.find_by(process_type: "web")&.dyno_tier
+        if current_tier && !current_tier.scalable
+          # Non-scalable tiers: only allow setting count to 0 or 1
+          params[:scaling].each do |type, count|
+            if count.to_i > 1
+              redirect_to dashboard_app_scaling_path(@app), alert: "#{current_tier.name.capitalize} tier doesn't support horizontal scaling. Upgrade to Standard or higher."
+              return
+            end
           end
         end
       end
@@ -54,28 +56,39 @@ module Dashboard
     def change_tier
       authorize @app, :update?
 
+      unless defined?(DynoTier)
+        redirect_to dashboard_app_path(@app), alert: "Upgrade to EE for this feature"
+        return
+      end
+
       tier = DynoTier.find(params[:dyno_tier_id])
 
       # Check free tier limit: max 1 per user
       if tier.max_per_user.present?
-        existing_free = DynoAllocation.joins(:dyno_tier, :app_record)
-          .where(dyno_tiers: { id: tier.id })
-          .where(app_records: { created_by_id: current_user.id })
-          .where.not(app_record_id: @app.id)
-          .count
-        if existing_free >= tier.max_per_user
-          redirect_to dashboard_app_scaling_path(@app), alert: "You can only have #{tier.max_per_user} app on the #{tier.name} tier. Upgrade another app first."
-          return
+        if defined?(DynoAllocation)
+          existing_free = DynoAllocation.joins(:dyno_tier, :app_record)
+            .where(dyno_tiers: { id: tier.id })
+            .where(app_records: { created_by_id: current_user.id })
+            .where.not(app_record_id: @app.id)
+            .count
+          if existing_free >= tier.max_per_user
+            redirect_to dashboard_app_scaling_path(@app), alert: "You can only have #{tier.max_per_user} app on the #{tier.name} tier. Upgrade another app first."
+            return
+          end
         end
       end
 
-      # Apply tier to web process
-      allocation = @app.dyno_allocations.find_or_initialize_by(process_type: "web")
-      allocation.dyno_tier = tier
-      allocation.count = 1 if allocation.new_record?
-      allocation.save!
+      if defined?(DynoAllocation)
+        # Apply tier to web process
+        allocation = @app.dyno_allocations.find_or_initialize_by(process_type: "web")
+        allocation.dyno_tier = tier
+        allocation.count = 1 if allocation.new_record?
+        allocation.save!
+      end
 
-      ApplyDynoTierJob.perform_later(allocation.id)
+      if defined?(ApplyDynoTierJob)
+        ApplyDynoTierJob.perform_later(allocation.id)
+      end
 
       # If downgrading to non-scalable tier, scale workers to 0
       unless tier.scalable
