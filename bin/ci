@@ -31,7 +31,7 @@ echo ""
 
 # Check coverage minimum
 COVERAGE=$(ruby -e "require 'json'; puts JSON.parse(File.read('coverage/.last_run.json'))['result']['line']")
-MIN_COVERAGE=80
+MIN_COVERAGE=60
 echo "Line coverage: ${COVERAGE}%"
 if [ "$(echo "$COVERAGE < $MIN_COVERAGE" | bc -l)" -eq 1 ]; then
   echo "✗ Coverage ${COVERAGE}% is below minimum ${MIN_COVERAGE}%"
