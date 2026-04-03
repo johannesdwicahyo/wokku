@@ -90,16 +90,12 @@ class Dashboard::TemplatesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  # NOTE: TemplatesController#create calls app.deploys.create!(description: ...)
-  # but Deploy model has no `description` column → raises ActiveModel::UnknownAttributeError.
-  # The test documents this current behavior (500 / error response).
-  test "create raises on deploy creation due to missing description attribute" do
+  test "create deploys a template" do
     skip "No templates available" unless @template_slug
     sign_in @user
     unique_name = "test-tpl-#{SecureRandom.hex(4)}"
-    assert_raises(ActiveModel::UnknownAttributeError) do
-      post "/dashboard/templates",
-           params: { template_slug: @template_slug, server_id: @server.id, app_name: unique_name }
-    end
+    post "/dashboard/templates",
+         params: { template_slug: @template_slug, server_id: @server.id, app_name: unique_name }
+    assert_response :redirect
   end
 end

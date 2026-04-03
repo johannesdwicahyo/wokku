@@ -33,8 +33,7 @@ module Webhooks
       apps.find_each do |app|
         deploy = app.deploys.create!(
           status: :pending,
-          commit_sha: commit_sha,
-          description: "GitHub push: #{commit_message&.truncate(80)}"
+          commit_sha: commit_sha
         )
         release = app.releases.create!(
           version: (app.releases.maximum(:version) || 0) + 1,

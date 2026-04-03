@@ -46,8 +46,7 @@ module Dashboard
       )
 
       deploy = app.deploys.create!(
-        status: :pending,
-        description: "Template deploy: #{template[:name]}"
+        status: :pending
       )
 
       TemplateDeployJob.perform_later(
