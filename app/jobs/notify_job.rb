@@ -18,6 +18,8 @@ class NotifyJob < ApplicationJob
       send_discord(notification, deploy, event)
     when "telegram"
       send_telegram(notification, deploy, event)
+    when "push"
+      PushNotificationService.new(notification, deploy, event).deliver!
     end
   end
 
