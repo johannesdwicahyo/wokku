@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  device_token: one
+  ticket_id: ticket-fixture-one
+  status: pending
+  checked_at: 2026-04-04 00:54:36
+
+two:
+  device_token: two
+  ticket_id: ticket-fixture-two
+  status: pending
+  checked_at: 2026-04-04 00:54:36
