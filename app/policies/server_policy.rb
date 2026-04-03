@@ -19,6 +19,10 @@ class ServerPolicy < ApplicationPolicy
     user_in_team?
   end
 
+  def update?
+    team_admin?
+  end
+
   def sync?
     user_in_team?
   end
