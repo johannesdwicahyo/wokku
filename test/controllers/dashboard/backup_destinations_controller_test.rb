@@ -16,15 +16,11 @@ class Dashboard::BackupDestinationsControllerTest < ActionDispatch::IntegrationT
   end
 
   # --- edit ---
-  # NOTE: ServerPolicy#update? inherits ApplicationPolicy#update? which returns
-  # false unconditionally. Pundit raises NotAuthorizedError → redirect to root.
-  # These tests document the current authorization behavior.
 
-  test "edit redirects to root due to missing update? in ServerPolicy" do
+  test "edit shows form for team admin" do
     sign_in @user
     get "/dashboard/servers/#{@server.id}/backup_destination/edit"
-    assert_response :redirect
-    assert_redirected_to "/"
+    assert_response :success
   end
 
   # --- update ---
@@ -35,7 +31,7 @@ class Dashboard::BackupDestinationsControllerTest < ActionDispatch::IntegrationT
     assert_response :redirect
   end
 
-  test "update redirects to root due to missing update? in ServerPolicy" do
+  test "update saves destination and redirects to server for team admin" do
     sign_in @user
     patch "/dashboard/servers/#{@server.id}/backup_destination",
           params: {
@@ -48,6 +44,6 @@ class Dashboard::BackupDestinationsControllerTest < ActionDispatch::IntegrationT
             }
           }
     assert_response :redirect
-    assert_redirected_to "/"
+    assert_redirected_to "/dashboard/servers/#{@server.id}"
   end
 end

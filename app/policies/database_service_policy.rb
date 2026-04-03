@@ -11,6 +11,10 @@ class DatabaseServicePolicy < ApplicationPolicy
     true
   end
 
+  def update?
+    user_in_team?
+  end
+
   def destroy?
     team_admin?
   end

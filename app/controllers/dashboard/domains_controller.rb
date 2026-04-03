@@ -17,7 +17,7 @@ module Dashboard
         Dokku::Domains.new(client).add(@app.name, @domain.hostname)
         redirect_to dashboard_app_domains_path(@app), notice: "Domain added successfully."
       else
-        @domains = @app.domains
+        @domains = @app.domains.reload
         render :index, status: :unprocessable_entity
       end
     end
