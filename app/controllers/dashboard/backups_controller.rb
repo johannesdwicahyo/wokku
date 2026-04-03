@@ -1,14 +1,14 @@
 module Dashboard
   class BackupsController < BaseController
     def index
-      @database = DatabaseService.find(params[:database_id])
+      @database = DatabaseService.find(params[:resource_id])
       authorize @database, :show?
       @backups = @database.backups.order(created_at: :desc).limit(30)
       @destination = @database.server.backup_destination
     end
 
     def create
-      @database = DatabaseService.find(params[:database_id])
+      @database = DatabaseService.find(params[:resource_id])
       authorize @database, :update?
 
       BackupJob.perform_later(@database.id)
