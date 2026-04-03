@@ -33,7 +33,7 @@ class NotificationTest < ActiveSupport::TestCase
   end
 
   test "channel enum includes all expected values" do
-    assert_equal({ "email" => 0, "slack" => 1, "webhook" => 2, "discord" => 3, "telegram" => 4 }, Notification.channels)
+    assert_equal({ "email" => 0, "slack" => 1, "webhook" => 2, "discord" => 3, "telegram" => 4, "push" => 5 }, Notification.channels)
   end
 
   test "fixture one is associated with app_record" do
