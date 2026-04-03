@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_02_150429) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_03_175436) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -282,6 +282,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_02_150429) do
     t.datetime "updated_at", null: false
     t.index ["app_record_id", "process_type"], name: "index_process_scales_on_app_record_id_and_process_type", unique: true
     t.index ["app_record_id"], name: "index_process_scales_on_app_record_id"
+  end
+
+  create_table "push_tickets", force: :cascade do |t|
+    t.datetime "checked_at"
+    t.datetime "created_at", null: false
+    t.bigint "device_token_id", null: false
+    t.string "status", default: "pending"
+    t.string "ticket_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["checked_at"], name: "index_push_tickets_on_checked_at"
+    t.index ["device_token_id"], name: "index_push_tickets_on_device_token_id"
+    t.index ["ticket_id"], name: "index_push_tickets_on_ticket_id", unique: true
   end
 
   create_table "releases", force: :cascade do |t|
@@ -579,6 +591,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_02_150429) do
   add_foreign_key "notifications", "app_records"
   add_foreign_key "notifications", "teams"
   add_foreign_key "process_scales", "app_records"
+  add_foreign_key "push_tickets", "device_tokens"
   add_foreign_key "releases", "app_records"
   add_foreign_key "releases", "deploys"
   add_foreign_key "resource_usages", "users"
