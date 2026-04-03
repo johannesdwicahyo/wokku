@@ -29,6 +29,7 @@ class GithubDeployJob < ApplicationJob
     app.track_resource_usage! if app.respond_to?(:track_resource_usage!)
     Activity.log(user: app.creator, team: app.team, action: "app.deployed", target: app, metadata: { commit: commit_sha }) rescue nil
     DeployChannel.broadcast_to(deploy, { type: "status", data: "succeeded" })
+    fire_notifications(app.team, "deploy_succeeded", deploy)
 
   rescue Timeout::Error
     deploy.update!(status: :timed_out, log: log.to_s + "\nDeploy timed out", finished_at: Time.current)
@@ -38,5 +39,6 @@ class GithubDeployJob < ApplicationJob
     deploy.update!(status: :failed, log: log.to_s + "\n#{e.message}", finished_at: Time.current)
     app.update!(status: :crashed)
     DeployChannel.broadcast_to(deploy, { type: "status", data: "failed" })
+    fire_notifications(app.team, "deploy_failed", deploy)
   end
 end

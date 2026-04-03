@@ -294,4 +294,26 @@ class NotifyJobTest < ActiveSupport::TestCase
   ensure
     notification.update!(channel: :email, config: {}, events: [ "deploy.succeeded", "deploy.failed" ]) rescue nil
   end
+
+  # --- perform with push channel ---
+
+  test "perform calls PushNotificationService for push channel" do
+    notification = notifications(:one)
+    notification.update!(channel: :push, config: {}, events: [ "deploy_succeeded" ])
+
+    delivered = []
+    mock_service = Object.new
+    mock_service.define_singleton_method(:deliver!) { delivered << true }
+
+    PushNotificationService.define_singleton_method(:new) do |n, d, e|
+      mock_service
+    end
+
+    NotifyJob.perform_now(notification.id, "deploy_succeeded", @deploy.id)
+
+    assert_equal 1, delivered.length
+  ensure
+    PushNotificationService.singleton_class.remove_method(:new) rescue nil
+    notification.update!(channel: :email, config: {}, events: [ "deploy.succeeded", "deploy.failed" ]) rescue nil
+  end
 end
