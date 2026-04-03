@@ -70,6 +70,7 @@ gem "groupdate"
 # API
 gem "rack-cors"
 gem "rack-attack"
+gem "expo-server-sdk"
 
 # Enterprise Edition (loaded when ee/ directory exists)
 eval_gemfile "ee/Gemfile.ee" if File.exist?(File.expand_path("ee/Gemfile.ee", __dir__))
