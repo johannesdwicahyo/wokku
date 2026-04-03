@@ -44,8 +44,7 @@ module Api
         )
 
         deploy = app.deploys.create!(
-          status: :pending,
-          description: "Template: #{template[:name]}"
+          status: :pending
         )
 
         TemplateDeployJob.perform_later(

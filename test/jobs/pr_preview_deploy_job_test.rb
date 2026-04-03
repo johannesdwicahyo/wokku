@@ -37,15 +37,16 @@ class PrPreviewDeployJobTest < ActiveJob::TestCase
     Dokku::Client.class_eval do
       alias_method :original_initialize, :initialize
       define_method(:initialize) { |_server| }
+      define_method(:run) { |_cmd| "" }
     end
 
     DeployChannel.class_eval do
       define_singleton_method(:broadcast_to) { |*_args| nil }
     end
 
-    # perform_now will raise because Deploy doesn't have a `description` column,
-    # but the AppRecord creation happens before that point.
-    assert_raises(ActiveRecord::UnknownAttributeError, ActiveModel::UnknownAttributeError) do
+    # Job may raise due to SSH-dependent Dokku calls deeper in the stack.
+    # We only care that the AppRecord was created before any failure.
+    begin
       PrPreviewDeployJob.perform_now(
         parent_app_id: @parent_app.id,
         pr_number: 88,
@@ -54,6 +55,8 @@ class PrPreviewDeployJobTest < ActiveJob::TestCase
         pr_title: "Test PR",
         repo_full_name: "owner/repo"
       )
+    rescue => e
+      # Expected — SSH/Dokku calls fail in test
     end
 
     preview = AppRecord.find_by(name: "#{@parent_app.name}-pr-88")

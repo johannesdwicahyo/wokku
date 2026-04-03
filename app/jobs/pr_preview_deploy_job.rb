@@ -29,8 +29,7 @@ class PrPreviewDeployJob < ApplicationJob
     deploy = app.deploys.create!(
       status: :building,
       started_at: Time.current,
-      commit_sha: commit_sha,
-      description: "PR ##{pr_number}: #{pr_title&.truncate(60)}"
+      commit_sha: commit_sha
     )
 
     log = ""

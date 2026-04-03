@@ -37,4 +37,31 @@ class ApplicationControllerTest < ActionDispatch::IntegrationTest
     # Either redirected (Pundit unauthorized) or not found — both are handled
     assert_includes [ 302, 404 ], response.status
   end
+
+  # Localizable — set_locale runs via before_action inherited from ApplicationController
+  test "locale is set from params on dashboard requests" do
+    get "/dashboard/apps", params: { locale: "id" }
+    assert_equal :id, I18n.locale
+  end
+
+  test "locale defaults to I18n.default_locale when no hint given" do
+    get "/dashboard/apps"
+    assert_equal I18n.default_locale, I18n.locale
+  end
+
+  # Dashboard::BaseController — current_team and user_teams helpers
+  test "dashboard requires authentication" do
+    sign_out @user
+    get "/dashboard/apps"
+    assert_response :redirect
+  end
+
+  test "dashboard is accessible when authenticated" do
+    get "/dashboard/apps"
+    assert_response :success
+  end
+
+  teardown do
+    I18n.locale = I18n.default_locale
+  end
 end
