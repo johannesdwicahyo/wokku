@@ -43,7 +43,7 @@ class Git::ServerTest < ActiveSupport::TestCase
     server = Git::Server.new(host: "127.0.0.1", port: 3333)
 
     mock_tcp_client = Object.new
-    mock_tcp_client.define_singleton_method(:close) {}
+    mock_tcp_client.define_singleton_method(:close) { }
 
     mock_tcp_server = Object.new
     loop_count = 0

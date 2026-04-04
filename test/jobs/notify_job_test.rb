@@ -96,7 +96,7 @@ class NotifyJobTest < ActiveSupport::TestCase
     NotificationMailer.define_singleton_method(:deploy_notification) do |n, d, e|
       performed_mailer_calls << { notification: n, deploy: d, event: e }
       mock = Object.new
-      mock.define_singleton_method(:deliver_later) {}
+      mock.define_singleton_method(:deliver_later) { }
       mock
     end
 
@@ -115,7 +115,7 @@ class NotifyJobTest < ActiveSupport::TestCase
     mailer_called = false
     NotificationMailer.define_singleton_method(:deploy_notification) do |*|
       mailer_called = true
-      m = Object.new; m.define_singleton_method(:deliver_later) {}; m
+      m = Object.new; m.define_singleton_method(:deliver_later) { }; m
     end
 
     # "backup_completed" not in notification events
