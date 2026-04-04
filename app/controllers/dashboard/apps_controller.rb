@@ -3,7 +3,7 @@ module Dashboard
     before_action :set_app, only: [ :show, :destroy, :restart, :stop, :start, :toggle_https, :toggle_maintenance ]
 
     def index
-      @apps = policy_scope(AppRecord).includes(:server, :team, :domains)
+      @apps = policy_scope(AppRecord).main_apps.includes(:server, :team, :domains)
       @app = AppRecord.new
       @servers = policy_scope(Server)
     end
@@ -19,6 +19,7 @@ module Dashboard
       @resources = fetch_resources
       @current_allocation = defined?(DynoAllocation) ? @app.dyno_allocations.includes(:dyno_tier).find_by(process_type: "web") : nil
       @logs = fetch_logs
+      @preview_apps = @app.preview_apps.order(pr_number: :desc) unless @app.is_preview?
     end
 
     def new
