@@ -4,6 +4,7 @@
 # category: analytics
 # tags: bi, dashboards, java
 # icon: analytics
+# port: 3000
 
 services:
   metabase:

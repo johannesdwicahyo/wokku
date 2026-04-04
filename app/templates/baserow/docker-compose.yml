@@ -4,6 +4,7 @@
 # category: databases
 # tags: no-code, database, python
 # icon: db
+# port: 80
 
 services:
   baserow:

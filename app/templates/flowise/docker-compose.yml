@@ -4,6 +4,7 @@
 # category: ai
 # tags: ai, llm, chatbot, node
 # icon: ai
+# port: 3000
 
 services:
   flowise:

@@ -4,6 +4,7 @@
 # category: cms
 # tags: wiki, docs, php
 # icon: wiki
+# port: 80
 
 services:
   bookstack:

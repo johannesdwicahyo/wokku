@@ -4,6 +4,7 @@
 # category: cms
 # tags: headless-cms, api, node
 # icon: cms
+# port: 1337
 
 services:
   strapi:

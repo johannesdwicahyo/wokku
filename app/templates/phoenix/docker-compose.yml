@@ -5,6 +5,7 @@
 # tags: elixir, phoenix, fullstack
 # icon: elixir
 # post_deploy: mix ecto.migrate
+# port: 4000
 
 services:
   phoenix:
