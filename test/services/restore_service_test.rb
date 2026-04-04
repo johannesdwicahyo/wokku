@@ -61,9 +61,9 @@ class RestoreServiceTest < ActiveSupport::TestCase
       block.call(mock_channel, true)
     }
     mock_channel.define_singleton_method(:send_data) { |_data| }
-    mock_channel.define_singleton_method(:eof!) {}
+    mock_channel.define_singleton_method(:eof!) { }
     mock_channel.define_singleton_method(:on_extended_data) { |&_b| }
-    mock_channel.define_singleton_method(:wait) {}
+    mock_channel.define_singleton_method(:wait) { }
     mock_channel
   end
 
