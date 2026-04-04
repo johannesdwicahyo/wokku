@@ -1,0 +1,26 @@
+# name: PhotoPrism
+# documentation: https://github.com/photoprism/photoprism
+# slogan: AI-powered photo management and sharing platform
+# category: media
+# tags: photos, gallery, ai, machine-learning
+# icon: media
+# port: 2342
+
+services:
+  photoprism:
+    image: photoprism/photoprism:latest
+    environment:
+      - PHOTOPRISM_ADMIN_USER=admin
+      - PHOTOPRISM_ADMIN_PASSWORD=insecure
+      - PHOTOPRISM_AUTH_MODE=password
+      - PHOTOPRISM_SITE_URL=http://localhost:2342/
+      - PHOTOPRISM_ORIGINALS_LIMIT=5000
+      - PHOTOPRISM_HTTP_COMPRESSION=gzip
+      - PHOTOPRISM_DATABASE_DRIVER=sqlite
+    ports:
+      - "2342:2342"
+    volumes:
+      - photoprism-data:/photoprism/storage
+
+volumes:
+  photoprism-data:

@@ -1,0 +1,40 @@
+# name: Semaphore
+# documentation: https://github.com/ansible-semaphore/semaphore
+# slogan: Modern web UI for Ansible with task scheduling and RBAC
+# category: automation
+# tags: ansible, automation, devops, ci-cd
+# icon: automation
+# port: 3000
+
+services:
+  semaphore:
+    image: semaphoreui/semaphore:latest
+    environment:
+      - SEMAPHORE_DB_USER=semaphore
+      - SEMAPHORE_DB_PASS=semaphore
+      - SEMAPHORE_DB_HOST=postgres
+      - SEMAPHORE_DB_PORT=5432
+      - SEMAPHORE_DB=semaphore
+      - SEMAPHORE_DB_DIALECT=postgres
+      - SEMAPHORE_PLAYBOOK_PATH=/tmp/semaphore/
+      - SEMAPHORE_ADMIN_PASSWORD=changeme
+      - SEMAPHORE_ADMIN_NAME=admin
+      - SEMAPHORE_ADMIN_EMAIL=admin@localhost
+      - SEMAPHORE_ADMIN=admin
+      - SEMAPHORE_ACCESS_KEY_ENCRYPTION=changeme-encryption-key
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=semaphore
+      - POSTGRES_USER=semaphore
+      - POSTGRES_PASSWORD=semaphore
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

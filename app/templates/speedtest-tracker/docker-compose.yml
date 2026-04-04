@@ -1,0 +1,39 @@
+# name: Speedtest Tracker
+# documentation: https://github.com/alexjustesen/speedtest-tracker
+# slogan: Self-hosted internet speed tracking application with graphs and alerts
+# category: monitoring
+# tags: speedtest, network, monitoring, bandwidth
+# icon: monitoring
+# port: 8080
+
+services:
+  speedtest-tracker:
+    image: lscr.io/linuxserver/speedtest-tracker:latest
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+      - APP_KEY=base64:changeme
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=speedtest_tracker
+      - DB_USERNAME=speedtest
+      - DB_PASSWORD=speedtest
+    ports:
+      - "8080:80"
+      - "8443:443"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=speedtest_tracker
+      - POSTGRES_USER=speedtest
+      - POSTGRES_PASSWORD=speedtest
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

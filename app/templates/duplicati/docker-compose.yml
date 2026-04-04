@@ -1,0 +1,24 @@
+# name: Duplicati
+# documentation: https://github.com/duplicati/duplicati
+# slogan: Free backup software with encryption, deduplication, and compression
+# category: file-storage
+# tags: backup, encryption, cloud, storage
+# icon: file-storage
+# port: 8200
+
+services:
+  duplicati:
+    image: lscr.io/linuxserver/duplicati:latest
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+    ports:
+      - "8200:8200"
+    volumes:
+      - duplicati-config:/config
+      - duplicati-backups:/backups
+
+volumes:
+  duplicati-config:
+  duplicati-backups:

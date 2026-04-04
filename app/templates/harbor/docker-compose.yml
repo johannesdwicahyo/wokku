@@ -1,0 +1,53 @@
+# name: Harbor
+# documentation: https://github.com/goharbor/harbor
+# slogan: Open-source container registry with vulnerability scanning and RBAC
+# category: developer-tools
+# tags: registry, containers, docker, security, devops
+# icon: developer-tools
+# port: 80
+
+services:
+  harbor-core:
+    image: goharbor/harbor-core:v2.10.0
+    environment:
+      - DATABASE_TYPE=postgresql
+      - POSTGRESQL_HOST=postgres
+      - POSTGRESQL_PORT=5432
+      - POSTGRESQL_USERNAME=harbor
+      - POSTGRESQL_PASSWORD=harbor
+      - POSTGRESQL_DATABASE=registry
+      - CORE_SECRET=changeme-core-secret
+      - JOBSERVICE_SECRET=changeme-job-secret
+    ports:
+      - "80:8080"
+    depends_on:
+      - postgres
+      - redis
+
+  harbor-portal:
+    image: goharbor/harbor-portal:v2.10.0
+
+  harbor-jobservice:
+    image: goharbor/harbor-jobservice:v2.10.0
+    environment:
+      - CORE_SECRET=changeme-core-secret
+      - JOBSERVICE_SECRET=changeme-job-secret
+      - CORE_URL=http://harbor-core:8080
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=registry
+      - POSTGRES_USER=harbor
+      - POSTGRES_PASSWORD=harbor
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    volumes:
+      - redis-data:/data
+
+volumes:
+  postgres-data:
+  redis-data:

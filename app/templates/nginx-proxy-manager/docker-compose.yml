@@ -1,0 +1,24 @@
+# name: Nginx Proxy Manager
+# documentation: https://github.com/NginxProxyManager/nginx-proxy-manager
+# slogan: Easy web UI for managing Nginx proxy hosts with SSL support
+# category: developer-tools
+# tags: proxy, nginx, ssl, reverse-proxy
+# icon: developer-tools
+# port: 81
+
+services:
+  nginx-proxy-manager:
+    image: jc21/nginx-proxy-manager:latest
+    environment:
+      - DB_SQLITE_FILE=/data/database.sqlite
+    ports:
+      - "80:80"
+      - "81:81"
+      - "443:443"
+    volumes:
+      - npm-data:/data
+      - npm-letsencrypt:/etc/letsencrypt
+
+volumes:
+  npm-data:
+  npm-letsencrypt:

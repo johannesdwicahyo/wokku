@@ -1,0 +1,21 @@
+# name: Memos
+# documentation: https://github.com/usememos/memos
+# slogan: Lightweight, self-hosted memo hub for capturing quick thoughts and ideas
+# category: productivity
+# tags: notes, memo, knowledge, markdown
+# icon: productivity
+# port: 5230
+
+services:
+  memos:
+    image: neosmemo/memos:stable
+    environment:
+      - MEMOS_MODE=prod
+      - MEMOS_PORT=5230
+    ports:
+      - "5230:5230"
+    volumes:
+      - memos-data:/var/opt/memos
+
+volumes:
+  memos-data:
