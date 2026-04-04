@@ -1,0 +1,11 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  app_record: one
+  url: syslog://logs.example.com:514
+  drain_type: syslog
+
+two:
+  app_record: two
+  url: https://logs.example.com/drain
+  drain_type: https
