@@ -1,0 +1,152 @@
+<%= render "dashboard/apps/tabs", app: @app %>
+
+<div class="max-w-2xl">
+  <%# Header %>
+  <div class="mb-6">
+    <h2 class="text-base font-semibold text-on-surface font-headline">Health Checks</h2>
+    <p class="text-sm text-outline mt-1">Configure Dokku health checks that run after each deployment to verify your app is responding correctly.</p>
+  </div>
+
+  <%# Current status banner %>
+  <% checks_disabled = @checks["checks_disabled"].to_s.strip == "true" %>
+  <div class="mb-6 flex items-center gap-3 px-4 py-3 rounded-md <%= checks_disabled ? 'bg-error-container/20 border border-error/20' : 'bg-secondary-container/20 border border-secondary/20' %>">
+    <span class="material-symbols-outlined text-[18px] <%= checks_disabled ? 'text-error' : 'text-secondary' %>">
+      <%= checks_disabled ? "heart_broken" : "favorite" %>
+    </span>
+    <div>
+      <p class="text-sm font-semibold text-on-surface">Checks are currently <span class="<%= checks_disabled ? 'text-error' : 'text-secondary' %>"><%= checks_disabled ? "disabled" : "enabled" %></span></p>
+      <p class="text-xs text-outline">
+        <% if checks_disabled %>
+          Deployments will proceed without waiting for a health response.
+        <% else %>
+          Dokku will verify your app responds before completing each deployment.
+        <% end %>
+      </p>
+    </div>
+  </div>
+
+  <%= form_with url: dashboard_app_checks_path(@app), method: :patch, class: "space-y-6" do |f| %>
+
+    <%# Enable / Disable toggle %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-6 py-4 border-b border-outline-variant/15">
+        <h3 class="text-sm font-semibold text-on-surface font-headline">Enable Health Checks</h3>
+        <p class="text-xs text-outline mt-1">When enabled, Dokku waits for your app to pass a health check before marking a deployment as successful.</p>
+      </div>
+      <div class="px-6 py-4">
+        <label class="flex items-center gap-3 cursor-pointer">
+          <input type="hidden" name="checks_enabled" value="0">
+          <input type="checkbox" name="checks_enabled" value="1"
+                 <%= checks_disabled ? "" : "checked" %>
+                 class="w-4 h-4 rounded border-outline accent-primary cursor-pointer">
+          <span class="text-sm text-on-surface">Enable health checks on deploy</span>
+        </label>
+      </div>
+    </div>
+
+    <%# Check path %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-6 py-4 border-b border-outline-variant/15">
+        <h3 class="text-sm font-semibold text-on-surface font-headline">Check Path</h3>
+        <p class="text-xs text-outline mt-1">The URL path Dokku will request to verify your app is healthy. Should return HTTP 2xx.</p>
+      </div>
+      <div class="px-6 py-4">
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-outline font-mono bg-surface-container-highest px-2 py-1.5 rounded border border-outline-variant/15">
+            <%= @app.domains.first&.hostname ? "https://#{@app.domains.first.hostname}" : "http://your-app.example.com" %>
+          </span>
+          <input type="text" name="check_path"
+                 value="<%= @checks['checks_path'] || '/' %>"
+                 placeholder="/"
+                 class="flex-1 bg-surface-container-highest border border-outline-variant/15 rounded px-3 py-1.5 text-sm font-mono text-on-surface focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition">
+        </div>
+        <p class="text-[10px] text-outline mt-2">Example: <span class="font-mono text-on-surface-variant">/health</span> or <span class="font-mono text-on-surface-variant">/up</span></p>
+      </div>
+    </div>
+
+    <%# Timing settings %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-6 py-4 border-b border-outline-variant/15">
+        <h3 class="text-sm font-semibold text-on-surface font-headline">Timing &amp; Retry Settings</h3>
+        <p class="text-xs text-outline mt-1">Control how long Dokku waits before checking, how long each check can take, and how many retries are attempted.</p>
+      </div>
+      <div class="divide-y divide-outline-variant/10">
+
+        <%# Wait %>
+        <div class="px-6 py-4 flex items-center justify-between gap-6">
+          <div class="flex-1">
+            <label class="text-sm font-medium text-on-surface" for="checks_wait">Initial Wait</label>
+            <p class="text-xs text-outline mt-0.5">Seconds to wait after container start before the first health check.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="number" id="checks_wait" name="checks_wait"
+                   value="<%= @checks['checks_wait'] || '5' %>"
+                   min="0" max="300"
+                   class="w-20 bg-surface-container-highest border border-outline-variant/15 rounded px-3 py-1.5 text-sm font-mono text-on-surface text-center focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+            <span class="text-xs text-outline">sec</span>
+          </div>
+        </div>
+
+        <%# Timeout %>
+        <div class="px-6 py-4 flex items-center justify-between gap-6">
+          <div class="flex-1">
+            <label class="text-sm font-medium text-on-surface" for="checks_timeout">Timeout</label>
+            <p class="text-xs text-outline mt-0.5">Seconds to wait for a response from each health check request.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="number" id="checks_timeout" name="checks_timeout"
+                   value="<%= @checks['checks_timeout'] || '5' %>"
+                   min="1" max="60"
+                   class="w-20 bg-surface-container-highest border border-outline-variant/15 rounded px-3 py-1.5 text-sm font-mono text-on-surface text-center focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+            <span class="text-xs text-outline">sec</span>
+          </div>
+        </div>
+
+        <%# Attempts %>
+        <div class="px-6 py-4 flex items-center justify-between gap-6">
+          <div class="flex-1">
+            <label class="text-sm font-medium text-on-surface" for="checks_attempts">Attempts</label>
+            <p class="text-xs text-outline mt-0.5">Number of times to retry the health check before marking the deployment as failed.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="number" id="checks_attempts" name="checks_attempts"
+                   value="<%= @checks['checks_attempts'] || '5' %>"
+                   min="1" max="100"
+                   class="w-20 bg-surface-container-highest border border-outline-variant/15 rounded px-3 py-1.5 text-sm font-mono text-on-surface text-center focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+            <span class="text-xs text-outline">tries</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <%# Raw report (collapsible) %>
+    <% if @checks.any? %>
+      <details class="bg-surface-container-lowest rounded-md overflow-hidden">
+        <summary class="px-6 py-3 text-xs text-outline cursor-pointer hover:text-on-surface transition flex items-center gap-2 select-none">
+          <span class="material-symbols-outlined text-[14px]">expand_more</span>
+          Raw Dokku Report
+        </summary>
+        <div class="px-6 pb-4 pt-1">
+          <div class="font-mono text-xs text-on-surface-variant space-y-1">
+            <% @checks.each do |key, value| %>
+              <div class="flex gap-3">
+                <span class="text-outline w-44 shrink-0"><%= key %></span>
+                <span><%= value %></span>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </details>
+    <% end %>
+
+    <%# Save button %>
+    <div class="flex items-center gap-3">
+      <%= f.submit "Save Health Check Settings",
+            class: "px-5 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
+      <%= link_to "Cancel", dashboard_app_path(@app),
+            class: "px-4 py-2 text-sm text-outline hover:text-on-surface transition" %>
+    </div>
+
+  <% end %>
+</div>
