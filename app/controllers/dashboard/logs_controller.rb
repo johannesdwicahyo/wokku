@@ -5,6 +5,7 @@ module Dashboard
     def show
       authorize @app, :show?
       @logs = fetch_recent_logs
+      @log_drains = @app.log_drains
     end
 
     private
