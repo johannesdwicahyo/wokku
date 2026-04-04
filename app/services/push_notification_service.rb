@@ -4,7 +4,9 @@ class PushNotificationService
     "deploy_failed" => "Deploy Failed",
     "app_crashed" => "App Crashed",
     "backup_completed" => "Backup Completed",
-    "backup_failed" => "Backup Failed"
+    "backup_failed" => "Backup Failed",
+    "resource_high_cpu" => "High CPU Alert",
+    "resource_high_memory" => "High Memory Alert"
   }.freeze
 
   CATEGORIES = {
@@ -12,13 +14,16 @@ class PushNotificationService
     "deploy_failed" => "deploy",
     "app_crashed" => "alert",
     "backup_completed" => "backup",
-    "backup_failed" => "alert"
+    "backup_failed" => "alert",
+    "resource_high_cpu" => "alert",
+    "resource_high_memory" => "alert"
   }.freeze
 
-  def initialize(notification, deploy, event)
+  def initialize(notification, deploy, event, app_record: nil)
     @notification = notification
     @deploy = deploy
     @event = event
+    @app_record = app_record
     @client = Expo::Push::Client.new
   end
 
@@ -55,7 +60,7 @@ class PushNotificationService
   end
 
   def build_notification(device_token)
-    app = @deploy.app_record
+    app = @deploy&.app_record || @app_record
     Expo::Push::Notification.new
       .to(device_token.token)
       .title(TITLES[@event] || @event.titleize)
@@ -63,7 +68,7 @@ class PushNotificationService
       .data({
         type: "deploy",
         app_id: app.id,
-        deploy_id: @deploy.id,
+        deploy_id: @deploy&.id,
         event: @event
       })
       .sound("default")
@@ -71,8 +76,8 @@ class PushNotificationService
   end
 
   def build_body(app)
-    commit = @deploy.commit_sha&.first(7)
-    version = @deploy.release&.version
+    commit = @deploy&.commit_sha&.first(7)
+    version = @deploy&.release&.version
 
     case @event
     when "deploy_succeeded"
@@ -85,6 +90,10 @@ class PushNotificationService
       "#{app.name} backup completed"
     when "backup_failed"
       "#{app.name} backup failed"
+    when "resource_high_cpu"
+      "#{app.name} CPU usage is above 80%"
+    when "resource_high_memory"
+      "#{app.name} memory usage is above 90%"
     else
       "#{app.name}: #{@event.humanize}"
     end
