@@ -4,6 +4,7 @@
 # category: frameworks
 # tags: go, fiber, api
 # icon: go
+# port: 3000
 
 services:
   go_fiber:

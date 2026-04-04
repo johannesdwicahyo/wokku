@@ -4,6 +4,7 @@
 # category: media
 # tags: audiobooks, podcasts, node
 # icon: media
+# port: 13378
 
 services:
   audiobookshelf:

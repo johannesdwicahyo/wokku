@@ -4,6 +4,7 @@
 # category: productivity
 # tags: scheduling, calendar, node
 # icon: calendar
+# port: 3000
 
 services:
   calcom:

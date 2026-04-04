@@ -4,6 +4,7 @@
 # category: ecommerce
 # tags: ecommerce, graphql, python
 # icon: ecommerce
+# port: 8000
 
 services:
   saleor:

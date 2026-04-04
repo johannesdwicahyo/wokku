@@ -4,6 +4,7 @@
 # category: media
 # tags: photos, backup, node
 # icon: media
+# port: 2283
 
 services:
   immich:

@@ -5,6 +5,7 @@
 # tags: ruby, rails, fullstack, tailwind
 # icon: rails
 # post_deploy: bin/rails db:migrate
+# port: 3000
 
 services:
   rails_tailwind:
