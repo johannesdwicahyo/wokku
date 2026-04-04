@@ -34,9 +34,11 @@ Rails.application.routes.draw do
           end
         end
         resource :ps, only: [ :show, :update ], controller: "ps"
+        resource :checks, only: [ :show, :update ], controller: "checks"
         resources :logs, only: [ :index ]
         resources :deploys, only: [ :index, :show ]
         resources :addons, only: [ :index, :create, :destroy ]
+        resources :log_drains, only: [ :index, :create, :destroy ]
       end
 
       resources :templates, only: [ :index, :show ] do
@@ -70,6 +72,8 @@ Rails.application.routes.draw do
   # GitHub
   get "/github/callback", to: "github/callbacks#create", as: :github_callback
   post "/webhooks/github", to: "webhooks/github#create"
+  post "/webhooks/gitlab", to: "webhooks/gitlab#create"
+  post "/webhooks/bitbucket", to: "webhooks/bitbucket#create"
   namespace :dashboard do
     get "/", to: "dashboard#show", as: :root
     resources :templates, only: [ :index, :show, :create ]
@@ -97,11 +101,13 @@ Rails.application.routes.draw do
       end
       resources :deploys, only: [ :show ], controller: "deploys"
       resource :logs, only: [ :show ], controller: "logs"
+      resources :log_drains, only: [ :create, :destroy ], controller: "log_drains"
       resource :metrics, only: [ :show ], controller: "metrics"
       resource :resources, only: [ :show, :create, :destroy ], controller: "resources"
       resource :scaling, only: [ :show, :update ], controller: "scaling" do
         post :change_tier
       end
+      resource :checks, only: [ :show, :update ], controller: "checks"
       resource :terminal, only: [ :show ], controller: "terminals"
       get "github/repos", to: "github#repos", as: :github_repos
       post "github/connect", to: "github#connect", as: :github_connect
