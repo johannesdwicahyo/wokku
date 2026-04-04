@@ -1,0 +1,53 @@
+# name: Penpot
+# documentation: https://github.com/penpot/penpot
+# slogan: Open-source design and prototyping platform for design and development teams
+# category: developer-tools
+# tags: design, prototyping, ui, figma-alternative
+# icon: developer-tools
+# port: 9001
+
+services:
+  penpot-frontend:
+    image: penpotapp/frontend:latest
+    ports:
+      - "9001:80"
+    environment:
+      - PENPOT_FLAGS=enable-registration enable-login
+
+  penpot-backend:
+    image: penpotapp/backend:latest
+    environment:
+      - PENPOT_FLAGS=enable-registration enable-login
+      - PENPOT_DATABASE_URI=postgresql://postgres/penpot
+      - PENPOT_DATABASE_USERNAME=penpot
+      - PENPOT_DATABASE_PASSWORD=penpot
+      - PENPOT_REDIS_URI=redis://redis/0
+      - PENPOT_STORAGE_BACKEND=fs
+      - PENPOT_STORAGE_FS_DIRECTORY=/opt/data/assets
+      - PENPOT_TELEMETRY_ENABLED=false
+    depends_on:
+      - postgres
+      - redis
+
+  penpot-exporter:
+    image: penpotapp/exporter:latest
+    environment:
+      - PENPOT_PUBLIC_URI=http://penpot-frontend
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=penpot
+      - POSTGRES_USER=penpot
+      - POSTGRES_PASSWORD=penpot
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    volumes:
+      - redis-data:/data
+
+volumes:
+  postgres-data:
+  redis-data:

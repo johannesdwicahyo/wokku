@@ -1,0 +1,22 @@
+# name: Syncthing
+# documentation: https://github.com/syncthing/syncthing
+# slogan: Continuous file synchronization between your devices
+# category: file-storage
+# tags: sync, files, p2p, backup
+# icon: file-storage
+# port: 8384
+
+services:
+  syncthing:
+    image: syncthing/syncthing:latest
+    environment:
+      - PUID=1000
+      - PGID=1000
+    ports:
+      - "8384:8384"
+      - "22000:22000"
+    volumes:
+      - syncthing-data:/var/syncthing
+
+volumes:
+  syncthing-data:

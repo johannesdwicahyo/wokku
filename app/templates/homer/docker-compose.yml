@@ -1,0 +1,21 @@
+# name: Homer
+# documentation: https://github.com/bastienwirtz/homer
+# slogan: Simple static homepage for your server to keep your services at one place
+# category: productivity
+# tags: dashboard, homepage, startpage, self-hosted
+# icon: productivity
+# port: 8080
+
+services:
+  homer:
+    image: b4bz/homer:latest
+    environment:
+      - UID=1000
+      - GID=1000
+    ports:
+      - "8080:8080"
+    volumes:
+      - homer-assets:/www/assets
+
+volumes:
+  homer-assets:

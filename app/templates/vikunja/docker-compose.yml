@@ -1,0 +1,38 @@
+# name: Vikunja
+# documentation: https://github.com/go-vikunja/vikunja
+# slogan: Open-source to-do app and project management tool
+# category: productivity
+# tags: tasks, todo, project-management, productivity
+# icon: productivity
+# port: 3456
+
+services:
+  vikunja:
+    image: vikunja/vikunja:latest
+    environment:
+      - VIKUNJA_DATABASE_TYPE=postgres
+      - VIKUNJA_DATABASE_HOST=postgres
+      - VIKUNJA_DATABASE_DATABASE=vikunja
+      - VIKUNJA_DATABASE_USER=vikunja
+      - VIKUNJA_DATABASE_PASSWORD=vikunja
+      - VIKUNJA_SERVICE_JWTSECRET=changeme-jwt-secret
+      - VIKUNJA_SERVICE_FRONTENDURL=http://localhost:3456
+    ports:
+      - "3456:3456"
+    depends_on:
+      - postgres
+    volumes:
+      - vikunja-files:/app/vikunja/files
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=vikunja
+      - POSTGRES_USER=vikunja
+      - POSTGRES_PASSWORD=vikunja
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  vikunja-files:
+  postgres-data:

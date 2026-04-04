@@ -1,0 +1,48 @@
+# name: Paperless-ngx
+# documentation: https://github.com/paperless-ngx/paperless-ngx
+# slogan: Document management system that transforms physical documents into searchable archives
+# category: productivity
+# tags: documents, ocr, archive, pdf
+# icon: productivity
+# port: 8000
+
+services:
+  paperless:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    environment:
+      - PAPERLESS_REDIS=redis://redis:6379
+      - PAPERLESS_DBHOST=postgres
+      - PAPERLESS_DBUSER=paperless
+      - PAPERLESS_DBPASS=paperless
+      - PAPERLESS_DBNAME=paperless
+      - PAPERLESS_SECRET_KEY=changeme-secret-key
+      - PAPERLESS_TIME_ZONE=UTC
+      - PAPERLESS_OCR_LANGUAGE=eng
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - paperless-data:/usr/src/paperless/data
+      - paperless-media:/usr/src/paperless/media
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=paperless
+      - POSTGRES_USER=paperless
+      - POSTGRES_PASSWORD=paperless
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    volumes:
+      - redis-data:/data
+
+volumes:
+  paperless-data:
+  paperless-media:
+  postgres-data:
+  redis-data:

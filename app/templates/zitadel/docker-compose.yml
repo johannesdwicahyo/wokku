@@ -1,0 +1,33 @@
+# name: ZITADEL
+# documentation: https://github.com/zitadel/zitadel
+# slogan: Cloud-native identity and access management platform with enterprise-grade security
+# category: security
+# tags: auth, iam, sso, oauth, identity
+# icon: security
+# port: 8080
+
+services:
+  zitadel:
+    image: ghcr.io/zitadel/zitadel:latest
+    command: start-from-init --masterkey "MasterkeyNeedsToHave32Characters" --tlsMode disabled
+    environment:
+      - ZITADEL_DATABASE_COCKROACH_HOST=cockroachdb
+      - ZITADEL_EXTERNALDOMAIN=localhost
+      - ZITADEL_EXTERNALPORT=8080
+      - ZITADEL_EXTERNALSECURE=false
+      - ZITADEL_TLS_ENABLED=false
+    ports:
+      - "8080:8080"
+    depends_on:
+      - cockroachdb
+
+  cockroachdb:
+    image: cockroachdb/cockroach:latest
+    command: start-single-node --insecure
+    ports:
+      - "26257:26257"
+    volumes:
+      - cockroachdb-data:/cockroach/cockroach-data
+
+volumes:
+  cockroachdb-data:

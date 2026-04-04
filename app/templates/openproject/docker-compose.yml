@@ -1,0 +1,32 @@
+# name: OpenProject
+# documentation: https://github.com/opf/openproject
+# slogan: Open-source project management software with Gantt charts and agile boards
+# category: productivity
+# tags: project-management, gantt, agile, scrum
+# icon: productivity
+# port: 8080
+
+services:
+  openproject:
+    image: openproject/openproject:latest
+    environment:
+      - OPENPROJECT_SECRET_KEY_BASE=changeme-secret-key
+      - OPENPROJECT_HOST__NAME=localhost:8080
+      - OPENPROJECT_HTTPS=false
+      - DATABASE_URL=postgres://openproject:openproject@postgres:5432/openproject
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=openproject
+      - POSTGRES_USER=openproject
+      - POSTGRES_PASSWORD=openproject
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

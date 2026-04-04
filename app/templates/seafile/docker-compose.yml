@@ -1,0 +1,34 @@
+# name: Seafile
+# documentation: https://github.com/haiwen/seafile
+# slogan: High-performance file syncing and sharing platform with encryption support
+# category: file-storage
+# tags: files, sync, sharing, collaboration, encryption
+# icon: file-storage
+# port: 80
+
+services:
+  seafile:
+    image: seafileltd/seafile-mc:latest
+    environment:
+      - DB_HOST=mysql
+      - DB_ROOT_PASSWD=rootpassword
+      - SEAFILE_ADMIN_EMAIL=admin@example.com
+      - SEAFILE_ADMIN_PASSWORD=admin123
+      - SEAFILE_SERVER_HOSTNAME=localhost
+    ports:
+      - "80:80"
+    depends_on:
+      - mysql
+    volumes:
+      - seafile-data:/shared
+
+  mysql:
+    image: mysql:8
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+volumes:
+  seafile-data:
+  mysql-data:
