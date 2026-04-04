@@ -212,6 +212,53 @@
         </div>
       <% end %>
     </div>
+    <%# Preview Apps (only shown for main apps that have PR previews) %>
+    <% if @preview_apps&.any? %>
+      <div class="bg-surface-container-low rounded-md overflow-hidden">
+        <div class="px-6 py-3 border-b border-outline-variant/10 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-[16px]">fork_right</span>
+            <h2 class="font-headline text-sm font-bold text-on-surface">Preview Apps</h2>
+            <span class="text-[10px] bg-primary-container text-on-primary-container px-2 py-0.5 rounded-full font-bold"><%= @preview_apps.size %></span>
+          </div>
+        </div>
+        <div class="divide-y divide-outline-variant/10">
+          <% @preview_apps.each do |preview| %>
+            <div class="px-6 py-3 flex items-center justify-between hover:bg-surface-container-high/20 transition">
+              <div class="flex items-center gap-3">
+                <% case preview.status %>
+                <% when "running" %>
+                  <span class="w-2 h-2 rounded-full bg-secondary glow-running flex-shrink-0"></span>
+                <% when "crashed" %>
+                  <span class="w-2 h-2 rounded-full bg-error flex-shrink-0"></span>
+                <% when "deploying" %>
+                  <span class="w-2 h-2 rounded-full bg-outline animate-pulse flex-shrink-0"></span>
+                <% else %>
+                  <span class="w-2 h-2 rounded-full bg-outline-variant flex-shrink-0"></span>
+                <% end %>
+                <div>
+                  <%= link_to dashboard_app_path(preview), class: "text-xs font-mono font-bold text-on-surface hover:text-primary transition" do %>
+                    PR #<%= preview.pr_number %>
+                  <% end %>
+                  <p class="text-[10px] text-outline mt-0.5"><%= preview.name %></p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-[10px] text-outline capitalize"><%= preview.status %></span>
+                <% if @app.github_repo_full_name.present? %>
+                  <%= link_to "https://github.com/#{@app.github_repo_full_name}/pull/#{preview.pr_number}",
+                        target: "_blank", rel: "noopener noreferrer",
+                        class: "text-outline hover:text-primary transition",
+                        title: "View PR on GitHub" do %>
+                    <span class="material-symbols-outlined text-[16px]">open_in_new</span>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
   </div>
 
   <%# ===== RIGHT COLUMN (4-col) ===== %>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_03_175436) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_04_060506) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -57,10 +57,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_03_175436) do
     t.datetime "created_at", null: false
     t.bigint "created_by_id", null: false
     t.string "deploy_branch", default: "main"
+    t.string "git_provider"
+    t.string "git_repo_full_name"
     t.string "git_repository_url"
+    t.string "git_webhook_secret"
     t.string "github_repo_full_name"
     t.string "github_webhook_secret"
+    t.boolean "is_preview", default: false, null: false
     t.string "name", null: false
+    t.bigint "parent_app_id"
+    t.integer "pr_number"
     t.bigint "server_id", null: false
     t.integer "status", default: 0
     t.datetime "synced_at"
@@ -69,6 +75,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_03_175436) do
     t.index ["created_by_id"], name: "index_app_records_on_created_by_id"
     t.index ["github_repo_full_name"], name: "index_app_records_on_github_repo_full_name"
     t.index ["name", "server_id"], name: "index_app_records_on_name_and_server_id", unique: true
+    t.index ["parent_app_id", "pr_number"], name: "index_app_records_on_parent_app_id_and_pr_number", unique: true, where: "(is_preview = true)"
+    t.index ["parent_app_id"], name: "index_app_records_on_parent_app_id"
     t.index ["server_id"], name: "index_app_records_on_server_id"
     t.index ["team_id"], name: "index_app_records_on_team_id"
   end
@@ -225,6 +233,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_03_175436) do
     t.bigint "user_id", null: false
     t.index ["reference_id"], name: "index_invoices_on_reference_id", unique: true
     t.index ["user_id"], name: "index_invoices_on_user_id"
+  end
+
+  create_table "log_drains", force: :cascade do |t|
+    t.bigint "app_record_id", null: false
+    t.datetime "created_at", null: false
+    t.string "drain_type"
+    t.datetime "updated_at", null: false
+    t.string "url"
+    t.index ["app_record_id"], name: "index_log_drains_on_app_record_id"
   end
 
   create_table "metrics", force: :cascade do |t|
@@ -571,6 +588,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_03_175436) do
   add_foreign_key "api_tokens", "users"
   add_foreign_key "app_databases", "app_records"
   add_foreign_key "app_databases", "database_services"
+  add_foreign_key "app_records", "app_records", column: "parent_app_id"
   add_foreign_key "app_records", "servers"
   add_foreign_key "app_records", "teams"
   add_foreign_key "app_records", "users", column: "created_by_id"
@@ -587,6 +605,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_03_175436) do
   add_foreign_key "dyno_allocations", "dyno_tiers"
   add_foreign_key "env_vars", "app_records"
   add_foreign_key "invoices", "users"
+  add_foreign_key "log_drains", "app_records"
   add_foreign_key "metrics", "app_records"
   add_foreign_key "notifications", "app_records"
   add_foreign_key "notifications", "teams"

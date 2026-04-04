@@ -21,7 +21,10 @@ class PrPreviewDeployJob < ApplicationJob
       deploy_branch: branch,
       git_repository_url: repo_url,
       github_repo_full_name: nil, # Don't trigger webhooks for preview apps
-      status: :deploying
+      status: :deploying,
+      is_preview: true,
+      pr_number: pr_number,
+      parent_app_id: parent_app.id
     )
     app.save!
 

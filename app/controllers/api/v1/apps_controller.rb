@@ -3,7 +3,8 @@ module Api
     class AppsController < BaseController
       def index
         apps = policy_scope(AppRecord)
-        render json: apps.select(:id, :name, :server_id, :team_id, :status, :created_at)
+        apps = apps.main_apps unless params[:include_previews].present?
+        render json: apps.select(:id, :name, :server_id, :team_id, :status, :is_preview, :pr_number, :parent_app_id, :created_at)
       end
 
       def show
