@@ -1,0 +1,32 @@
+# name: RustDesk Server
+# documentation: https://github.com/rustdesk/rustdesk-server
+# slogan: Self-hosted remote desktop server for secure screen sharing and control
+# category: developer-tools
+# tags: remote-desktop, rdp, screen-sharing, vnc
+# icon: developer-tools
+# port: 21114
+
+services:
+  hbbs:
+    image: rustdesk/rustdesk-server:latest
+    command: hbbs
+    ports:
+      - "21115:21115"
+      - "21116:21116"
+      - "21116:21116/udp"
+      - "21118:21118"
+    volumes:
+      - rustdesk-data:/root
+
+  hbbr:
+    image: rustdesk/rustdesk-server:latest
+    command: hbbr
+    ports:
+      - "21117:21117"
+      - "21119:21119"
+      - "21114:21114"
+    volumes:
+      - rustdesk-data:/root
+
+volumes:
+  rustdesk-data:

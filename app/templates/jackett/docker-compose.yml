@@ -1,0 +1,25 @@
+# name: Jackett
+# documentation: https://github.com/Jackett/Jackett
+# slogan: API support for torrent trackers, bridging Sonarr, Radarr, and other apps
+# category: media
+# tags: torrent, indexer, api, arr
+# icon: media
+# port: 9117
+
+services:
+  jackett:
+    image: lscr.io/linuxserver/jackett:latest
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+      - AUTO_UPDATE=true
+    ports:
+      - "9117:9117"
+    volumes:
+      - jackett-config:/config
+      - jackett-downloads:/downloads
+
+volumes:
+  jackett-config:
+  jackett-downloads:

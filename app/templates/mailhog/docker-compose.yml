@@ -1,0 +1,14 @@
+# name: MailHog
+# documentation: https://github.com/mailhog/MailHog
+# slogan: Email testing tool for developers with a web UI and SMTP server
+# category: developer-tools
+# tags: email, testing, smtp, development
+# icon: developer-tools
+# port: 8025
+
+services:
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"
+      - "8025:8025"

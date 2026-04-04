@@ -1,0 +1,23 @@
+# name: Stirling PDF
+# documentation: https://github.com/Stirling-Tools/Stirling-PDF
+# slogan: Locally hosted web app for PDF manipulation with merge, split, and convert features
+# category: productivity
+# tags: pdf, documents, tools, conversion
+# icon: productivity
+# port: 8080
+
+services:
+  stirling-pdf:
+    image: frooodle/s-pdf:latest
+    environment:
+      - DOCKER_ENABLE_SECURITY=false
+      - INSTALL_BOOK_AND_ADVANCED_HTML_OPS=false
+    ports:
+      - "8080:8080"
+    volumes:
+      - stirling-training-data:/usr/share/tessdata
+      - stirling-configs:/configs
+
+volumes:
+  stirling-training-data:
+  stirling-configs:

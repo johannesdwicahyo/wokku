@@ -1,0 +1,22 @@
+# name: ZincSearch
+# documentation: https://github.com/zincsearch/zincsearch
+# slogan: Lightweight Elasticsearch alternative with a simple API and web UI
+# category: developer-tools
+# tags: search, elasticsearch, full-text, indexing
+# icon: developer-tools
+# port: 4080
+
+services:
+  zincsearch:
+    image: public.ecr.aws/zinclabs/zincsearch:latest
+    environment:
+      - ZINC_FIRST_ADMIN_USER=admin
+      - ZINC_FIRST_ADMIN_PASSWORD=Complexpass#123
+      - ZINC_DATA_PATH=/data
+    ports:
+      - "4080:4080"
+    volumes:
+      - zincsearch-data:/data
+
+volumes:
+  zincsearch-data:
