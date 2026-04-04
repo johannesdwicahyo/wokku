@@ -16,8 +16,8 @@ class NotifiableTest < ActiveSupport::TestCase
   end
 
   test "fire_notifications enqueues NotifyJob for each notification" do
-    Notification.create!(team: @team, channel: :push, events: ["deploy_succeeded"])
-    Notification.create!(team: @team, channel: :slack, events: ["deploy_succeeded"], config: { "url" => "https://hooks.slack.com/test" })
+    Notification.create!(team: @team, channel: :push, events: [ "deploy_succeeded" ])
+    Notification.create!(team: @team, channel: :slack, events: [ "deploy_succeeded" ], config: { "url" => "https://hooks.slack.com/test" })
 
     job = TestJob.new
     assert_enqueued_jobs 2, only: NotifyJob do

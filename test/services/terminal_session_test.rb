@@ -65,7 +65,7 @@ class TerminalSessionTest < ActiveSupport::TestCase
     mock_ssh = Object.new
     mock_ssh.define_singleton_method(:closed?) { false }
     mock_ssh.define_singleton_method(:open_channel) { |&b| b.call(mock_channel); mock_channel }
-    mock_ssh.define_singleton_method(:close) {}
+    mock_ssh.define_singleton_method(:close) { }
 
     Net::SSH.define_singleton_method(:start) { |*_args, **_opts, &_block| mock_ssh }
 
@@ -89,7 +89,7 @@ class TerminalSessionTest < ActiveSupport::TestCase
     mock_ssh = Object.new
     mock_ssh.define_singleton_method(:closed?) { false }
     mock_ssh.define_singleton_method(:open_channel) { |&b| b.call(mock_channel); mock_channel }
-    mock_ssh.define_singleton_method(:close) {}
+    mock_ssh.define_singleton_method(:close) { }
 
     Net::SSH.define_singleton_method(:start) { |*_args, **_opts, &_block| mock_ssh }
 
@@ -166,10 +166,10 @@ class TerminalSessionTest < ActiveSupport::TestCase
     mock_ssh = Object.new
     mock_ssh.define_singleton_method(:closed?) { false }
     mock_ssh.define_singleton_method(:process) { |_t| raise IOError, "stream closed" }
-    mock_ssh.define_singleton_method(:close) {}
+    mock_ssh.define_singleton_method(:close) { }
 
     mock_channel = Object.new
-    mock_channel.define_singleton_method(:close) {}
+    mock_channel.define_singleton_method(:close) { }
 
     session = TerminalSession.new(server: @server)
     session.instance_variable_set(:@ssh, mock_ssh)
