@@ -4,6 +4,7 @@
 # category: rss
 # tags: read-later, bookmarks, php
 # icon: rss
+# port: 80
 
 services:
   wallabag:

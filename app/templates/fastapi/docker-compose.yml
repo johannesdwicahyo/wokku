@@ -5,6 +5,7 @@
 # tags: python, fastapi, api
 # icon: python
 # post_deploy: alembic upgrade head
+# port: 8000
 
 services:
   fastapi:

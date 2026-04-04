@@ -4,6 +4,7 @@
 # category: devtools
 # tags: git, code-hosting, go
 # icon: git
+# port: 3000
 
 services:
   gitea:

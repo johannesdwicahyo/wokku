@@ -4,6 +4,7 @@
 # category: ai
 # tags: ai, llm, python, workflow
 # icon: ai
+# port: 7860
 
 services:
   langflow:

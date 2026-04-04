@@ -4,6 +4,7 @@
 # category: ecommerce
 # tags: ecommerce, headless, node
 # icon: ecommerce
+# port: 9000
 
 services:
   medusa:

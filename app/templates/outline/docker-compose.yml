@@ -4,6 +4,7 @@
 # category: databases
 # tags: wiki, knowledge-base, node
 # icon: wiki
+# port: 3000
 
 services:
   outline:

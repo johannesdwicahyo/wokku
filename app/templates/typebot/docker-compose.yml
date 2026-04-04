@@ -4,6 +4,7 @@
 # category: communication
 # tags: chatbot, forms, node
 # icon: chat
+# port: 3000
 
 services:
   typebot:

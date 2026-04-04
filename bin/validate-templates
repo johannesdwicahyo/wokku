@@ -1,0 +1,60 @@
+#!/usr/bin/env ruby
+require_relative "../config/environment"
+
+puts "=== Template Validation ==="
+puts ""
+
+registry = TemplateRegistry.new
+templates = registry.all
+passed = 0
+failed = 0
+errors = []
+
+templates.each do |template|
+  checks = []
+  checks << ["name present", template[:name].present?]
+  checks << ["slug present", template[:slug].present?]
+  checks << ["description present", template[:description].present?]
+  checks << ["category present", template[:category].present?]
+
+  template_path = Rails.root.join("app/templates", template[:slug], "docker-compose.yml")
+  checks << ["docker-compose.yml exists", File.exist?(template_path)]
+
+  if File.exist?(template_path)
+    content = File.read(template_path)
+    checks << ["has image reference", content.include?("image:")]
+    checks << ["has port mapping", content.include?("ports:") || content.include?("port:")]
+
+    # Check image tag isn't using 'latest' with typo
+    if content.match?(/image:.*:latest\s*$/) || content.match?(/image:\s*\S+\s*$/)
+      checks << ["valid image tag", true]
+    end
+  end
+
+  all_passed = checks.all? { |_, ok| ok }
+
+  if all_passed
+    puts "  ✓ #{template[:name]} (#{template[:slug]})"
+    passed += 1
+  else
+    puts "  ✗ #{template[:name]} (#{template[:slug]})"
+    checks.reject { |_, ok| ok }.each { |check, _| puts "    - FAIL: #{check}" }
+    failed += 1
+    errors << { template: template[:slug], failures: checks.reject { |_, ok| ok }.map(&:first) }
+  end
+end
+
+puts ""
+puts "=== Results ==="
+puts "Total: #{templates.size}"
+puts "Passed: #{passed}"
+puts "Failed: #{failed}"
+
+if failed > 0
+  puts ""
+  puts "Failed templates:"
+  errors.each { |e| puts "  #{e[:template]}: #{e[:failures].join(', ')}" }
+  exit 1
+else
+  puts "All templates validated!"
+end

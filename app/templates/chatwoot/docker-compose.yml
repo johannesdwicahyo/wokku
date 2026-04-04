@@ -5,6 +5,7 @@
 # tags: chat, support, customer-service, ruby
 # icon: chat
 # post_deploy: bundle exec rails db:migrate
+# port: 3000
 
 services:
   chatwoot:

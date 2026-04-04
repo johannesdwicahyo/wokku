@@ -4,6 +4,7 @@
 # category: frameworks
 # tags: java, spring, api
 # icon: java
+# port: 8080
 
 services:
   spring_boot:

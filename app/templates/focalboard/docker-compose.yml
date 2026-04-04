@@ -4,6 +4,7 @@
 # category: productivity
 # tags: project-management, kanban, go
 # icon: form
+# port: 8000
 
 services:
   focalboard:

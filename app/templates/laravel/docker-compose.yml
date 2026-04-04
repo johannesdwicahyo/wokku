@@ -5,6 +5,7 @@
 # tags: php, laravel, fullstack
 # icon: php
 # post_deploy: php artisan migrate --force
+# port: 80
 
 services:
   laravel:

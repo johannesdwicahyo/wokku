@@ -4,6 +4,7 @@
 # category: devtools
 # tags: api-testing, http, node
 # icon: api
+# port: 3000
 
 services:
   hoppscotch:

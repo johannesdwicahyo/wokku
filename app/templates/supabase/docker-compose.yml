@@ -4,6 +4,7 @@
 # category: platform
 # tags: baas, firebase-alt, postgres
 # icon: platform
+# port: 8000
 
 services:
   supabase:

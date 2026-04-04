@@ -5,6 +5,7 @@
 # tags: python, django, fullstack
 # icon: python
 # post_deploy: python manage.py migrate
+# port: 8000
 
 services:
   django:

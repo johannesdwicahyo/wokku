@@ -4,6 +4,7 @@
 # category: communication
 # tags: whatsapp, api, messaging
 # icon: whatsapp
+# port: 3000
 
 services:
   waha:

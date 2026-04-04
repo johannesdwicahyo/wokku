@@ -4,6 +4,7 @@
 # category: frameworks
 # tags: node, react, nextjs, frontend
 # icon: node
+# port: 3000
 
 services:
   nextjs:

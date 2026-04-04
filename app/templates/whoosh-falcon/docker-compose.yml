@@ -4,6 +4,7 @@
 # category: frameworks
 # tags: ruby, whoosh, falcon, async
 # icon: ruby
+# port: 9292
 
 services:
   whoosh_falcon:

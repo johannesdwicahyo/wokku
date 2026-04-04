@@ -4,6 +4,7 @@
 # category: frameworks
 # tags: node, express, prisma, api
 # icon: node
+# port: 3000
 
 services:
   express_prisma:
