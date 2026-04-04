@@ -1,4 +1,6 @@
 class MetricsPollJob < ApplicationJob
+  include Notifiable
+
   queue_as :metrics
 
   def perform(server_id)
@@ -29,12 +31,31 @@ class MetricsPollJob < ApplicationJob
         memory_limit: parse_bytes(mem_parts.last.strip),
         recorded_at: Time.current
       )
+
+      check_threshold(app, "resource_high_cpu", data["CPUPerc"].to_f, 80.0)
+      mem_usage = parse_bytes(mem_parts.first.strip)
+      mem_limit = parse_bytes(mem_parts.last.strip)
+      mem_pct = mem_limit > 0 ? (mem_usage.to_f / mem_limit * 100) : 0
+      check_threshold(app, "resource_high_memory", mem_pct, 90.0)
     end
   rescue Net::SSH::Exception, Errno::ECONNREFUSED, JSON::ParserError => e
     Rails.logger.warn("MetricsPollJob failed for server #{server_id}: #{e.message}")
   end
 
   private
+
+  def check_threshold(app, event, value, threshold)
+    cache_key = "alert:#{app.id}:#{event}"
+    if value > threshold
+      count = Rails.cache.increment(cache_key, 1, expires_in: 1.hour)
+      if count == 2
+        fire_resource_alert(app.team, event, app)
+        Rails.cache.write(cache_key, 0, expires_in: 1.hour)
+      end
+    else
+      Rails.cache.delete(cache_key)
+    end
+  end
 
   def parse_bytes(str)
     num = str.to_f
