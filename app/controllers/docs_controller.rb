@@ -9,6 +9,19 @@ class DocsController < ApplicationController
     @prev_page, @next_page = find_prev_next(@path)
   end
 
+  def search_index
+    entries = []
+    Dir.glob(Rails.root.join("docs/content/**/*.md")).each do |file|
+      path = file.sub(Rails.root.join("docs/content/").to_s, "").sub(".md", "")
+      content = File.read(file)
+      title = content.match(/^# (.+)/)&.captures&.first || path.split("/").last.titleize
+      headings = content.scan(/^## (.+)/).flatten
+      body = content.gsub(/^#+ /, "").gsub(/```.*?```/m, "").gsub(/:::.*?:::/m, "").gsub(/::\S+/, "").strip[0..300]
+      entries << { title: title, path: path, headings: headings, excerpt: body }
+    end
+    render json: entries
+  end
+
   private
 
   def load_sidebar
