@@ -1,0 +1,3 @@
+# Logs
+
+Documentation coming soon.
