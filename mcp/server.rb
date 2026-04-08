@@ -68,6 +68,7 @@ def handle_tool(name, args)
   when "wokku_restart_app" then api_request(:post, "/apps/#{args['app_id']}/restart")
   when "wokku_stop_app" then api_request(:post, "/apps/#{args['app_id']}/stop")
   when "wokku_start_app" then api_request(:post, "/apps/#{args['app_id']}/start")
+  when "wokku_deploy_app" then api_request(:post, "/apps/#{args['app_id']}/deploy")
   when "wokku_get_config" then api_request(:get, "/apps/#{args['app_id']}/config")
   when "wokku_set_config" then api_request(:put, "/apps/#{args['app_id']}/config", args["vars"])
   when "wokku_unset_config" then api_request(:delete, "/apps/#{args['app_id']}/config", { keys: args["keys"] })
@@ -139,6 +140,7 @@ TOOLS = [
   { name: "wokku_restart_app", description: "Restart an application", inputSchema: { type: "object", properties: { app_id: { type: "string", description: "The app ID" } }, required: [ "app_id" ] } },
   { name: "wokku_stop_app", description: "Stop an application", inputSchema: { type: "object", properties: { app_id: { type: "string", description: "The app ID" } }, required: [ "app_id" ] } },
   { name: "wokku_start_app", description: "Start a stopped application", inputSchema: { type: "object", properties: { app_id: { type: "string", description: "The app ID" } }, required: [ "app_id" ] } },
+  { name: "wokku_deploy_app", description: "Trigger a deploy for an app (rebuilds and deploys the latest code)", inputSchema: { type: "object", properties: { app_id: { type: "string", description: "The app ID" } }, required: [ "app_id" ] } },
   { name: "wokku_get_config", description: "Get environment variables", inputSchema: { type: "object", properties: { app_id: { type: "string", description: "The app ID" } }, required: [ "app_id" ] } },
   { name: "wokku_set_config", description: "Set environment variables", inputSchema: { type: "object", properties: { app_id: { type: "string", description: "The app ID" }, vars: { type: "object", description: "Key-value pairs" } }, required: [ "app_id", "vars" ] } },
   { name: "wokku_unset_config", description: "Remove environment variables", inputSchema: { type: "object", properties: { app_id: { type: "string", description: "The app ID" }, keys: { type: "array", items: { type: "string" }, description: "Keys to remove" } }, required: [ "app_id", "keys" ] } },
