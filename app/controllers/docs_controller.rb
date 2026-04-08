@@ -48,9 +48,12 @@ class DocsController < ApplicationController
 
   def highlight_code_blocks(html)
     formatter = Rouge::Formatters::HTML.new
-    html.gsub(%r{<pre><code class="language-(\w+)">(.*?)</code></pre>}m) do
+    # Commonmarker v2 outputs: <pre lang="bash" style="..."><code><span>...</span></code></pre>
+    html.gsub(%r{<pre lang="(\w+)"[^>]*><code>(.*?)</code></pre>}m) do
       lang = $1
-      code = CGI.unescapeHTML($2)
+      # Strip span tags and inline styles from commonmarker's built-in highlighting
+      code = $2.gsub(/<span[^>]*>/, "").gsub("</span>", "")
+      code = CGI.unescapeHTML(code)
       lexer = Rouge::Lexer.find(lang) || Rouge::Lexers::PlainText.new
       highlighted = formatter.format(lexer.lex(code))
       %(<div class="docs-code-block"><div class="docs-code-lang">#{lang}</div><pre><code>#{highlighted}</code></pre></div>)
