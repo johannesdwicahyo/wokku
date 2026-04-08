@@ -21,6 +21,7 @@ env:
     - RAILS_MASTER_KEY
     - WOKKU_DATABASE_PASSWORD
     - RESEND_API_KEY
+    - SENTRY_DSN
   clear:
     SOLID_QUEUE_IN_PUMA: true
     DB_HOST: wokku-db
@@ -43,8 +44,8 @@ ssh:
 builder:
   remote: ssh://deploy@43.159.57.11
   arch: amd64
-  args:
-    WOKKU_EE_TOKEN: WOKKU_EE_TOKEN_PLACEHOLDER
+  secrets:
+    - WOKKU_EE_TOKEN
 
 aliases:
   console: app exec --interactive --reuse "bin/rails console"
