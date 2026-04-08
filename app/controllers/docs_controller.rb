@@ -1,5 +1,5 @@
 class DocsController < ApplicationController
-  layout "application"
+  layout "docs"
 
   def show
     @path = params[:path] || "getting-started/sign-up"
