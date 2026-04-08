@@ -15,7 +15,7 @@ echo "✓ Rubocop passed"
 echo ""
 
 echo "→ Step 3/6: Brakeman (security)"
-bundle exec brakeman --quiet --no-pager
+bundle exec brakeman --quiet --no-pager -i config/brakeman.ignore
 echo "✓ Brakeman passed"
 echo ""
 
