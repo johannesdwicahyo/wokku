@@ -1,0 +1,127 @@
+- title: Getting Started
+  icon: rocket_launch
+  items:
+    - title: Sign Up
+      path: getting-started/sign-up
+    - title: Your First Deploy
+      path: getting-started/first-deploy
+    - title: Connect a Server
+      path: getting-started/connect-server
+
+- title: Apps
+  icon: deployed_code
+  items:
+    - title: Create an App
+      path: apps/create
+    - title: Deploy
+      path: apps/deploy
+    - title: GitHub Auto-Deploy
+      path: apps/github-autodeploy
+    - title: Environment Variables
+      path: apps/config
+    - title: Logs
+      path: apps/logs
+    - title: Restart / Stop / Start
+      path: apps/lifecycle
+
+- title: Templates
+  icon: dashboard_customize
+  items:
+    - title: Browse Templates
+      path: templates/browse
+    - title: Deploy a Template
+      path: templates/deploy
+
+- title: Domains & SSL
+  icon: language
+  items:
+    - title: Custom Domains
+      path: domains-ssl/custom-domains
+    - title: SSL Certificates
+      path: domains-ssl/ssl
+
+- title: Databases
+  icon: database
+  items:
+    - title: Supported Engines
+      path: databases/engines
+    - title: Create & Link
+      path: databases/create-link
+    - title: Backups
+      path: databases/backups
+
+- title: Scaling
+  icon: speed
+  items:
+    - title: Process Types & Dynos
+      path: scaling/dynos
+    - title: Dyno Tiers
+      path: scaling/tiers
+
+- title: Monitoring
+  icon: monitoring
+  items:
+    - title: Logs
+      path: monitoring/logs
+    - title: Metrics
+      path: monitoring/metrics
+    - title: Health Checks
+      path: monitoring/health-checks
+    - title: Notifications
+      path: monitoring/notifications
+
+- title: Teams
+  icon: group
+  items:
+    - title: Members & Roles
+      path: teams/members
+    - title: Permissions
+      path: teams/permissions
+
+- title: CLI
+  icon: terminal
+  items:
+    - title: Installation
+      path: cli/install
+    - title: Commands Reference
+      path: cli/commands
+
+- title: API
+  icon: api
+  items:
+    - title: Authentication
+      path: api/authentication
+    - title: Endpoints Reference
+      path: api/endpoints
+
+- title: Claude Code (MCP)
+  icon: smart_toy
+  items:
+    - title: Setup
+      path: mcp/setup
+    - title: Available Tools
+      path: mcp/tools
+
+- title: Mobile App
+  icon: phone_iphone
+  items:
+    - title: Download
+      path: mobile/download
+    - title: Push Notifications
+      path: mobile/notifications
+
+- title: Billing
+  icon: payments
+  items:
+    - title: Plans & Pricing
+      path: billing/plans
+    - title: Usage
+      path: billing/usage
+
+- title: Troubleshooting
+  icon: help
+  items:
+    - title: Common Issues
+      path: troubleshooting/common
+    - title: FAQ
+      path: troubleshooting/faq

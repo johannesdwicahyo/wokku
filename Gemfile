@@ -72,6 +72,17 @@ gem "rack-cors"
 gem "rack-attack"
 gem "expo-server-sdk"
 
+# Error Tracking
+gem "sentry-ruby"
+gem "sentry-rails"
+
+# Profiling
+gem "stackprof"
+
+# Documentation
+gem "commonmarker"
+gem "rouge"
+
 # Enterprise Edition (loaded when ee/ directory exists)
 eval_gemfile "ee/Gemfile.ee" if File.exist?(File.expand_path("ee/Gemfile.ee", __dir__))
 

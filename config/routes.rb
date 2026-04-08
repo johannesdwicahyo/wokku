@@ -161,7 +161,8 @@ Rails.application.routes.draw do
   # Marketing pages
   get "/deploy", to: "pages#deploy"
   get "/pricing", to: "pages#pricing"
-  get "/docs", to: "pages#docs"
+  get "/docs", to: "docs#show", as: :docs
+  get "/docs/*path", to: "docs#show", as: :docs_page
 
   get "up" => "rails/health#show", as: :rails_health_check
 
