@@ -162,6 +162,7 @@ Rails.application.routes.draw do
   get "/deploy", to: "pages#deploy"
   get "/pricing", to: "pages#pricing"
   get "/docs", to: "docs#show", as: :docs
+  get "/docs/search-index.json", to: "docs#search_index", as: :docs_search_index
   get "/docs/*path", to: "docs#show", as: :docs_page
 
   get "up" => "rails/health#show", as: :rails_health_check
