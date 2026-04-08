@@ -21,7 +21,7 @@ Install the Wokku CLI and run the signup command:
 
 ```bash
 # Install via Homebrew
-brew install wokku/tap/wokku
+brew install johannesdwicahyo/tap/wokku
 
 # Sign up for a new account
 wokku auth:signup
