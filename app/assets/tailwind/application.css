@@ -81,3 +81,119 @@
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #4a4453; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #958e9e; }
+
+/* === Documentation === */
+.docs-content h1 {
+  @apply font-headline text-3xl font-bold text-on-surface mb-6;
+}
+.docs-content h2 {
+  @apply font-headline text-xl font-bold text-on-surface mt-10 mb-4;
+}
+.docs-content h3 {
+  @apply font-headline text-base font-bold text-on-surface mt-6 mb-3;
+}
+.docs-content p {
+  @apply text-sm text-on-surface-variant leading-relaxed mb-4;
+}
+.docs-content ul, .docs-content ol {
+  @apply text-sm text-on-surface-variant mb-4 pl-5 space-y-1;
+}
+.docs-content ul { @apply list-disc; }
+.docs-content ol { @apply list-decimal; }
+.docs-content li { @apply leading-relaxed; }
+.docs-content a {
+  @apply text-primary hover:underline;
+}
+.docs-content strong {
+  @apply text-on-surface font-medium;
+}
+.docs-content code {
+  @apply bg-surface-container-high/50 text-primary px-1.5 py-0.5 rounded text-xs font-mono;
+}
+.docs-content pre code {
+  @apply bg-transparent p-0 text-inherit;
+}
+.docs-content table {
+  @apply w-full text-sm mb-6;
+}
+.docs-content thead {
+  @apply bg-surface-container-high;
+}
+.docs-content th {
+  @apply px-4 py-2 text-left text-[10px] text-outline uppercase tracking-wider font-bold;
+}
+.docs-content td {
+  @apply px-4 py-2.5 text-on-surface-variant border-t border-outline-variant/10;
+}
+.docs-content hr {
+  @apply border-outline-variant/20 my-8;
+}
+.docs-content blockquote {
+  @apply border-l-2 border-primary/50 pl-4 py-1 my-4 text-sm text-on-surface-variant italic;
+}
+
+/* Code blocks */
+.docs-code-block {
+  @apply bg-surface-container-lowest rounded-lg mb-4 overflow-hidden border border-outline-variant/10;
+}
+.docs-code-block .docs-code-lang {
+  @apply text-[10px] text-outline uppercase tracking-wider font-bold px-4 py-1.5 border-b border-outline-variant/10 bg-surface-container-low;
+}
+.docs-code-block pre {
+  @apply p-4 overflow-x-auto text-xs leading-relaxed;
+}
+.docs-code-block code {
+  @apply font-mono text-on-surface-variant;
+}
+
+/* Heading anchors */
+.docs-anchor {
+  @apply text-outline-variant/0 hover:text-outline ml-1 no-underline transition;
+}
+.docs-content h2:hover .docs-anchor,
+.docs-content h3:hover .docs-anchor {
+  @apply text-outline;
+}
+
+/* Channel tabs */
+.docs-tabs {
+  @apply mb-6 border border-outline-variant/15 rounded-lg overflow-hidden;
+}
+.docs-tab-bar {
+  @apply flex gap-0 bg-surface-container-low border-b border-outline-variant/15;
+}
+.docs-tab-btn {
+  @apply px-4 py-2 text-xs font-medium text-outline hover:text-on-surface-variant transition border-b-2 border-transparent;
+}
+.docs-tab-btn--active {
+  @apply text-primary border-primary bg-surface-container-high/30;
+}
+.docs-tab-panel {
+  @apply p-5;
+}
+.docs-tab-panel > :first-child {
+  @apply mt-0;
+}
+.docs-tab-panel > :last-child {
+  @apply mb-0;
+}
+
+/* Rouge syntax highlighting (dark theme) */
+.docs-code-block .highlight .k, .docs-code-block .highlight .kd,
+.docs-code-block .highlight .kn, .docs-code-block .highlight .kp,
+.docs-code-block .highlight .kr, .docs-code-block .highlight .kt { color: #c0c1ff; }
+.docs-code-block .highlight .s, .docs-code-block .highlight .s1,
+.docs-code-block .highlight .s2, .docs-code-block .highlight .sb,
+.docs-code-block .highlight .sc, .docs-code-block .highlight .sd,
+.docs-code-block .highlight .se, .docs-code-block .highlight .sh,
+.docs-code-block .highlight .sx { color: #d2bbff; }
+.docs-code-block .highlight .c, .docs-code-block .highlight .c1,
+.docs-code-block .highlight .cm, .docs-code-block .highlight .cs { color: #958e9e; font-style: italic; }
+.docs-code-block .highlight .nb, .docs-code-block .highlight .bp { color: #ffb694; }
+.docs-code-block .highlight .nf, .docs-code-block .highlight .nx { color: #c0c1ff; }
+.docs-code-block .highlight .mi, .docs-code-block .highlight .mf,
+.docs-code-block .highlight .mh, .docs-code-block .highlight .mo { color: #ffb694; }
+.docs-code-block .highlight .o, .docs-code-block .highlight .ow { color: #e2e0fc; }
+.docs-code-block .highlight .p { color: #e2e0fc; }
+.docs-code-block .highlight .na { color: #d2bbff; }
+.docs-code-block .highlight .nn, .docs-code-block .highlight .nc { color: #ffb694; }
