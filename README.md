@@ -169,6 +169,23 @@ services:
 bin/rails test
 ```
 
+## Claude Code (MCP)
+
+Manage your Wokku apps from [Claude Code](https://docs.anthropic.com/en/docs/claude-code) using the built-in MCP server — 55 tools covering 100% of the API. Deploy templates, manage domains, scale dynos, rollback releases, and more through natural language.
+
+```bash
+# Download
+curl -fsSL https://raw.githubusercontent.com/johannesdwicahyo/wokku/main/mcp/server.rb -o wokku-mcp.rb
+
+# Add to Claude Code
+claude mcp add wokku \
+  -e WOKKU_API_URL=https://wokku.dev/api/v1 \
+  -e WOKKU_API_TOKEN=your-token-here \
+  -- ruby wokku-mcp.rb
+```
+
+See [mcp/README.md](mcp/README.md) for full setup instructions and all 55 available tools.
+
 ## Enterprise Edition
 
 Wokku follows an open-core model. The community edition (this repo) is fully functional under AGPL-3.0. The Enterprise Edition adds:
