@@ -112,7 +112,7 @@ class DocsController < ApplicationController
   def find_prev_next(path)
     flat = load_sidebar.flat_map { |section| section["items"].map { |item| item["path"] } }
     idx = flat.index(path)
-    return [nil, nil] unless idx
+    return [ nil, nil ] unless idx
 
     prev_path = idx > 0 ? flat[idx - 1] : nil
     next_path = idx < flat.length - 1 ? flat[idx + 1] : nil
@@ -120,7 +120,7 @@ class DocsController < ApplicationController
     prev_item = prev_path ? find_sidebar_item(prev_path) : nil
     next_item = next_path ? find_sidebar_item(next_path) : nil
 
-    [prev_item, next_item]
+    [ prev_item, next_item ]
   end
 
   def find_sidebar_item(path)
