@@ -1,0 +1,26 @@
+{
+  "ignored_warnings": [
+    {
+      "fingerprint": "d8f5f3e6c4e11b9694292a73ace9708753968e2a646530fa9b269f3159f007d0",
+      "note": "Intentional redirect to S3 backup download URL with allow_other_host"
+    },
+    {
+      "fingerprint": "a63bfcba0a273a399673f1d712e31cff44aac55594f56c78dd9702cdd517f440",
+      "note": "Intentional redirect to iPaymu payment gateway with allow_other_host"
+    },
+    {
+      "fingerprint": "063665dfceada1b0b554050e85fb36980b07e30a0a2dd9279c0b74ae1b98630c",
+      "note": "SSH command execution is core functionality for Dokku server management"
+    },
+    {
+      "fingerprint": "91e94a00d60fadbf8f4e519edeb37631c33e83a247e306d2a923355ab808b1e8",
+      "note": "SSH command execution is core functionality for Dokku server management"
+    },
+    {
+      "fingerprint": "d2d9dfd4e397e30a29c980923700ddf9d7899ec706796b7fbd8e138d01b96e5e",
+      "note": "Docs content rendered from trusted local markdown files, not user input"
+    }
+  ],
+  "updated": "2026-04-08",
+  "brakeman_version": "8.0.4"
+}
