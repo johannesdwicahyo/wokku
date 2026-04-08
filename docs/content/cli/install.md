@@ -4,14 +4,24 @@ Install the Wokku CLI to manage apps from your terminal.
 
 ## Install
 
+### Homebrew (macOS / Linux)
+
+```bash
+brew install johannesdwicahyo/tap/wokku
+```
+
+### Shell script
+
 ```bash
 curl -sL https://wokku.dev/cli/install.sh | bash
 ```
 
-Or install via RubyGems:
+This downloads the standalone CLI to `/usr/local/bin/wokku`.
+
+### RubyGems
 
 ```bash
-gem install wokku
+gem install wokku-cli
 ```
 
 ## Login
@@ -33,11 +43,25 @@ If you see your app list, you're all set.
 ## Update
 
 ```bash
-gem update wokku
+# Homebrew
+brew upgrade wokku
+
+# Shell script
+curl -sL https://wokku.dev/cli/install.sh | bash
+
+# RubyGems
+gem update wokku-cli
 ```
 
 ## Uninstall
 
 ```bash
-gem uninstall wokku
+# Homebrew
+brew uninstall wokku
+
+# Shell script
+sudo rm /usr/local/bin/wokku
+
+# RubyGems
+gem uninstall wokku-cli
 ```
