@@ -18,9 +18,6 @@ class PagesController < ApplicationController
     end
   end
 
-  def docs
-  end
-
   def deploy
     render layout: "landing"
   end

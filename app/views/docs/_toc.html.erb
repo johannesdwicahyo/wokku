@@ -1,0 +1,17 @@
+<% if @toc.present? %>
+  <aside class="hidden xl:block w-48 shrink-0 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto py-8 pr-4"
+         data-controller="docs-toc">
+    <p class="text-[10px] text-outline uppercase tracking-widest font-bold mb-3 px-2">On This Page</p>
+    <nav class="space-y-0.5">
+      <% @toc.each do |heading| %>
+        <a href="#<%= heading[:id] %>"
+           class="block text-sm py-0.5 transition hover:text-primary
+                  <%= heading[:level] == 2 ? 'px-2 text-on-surface-variant font-medium' : 'px-2 pl-5 text-outline' %>"
+           data-docs-toc-target="link"
+           data-heading-id="<%= heading[:id] %>">
+          <%= heading[:text] %>
+        </a>
+      <% end %>
+    </nav>
+  </aside>
+<% end %>

@@ -1,0 +1,70 @@
+<aside class="hidden lg:block w-60 shrink-0 border-r border-outline-variant/20 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto py-6 px-4"
+       data-controller="docs-sidebar">
+  <nav class="space-y-1">
+    <% @sidebar.each_with_index do |section, idx| %>
+      <div class="mb-1">
+        <button type="button"
+                class="w-full flex items-center gap-2 px-2 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition
+                       <%= docs_section_active?(section) ? 'text-primary' : 'text-outline hover:text-on-surface-variant' %>"
+                data-action="click->docs-sidebar#toggle"
+                data-docs-sidebar-target="section"
+                data-index="<%= idx %>">
+          <span class="material-symbols-outlined text-[16px]"><%= section['icon'] %></span>
+          <span class="flex-1 text-left"><%= section['title'] %></span>
+          <span class="material-symbols-outlined text-[14px] transition-transform <%= docs_section_active?(section) ? 'rotate-90' : '' %>"
+                data-docs-sidebar-target="arrow"
+                data-index="<%= idx %>">chevron_right</span>
+        </button>
+
+        <div class="ml-6 mt-0.5 space-y-0.5 <%= docs_section_active?(section) ? '' : 'hidden' %>"
+             data-docs-sidebar-target="items"
+             data-index="<%= idx %>">
+          <% section['items'].each do |item| %>
+            <a href="/docs/<%= item['path'] %>"
+               class="block px-2 py-1 text-sm rounded-md transition
+                      <%= docs_active?(item['path']) ? 'text-primary bg-primary/10 font-medium border-l-2 border-primary -ml-px pl-[7px]' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/30' %>">
+              <%= item['title'] %>
+            </a>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </nav>
+</aside>
+
+<%# Mobile sidebar drawer %>
+<div class="lg:hidden fixed inset-0 z-50 hidden" data-docs-sidebar-target="mobileOverlay">
+  <div class="absolute inset-0 bg-black/50" data-action="click->docs-sidebar#toggleMobile"></div>
+  <aside class="absolute left-0 top-0 bottom-0 w-72 bg-surface border-r border-outline-variant/20 overflow-y-auto py-6 px-4">
+    <div class="flex items-center justify-between mb-4 px-2">
+      <span class="font-headline font-bold text-sm text-on-surface">Documentation</span>
+      <button data-action="click->docs-sidebar#toggleMobile" class="text-outline hover:text-on-surface">
+        <span class="material-symbols-outlined text-[20px]">close</span>
+      </button>
+    </div>
+    <nav class="space-y-1">
+      <% @sidebar.each_with_index do |section, idx| %>
+        <div class="mb-1">
+          <button type="button"
+                  class="w-full flex items-center gap-2 px-2 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition
+                         <%= docs_section_active?(section) ? 'text-primary' : 'text-outline hover:text-on-surface-variant' %>"
+                  data-action="click->docs-sidebar#toggle"
+                  data-index="<%= idx %>">
+            <span class="material-symbols-outlined text-[16px]"><%= section['icon'] %></span>
+            <span class="flex-1 text-left"><%= section['title'] %></span>
+            <span class="material-symbols-outlined text-[14px] transition-transform <%= docs_section_active?(section) ? 'rotate-90' : '' %>">chevron_right</span>
+          </button>
+          <div class="ml-6 mt-0.5 space-y-0.5 <%= docs_section_active?(section) ? '' : 'hidden' %>">
+            <% section['items'].each do |item| %>
+              <a href="/docs/<%= item['path'] %>"
+                 class="block px-2 py-1 text-sm rounded-md transition
+                        <%= docs_active?(item['path']) ? 'text-primary bg-primary/10 font-medium' : 'text-on-surface-variant hover:text-on-surface' %>">
+                <%= item['title'] %>
+              </a>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </nav>
+  </aside>
+</div>
