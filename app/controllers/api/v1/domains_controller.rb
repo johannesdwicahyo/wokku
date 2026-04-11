@@ -49,7 +49,7 @@ module Api
         authorize domain, :ssl?
 
         client = Dokku::Client.new(@app_record.server)
-        Dokku::Domains.new(client).enable_ssl(@app_record.name)
+        Dokku::Domains.new(client).enable_ssl(@app_record.name, domain.hostname)
         domain.update!(ssl_enabled: true)
         domain.create_certificate! unless domain.certificate
 

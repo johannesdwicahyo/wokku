@@ -28,9 +28,17 @@ class DocsController < ApplicationController
     @_sidebar ||= YAML.load_file(Rails.root.join("docs/sidebar.yml"))
   end
 
+  DOCS_BASE = Rails.root.join("docs/content").freeze
+  SAFE_PATH = /\A[a-z0-9\-_\/]+\z/i.freeze
+
   def render_doc(path)
-    file = Rails.root.join("docs/content/#{path}.md")
-    raise ActiveRecord::RecordNotFound unless file.exist?
+    # Validate path: only lowercase alphanumeric, hyphens, underscores, slashes
+    raise ActiveRecord::RecordNotFound unless path.is_a?(String) && path.match?(SAFE_PATH)
+
+    file = DOCS_BASE.join("#{path}.md").expand_path
+    # Prevent path traversal: resolved path must be inside docs/content/
+    raise ActiveRecord::RecordNotFound unless file.to_s.start_with?(DOCS_BASE.to_s + "/")
+    raise ActiveRecord::RecordNotFound unless file.file?
 
     raw = file.read
     processed = preprocess_tabs(raw)
@@ -95,17 +103,21 @@ class DocsController < ApplicationController
   end
 
   def add_heading_anchors(html)
-    html.gsub(/<(h[23])[^>]*>(.*?)<\/\1>/i) do
+    # Commonmarker v2 already generates anchors:
+    #   <h2><a href="#id" aria-hidden="true" class="anchor" id="id"></a>Text</h2>
+    # Just replace the invisible anchor with our styled one
+    html.gsub(/<(h[23])><a href="#([^"]+)"[^>]*><\/a>(.*?)<\/\1>/i) do
       tag = $1
-      text = $2.gsub(/<[^>]+>/, "")
-      id = text.downcase.gsub(/[^a-z0-9\s-]/, "").gsub(/\s+/, "-")
-      %(<#{tag} id="#{id}"><a href="##{id}" class="docs-anchor">#</a>#{$2}</#{tag}>)
+      id = $2
+      text = $3
+      %(<#{tag} id="#{id}"><a href="##{id}" class="docs-anchor">#</a>#{text}</#{tag}>)
     end
   end
 
   def extract_toc(html)
-    html.scan(/<(h[23]) id="([^"]+)"[^>]*>.*?>(.*?)<\/\1>/i).map do |tag, id, text|
-      { level: tag == "h2" ? 2 : 3, id: id, text: text.gsub(/<[^>]+>/, "") }
+    # Match our output format: <h2 id="foo"><a ...>#</a>Text</h2>
+    html.scan(/<(h[23]) id="([^"]+)"[^>]*>.*?<\/a>(.*?)<\/\1>/i).map do |tag, id, text|
+      { level: tag == "h2" ? 2 : 3, id: id, text: text.strip }
     end
   end
 

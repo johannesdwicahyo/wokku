@@ -24,7 +24,17 @@
       <span class="material-symbols-outlined text-[18px] mr-1.5">backup</span>
       Backups
     <% end %>
-    <%= link_to "Delete", dashboard_resource_path(@database), data: { turbo_method: :delete, turbo_confirm: "Destroy #{@database.name}? This will delete all data." }, class: "text-sm text-error/70 hover:text-error font-medium transition" %>
+    <%= button_to "Delete", dashboard_resource_path(@database),
+          method: :delete,
+          form: {
+            data: {
+              controller: "confirm-delete",
+              confirm_delete_name_value: @database.name,
+              confirm_delete_impact_value: "This will permanently delete the #{@database.service_type} database #{@database.name} and ALL its data. Existing backups will remain in your backup destination until they expire.",
+              confirm_delete_resource_value: "database"
+            }
+          },
+          class: "text-sm text-error/70 hover:text-error font-medium transition bg-transparent border-0 cursor-pointer" %>
   </div>
 </div>
 

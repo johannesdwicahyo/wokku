@@ -42,9 +42,78 @@
       Backups
     <% end %>
     <%= button_to "Sync Now", sync_dashboard_server_path(@server), method: :post, class: "inline-flex items-center px-3 py-1.5 text-sm font-medium text-on-surface-variant bg-surface-container-low border border-outline-variant/15 rounded-md hover:bg-surface-container-highest hover:text-on-surface transition cursor-pointer" %>
-    <%= link_to "Delete", dashboard_server_path(@server), data: { turbo_method: :delete, turbo_confirm: "Are you sure? This will remove the server and all associated apps." }, class: "text-sm text-error/70 hover:text-error font-medium transition cursor-pointer" %>
+    <%= button_to "Delete", dashboard_server_path(@server),
+          method: :delete,
+          form: {
+            data: {
+              controller: "confirm-delete",
+              confirm_delete_name_value: @server.name,
+              confirm_delete_impact_value: "This will remove #{@server.name} from Wokku and all its apps, databases, and backups will lose their connection. The Dokku server itself will NOT be deleted — you must remove it manually if you want to.",
+              confirm_delete_resource_value: "server"
+            }
+          },
+          class: "text-sm text-error/70 hover:text-error font-medium transition cursor-pointer bg-transparent border-0" %>
   </div>
 </div>
+
+<%# Recovery card — shown when server can't connect %>
+<% if @server.auth_failed? || @server.unreachable? %>
+  <div class="mb-6 bg-error-container/10 border border-error/30 rounded-md p-5">
+    <div class="flex items-start gap-4">
+      <div class="w-10 h-10 rounded-full bg-error/15 flex items-center justify-center flex-shrink-0">
+        <span class="material-symbols-outlined text-error">error</span>
+      </div>
+      <div class="flex-1">
+        <h3 class="text-sm font-bold text-on-surface mb-1">
+          <% if @server.auth_failed? %>
+            SSH authentication failed
+          <% else %>
+            Server unreachable
+          <% end %>
+        </h3>
+        <p class="text-xs text-on-surface-variant mb-3">
+          <% if @server.auth_failed? %>
+            Wokku couldn't authenticate to <code class="font-mono text-primary"><%= @server.host %></code> with the SSH key on file.
+            This usually means the public key isn't in the server's <code class="font-mono">~/.ssh/authorized_keys</code>, or the SSH user is wrong.
+          <% else %>
+            Wokku couldn't connect to <code class="font-mono text-primary"><%= @server.host %>:<%= @server.port %></code>.
+            Check that the server is online, the hostname is correct, and port <%= @server.port %> accepts SSH connections from Wokku's server.
+          <% end %>
+        </p>
+        <div class="bg-surface-container-lowest rounded p-3 mb-3">
+          <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-2">Troubleshooting checklist</p>
+          <ul class="text-xs text-on-surface-variant space-y-1.5">
+            <% if @server.auth_failed? %>
+              <li class="flex items-start gap-2"><span class="text-outline">1.</span>Verify the SSH user is correct (currently: <code class="font-mono text-primary"><%= @server.ssh_user || "dokku" %></code>)</li>
+              <li class="flex items-start gap-2"><span class="text-outline">2.</span>Check that Wokku's public SSH key is in <code class="font-mono">~/.ssh/authorized_keys</code> on the server</li>
+              <li class="flex items-start gap-2"><span class="text-outline">3.</span>Try SSH-ing manually from your machine: <code class="font-mono text-primary">ssh <%= @server.ssh_user || "dokku" %>@<%= @server.host %></code></li>
+              <li class="flex items-start gap-2"><span class="text-outline">4.</span>If you updated the server's authorized_keys, click Retry Sync below</li>
+            <% else %>
+              <li class="flex items-start gap-2"><span class="text-outline">1.</span>Ping the server from your machine: <code class="font-mono text-primary">ping <%= @server.host %></code></li>
+              <li class="flex items-start gap-2"><span class="text-outline">2.</span>Check SSH port is open: <code class="font-mono text-primary">nc -zv <%= @server.host %> <%= @server.port %></code></li>
+              <li class="flex items-start gap-2"><span class="text-outline">3.</span>Verify firewall allows SSH from Wokku's IP</li>
+              <li class="flex items-start gap-2"><span class="text-outline">4.</span>Confirm the server is powered on and responsive</li>
+            <% end %>
+          </ul>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <%= button_to sync_dashboard_server_path(@server), method: :post, class: "inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-surface bg-primary rounded-md hover:bg-primary/80 transition cursor-pointer" do %>
+            <span class="material-symbols-outlined text-[14px]">refresh</span>
+            Retry Sync
+          <% end %>
+          <%= link_to edit_dashboard_server_path(@server), class: "inline-flex items-center gap-1 px-3 py-1.5 text-xs text-on-surface-variant border border-outline-variant/20 rounded-md hover:bg-surface-container-high/30 transition" do %>
+            <span class="material-symbols-outlined text-[14px]">edit</span>
+            Edit Server
+          <% end %>
+          <a href="/docs/getting-started/connect-server" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-on-surface-variant hover:text-primary transition">
+            <span class="material-symbols-outlined text-[14px]">menu_book</span>
+            View docs
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
   <div class="bg-surface-container-low rounded-lg border border-outline-variant/15 p-4">

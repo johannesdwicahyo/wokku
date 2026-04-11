@@ -1,3 +1,5 @@
+require "shellwords"
+
 module Dokku
   class Resources
     def initialize(client)
@@ -5,16 +7,18 @@ module Dokku
     end
 
     def apply_limits(app_name, memory_mb:, cpu_shares:)
-      @client.run("resource:limit --memory #{memory_mb} --cpu #{cpu_shares} #{app_name}")
+      memory = memory_mb.to_i
+      cpu = cpu_shares.is_a?(Integer) ? cpu_shares : cpu_shares.to_f
+      @client.run("resource:limit --memory #{memory} --cpu #{cpu} #{Shellwords.escape(app_name)}")
     end
 
     def apply_reservation(app_name, memory_mb:)
-      reserve_mb = memory_mb / 2
-      @client.run("resource:reserve --memory #{reserve_mb} #{app_name}")
+      reserve = (memory_mb.to_i / 2)
+      @client.run("resource:reserve --memory #{reserve} #{Shellwords.escape(app_name)}")
     end
 
     def report(app_name)
-      output = @client.run("resource:report #{app_name}")
+      output = @client.run("resource:report #{Shellwords.escape(app_name)}")
       parse_report(output)
     end
 
