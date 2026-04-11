@@ -8,15 +8,14 @@ module Dashboard
         authorize @server, :show?
         @console_type = :app
       else
-        # Server terminal — admin only, full Dokku shell
+        # Server terminal — team admin only, full Dokku shell
         @server = policy_scope(Server).find(params[:server_id])
-        authorize @server, :show?
-        unless current_user.admin?
-          redirect_to dashboard_apps_path, alert: "Server terminal is only available to administrators."
-          return
-        end
+        authorize @server, :admin_terminal?
         @console_type = :server
       end
+    rescue Pundit::NotAuthorizedError
+      redirect_to dashboard_apps_path,
+        alert: "Server terminal is only available to team admins."
     end
   end
 end

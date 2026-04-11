@@ -1,5 +1,11 @@
 class Rack::Attack
-  Rack::Attack.cache.store = ActiveSupport::Cache::MemoryStore.new
+  # Use Redis for distributed rate limiting across Puma processes.
+  # Falls back to MemoryStore in test/development if Redis isn't configured.
+  Rack::Attack.cache.store = if ENV["REDIS_URL"].present?
+    ActiveSupport::Cache::RedisCacheStore.new(url: ENV["REDIS_URL"], namespace: "rack_attack")
+  else
+    ActiveSupport::Cache::MemoryStore.new
+  end
 
   # Throttle login attempts
   throttle("logins/ip", limit: 5, period: 20.seconds) do |req|

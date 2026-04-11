@@ -21,9 +21,18 @@ module Dashboard
       authorize @app, :update?
 
       target_release = @app.releases.find(params[:id])
-      new_release = @app.releases.create!(description: "Rollback to v#{target_release.version}")
-      deploy = @app.deploys.create!(release: new_release, status: :pending)
-      DeployJob.perform_later(deploy.id)
+      target_deploy = target_release.deploy || @app.deploys.where(release_id: target_release.id).order(created_at: :desc).first
+      target_sha = target_deploy&.commit_sha
+
+      if target_sha.blank?
+        redirect_to dashboard_app_releases_path(@app),
+          alert: "Cannot rollback to v#{target_release.version}: no commit SHA recorded."
+        return
+      end
+
+      new_release = @app.releases.create!(description: "Rollback to v#{target_release.version} (#{target_sha[0..6]})")
+      deploy = @app.deploys.create!(release: new_release, status: :pending, commit_sha: target_sha)
+      DeployJob.perform_later(deploy.id, commit_sha: target_sha)
 
       redirect_to dashboard_app_releases_path(@app), notice: "Rolling back to v#{target_release.version}..."
     end

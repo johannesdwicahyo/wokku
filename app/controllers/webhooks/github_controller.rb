@@ -29,8 +29,18 @@ module Webhooks
       return head :ok unless repo_full_name && branch
 
       apps = AppRecord.where(github_repo_full_name: repo_full_name, deploy_branch: branch)
+                      .includes(:server)
 
       apps.find_each do |app|
+        # Skip apps whose server is unreachable to avoid creating orphaned
+        # "pending" deploys that never resolve.
+        unless app.server && app.server.connected?
+          Rails.logger.warn(
+            "GitHub webhook: skipping deploy for #{app.name} — server #{app.server&.name || '(none)'} not connected (status: #{app.server&.status || 'missing'})"
+          )
+          next
+        end
+
         deploy = app.deploys.create!(
           status: :pending,
           commit_sha: commit_sha

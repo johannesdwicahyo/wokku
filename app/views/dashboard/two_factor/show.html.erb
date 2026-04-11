@@ -28,7 +28,9 @@
       <h2 class="text-sm font-bold text-on-surface mb-4">1. Scan QR Code</h2>
       <p class="text-xs text-outline mb-4">Scan this code with Google Authenticator, Authy, or any TOTP app.</p>
       <div class="bg-white rounded-md p-4 inline-block mb-4">
-        <%= raw @qr_code %>
+        <%= sanitize @qr_code,
+            tags: %w[svg g path rect circle title desc],
+            attributes: %w[xmlns width height viewBox fill stroke stroke-width d x y rx ry cx cy r transform shape-rendering version] %>
       </div>
     </div>
 

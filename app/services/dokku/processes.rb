@@ -1,3 +1,5 @@
+require "shellwords"
+
 module Dokku
   class Processes
     def initialize(client)
@@ -5,25 +7,30 @@ module Dokku
     end
 
     def list(app_name)
-      output = @client.run("ps:report #{app_name}")
+      output = @client.run("ps:report #{Shellwords.escape(app_name)}")
       parse_report(output)
     end
 
     def scale(app_name, scaling = {})
-      pairs = scaling.map { |type, count| "#{type}=#{count}" }.join(" ")
-      @client.run("ps:scale #{app_name} #{pairs}")
+      # process types are restricted to alphanumeric + underscore by Dokku,
+      # counts are coerced to integers. Escape the app name defensively.
+      pairs = scaling.map do |type, count|
+        raise ArgumentError, "Invalid process type: #{type}" unless type.to_s.match?(/\A[a-z][a-z0-9_]*\z/)
+        "#{type}=#{count.to_i}"
+      end.join(" ")
+      @client.run("ps:scale #{Shellwords.escape(app_name)} #{pairs}")
     end
 
     def restart(app_name)
-      @client.run("ps:restart #{app_name}")
+      @client.run("ps:restart #{Shellwords.escape(app_name)}")
     end
 
     def stop(app_name)
-      @client.run("ps:stop #{app_name}")
+      @client.run("ps:stop #{Shellwords.escape(app_name)}")
     end
 
     def start(app_name)
-      @client.run("ps:start #{app_name}")
+      @client.run("ps:start #{Shellwords.escape(app_name)}")
     end
 
     private
