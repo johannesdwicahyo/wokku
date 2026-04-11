@@ -1,3 +1,5 @@
+require "shellwords"
+
 module Dokku
   class Databases
     SUPPORTED_TYPES = %w[postgres redis mysql mongodb memcached rabbitmq elasticsearch mariadb meilisearch clickhouse nats].freeze
@@ -19,28 +21,28 @@ module Dokku
 
     def create(service_type, name)
       validate_type!(service_type)
-      @client.run("#{plugin_name(service_type)}:create #{name}")
+      @client.run("#{plugin_name(service_type)}:create #{Shellwords.escape(name)}")
     end
 
     def destroy(service_type, name)
       validate_type!(service_type)
-      @client.run("#{plugin_name(service_type)}:destroy #{name} --force")
+      @client.run("#{plugin_name(service_type)}:destroy #{Shellwords.escape(name)} --force")
     end
 
     def info(service_type, name)
       validate_type!(service_type)
-      output = @client.run("#{plugin_name(service_type)}:info #{name}")
+      output = @client.run("#{plugin_name(service_type)}:info #{Shellwords.escape(name)}")
       parse_report(output)
     end
 
     def link(service_type, db_name, app_name)
       validate_type!(service_type)
-      @client.run("#{plugin_name(service_type)}:link #{db_name} #{app_name}")
+      @client.run("#{plugin_name(service_type)}:link #{Shellwords.escape(db_name)} #{Shellwords.escape(app_name)}")
     end
 
     def unlink(service_type, db_name, app_name)
       validate_type!(service_type)
-      @client.run("#{plugin_name(service_type)}:unlink #{db_name} #{app_name}")
+      @client.run("#{plugin_name(service_type)}:unlink #{Shellwords.escape(db_name)} #{Shellwords.escape(app_name)}")
     end
 
     private

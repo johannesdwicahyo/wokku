@@ -1,3 +1,5 @@
+require "shellwords"
+
 module Dokku
   class Apps
     def initialize(client)
@@ -10,20 +12,20 @@ module Dokku
     end
 
     def create(name)
-      @client.run("apps:create #{name}")
+      @client.run("apps:create #{Shellwords.escape(name)}")
     end
 
     def destroy(name)
-      @client.run("apps:destroy #{name} --force")
+      @client.run("apps:destroy #{Shellwords.escape(name)} --force")
     end
 
     def info(name)
-      output = @client.run("apps:report #{name}")
+      output = @client.run("apps:report #{Shellwords.escape(name)}")
       parse_report(output)
     end
 
     def rename(old_name, new_name)
-      @client.run("apps:rename #{old_name} #{new_name}")
+      @client.run("apps:rename #{Shellwords.escape(old_name)} #{Shellwords.escape(new_name)}")
     end
 
     private

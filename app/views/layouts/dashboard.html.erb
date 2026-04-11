@@ -51,13 +51,37 @@
     </script>
   </head>
   <body class="h-full bg-surface text-on-surface font-body selection:bg-primary-container selection:text-primary">
-    <%= render "dashboard/shared/sidebar" %>
-    <%= render "dashboard/shared/navbar" %>
-    <main class="ml-64 pt-16 min-h-screen">
-      <div class="px-8 py-8">
-        <%= render "dashboard/shared/flash" %>
-        <%= yield %>
+    <%# Beta Banner %>
+    <div class="fixed top-0 left-0 right-0 z-[60] bg-gradient-to-r from-tertiary/15 via-primary/15 to-tertiary/15 border-b border-tertiary/20">
+      <div class="px-4 py-1.5">
+        <div class="flex items-center justify-center gap-2 text-xs">
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-tertiary/20 text-tertiary rounded font-bold uppercase tracking-wider text-[10px]">
+            <span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+            Public Beta
+          </span>
+          <span class="text-on-surface-variant hidden md:inline">
+            Wokku.dev is in public beta — not recommended for production workloads yet. See the <%= link_to "beta notice", "/docs/beta", class: "text-primary hover:underline" %>.
+          </span>
+          <span class="text-on-surface-variant md:hidden">Beta — not for production yet</span>
+        </div>
       </div>
-    </main>
+    </div>
+
+    <div class="pt-7" data-controller="mobile-nav">
+      <%= render "dashboard/shared/sidebar" %>
+      <%= render "dashboard/shared/navbar" %>
+
+      <%# Mobile overlay — appears when sidebar is open %>
+      <div class="lg:hidden fixed inset-0 bg-black/50 z-20 hidden"
+           data-mobile-nav-target="overlay"
+           data-action="click->mobile-nav#close"></div>
+
+      <main class="lg:ml-64 pt-16 min-h-screen">
+        <div class="px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+          <%= render "dashboard/shared/flash" %>
+          <%= yield %>
+        </div>
+      </main>
+    </div>
   </body>
 </html>

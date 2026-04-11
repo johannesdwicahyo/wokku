@@ -101,9 +101,46 @@ class TemplateDeployer
     { success: true, app: app, log: @log }
   rescue => e
     @log << { step: "Error", message: e.message, at: Time.current }
-    app = AppRecord.find_by(name: app_name, server: server)
-    app&.update!(status: :crashed)
+    @on_progress&.call("Deploy failed: #{e.message}. Rolling back...")
+    rollback_partial_deploy!(e)
     { success: false, error: e.message, log: @log }
+  end
+
+  # Clean up any partially-created resources when a deploy step fails.
+  # This prevents users from being stuck with half-configured apps and orphaned
+  # databases that continue to consume server resources.
+  def rollback_partial_deploy!(original_error)
+    client = Dokku::Client.new(server)
+    app = AppRecord.find_by(name: app_name, server: server)
+    return unless app
+
+    # Tear down any databases that were created for this app
+    begin
+      app.app_databases.includes(:database_service).each do |ad|
+        db = ad.database_service
+        next unless db
+        begin
+          Dokku::Databases.new(client).unlink(db.service_type, db.name, app_name) rescue nil
+          Dokku::Databases.new(client).destroy(db.service_type, db.name) rescue nil
+          db.destroy
+        rescue StandardError => e
+          @log << { step: "Rollback warning: could not clean up database #{db.name}", error: e.message, at: Time.current }
+        end
+      end
+
+      # Destroy the Dokku app
+      Dokku::Apps.new(client).destroy(app_name) rescue nil
+
+      # Remove the Rails record
+      app.destroy
+      @log << { step: "Rollback complete. Partial resources removed.", at: Time.current }
+    rescue StandardError => rollback_error
+      # If cleanup itself fails, at least leave the app in a crashed state so
+      # the user sees something went wrong.
+      app.update!(status: :crashed)
+      @log << { step: "Rollback failed", error: rollback_error.message, at: Time.current }
+      Rails.logger.error("TemplateDeployer rollback failed: #{rollback_error.message} (original: #{original_error.message})")
+    end
   end
 
   def build_steps

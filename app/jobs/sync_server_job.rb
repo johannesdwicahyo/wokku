@@ -25,8 +25,8 @@ class SyncServerJob < ApplicationJob
       server.app_records.find_by(name: name)&.destroy
     end
 
-    # Sync domains for each app
-    server.app_records.reload.each do |app_record|
+    # Sync domains for each app (preload domains to avoid N+1)
+    server.app_records.reload.includes(:domains).each do |app_record|
       sync_domains(dokku_domains, app_record)
     end
 
@@ -61,16 +61,19 @@ class SyncServerJob < ApplicationJob
   end
 
   def sync_database_links(dokku_databases, server)
-    server.database_services.find_each do |db|
+    # Preload app_records once instead of querying per database
+    apps_by_name = server.app_records.index_by(&:name)
+
+    server.database_services.includes(app_databases: :app_record).find_each do |db|
       info = dokku_databases.info(db.service_type, db.name)
       links_value = info["links"] || info["Links"] || ""
       remote_app_names = links_value.split(/[\s,]+/).reject(&:blank?)
 
-      local_app_names = db.app_records.pluck(:name)
+      local_app_names = db.app_records.map(&:name)
 
       # Add missing links
       (remote_app_names - local_app_names).each do |app_name|
-        app = server.app_records.find_by(name: app_name)
+        app = apps_by_name[app_name]
         next unless app
         db.app_databases.find_or_create_by!(app_record: app) do |ad|
           ad.alias_name = db.service_type.upcase
@@ -79,7 +82,7 @@ class SyncServerJob < ApplicationJob
 
       # Remove stale links
       (local_app_names - remote_app_names).each do |app_name|
-        app = server.app_records.find_by(name: app_name)
+        app = apps_by_name[app_name]
         db.app_databases.where(app_record: app).destroy_all if app
       end
     end

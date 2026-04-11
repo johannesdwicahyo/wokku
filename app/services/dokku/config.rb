@@ -1,3 +1,5 @@
+require "shellwords"
+
 module Dokku
   class Config
     def initialize(client)
@@ -5,21 +7,22 @@ module Dokku
     end
 
     def list(app_name)
-      output = @client.run("config:show #{app_name}")
+      output = @client.run("config:show #{Shellwords.escape(app_name)}")
       parse_env(output)
     end
 
     def set(app_name, vars = {})
-      pairs = vars.map { |k, v| "#{k}=#{Shellwords.escape(v)}" }.join(" ")
-      @client.run("config:set #{app_name} #{pairs}")
+      pairs = vars.map { |k, v| "#{Shellwords.escape(k.to_s)}=#{Shellwords.escape(v.to_s)}" }.join(" ")
+      @client.run("config:set #{Shellwords.escape(app_name)} #{pairs}")
     end
 
     def unset(app_name, *keys)
-      @client.run("config:unset #{app_name} #{keys.join(' ')}")
+      escaped_keys = keys.map { |k| Shellwords.escape(k.to_s) }.join(" ")
+      @client.run("config:unset #{Shellwords.escape(app_name)} #{escaped_keys}")
     end
 
     def get(app_name, key)
-      @client.run("config:get #{app_name} #{key}")
+      @client.run("config:get #{Shellwords.escape(app_name)} #{Shellwords.escape(key.to_s)}")
     end
 
     private
