@@ -1,15 +1,26 @@
 module Localizable
   extend ActiveSupport::Concern
 
+  LOCALE_CURRENCY = { en: "usd", id: "idr" }.freeze
+
   included do
     before_action :set_locale
+    helper_method :current_currency
   end
 
   private
 
   def set_locale
     locale = params[:locale] || cookies[:locale] || extract_locale_from_header || I18n.default_locale
-    I18n.locale = locale.to_sym if I18n.available_locales.include?(locale.to_sym)
+    locale = locale.to_sym
+    locale = I18n.default_locale unless I18n.available_locales.include?(locale)
+
+    I18n.locale = locale
+    @currency = LOCALE_CURRENCY[locale] || "usd"
+  end
+
+  def current_currency
+    @currency || "usd"
   end
 
   def extract_locale_from_header
