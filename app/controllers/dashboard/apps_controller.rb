@@ -34,6 +34,9 @@ module Dashboard
       authorize @app
 
       if @app.save
+        # Create DNS record: app-name.wokku.cloud → server IP
+        Cloudflare::Dns.new.create_app_record(@app.name, server.host) rescue nil
+
         track("app.created", target: @app)
         redirect_to dashboard_app_path(@app), notice: "App created successfully."
       else
@@ -51,6 +54,9 @@ module Dashboard
       rescue Dokku::Client::CommandError, Dokku::Client::ConnectionError => e
         Rails.logger.warn("Failed to destroy #{@app.name} on Dokku: #{e.message}")
       end
+      # Clean up DNS record
+      Cloudflare::Dns.new.delete_app_record(@app.name) rescue nil
+
       @app.destroy
       track("app.destroyed", target: @app)
       redirect_to dashboard_apps_path, notice: "App deleted successfully."

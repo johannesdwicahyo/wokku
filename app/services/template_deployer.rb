@@ -108,6 +108,13 @@ class TemplateDeployer
       end
     end
 
+    # Create DNS record: app-name.wokku.cloud → server IP
+    step("Configuring DNS...") do
+      Cloudflare::Dns.new.create_app_record(app_name, server.host)
+    rescue => e
+      @log << { step: "DNS setup skipped: #{e.message}", at: Time.current }
+    end
+
     app.update!(status: :running)
     @log << { step: "Deploy complete!", at: Time.current }
     @on_progress&.call("Deploy complete!")
@@ -141,6 +148,9 @@ class TemplateDeployer
           @log << { step: "Rollback warning: could not clean up database #{db.name}", error: e.message, at: Time.current }
         end
       end
+
+      # Clean up DNS record
+      Cloudflare::Dns.new.delete_app_record(app_name) rescue nil
 
       # Destroy the Dokku app
       Dokku::Apps.new(client).destroy(app_name) rescue nil
