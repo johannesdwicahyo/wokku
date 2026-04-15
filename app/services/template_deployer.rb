@@ -29,6 +29,20 @@ class TemplateDeployer
 
     app = AppRecord.find_by!(name: app_name, server: server)
 
+    # Assign free tier and enforce resource limits so no app runs unrestricted
+    step("Setting resource limits...") do
+      free_tier = DynoTier.find_by(name: "free") || DynoTier.order(:price_cents_per_hour).first
+      if free_tier
+        allocation = app.dyno_allocations.find_or_create_by!(process_type: "web") do |a|
+          a.dyno_tier = free_tier
+          a.count = 1
+        end
+        resources = Dokku::Resources.new(client)
+        resources.apply_limits(app_name, memory_mb: free_tier.memory_mb, cpu_shares: free_tier.cpu_shares)
+        resources.apply_reservation(app_name, memory_mb: free_tier.memory_mb)
+      end
+    end
+
     (template[:addons] || []).each do |addon|
       step("Provisioning #{addon['type']}...") do
         db_name = "#{app_name}-#{addon['type']}"

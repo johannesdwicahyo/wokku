@@ -35,6 +35,10 @@ class DeployJob < ApplicationJob
       return
     end
 
+    # Enforce resource limits before every deploy as a safety net.
+    # If the app has a tier allocation, ensure Dokku has the correct limits.
+    enforce_resource_limits(client, app)
+
     # If a commit_sha is specified (rollback), use git:from-image with the sha tag.
     # Otherwise just rebuild the current HEAD.
     build_command = if sha.present?
@@ -71,6 +75,27 @@ class DeployJob < ApplicationJob
   end
 
   private
+
+  # Ensure Dokku resource limits match the app's assigned tier.
+  # If no tier is assigned, assign the free tier as a default.
+  def enforce_resource_limits(client, app)
+    allocation = app.dyno_allocations.includes(:dyno_tier).find_by(process_type: "web")
+
+    unless allocation
+      free_tier = DynoTier.find_by(name: "free") || DynoTier.order(:price_cents_per_hour).first
+      return unless free_tier
+      allocation = app.dyno_allocations.create!(process_type: "web", dyno_tier: free_tier, count: 1)
+    end
+
+    tier = allocation.dyno_tier
+    return unless tier
+
+    resources = Dokku::Resources.new(client)
+    resources.apply_limits(app.name, memory_mb: tier.memory_mb, cpu_shares: tier.cpu_shares)
+    resources.apply_reservation(app.name, memory_mb: tier.memory_mb)
+  rescue StandardError => e
+    Rails.logger.warn("DeployJob: resource limit enforcement failed: #{e.message}")
+  end
 
   # Returns free space in MB on the Dokku server's root filesystem, or nil if
   # the check fails (we treat that as "unknown, allow the deploy").

@@ -88,7 +88,9 @@ module Dokku
       opts = {
         port: @server.port || 22,
         non_interactive: true,
-        timeout: 10
+        timeout: 10,
+        keepalive: true,
+        keepalive_interval: 15
       }
 
       if @server.ssh_private_key.present?
