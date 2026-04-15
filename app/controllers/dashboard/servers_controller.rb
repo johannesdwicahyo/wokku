@@ -21,6 +21,9 @@ module Dashboard
       authorize @server
 
       if @server.save
+        # Create DNS record: server-name.wokku.cloud → server IP
+        Cloudflare::Dns.new.create_app_record(@server.name, @server.host) rescue nil
+
         track("server.created", target: @server)
         redirect_to dashboard_server_path(@server), notice: "Server added successfully."
       else
@@ -58,6 +61,9 @@ module Dashboard
         status: :syncing
       )
 
+      # Create DNS record: server-name.wokku.cloud → server IP
+      Cloudflare::Dns.new.create_app_record(server.name, result[:ip]) rescue nil
+
       # Queue Dokku installation
       ProvisionServerJob.perform_later(
         server_id: server.id,
@@ -78,6 +84,10 @@ module Dashboard
 
     def destroy
       authorize @server
+
+      # Clean up DNS record
+      Cloudflare::Dns.new.delete_app_record(@server.name) rescue nil
+
       @server.destroy
       track("server.destroyed", target: @server)
       redirect_to dashboard_servers_path, notice: "Server removed successfully."
