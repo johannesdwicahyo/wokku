@@ -1,4 +1,4 @@
-<% content_for(:title, "Wokku - Deploy Anything in One Click") %>
+<% content_for(:title, t('landing.title')) %>
 
 <style>
   @keyframes terminal-type { from { width: 0 } to { width: 100% } }
@@ -56,15 +56,15 @@
       <div class="animate-float animate-float-3 mt-10 flex flex-col sm:flex-row justify-center gap-4">
         <%= link_to new_user_registration_path, class: "inline-flex items-center justify-center px-8 py-3.5 text-sm font-semibold rounded-lg hover:opacity-90 transition shadow-lg shadow-[#c0c1ff]/20 text-[#282a64]", style: "background: linear-gradient(135deg, #c0c1ff 0%, #5625ab 100%);" do %>
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-          Start Free
+          <%= t('landing.start_building') %>
         <% end %>
         <%= link_to dashboard_templates_path, class: "inline-flex items-center justify-center px-8 py-3.5 border border-[#c0c1ff]/30 text-[#c0c1ff] text-sm font-semibold rounded-lg hover:bg-[#c0c1ff]/10 transition" do %>
-          View Templates
+          <%= t('landing.view_all_templates') %>
           <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
         <% end %>
       </div>
 
-      <p class="animate-float animate-float-4 mt-6 text-xs text-[#4a4453]">Free tier included &middot; No credit card required &middot; Deploy in under 5 minutes</p>
+      <p class="animate-float animate-float-4 mt-6 text-xs text-[#4a4453]"><%= t('landing.free_tier') %> &middot; Deploy in under 5 minutes</p>
     </div>
 
     <!-- Terminal Preview -->
@@ -83,7 +83,7 @@
           <div class="terminal-line terminal-line-2"><span class="text-[#c0c1ff]">Creating my-app... done</span></div>
           <div class="terminal-line terminal-line-3 mt-1"><span class="text-[#958e9e]">$</span> <span class="text-gray-300">git push wokku main</span></div>
           <div class="terminal-line terminal-line-4"><span class="text-[#c0c1ff]">Deploying...</span> <span class="text-[#958e9e]">build succeeded</span></div>
-          <div class="terminal-line terminal-line-5"><span class="text-[#c0c1ff]">Live at</span> <span class="text-[#c0c1ff] underline">https://my-app.wokku.dev</span><span class="terminal-cursor"></span></div>
+          <div class="terminal-line terminal-line-5"><span class="text-[#c0c1ff]">Live at</span> <span class="text-[#c0c1ff] underline">https://my-app.wokku.cloud</span><span class="terminal-cursor"></span></div>
         </div>
       </div>
     </div>
@@ -219,8 +219,8 @@
 <div class="border-t border-[#28283d]/30">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
     <div class="text-center mb-16">
-      <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;">Popular templates</h2>
-      <p class="mt-3 text-[#958e9e] text-lg">Deploy production-ready apps with a single click.</p>
+      <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;"><%= t('landing.popular_apps') %></h2>
+      <p class="mt-3 text-[#958e9e] text-lg"><%= t('landing.popular_apps_desc') %></p>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -243,7 +243,7 @@
           <h3 class="text-base font-semibold text-white mb-2"><%= template[:name] %></h3>
           <p class="text-sm text-[#958e9e] leading-relaxed mb-4"><%= template[:desc] %></p>
           <%= link_to dashboard_templates_path, class: "inline-flex items-center text-xs font-medium text-[#c0c1ff] hover:text-white transition" do %>
-            Deploy
+            <%= t('landing.start_building') %>
             <svg class="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
           <% end %>
         </div>
@@ -252,7 +252,7 @@
 
     <div class="text-center mt-10">
       <%= link_to dashboard_templates_path, class: "inline-flex items-center px-6 py-3 border border-[#c0c1ff]/30 text-[#c0c1ff] text-sm font-medium rounded-lg hover:bg-[#c0c1ff]/10 transition" do %>
-        View all 50+ templates
+        <%= t('landing.view_all_templates') %>
         <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
       <% end %>
     </div>
@@ -264,7 +264,7 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
     <div class="text-center mb-16">
       <div class="inline-flex items-center px-2.5 py-1 rounded-md bg-[#1e1e32] border border-[#c0c1ff]/20 mb-6">
-        <span class="text-[10px] text-[#c0c1ff] font-mono font-medium tracking-wider uppercase">For Developers</span>
+        <span class="text-[10px] text-[#c0c1ff] font-mono font-medium tracking-wider uppercase"><%= t('landing.for_developers') %></span>
       </div>
       <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;">4 ways to deploy</h2>
       <p class="mt-3 text-[#958e9e] text-lg">Dashboard, CLI, API, or AI. Pick what fits your workflow.</p>
@@ -289,7 +289,7 @@
             <span class="text-[#4a4453]">&middot;</span>
             <span>512 MB</span>
             <span class="text-[#4a4453]">&middot;</span>
-            <span>my-app.wokku.dev</span>
+            <span>my-app.wokku.cloud</span>
           </div>
         </div>
       </div>
@@ -319,7 +319,7 @@
         </div>
         <p class="text-sm text-[#958e9e] leading-relaxed mb-4">Full API for CI/CD pipelines, custom dashboards, and automation. Token-based authentication.</p>
         <div class="rounded-lg bg-[#111125] border border-[#28283d]/50 p-4 font-mono text-xs text-[#958e9e] overflow-x-auto">
-          <div>curl -X POST https://wokku.dev/api/v1/apps \</div>
+          <div>curl -X POST https://wokku.cloud/api/v1/apps \</div>
           <div class="pl-4">-H "Authorization: Bearer $TOKEN" \</div>
           <div class="pl-4">-d '{"name": "my-app"}'</div>
         </div>
@@ -360,11 +360,11 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
       <%
         tiers = [
-          { name: "Free", price: "$0", period: "/mo", ram: "256 MB", vcpu: "Shared", storage: "1 GB", badge: "Free", badge_color: "bg-[#c0c1ff]/10 text-[#c0c1ff]", highlight: false },
-          { name: "Starter", price: "$1.50", period: "/mo", ram: "512 MB", vcpu: "Shared", storage: "5 GB", badge: nil, badge_color: nil, highlight: false },
-          { name: "Basic", price: "$2.50", period: "/mo", ram: "1 GB", vcpu: "1 vCPU", storage: "10 GB", badge: nil, badge_color: nil, highlight: false },
-          { name: "Standard", price: "$7", period: "/mo", ram: "2 GB", vcpu: "2 vCPU", storage: "25 GB", badge: "Popular", badge_color: "bg-[#c0c1ff]/20 text-[#c0c1ff]", highlight: true },
-          { name: "Pro", price: "$14", period: "/mo", ram: "4 GB", vcpu: "4 vCPU", storage: "50 GB", badge: nil, badge_color: nil, highlight: false }
+          { name: "Free", usd: 0, ram: "256 MB", vcpu: "Shared", storage: "1 GB", badge: "Free", badge_color: "bg-[#c0c1ff]/10 text-[#c0c1ff]", highlight: false },
+          { name: "Starter", usd: 1.50, ram: "512 MB", vcpu: "Shared", storage: "5 GB", badge: nil, badge_color: nil, highlight: false },
+          { name: "Basic", usd: 2.50, ram: "1 GB", vcpu: "1 vCPU", storage: "10 GB", badge: nil, badge_color: nil, highlight: false },
+          { name: "Standard", usd: 7, ram: "2 GB", vcpu: "2 vCPU", storage: "25 GB", badge: "Popular", badge_color: "bg-[#c0c1ff]/20 text-[#c0c1ff]", highlight: true },
+          { name: "Pro", usd: 14, ram: "4 GB", vcpu: "4 vCPU", storage: "50 GB", badge: nil, badge_color: nil, highlight: false }
         ]
       %>
       <% tiers.each do |tier| %>
@@ -377,8 +377,8 @@
           </div>
 
           <div class="mb-6">
-            <span class="text-3xl font-bold text-white font-mono"><%= tier[:price] %></span>
-            <span class="text-sm text-[#958e9e]"><%= tier[:period] %></span>
+            <span class="text-3xl font-bold text-white font-mono"><%= format_price(tier[:usd]) %></span>
+            <span class="text-sm text-[#958e9e]"><%= price_period %></span>
           </div>
 
           <ul class="space-y-2 mb-6 text-sm text-[#958e9e]">
@@ -406,7 +406,7 @@
     <div class="text-center mt-8">
       <p class="text-sm text-[#958e9e]">All tiers include free SSL, custom domains, and managed add-ons. <span class="text-[#4a4453]">Databases start free (1 GB).</span></p>
       <%= link_to pricing_path, class: "inline-flex items-center text-sm text-[#c0c1ff] hover:text-white transition font-medium mt-2" do %>
-        Full pricing details
+        <%= t('landing.compare_pricing') %>
         <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
       <% end %>
     </div>
@@ -422,9 +422,9 @@
         <span class="text-xs text-[#958e9e] font-medium">Open Source on GitHub</span>
       </div>
 
-      <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;">Built in the open.<br>Run it <span class="text-[#c0c1ff]">anywhere</span>.</h2>
+      <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;"><%= t('landing.open_source') %><br><%= t('landing.run_anywhere') %></h2>
       <p class="mt-4 text-[#958e9e] leading-relaxed text-lg">
-        Wokku is open-source, built on <span class="text-white font-medium">Dokku</span>. Use our managed cloud at wokku.dev, or self-host on your own servers. No vendor lock-in, ever.
+        <%= t('landing.open_source_desc') %>
       </p>
 
       <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4">
@@ -445,14 +445,14 @@
 <div class="border-t border-[#28283d]/30">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
     <div class="max-w-2xl mx-auto text-center">
-      <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;">Ready to deploy?</h2>
-      <p class="mt-3 text-[#958e9e] text-lg">Start for free. Deploy your first app in minutes.</p>
+      <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;"><%= t('landing.ready_to_deploy') %></h2>
+      <p class="mt-3 text-[#958e9e] text-lg"><%= t('landing.start_free') %></p>
       <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4">
         <%= link_to new_user_registration_path, class: "inline-flex items-center justify-center px-8 py-3.5 text-sm font-semibold rounded-lg hover:opacity-90 transition shadow-lg shadow-[#c0c1ff]/20 text-[#282a64]", style: "background: linear-gradient(135deg, #c0c1ff 0%, #5625ab 100%);" do %>
-          Start Free
+          <%= t('landing.start_building') %>
         <% end %>
         <%= link_to dashboard_templates_path, class: "inline-flex items-center justify-center px-8 py-3.5 border border-[#c0c1ff]/30 text-[#c0c1ff] text-sm font-semibold rounded-lg hover:bg-[#c0c1ff]/10 transition" do %>
-          Browse Templates
+          <%= t('landing.view_all_templates') %>
         <% end %>
       </div>
     </div>
