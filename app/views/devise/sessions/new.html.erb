@@ -21,16 +21,16 @@
           <div class="flex items-center justify-between">
             <label class="flex items-center cursor-pointer">
               <%= f.check_box :remember_me, class: "h-3.5 w-3.5 rounded border-[#4a4453]/30 bg-[#111125] text-[#c0c1ff] focus:ring-[#c0c1ff] cursor-pointer" %>
-              <span class="ml-2 text-xs text-[#958e9e]">Remember me</span>
+              <span class="ml-2 text-xs text-[#958e9e]"><%= t("auth.remember_me") %></span>
             </label>
             <% if devise_mapping.recoverable? %>
-              <%= link_to "Forgot password?", new_password_path(resource_name), class: "text-xs text-[#958e9e] hover:text-[#c0c1ff] transition cursor-pointer" %>
+              <%= link_to t("auth.forgot_password"), new_password_path(resource_name), class: "text-xs text-[#958e9e] hover:text-[#c0c1ff] transition cursor-pointer" %>
             <% end %>
           </div>
         <% end %>
 
         <div>
-          <%= f.submit "Sign in", class: "w-full py-2 px-4 text-[#282a64] text-sm font-semibold rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#c0c1ff] focus:ring-offset-2 focus:ring-offset-[#111125] cursor-pointer transition", style: "background: linear-gradient(135deg, #c0c1ff 0%, #5625ab 100%);" %>
+          <%= f.submit t("auth.sign_in"), class: "w-full py-2 px-4 text-[#282a64] text-sm font-semibold rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#c0c1ff] focus:ring-offset-2 focus:ring-offset-[#111125] cursor-pointer transition", style: "background: linear-gradient(135deg, #c0c1ff 0%, #5625ab 100%);" %>
         </div>
       <% end %>
 
@@ -50,8 +50,8 @@
     </div>
 
     <p class="mt-6 text-center text-xs text-[#4a4453]">
-      Don't have an account?
-      <%= link_to "Sign up", new_registration_path(resource_name), class: "text-[#c0c1ff] hover:text-[#c0c1ff] font-medium ml-1 cursor-pointer transition" %>
+      <%= t("auth.no_account") %>
+      <%= link_to t("auth.sign_up"), new_registration_path(resource_name), class: "text-[#c0c1ff] hover:text-[#c0c1ff] font-medium ml-1 cursor-pointer transition" %>
     </p>
   </div>
 </div>

@@ -1,7 +1,7 @@
 <div class="min-h-screen flex items-center justify-center px-4">
   <div class="max-w-sm w-full">
     <div class="text-center mb-8">
-      <h1 class="text-xl font-semibold text-[#e2e0fc]">Reset your password</h1>
+      <h1 class="text-xl font-semibold text-[#e2e0fc]"><%= t("auth.reset_password") %></h1>
       <p class="mt-1 text-sm text-[#958e9e]">We'll send you reset instructions</p>
     </div>
 
@@ -23,14 +23,14 @@
         </div>
 
         <div>
-          <%= f.submit "Send reset instructions", class: "w-full py-2 px-4 text-[#282a64] text-sm font-semibold rounded-md hover:opacity-90 cursor-pointer transition", style: "background: linear-gradient(135deg, #c0c1ff 0%, #5625ab 100%);" %>
+          <%= f.submit t("auth.send_reset"), class: "w-full py-2 px-4 text-[#282a64] text-sm font-semibold rounded-md hover:opacity-90 cursor-pointer transition", style: "background: linear-gradient(135deg, #c0c1ff 0%, #5625ab 100%);" %>
         </div>
       <% end %>
     </div>
 
     <p class="mt-6 text-center text-xs text-[#4a4453]">
-      Remember your password?
-      <%= link_to "Sign in", new_session_path(resource_name), class: "text-[#c0c1ff] hover:text-[#c0c1ff] font-medium ml-1 cursor-pointer transition" %>
+      <%= t("auth.have_account") %>
+      <%= link_to t("auth.sign_in"), new_session_path(resource_name), class: "text-[#c0c1ff] hover:text-[#c0c1ff] font-medium ml-1 cursor-pointer transition" %>
     </p>
   </div>
 </div>

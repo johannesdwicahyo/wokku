@@ -1,7 +1,7 @@
 <div class="min-h-screen flex items-center justify-center px-4">
   <div class="max-w-sm w-full">
     <div class="text-center mb-8">
-      <h1 class="text-xl font-semibold text-[#e2e0fc]" style="font-family: 'Space Grotesk', sans-serif;">Create your account</h1>
+      <h1 class="text-xl font-semibold text-[#e2e0fc]" style="font-family: 'Space Grotesk', sans-serif;"><%= t("auth.sign_up") %></h1>
       <p class="mt-1 text-sm text-[#958e9e]">Start deploying in seconds</p>
     </div>
 
@@ -29,12 +29,12 @@
         </div>
 
         <div>
-          <%= f.label :password_confirmation, "Confirm password", class: "block text-xs font-medium text-[#958e9e] mb-1.5 uppercase tracking-wider" %>
+          <%= f.label :password_confirmation, t("auth.confirm_password"), class: "block text-xs font-medium text-[#958e9e] mb-1.5 uppercase tracking-wider" %>
           <%= f.password_field :password_confirmation, autocomplete: "new-password", class: "w-full rounded-md bg-[#111125] border border-[#4a4453]/30 px-3 py-2 text-sm text-[#e2e0fc] placeholder-[#4a4453] focus:outline-none focus:ring-1 focus:ring-[#c0c1ff] focus:border-[#c0c1ff]" %>
         </div>
 
         <div>
-          <%= f.submit "Create account", class: "w-full py-2 px-4 text-[#282a64] text-sm font-semibold rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#c0c1ff] focus:ring-offset-2 focus:ring-offset-[#111125] cursor-pointer transition", style: "background: linear-gradient(135deg, #c0c1ff 0%, #5625ab 100%);" %>
+          <%= f.submit t("auth.sign_up"), class: "w-full py-2 px-4 text-[#282a64] text-sm font-semibold rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#c0c1ff] focus:ring-offset-2 focus:ring-offset-[#111125] cursor-pointer transition", style: "background: linear-gradient(135deg, #c0c1ff 0%, #5625ab 100%);" %>
         </div>
       <% end %>
 
@@ -42,8 +42,8 @@
     </div>
 
     <p class="mt-6 text-center text-xs text-[#4a4453]">
-      Already have an account?
-      <%= link_to "Sign in", new_session_path(resource_name), class: "text-[#c0c1ff] hover:text-[#c0c1ff] font-medium ml-1 cursor-pointer transition" %>
+      <%= t("auth.have_account") %>
+      <%= link_to t("auth.sign_in"), new_session_path(resource_name), class: "text-[#c0c1ff] hover:text-[#c0c1ff] font-medium ml-1 cursor-pointer transition" %>
     </p>
   </div>
 </div>
