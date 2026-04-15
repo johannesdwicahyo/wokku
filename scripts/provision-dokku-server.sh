@@ -406,11 +406,15 @@ dokku plugin:install https://github.com/dokku/dokku-mysql.git mysql
 dokku plugin:install https://github.com/dokku/dokku-mariadb.git mariadb
 dokku plugin:install https://github.com/dokku/dokku-mongo.git mongo
 
-# SSL + maintenance
+# SSL + maintenance + ACL
 dokku plugin:install https://github.com/dokku/dokku-letsencrypt.git letsencrypt
 dokku plugin:install https://github.com/dokku/dokku-maintenance.git maintenance
+dokku plugin:install https://github.com/dokku/dokku-acl.git acl
 
-log "Plugins: postgres, redis, mysql, mariadb, mongo, letsencrypt, maintenance"
+# Enable ACL per-app enforcement by default
+dokku config:set --global DOKKU_ACL_ALLOW_UNCONTROLLED=0
+
+log "Plugins: postgres, redis, mysql, mariadb, mongo, letsencrypt, maintenance, acl"
 
 # ══════════════════════════════════════════════════════════════════
 section "15. Let's Encrypt Auto-Renewal"

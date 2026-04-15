@@ -7,7 +7,18 @@ class SshPublicKey < ApplicationRecord
 
   before_validation :compute_fingerprint, if: -> { public_key.present? && fingerprint.blank? }
 
+  after_create_commit :sync_key_to_servers
+  after_destroy_commit :remove_key_from_servers
+
   private
+
+  def sync_key_to_servers
+    SyncSshKeyJob.perform_later(id, user_id, action: :add)
+  end
+
+  def remove_key_from_servers
+    SyncSshKeyJob.perform_later(id, user_id, action: :remove)
+  end
 
   def compute_fingerprint
     key = Net::SSH::KeyFactory.load_data_public_key(public_key)

@@ -37,6 +37,11 @@ module Dashboard
         # Create DNS record: app-name.wokku.cloud → server IP
         Cloudflare::Dns.new.create_app_record(@app.name, server.host) rescue nil
 
+        # Grant git push access to creator via Dokku ACL
+        if current_user.ssh_public_key.present?
+          GrantAppAclJob.perform_later(@app.id, current_user.id)
+        end
+
         track("app.created", target: @app)
         redirect_to dashboard_app_path(@app), notice: "App created successfully."
       else
