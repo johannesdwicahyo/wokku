@@ -2,7 +2,7 @@
 <div class="flex items-center justify-between mb-8">
   <div class="flex items-center gap-4">
     <div class="flex items-center gap-3">
-      <%= link_to "Apps", dashboard_apps_path, class: "text-sm text-outline hover:text-primary transition" %>
+      <%= link_to t("dashboard.apps.title"), dashboard_apps_path, class: "text-sm text-outline hover:text-primary transition" %>
       <span class="material-symbols-outlined text-outline-variant text-[16px]">chevron_right</span>
     </div>
     <div class="flex items-center gap-3">
@@ -11,15 +11,15 @@
     </div>
     <% case @app.status %>
     <% when "running" %>
-      <span class="bg-secondary-container text-on-secondary-container text-[10px] px-2.5 py-1 rounded-full font-bold uppercase glow-running">Running</span>
+      <span class="bg-secondary-container text-on-secondary-container text-[10px] px-2.5 py-1 rounded-full font-bold uppercase glow-running"><%= t("common.running") %></span>
     <% when "crashed" %>
-      <span class="bg-error-container text-on-error-container text-[10px] px-2.5 py-1 rounded-full font-bold uppercase glow-error">Crashed</span>
+      <span class="bg-error-container text-on-error-container text-[10px] px-2.5 py-1 rounded-full font-bold uppercase glow-error"><%= t("common.crashed") %></span>
     <% when "stopped" %>
-      <span class="bg-surface-variant text-outline text-[10px] px-2.5 py-1 rounded-full font-bold uppercase">Stopped</span>
+      <span class="bg-surface-variant text-outline text-[10px] px-2.5 py-1 rounded-full font-bold uppercase"><%= t("common.stopped") %></span>
     <% when "deploying" %>
       <span class="bg-primary/15 text-primary text-[10px] px-2.5 py-1 rounded-full font-bold uppercase flex items-center gap-1.5">
         <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-        Deploying
+        <%= t("common.deploying") %>
       </span>
     <% end %>
   </div>
@@ -129,7 +129,7 @@
     <div class="bg-surface-container-lowest rounded-md overflow-hidden">
       <div class="px-6 py-3 border-b border-outline-variant/10 flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <h2 class="font-headline text-sm font-bold text-on-surface">Logs</h2>
+          <h2 class="font-headline text-sm font-bold text-on-surface"><%= t("dashboard.apps.logs") %></h2>
           <% if @processes.any? %>
             <span class="text-[10px] text-outline font-mono">
               STREAMS: <%= @processes.map { |p| "#{p[:type]}.#{p[:index]}" }.join(", ") %>
@@ -163,7 +163,7 @@
     <%# Environment Variables %>
     <div class="bg-surface-container-low rounded-md overflow-hidden">
       <div class="px-6 py-3 border-b border-outline-variant/10 flex items-center justify-between">
-        <h2 class="font-headline text-sm font-bold text-on-surface">Environment Variables</h2>
+        <h2 class="font-headline text-sm font-bold text-on-surface"><%= t("dashboard.apps.environment_variables") %></h2>
         <%= link_to dashboard_app_config_index_path(@app), class: "text-xs text-outline hover:text-primary transition flex items-center gap-1" do %>
           <span class="material-symbols-outlined text-[14px]">edit</span> Manage
         <% end %>
@@ -192,7 +192,7 @@
     <%# Domains %>
     <div class="bg-surface-container-low rounded-md overflow-hidden">
       <div class="px-6 py-3 border-b border-outline-variant/10 flex items-center justify-between">
-        <h2 class="font-headline text-sm font-bold text-on-surface">Domains</h2>
+        <h2 class="font-headline text-sm font-bold text-on-surface"><%= t("dashboard.apps.domains") %></h2>
         <%= link_to dashboard_app_domains_path(@app), class: "text-xs text-outline hover:text-primary transition flex items-center gap-1" do %>
           <span class="material-symbols-outlined text-[14px]">edit</span> Manage
         <% end %>
@@ -312,7 +312,7 @@
       </div>
       <div class="divide-y divide-outline-variant/10">
         <div class="px-5 py-3 flex items-center justify-between">
-          <span class="text-xs text-outline">Server</span>
+          <span class="text-xs text-outline"><%= t("dashboard.apps.server") %></span>
           <span class="text-xs font-mono font-bold text-on-surface"><%= @app.server.name %></span>
         </div>
         <div class="px-5 py-3 flex items-center justify-between">
@@ -340,7 +340,7 @@
           </div>
         <% end %>
         <div class="px-5 py-3 flex items-center justify-between">
-          <span class="text-xs text-outline">Created</span>
+          <span class="text-xs text-outline"><%= t("dashboard.apps.created") %></span>
           <span class="text-xs text-on-surface-variant"><%= @app.created_at.strftime("%b %d, %Y") %></span>
         </div>
         <div class="px-5 py-3 flex items-center justify-between border-t border-outline-variant/10">
@@ -482,7 +482,7 @@
 
     <%# Danger Zone %>
     <div class="bg-error-container/10 border border-error/20 rounded-md p-5 text-center">
-      <%= button_to "Delete Application", dashboard_app_path(@app),
+      <%= button_to t("dashboard.apps.delete_application"), dashboard_app_path(@app),
             method: :delete,
             form: {
               data: {

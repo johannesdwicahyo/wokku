@@ -1,6 +1,6 @@
 <div class="mb-4">
   <div class="flex items-center space-x-2 text-sm">
-    <%= link_to "Servers", dashboard_servers_path, class: "text-outline hover:text-primary transition cursor-pointer" %>
+    <%= link_to t("dashboard.servers.title"), dashboard_servers_path, class: "text-outline hover:text-primary transition cursor-pointer" %>
     <span class="material-symbols-outlined text-[16px] text-outline-variant">chevron_right</span>
     <span class="text-on-surface-variant font-mono"><%= @server.name %></span>
   </div>
@@ -13,22 +13,22 @@
     <% when "connected" %>
       <span class="inline-flex items-center space-x-1 text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">
         <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
-        <span>Connected</span>
+        <span><%= t("dashboard.servers.connected") %></span>
       </span>
     <% when "unreachable" %>
       <span class="inline-flex items-center space-x-1 text-xs text-error bg-error-container/20 px-2 py-0.5 rounded-md border border-error/20">
         <span class="w-1.5 h-1.5 rounded-full bg-error"></span>
-        <span>Unreachable</span>
+        <span><%= t("dashboard.servers.unreachable") %></span>
       </span>
     <% when "auth_failed" %>
       <span class="inline-flex items-center space-x-1 text-xs text-orange-800 bg-orange-100 px-2 py-0.5 rounded-md border border-orange-800/20">
         <span class="w-1.5 h-1.5 rounded-full bg-orange-800"></span>
-        <span>Auth Failed</span>
+        <span><%= t("dashboard.servers.auth_failed") %></span>
       </span>
     <% when "syncing" %>
       <span class="inline-flex items-center space-x-1 text-xs text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-md border border-yellow-500/20">
         <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span>
-        <span>Syncing</span>
+        <span><%= t("dashboard.servers.syncing") %></span>
       </span>
     <% end %>
   </div>

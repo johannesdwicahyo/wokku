@@ -1,12 +1,12 @@
 <div data-controller="slide-panel">
   <div class="flex items-center justify-between mb-6">
     <div>
-      <h1 class="text-xl font-headline text-on-surface">Servers</h1>
+      <h1 class="text-xl font-headline text-on-surface"><%= t("dashboard.servers.title") %></h1>
       <p class="mt-0.5 text-sm text-outline">Manage your Dokku servers</p>
     </div>
     <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">
       <span class="material-symbols-outlined text-[18px] mr-1.5">add</span>
-      Add Server
+      <%= t("dashboard.servers.add_server") %>
     </button>
   </div>
 
@@ -34,22 +34,22 @@
                 <% when "connected" %>
                   <span class="inline-flex items-center space-x-1 text-xs text-primary">
                     <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                    <span>Connected</span>
+                    <span><%= t("dashboard.servers.connected") %></span>
                   </span>
                 <% when "unreachable" %>
                   <span class="inline-flex items-center space-x-1 text-xs text-error">
                     <span class="w-1.5 h-1.5 rounded-full bg-error"></span>
-                    <span>Unreachable</span>
+                    <span><%= t("dashboard.servers.unreachable") %></span>
                   </span>
                 <% when "auth_failed" %>
                   <span class="inline-flex items-center space-x-1 text-xs text-orange-800">
                     <span class="w-1.5 h-1.5 rounded-full bg-orange-800"></span>
-                    <span>Auth Failed</span>
+                    <span><%= t("dashboard.servers.auth_failed") %></span>
                   </span>
                 <% when "syncing" %>
                   <span class="inline-flex items-center space-x-1 text-xs text-yellow-500">
                     <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span>
-                    <span>Syncing</span>
+                    <span><%= t("dashboard.servers.syncing") %></span>
                   </span>
                 <% end %>
               </td>
@@ -65,15 +65,15 @@
   <% else %>
     <div class="text-center py-16 bg-surface-container-low rounded-lg border border-outline-variant/15">
       <span class="material-symbols-outlined text-[40px] text-outline-variant mb-2">dns</span>
-      <h3 class="mt-3 text-sm font-medium text-on-surface-variant">No servers yet</h3>
+      <h3 class="mt-3 text-sm font-medium text-on-surface-variant"><%= t("dashboard.servers.no_servers") %></h3>
       <p class="mt-1 text-xs text-outline">Connect your first Dokku server to get started.</p>
       <div class="mt-4">
-        <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">Add Server</button>
+        <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer"><%= t("dashboard.servers.add_server") %></button>
       </div>
     </div>
   <% end %>
 
-  <%= render layout: "dashboard/shared/slide_panel", locals: { title: "Add Server", subtitle: "Connect a Dokku server via SSH" } do %>
+  <%= render layout: "dashboard/shared/slide_panel", locals: { title: t("dashboard.servers.add_server"), subtitle: "Connect a Dokku server via SSH" } do %>
     <%= render "form", server: @server %>
   <% end %>
 </div>

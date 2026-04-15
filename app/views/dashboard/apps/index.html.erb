@@ -1,17 +1,17 @@
 <div data-controller="slide-panel">
   <div class="flex items-center justify-between mb-8">
     <div>
-      <h1 class="text-2xl font-bold text-on-surface font-headline">Apps</h1>
+      <h1 class="text-2xl font-bold text-on-surface font-headline"><%= t("dashboard.apps.title") %></h1>
       <p class="text-[10px] text-outline uppercase tracking-wider font-bold mt-1">All deployed applications</p>
     </div>
     <div class="flex items-center gap-3">
       <%= link_to dashboard_templates_path, class: "inline-flex items-center px-4 py-2 bg-surface-container-low text-on-surface-variant text-sm font-semibold rounded-md hover:bg-surface-container-high transition" do %>
         <span class="material-symbols-outlined text-[18px] mr-2">rocket_launch</span>
-        Templates
+        <%= t("dashboard.nav.templates") %>
       <% end %>
       <button data-action="click->slide-panel#open" class="inline-flex items-center px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">
         <span class="material-symbols-outlined text-[18px] mr-2">add</span>
-        New App
+        <%= t("dashboard.apps.new_app") %>
       </button>
     </div>
   </div>
@@ -42,13 +42,13 @@
               </div>
               <% case app.status %>
               <% when "running" %>
-                <span class="bg-secondary-container text-on-secondary-container text-[10px] px-2 py-0.5 rounded-full font-bold uppercase glow-running">Running</span>
+                <span class="bg-secondary-container text-on-secondary-container text-[10px] px-2 py-0.5 rounded-full font-bold uppercase glow-running"><%= t("common.running") %></span>
               <% when "crashed" %>
-                <span class="bg-error-container text-on-error-container text-[10px] px-2 py-0.5 rounded-full font-bold uppercase glow-error">Crashed</span>
+                <span class="bg-error-container text-on-error-container text-[10px] px-2 py-0.5 rounded-full font-bold uppercase glow-error"><%= t("common.crashed") %></span>
               <% when "deploying" %>
-                <span class="bg-surface-variant text-on-surface-variant text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">Deploying</span>
+                <span class="bg-surface-variant text-on-surface-variant text-[10px] px-2 py-0.5 rounded-full font-bold uppercase"><%= t("common.deploying") %></span>
               <% when "stopped" %>
-                <span class="bg-surface-variant text-outline text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">Stopped</span>
+                <span class="bg-surface-variant text-outline text-[10px] px-2 py-0.5 rounded-full font-bold uppercase"><%= t("common.stopped") %></span>
               <% end %>
             </div>
 
@@ -70,17 +70,17 @@
   <% else %>
     <div class="bg-surface-container-low rounded-md p-16 text-center">
       <span class="material-symbols-outlined text-outline-variant text-[48px] mb-4">terminal</span>
-      <h3 class="text-lg font-medium text-on-surface font-headline">No apps yet</h3>
-      <p class="text-sm text-outline mt-2">Deploy your first application to get started.</p>
+      <h3 class="text-lg font-medium text-on-surface font-headline"><%= t("dashboard.apps.no_apps") %></h3>
+      <p class="text-sm text-outline mt-2"><%= t("dashboard.apps.no_apps_desc") %></p>
       <div class="mt-6 flex items-center justify-center gap-3">
-        <button data-action="click->slide-panel#open" class="inline-flex items-center px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">Create App</button>
-        <%= link_to "Browse Templates", dashboard_templates_path, class: "inline-flex items-center px-4 py-2 bg-surface-container text-on-surface-variant text-sm font-medium rounded-md hover:bg-surface-container-high transition" %>
+        <button data-action="click->slide-panel#open" class="inline-flex items-center px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer"><%= t("dashboard.apps.create_app") %></button>
+        <%= link_to t("dashboard.apps.browse_templates"), dashboard_templates_path, class: "inline-flex items-center px-4 py-2 bg-surface-container text-on-surface-variant text-sm font-medium rounded-md hover:bg-surface-container-high transition" %>
       </div>
     </div>
   <% end %>
 
   <%# New App Slide Panel %>
-  <%= render layout: "dashboard/shared/slide_panel", locals: { title: "New App", subtitle: "Deploy a new application" } do %>
+  <%= render layout: "dashboard/shared/slide_panel", locals: { title: t("dashboard.apps.new_app"), subtitle: "Deploy a new application" } do %>
     <%= render "form", app: AppRecord.new, servers: policy_scope(Server) %>
   <% end %>
 </div>

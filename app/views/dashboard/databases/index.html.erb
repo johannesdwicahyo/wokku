@@ -2,12 +2,12 @@
   <%# Header %>
   <div class="flex items-center justify-between mb-8">
     <div>
-      <h1 class="text-2xl font-bold text-on-surface font-headline">Resources</h1>
+      <h1 class="text-2xl font-bold text-on-surface font-headline"><%= t("dashboard.nav.resources") %></h1>
       <p class="text-[10px] text-outline uppercase tracking-wider font-bold mt-1">All add-ons across your apps</p>
     </div>
     <button data-action="click->slide-panel#open" class="inline-flex items-center px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">
       <span class="material-symbols-outlined text-[18px] mr-1.5">add</span>
-      New Resource
+      <%= t("dashboard.databases.new_database") %>
     </button>
   </div>
 
@@ -82,11 +82,11 @@
                   <div class="flex items-center gap-3">
                     <% case db.status %>
                     <% when "running" %>
-                      <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-secondary glow-running"></span><span class="text-[10px] text-outline uppercase font-bold">Running</span></span>
+                      <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-secondary glow-running"></span><span class="text-[10px] text-outline uppercase font-bold"><%= t("common.running") %></span></span>
                     <% when "error" %>
-                      <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-error glow-error"></span><span class="text-[10px] text-error uppercase font-bold">Error</span></span>
+                      <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-error glow-error"></span><span class="text-[10px] text-error uppercase font-bold"><%= t("common.error") %></span></span>
                     <% when "stopped" %>
-                      <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-outline"></span><span class="text-[10px] text-outline uppercase font-bold">Stopped</span></span>
+                      <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-outline"></span><span class="text-[10px] text-outline uppercase font-bold"><%= t("common.stopped") %></span></span>
                     <% end %>
                     <%= link_to dashboard_resource_path(db), class: "text-outline hover:text-primary transition" do %>
                       <span class="material-symbols-outlined text-[18px]">chevron_right</span>
@@ -130,7 +130,7 @@
                   </div>
                   <div class="flex items-center gap-3">
                     <% if db.running? %>
-                      <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-secondary glow-running"></span><span class="text-[10px] text-outline uppercase font-bold">Running</span></span>
+                      <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-secondary glow-running"></span><span class="text-[10px] text-outline uppercase font-bold"><%= t("common.running") %></span></span>
                     <% end %>
                     <%= link_to dashboard_resource_path(db), class: "text-outline hover:text-primary transition" do %>
                       <span class="material-symbols-outlined text-[18px]">chevron_right</span>
@@ -147,10 +147,10 @@
   <% else %>
     <div class="bg-surface-container-low rounded-md p-16 text-center">
       <span class="material-symbols-outlined text-outline-variant text-[48px] mb-4">dns</span>
-      <h3 class="text-lg font-medium text-on-surface font-headline">No resources yet</h3>
+      <h3 class="text-lg font-medium text-on-surface font-headline"><%= t("dashboard.databases.no_databases") %></h3>
       <p class="text-sm text-outline mt-2">Add databases, caches, and services from any app's Resources tab.</p>
       <div class="mt-6">
-        <button data-action="click->slide-panel#open" class="inline-flex items-center px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">New Resource</button>
+        <button data-action="click->slide-panel#open" class="inline-flex items-center px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer"><%= t("dashboard.databases.new_database") %></button>
       </div>
     </div>
   <% end %>
