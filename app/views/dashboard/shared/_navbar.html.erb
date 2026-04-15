@@ -9,7 +9,7 @@
     </button>
     <div class="relative hidden md:block">
       <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
-      <input type="text" placeholder="Search apps..." class="bg-surface-container-low border-none rounded-md pl-10 pr-4 py-1.5 text-sm focus:ring-1 focus:ring-primary w-64 text-on-surface placeholder:text-outline font-body">
+      <input type="text" placeholder="<%= t('dashboard.nav.search_apps') %>" class="bg-surface-container-low border-none rounded-md pl-10 pr-4 py-1.5 text-sm focus:ring-1 focus:ring-primary w-64 text-on-surface placeholder:text-outline font-body">
     </div>
   </div>
   <div class="flex items-center gap-3">
@@ -28,7 +28,7 @@
       <%= I18n.locale.to_s.upcase %>
     <% end %>
     <%= link_to dashboard_templates_path, class: "technical-gradient text-on-primary font-bold px-5 py-1.5 rounded-md hover:opacity-90 active:scale-95 transition-all text-sm" do %>
-      Deploy
+      <%= t('dashboard.nav.deploy') %>
     <% end %>
     <div class="relative" data-controller="dropdown">
       <button data-action="click->dropdown#toggle" class="h-8 w-8 rounded-lg bg-primary-container flex items-center justify-center overflow-hidden border border-outline-variant/30 cursor-pointer">
@@ -43,9 +43,9 @@
           <p class="text-xs text-on-surface font-medium truncate"><%= current_user.email %></p>
           <p class="text-xs text-outline font-mono mt-0.5"><%= current_user.role %></p>
         </div>
-        <a href="<%= dashboard_profile_path %>" class="block px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface cursor-pointer transition">Profile</a>
-        <a href="<%= dashboard_teams_path %>" class="block px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface cursor-pointer transition">Teams</a>
-        <%= link_to "Sign out", destroy_user_session_path, data: { turbo_method: :delete }, class: "block px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface rounded-b-md cursor-pointer transition" %>
+        <a href="<%= dashboard_profile_path %>" class="block px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface cursor-pointer transition"><%= t('dashboard.nav.profile') %></a>
+        <a href="<%= dashboard_teams_path %>" class="block px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface cursor-pointer transition"><%= t('dashboard.nav.teams') %></a>
+        <%= link_to t('common.sign_out'), destroy_user_session_path, data: { turbo_method: :delete }, class: "block px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface rounded-b-md cursor-pointer transition" %>
       </div>
     </div>
   </div>
