@@ -16,6 +16,8 @@ id:
       profile: "Profil"
       deploy: "Deploy"
       search_apps: "Cari aplikasi..."
+      documentation: "Dokumentasi"
+      support: "Dukungan"
     onboarding:
       welcome: "Selamat Datang di Wokku"
       welcome_desc: "Mulai dengan menyelesaikan langkah berikut"

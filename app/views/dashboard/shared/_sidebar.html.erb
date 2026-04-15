@@ -4,18 +4,18 @@
        data-mobile-nav-target="sidebar">
   <div class="px-6 mb-8">
     <a href="<%= root_path %>" class="block">
-      <h1 class="text-lg font-black text-white font-headline tracking-tight">Wokku.dev</h1>
+      <h1 class="text-lg font-black text-white font-headline tracking-tight">Wokku</h1>
       <p class="text-[10px] text-outline font-mono mt-1">Dokku v0.37.2 · CE v1.0</p>
     </a>
   </div>
 
   <%
     nav_items = [
-      { name: "Dashboard", path: dashboard_root_path, pattern: "/dashboard", icon: "dashboard", exact: true },
-      { name: "Apps", path: dashboard_apps_path, pattern: "/dashboard/apps", icon: "terminal" },
-      { name: "1 Click Deploy", path: dashboard_templates_path, pattern: "/dashboard/templates", icon: "rocket_launch" },
-      { name: "Resources", path: dashboard_resources_path, pattern: "/dashboard/resources", icon: "dns" },
-      { name: "Activity", path: dashboard_activities_path, pattern: "/dashboard/activities", icon: "history" },
+      { name: t("dashboard.nav.dashboard"), path: dashboard_root_path, pattern: "/dashboard", icon: "dashboard", exact: true },
+      { name: t("dashboard.nav.apps"), path: dashboard_apps_path, pattern: "/dashboard/apps", icon: "terminal" },
+      { name: t("dashboard.nav.one_click_deploy"), path: dashboard_templates_path, pattern: "/dashboard/templates", icon: "rocket_launch" },
+      { name: t("dashboard.nav.resources"), path: dashboard_resources_path, pattern: "/dashboard/resources", icon: "dns" },
+      { name: t("dashboard.nav.activity"), path: dashboard_activities_path, pattern: "/dashboard/activities", icon: "history" },
     ]
   %>
   <nav class="flex-1 space-y-0.5">
@@ -37,7 +37,7 @@
       %>
       <a href="<%= dashboard_servers_path %>" class="flex items-center px-6 py-3 text-sm font-label <%= server_classes %>">
         <span class="material-symbols-outlined mr-3 text-[20px]">storage</span>
-        <span class="font-medium">Servers</span>
+        <span class="font-medium"><%= t("dashboard.nav.servers") %></span>
       </a>
     <% end %>
   </nav>
@@ -45,21 +45,21 @@
   <div class="mt-auto px-6 pt-6 border-t border-outline-variant/10 space-y-1">
     <a href="/docs" target="_blank" class="flex items-center py-2 text-outline hover:text-on-surface-variant transition-all">
       <span class="material-symbols-outlined mr-3 text-[18px]">menu_book</span>
-      <span class="text-xs font-medium font-label">Documentation</span>
+      <span class="text-xs font-medium font-label"><%= t("dashboard.nav.documentation") %></span>
     </a>
     <a href="mailto:support@wokku.dev" class="flex items-center py-2 text-outline hover:text-on-surface-variant transition-all">
       <span class="material-symbols-outlined mr-3 text-[18px]">contact_support</span>
-      <span class="text-xs font-medium font-label">Support</span>
+      <span class="text-xs font-medium font-label"><%= t("dashboard.nav.support") %></span>
     </a>
     <% if defined?(dashboard_billing_path) %>
       <a href="<%= dashboard_billing_path %>" class="flex items-center py-2 text-outline hover:text-on-surface-variant transition-all">
         <span class="material-symbols-outlined mr-3 text-[18px]">payments</span>
-        <span class="text-xs font-medium font-label">Billing</span>
+        <span class="text-xs font-medium font-label"><%= t("dashboard.nav.billing") %></span>
       </a>
     <% end %>
     <a href="<%= dashboard_profile_path %>" class="flex items-center py-2 text-outline hover:text-on-surface-variant transition-all">
       <span class="material-symbols-outlined mr-3 text-[18px]">settings</span>
-      <span class="text-xs font-medium font-label">Settings</span>
+      <span class="text-xs font-medium font-label"><%= t("dashboard.nav.settings") %></span>
     </a>
   </div>
 </aside>

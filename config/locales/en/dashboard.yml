@@ -16,6 +16,8 @@ en:
       profile: "Profile"
       deploy: "Deploy"
       search_apps: "Search apps..."
+      documentation: "Documentation"
+      support: "Support"
     onboarding:
       welcome: "Welcome to Wokku"
       welcome_desc: "Get started by completing these steps"
