@@ -48,6 +48,11 @@
             </div>
           </div>
           <div class="flex items-center space-x-4">
+            <a href="?locale=<%= I18n.locale == :en ? 'id' : 'en' %>"
+               class="text-on-surface-variant hover:text-on-surface text-xs font-mono font-bold px-2 py-1 rounded-md hover:bg-surface-container-high transition-colors"
+               title="<%= I18n.locale == :en ? 'Bahasa Indonesia' : 'English' %>">
+              <%= I18n.locale.to_s.upcase %>
+            </a>
             <%= link_to "Log in", new_user_session_path, class: "text-sm text-[#958e9e] hover:text-white transition" %>
             <%= link_to "Sign up free", new_user_registration_path, class: "inline-flex items-center px-3.5 py-1.5 technical-gradient text-[#282a64] text-sm font-semibold rounded-md hover:opacity-90 transition" %>
           </div>
