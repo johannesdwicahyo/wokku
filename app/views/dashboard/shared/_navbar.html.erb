@@ -21,6 +21,12 @@
         <span class="material-symbols-outlined text-[20px]">terminal</span>
       <% end %>
     <% end %>
+    <%= button_to dashboard_locale_path(locale: I18n.locale == :en ? :id : :en),
+        method: :post,
+        class: "text-outline hover:text-on-surface-variant hover:bg-surface-container-high px-2 py-1 rounded-md transition-colors text-xs font-mono font-bold cursor-pointer",
+        title: I18n.locale == :en ? "Ganti ke Bahasa Indonesia" : "Switch to English" do %>
+      <%= I18n.locale.to_s.upcase %>
+    <% end %>
     <%= link_to dashboard_templates_path, class: "technical-gradient text-on-primary font-bold px-5 py-1.5 rounded-md hover:opacity-90 active:scale-95 transition-all text-sm" do %>
       Deploy
     <% end %>
