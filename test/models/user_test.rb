@@ -108,4 +108,76 @@ class UserTest < ActiveSupport::TestCase
   test "current_plan returns nil" do
     assert_nil users(:one).current_plan
   end
+
+  # --- balance helpers ---
+
+  test "balance returns balance_idr for idr user" do
+    user = users(:admin)
+    user.update!(currency: "idr", balance_idr: 100_000, balance_usd_cents: 0)
+    assert_equal 100_000, user.balance
+  end
+
+  test "balance returns balance_usd_cents for usd user" do
+    user = users(:admin)
+    user.update!(currency: "usd", balance_idr: 0, balance_usd_cents: 500)
+    assert_equal 500, user.balance
+  end
+
+  test "balance_formatted returns IDR string" do
+    user = users(:admin)
+    user.update!(currency: "idr", balance_idr: 150_000)
+    assert_equal "Rp 150.000", user.balance_formatted
+  end
+
+  test "balance_formatted returns USD string" do
+    user = users(:admin)
+    user.update!(currency: "usd", balance_usd_cents: 1050)
+    assert_equal "$10.50", user.balance_formatted
+  end
+
+  test "has_credit_card? returns true when stripe_payment_method_id present" do
+    user = users(:admin)
+    user.stripe_payment_method_id = "pm_test_123"
+    assert user.has_credit_card?
+  end
+
+  test "has_deposit_balance? returns true when idr balance positive" do
+    user = users(:admin)
+    user.update!(currency: "idr", balance_idr: 10_000)
+    assert user.has_deposit_balance?
+  end
+
+  test "has_deposit_balance? returns false when idr balance is zero" do
+    user = users(:admin)
+    user.update!(currency: "idr", balance_idr: 0)
+    assert_not user.has_deposit_balance?
+  end
+
+  test "has_payment_method? is true with deposit balance" do
+    user = users(:admin)
+    user.update!(currency: "idr", balance_idr: 50_000)
+    assert user.has_payment_method?
+  end
+
+  test "deposit_user? returns true when payment_method_type is deposit" do
+    user = users(:admin)
+    user.update!(payment_method_type: "deposit")
+    assert user.deposit_user?
+  end
+
+  test "card_user? returns true when payment_method_type is card" do
+    user = users(:admin)
+    user.update!(payment_method_type: "card")
+    assert user.card_user?
+  end
+
+  test "days_of_balance_remaining returns infinity when no daily cost" do
+    user = users(:admin)
+    user.update!(currency: "idr", balance_idr: 100_000)
+    assert_equal Float::INFINITY, user.days_of_balance_remaining
+  end
+
+  test "has many deposit_transactions" do
+    assert_respond_to users(:one), :deposit_transactions
+  end
 end
