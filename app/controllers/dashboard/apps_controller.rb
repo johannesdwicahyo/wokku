@@ -38,7 +38,7 @@ module Dashboard
         Cloudflare::Dns.new.create_app_record(@app.name, server.host) rescue nil
 
         # Grant git push access to creator via Dokku ACL
-        if current_user.ssh_public_key.present?
+        if current_user.ssh_public_keys.any?
           GrantAppAclJob.perform_later(@app.id, current_user.id)
         end
 
