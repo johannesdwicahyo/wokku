@@ -60,7 +60,7 @@
     100% { transform: rotate(-35deg) translateY(120vh); opacity: 0; }
   }
 
-  /* Dino running along bottom of terminal */
+  /* Dino follows mouse along terminal bottom */
   .terminal-dino-wrap {
     position: absolute;
     bottom: -16px;
@@ -78,18 +78,19 @@
     cursor: default;
     pointer-events: auto;
     opacity: 0.5;
-    animation: dino-run 20s linear infinite;
-    transition: opacity 0.2s;
+    transition: left 0.15s ease-out, opacity 0.2s;
+    left: 85%;
   }
-  .terminal-dino:hover {
-    opacity: 1;
+  .terminal-dino:hover { opacity: 1; }
+  .terminal-dino.dead {
+    opacity: 0.6;
+    animation: none;
+    cursor: pointer;
   }
-  @keyframes dino-run {
-    0% { left: 85%; }
-    25% { left: 15%; }
-    50% { left: 50%; }
-    75% { left: 5%; }
-    100% { left: 85%; }
+  @keyframes dino-shake {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-5deg); }
+    75% { transform: rotate(5deg); }
   }
 </style>
 
@@ -529,3 +530,74 @@
   </div>
 </div>
 
+<script>
+(function() {
+  var dino = document.querySelector('.terminal-dino');
+  var wrap = document.querySelector('.terminal-dino-wrap');
+  if (!dino || !wrap) return;
+
+  var alive = true;
+  var DINO_EMOJI = '🦕';
+  var GRAVE_EMOJI = '🪦';
+
+  var terminalEl = wrap.parentElement;
+  document.addEventListener('mousemove', function(e) {
+    if (!alive) return;
+    var rect = terminalEl.getBoundingClientRect();
+    if (e.clientY < rect.top - 200 || e.clientY > rect.bottom + 100) return;
+
+    var relX = e.clientX - rect.left;
+    var pct = Math.max(2, Math.min(92, (relX / rect.width) * 100));
+    dino.style.left = pct + '%';
+
+    if (!dino._lastX) dino._lastX = pct;
+    if (pct < dino._lastX - 1) {
+      dino.style.transform = 'scaleX(-1)';
+    } else if (pct > dino._lastX + 1) {
+      dino.style.transform = 'scaleX(1)';
+    }
+    dino._lastX = pct;
+  });
+
+  function checkCollisions() {
+    if (!alive) return;
+    var dinoRect = dino.getBoundingClientRect();
+    var dinoBox = {
+      left: dinoRect.left + 4, right: dinoRect.right - 4,
+      top: dinoRect.top + 4, bottom: dinoRect.bottom - 4
+    };
+
+    var meteors = document.querySelectorAll('.meteor');
+    for (var i = 0; i < meteors.length; i++) {
+      var m = meteors[i].getBoundingClientRect();
+      var headY = m.bottom;
+      var headX = m.left + m.width / 2;
+      if (headX >= dinoBox.left && headX <= dinoBox.right &&
+          headY >= dinoBox.top && headY <= dinoBox.bottom) {
+        killDino();
+        return;
+      }
+    }
+  }
+
+  function killDino() {
+    alive = false;
+    dino.textContent = GRAVE_EMOJI;
+    dino.classList.add('dead');
+    dino.style.transform = 'none';
+    dino.style.animation = 'dino-shake 0.3s ease-in-out';
+    dino.title = 'Click to revive!';
+
+    dino.addEventListener('click', function revive() {
+      alive = true;
+      dino.textContent = DINO_EMOJI;
+      dino.classList.remove('dead');
+      dino.title = 'Dodge the meteors!';
+      dino.removeEventListener('click', revive);
+    }, { once: true });
+  }
+
+  setInterval(checkCollisions, 33);
+  dino.title = 'Dodge the meteors!';
+})();
+</script>
