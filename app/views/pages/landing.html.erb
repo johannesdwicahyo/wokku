@@ -36,22 +36,22 @@
     position: absolute;
     width: 2px;
     height: 80px;
-    background: linear-gradient(to bottom, rgba(192, 193, 255, 0.8), rgba(192, 193, 255, 0.2), transparent);
+    background: linear-gradient(to top, rgba(192, 193, 255, 0.8), rgba(192, 193, 255, 0.2), transparent);
     border-radius: 2px;
     animation: meteor-streak linear infinite;
     transform: rotate(-35deg);
     filter: blur(0.5px);
   }
-  .meteor::after {
+  .meteor::before {
     content: '';
     position: absolute;
-    top: 0;
+    bottom: 0;
     left: -1px;
     width: 4px;
     height: 4px;
-    background: rgba(192, 193, 255, 0.9);
+    background: #fff;
     border-radius: 50%;
-    box-shadow: 0 0 12px rgba(192, 193, 255, 0.6), 0 0 24px rgba(192, 193, 255, 0.3);
+    box-shadow: 0 0 8px rgba(192, 193, 255, 0.9), 0 0 20px rgba(192, 193, 255, 0.4);
   }
   @keyframes meteor-streak {
     0% { transform: rotate(-35deg) translateY(-200px); opacity: 0; }
@@ -60,32 +60,39 @@
     100% { transform: rotate(-35deg) translateY(120vh); opacity: 0; }
   }
 
-  /* Dino hiding behind terminal - runs away from meteors */
+  /* Dino running along bottom of terminal */
+  .terminal-dino-wrap {
+    position: absolute;
+    bottom: -16px;
+    left: 0;
+    right: 0;
+    height: 40px;
+    pointer-events: none;
+    overflow: visible;
+    z-index: 10;
+  }
   .terminal-dino {
     position: absolute;
-    bottom: -12px;
-    right: -20px;
-    font-size: 32px;
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    bottom: 0;
+    font-size: 28px;
     cursor: default;
-    z-index: 10;
-    opacity: 0.6;
+    pointer-events: auto;
+    opacity: 0.5;
+    animation: dino-run 8s ease-in-out infinite;
+    transition: opacity 0.2s;
   }
   .terminal-dino:hover {
     opacity: 1;
-    transform: scale(1.2);
   }
-  .terminal-dino.dodge-left {
-    transform: translateX(-60px) translateY(-8px) scaleX(-1);
-    opacity: 0.9;
-  }
-  .terminal-dino.dodge-right {
-    transform: translateX(30px) translateY(-12px);
-    opacity: 0.9;
-  }
-  .terminal-dino.duck {
-    transform: translateY(8px) scale(0.8);
-    opacity: 0.7;
+  @keyframes dino-run {
+    0% { left: 85%; transform: scaleX(-1); }
+    15% { left: 10%; transform: scaleX(-1); }
+    20% { left: 10%; transform: scaleX(1); }
+    45% { left: 70%; transform: scaleX(1); }
+    50% { left: 70%; transform: scaleX(-1); }
+    70% { left: 30%; transform: scaleX(-1); }
+    75% { left: 30%; transform: scaleX(1); }
+    100% { left: 85%; transform: scaleX(1); }
   }
 </style>
 
@@ -134,7 +141,7 @@
 
     <!-- Terminal Preview -->
     <div class="animate-float animate-float-4 mt-16 max-w-2xl mx-auto relative">
-      <span class="terminal-dino" title="rawr!">🦕</span>
+      <div class="terminal-dino-wrap"><span class="terminal-dino" title="rawr!">🦕</span></div>
       <div class="rounded-xl border border-[#28283d]/30 bg-[#0D1424] overflow-hidden shadow-2xl shadow-black/40">
         <div class="flex items-center px-4 py-2.5 border-b border-[#28283d]/30 bg-[#111125]">
           <div class="flex space-x-1.5">
@@ -525,28 +532,3 @@
   </div>
 </div>
 
-<script>
-  // Dino dodges meteors
-  (function() {
-    var dino = document.querySelector('.terminal-dino');
-    if (!dino) return;
-    var dodges = ['dodge-left', 'dodge-right', 'duck'];
-    var dodging = false;
-
-    function randomDodge() {
-      if (dodging) return;
-      dodging = true;
-      var move = dodges[Math.floor(Math.random() * dodges.length)];
-      dino.classList.add(move);
-      setTimeout(function() {
-        dino.classList.remove(move);
-        dodging = false;
-      }, 600);
-    }
-
-    // Dodge at random intervals (simulating reaction to meteors)
-    setInterval(function() {
-      if (Math.random() < 0.3) randomDodge();
-    }, 2000);
-  })();
-</script>
