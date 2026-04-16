@@ -67,6 +67,16 @@
       </div>
     </div>
 
+    <% if user_signed_in? && current_user.billing_status == "suspended" %>
+      <div class="bg-error/10 border-b border-error/30 px-4 py-3">
+        <div class="flex items-center justify-center gap-2 text-sm text-error">
+          <span class="material-symbols-outlined text-[18px]">warning</span>
+          <span>Your apps are suspended due to insufficient funds.</span>
+          <%= link_to "Top Up Now", dashboard_billing_path, class: "font-bold underline ml-1" %>
+        </div>
+      </div>
+    <% end %>
+
     <div class="pt-7" data-controller="mobile-nav">
       <%= render "dashboard/shared/sidebar" %>
       <%= render "dashboard/shared/navbar" %>
