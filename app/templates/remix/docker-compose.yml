@@ -1,0 +1,15 @@
+# name: Remix
+# documentation: https://github.com/remix-run/remix
+# slogan: Full-stack React framework focused on web fundamentals and UX
+# category: frameworks
+# tags: node, react, remix, fullstack
+# icon: node
+# deploy_method: git
+# repo: https://github.com/remix-run/remix
+# port: 3000
+
+services:
+  remix:
+    image: remix:latest
+    environment:
+      - NODE_ENV=production

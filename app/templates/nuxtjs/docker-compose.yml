@@ -1,0 +1,15 @@
+# name: Nuxt.js
+# documentation: https://github.com/nuxt/nuxt
+# slogan: Intuitive Vue.js framework with SSR and static generation
+# category: frameworks
+# tags: node, vue, nuxt, frontend, ssr
+# icon: node
+# deploy_method: git
+# repo: https://github.com/nuxt/starter
+# port: 3000
+
+services:
+  nuxtjs:
+    image: nuxtjs:latest
+    environment:
+      - NODE_ENV=production

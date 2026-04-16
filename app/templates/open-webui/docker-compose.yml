@@ -1,0 +1,19 @@
+# name: Open WebUI
+# documentation: https://github.com/open-webui/open-webui
+# slogan: Feature-rich self-hosted AI chat interface supporting Ollama and OpenAI
+# category: ai
+# tags: ai, chat, llm, ollama, openai
+# icon: ai
+# deploy_method: docker_image
+# port: 8080
+
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    environment:
+      - WEBUI_SECRET_KEY=changeme
+    volumes:
+      - open-webui-data:/app/backend/data
+
+volumes:
+  open-webui-data:

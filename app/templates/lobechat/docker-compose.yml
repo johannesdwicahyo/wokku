@@ -1,0 +1,14 @@
+# name: LobeChat
+# documentation: https://github.com/lobehub/lobe-chat
+# slogan: Modern open-source AI chat framework supporting multiple LLM providers
+# category: ai
+# tags: ai, chat, llm, openai, plugins
+# icon: ai
+# deploy_method: docker_image
+# port: 3210
+
+services:
+  lobechat:
+    image: lobehub/lobe-chat:latest
+    environment:
+      - NODE_ENV=production

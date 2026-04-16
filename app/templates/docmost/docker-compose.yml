@@ -1,0 +1,31 @@
+# name: Docmost
+# documentation: https://github.com/docmost/docmost
+# slogan: Open-source wiki and documentation platform for teams
+# category: wiki
+# tags: wiki, docs, knowledge-base, collaboration
+# icon: wiki
+# deploy_method: docker_image
+# port: 3000
+
+services:
+  docmost:
+    image: docmost/docmost:latest
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+
+volumes:
+  postgres-data:
+  redis-data:

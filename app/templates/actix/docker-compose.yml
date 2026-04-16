@@ -1,0 +1,15 @@
+# name: Actix Web
+# documentation: https://github.com/actix/actix-web
+# slogan: Powerful and fast Rust web framework built on Actix actor system
+# category: frameworks
+# tags: rust, actix, api, performance
+# icon: rust
+# deploy_method: git
+# repo: https://github.com/actix/actix-web
+# port: 8080
+
+services:
+  actix:
+    image: actix:latest
+    environment:
+      - RUST_LOG=info

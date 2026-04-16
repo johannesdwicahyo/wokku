@@ -1,0 +1,26 @@
+# name: Hanami
+# documentation: https://github.com/hanami/hanami
+# slogan: Modern Ruby web framework built for simplicity and performance
+# category: frameworks
+# tags: ruby, hanami, fullstack
+# icon: ruby
+# deploy_method: git
+# repo: https://github.com/hanami/hanami
+# post_deploy: bundle exec hanami db migrate
+# port: 2300
+
+services:
+  hanami:
+    image: hanami:latest
+    environment:
+      - HANAMI_ENV=production
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

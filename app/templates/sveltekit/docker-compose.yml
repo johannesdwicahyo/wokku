@@ -1,0 +1,15 @@
+# name: SvelteKit
+# documentation: https://github.com/sveltejs/kit
+# slogan: Svelte full-stack framework with file-based routing and SSR
+# category: frameworks
+# tags: node, svelte, sveltekit, frontend, fullstack
+# icon: node
+# deploy_method: git
+# repo: https://github.com/sveltejs/kit
+# port: 3000
+
+services:
+  sveltekit:
+    image: sveltekit:latest
+    environment:
+      - NODE_ENV=production

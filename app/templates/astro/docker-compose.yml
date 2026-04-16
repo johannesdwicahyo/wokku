@@ -1,0 +1,15 @@
+# name: Astro
+# documentation: https://github.com/withastro/astro
+# slogan: Fast static site builder with islands architecture for any UI framework
+# category: frameworks
+# tags: node, astro, static, frontend
+# icon: node
+# deploy_method: git
+# repo: https://github.com/withastro/astro
+# port: 4321
+
+services:
+  astro:
+    image: astro:latest
+    environment:
+      - NODE_ENV=production

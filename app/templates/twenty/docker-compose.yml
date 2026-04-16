@@ -1,0 +1,31 @@
+# name: Twenty CRM
+# documentation: https://github.com/twentyhq/twenty
+# slogan: Modern open-source CRM — the self-hosted Salesforce alternative
+# category: crm
+# tags: crm, sales, contacts, pipeline
+# icon: crm
+# deploy_method: docker_image
+# port: 3000
+
+services:
+  twenty:
+    image: twentycrm/twenty:latest
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+
+volumes:
+  postgres-data:
+  redis-data:

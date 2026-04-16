@@ -1,0 +1,15 @@
+# name: Elysia
+# documentation: https://github.com/elysiajs/elysia
+# slogan: Ergonomic Bun web framework with end-to-end type safety
+# category: frameworks
+# tags: bun, elysia, typescript, api
+# icon: node
+# deploy_method: git
+# repo: https://github.com/elysiajs/elysia
+# port: 3000
+
+services:
+  elysia:
+    image: elysia:latest
+    environment:
+      - NODE_ENV=production
