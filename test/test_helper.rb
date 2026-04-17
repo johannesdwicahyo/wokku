@@ -44,6 +44,8 @@ DOKKU_PROCESSES_ORIGINAL = {
   start:   (Dokku::Processes.instance_method(:start) rescue nil),
   scale:   (Dokku::Processes.instance_method(:scale) rescue nil)
 }.compact
+HETZNER_ORIGINAL_SERVER_STATUS = CloudProviders::Hetzner.instance_method(:server_status) rescue nil
+HETZNER_ORIGINAL_INITIALIZE = CloudProviders::Hetzner.instance_method(:initialize) rescue nil
 
 module SshStubHelper
   def stub_net_ssh_start(&block)
@@ -79,6 +81,8 @@ module AutoRestoreStubs
     Dokku::Config.define_method(:list, DOKKU_CONFIG_ORIGINAL_LIST) if DOKKU_CONFIG_ORIGINAL_LIST
     Dokku::Client.define_method(:run, DOKKU_CLIENT_ORIGINAL_RUN) if DOKKU_CLIENT_ORIGINAL_RUN
     DOKKU_PROCESSES_ORIGINAL.each { |name, m| Dokku::Processes.define_method(name, m) }
+    CloudProviders::Hetzner.define_method(:server_status, HETZNER_ORIGINAL_SERVER_STATUS) if HETZNER_ORIGINAL_SERVER_STATUS
+    CloudProviders::Hetzner.define_method(:initialize, HETZNER_ORIGINAL_INITIALIZE) if HETZNER_ORIGINAL_INITIALIZE
   end
 end
 
