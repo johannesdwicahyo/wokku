@@ -33,4 +33,30 @@ class Api::V1::PsControllerDeepTest < ActionDispatch::IntegrationTest
     put "/api/v1/apps/#{@app.id}/ps", headers: auth_headers
     assert_response :bad_request
   end
+
+  test "update scales processes and persists counts" do
+    Dokku::Processes.any_instance.stubs(:scale).returns(nil)
+    put "/api/v1/apps/#{@app.id}/ps",
+      params: { scaling: { "web" => 3, "worker" => 2 } },
+      headers: auth_headers
+    assert_response :success
+    assert_equal 3, @app.process_scales.find_by(process_type: "web").count
+    assert_equal 2, @app.process_scales.find_by(process_type: "worker").count
+  end
+
+  test "update returns 503 on connection error" do
+    Dokku::Processes.any_instance.stubs(:scale).raises(Dokku::Client::ConnectionError, "ssh down")
+    put "/api/v1/apps/#{@app.id}/ps",
+      params: { scaling: { "web" => 2 } },
+      headers: auth_headers
+    assert_response :service_unavailable
+  end
+
+  test "update returns 422 on command error" do
+    Dokku::Processes.any_instance.stubs(:scale).raises(Dokku::Client::CommandError.new("boom"))
+    put "/api/v1/apps/#{@app.id}/ps",
+      params: { scaling: { "web" => 2 } },
+      headers: auth_headers
+    assert_response :unprocessable_entity
+  end
 end

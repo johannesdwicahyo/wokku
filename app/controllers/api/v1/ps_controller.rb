@@ -18,7 +18,8 @@ module Api
       def update
         authorize @app_record, :update?
 
-        scaling = params.permit(:scaling).to_h.fetch("scaling", params[:scaling])
+        raw = params[:scaling]
+        scaling = raw.respond_to?(:to_unsafe_h) ? raw.to_unsafe_h : raw
         return render json: { error: "scaling parameter required" }, status: :bad_request unless scaling.is_a?(Hash)
 
         client = Dokku::Client.new(@app_record.server)
