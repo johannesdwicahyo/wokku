@@ -38,6 +38,8 @@ DOKKU_APPS_ORIGINAL_LIST = Dokku::Apps.instance_method(:list) rescue nil
 DOKKU_APPS_ORIGINAL_DESTROY = Dokku::Apps.instance_method(:destroy) rescue nil
 DOKKU_CONFIG_ORIGINAL_LIST = Dokku::Config.instance_method(:list) rescue nil
 DOKKU_CLIENT_ORIGINAL_RUN = Dokku::Client.instance_method(:run) rescue nil
+DOKKU_CLIENT_ORIGINAL_CONNECTED = Dokku::Client.instance_method(:connected?) rescue nil
+DOKKU_CLIENT_ORIGINAL_RUN_STREAMING = Dokku::Client.instance_method(:run_streaming) rescue nil
 DOKKU_PROCESSES_ORIGINAL = {
   restart: (Dokku::Processes.instance_method(:restart) rescue nil),
   stop:    (Dokku::Processes.instance_method(:stop) rescue nil),
@@ -80,6 +82,8 @@ module AutoRestoreStubs
     Dokku::Apps.define_method(:destroy, DOKKU_APPS_ORIGINAL_DESTROY) if DOKKU_APPS_ORIGINAL_DESTROY
     Dokku::Config.define_method(:list, DOKKU_CONFIG_ORIGINAL_LIST) if DOKKU_CONFIG_ORIGINAL_LIST
     Dokku::Client.define_method(:run, DOKKU_CLIENT_ORIGINAL_RUN) if DOKKU_CLIENT_ORIGINAL_RUN
+    Dokku::Client.define_method(:connected?, DOKKU_CLIENT_ORIGINAL_CONNECTED) if DOKKU_CLIENT_ORIGINAL_CONNECTED
+    Dokku::Client.define_method(:run_streaming, DOKKU_CLIENT_ORIGINAL_RUN_STREAMING) if DOKKU_CLIENT_ORIGINAL_RUN_STREAMING
     DOKKU_PROCESSES_ORIGINAL.each { |name, m| Dokku::Processes.define_method(name, m) }
     CloudProviders::Hetzner.define_method(:server_status, HETZNER_ORIGINAL_SERVER_STATUS) if HETZNER_ORIGINAL_SERVER_STATUS
     CloudProviders::Hetzner.define_method(:initialize, HETZNER_ORIGINAL_INITIALIZE) if HETZNER_ORIGINAL_INITIALIZE
