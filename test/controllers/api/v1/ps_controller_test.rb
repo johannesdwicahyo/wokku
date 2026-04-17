@@ -1,0 +1,36 @@
+require "test_helper"
+
+class Api::V1::PsControllerDeepTest < ActionDispatch::IntegrationTest
+  setup do
+    @user = users(:one)
+    @app = app_records(:one)
+    _, @plain_token = ApiToken.create_with_token!(user: @user, name: "test")
+  end
+
+  def auth_headers
+    { "Authorization" => "Bearer #{@plain_token}" }
+  end
+
+  test "show returns Dokku process report" do
+    Dokku::Processes.any_instance.stubs(:list).returns({ "web" => "1", "worker" => "0" })
+    get "/api/v1/apps/#{@app.id}/ps", headers: auth_headers
+    assert_response :success
+    assert_equal({ "web" => "1", "worker" => "0" }, JSON.parse(response.body)["processes"])
+  end
+
+  test "show returns 503 on Dokku connection error" do
+    Dokku::Processes.any_instance.stubs(:list).raises(Dokku::Client::ConnectionError, "ssh down")
+    get "/api/v1/apps/#{@app.id}/ps", headers: auth_headers
+    assert_response :service_unavailable
+  end
+
+  test "update rejects non-hash scaling" do
+    put "/api/v1/apps/#{@app.id}/ps", params: { scaling: "invalid" }, headers: auth_headers
+    assert_response :bad_request
+  end
+
+  test "update rejects missing scaling parameter" do
+    put "/api/v1/apps/#{@app.id}/ps", headers: auth_headers
+    assert_response :bad_request
+  end
+end
