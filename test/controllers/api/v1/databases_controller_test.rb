@@ -63,4 +63,44 @@ class Api::V1::DatabasesControllerTest < ActionDispatch::IntegrationTest
     end
     assert_response :success
   end
+
+  test "destroy returns 503 on Dokku connection error" do
+    db = @server.database_services.create!(name: "err-down", service_type: "postgres", status: :running)
+    Dokku::Databases.any_instance.stubs(:destroy).raises(Dokku::Client::ConnectionError, "ssh down")
+    delete "/api/v1/databases/#{db.id}", headers: auth_headers
+    assert_response :service_unavailable
+  end
+
+  test "link attaches a database to an app" do
+    db = @server.database_services.create!(name: "shared-pg", service_type: "postgres", status: :running)
+    app = app_records(:one)
+    Dokku::Databases.any_instance.stubs(:link).returns(nil)
+
+    assert_difference "AppDatabase.count", 1 do
+      post "/api/v1/databases/#{db.id}/link", params: { app_id: app.id }, headers: auth_headers
+    end
+    assert_response :created
+  end
+
+  test "link returns 503 on connection error" do
+    db = @server.database_services.create!(name: "link-err", service_type: "postgres", status: :running)
+    Dokku::Databases.any_instance.stubs(:link).raises(Dokku::Client::ConnectionError, "ssh down")
+    post "/api/v1/databases/#{db.id}/link",
+      params: { app_id: app_records(:one).id },
+      headers: auth_headers
+    assert_response :service_unavailable
+  end
+
+  test "unlink detaches a database from an app" do
+    db = @server.database_services.create!(name: "unlink-pg", service_type: "postgres", status: :running)
+    app = app_records(:one)
+    AppDatabase.create!(app_record: app, database_service: db, alias_name: "DB")
+
+    Dokku::Databases.any_instance.stubs(:unlink).returns(nil)
+
+    assert_difference "AppDatabase.count", -1 do
+      post "/api/v1/databases/#{db.id}/unlink", params: { app_id: app.id }, headers: auth_headers
+    end
+    assert_response :success
+  end
 end
