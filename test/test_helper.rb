@@ -69,6 +69,7 @@ end
 module AutoRestoreStubs
   def after_teardown
     super
+    I18n.locale = I18n.default_locale
     Net::SSH.define_singleton_method(:start, NET_SSH_ORIGINAL_START)
     Net::HTTP.define_singleton_method(:new, NET_HTTP_ORIGINAL_NEW)
     Tempfile.define_singleton_method(:new, TEMPFILE_ORIGINAL_NEW)
