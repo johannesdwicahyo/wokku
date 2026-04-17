@@ -41,7 +41,7 @@ class ProvisionServerJob < ApplicationJob
       channel.wait
 
       # Set global domain
-      ssh.exec!("dokku domains:set-global #{server.name}.wokku.dev") rescue nil
+      ssh.exec!("dokku domains:set-global #{server.name}.wokku.cloud") rescue nil
 
       # Install common plugins
       ssh.exec!("dokku plugin:install https://github.com/dokku/dokku-postgres.git") rescue nil

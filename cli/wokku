@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # Wokku CLI — manage your Wokku apps from the terminal
-# Install: curl -sL https://wokku.dev/cli/install.sh | bash
+# Install: curl -sL https://wokku.cloud/cli/install.sh | bash
 # Or:      cp cli/wokku /usr/local/bin/wokku && chmod +x /usr/local/bin/wokku
 
 require "json"
@@ -28,7 +28,7 @@ def save_config(config)
 end
 
 def api_url
-  load_config["api_url"] || ENV["WOKKU_API_URL"] || "https://wokku.dev/api/v1"
+  load_config["api_url"] || ENV["WOKKU_API_URL"] || "https://wokku.cloud/api/v1"
 end
 
 def api_token
@@ -96,9 +96,9 @@ end
 
 # --- Auth ---
 register "auth:login", "Authenticate with Wokku" do
-  print "Wokku API URL [https://wokku.dev/api/v1]: "
+  print "Wokku API URL [https://wokku.cloud/api/v1]: "
   url = $stdin.gets.strip
-  url = "https://wokku.dev/api/v1" if url.empty?
+  url = "https://wokku.cloud/api/v1" if url.empty?
 
   print "Email: "
   email = $stdin.gets.strip

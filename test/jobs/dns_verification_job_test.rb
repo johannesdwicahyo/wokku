@@ -16,7 +16,7 @@ class DnsVerificationJobTest < ActiveSupport::TestCase
   end
 
   test "does not update domain when DNS is not verified" do
-    # DNS lookup will fail for test.example.com -> domains.wokku.dev
+    # DNS lookup will fail for test.example.com -> domains.wokku.cloud
     DnsVerificationJob.perform_now(@domain.id)
     @domain.reload
     assert_not @domain.dns_verified

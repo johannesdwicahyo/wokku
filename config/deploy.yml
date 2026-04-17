@@ -8,7 +8,7 @@ servers:
 
 proxy:
   ssl: true
-  host: wokku.dev
+  host: wokku.cloud
 
 registry:
   server: localhost:5000
@@ -22,16 +22,28 @@ env:
     - WOKKU_DATABASE_PASSWORD
     - RESEND_API_KEY
     - SENTRY_DSN
+    - IPAYMU_VA
+    - IPAYMU_API_KEY
+    - STRIPE_PUBLISHABLE_KEY
+    - STRIPE_SECRET_KEY
+    - STRIPE_WEBHOOK_SECRET
+    - CLOUDFLARE_API_TOKEN
+    - CLOUDFLARE_ZONE_ID
+    - GOOGLE_OAUTH_CLIENT_ID
+    - GOOGLE_OAUTH_CLIENT_SECRET
+    - GITHUB_OAUTH_CLIENT_ID
+    - GITHUB_OAUTH_CLIENT_SECRET
+    - ADMIN_EMAIL
+    - ADMIN_PASSWORD
   clear:
     SOLID_QUEUE_IN_PUMA: true
     DB_HOST: wokku-db
     REDIS_URL: redis://wokku-redis:6379/0
     RAILS_LOG_LEVEL: info
     WEB_CONCURRENCY: 2
-    IPAYMU_VA: "0000001914914286"
-    IPAYMU_API_KEY: "SANDBOX2BAE12F9-82A3-49CA-B1B2-6BF9ACD0D8A9"
+    RAILS_MAX_THREADS: 10
     IPAYMU_URL: "https://sandbox.ipaymu.com"
-    APP_URL: "https://wokku.dev"
+    APP_URL: "https://wokku.cloud"
 
 volumes:
   - "wokku_storage:/rails/storage"
@@ -44,8 +56,6 @@ ssh:
 builder:
   remote: ssh://deploy@43.159.57.11
   arch: amd64
-  secrets:
-    - WOKKU_EE_TOKEN
 
 aliases:
   console: app exec --interactive --reuse "bin/rails console"

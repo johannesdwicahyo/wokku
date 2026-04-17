@@ -11,6 +11,12 @@ module Dashboard
       @database = DatabaseService.find(params[:resource_id])
       authorize @database, :update?
 
+      if @database.backup_limit_reached?
+        redirect_to dashboard_resource_backups_path(@database),
+          alert: "Free tier limit reached (2 backups). Upgrade to Basic for daily auto-backups with 7-day retention."
+        return
+      end
+
       BackupJob.perform_later(@database.id)
       redirect_to dashboard_resource_backups_path(@database), notice: "Backup started..."
     end

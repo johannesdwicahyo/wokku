@@ -8,7 +8,7 @@ Rails.application.configure do
     policy.object_src  :none
     policy.script_src  :self, "https://cdn.jsdelivr.net"
     policy.style_src   :self, :unsafe_inline, "https://fonts.googleapis.com"
-    policy.connect_src :self, "wss://wokku.dev", "https://wokku.dev"
+    policy.connect_src :self, "wss://wokku.cloud", "https://wokku.cloud"
     policy.frame_src   :none
     policy.base_uri    :self
     policy.form_action :self, "https://sandbox.ipaymu.com", "https://my.ipaymu.com"

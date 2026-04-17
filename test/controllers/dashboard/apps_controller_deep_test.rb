@@ -8,6 +8,10 @@ class Dashboard::AppsControllerDeepTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:two)  # admin, team two
     @app  = app_records(:two)  # belongs to team two, server two
+
+    # Defend against test pollution — ensure Dokku::Client#run is the original
+    # before each test body stubs it differently.
+    Dokku::Client.define_method(:run, DOKKU_CLIENT_ORIGINAL_RUN) if DOKKU_CLIENT_ORIGINAL_RUN
   end
 
   # ---------------------------------------------------------------------------

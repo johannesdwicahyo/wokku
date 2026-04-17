@@ -1,6 +1,6 @@
 <div class="flex items-center justify-between mb-6">
   <div>
-    <h1 class="text-xl font-headline text-on-surface">Notifications</h1>
+    <h1 class="text-xl font-headline text-on-surface"><%= t("dashboard.notifications.title") %></h1>
     <p class="mt-0.5 text-sm text-outline">Get notified about deploys, failures, and other events</p>
   </div>
 </div>
@@ -8,7 +8,7 @@
 <%# Existing Rules %>
 <div class="bg-surface-container-low rounded-xl border border-outline-variant/15 overflow-hidden mb-6">
   <div class="px-6 py-4 border-b border-outline-variant/15">
-    <h2 class="text-base font-semibold text-on-surface">Notification Rules</h2>
+    <h2 class="text-base font-semibold text-on-surface"><%= t("dashboard.notifications.notification_rules") %></h2>
   </div>
 
   <% if @notifications.any? %>
@@ -22,6 +22,10 @@
                 <span class="material-symbols-outlined text-[18px] text-primary">mail</span>
               <% when "slack" %>
                 <span class="material-symbols-outlined text-[18px] text-secondary">tag</span>
+              <% when "discord" %>
+                <span class="material-symbols-outlined text-[18px] text-[#5865F2]">forum</span>
+              <% when "telegram" %>
+                <span class="material-symbols-outlined text-[18px] text-[#26A5E4]">send</span>
               <% when "webhook" %>
                 <span class="material-symbols-outlined text-[18px] text-tertiary">webhook</span>
               <% end %>
@@ -57,7 +61,7 @@
 
 <%# Add Notification %>
 <div class="bg-surface-container-low rounded-xl border border-outline-variant/15 p-6">
-  <h3 class="text-sm font-semibold text-on-surface mb-4">Add Notification Rule</h3>
+  <h3 class="text-sm font-semibold text-on-surface mb-4"><%= t("dashboard.notifications.add_rule") %></h3>
   <%= form_with(model: @notification, url: dashboard_notifications_path, class: "space-y-4") do |f| %>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div>
@@ -68,10 +72,77 @@
           ["Discord", "discord"],
           ["Telegram", "telegram"],
           ["Webhook", "webhook"]
-        ], { prompt: "Select channel" }, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary" %>
-        <p class="mt-1 text-[10px] text-outline-variant">
-          Slack/Discord: paste webhook URL. Telegram: set bot_token and chat_id in config.
-        </p>
+        ], { prompt: "Select channel" }, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary", data: { action: "change->notification-config#toggle" } %>
+      </div>
+
+      <%# Channel-specific config fields %>
+      <div data-controller="notification-config">
+        <label class="block text-xs text-on-surface-variant uppercase tracking-wider mb-1">Channel Config</label>
+
+        <%# Email %>
+        <div data-notification-config-target="email" class="hidden">
+          <div class="bg-surface rounded-md p-3 space-y-2">
+            <p class="text-xs text-on-surface-variant">Notifications will be sent to <span class="font-mono font-bold text-on-surface"><%= current_user.email %></span></p>
+            <p class="text-[10px] text-outline">No additional setup needed.</p>
+          </div>
+        </div>
+
+        <%# Slack %>
+        <div data-notification-config-target="slack" class="hidden space-y-2">
+          <input type="text" name="notification[config][webhook_url]" placeholder="https://hooks.slack.com/services/T00.../B00.../xxxx" class="w-full rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary font-mono">
+          <div class="bg-surface rounded-md p-3">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1.5">Setup Guide</p>
+            <ol class="text-[11px] text-outline space-y-1 list-decimal list-inside">
+              <li>Open your Slack workspace and go to <span class="text-on-surface-variant">Apps</span></li>
+              <li>Search for <span class="font-bold text-on-surface-variant">Incoming Webhooks</span> and install it</li>
+              <li>Click <span class="font-bold text-on-surface-variant">Add New Webhook to Workspace</span></li>
+              <li>Choose a channel (e.g. #deploys) and authorize</li>
+              <li>Copy the <span class="font-bold text-on-surface-variant">Webhook URL</span> and paste it above</li>
+            </ol>
+          </div>
+        </div>
+
+        <%# Discord %>
+        <div data-notification-config-target="discord" class="hidden space-y-2">
+          <input type="text" name="notification[config][webhook_url]" placeholder="https://discord.com/api/webhooks/1234.../abcd..." class="w-full rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary font-mono">
+          <div class="bg-surface rounded-md p-3">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1.5">Setup Guide</p>
+            <ol class="text-[11px] text-outline space-y-1 list-decimal list-inside">
+              <li>Open your Discord server and go to <span class="text-on-surface-variant">Server Settings > Integrations</span></li>
+              <li>Click <span class="font-bold text-on-surface-variant">Webhooks > New Webhook</span></li>
+              <li>Name it (e.g. "Wokku") and choose a channel</li>
+              <li>Click <span class="font-bold text-on-surface-variant">Copy Webhook URL</span> and paste it above</li>
+            </ol>
+          </div>
+        </div>
+
+        <%# Telegram %>
+        <div data-notification-config-target="telegram" class="hidden space-y-2">
+          <input type="text" name="notification[config][bot_token]" placeholder="123456:ABC-DEF1234..." class="w-full rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary font-mono">
+          <input type="text" name="notification[config][chat_id]" placeholder="-1001234567890" class="w-full rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary font-mono">
+          <div class="bg-surface rounded-md p-3">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1.5">Setup Guide</p>
+            <ol class="text-[11px] text-outline space-y-1 list-decimal list-inside">
+              <li>Open Telegram and message <a href="https://t.me/BotFather" class="text-primary hover:underline" target="_blank">@BotFather</a></li>
+              <li>Send <span class="font-mono text-on-surface-variant">/newbot</span>, follow the prompts, and copy the <span class="font-bold text-on-surface-variant">Bot Token</span></li>
+              <li>Add the bot to your group or channel</li>
+              <li>To find your <span class="font-bold text-on-surface-variant">Chat ID</span>: message <a href="https://t.me/userinfobot" class="text-primary hover:underline" target="_blank">@userinfobot</a>, or for groups forward a message to <a href="https://t.me/JsonDumpBot" class="text-primary hover:underline" target="_blank">@JsonDumpBot</a></li>
+              <li>Paste both values in the fields above</li>
+            </ol>
+          </div>
+        </div>
+
+        <%# Webhook %>
+        <div data-notification-config-target="webhook" class="hidden space-y-2">
+          <input type="text" name="notification[config][url]" placeholder="https://example.com/webhooks/wokku" class="w-full rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary font-mono">
+          <div class="bg-surface rounded-md p-3">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1.5">Setup Guide</p>
+            <p class="text-[11px] text-outline mb-2">We'll send a <span class="font-mono text-on-surface-variant">POST</span> request with a JSON body on each event:</p>
+            <code class="block text-[10px] font-mono text-on-surface-variant bg-surface-container-low rounded p-2 whitespace-pre">{ "event": "deploy_succeeded",
+  "app": "my-app",
+  "timestamp": "2026-..." }</code>
+          </div>
+        </div>
       </div>
       <div>
         <label class="block text-xs text-on-surface-variant uppercase tracking-wider mb-1">App (optional)</label>

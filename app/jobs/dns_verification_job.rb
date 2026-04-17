@@ -21,7 +21,7 @@ class DnsVerificationJob < ApplicationJob
   def dns_verified?(hostname)
     resolver = Resolv::DNS.new
     records = resolver.getresources(hostname, Resolv::DNS::Resource::IN::CNAME)
-    records.any? { |r| r.name.to_s.downcase == "domains.wokku.dev" }
+    records.any? { |r| r.name.to_s.downcase == "domains.wokku.cloud" }
   rescue Resolv::ResolvError
     false
   end

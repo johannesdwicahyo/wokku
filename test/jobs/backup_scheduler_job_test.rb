@@ -21,11 +21,16 @@ class BackupSchedulerJobTest < ActiveJob::TestCase
       path_prefix: "backups"
     )
 
+    ServiceTier.find_or_create_by!(name: "basic", service_type: "postgres") do |t|
+      t.price_cents_per_hour = 0.137
+      t.spec = { storage_gb: 4, connections: 50 }
+    end
     db = DatabaseService.create!(
       server: server,
       service_type: "postgres",
       name: "pg-scheduler-test",
-      status: :running
+      status: :running,
+      tier_name: "basic"
     )
 
     assert_enqueued_with(job: BackupJob) do

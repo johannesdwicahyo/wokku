@@ -30,6 +30,7 @@ class TemplateDeployJob < ApplicationJob
 
     if result[:success]
       app = result[:app]
+      PostDeploySetupJob.perform_later(app.id)
       if deploy
         deploy.update!(
           app_record: app,

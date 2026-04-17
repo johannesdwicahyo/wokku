@@ -46,9 +46,6 @@ if [ -f /etc/os-release ]; then
   if [[ "${ID:-}" != "ubuntu" ]]; then
     err "This script requires Ubuntu 22.04 or 24.04. Detected: ${PRETTY_NAME:-unknown}"
   fi
-  if [[ "${VERSION_ID:-}" != "24.04" && "${VERSION_ID:-}" != "22.04" ]]; then
-    warn "Tested on Ubuntu 22.04/24.04. Detected: ${VERSION_ID:-unknown}. Proceeding..."
-  fi
 fi
 
 echo ""
@@ -70,9 +67,10 @@ export DEBIAN_FRONTEND=noninteractive
 # Ubuntu 24.04: Prevent needrestart from prompting during apt operations
 if [ -f /etc/needrestart/needrestart.conf ]; then
   sed -i "s/#\$nrconf{restart} = 'i';/\$nrconf{restart} = 'a';/" /etc/needrestart/needrestart.conf
-  log "Disabled needrestart interactive prompts (Ubuntu 24.04)"
+  log "Disabled needrestart interactive prompts"
 fi
 export NEEDRESTART_MODE=a
+export NEEDRESTART_SUSPEND=1
 
 apt-get update -qq
 apt-get upgrade -y -qq -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
@@ -156,7 +154,7 @@ LogLevel VERBOSE
 SSHD
 
 # Ubuntu 24.04 uses sshd_config.d includes by default
-systemctl reload sshd
+systemctl reload ssh || systemctl reload sshd
 log "SSH hardened: key-only, no password, no X11, 3 max auth tries"
 
 # ══════════════════════════════════════════════════════════════════

@@ -4,11 +4,11 @@
   # Separate the auto-assigned Wokku domain from custom domains
   server_global_domain = @app.server.host # fallback
   begin
-    # Try to detect the wokku subdomain pattern (e.g. app-name.mochi.wokku.dev)
+    # Try to detect the wokku subdomain pattern (e.g. app-name.mochi.wokku.cloud)
   rescue
   end
-  wokku_domain = @domains.find { |d| d.hostname.end_with?(".wokku.dev") }
-  custom_domains = @domains.reject { |d| d.hostname.end_with?(".wokku.dev") }
+  wokku_domain = @domains.find { |d| d.hostname.end_with?(".wokku.cloud") }
+  custom_domains = @domains.reject { |d| d.hostname.end_with?(".wokku.cloud") }
 %>
 
 <%# Wokku Domain (auto-assigned) %>
@@ -87,7 +87,7 @@
 <%# Add Domain %>
 <div class="bg-surface-container-low rounded-xl p-6">
   <h3 class="text-sm font-semibold text-on-surface font-headline mb-1">Add Domain</h3>
-  <p class="text-xs text-outline mb-4">Point a CNAME record to <span class="font-mono text-on-surface-variant"><%= wokku_domain&.hostname || "#{@app.name}.mochi.wokku.dev" %></span> then add the hostname below.</p>
+  <p class="text-xs text-outline mb-4">Point a CNAME record to <span class="font-mono text-on-surface-variant"><%= wokku_domain&.hostname || "#{@app.name}.mochi.wokku.cloud" %></span> then add the hostname below.</p>
   <%= form_with(model: Domain.new, url: dashboard_app_domains_path(@app), class: "flex items-end space-x-3") do |f| %>
     <div class="flex-1">
       <%= f.label :hostname, class: "block text-[10px] text-outline uppercase tracking-wider font-bold mb-1" %>

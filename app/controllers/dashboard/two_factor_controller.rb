@@ -22,6 +22,11 @@ module Dashboard
     end
 
     def disable
+      if current_user.admin?
+        redirect_to dashboard_two_factor_path, alert: "Admin accounts cannot disable two-factor authentication."
+        return
+      end
+
       if current_user.validate_and_consume_otp!(params[:otp_code])
         current_user.update!(otp_required_for_login: false, otp_secret: nil)
         redirect_to dashboard_profile_path, notice: "Two-factor authentication disabled."

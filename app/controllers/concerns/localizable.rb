@@ -11,7 +11,7 @@ module Localizable
   private
 
   def set_locale
-    locale = params[:locale] || cookies[:locale] || extract_locale_from_header || I18n.default_locale
+    locale = params[:locale].presence || cookies[:locale] || extract_locale_from_header || I18n.default_locale
     locale = locale.to_sym
     locale = I18n.default_locale unless I18n.available_locales.include?(locale)
 

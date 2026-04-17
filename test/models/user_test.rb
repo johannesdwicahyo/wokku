@@ -38,8 +38,8 @@ class UserTest < ActiveSupport::TestCase
     assert_not users(:one).admin?
   end
 
-  test "fixture two has admin role" do
-    assert users(:two).admin?
+  test "fixture admin has admin role" do
+    assert users(:admin).admin?
   end
 
   test "role enum has member and admin values" do
@@ -105,8 +105,8 @@ class UserTest < ActiveSupport::TestCase
 
   # --- current_plan ---
 
-  test "current_plan returns nil" do
-    assert_nil users(:one).current_plan
+  test "current_plan falls back to free plan when no subscription" do
+    assert_equal plans(:free), users(:one).current_plan
   end
 
   # --- balance helpers ---

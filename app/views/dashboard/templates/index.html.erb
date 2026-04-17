@@ -2,18 +2,24 @@
 
 <%# Header %>
 <div class="mb-8">
-  <h1 class="font-headline text-3xl font-bold text-on-surface mb-2">1 Click Deploy</h1>
+  <h1 class="font-headline text-3xl font-bold text-on-surface mb-2"><%= t("dashboard.templates.title") %></h1>
   <p class="text-sm text-outline">Deploy production-ready stacks in seconds. Each template is optimized for high-performance orchestration.</p>
 </div>
 
 <%# Search %>
-<div class="mb-8">
-  <%= form_with url: dashboard_templates_path, method: :get do |f| %>
-    <div class="relative">
-      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
-      <%= f.search_field :q, value: params[:q], placeholder: "Search templates...", class: "w-full pl-10 pr-4 py-2.5 rounded-md bg-surface-container-low border-none text-sm text-on-surface placeholder-outline/50 focus:ring-1 focus:ring-primary", autofocus: params[:q].present? %>
-    </div>
-  <% end %>
+<div class="mb-8" data-controller="template-filter">
+  <div class="relative">
+    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
+    <input type="text" placeholder="<%= t('dashboard.templates.search_placeholder') %>" value="<%= params[:q] %>"
+           data-template-filter-target="input"
+           data-action="input->template-filter#filter"
+           class="w-full pl-10 pr-4 py-2.5 rounded-md bg-surface-container-low border-none text-sm text-on-surface placeholder-outline/50 focus:ring-1 focus:ring-primary"
+           <%= "autofocus" if params[:q].present? %>>
+  </div>
+  <div data-template-filter-target="empty" class="hidden text-center py-16 bg-surface-container-low rounded-md mt-8">
+    <span class="material-symbols-outlined text-outline-variant text-[40px] mb-3">search_off</span>
+    <p class="text-sm text-outline">No templates found.</p>
+  </div>
 </div>
 
 <div class="grid grid-cols-12 gap-8">
@@ -21,10 +27,10 @@
   <div class="col-span-3">
     <div class="sticky top-24 space-y-6">
       <div>
-        <p class="text-[10px] text-outline uppercase tracking-widest font-bold mb-3">Categories</p>
+        <p class="text-[10px] text-outline uppercase tracking-widest font-bold mb-3"><%= t("dashboard.templates.categories") %></p>
         <div class="space-y-0.5">
           <%= link_to dashboard_templates_path, class: "flex items-center justify-between px-3 py-2 rounded-md text-sm transition #{params[:category].blank? && params[:q].blank? ? 'bg-surface-container-high text-primary font-semibold' : 'text-on-surface-variant hover:bg-surface-container-high/50 hover:text-on-surface'}" do %>
-            <span>All Templates</span>
+            <span><%= t("dashboard.templates.all_templates") %></span>
             <span class="text-[10px] font-mono bg-surface-container-highest px-1.5 py-0.5 rounded"><%= @templates.size %></span>
           <% end %>
           <% @categories.each do |cat| %>
@@ -54,7 +60,7 @@
     <% if @templates.any? %>
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <% @templates.each do |template| %>
-          <div class="bg-surface-container-low rounded-md overflow-hidden hover:bg-surface-container-high/60 transition group">
+          <div data-template-wrapper data-template-filter-target="card" data-name="<%= template[:name] %>" data-tags="<%= (template[:tags] || []).join(' ') %> <%= template[:category] %>" class="bg-surface-container-low rounded-md overflow-hidden hover:bg-surface-container-high/60 transition group">
             <div class="p-5">
               <%# Icon + Category Badge %>
               <div class="flex items-start justify-between mb-4">
@@ -84,7 +90,7 @@
                     <% end %>
                   </p>
                 </div>
-                <%= link_to dashboard_template_path(template[:slug]), class: "px-4 py-2 rounded-md text-xs font-bold bg-surface-variant text-on-surface-variant group-hover:technical-gradient group-hover:text-on-primary transition-all" do %>
+                <%= link_to dashboard_template_path(template[:slug]), class: "px-4 py-2 rounded-md text-xs font-bold technical-gradient text-on-primary hover:opacity-90 transition-all" do %>
                   Deploy Now
                 <% end %>
               </div>

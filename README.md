@@ -1,10 +1,10 @@
 # Wokku
 
-[![Deploy to Wokku](https://img.shields.io/badge/Deploy%20to-Wokku-22C55E?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMyAxMFYzTDQgMTRoN3Y3bDktMTFoLTd6Ii8+PC9zdmc+)](https://wokku.dev/deploy)
+[![Deploy to Wokku](https://img.shields.io/badge/Deploy%20to-Wokku-22C55E?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMyAxMFYzTDQgMTRoN3Y3bDktMTFoLTd6Ii8+PC9zdmc+)](https://wokku.cloud/deploy)
 
 **Web UI for [Dokku](https://dokku.com).** Open-source cloud platform for developers and creators — deploy apps with `git push`, install popular open-source tools in one click, manage databases, domains, SSL, and more from a beautiful dashboard.
 
-> Self-host on your own servers or use our managed cloud at [wokku.dev](https://wokku.dev). No vendor lock-in.
+> Self-host on your own servers or use our managed cloud at [wokku.cloud](https://wokku.cloud). No vendor lock-in.
 
 ## Features
 
@@ -41,7 +41,7 @@ docker compose up -d
 docker compose exec web bin/rails db:setup
 ```
 
-Open `http://localhost:3000` — default login: `admin@wokku.dev` / `password123456`
+Open `http://localhost:3000` — default login: `admin@wokku.cloud` / `password123456`
 
 ### Manual Setup
 
@@ -69,7 +69,7 @@ wokku servers:add my-server --host dokku.example.com --ssh-key ~/.ssh/id_ed25519
 
 ## 1-Click App Templates
 
-Deploy popular open-source tools with a single click. Browse from the dashboard or the [template gallery](https://wokku.dev/dashboard/templates).
+Deploy popular open-source tools with a single click. Browse from the dashboard or the [template gallery](https://wokku.cloud/dashboard/templates).
 
 **Popular templates:** n8n, Waha, Ghost, Uptime Kuma, Umami, Vaultwarden, NocoDB, Grafana, Cal.com, Listmonk, Miniflux, Supabase, and 40+ more.
 
@@ -110,7 +110,7 @@ All endpoints are under `/api/v1/` with Bearer token authentication.
 
 ```bash
 curl -X POST localhost:3000/api/v1/auth/login \
-  -d '{"email":"admin@wokku.dev","password":"password123456"}'
+  -d '{"email":"admin@wokku.cloud","password":"password123456"}'
 
 curl -H "Authorization: Bearer <token>" localhost:3000/api/v1/apps
 ```
@@ -169,22 +169,18 @@ services:
 bin/rails test
 ```
 
-## Claude Code (MCP)
+## Claude Code Plugin
 
-Manage your Wokku apps from [Claude Code](https://docs.anthropic.com/en/docs/claude-code) using the built-in MCP server — 55 tools covering 100% of the API. Deploy templates, manage domains, scale dynos, rollback releases, and more through natural language.
+Install the official Wokku plugin for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — 57 tools + 4 guided workflows for deploying, managing, and troubleshooting your apps through natural language.
 
 ```bash
-# Download
-curl -fsSL https://raw.githubusercontent.com/johannesdwicahyo/wokku/main/mcp/server.rb -o wokku-mcp.rb
-
-# Add to Claude Code
-claude mcp add wokku \
-  -e WOKKU_API_URL=https://wokku.dev/api/v1 \
-  -e WOKKU_API_TOKEN=your-token-here \
-  -- ruby wokku-mcp.rb
+claude plugin marketplace add johannesdwicahyo/wokku-plugin
+claude plugin install wokku@wokku
 ```
 
-See [mcp/README.md](mcp/README.md) for full setup instructions and all 55 available tools.
+Then ask Claude: *"Deploy this project to Wokku as my-app"* or *"Troubleshoot why my-app is crashing"*.
+
+See [mcp/README.md](mcp/README.md) for the underlying MCP server (55 tools, 100% API coverage) and full setup instructions.
 
 ## Enterprise Edition
 
@@ -196,7 +192,7 @@ Wokku follows an open-core model. The community edition (this repo) is fully fun
 - Auto-placement (bin-packing server selection)
 - Mobile companion app
 
-See [wokku.dev](https://wokku.dev) for the managed cloud and enterprise features.
+See [wokku.cloud](https://wokku.cloud) for the managed cloud and enterprise features.
 
 ## License
 

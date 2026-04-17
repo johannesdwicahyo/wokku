@@ -3,8 +3,8 @@ class IpaymuClient
   PRODUCTION_URL = "https://my.ipaymu.com"
 
   def initialize
-    @va = ENV.fetch("IPAYMU_VA", "0000001914914286")
-    @api_key = ENV.fetch("IPAYMU_API_KEY", "SANDBOX2BAE12F9-82A3-49CA-B1B2-6BF9ACD0D8A9")
+    @va = ENV.fetch("IPAYMU_VA", "REDACTED_IPAYMU_VA")
+    @api_key = ENV.fetch("IPAYMU_API_KEY", "REDACTED_IPAYMU_KEY")
     @base_url = ENV.fetch("IPAYMU_URL", SANDBOX_URL)
   end
 
@@ -14,7 +14,7 @@ class IpaymuClient
       phone: customer_phone,
       email: customer_email,
       amount: amount_idr.to_i,
-      notifyUrl: "#{ENV.fetch('APP_URL', 'https://wokku.dev')}/webhooks/ipaymu",
+      notifyUrl: "#{ENV.fetch('APP_URL', 'https://wokku.cloud')}/webhooks/ipaymu",
       referenceId: reference_id,
       paymentMethod: payment_method,
       paymentChannel: payment_channel
@@ -27,9 +27,9 @@ class IpaymuClient
       product: products,
       qty: [ 1 ],
       price: [ amount_idr.to_i ],
-      returnUrl: "#{ENV.fetch('APP_URL', 'https://wokku.dev')}/dashboard/billing?status=success",
-      cancelUrl: "#{ENV.fetch('APP_URL', 'https://wokku.dev')}/dashboard/billing?status=cancelled",
-      notifyUrl: "#{ENV.fetch('APP_URL', 'https://wokku.dev')}/webhooks/ipaymu",
+      returnUrl: "#{ENV.fetch('APP_URL', 'https://wokku.cloud')}/dashboard/billing?status=success",
+      cancelUrl: "#{ENV.fetch('APP_URL', 'https://wokku.cloud')}/dashboard/billing?status=cancelled",
+      notifyUrl: "#{ENV.fetch('APP_URL', 'https://wokku.cloud')}/webhooks/ipaymu",
       referenceId: reference_id
     }
     post("/api/v2/payment", body)

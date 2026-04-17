@@ -8,6 +8,16 @@ module Api
       def login
         user = User.find_by(email: params[:email])
         if user&.valid_password?(params[:password])
+          # Admin must have 2FA enabled and provide OTP code
+          if user.admin?
+            unless user.two_factor_enabled?
+              return render json: { error: "Admin must enable 2FA before using the API. Log in at wokku.cloud first." }, status: :forbidden
+            end
+            unless user.validate_and_consume_otp!(params[:otp_code].to_s)
+              return render json: { error: "Invalid or missing OTP code. Provide otp_code parameter." }, status: :unauthorized
+            end
+          end
+
           token, plain_token = ApiToken.create_with_token!(
             user: user,
             name: params[:name] || "cli-#{Time.current.to_i}"

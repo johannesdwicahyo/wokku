@@ -47,6 +47,7 @@ gem "rqrcode" # For QR code generation
 gem "pundit"
 gem "omniauth-github", "~> 2.0"
 gem "omniauth-google-oauth2"
+gem "omniauth-apple"
 gem "omniauth-rails_csrf_protection"
 
 # SSH
@@ -56,6 +57,8 @@ gem "sshkit"
 # GitHub Integration
 gem "octokit"
 gem "jwt"
+# Faraday 2 split retry middleware into its own gem; octokit/stripe still try to use it
+gem "faraday-retry"
 
 # S3 Backups (supports AWS S3, Cloudflare R2, MinIO, Backblaze B2, DO Spaces)
 gem "aws-sdk-s3", require: false
@@ -83,8 +86,9 @@ gem "stackprof"
 gem "commonmarker"
 gem "rouge"
 
-# Enterprise Edition (loaded when ee/ directory exists)
-eval_gemfile "ee/Gemfile.ee" if File.exist?(File.expand_path("ee/Gemfile.ee", __dir__))
+# Billing
+gem "pay", "~> 7.0"
+gem "stripe", "~> 12.0"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
@@ -110,4 +114,6 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
   gem "simplecov", require: false
+  # Mocking/stubbing (minitest 6 dropped built-in Mock/stub)
+  gem "mocha"
 end

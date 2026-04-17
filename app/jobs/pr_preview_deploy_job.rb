@@ -68,6 +68,7 @@ class PrPreviewDeployJob < ApplicationJob
 
       deploy.update!(status: :succeeded, log: log, finished_at: Time.current)
       app.update!(status: :running)
+      PostDeploySetupJob.perform_later(app.id)
 
       # Get the preview URL
       domains = Dokku::Domains.new(client).list(preview_name) rescue []
@@ -103,7 +104,7 @@ class PrPreviewDeployJob < ApplicationJob
            "| **URL** | #{preview_url} |\n" \
            "| **Commit** | `#{commit_sha&.first(7)}` |\n" \
            "| **App** | `#{parent_app.name}-pr-#{pr_number}` |\n\n" \
-           "_Deployed by [Wokku](https://wokku.dev)_"
+           "_Deployed by [Wokku](https://wokku.cloud)_"
 
     github.client.add_comment(
       parent_app.github_repo_full_name,

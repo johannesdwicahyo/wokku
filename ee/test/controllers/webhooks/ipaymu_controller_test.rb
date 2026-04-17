@@ -1,8 +1,8 @@
 require "test_helper"
 
 class Webhooks::IpaymuControllerTest < ActionDispatch::IntegrationTest
-  IPAYMU_API_KEY = "SANDBOX2BAE12F9-82A3-49CA-B1B2-6BF9ACD0D8A9"
-  IPAYMU_VA      = "0000001914914286"
+  IPAYMU_API_KEY = "REDACTED_IPAYMU_KEY"
+  IPAYMU_VA      = "REDACTED_IPAYMU_VA"
 
   def sign_payload(body_string, api_key: IPAYMU_API_KEY, va: IPAYMU_VA)
     body_hash      = Digest::SHA256.hexdigest(body_string).downcase

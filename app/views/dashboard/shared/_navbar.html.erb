@@ -7,17 +7,25 @@
             aria-label="Open navigation">
       <span class="material-symbols-outlined text-[22px]">menu</span>
     </button>
-    <div class="relative hidden md:block">
+    <div class="relative hidden md:block" data-controller="app-search" data-app-search-url-value="<%= dashboard_apps_path %>">
       <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
-      <input type="text" placeholder="<%= t('dashboard.nav.search_apps') %>" class="bg-surface-container-low border-none rounded-md pl-10 pr-4 py-1.5 text-sm focus:ring-1 focus:ring-primary w-64 text-on-surface placeholder:text-outline font-body">
+      <input type="text" placeholder="<%= t('dashboard.nav.search_apps') %>"
+             data-app-search-target="input"
+             data-action="input->app-search#filter keydown.enter->app-search#submit"
+             class="bg-surface-container-low border-none rounded-md pl-10 pr-4 py-1.5 text-sm focus:ring-1 focus:ring-primary w-64 text-on-surface placeholder:text-outline font-body">
+      <div data-app-search-target="results" class="hidden"></div>
     </div>
   </div>
   <div class="flex items-center gap-3">
     <%= link_to dashboard_notifications_path, class: "text-outline hover:text-on-surface-variant hover:bg-surface-container-high p-2 rounded-md transition-colors", title: "Notifications" do %>
       <span class="material-symbols-outlined text-[20px]">notifications</span>
     <% end %>
-    <% if (first_server = policy_scope(Server).first) %>
-      <%= link_to dashboard_server_terminal_path(first_server), class: "text-outline hover:text-on-surface-variant hover:bg-surface-container-high p-2 rounded-md transition-colors", title: "Terminal" do %>
+    <% if defined?(@app) && @app.is_a?(AppRecord) && @app.persisted? && @app.server %>
+      <%= link_to dashboard_app_terminal_path(@app), class: "text-outline hover:text-on-surface-variant hover:bg-surface-container-high p-2 rounded-md transition-colors", title: "Console: #{@app.name}" do %>
+        <span class="material-symbols-outlined text-[20px]">terminal</span>
+      <% end %>
+    <% elsif defined?(@server) && @server.is_a?(Server) && @server.persisted? %>
+      <%= link_to dashboard_server_terminal_path(@server), class: "text-outline hover:text-on-surface-variant hover:bg-surface-container-high p-2 rounded-md transition-colors", title: "Terminal: #{@server.name}" do %>
         <span class="material-symbols-outlined text-[20px]">terminal</span>
       <% end %>
     <% end %>

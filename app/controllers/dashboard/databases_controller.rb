@@ -1,5 +1,8 @@
 module Dashboard
   class DatabasesController < BaseController
+    include PlanEnforceable
+    before_action :enforce_free_database_limit!, only: [ :create ]
+
     def index
       @databases = policy_scope(DatabaseService).includes(:server, :app_records).order(:service_type, :name)
       @by_type = @databases.group_by(&:service_type)

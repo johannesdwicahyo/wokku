@@ -8,7 +8,7 @@ module Wokku
         prompt = TTY::Prompt.new
         pastel = Pastel.new
 
-        url = api_url || prompt.ask("API URL:", default: "https://wokku.dev")
+        url = api_url || prompt.ask("API URL:", default: "https://wokku.cloud")
         email = prompt.ask("Email:")
         password = prompt.mask("Password:")
 

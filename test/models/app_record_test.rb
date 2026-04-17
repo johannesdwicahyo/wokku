@@ -62,7 +62,7 @@ class AppRecordTest < ActiveSupport::TestCase
   end
 
   test "status enum includes all expected values" do
-    assert_equal({ "running" => 0, "stopped" => 1, "crashed" => 2, "deploying" => 3, "sleeping" => 4 }, AppRecord.statuses)
+    assert_equal({ "running" => 0, "stopped" => 1, "crashed" => 2, "deploying" => 3, "sleeping" => 4, "created" => 5 }, AppRecord.statuses)
   end
 
   test "can set status to stopped" do

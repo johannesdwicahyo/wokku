@@ -3,7 +3,7 @@ Gem::Specification.new do |spec|
   spec.version       = "0.1.0"
   spec.authors       = [ "Johannes Dwicahyo" ]
   spec.summary       = "CLI for Wokku - Heroku-like PaaS on Dokku"
-  spec.homepage      = "https://wokku.dev"
+  spec.homepage      = "https://wokku.cloud"
   spec.license       = "MIT"
   spec.required_ruby_version = ">= 3.1"
   spec.files         = Dir["lib/**/*", "exe/*"]

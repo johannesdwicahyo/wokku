@@ -1,5 +1,7 @@
 module Dashboard
   class AppsController < BaseController
+    include PlanEnforceable
+    before_action :enforce_free_container_limit!, only: [ :create ]
     before_action :set_app, only: [ :show, :destroy, :restart, :stop, :start, :toggle_https, :toggle_maintenance ]
 
     def index
@@ -30,7 +32,7 @@ module Dashboard
     def create
       team = current_team
       server = policy_scope(Server).find(params[:app_record][:server_id])
-      @app = AppRecord.new(app_params.merge(team: team, creator: current_user, server: server))
+      @app = AppRecord.new(app_params.merge(team: team, creator: current_user, server: server, status: :created))
       authorize @app
 
       if @app.save
@@ -100,7 +102,7 @@ module Dashboard
     def toggle_https
       authorize @app, :update?
       client = Dokku::Client.new(@app.server)
-      client.run("redirect:set #{@app.name} https://#{@app.domains.first&.hostname || @app.name + '.wokku.dev'}")
+      client.run("redirect:set #{@app.name} https://#{@app.domains.first&.hostname || @app.name + '.wokku.cloud'}")
       track("app.https_enabled", target: @app)
       redirect_to dashboard_app_path(@app), notice: "HTTPS redirect enabled."
     rescue => e

@@ -33,18 +33,9 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential git libpq-dev libyaml-dev pkg-config nodejs && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# Enterprise Edition: clone into /tmp/ee if token is provided
-RUN --mount=type=secret,id=WOKKU_EE_TOKEN \
-    WOKKU_EE_TOKEN=$(cat /run/secrets/WOKKU_EE_TOKEN 2>/dev/null) && \
-    if [ -n "$WOKKU_EE_TOKEN" ]; then \
-    git clone https://${WOKKU_EE_TOKEN}@github.com/johannesdwicahyo/wokku-ee.git /tmp/ee && \
-    rm -rf /tmp/ee/.git; \
-    fi
-
-# Install application gems (copy EE Gemfile.ee if available)
+# Install application gems
 COPY vendor/* ./vendor/
 COPY Gemfile Gemfile.lock ./
-RUN mkdir -p ee && if [ -d /tmp/ee ]; then cp /tmp/ee/Gemfile.ee ee/Gemfile.ee; fi
 
 RUN bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
@@ -52,9 +43,6 @@ RUN bundle install && \
 
 # Copy application code
 COPY . .
-
-# Copy EE code into the app after COPY . .
-RUN if [ -d /tmp/ee ]; then rm -rf ee && cp -r /tmp/ee ee; fi
 
 # Precompile bootsnap code for faster boot times.
 RUN bundle exec bootsnap precompile -j 1 app/ lib/

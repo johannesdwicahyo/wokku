@@ -3,7 +3,6 @@ SimpleCov.start "rails" do
   add_filter "/test/"
   add_filter "/config/"
   add_filter "/vendor/"
-  add_filter "/ee/"
   enable_coverage :branch
   # SimpleCov undercounts due to Zeitwerk autoloading files before
   # Coverage.start — actual coverage is higher than reported.
@@ -11,8 +10,15 @@ SimpleCov.start "rails" do
 end
 
 ENV["RAILS_ENV"] ||= "test"
+
+# Test-only env vars for integrations. Real values live in .kamal/secrets.
+ENV["IPAYMU_VA"]      ||= "TEST_VA"
+ENV["IPAYMU_API_KEY"] ||= "TEST_API_KEY"
+ENV["IPAYMU_URL"]     ||= "https://sandbox.ipaymu.com"
+
 require_relative "../config/environment"
 require "rails/test_help"
+require "mocha/minitest"
 
 # Disable Rack::Attack throttling in tests to avoid rate limit interference
 Rack::Attack.enabled = false

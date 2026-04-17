@@ -61,6 +61,11 @@ module Dashboard
         return
       end
 
+      if @app.created?
+        redirect_to dashboard_app_scaling_path(@app), alert: "Deploy the app first before changing the dyno tier."
+        return
+      end
+
       tier = DynoTier.find(params[:dyno_tier_id])
 
       # Check free tier limit: max 1 per user

@@ -7,11 +7,6 @@ require "rails/all"
 Bundler.require(*Rails.groups)
 
 module Wokku
-  def self.ee?
-    @ee = File.directory?(Rails.root.join("ee")) unless defined?(@ee)
-    @ee
-  end
-
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.1
@@ -20,24 +15,6 @@ module Wokku
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
-
-    # Enterprise Edition autoloading
-    if File.directory?(Rails.root.join("ee"))
-      %w[app/models app/controllers app/policies app/services app/jobs app/mailers].each do |path|
-        full = Rails.root.join("ee", path)
-        if full.exist?
-          config.autoload_paths << full.to_s
-          config.eager_load_paths << full.to_s
-        end
-      end
-      # Collapse concerns/ subdirectories so Zeitwerk doesn't namespace them
-      Rails.autoloaders.main.collapse(Rails.root.join("ee/app/models/concerns").to_s)
-      Rails.autoloaders.main.collapse(Rails.root.join("ee/app/controllers/concerns").to_s)
-      config.paths["app/views"].unshift(Rails.root.join("ee/app/views").to_s)
-      config.paths["db/migrate"] << Rails.root.join("ee/db/migrate").to_s if File.directory?(Rails.root.join("ee/db/migrate"))
-      # Load EE initializers
-      config.paths["config/initializers"] << Rails.root.join("ee/config/initializers").to_s
-    end
 
     config.i18n.available_locales = [ :en, :id ]
     config.i18n.default_locale = :en

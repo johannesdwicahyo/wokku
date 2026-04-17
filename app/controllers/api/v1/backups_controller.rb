@@ -13,9 +13,16 @@ module Api
       def create
         db = DatabaseService.find(params[:database_id])
         authorize db.server, :update?
-        backup = db.backups.create!(status: :pending)
-        BackupJob.perform_later(backup.id)
-        render json: { id: backup.id, status: "pending", message: "Backup started" }, status: :created
+
+        if db.backup_limit_reached?
+          render json: {
+            error: "Free tier limit reached (2 backups). Upgrade to Basic for daily auto-backups with 7-day retention."
+          }, status: :payment_required
+          return
+        end
+
+        BackupJob.perform_later(db.id)
+        render json: { message: "Backup started" }, status: :created
       rescue => e
         render json: { error: e.message }, status: :unprocessable_entity
       end

@@ -1,6 +1,6 @@
 <%# Header %>
 <div class="mb-8">
-  <h1 class="font-headline text-3xl font-bold text-on-surface mb-2">Settings</h1>
+  <h1 class="font-headline text-3xl font-bold text-on-surface mb-2"><%= t("dashboard.profile.title") %></h1>
   <p class="text-sm text-outline">Manage your account, security, API credentials, and billing.</p>
 </div>
 
@@ -12,7 +12,7 @@
     <div class="bg-surface-container-low rounded-md overflow-hidden">
       <div class="px-6 py-4 border-b border-outline-variant/10 flex items-center justify-between">
         <div>
-          <h2 class="font-headline text-base font-bold text-on-surface">Account</h2>
+          <h2 class="font-headline text-base font-bold text-on-surface"><%= t("dashboard.profile.account") %></h2>
           <p class="text-xs text-outline mt-0.5">Your profile and account details</p>
         </div>
         <%= link_to edit_dashboard_profile_path, class: "text-xs text-primary hover:underline flex items-center gap-1" do %>
@@ -55,10 +55,10 @@
     <div class="bg-surface-container-low rounded-md overflow-hidden">
       <div class="px-6 py-4 border-b border-outline-variant/10">
         <div class="flex items-center justify-between">
-          <h2 class="font-headline text-base font-bold text-on-surface">Resource Overview</h2>
+          <h2 class="font-headline text-base font-bold text-on-surface"><%= t("dashboard.profile.resource_overview") %></h2>
           <div class="text-right">
             <span class="text-lg font-bold text-primary font-headline">$<%= "%.2f" % (policy_scope(AppRecord).includes(dyno_allocations: :dyno_tier).flat_map(&:dyno_allocations).sum { |a| a.dyno_tier.monthly_price_dollars * a.count } rescue 0) %></span>
-            <p class="text-[10px] text-outline uppercase tracking-wider">Estimated Monthly</p>
+            <p class="text-[10px] text-outline uppercase tracking-wider"><%= t("dashboard.profile.estimated_monthly") %></p>
           </div>
         </div>
       </div>
@@ -89,7 +89,7 @@
     <%# Teams %>
     <div class="bg-surface-container-low rounded-md overflow-hidden">
       <div class="px-6 py-4 border-b border-outline-variant/10 flex items-center justify-between">
-        <h2 class="font-headline text-base font-bold text-on-surface">Teams</h2>
+        <h2 class="font-headline text-base font-bold text-on-surface"><%= t("dashboard.profile.teams") %></h2>
         <%= link_to dashboard_teams_path, class: "text-xs text-primary hover:underline" do %>
           Manage Teams
         <% end %>
@@ -150,7 +150,7 @@
     <%# Security — 2FA %>
     <div class="bg-surface-container-low rounded-md overflow-hidden">
       <div class="px-5 py-3 border-b border-outline-variant/10">
-        <p class="text-[10px] text-outline uppercase tracking-widest font-bold">Security</p>
+        <p class="text-[10px] text-outline uppercase tracking-widest font-bold"><%= t("dashboard.profile.security") %></p>
       </div>
       <div class="p-5">
         <div class="flex items-center justify-between mb-3">
@@ -177,7 +177,7 @@
     <%# SSH Keys %>
     <div class="bg-surface-container-low rounded-md overflow-hidden">
       <div class="px-5 py-3 border-b border-outline-variant/10 flex items-center justify-between">
-        <p class="text-[10px] text-outline uppercase tracking-widest font-bold">SSH Keys</p>
+        <p class="text-[10px] text-outline uppercase tracking-widest font-bold"><%= t("dashboard.profile.ssh_keys") %></p>
       </div>
       <div class="p-5">
         <p class="text-xs text-outline mb-3">Add your SSH public key to enable <code class="text-primary font-mono">git push</code> deployments.</p>
@@ -193,28 +193,28 @@
       </div>
     </div>
 
-    <%# API Credentials %>
+    <%# API Tokens %>
     <div class="bg-surface-container-low rounded-md overflow-hidden">
-      <div class="px-5 py-3 border-b border-outline-variant/10">
-        <p class="text-[10px] text-outline uppercase tracking-widest font-bold">API Credentials</p>
+      <div class="px-5 py-3 border-b border-outline-variant/10 flex items-center justify-between">
+        <p class="text-[10px] text-outline uppercase tracking-widest font-bold"><%= t("dashboard.profile.api_tokens") %></p>
       </div>
       <div class="p-5">
-        <p class="text-xs text-outline mb-3">Use API tokens to authenticate CLI and API requests.</p>
-        <div class="bg-surface rounded-md p-3 mb-3">
-          <div class="flex items-center justify-between mb-1">
+        <p class="text-xs text-outline mb-3">Use tokens to authenticate CLI, API, and MCP requests.</p>
+
+        <%= turbo_frame_tag "api_tokens" do %>
+          <%= render "dashboard/api_tokens/token_list", tokens: current_user.api_tokens.active.order(created_at: :desc), new_token: nil %>
+        <% end %>
+
+        <%# API info %>
+        <div class="mt-4 pt-4 border-t border-outline-variant/10">
+          <div class="bg-surface rounded-md p-3 mb-2">
             <span class="text-[10px] text-outline uppercase tracking-wider font-bold">API Endpoint</span>
+            <code class="block text-xs font-mono text-primary mt-1">https://wokku.cloud/api/v1</code>
           </div>
-          <code class="text-xs font-mono text-primary">https://wokku.dev/api/v1</code>
-        </div>
-        <div class="bg-surface rounded-md p-3 mb-4">
-          <div class="flex items-center justify-between mb-1">
+          <div class="bg-surface rounded-md p-3">
             <span class="text-[10px] text-outline uppercase tracking-wider font-bold">Auth Header</span>
+            <code class="block text-xs font-mono text-on-surface-variant mt-1">Authorization: Bearer <span class="text-primary">YOUR_TOKEN</span></code>
           </div>
-          <code class="text-xs font-mono text-on-surface-variant">Authorization: Bearer <span class="text-primary">YOUR_TOKEN</span></code>
-        </div>
-        <p class="text-[10px] text-outline mb-2">Generate tokens via the API:</p>
-        <div class="bg-surface-container-lowest rounded-md p-2">
-          <code class="text-[10px] font-mono text-on-surface-variant">POST /api/v1/auth/login</code>
         </div>
       </div>
     </div>
@@ -242,10 +242,14 @@
 
     <%# Danger Zone %>
     <div class="bg-error-container/10 border border-error/20 rounded-md p-5">
-      <h3 class="text-sm font-bold text-error mb-2">Danger Zone</h3>
+      <h3 class="text-sm font-bold text-error mb-2"><%= t("dashboard.profile.danger_zone") %></h3>
       <p class="text-xs text-on-error-container/70 mb-4">Permanently delete your account and all associated data. This action cannot be undone.</p>
-      <button class="w-full py-2 text-xs font-bold text-error border border-error/30 rounded-md hover:bg-error/10 transition cursor-pointer" onclick="alert('Contact support@wokku.dev to delete your account.')">
-        Delete Account
+      <button type="button" class="w-full py-2 text-xs font-bold text-error border border-error/30 rounded-md hover:bg-error/10 transition cursor-pointer"
+              data-controller="contact-modal"
+              data-contact-modal-message-value="Contact support@wokku.cloud to delete your account."
+              data-contact-modal-email-value="support@wokku.cloud"
+              data-action="click->contact-modal#show">
+        <%= t("dashboard.profile.delete_account") %>
       </button>
     </div>
   </div>

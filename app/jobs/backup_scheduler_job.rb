@@ -10,6 +10,7 @@ class BackupSchedulerJob < ApplicationJob
         server.database_services
           .where(service_type: BACKUPABLE_TYPES, status: :running)
           .find_each do |db|
+            next unless db.auto_backup?
             BackupJob.perform_later(db.id)
           end
       end

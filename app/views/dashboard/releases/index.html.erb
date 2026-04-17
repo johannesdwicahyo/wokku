@@ -19,14 +19,14 @@
       <div class="space-y-2">
         <div class="flex items-center space-x-2">
           <code class="flex-1 bg-surface border border-outline-variant/15 rounded-md px-3 py-2 text-sm text-on-surface-variant font-mono">git remote add dokku <%= git_remote %></code>
-          <button onclick="navigator.clipboard.writeText('git remote add dokku <%= git_remote %>')" class="p-2 text-outline hover:text-primary transition cursor-pointer" title="Copy">
-            <span class="material-symbols-outlined text-[18px]">content_copy</span>
+          <button type="button" data-controller="clipboard" data-clipboard-text-value="git remote add dokku <%= git_remote %>" data-action="click->clipboard#copy" class="p-2 text-outline hover:text-primary transition cursor-pointer" title="Copy">
+            <span data-clipboard-target="label" class="material-symbols-outlined text-[18px]">content_copy</span>
           </button>
         </div>
         <div class="flex items-center space-x-2">
           <code class="flex-1 bg-surface border border-outline-variant/15 rounded-md px-3 py-2 text-sm text-on-surface-variant font-mono">git push dokku <%= @app.deploy_branch || "main" %></code>
-          <button onclick="navigator.clipboard.writeText('git push dokku <%= @app.deploy_branch || "main" %>')" class="p-2 text-outline hover:text-primary transition cursor-pointer" title="Copy">
-            <span class="material-symbols-outlined text-[18px]">content_copy</span>
+          <button type="button" data-controller="clipboard" data-clipboard-text-value="git push dokku <%= @app.deploy_branch || "main" %>" data-action="click->clipboard#copy" class="p-2 text-outline hover:text-primary transition cursor-pointer" title="Copy">
+            <span data-clipboard-target="label" class="material-symbols-outlined text-[18px]">content_copy</span>
           </button>
         </div>
       </div>

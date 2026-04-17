@@ -45,8 +45,8 @@ module Webhooks
       signature = request.headers["signature"]
       return head :unauthorized if signature.blank?
 
-      api_key = ENV.fetch("IPAYMU_API_KEY", "SANDBOX2BAE12F9-82A3-49CA-B1B2-6BF9ACD0D8A9")
-      va      = ENV.fetch("IPAYMU_VA", "0000001914914286")
+      api_key = ENV.fetch("IPAYMU_API_KEY", "REDACTED_IPAYMU_KEY")
+      va      = ENV.fetch("IPAYMU_VA", "REDACTED_IPAYMU_VA")
 
       body_hash      = Digest::SHA256.hexdigest(body).downcase
       string_to_sign = "POST:#{va}:#{body_hash}:#{api_key}"

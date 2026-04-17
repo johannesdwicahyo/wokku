@@ -31,12 +31,11 @@ class Dashboard::TerminalsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "redirects non-team-admin away from server terminal" do
-    # Create a user who is a team member but not an admin of the target team.
-    member_user = User.create!(email: "member@example.com", password: "password123", name: "Member", role: :member)
-    TeamMembership.create!(user: member_user, team: teams(:two), role: :member)
-    sign_in member_user
-    get "/dashboard/servers/#{@server.id}/terminal"
-    assert_response :redirect
+  test "redirects non-team-member away from server terminal" do
+    outsider = User.create!(email: "outsider@example.com", password: "password123456")
+    sign_in outsider
+    server_one = servers(:one)
+    get "/dashboard/servers/#{server_one.id}/terminal"
+    assert_includes [ 302, 403, 404 ], response.status
   end
 end

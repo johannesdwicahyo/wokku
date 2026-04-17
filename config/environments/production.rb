@@ -57,7 +57,7 @@ Rails.application.configure do
   config.action_mailer.raise_delivery_errors = true
 
   # Set host to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: ENV.fetch("APP_HOST", "wokku.dev"), protocol: "https" }
+  config.action_mailer.default_url_options = { host: ENV.fetch("APP_HOST", "wokku.cloud"), protocol: "https" }
 
   # Outgoing SMTP via Resend (https://resend.com).
   config.action_mailer.smtp_settings = {
@@ -81,8 +81,8 @@ Rails.application.configure do
 
   # Enable DNS rebinding protection.
   config.hosts = [
-    "wokku.dev",
-    /.*\.wokku\.dev/  # Allow subdomains (app.wokku.dev, mochi.wokku.dev, etc.)
+    "wokku.cloud",
+    /.*\.wokku\.dev/  # Allow subdomains (app.wokku.cloud, mochi.wokku.cloud, etc.)
   ]
 
   # Skip DNS rebinding protection for the health check endpoint.

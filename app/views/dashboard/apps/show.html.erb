@@ -21,10 +21,14 @@
         <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
         <%= t("common.deploying") %>
       </span>
+    <% when "created" %>
+      <span class="bg-surface-variant text-outline text-[10px] px-2.5 py-1 rounded-full font-bold uppercase">AWAITING DEPLOY</span>
     <% end %>
   </div>
   <div class="flex items-center gap-2">
-    <% if @app.stopped? %>
+    <% if @app.created? %>
+      <%# No actions for apps that haven't been deployed yet %>
+    <% elsif @app.stopped? %>
       <%= button_to start_dashboard_app_path(@app), method: :post, class: "inline-flex items-center px-3 py-1.5 text-xs text-primary border border-primary/30 rounded-md hover:bg-secondary-container/20 transition cursor-pointer" do %>
         <span class="material-symbols-outlined text-[16px] mr-1">play_arrow</span> Start
       <% end %>
@@ -38,6 +42,48 @@
     <% end %>
   </div>
 </div>
+
+<%# Getting started guide for new apps %>
+<% if @app.created? %>
+  <div class="mb-6 bg-primary/5 border border-primary/20 rounded-xl p-6">
+    <div class="flex items-start gap-4">
+      <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+        <span class="material-symbols-outlined text-primary text-[20px]">rocket_launch</span>
+      </div>
+      <div class="flex-1">
+        <h3 class="text-sm font-bold text-on-surface font-headline mb-1">Deploy your app</h3>
+        <p class="text-xs text-outline mb-4">Push your code via Git or connect a GitHub repository for automatic deploys.</p>
+
+        <div class="space-y-3">
+          <div class="bg-surface rounded-md p-3">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-2">Option 1: Git Push</p>
+            <div class="space-y-1.5">
+              <code class="block text-xs font-mono text-on-surface-variant bg-surface-container-low rounded px-2 py-1">git remote add dokku dokku@<%= @app.server.host %>:<%= @app.name %></code>
+              <code class="block text-xs font-mono text-on-surface-variant bg-surface-container-low rounded px-2 py-1">git push dokku <%= @app.deploy_branch || "main" %></code>
+            </div>
+          </div>
+
+          <div class="bg-surface rounded-md p-3">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-2">Option 2: GitHub Auto-Deploy</p>
+            <p class="text-xs text-outline">Connect a repo from the <%= link_to "Releases", dashboard_app_releases_path(@app), class: "text-primary hover:underline" %> tab.</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 mt-4">
+          <%= link_to docs_page_path("getting-started/first-deploy"), class: "text-xs text-primary hover:underline flex items-center gap-1" do %>
+            <span class="material-symbols-outlined text-[14px]">menu_book</span> Deployment Guide
+          <% end %>
+          <%= link_to docs_page_path("apps/config"), class: "text-xs text-primary hover:underline flex items-center gap-1" do %>
+            <span class="material-symbols-outlined text-[14px]">settings</span> Environment Variables
+          <% end %>
+          <%= link_to docs_page_path("domains-ssl/custom-domains"), class: "text-xs text-primary hover:underline flex items-center gap-1" do %>
+            <span class="material-symbols-outlined text-[14px]">language</span> Custom Domains
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>
 
 <%# In-progress deploy banner — prominent feedback during the 30+ second build %>
 <% if @app.deploying? %>
@@ -321,7 +367,7 @@
         </div>
         <div class="px-5 py-3 flex items-center justify-between">
           <span class="text-xs text-outline">Git Remote</span>
-          <code class="text-xs font-mono text-primary">dokku@<%= @app.server.name %>.wokku.cloud:<%= @app.name %></code>
+          <code class="text-xs font-mono text-primary">dokku@<%= @app.server.host %>:<%= @app.name %></code>
         </div>
         <div class="px-5 py-3 flex items-center justify-between">
           <span class="text-xs text-outline">Team</span>
@@ -357,8 +403,8 @@
             <span class="material-symbols-outlined text-[14px] text-outline">construction</span>
             <span class="text-xs text-outline">Maintenance Mode</span>
           </div>
-          <%= button_to toggle_maintenance_dashboard_app_path(@app), method: :post, data: { turbo_confirm: "Toggle maintenance mode for #{@app.name}?" }, class: "text-xs text-primary hover:underline cursor-pointer" do %>
-            Toggle
+          <%= button_to toggle_maintenance_dashboard_app_path(@app), method: :post, data: { turbo_confirm: "Toggle maintenance mode for #{@app.name}?" }, class: "relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer #{@app.try(:maintenance_mode?) ? 'bg-primary' : 'bg-outline-variant/30'}" do %>
+            <span class="inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform <%= @app.try(:maintenance_mode?) ? 'translate-x-4' : 'translate-x-0.5' %>"></span>
           <% end %>
         </div>
       </div>

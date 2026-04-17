@@ -27,6 +27,13 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "pricing page renders with tier data or fallback" do
+    get pricing_path
+    assert_response :success
+    assert_select "h2", text: /App Containers|Container Aplikasi/
+    assert_select "h2", text: /Databases|Database/
+  end
+
   # Docs page — moved to DocsControllerTest
 
   # Deploy page

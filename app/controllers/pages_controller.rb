@@ -12,13 +12,20 @@ class PagesController < ApplicationController
   end
 
   def pricing
-    if Wokku.ee? && defined?(DynoTier)
-      @dyno_tiers = DynoTier.order(:price_cents_per_hour)
-      @service_tiers = ServiceTier.available.order(:service_type, :price_cents_per_hour)
-    end
+    @container_tiers = ServiceTier.available.for_type("container").order(:price_cents_per_hour)
+    @database_tiers = ServiceTier.available.for_type("database").order(:price_cents_per_hour)
+    render layout: "landing"
   end
 
   def deploy
+    render layout: "landing"
+  end
+
+  def privacy
+    render layout: "landing"
+  end
+
+  def terms
     render layout: "landing"
   end
 end

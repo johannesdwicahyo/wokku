@@ -111,20 +111,20 @@
     <div class="text-center max-w-4xl mx-auto">
       <div class="animate-float inline-flex items-center px-3 py-1 rounded-full bg-[#c0c1ff]/10 border border-[#c0c1ff]/20 mb-8">
         <span class="w-1.5 h-1.5 rounded-full bg-[#c0c1ff] mr-2"></span>
-        <span class="text-xs text-[#c0c1ff] font-medium tracking-wide">Open Source &middot; Built on Dokku &middot; Deploy in 30 seconds</span>
+        <span class="text-xs text-[#c0c1ff] font-medium tracking-wide"><%= t('landing.hero_badge') %></span>
       </div>
 
       <h1 class="animate-float animate-float-1 text-5xl sm:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-[1.1]" style="font-family: 'Space Grotesk', sans-serif;">
-        Your own cloud.<br>
-        <span class="bg-gradient-to-r from-[#c0c1ff] to-[#a78bfa] bg-clip-text text-transparent">60% cheaper than Heroku.</span>
+        <%= t('landing.hero_heading_1') %><br>
+        <span class="bg-gradient-to-r from-[#c0c1ff] to-[#a78bfa] bg-clip-text text-transparent"><%= t('landing.hero_heading_2') %></span>
       </h1>
 
       <p class="animate-float animate-float-2 mt-6 text-lg sm:text-xl text-[#958e9e] max-w-2xl mx-auto leading-relaxed">
-        Open-source PaaS with <span class="text-white font-medium">50+ templates</span>, <span class="text-white font-medium">11 managed add-ons</span>, and containers starting at <span class="text-white font-medium">$1.50/mo</span>. The Heroku experience on your own servers.
+        <%= t('landing.hero_subtitle_html', price: format_price(1.50) + price_period).html_safe %>
       </p>
 
       <div class="animate-float animate-float-3 mt-10 flex flex-col sm:flex-row justify-center gap-4">
-        <%= link_to new_user_registration_path, class: "inline-flex items-center justify-center px-8 py-3.5 text-sm font-semibold rounded-lg hover:opacity-90 transition shadow-lg shadow-[#c0c1ff]/20 text-[#282a64]", style: "background: linear-gradient(135deg, #c0c1ff 0%, #5625ab 100%);" do %>
+        <%= link_to new_user_session_path, class: "inline-flex items-center justify-center px-8 py-3.5 text-sm font-semibold rounded-lg hover:opacity-90 transition shadow-lg shadow-[#c0c1ff]/20 text-[#282a64]", style: "background: linear-gradient(135deg, #c0c1ff 0%, #5625ab 100%);" do %>
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           <%= t('landing.start_building') %>
         <% end %>
@@ -134,12 +134,12 @@
         <% end %>
       </div>
 
-      <p class="animate-float animate-float-4 mt-6 text-xs text-[#4a4453]"><%= t('landing.free_tier') %> &middot; Deploy in under 5 minutes</p>
+      <p class="animate-float animate-float-4 mt-6 text-xs text-[#4a4453]"><%= t('landing.free_tier') %> &middot; <%= t('landing.deploy_in_5_min') %></p>
     </div>
 
     <!-- Terminal Preview -->
-    <div class="animate-float animate-float-4 mt-16 max-w-2xl mx-auto relative">
-      <div class="terminal-dino-wrap"><span class="terminal-dino" title="rawr!">🦕</span></div>
+    <div class="animate-float animate-float-4 mt-16 max-w-2xl mx-auto relative" data-controller="dino-game">
+      <div class="terminal-dino-wrap"><span class="terminal-dino" data-dino-game-target="dino" data-action="click->dino-game#revive" title="rawr!">🦕</span></div>
       <div class="rounded-xl border border-[#28283d]/30 bg-[#0D1424]/80 backdrop-blur-sm overflow-hidden shadow-2xl shadow-black/40">
         <div class="flex items-center px-4 py-2.5 border-b border-[#28283d]/30 bg-[#111125]/80">
           <div class="flex space-x-1.5">
@@ -165,8 +165,8 @@
 <div class="border-t border-[#28283d]/30">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
     <div class="text-center mb-16">
-      <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;">Why Wokku?</h2>
-      <p class="mt-3 text-[#958e9e] text-lg">Same developer experience. Fraction of the cost.</p>
+      <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;"><%= t('landing.why_wokku') %></h2>
+      <p class="mt-3 text-[#958e9e] text-lg"><%= t('landing.why_wokku_subtitle') %></p>
     </div>
 
     <div class="max-w-3xl mx-auto">
@@ -183,7 +183,7 @@
                 </div>
                 <div>
                   <span class="text-sm font-medium text-[#958e9e]">Heroku</span>
-                  <p class="text-xs text-[#4a4453]">Basic dyno + Mini Postgres + Mini Redis</p>
+                  <p class="text-xs text-[#4a4453]"><%= t('landing.heroku_stack_desc') %></p>
                 </div>
               </div>
               <span class="text-lg font-mono font-bold text-[#958e9e] comparison-strike">$32/mo</span>
@@ -197,16 +197,16 @@
                 </div>
                 <div>
                   <span class="text-sm font-medium text-white">Wokku</span>
-                  <p class="text-xs text-[#958e9e]">Starter container + free Postgres + free Redis</p>
+                  <p class="text-xs text-[#958e9e]"><%= t('landing.wokku_stack_desc') %></p>
                 </div>
               </div>
-              <span class="text-lg font-mono font-bold text-[#c0c1ff]">$1.50/mo</span>
+              <span class="text-lg font-mono font-bold text-[#c0c1ff]"><%= format_price(1.50) %><%= price_period %></span>
             </div>
           </div>
 
           <div class="mt-6 text-center">
             <span class="inline-flex items-center px-4 py-2 rounded-full bg-[#c0c1ff]/10 border border-[#c0c1ff]/20">
-              <span class="text-sm font-semibold text-[#c0c1ff]">Save 95% on your infrastructure</span>
+              <span class="text-sm font-semibold text-[#c0c1ff]"><%= t('landing.save_infrastructure') %></span>
             </span>
           </div>
         </div>
@@ -219,8 +219,8 @@
 <div class="border-t border-[#28283d]/30 bg-[#0D1424]">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
     <div class="text-center mb-16">
-      <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;">Everything you need to ship</h2>
-      <p class="mt-3 text-[#958e9e] text-lg">Production-ready infrastructure without the complexity.</p>
+      <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;"><%= t('landing.everything_you_need') %></h2>
+      <p class="mt-3 text-[#958e9e] text-lg"><%= t('landing.everything_subtitle') %></p>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -228,48 +228,48 @@
         features = [
           {
             icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>',
-            title: "1-Click Deploy",
-            desc: "50+ templates ready to go. n8n, Ghost, Uptime Kuma, WordPress — deploy any app in under 30 seconds."
+            title: t('landing.feature_1click_title'),
+            desc: t('landing.feature_1click_desc')
           },
           {
             icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"/></svg>',
-            title: "GitHub Auto-Deploy",
-            desc: "Push to deploy. Connect your repo, and every git push triggers an automatic build and zero-downtime deploy."
+            title: t('landing.feature_github_title'),
+            desc: t('landing.feature_github_desc')
           },
           {
             icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"/></svg>',
-            title: "11 Managed Add-ons",
-            desc: "Postgres, Redis, MongoDB, MySQL, MariaDB, Memcached, RabbitMQ, ClickHouse, Elasticsearch, Grafana, Loki."
+            title: t('landing.feature_addons_title'),
+            desc: t('landing.feature_addons_desc')
           },
           {
             icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z"/></svg>',
-            title: "Container Console",
-            desc: "Browser-based terminal. SSH into any container directly from the dashboard — no local tools needed."
+            title: t('landing.feature_console_title'),
+            desc: t('landing.feature_console_desc')
           },
           {
             icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>',
-            title: "Custom Domains + SSL",
-            desc: "Free Let's Encrypt certificates, auto-renewed. Add unlimited custom domains to any app."
+            title: t('landing.feature_domains_title'),
+            desc: t('landing.feature_domains_desc')
           },
           {
             icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>',
-            title: "Team Collaboration",
-            desc: "Role-based access control, activity logs, and team management. Built for small teams and agencies."
+            title: t('landing.feature_team_title'),
+            desc: t('landing.feature_team_desc')
           },
           {
             icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 9.75L16.5 12l-2.25 2.25m-4.5 0L7.5 12l2.25-2.25M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z"/></svg>',
-            title: "API + CLI + MCP",
-            desc: "Full REST API, Ruby CLI gem, and MCP server for AI-assisted deployments. Automate everything."
+            title: t('landing.feature_api_title'),
+            desc: t('landing.feature_api_desc')
           },
           {
             icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/></svg>',
-            title: "5 Container Sizes",
-            desc: "From 256 MB free tier to 4 GB Pro. Scale vertically and horizontally as your app grows."
+            title: t('landing.feature_containers_title'),
+            desc: t('landing.feature_containers_desc')
           },
           {
             icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>',
-            title: "Server Security",
-            desc: "UFW firewall, fail2ban, hardened SSH, and automatic security updates. Your servers, locked down."
+            title: t('landing.feature_security_title'),
+            desc: t('landing.feature_security_desc')
           }
         ]
       %>
@@ -297,12 +297,12 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <%
         templates = [
-          { name: "n8n", emoji: "🔄", desc: "Workflow automation platform. Connect APIs, build automations, no code required.", category: "Automation" },
-          { name: "Uptime Kuma", emoji: "📈", desc: "Self-hosted monitoring tool. Track uptime for websites, APIs, and TCP services.", category: "Monitoring" },
-          { name: "Ghost", emoji: "📝", desc: "Professional publishing platform. Memberships, newsletters, and content monetization.", category: "CMS" },
-          { name: "WordPress", emoji: "🌐", desc: "The world's most popular CMS. Themes, plugins, and full customization.", category: "CMS" },
-          { name: "Strapi", emoji: "🏗️", desc: "Headless CMS with a visual content editor. Build APIs without writing code.", category: "CMS" },
-          { name: "Redis Stack", emoji: "🔴", desc: "Redis with JSON, search, time series, and graph modules built in.", category: "Database" }
+          { name: "n8n",          emoji: "🔄", desc: t('landing.template_n8n_desc'),       category: t('landing.template_automation') },
+          { name: "Uptime Kuma",  emoji: "📈", desc: t('landing.template_uptime_desc'),    category: t('landing.template_monitoring') },
+          { name: "Ghost",        emoji: "📝", desc: t('landing.template_ghost_desc'),     category: t('landing.template_cms') },
+          { name: "WordPress",    emoji: "🌐", desc: t('landing.template_wordpress_desc'), category: t('landing.template_cms') },
+          { name: "Strapi",       emoji: "🏗️", desc: t('landing.template_strapi_desc'),   category: t('landing.template_cms') },
+          { name: "Redis Stack",  emoji: "🔴", desc: t('landing.template_redis_desc'),    category: t('landing.template_database') }
         ]
       %>
       <% templates.each do |template| %>
@@ -337,8 +337,8 @@
       <div class="inline-flex items-center px-2.5 py-1 rounded-md bg-[#1e1e32] border border-[#c0c1ff]/20 mb-6">
         <span class="text-[10px] text-[#c0c1ff] font-mono font-medium tracking-wider uppercase"><%= t('landing.for_developers') %></span>
       </div>
-      <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;">4 ways to deploy</h2>
-      <p class="mt-3 text-[#958e9e] text-lg">Dashboard, CLI, API, or AI. Pick what fits your workflow.</p>
+      <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;"><%= t('landing.four_ways_heading') %></h2>
+      <p class="mt-3 text-[#958e9e] text-lg"><%= t('landing.four_ways_subtitle') %></p>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -348,9 +348,9 @@
           <div class="w-10 h-10 rounded-lg bg-[#c0c1ff]/10 flex items-center justify-center">
             <svg class="w-5 h-5 text-[#c0c1ff]" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25"/></svg>
           </div>
-          <h3 class="text-base font-semibold text-white">Web Dashboard</h3>
+          <h3 class="text-base font-semibold text-white"><%= t('landing.deploy_web_title') %></h3>
         </div>
-        <p class="text-sm text-[#958e9e] leading-relaxed mb-4">Point-and-click interface. Deploy apps, manage databases, view logs, and scale containers — all from your browser.</p>
+        <p class="text-sm text-[#958e9e] leading-relaxed mb-4"><%= t('landing.deploy_web_desc') %></p>
         <div class="rounded-lg bg-[#111125] border border-[#28283d]/50 p-4">
           <div class="flex items-center space-x-2 text-xs text-[#958e9e]">
             <span class="w-2 h-2 rounded-full bg-[#c0c1ff]"></span>
@@ -371,9 +371,9 @@
           <div class="w-10 h-10 rounded-lg bg-[#c0c1ff]/10 flex items-center justify-center">
             <svg class="w-5 h-5 text-[#c0c1ff]" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z"/></svg>
           </div>
-          <h3 class="text-base font-semibold text-white">CLI</h3>
+          <h3 class="text-base font-semibold text-white"><%= t('landing.deploy_cli_title') %></h3>
         </div>
-        <p class="text-sm text-[#958e9e] leading-relaxed mb-4">Heroku-compatible command line. Install with <code class="text-[#c0c1ff] text-xs">gem install wokku</code> and manage everything from your terminal.</p>
+        <p class="text-sm text-[#958e9e] leading-relaxed mb-4"><%= t('landing.deploy_cli_desc_html').html_safe %></p>
         <div class="rounded-lg bg-[#111125] border border-[#28283d]/50 p-4 font-mono text-xs text-[#958e9e]">
           <div><span class="text-[#4a4453]">$</span> wokku apps:create my-app --server prod</div>
           <div class="text-[#c0c1ff]">Creating my-app on prod... done</div>
@@ -386,9 +386,9 @@
           <div class="w-10 h-10 rounded-lg bg-[#c0c1ff]/10 flex items-center justify-center">
             <svg class="w-5 h-5 text-[#c0c1ff]" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 9.75L16.5 12l-2.25 2.25m-4.5 0L7.5 12l2.25-2.25M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z"/></svg>
           </div>
-          <h3 class="text-base font-semibold text-white">REST API</h3>
+          <h3 class="text-base font-semibold text-white"><%= t('landing.deploy_api_title') %></h3>
         </div>
-        <p class="text-sm text-[#958e9e] leading-relaxed mb-4">Full API for CI/CD pipelines, custom dashboards, and automation. Token-based authentication.</p>
+        <p class="text-sm text-[#958e9e] leading-relaxed mb-4"><%= t('landing.deploy_api_desc') %></p>
         <div class="rounded-lg bg-[#111125] border border-[#28283d]/50 p-4 font-mono text-xs text-[#958e9e] overflow-x-auto">
           <div>curl -X POST https://wokku.cloud/api/v1/apps \</div>
           <div class="pl-4">-H "Authorization: Bearer $TOKEN" \</div>
@@ -402,17 +402,17 @@
           <div class="w-10 h-10 rounded-lg bg-[#c0c1ff]/10 flex items-center justify-center">
             <svg class="w-5 h-5 text-[#c0c1ff]" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"/></svg>
           </div>
-          <h3 class="text-base font-semibold text-white">MCP Server</h3>
+          <h3 class="text-base font-semibold text-white"><%= t('landing.deploy_mcp_title') %></h3>
         </div>
-        <p class="text-sm text-[#958e9e] leading-relaxed mb-4">Deploy from Claude Code, Cursor, or any MCP-compatible AI assistant. Natural language infrastructure.</p>
+        <p class="text-sm text-[#958e9e] leading-relaxed mb-4"><%= t('landing.deploy_mcp_desc') %></p>
         <div class="rounded-lg bg-[#111125] border border-[#28283d]/50 p-4 text-xs text-[#958e9e]">
           <div class="flex items-start space-x-2">
-            <span class="text-[#c0c1ff]">You:</span>
-            <span>"Deploy my Rails app to production with Postgres"</span>
+            <span class="text-[#c0c1ff]"><%= t('landing.deploy_mcp_user') %></span>
+            <span><%= t('landing.deploy_mcp_prompt') %></span>
           </div>
           <div class="flex items-start space-x-2 mt-1">
-            <span class="text-[#c0c1ff]">AI:</span>
-            <span>Creating app, provisioning database, deploying... done.</span>
+            <span class="text-[#c0c1ff]"><%= t('landing.deploy_mcp_ai') %></span>
+            <span><%= t('landing.deploy_mcp_response') %></span>
           </div>
         </div>
       </div>
@@ -424,18 +424,18 @@
 <div class="border-t border-[#28283d]/30">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
     <div class="text-center mb-16">
-      <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;">Simple, transparent pricing</h2>
-      <p class="mt-3 text-[#958e9e] text-lg">Pay per resource, per hour. No hidden fees. Start free.</p>
+      <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;"><%= t('landing.pricing_heading') %></h2>
+      <p class="mt-3 text-[#958e9e] text-lg"><%= t('landing.pricing_subtitle') %></p>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
       <%
         tiers = [
-          { name: "Free", usd: 0, ram: "256 MB", vcpu: "Shared", storage: "1 GB", badge: "Free", badge_color: "bg-[#c0c1ff]/10 text-[#c0c1ff]", highlight: false },
-          { name: "Starter", usd: 1.50, ram: "512 MB", vcpu: "Shared", storage: "5 GB", badge: nil, badge_color: nil, highlight: false },
-          { name: "Basic", usd: 2.50, ram: "1 GB", vcpu: "1 vCPU", storage: "10 GB", badge: nil, badge_color: nil, highlight: false },
-          { name: "Standard", usd: 7, ram: "2 GB", vcpu: "2 vCPU", storage: "25 GB", badge: "Popular", badge_color: "bg-[#c0c1ff]/20 text-[#c0c1ff]", highlight: true },
-          { name: "Pro", usd: 14, ram: "4 GB", vcpu: "4 vCPU", storage: "50 GB", badge: nil, badge_color: nil, highlight: false }
+          { name: "Free",           usd: 0,    ram: "256 MB", vcpu: "0.15", storage: "1 GB",  badge: t('landing.tier_free_badge'),    badge_color: "bg-[#c0c1ff]/10 text-[#c0c1ff]", highlight: false },
+          { name: "Basic",          usd: 1.50, ram: "512 MB", vcpu: "0.3",  storage: "5 GB",  badge: nil, badge_color: nil, highlight: false },
+          { name: "Standard",       usd: 4,    ram: "1 GB",   vcpu: "0.5",  storage: "10 GB", badge: nil, badge_color: nil, highlight: false },
+          { name: "Performance",    usd: 8,    ram: "2 GB",   vcpu: "1.0",  storage: "25 GB", badge: t('landing.tier_popular_badge'), badge_color: "bg-[#c0c1ff]/20 text-[#c0c1ff]", highlight: true },
+          { name: "Performance 2x", usd: 15,   ram: "4 GB",   vcpu: "2.0",  storage: "50 GB", badge: nil, badge_color: nil, highlight: false }
         ]
       %>
       <% tiers.each do |tier| %>
@@ -448,8 +448,8 @@
           </div>
 
           <div class="mb-6">
-            <span class="text-3xl font-bold text-white font-mono"><%= format_price(tier[:usd]) %></span>
-            <span class="text-sm text-[#958e9e]"><%= price_period %></span>
+            <span class="text-xl font-bold text-white font-mono"><%= format_price(tier[:usd]) %></span>
+            <span class="text-xs text-[#958e9e]"><%= price_period %></span>
           </div>
 
           <ul class="space-y-2 mb-6 text-sm text-[#958e9e]">
@@ -459,23 +459,29 @@
             </li>
             <li class="flex items-center">
               <svg class="w-3.5 h-3.5 text-[#c0c1ff] mr-2 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-              <%= tier[:vcpu] %>
+              <%= tier[:vcpu] %> vCPU
             </li>
             <li class="flex items-center">
               <svg class="w-3.5 h-3.5 text-[#c0c1ff] mr-2 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
               <%= tier[:storage] %> disk
             </li>
+            <% if tier[:usd] == 0 %>
+              <li class="flex items-center text-[#4a4453]">
+                <svg class="w-3.5 h-3.5 text-[#4a4453] mr-2 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <%= t('pricing.sleeps_idle') %>
+              </li>
+            <% end %>
           </ul>
 
-          <%= link_to new_user_registration_path, class: "block w-full text-center py-2.5 text-sm font-medium rounded-lg transition #{tier[:highlight] ? 'text-[#282a64] hover:opacity-90' : 'text-[#c0c1ff] border border-[#c0c1ff]/30 hover:bg-[#c0c1ff]/10'}", style: tier[:highlight] ? "background: linear-gradient(135deg, #c0c1ff 0%, #5625ab 100%);" : "" do %>
-            Get started
+          <%= link_to new_user_session_path, class: "block w-full text-center py-2.5 text-sm font-medium rounded-lg transition #{tier[:highlight] ? 'text-[#282a64] hover:opacity-90' : 'text-[#c0c1ff] border border-[#c0c1ff]/30 hover:bg-[#c0c1ff]/10'}", style: tier[:highlight] ? "background: linear-gradient(135deg, #c0c1ff 0%, #5625ab 100%);" : "" do %>
+            <%= t('landing.pricing_get_started') %>
           <% end %>
         </div>
       <% end %>
     </div>
 
     <div class="text-center mt-8">
-      <p class="text-sm text-[#958e9e]">All tiers include free SSL, custom domains, and managed add-ons. <span class="text-[#4a4453]">Databases start free (1 GB).</span></p>
+      <p class="text-sm text-[#958e9e]"><%= t('landing.pricing_all_tiers_note') %> <span class="text-[#4a4453]"><%= t('landing.pricing_db_note') %></span></p>
       <%= link_to pricing_path, class: "inline-flex items-center text-sm text-[#c0c1ff] hover:text-white transition font-medium mt-2" do %>
         <%= t('landing.compare_pricing') %>
         <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
@@ -490,7 +496,7 @@
     <div class="max-w-3xl mx-auto text-center">
       <div class="inline-flex items-center px-3 py-1 rounded-full bg-[#1e1e32] border border-[#28283d]/50 mb-6">
         <svg class="w-3.5 h-3.5 text-[#958e9e] mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-        <span class="text-xs text-[#958e9e] font-medium">Open Source on GitHub</span>
+        <span class="text-xs text-[#958e9e] font-medium"><%= t('landing.open_source_github') %></span>
       </div>
 
       <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;"><%= t('landing.open_source') %><br><%= t('landing.run_anywhere') %></h2>
@@ -501,10 +507,10 @@
       <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4">
         <a href="https://github.com/johannesdwicahyo/wokku" target="_blank" rel="noopener" class="inline-flex items-center justify-center px-6 py-3 bg-[#1e1e32] border border-[#28283d]/50 text-white text-sm font-medium rounded-lg hover:bg-[#28283d] transition">
           <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-          Star on GitHub
+          <%= t('landing.star_on_github') %>
         </a>
         <%= link_to docs_path, class: "inline-flex items-center justify-center px-6 py-3 text-sm text-[#958e9e] font-medium hover:text-white transition" do %>
-          Read the docs
+          <%= t('landing.read_the_docs') %>
           <svg class="w-4 h-4 ml-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
         <% end %>
       </div>
@@ -519,7 +525,7 @@
       <h2 class="text-3xl sm:text-4xl font-bold text-white" style="font-family: 'Space Grotesk', sans-serif;"><%= t('landing.ready_to_deploy') %></h2>
       <p class="mt-3 text-[#958e9e] text-lg"><%= t('landing.start_free') %></p>
       <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-        <%= link_to new_user_registration_path, class: "inline-flex items-center justify-center px-8 py-3.5 text-sm font-semibold rounded-lg hover:opacity-90 transition shadow-lg shadow-[#c0c1ff]/20 text-[#282a64]", style: "background: linear-gradient(135deg, #c0c1ff 0%, #5625ab 100%);" do %>
+        <%= link_to new_user_session_path, class: "inline-flex items-center justify-center px-8 py-3.5 text-sm font-semibold rounded-lg hover:opacity-90 transition shadow-lg shadow-[#c0c1ff]/20 text-[#282a64]", style: "background: linear-gradient(135deg, #c0c1ff 0%, #5625ab 100%);" do %>
           <%= t('landing.start_building') %>
         <% end %>
         <%= link_to dashboard_templates_path, class: "inline-flex items-center justify-center px-8 py-3.5 border border-[#c0c1ff]/30 text-[#c0c1ff] text-sm font-semibold rounded-lg hover:bg-[#c0c1ff]/10 transition" do %>
@@ -530,74 +536,3 @@
   </div>
 </div>
 
-<script>
-(function() {
-  var dino = document.querySelector('.terminal-dino');
-  var wrap = document.querySelector('.terminal-dino-wrap');
-  if (!dino || !wrap) return;
-
-  var alive = true;
-  var DINO_EMOJI = '🦕';
-  var GRAVE_EMOJI = '🪦';
-
-  var terminalEl = wrap.parentElement;
-  document.addEventListener('mousemove', function(e) {
-    if (!alive) return;
-    var rect = terminalEl.getBoundingClientRect();
-    if (e.clientY < rect.top - 200 || e.clientY > rect.bottom + 100) return;
-
-    var relX = e.clientX - rect.left;
-    var pct = Math.max(2, Math.min(92, (relX / rect.width) * 100));
-    dino.style.left = pct + '%';
-
-    if (!dino._lastX) dino._lastX = pct;
-    if (pct < dino._lastX - 1) {
-      dino.style.transform = 'scaleX(-1)';
-    } else if (pct > dino._lastX + 1) {
-      dino.style.transform = 'scaleX(1)';
-    }
-    dino._lastX = pct;
-  });
-
-  function checkCollisions() {
-    if (!alive) return;
-    var dinoRect = dino.getBoundingClientRect();
-    var dinoBox = {
-      left: dinoRect.left + 4, right: dinoRect.right - 4,
-      top: dinoRect.top + 4, bottom: dinoRect.bottom - 4
-    };
-
-    var meteors = document.querySelectorAll('.meteor');
-    for (var i = 0; i < meteors.length; i++) {
-      var m = meteors[i].getBoundingClientRect();
-      var headY = m.bottom;
-      var headX = m.left + m.width / 2;
-      if (headX >= dinoBox.left && headX <= dinoBox.right &&
-          headY >= dinoBox.top && headY <= dinoBox.bottom) {
-        killDino();
-        return;
-      }
-    }
-  }
-
-  function killDino() {
-    alive = false;
-    dino.textContent = GRAVE_EMOJI;
-    dino.classList.add('dead');
-    dino.style.transform = 'none';
-    dino.style.animation = 'dino-shake 0.3s ease-in-out';
-    dino.title = 'Click to revive!';
-
-    dino.addEventListener('click', function revive() {
-      alive = true;
-      dino.textContent = DINO_EMOJI;
-      dino.classList.remove('dead');
-      dino.title = 'Dodge the meteors!';
-      dino.removeEventListener('click', revive);
-    }, { once: true });
-  }
-
-  setInterval(checkCollisions, 33);
-  dino.title = 'Dodge the meteors!';
-})();
-</script>

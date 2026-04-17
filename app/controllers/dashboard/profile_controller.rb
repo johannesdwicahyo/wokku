@@ -17,7 +17,7 @@ module Dashboard
     private
 
     def profile_params
-      params.require(:user).permit(:email)
+      params.require(:user).permit(:email, :currency)
     end
   end
 end

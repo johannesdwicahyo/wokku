@@ -1,6 +1,6 @@
 #!/bin/bash
 # Wokku CLI Installer
-# Usage: curl -sL https://wokku.dev/cli/install.sh | bash
+# Usage: curl -sL https://wokku.cloud/cli/install.sh | bash
 
 set -e
 

@@ -1,6 +1,6 @@
 <%= render "dashboard/apps/tabs", app: @app %>
 
-<div class="bg-surface-container-low rounded-xl overflow-hidden">
+<div class="bg-surface-container-low rounded-xl overflow-hidden" data-controller="log-viewer">
   <div class="px-6 py-4 border-b border-outline-variant/15 flex items-center justify-between">
     <div>
       <h2 class="text-base font-semibold text-on-surface font-headline">Application Logs</h2>
@@ -17,7 +17,7 @@
   <div class="px-6 py-3 flex items-center gap-3 border-b border-outline-variant/15">
     <div class="relative flex-1">
       <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[16px]">search</span>
-      <input type="text" id="log-search" placeholder="Filter logs..." oninput="filterLogs(this.value)" class="w-full pl-9 pr-4 py-1.5 rounded-md bg-surface border-none text-xs text-on-surface placeholder-outline focus:ring-1 focus:ring-primary font-mono">
+      <input type="text" placeholder="Filter logs..." data-log-viewer-target="search" data-action="input->log-viewer#filter" class="w-full pl-9 pr-4 py-1.5 rounded-md bg-surface border-none text-xs text-on-surface placeholder-outline focus:ring-1 focus:ring-primary font-mono">
     </div>
     <%= link_to dashboard_app_logs_path(@app, lines: 50), class: "text-[10px] px-2 py-1 rounded #{(params[:lines] || '200') == '50' ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-outline'}" do %>50<% end %>
     <%= link_to dashboard_app_logs_path(@app, lines: 100), class: "text-[10px] px-2 py-1 rounded #{(params[:lines] || '200') == '100' ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-outline'}" do %>100<% end %>
@@ -25,10 +25,10 @@
     <%= link_to dashboard_app_logs_path(@app, lines: 500), class: "text-[10px] px-2 py-1 rounded #{params[:lines] == '500' ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-outline'}" do %>500<% end %>
   </div>
 
-  <div class="bg-surface p-4 font-mono text-xs leading-5 h-[600px] overflow-y-auto" id="log-output">
+  <div class="bg-surface p-4 font-mono text-xs leading-5 h-[600px] overflow-y-auto" data-log-viewer-target="output">
     <% if @logs.present? %>
       <% @logs.each_line do |line| %>
-        <div class="log-line <%= log_line_class(line) %> whitespace-pre-wrap break-all"><%= line.rstrip %></div>
+        <div class="log-line <%= log_line_class(line) %> whitespace-pre-wrap break-all" data-log-viewer-target="line"><%= line.rstrip %></div>
       <% end %>
     <% else %>
       <p class="text-outline-variant">No logs available. The app may not have been deployed yet.</p>
@@ -86,20 +86,3 @@
   <% end %>
 </div>
 
-<script>
-  function filterLogs(query) {
-    const lines = document.querySelectorAll('.log-line');
-    const q = query.toLowerCase();
-    lines.forEach(line => {
-      line.style.display = q === '' || line.textContent.toLowerCase().includes(q) ? '' : 'none';
-    });
-  }
-
-  // Auto-scroll to bottom on load
-  document.addEventListener("turbo:load", function() {
-    const output = document.getElementById("log-output");
-    if (output) output.scrollTop = output.scrollHeight;
-  });
-  const output = document.getElementById("log-output");
-  if (output) output.scrollTop = output.scrollHeight;
-</script>

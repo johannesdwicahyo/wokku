@@ -53,11 +53,11 @@
 
     <div class="flex items-center justify-between">
       <div>
-        <span class="text-3xl font-bold text-white">$5</span>
-        <span class="text-[#958e9e] text-sm">/month</span>
+        <span class="text-3xl font-bold text-white"><%= format_price(5) %></span>
+        <span class="text-[#958e9e] text-sm"><%= price_period %></span>
         <p class="text-xs text-[#4a4453] mt-0.5">10% supports Wokku + open-source development</p>
       </div>
-      <%= link_to new_user_registration_path, class: "inline-flex items-center px-6 py-3 technical-gradient text-[#282a64] text-sm font-semibold rounded-lg hover:opacity-90 transition shadow-lg shadow-[#c0c1ff]/20" do %>
+      <%= link_to new_user_session_path, class: "inline-flex items-center px-6 py-3 technical-gradient text-[#282a64] text-sm font-semibold rounded-lg hover:opacity-90 transition shadow-lg shadow-[#c0c1ff]/20" do %>
         Deploy Now
         <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
       <% end %>
@@ -75,19 +75,19 @@
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
       <a href="https://www.hetzner.com/cloud" target="_blank" rel="noopener" class="bg-[#1E293B]/40 rounded-xl border border-[#334155]/40 p-4 text-center hover:border-[#475569] transition group">
         <p class="text-sm font-medium text-gray-300 group-hover:text-white transition">Hetzner</p>
-        <p class="text-xs text-[#4a4453] mt-0.5">From $4/mo</p>
+        <p class="text-xs text-[#4a4453] mt-0.5">From <%= format_price(4) %><%= price_period %></p>
       </a>
       <a href="https://www.vultr.com" target="_blank" rel="noopener" class="bg-[#1E293B]/40 rounded-xl border border-[#334155]/40 p-4 text-center hover:border-[#475569] transition group">
         <p class="text-sm font-medium text-gray-300 group-hover:text-white transition">Vultr</p>
-        <p class="text-xs text-[#4a4453] mt-0.5">From $6/mo</p>
+        <p class="text-xs text-[#4a4453] mt-0.5">From <%= format_price(6) %><%= price_period %></p>
       </a>
       <a href="https://www.digitalocean.com" target="_blank" rel="noopener" class="bg-[#1E293B]/40 rounded-xl border border-[#334155]/40 p-4 text-center hover:border-[#475569] transition group">
         <p class="text-sm font-medium text-gray-300 group-hover:text-white transition">DigitalOcean</p>
-        <p class="text-xs text-[#4a4453] mt-0.5">From $6/mo</p>
+        <p class="text-xs text-[#4a4453] mt-0.5">From <%= format_price(6) %><%= price_period %></p>
       </a>
       <a href="https://www.linode.com" target="_blank" rel="noopener" class="bg-[#1E293B]/40 rounded-xl border border-[#334155]/40 p-4 text-center hover:border-[#475569] transition group">
         <p class="text-sm font-medium text-gray-300 group-hover:text-white transition">Linode</p>
-        <p class="text-xs text-[#4a4453] mt-0.5">From $5/mo</p>
+        <p class="text-xs text-[#4a4453] mt-0.5">From <%= format_price(5) %><%= price_period %></p>
       </a>
     </div>
 

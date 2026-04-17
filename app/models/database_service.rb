@@ -11,4 +11,22 @@ class DatabaseService < ApplicationRecord
   validates :service_type, presence: true, inclusion: {
     in: %w[postgres redis mysql mongodb memcached rabbitmq elasticsearch mariadb meilisearch clickhouse nats]
   }
+
+  def service_tier
+    @service_tier ||= ServiceTier.find_by(name: tier_name || "mini", service_type: service_type)
+  end
+
+  def backup_policy
+    service_tier&.backup_policy || ServiceTier::BACKUP_POLICIES["mini"]
+  end
+
+  def auto_backup?
+    backup_policy[:auto_backup]
+  end
+
+  def backup_limit_reached?
+    cap = backup_policy[:free_cap]
+    return false unless cap # paid tiers have no cap
+    backups.completed.count >= cap
+  end
 end

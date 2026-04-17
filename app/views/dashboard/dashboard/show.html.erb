@@ -13,7 +13,7 @@
     <div class="flex items-center gap-3">
       <button data-action="click->slide-panel#open" class="inline-flex items-center gap-2 px-5 py-2 technical-gradient text-on-primary text-sm font-bold rounded-md hover:opacity-90 active:scale-95 transition-all cursor-pointer">
         <span class="material-symbols-outlined text-base">add</span>
-        New App
+        <%= t("dashboard.apps.new_app") %>
       </button>
     </div>
   </div>
@@ -99,20 +99,22 @@
                   </div>
                   <% case app.status %>
                   <% when "running" %>
-                    <span class="bg-secondary-container text-on-secondary-container text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-tighter glow-running">Running</span>
+                    <span class="bg-secondary-container text-on-secondary-container text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-tighter glow-running"><%= t("common.running") %></span>
                   <% when "crashed" %>
-                    <span class="bg-error-container text-on-error-container text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-tighter">Crashed</span>
+                    <span class="bg-error-container text-on-error-container text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-tighter"><%= t("common.crashed") %></span>
                   <% when "deploying" %>
-                    <span class="bg-surface-variant text-on-surface-variant text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-tighter">Deploying</span>
+                    <span class="bg-surface-variant text-on-surface-variant text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-tighter"><%= t("common.deploying") %></span>
                   <% when "stopped" %>
-                    <span class="bg-surface-variant text-on-surface-variant text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-tighter">Stopped</span>
+                    <span class="bg-surface-variant text-on-surface-variant text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-tighter"><%= t("common.stopped") %></span>
                   <% when "sleeping" %>
-                    <span class="bg-surface-variant text-on-surface-variant text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-tighter">Sleeping</span>
+                    <span class="bg-surface-variant text-on-surface-variant text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-tighter"><%= t("common.sleeping") %></span>
+                  <% when "created" %>
+                    <span class="bg-surface-variant text-outline text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-tighter">AWAITING DEPLOY</span>
                   <% end %>
                 </div>
 
                 <%# Domain %>
-                <% if (primary_domain = app.domains.find { |d| d.hostname.end_with?(".wokku.dev") } || app.domains.first) %>
+                <% if (primary_domain = app.domains.find { |d| d.hostname.end_with?(".wokku.cloud") } || app.domains.first) %>
                   <div class="flex items-center gap-1.5 mb-3">
                     <span class="material-symbols-outlined text-outline text-xs">language</span>
                     <span class="font-mono text-xs text-primary truncate"><%= primary_domain.hostname %></span>
@@ -190,22 +192,125 @@
       </div>
     </div>
   <% else %>
-    <%# Empty State %>
-    <div class="text-center py-20 bg-surface-container-low rounded-md">
-      <div class="w-16 h-16 rounded-full bg-primary-container/20 flex items-center justify-center mx-auto mb-4">
-        <span class="material-symbols-outlined text-3xl text-primary">terminal</span>
+    <%# Onboarding Checklist — shown to new users with no apps %>
+    <%
+      server_count = policy_scope(Server).size
+      step1_done = server_count > 0
+      step2_done = false  # No apps = false by definition in this branch
+      step3_done = current_user.api_tokens.active.exists?
+      completed_count = [ step1_done, step2_done, step3_done ].count(true)
+    %>
+
+    <div class="max-w-3xl mx-auto">
+      <div class="text-center mb-8">
+        <div class="w-16 h-16 rounded-full technical-gradient flex items-center justify-center mx-auto mb-4">
+          <span class="material-symbols-outlined text-3xl text-on-primary">waving_hand</span>
+        </div>
+        <h2 class="font-headline text-2xl font-bold text-on-surface mb-2"><%= t("dashboard.onboarding.welcome") %></h2>
+        <p class="text-sm text-outline">Let's get you deploying in under 5 minutes.</p>
       </div>
-      <h3 class="font-headline text-lg font-bold text-on-surface mb-1">No apps yet</h3>
-      <p class="text-sm text-outline mb-6">Get started by creating your first application.</p>
-      <div class="flex items-center justify-center gap-3">
-        <button data-action="click->slide-panel#open" class="inline-flex items-center gap-2 px-5 py-2 technical-gradient text-on-primary text-sm font-bold rounded-md hover:opacity-90 active:scale-95 transition-all cursor-pointer">
-          <span class="material-symbols-outlined text-base">add</span>
-          Create App
-        </button>
-        <%= link_to dashboard_templates_path, class: "inline-flex items-center gap-2 px-4 py-2 bg-surface-container text-on-surface-variant text-sm font-bold rounded-md hover:bg-surface-container-high transition-colors" do %>
-          <span class="material-symbols-outlined text-base">rocket_launch</span>
-          1 Click Deploy
-        <% end %>
+
+      <div class="bg-surface-container-low rounded-md overflow-hidden">
+        <div class="px-6 py-4 border-b border-outline-variant/10 flex items-center justify-between">
+          <div>
+            <h3 class="font-headline text-base font-bold text-on-surface"><%= t("dashboard.onboarding.welcome_desc") %></h3>
+            <p class="text-xs text-outline mt-0.5"><%= completed_count %> of 3 <%= t("dashboard.onboarding.completed") %></p>
+          </div>
+          <div class="w-32 bg-surface-container rounded-full h-1.5 overflow-hidden">
+            <div class="h-full technical-gradient transition-all" style="width: <%= (completed_count / 3.0 * 100).round %>%"></div>
+          </div>
+        </div>
+
+        <%# Step 1: Connect a server %>
+        <div class="px-6 py-4 border-b border-outline-variant/10 flex items-start gap-4">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 <%= step1_done ? 'bg-secondary/20' : 'bg-surface-container' %>">
+            <% if step1_done %>
+              <span class="material-symbols-outlined text-secondary text-[18px]">check</span>
+            <% else %>
+              <span class="text-sm font-bold text-on-surface-variant">1</span>
+            <% end %>
+          </div>
+          <div class="flex-1">
+            <h4 class="text-sm font-bold text-on-surface mb-1"><%= t("dashboard.onboarding.add_server") %></h4>
+            <p class="text-xs text-outline mb-3">
+              Wokku manages apps on Dokku servers via SSH. You need at least one server to deploy anything.
+              Need a server? Any VPS with Dokku installed works — DigitalOcean, Hetzner, Contabo, even a Raspberry Pi.
+            </p>
+            <% unless step1_done %>
+              <%= link_to dashboard_servers_path + "/new", class: "inline-flex items-center gap-1 px-3 py-1.5 technical-gradient text-on-primary text-xs font-bold rounded-md hover:opacity-90 transition" do %>
+                <span class="material-symbols-outlined text-[14px]">add</span>
+                Add Server
+              <% end %>
+              <a href="/docs/getting-started/connect-server" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-on-surface-variant hover:text-on-surface transition ml-2">
+                <span class="material-symbols-outlined text-[14px]">menu_book</span>
+                Read the guide
+              </a>
+            <% end %>
+          </div>
+        </div>
+
+        <%# Step 2: Deploy an app %>
+        <div class="px-6 py-4 border-b border-outline-variant/10 flex items-start gap-4">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 <%= step2_done ? 'bg-secondary/20' : step1_done ? 'bg-surface-container' : 'bg-surface-container/50' %>">
+            <% if step2_done %>
+              <span class="material-symbols-outlined text-secondary text-[18px]">check</span>
+            <% else %>
+              <span class="text-sm font-bold <%= step1_done ? 'text-on-surface-variant' : 'text-outline-variant' %>">2</span>
+            <% end %>
+          </div>
+          <div class="flex-1">
+            <h4 class="text-sm font-bold <%= step1_done ? 'text-on-surface' : 'text-outline-variant' %> mb-1"><%= t("dashboard.onboarding.deploy_app") %></h4>
+            <p class="text-xs text-outline mb-3">
+              Pick a one-click template (Ghost, n8n, Waha, etc.) or create a custom app and git push your code.
+            </p>
+            <% if step1_done %>
+              <%= link_to dashboard_templates_path, class: "inline-flex items-center gap-1 px-3 py-1.5 technical-gradient text-on-primary text-xs font-bold rounded-md hover:opacity-90 transition" do %>
+                <span class="material-symbols-outlined text-[14px]">rocket_launch</span>
+                Browse Templates
+              <% end %>
+              <button data-action="click->slide-panel#open" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-on-surface-variant hover:text-on-surface transition ml-2 cursor-pointer">
+                <span class="material-symbols-outlined text-[14px]">add</span>
+                Create Custom App
+              </button>
+            <% else %>
+              <span class="text-[11px] text-outline italic">Complete step 1 first</span>
+            <% end %>
+          </div>
+        </div>
+
+        <%# Step 3: API token for CLI / MCP %>
+        <div class="px-6 py-4 flex items-start gap-4">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 <%= step3_done ? 'bg-secondary/20' : 'bg-surface-container' %>">
+            <% if step3_done %>
+              <span class="material-symbols-outlined text-secondary text-[18px]">check</span>
+            <% else %>
+              <span class="text-sm font-bold text-on-surface-variant">3</span>
+            <% end %>
+          </div>
+          <div class="flex-1">
+            <h4 class="text-sm font-bold text-on-surface mb-1"><%= t("dashboard.onboarding.generate_token") %></h4>
+            <p class="text-xs text-outline mb-3">
+              Create a token to use the CLI, REST API, or the Claude Code plugin. Deploy and manage your apps from
+              your terminal or directly from AI.
+            </p>
+            <% unless step3_done %>
+              <%= link_to dashboard_profile_path, class: "inline-flex items-center gap-1 px-3 py-1.5 text-xs text-on-surface-variant hover:text-on-surface border border-outline-variant/20 rounded-md transition" do %>
+                <span class="material-symbols-outlined text-[14px]">key</span>
+                Create Token
+              <% end %>
+              <a href="/docs/mcp/setup" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-on-surface-variant hover:text-on-surface transition ml-2">
+                <span class="material-symbols-outlined text-[14px]">smart_toy</span>
+                Set up Claude Code
+              </a>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center mt-6">
+        <a href="/docs" target="_blank" class="text-xs text-outline hover:text-primary transition">
+          Or browse the full documentation →
+        </a>
       </div>
     </div>
   <% end %>
