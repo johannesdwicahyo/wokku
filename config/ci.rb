@@ -3,6 +3,9 @@
 CI.run do
   step "Setup", "bin/setup --skip-server"
 
+  step "Security: Secret scan",
+    "sh", "-c", "bin/scan-secrets $(git ls-files -- '*.rb' '*.yml' '*.json' '*.js' '*.erb' | grep -vE 'test/|spec/|docs/content/')"
+
   step "Style: Ruby", "bin/rubocop"
 
   step "Security: Gem audit", "bin/bundler-audit"
