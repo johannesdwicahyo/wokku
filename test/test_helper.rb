@@ -46,6 +46,14 @@ DOKKU_PROCESSES_ORIGINAL = {
   start:   (Dokku::Processes.instance_method(:start) rescue nil),
   scale:   (Dokku::Processes.instance_method(:scale) rescue nil)
 }.compact
+DOKKU_DATABASES_ORIGINAL = {
+  list:    (Dokku::Databases.instance_method(:list) rescue nil),
+  info:    (Dokku::Databases.instance_method(:info) rescue nil),
+  create:  (Dokku::Databases.instance_method(:create) rescue nil),
+  destroy: (Dokku::Databases.instance_method(:destroy) rescue nil),
+  link:    (Dokku::Databases.instance_method(:link) rescue nil),
+  unlink:  (Dokku::Databases.instance_method(:unlink) rescue nil)
+}.compact
 HETZNER_ORIGINAL_SERVER_STATUS = CloudProviders::Hetzner.instance_method(:server_status) rescue nil
 HETZNER_ORIGINAL_INITIALIZE = CloudProviders::Hetzner.instance_method(:initialize) rescue nil
 TEMPLATE_DEPLOYER_ORIGINAL_DEPLOY = TemplateDeployer.instance_method(:deploy!) rescue nil
@@ -89,6 +97,7 @@ module AutoRestoreStubs
     Dokku::Client.define_method(:connected?, DOKKU_CLIENT_ORIGINAL_CONNECTED) if DOKKU_CLIENT_ORIGINAL_CONNECTED
     Dokku::Client.define_method(:run_streaming, DOKKU_CLIENT_ORIGINAL_RUN_STREAMING) if DOKKU_CLIENT_ORIGINAL_RUN_STREAMING
     DOKKU_PROCESSES_ORIGINAL.each { |name, m| Dokku::Processes.define_method(name, m) }
+    DOKKU_DATABASES_ORIGINAL.each { |name, m| Dokku::Databases.define_method(name, m) }
     CloudProviders::Hetzner.define_method(:server_status, HETZNER_ORIGINAL_SERVER_STATUS) if HETZNER_ORIGINAL_SERVER_STATUS
     CloudProviders::Hetzner.define_method(:initialize, HETZNER_ORIGINAL_INITIALIZE) if HETZNER_ORIGINAL_INITIALIZE
     TemplateDeployer.define_method(:deploy!, TEMPLATE_DEPLOYER_ORIGINAL_DEPLOY) if TEMPLATE_DEPLOYER_ORIGINAL_DEPLOY
