@@ -38,6 +38,12 @@ DOKKU_APPS_ORIGINAL_LIST = Dokku::Apps.instance_method(:list) rescue nil
 DOKKU_APPS_ORIGINAL_DESTROY = Dokku::Apps.instance_method(:destroy) rescue nil
 DOKKU_CONFIG_ORIGINAL_LIST = Dokku::Config.instance_method(:list) rescue nil
 DOKKU_CLIENT_ORIGINAL_RUN = Dokku::Client.instance_method(:run) rescue nil
+DOKKU_PROCESSES_ORIGINAL = {
+  restart: (Dokku::Processes.instance_method(:restart) rescue nil),
+  stop:    (Dokku::Processes.instance_method(:stop) rescue nil),
+  start:   (Dokku::Processes.instance_method(:start) rescue nil),
+  scale:   (Dokku::Processes.instance_method(:scale) rescue nil)
+}.compact
 
 module SshStubHelper
   def stub_net_ssh_start(&block)
@@ -71,6 +77,7 @@ module AutoRestoreStubs
     Dokku::Apps.define_method(:destroy, DOKKU_APPS_ORIGINAL_DESTROY) if DOKKU_APPS_ORIGINAL_DESTROY
     Dokku::Config.define_method(:list, DOKKU_CONFIG_ORIGINAL_LIST) if DOKKU_CONFIG_ORIGINAL_LIST
     Dokku::Client.define_method(:run, DOKKU_CLIENT_ORIGINAL_RUN) if DOKKU_CLIENT_ORIGINAL_RUN
+    DOKKU_PROCESSES_ORIGINAL.each { |name, m| Dokku::Processes.define_method(name, m) }
   end
 end
 
