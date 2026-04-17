@@ -48,6 +48,10 @@ DOKKU_PROCESSES_ORIGINAL = {
 }.compact
 HETZNER_ORIGINAL_SERVER_STATUS = CloudProviders::Hetzner.instance_method(:server_status) rescue nil
 HETZNER_ORIGINAL_INITIALIZE = CloudProviders::Hetzner.instance_method(:initialize) rescue nil
+TEMPLATE_DEPLOYER_ORIGINAL_DEPLOY = TemplateDeployer.instance_method(:deploy!) rescue nil
+TEMPLATE_DEPLOYER_ORIGINAL_INITIALIZE = TemplateDeployer.instance_method(:initialize) rescue nil
+TEMPLATE_REGISTRY_ORIGINAL_FIND = (TemplateRegistry.instance_method(:find) rescue nil)
+TEMPLATE_REGISTRY_ORIGINAL_INITIALIZE = (TemplateRegistry.instance_method(:initialize) rescue nil)
 
 module SshStubHelper
   def stub_net_ssh_start(&block)
@@ -87,6 +91,10 @@ module AutoRestoreStubs
     DOKKU_PROCESSES_ORIGINAL.each { |name, m| Dokku::Processes.define_method(name, m) }
     CloudProviders::Hetzner.define_method(:server_status, HETZNER_ORIGINAL_SERVER_STATUS) if HETZNER_ORIGINAL_SERVER_STATUS
     CloudProviders::Hetzner.define_method(:initialize, HETZNER_ORIGINAL_INITIALIZE) if HETZNER_ORIGINAL_INITIALIZE
+    TemplateDeployer.define_method(:deploy!, TEMPLATE_DEPLOYER_ORIGINAL_DEPLOY) if TEMPLATE_DEPLOYER_ORIGINAL_DEPLOY
+    TemplateDeployer.define_method(:initialize, TEMPLATE_DEPLOYER_ORIGINAL_INITIALIZE) if TEMPLATE_DEPLOYER_ORIGINAL_INITIALIZE
+    TemplateRegistry.define_method(:find, TEMPLATE_REGISTRY_ORIGINAL_FIND) if TEMPLATE_REGISTRY_ORIGINAL_FIND
+    TemplateRegistry.define_method(:initialize, TEMPLATE_REGISTRY_ORIGINAL_INITIALIZE) if TEMPLATE_REGISTRY_ORIGINAL_INITIALIZE
   end
 end
 
