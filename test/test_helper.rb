@@ -5,9 +5,9 @@ SimpleCov.start "rails" do
   add_filter "/vendor/"
   add_filter "/ee/"
   enable_coverage :branch
-  # Target 80% for launch. SimpleCov undercounts due to Zeitwerk autoloading
-  # files before Coverage.start — actual coverage is higher than reported.
-  minimum_coverage line: 60
+  # SimpleCov undercounts due to Zeitwerk autoloading files before
+  # Coverage.start — actual coverage is higher than reported.
+  minimum_coverage line: 88
 end
 
 ENV["RAILS_ENV"] ||= "test"
