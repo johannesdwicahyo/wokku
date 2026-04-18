@@ -10,7 +10,19 @@ class ApplicationController < ActionController::Base
   rescue_from ActiveRecord::RecordNotFound, with: :not_found
   rescue_from Pundit::NotAuthorizedError, with: :forbidden
 
+  # Auth / account pages carry CSRF tokens tied to the session cookie. If the
+  # browser re-renders a cached copy of these pages (bfcache, disk cache, or
+  # a 304 revalidation after Rails has rotated the session), the embedded
+  # token won't match the current session and any POST lands in
+  # InvalidAuthenticityToken → 422. Force no-store on every Devise route.
+  before_action :no_store_auth_pages
+
   private
+
+  def no_store_auth_pages
+    return unless request.path.start_with?("/users/")
+    response.headers["Cache-Control"] = "no-store"
+  end
 
   def not_found
     respond_to do |format|
