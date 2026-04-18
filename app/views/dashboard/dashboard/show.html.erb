@@ -7,8 +7,8 @@
   <%# Page Header %>
   <div class="flex items-center justify-between mb-8">
     <div>
-      <h1 class="text-2xl font-bold text-on-surface font-headline">Dashboard</h1>
-      <p class="mt-1 text-[10px] text-outline uppercase tracking-wider font-bold">Overview of your platform</p>
+      <h1 class="text-2xl font-bold text-on-surface font-headline"><%= t("dashboard.home.title") %></h1>
+      <p class="mt-1 text-[10px] text-outline uppercase tracking-wider font-bold"><%= t("dashboard.home.subtitle") %></p>
     </div>
     <div class="flex items-center gap-3">
       <button data-action="click->slide-panel#open" class="inline-flex items-center gap-2 px-5 py-2 technical-gradient text-on-primary text-sm font-bold rounded-md hover:opacity-90 active:scale-95 transition-all cursor-pointer">
@@ -22,7 +22,7 @@
   <div class="grid grid-cols-4 gap-4 mb-8">
     <div class="bg-surface-container-low p-5 rounded-md flex items-center justify-between group hover:bg-surface-container transition-colors">
       <div>
-        <p class="text-outline uppercase tracking-wider text-[10px] font-bold mb-1">Total Apps</p>
+        <p class="text-outline uppercase tracking-wider text-[10px] font-bold mb-1"><%= t("dashboard.home.total_apps") %></p>
         <h3 class="font-headline text-2xl font-bold text-on-surface"><%= @apps.size %></h3>
       </div>
       <div class="w-10 h-10 rounded bg-primary-container/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
@@ -31,7 +31,7 @@
     </div>
     <div class="bg-surface-container-low p-5 rounded-md flex items-center justify-between group hover:bg-surface-container transition-colors">
       <div>
-        <p class="text-outline uppercase tracking-wider text-[10px] font-bold mb-1">Active Resources</p>
+        <p class="text-outline uppercase tracking-wider text-[10px] font-bold mb-1"><%= t("dashboard.home.active_resources") %></p>
         <h3 class="font-headline text-2xl font-bold text-on-surface"><%= running_count %></h3>
       </div>
       <div class="w-10 h-10 rounded bg-secondary-container/20 flex items-center justify-center text-secondary group-hover:scale-110 transition-transform">
@@ -40,7 +40,7 @@
     </div>
     <div class="bg-surface-container-low p-5 rounded-md flex items-center justify-between group hover:bg-surface-container transition-colors">
       <div>
-        <p class="text-outline uppercase tracking-wider text-[10px] font-bold mb-1">Errors</p>
+        <p class="text-outline uppercase tracking-wider text-[10px] font-bold mb-1"><%= t("dashboard.home.errors") %></p>
         <h3 class="font-headline text-2xl font-bold <%= crashed_count > 0 ? 'text-error' : 'text-on-surface' %>"><%= crashed_count %></h3>
       </div>
       <div class="w-10 h-10 rounded bg-error-container/20 flex items-center justify-center text-error group-hover:scale-110 transition-transform">
@@ -49,7 +49,7 @@
     </div>
     <div class="bg-surface-container-low p-5 rounded-md flex items-center justify-between group hover:bg-surface-container transition-colors">
       <div>
-        <p class="text-outline uppercase tracking-wider text-[10px] font-bold mb-1">Cost (MTD)</p>
+        <p class="text-outline uppercase tracking-wider text-[10px] font-bold mb-1"><%= t("dashboard.home.cost_mtd") %></p>
         <h3 class="font-headline text-2xl font-bold text-on-surface">$<%= "%.2f" % @stats[:cost_mtd] %></h3>
       </div>
       <div class="w-10 h-10 rounded bg-tertiary-container/20 flex items-center justify-center text-tertiary group-hover:scale-110 transition-transform">
@@ -63,9 +63,9 @@
       <%# Main Content — Recent Apps %>
       <div class="col-span-8">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="font-headline text-xl font-bold text-on-surface">Recent Apps</h2>
+          <h2 class="font-headline text-xl font-bold text-on-surface"><%= t("dashboard.home.recent_apps") %></h2>
           <%= link_to dashboard_apps_path, class: "text-xs text-primary hover:text-on-surface-variant font-medium transition-colors" do %>
-            View All
+            <%= t("dashboard.home.view_all") %>
           <% end %>
         </div>
         <div class="grid grid-cols-2 gap-4">
@@ -247,7 +247,7 @@
           <span class="material-symbols-outlined text-3xl text-on-primary">waving_hand</span>
         </div>
         <h2 class="font-headline text-2xl font-bold text-on-surface mb-2"><%= t("dashboard.onboarding.welcome") %></h2>
-        <p class="text-sm text-outline">Let's get you deploying in under 5 minutes.</p>
+        <p class="text-sm text-outline"><%= t("dashboard.onboarding.tagline") %></p>
       </div>
 
       <div class="bg-surface-container-low rounded-md overflow-hidden">
@@ -273,18 +273,15 @@
           </div>
           <div class="flex-1">
             <h4 class="text-sm font-bold text-on-surface mb-1"><%= t("dashboard.onboarding.add_server") %></h4>
-            <p class="text-xs text-outline mb-3">
-              Wokku manages apps on Dokku servers via SSH. You need at least one server to deploy anything.
-              Need a server? Any VPS with Dokku installed works — DigitalOcean, Hetzner, Contabo, even a Raspberry Pi.
-            </p>
+            <p class="text-xs text-outline mb-3"><%= t("dashboard.onboarding.add_server_desc") %></p>
             <% unless step_server_done %>
               <%= link_to dashboard_servers_path + "/new", class: "inline-flex items-center gap-1 px-3 py-1.5 technical-gradient text-on-primary text-xs font-bold rounded-md hover:opacity-90 transition" do %>
                 <span class="material-symbols-outlined text-[14px]">add</span>
-                Add Server
+                <%= t("dashboard.onboarding.add_server_btn") %>
               <% end %>
               <a href="/docs/getting-started/connect-server" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-on-surface-variant hover:text-on-surface transition ml-2">
                 <span class="material-symbols-outlined text-[14px]">menu_book</span>
-                Read the guide
+                <%= t("dashboard.onboarding.read_guide") %>
               </a>
             <% end %>
           </div>
@@ -303,20 +300,18 @@
           </div>
           <div class="flex-1">
             <h4 class="text-sm font-bold <%= step_server_done ? 'text-on-surface' : 'text-outline-variant' %> mb-1"><%= t("dashboard.onboarding.deploy_app") %></h4>
-            <p class="text-xs text-outline mb-3">
-              Pick a one-click template (Ghost, n8n, Waha, etc.) or create a custom app and git push your code.
-            </p>
+            <p class="text-xs text-outline mb-3"><%= t("dashboard.onboarding.deploy_app_desc") %></p>
             <% if step_server_done %>
               <%= link_to dashboard_templates_path, class: "inline-flex items-center gap-1 px-3 py-1.5 technical-gradient text-on-primary text-xs font-bold rounded-md hover:opacity-90 transition" do %>
                 <span class="material-symbols-outlined text-[14px]">rocket_launch</span>
-                Browse Templates
+                <%= t("dashboard.onboarding.browse_templates") %>
               <% end %>
               <button data-action="click->slide-panel#open" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-on-surface-variant hover:text-on-surface transition ml-2 cursor-pointer">
                 <span class="material-symbols-outlined text-[14px]">add</span>
-                Create Custom App
+                <%= t("dashboard.onboarding.create_custom_app") %>
               </button>
             <% else %>
-              <span class="text-[11px] text-outline italic">Complete step 1 first</span>
+              <span class="text-[11px] text-outline italic"><%= t("dashboard.onboarding.complete_step_first") %></span>
             <% end %>
           </div>
         </div>
@@ -332,18 +327,15 @@
           </div>
           <div class="flex-1">
             <h4 class="text-sm font-bold text-on-surface mb-1"><%= t("dashboard.onboarding.generate_token") %></h4>
-            <p class="text-xs text-outline mb-3">
-              Create a token to use the CLI, REST API, or the Claude Code plugin. Deploy and manage your apps from
-              your terminal or directly from AI.
-            </p>
+            <p class="text-xs text-outline mb-3"><%= t("dashboard.onboarding.generate_token_desc") %></p>
             <% unless step_token_done %>
               <%= link_to dashboard_profile_path, class: "inline-flex items-center gap-1 px-3 py-1.5 text-xs text-on-surface-variant hover:text-on-surface border border-outline-variant/20 rounded-md transition" do %>
                 <span class="material-symbols-outlined text-[14px]">key</span>
-                Create Token
+                <%= t("dashboard.onboarding.create_token") %>
               <% end %>
               <a href="/docs/mcp/setup" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-on-surface-variant hover:text-on-surface transition ml-2">
                 <span class="material-symbols-outlined text-[14px]">smart_toy</span>
-                Set up Claude Code
+                <%= t("dashboard.onboarding.setup_claude_code") %>
               </a>
             <% end %>
           </div>
