@@ -192,14 +192,54 @@
       </div>
     </div>
   <% else %>
-    <%# Onboarding Checklist — shown to new users with no apps %>
+    <%# Onboarding — role-aware.
+       We show a different checklist depending on whether this user is
+       expected to provision servers or just deploy apps on servers their
+       team admin (or wokku.cloud) has already set up. %>
     <%
       server_count = policy_scope(Server).size
-      step1_done = server_count > 0
-      step2_done = false  # No apps = false by definition in this branch
-      step3_done = current_user.api_tokens.active.exists?
-      completed_count = [ step1_done, step2_done, step3_done ].count(true)
+      has_server_access = server_count > 0
+      user_can_add_server = current_user.teams.any? { |t| t.team_memberships.exists?(user_id: current_user.id, role: :admin) } || current_user.admin?
+
+      # Steps presented to the user depend on their situation
+      show_server_step = !has_server_access && user_can_add_server
+
+      step_server_done = has_server_access
+      step_deploy_done = false # always false in this branch (no apps)
+      step_token_done  = current_user.api_tokens.active.exists?
+
+      onboarding_steps = []
+      onboarding_steps << :server if show_server_step
+      onboarding_steps << :deploy
+      onboarding_steps << :token
+
+      done_steps = [
+        (show_server_step && step_server_done),
+        step_deploy_done,
+        step_token_done
+      ].count(true)
+      completed_count = done_steps
+      total_steps = onboarding_steps.length
     %>
+
+    <% if !has_server_access && !user_can_add_server %>
+      <%# Regular team member whose team doesn't have a server yet —
+          they can't do anything productive until an admin acts. Be honest
+          and explain rather than dumping technical onboarding on them. %>
+      <div class="max-w-2xl mx-auto text-center py-12">
+        <div class="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center mx-auto mb-4">
+          <span class="material-symbols-outlined text-3xl text-primary">hourglass_empty</span>
+        </div>
+        <h2 class="font-headline text-2xl font-bold text-on-surface mb-2"><%= t("dashboard.onboarding.waiting_title", default: "You're all set — waiting on your team") %></h2>
+        <p class="text-sm text-outline max-w-md mx-auto mb-6">
+          <%= t("dashboard.onboarding.waiting_desc", default: "Your team admin needs to connect a server before you can deploy. Once that's done, this page will show your apps.") %>
+        </p>
+        <%= link_to dashboard_templates_path, class: "inline-flex items-center gap-2 px-5 py-2 border border-outline-variant/20 text-on-surface-variant rounded-md text-sm hover:bg-surface-container transition" do %>
+          <span class="material-symbols-outlined text-[18px]">rocket_launch</span>
+          <%= t("dashboard.onboarding.browse_while_waiting", default: "Browse app templates in the meantime") %>
+        <% end %>
+      </div>
+    <% else %>
 
     <div class="max-w-3xl mx-auto">
       <div class="text-center mb-8">
@@ -214,17 +254,18 @@
         <div class="px-6 py-4 border-b border-outline-variant/10 flex items-center justify-between">
           <div>
             <h3 class="font-headline text-base font-bold text-on-surface"><%= t("dashboard.onboarding.welcome_desc") %></h3>
-            <p class="text-xs text-outline mt-0.5"><%= completed_count %> of 3 <%= t("dashboard.onboarding.completed") %></p>
+            <p class="text-xs text-outline mt-0.5"><%= completed_count %>/<%= total_steps %> <%= t("dashboard.onboarding.completed") %></p>
           </div>
           <div class="w-32 bg-surface-container rounded-full h-1.5 overflow-hidden">
-            <div class="h-full technical-gradient transition-all" style="width: <%= (completed_count / 3.0 * 100).round %>%"></div>
+            <div class="h-full technical-gradient transition-all" style="width: <%= (completed_count.to_f / total_steps * 100).round %>%"></div>
           </div>
         </div>
 
-        <%# Step 1: Connect a server %>
+        <%# Step 1: Connect a server — only for users who can provision infra %>
+        <% if show_server_step %>
         <div class="px-6 py-4 border-b border-outline-variant/10 flex items-start gap-4">
-          <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 <%= step1_done ? 'bg-secondary/20' : 'bg-surface-container' %>">
-            <% if step1_done %>
+          <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 <%= step_server_done ? 'bg-secondary/20' : 'bg-surface-container' %>">
+            <% if step_server_done %>
               <span class="material-symbols-outlined text-secondary text-[18px]">check</span>
             <% else %>
               <span class="text-sm font-bold text-on-surface-variant">1</span>
@@ -236,7 +277,7 @@
               Wokku manages apps on Dokku servers via SSH. You need at least one server to deploy anything.
               Need a server? Any VPS with Dokku installed works — DigitalOcean, Hetzner, Contabo, even a Raspberry Pi.
             </p>
-            <% unless step1_done %>
+            <% unless step_server_done %>
               <%= link_to dashboard_servers_path + "/new", class: "inline-flex items-center gap-1 px-3 py-1.5 technical-gradient text-on-primary text-xs font-bold rounded-md hover:opacity-90 transition" do %>
                 <span class="material-symbols-outlined text-[14px]">add</span>
                 Add Server
@@ -249,21 +290,23 @@
           </div>
         </div>
 
-        <%# Step 2: Deploy an app %>
+        <% end %><%# /show_server_step %>
+
+        <%# Step (2 when server step visible, else 1): Deploy an app %>
         <div class="px-6 py-4 border-b border-outline-variant/10 flex items-start gap-4">
-          <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 <%= step2_done ? 'bg-secondary/20' : step1_done ? 'bg-surface-container' : 'bg-surface-container/50' %>">
-            <% if step2_done %>
+          <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 <%= step_deploy_done ? 'bg-secondary/20' : step_server_done ? 'bg-surface-container' : 'bg-surface-container/50' %>">
+            <% if step_deploy_done %>
               <span class="material-symbols-outlined text-secondary text-[18px]">check</span>
             <% else %>
-              <span class="text-sm font-bold <%= step1_done ? 'text-on-surface-variant' : 'text-outline-variant' %>">2</span>
+              <span class="text-sm font-bold <%= step_server_done ? 'text-on-surface-variant' : 'text-outline-variant' %>"><%= show_server_step ? 2 : 1 %></span>
             <% end %>
           </div>
           <div class="flex-1">
-            <h4 class="text-sm font-bold <%= step1_done ? 'text-on-surface' : 'text-outline-variant' %> mb-1"><%= t("dashboard.onboarding.deploy_app") %></h4>
+            <h4 class="text-sm font-bold <%= step_server_done ? 'text-on-surface' : 'text-outline-variant' %> mb-1"><%= t("dashboard.onboarding.deploy_app") %></h4>
             <p class="text-xs text-outline mb-3">
               Pick a one-click template (Ghost, n8n, Waha, etc.) or create a custom app and git push your code.
             </p>
-            <% if step1_done %>
+            <% if step_server_done %>
               <%= link_to dashboard_templates_path, class: "inline-flex items-center gap-1 px-3 py-1.5 technical-gradient text-on-primary text-xs font-bold rounded-md hover:opacity-90 transition" do %>
                 <span class="material-symbols-outlined text-[14px]">rocket_launch</span>
                 Browse Templates
@@ -278,13 +321,13 @@
           </div>
         </div>
 
-        <%# Step 3: API token for CLI / MCP %>
+        <%# Step (3/2): API token for CLI / MCP %>
         <div class="px-6 py-4 flex items-start gap-4">
-          <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 <%= step3_done ? 'bg-secondary/20' : 'bg-surface-container' %>">
-            <% if step3_done %>
+          <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 <%= step_token_done ? 'bg-secondary/20' : 'bg-surface-container' %>">
+            <% if step_token_done %>
               <span class="material-symbols-outlined text-secondary text-[18px]">check</span>
             <% else %>
-              <span class="text-sm font-bold text-on-surface-variant">3</span>
+              <span class="text-sm font-bold text-on-surface-variant"><%= show_server_step ? 3 : 2 %></span>
             <% end %>
           </div>
           <div class="flex-1">
@@ -293,7 +336,7 @@
               Create a token to use the CLI, REST API, or the Claude Code plugin. Deploy and manage your apps from
               your terminal or directly from AI.
             </p>
-            <% unless step3_done %>
+            <% unless step_token_done %>
               <%= link_to dashboard_profile_path, class: "inline-flex items-center gap-1 px-3 py-1.5 text-xs text-on-surface-variant hover:text-on-surface border border-outline-variant/20 rounded-md transition" do %>
                 <span class="material-symbols-outlined text-[14px]">key</span>
                 Create Token
@@ -309,10 +352,11 @@
 
       <div class="text-center mt-6">
         <a href="/docs" target="_blank" class="text-xs text-outline hover:text-primary transition">
-          Or browse the full documentation →
+          <%= t("dashboard.home.browse_docs") %>
         </a>
       </div>
     </div>
+    <% end %><%# /!has_server_access && !user_can_add_server branch %>
   <% end %>
 
   <%= render layout: "dashboard/shared/slide_panel", locals: { title: "New App", subtitle: "Deploy a new application" } do %>
