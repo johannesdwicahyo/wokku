@@ -67,10 +67,33 @@ end
 # When we ssh to the Dokku host, sshd on that host runs the command via
 # the user's login shell, which is fine — the app name has already been
 # validated against /\A[a-z][a-z0-9-]{0,62}\z/ so there are no metachars.
-gateway_key  = ENV.fetch("WOKKU_GATEWAY_SSH_KEY", "/etc/wokku/gateway_id_ed25519")
-known_hosts  = ENV.fetch("WOKKU_KNOWN_HOSTS",     "/etc/wokku/known_hosts")
-server_port  = (result.server.port.presence || 22).to_i
-server_host  = result.server.host
+
+# The gateway private key is injected as a kamal secret env var. Write
+# it to a pid-scoped temp file so ssh(1) can consume it via -i; mode
+# 0600 so only this process (and root) can read.
+require "tempfile"
+gateway_key =
+  if ENV["WOKKU_GATEWAY_SSH_KEY"].present? && File.exist?(ENV["WOKKU_GATEWAY_SSH_KEY"])
+    ENV["WOKKU_GATEWAY_SSH_KEY"]
+  elsif ENV["WOKKU_GATEWAY_SSH_PRIVATE_KEY"].present?
+    f = Tempfile.new([ "wokku-gateway-", ".key" ])
+    f.chmod(0o600)
+    f.write(ENV["WOKKU_GATEWAY_SSH_PRIVATE_KEY"])
+    f.write("\n") unless ENV["WOKKU_GATEWAY_SSH_PRIVATE_KEY"].end_with?("\n")
+    f.close
+    # ssh will read this inline; the tempfile auto-unlinks on process exit
+    # (Process.exec replaces us, which closes Ruby — Tempfile's finalizer
+    # won't run, so explicitly unlink via an at_exit hook before exec).
+    at_exit { File.unlink(f.path) rescue nil }
+    f.path
+  else
+    warn "wokku: gateway SSH key not configured"
+    exit 1
+  end
+
+known_hosts = ENV.fetch("WOKKU_KNOWN_HOSTS", "/etc/wokku/known_hosts")
+server_port = (result.server.port.presence || 22).to_i
+server_host = result.server.host
 
 if dry_run
   puts "[dry-run] ssh dokku@#{server_host} -- #{result.remote_command}"
