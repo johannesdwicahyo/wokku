@@ -2,6 +2,59 @@
 
 <div data-controller="slide-panel">
 
+  <%# Container / Dyno overview — mirrors the scaling page summary so
+      users can see what the app is running on without leaving Resources. %>
+  <%
+    web_allocation = @app.dyno_allocations.includes(:dyno_tier).find_by(process_type: "web")
+    tier = web_allocation&.dyno_tier
+    total_dynos = @app.dyno_allocations.sum(:count)
+  %>
+  <div class="bg-surface-container-low rounded-md overflow-hidden mb-6">
+    <div class="px-6 py-4 border-b border-outline-variant/15 flex items-center justify-between">
+      <div>
+        <h2 class="text-base font-semibold text-on-surface font-headline">Container</h2>
+        <p class="text-sm text-outline mt-1">Compute + memory allocated to <span class="font-mono"><%= @app.name %></span></p>
+      </div>
+      <%= link_to "Change tier", dashboard_app_scaling_path(@app), class: "inline-flex items-center px-3 py-1.5 border border-outline-variant/15 text-xs text-on-surface-variant hover:border-primary/50 hover:text-primary rounded-md transition" %>
+    </div>
+    <% if tier %>
+      <div class="px-6 py-4 grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div>
+          <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Tier</p>
+          <p class="text-sm font-bold text-on-surface capitalize"><%= tier.name %></p>
+        </div>
+        <div>
+          <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Memory</p>
+          <p class="text-sm font-mono text-on-surface-variant"><%= tier.memory_mb >= 1024 ? "#{tier.memory_mb / 1024} GB" : "#{tier.memory_mb} MB" %></p>
+        </div>
+        <div>
+          <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">CPU</p>
+          <p class="text-sm font-mono text-on-surface-variant"><%= tier.vcpu_label %></p>
+        </div>
+        <div>
+          <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Estimated / month</p>
+          <% if tier.free? %>
+            <p class="text-sm font-bold text-on-surface">Free</p>
+          <% else %>
+            <p class="text-sm font-bold text-primary font-mono"><%= format_usd_for_user(total_dynos * tier.monthly_price_dollars) %></p>
+          <% end %>
+        </div>
+      </div>
+      <% if total_dynos > 1 || @app.dyno_allocations.count > 1 %>
+        <div class="px-6 py-3 border-t border-outline-variant/10 flex flex-wrap items-center gap-2 text-xs text-outline">
+          <span>Dynos:</span>
+          <% @app.dyno_allocations.each do |alloc| %>
+            <span class="font-mono bg-surface-container-highest px-2 py-0.5 rounded"><%= alloc.process_type %> × <%= alloc.count %></span>
+          <% end %>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="px-6 py-6 text-center">
+        <p class="text-xs text-outline">No container tier assigned yet — deploy the app once to pick the free tier automatically.</p>
+      </div>
+    <% end %>
+  </div>
+
   <%# Attached Add-ons %>
   <div class="bg-surface-container-low rounded-md overflow-hidden mb-6">
     <div class="px-6 py-4 border-b border-outline-variant/15 flex items-center justify-between">

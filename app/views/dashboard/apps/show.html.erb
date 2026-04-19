@@ -410,6 +410,39 @@
       </div>
     </div>
 
+    <%# Billing %>
+    <% if @current_allocation %>
+      <%
+        tier = @current_allocation.dyno_tier
+        total_dynos = @app.dyno_allocations.sum(:count)
+        monthly_cost_usd = total_dynos * tier.monthly_price_dollars
+      %>
+      <div class="bg-surface-container-low rounded-md overflow-hidden">
+        <div class="px-5 py-3 border-b border-outline-variant/10 flex items-center justify-between">
+          <p class="text-[10px] text-outline uppercase tracking-widest font-bold">Billing</p>
+          <%= link_to "Scaling", dashboard_app_scaling_path(@app), class: "text-[10px] text-primary hover:underline" %>
+        </div>
+        <div class="divide-y divide-outline-variant/10">
+          <div class="px-5 py-3 flex items-center justify-between">
+            <span class="text-xs text-outline">Tier</span>
+            <span class="text-xs font-bold text-on-surface capitalize"><%= tier.name %></span>
+          </div>
+          <div class="px-5 py-3 flex items-center justify-between">
+            <span class="text-xs text-outline">Dynos</span>
+            <span class="text-xs font-mono text-on-surface-variant"><%= total_dynos %></span>
+          </div>
+          <div class="px-5 py-3 flex items-center justify-between">
+            <span class="text-xs text-outline">Estimated / month</span>
+            <% if tier.free? %>
+              <span class="text-xs font-bold text-on-surface">Free</span>
+            <% else %>
+              <span class="text-xs font-bold text-primary font-mono"><%= format_usd_for_user(monthly_cost_usd) %><%= price_period(Wokku::LaunchMode.idr_only? ? "idr" : nil) %></span>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
     <%# Resource Limits %>
     <% if @resources.any? %>
       <%
