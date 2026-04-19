@@ -57,6 +57,11 @@ bin/dev
 
 ## Connecting a Dokku Server
 
+> On the managed cloud at [wokku.cloud](https://wokku.cloud), servers are
+> platform infrastructure managed by the Wokku team — every user can
+> deploy onto them without setup. The steps below apply to self-hosted
+> installs, where the first admin connects their own Dokku server.
+
 1. Go to **Servers > Add Server** in the dashboard
 2. Enter your Dokku server's hostname, SSH port, and private key
 3. Wokku connects over SSH and syncs all existing apps and databases
@@ -66,6 +71,21 @@ Or via CLI:
 ```bash
 wokku servers:add my-server --host dokku.example.com --ssh-key ~/.ssh/id_ed25519
 ```
+
+## Deploying with `git push`
+
+Register your SSH public key in **Profile → SSH Keys**, then push to the
+Wokku git gateway:
+
+```bash
+git remote add wokku git@wokku.cloud:my-app
+git push wokku main
+```
+
+The gateway authenticates you by SSH key, authorizes against your team's
+access to `my-app`, and proxies the push to the underlying Dokku host —
+you never need to know which server your app runs on. Direct pushes to
+`dokku@<server>:my-app` still work as a fallback.
 
 ## 1-Click App Templates
 
@@ -86,7 +106,7 @@ wokku (Rails 8.1)
 ├── Background Jobs     Solid Queue (deploys, backups, health checks, metrics)
 ├── Dokku Integration   SSH-based command execution via net-ssh
 ├── GitHub Integration  GitHub App for auto-deploy on push
-└── Git Receiver        Accept git push deploys on port 2222
+└── SSH Git Gateway     git@wokku.cloud routes pushes to the right Dokku host
 ```
 
 **Stack:** Rails 8.1 / PostgreSQL / Redis / Solid Queue / Solid Cache / Tailwind CSS / Hotwire
