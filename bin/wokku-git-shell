@@ -1,0 +1,90 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+#
+# bin/wokku-git-shell — SSH forced-command entry point for the
+# wokku.cloud git gateway.
+#
+# On the host VM, sshd is configured so that when a user connects as
+# `git@wokku.cloud`, their allowed key's authorized_keys line forces this
+# binary via:
+#
+#   command="/opt/wokku/bin/wokku-git-shell",no-pty,no-port-forwarding,
+#           no-X11-forwarding,no-agent-forwarding,
+#           environment="WOKKU_GIT_KEY_ID=<id>"
+#
+# sshd sets SSH_ORIGINAL_COMMAND to whatever `git` asked for (e.g.
+# `git-receive-pack 'myapp.git'`). We:
+#   1. look up the SshPublicKey by id,
+#   2. use Git::Shell to authorize and resolve the target app+server,
+#   3. replace this process with ssh → dokku@<server>, so stdin/stdout
+#      from the client's git pipe directly into the Dokku host's receive-
+#      pack and the normal Dokku push pipeline runs.
+#
+# Security note on argv exec:
+#   Process.exec below is called with an explicit argv array — Ruby does
+#   NOT invoke a shell in this form. App names are pre-validated by
+#   Git::Shell#parse_command to the same regex AppRecord#name accepts,
+#   so server host and command arguments cannot contain shell metachars.
+
+require_relative "../config/environment"
+
+ssh_command = ENV["SSH_ORIGINAL_COMMAND"].to_s
+key_id      = ENV["WOKKU_GIT_KEY_ID"]&.to_i
+dry_run     = ENV["WOKKU_GIT_DRY_RUN"] == "1"
+
+if ssh_command.empty?
+  warn <<~MSG
+    Hi! This is the wokku.cloud git gateway.
+    It only accepts `git push` / `git pull`, not interactive logins.
+
+    To deploy an app:
+      git remote add wokku git@wokku.cloud:<app-name>
+      git push wokku main
+  MSG
+  exit 1
+end
+
+key = SshPublicKey.find_by(id: key_id) if key_id&.positive?
+unless key
+  warn "wokku: key not recognized. Re-upload your public key at https://wokku.cloud/dashboard/profile"
+  exit 1
+end
+
+begin
+  result = Git::Shell.new(ssh_key: key, ssh_command: ssh_command).authorize!
+rescue Git::Shell::UnauthorizedError => e
+  warn "wokku: access denied — #{e.message}"
+  exit 1
+rescue Git::Shell::AppNotFoundError => e
+  warn "wokku: #{e.message}"
+  exit 1
+rescue Git::Shell::InvalidCommandError => e
+  warn "wokku: #{e.message}"
+  exit 1
+end
+
+# The remote_command is a single string like "git-receive-pack myapp".
+# When we ssh to the Dokku host, sshd on that host runs the command via
+# the user's login shell, which is fine — the app name has already been
+# validated against /\A[a-z][a-z0-9-]{0,62}\z/ so there are no metachars.
+gateway_key  = ENV.fetch("WOKKU_GATEWAY_SSH_KEY", "/etc/wokku/gateway_id_ed25519")
+known_hosts  = ENV.fetch("WOKKU_KNOWN_HOSTS",     "/etc/wokku/known_hosts")
+server_port  = (result.server.port.presence || 22).to_i
+server_host  = result.server.host
+
+if dry_run
+  puts "[dry-run] ssh dokku@#{server_host} -- #{result.remote_command}"
+  exit 0
+end
+
+argv = [
+  "ssh", "-T",
+  "-i", gateway_key,
+  "-o", "UserKnownHostsFile=#{known_hosts}",
+  "-o", "StrictHostKeyChecking=yes",
+  "-o", "BatchMode=yes",
+  "-p", server_port.to_s,
+  "dokku@#{server_host}",
+  result.remote_command
+]
+Process.exec(*argv)
