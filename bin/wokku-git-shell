@@ -76,10 +76,17 @@ gateway_key =
   if ENV["WOKKU_GATEWAY_SSH_KEY"].present? && File.exist?(ENV["WOKKU_GATEWAY_SSH_KEY"])
     ENV["WOKKU_GATEWAY_SSH_KEY"]
   elsif ENV["WOKKU_GATEWAY_SSH_PRIVATE_KEY"].present?
+    # Secrets passed as docker env vars lose real newlines — if the value
+    # in .kamal/secrets is quoted with `\n` escapes, the container sees
+    # them as two literal characters. ssh then can't parse the PEM
+    # ("error in libcrypto") and falls back to no key. Unescape so either
+    # form works: real newlines OR literal `\n`.
+    raw = ENV["WOKKU_GATEWAY_SSH_PRIVATE_KEY"].dup
+    raw = raw.gsub("\\n", "\n") if raw.include?("\\n") && !raw.include?("\n")
     f = Tempfile.new([ "wokku-gateway-", ".key" ])
     f.chmod(0o600)
-    f.write(ENV["WOKKU_GATEWAY_SSH_PRIVATE_KEY"])
-    f.write("\n") unless ENV["WOKKU_GATEWAY_SSH_PRIVATE_KEY"].end_with?("\n")
+    f.write(raw)
+    f.write("\n") unless raw.end_with?("\n")
     f.close
     # ssh will read this inline; the tempfile auto-unlinks on process exit
     # (Process.exec replaces us, which closes Ruby — Tempfile's finalizer
