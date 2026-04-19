@@ -37,3 +37,8 @@ production:
     class: BackupRetentionJob
     schedule: every day at 4am
     queue: backups
+
+  daily_debit:
+    class: DailyDebitSchedulerJob
+    schedule: every day at 1am
+    queue: default
