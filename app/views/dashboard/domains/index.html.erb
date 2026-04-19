@@ -87,7 +87,21 @@
 <%# Add Domain %>
 <div class="bg-surface-container-low rounded-xl p-6">
   <h3 class="text-sm font-semibold text-on-surface font-headline mb-1">Add Domain</h3>
-  <p class="text-xs text-outline mb-4">Point a CNAME record to <span class="font-mono text-on-surface-variant"><%= wokku_domain&.hostname || "#{@app.name}.mochi.wokku.cloud" %></span> then add the hostname below.</p>
+  <p class="text-xs text-outline mb-3">Configure DNS at your registrar, then add the hostname below.</p>
+
+  <%# DNS spec forbids CNAME on apex/root domains — show both paths. %>
+  <div class="grid grid-cols-2 gap-3 mb-4 text-xs">
+    <div class="rounded-md border border-outline-variant/15 bg-surface p-3">
+      <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Subdomain (e.g. <code class="font-mono">app.example.com</code>)</p>
+      <p class="text-on-surface-variant">Add a <span class="font-mono text-on-surface">CNAME</span> → <span class="font-mono text-primary"><%= wokku_domain&.hostname || "#{@app.name}.wokku.cloud" %></span></p>
+    </div>
+    <div class="rounded-md border border-outline-variant/15 bg-surface p-3">
+      <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Root domain (e.g. <code class="font-mono">example.com</code>)</p>
+      <p class="text-on-surface-variant">Add an <span class="font-mono text-on-surface">A record</span> → <span class="font-mono text-primary"><%= @app.server&.host %></span></p>
+      <p class="text-[10px] text-outline mt-1">Or <span class="font-mono">ALIAS</span>/<span class="font-mono">ANAME</span> to <span class="font-mono"><%= wokku_domain&.hostname || "#{@app.name}.wokku.cloud" %></span> if your DNS provider supports CNAME flattening (Cloudflare, Route 53, DNSimple).</p>
+    </div>
+  </div>
+
   <%= form_with(model: Domain.new, url: dashboard_app_domains_path(@app), class: "flex items-end space-x-3") do |f| %>
     <div class="flex-1">
       <%= f.label :hostname, class: "block text-[10px] text-outline uppercase tracking-wider font-bold mb-1" %>
