@@ -1,5 +1,11 @@
 <div class="min-h-screen flex items-center justify-center px-4">
   <div class="max-w-sm w-full">
+    <div class="mb-6 flex justify-center">
+      <%= link_to root_path, class: "inline-flex items-center gap-1.5 text-xs text-[#958e9e] hover:text-[#c0c1ff] transition" do %>
+        <span class="material-symbols-outlined text-[14px]">arrow_back</span>
+        Back to wokku.cloud
+      <% end %>
+    </div>
     <div class="text-center mb-8">
       <h1 class="text-xl font-semibold text-[#e2e0fc]" style="font-family: 'Space Grotesk', sans-serif;"><%= t("auth.sign_up") %></h1>
       <p class="mt-1 text-sm text-[#958e9e]">Start deploying in seconds</p>
