@@ -19,6 +19,14 @@ echo "[1/5] Creating git user + directories"
 if ! id git >/dev/null 2>&1; then
   useradd --system --create-home --shell /bin/bash --home-dir /var/lib/wokku-git git
 fi
+# The host-side wokku-git-shell wrapper needs to `docker exec` into the
+# web container, which requires membership in the docker group.
+# Security note: docker-group = effective root on the host, so this
+# relies on the git user's shell being locked to the ForceCommand set
+# in the sshd Match block below — interactive shells are refused.
+if getent group docker >/dev/null 2>&1; then
+  usermod -aG docker git
+fi
 mkdir -p "$WOKKU_DIR" "$WOKKU_BIN" /var/lib/wokku-git /var/log/wokku
 chown git:git /var/lib/wokku-git /var/log/wokku
 chmod 755 "$WOKKU_BIN"
