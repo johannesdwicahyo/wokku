@@ -117,4 +117,25 @@ argv = [
   "dokku@#{server_host}",
   result.remote_command
 ]
-Process.exec(*argv)
+
+# Used to be Process.exec here — but exec replaces the process, so
+# nothing runs after the push finishes. We want to enqueue
+# PostDeploySetupJob (Cloudflare DNS + Let's Encrypt + port mapping +
+# worker scaling) after a successful git-receive-pack. Fork-and-wait
+# so we can observe the exit code; stdio passes through transparently
+# because the child inherits our fds.
+pid = Process.spawn(*argv)
+_, status = Process.waitpid2(pid)
+exit_code = status.exitstatus || 1
+
+if exit_code == 0 && result.action == :"git-receive-pack"
+  begin
+    PostDeploySetupJob.perform_later(result.app.id)
+  rescue StandardError => e
+    # Enqueue failure shouldn't mask a successful push. Log + move on.
+    warn "wokku: post-deploy hook failed to enqueue: #{e.class}: #{e.message}"
+    Sentry.capture_exception(e) if defined?(Sentry)
+  end
+end
+
+exit exit_code
