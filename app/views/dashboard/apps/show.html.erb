@@ -58,8 +58,8 @@
           <div class="bg-surface rounded-md p-3">
             <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-2">Option 1: Git Push</p>
             <div class="space-y-1.5">
-              <code class="block text-xs font-mono text-on-surface-variant bg-surface-container-low rounded px-2 py-1">git remote add dokku dokku@<%= @app.server.host %>:<%= @app.name %></code>
-              <code class="block text-xs font-mono text-on-surface-variant bg-surface-container-low rounded px-2 py-1">git push dokku <%= @app.deploy_branch || "main" %></code>
+              <code class="block text-xs font-mono text-on-surface-variant bg-surface-container-low rounded px-2 py-1">git remote add wokku <%= @app.git_remote_url %></code>
+              <code class="block text-xs font-mono text-on-surface-variant bg-surface-container-low rounded px-2 py-1">git push wokku <%= @app.deploy_branch || "main" %></code>
             </div>
           </div>
 
@@ -367,7 +367,7 @@
         </div>
         <div class="px-5 py-3 flex items-center justify-between">
           <span class="text-xs text-outline">Git Remote</span>
-          <code class="text-xs font-mono text-primary">dokku@<%= @app.server.host %>:<%= @app.name %></code>
+          <code class="text-xs font-mono text-primary"><%= @app.git_remote_url %></code>
         </div>
         <div class="px-5 py-3 flex items-center justify-between">
           <span class="text-xs text-outline">Team</span>

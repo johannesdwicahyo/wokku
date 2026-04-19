@@ -14,7 +14,10 @@ module Api
       def show
         app = AppRecord.find(params[:id])
         authorize app
-        render json: app
+        render json: app.as_json.merge(
+          git_remote: app.git_remote_url,
+          push_instructions: "git remote add wokku #{app.git_remote_url} && git push wokku #{app.deploy_branch || 'main'}"
+        )
       end
 
       def create
@@ -40,7 +43,10 @@ module Api
           app.save!
           Cloudflare::Dns.new.create_app_record(app.name, server.host) rescue nil
           track("app.created", target: app)
-          render json: app, status: :created
+          render json: app.as_json.merge(
+            git_remote: app.git_remote_url,
+            push_instructions: "git remote add wokku #{app.git_remote_url} && git push wokku #{app.deploy_branch || 'main'}"
+          ), status: :created
         rescue Dokku::Client::CommandError => e
           render json: { error: e.message }, status: :unprocessable_entity
         rescue Dokku::Client::ConnectionError => e

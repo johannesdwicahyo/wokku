@@ -28,6 +28,21 @@ class AppRecord < ApplicationRecord
   scope :main_apps, -> { where(is_preview: false) }
   scope :previews, -> { where(is_preview: true) }
 
+  # Canonical git remote URL shown to users everywhere (dashboard, API,
+  # CLI). Goes through the wokku SSH gateway rather than exposing the
+  # underlying Dokku server IP.
+  def git_remote_url
+    host = ENV.fetch("WOKKU_GIT_HOST", "wokku.cloud")
+    "git@#{host}:#{name}"
+  end
+
+  # Direct-to-Dokku URL. Still works and can be used as a bypass if the
+  # gateway is down. Kept separately so we can display it in admin
+  # views if needed.
+  def direct_git_remote_url
+    "dokku@#{server.host}:#{name}"
+  end
+
   def track_resource_usage!
     allocation = dyno_allocations.includes(:dyno_tier).find_by(process_type: "web")
     tier_name = allocation&.dyno_tier&.name || "eco"
