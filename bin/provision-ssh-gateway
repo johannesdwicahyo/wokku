@@ -15,25 +15,27 @@ WOKKU_DIR=/etc/wokku
 WOKKU_BIN=/opt/wokku/bin
 CONTAINER_GLOB='wokku-web-*'
 
-echo "[1/6] Creating git user + directories"
+echo "[1/5] Creating git user + directories"
 if ! id git >/dev/null 2>&1; then
   useradd --system --create-home --shell /bin/bash --home-dir /var/lib/wokku-git git
 fi
 mkdir -p "$WOKKU_DIR" "$WOKKU_BIN" /var/lib/wokku-git /var/log/wokku
 chown git:git /var/lib/wokku-git /var/log/wokku
-chmod 755 "$WOKKU_DIR" "$WOKKU_BIN"
+chmod 755 "$WOKKU_BIN"
+# /etc/wokku must be writable by the web container (UID 1000 = rails) so
+# Git::AuthorizedKeysWriter + Git::KnownHostsWriter can update their
+# files directly. sshd reads as root, so permissions on the contents
+# don't matter much.
+chown 1000:1000 "$WOKKU_DIR"
+chmod 755 "$WOKKU_DIR"
 
-echo "[2/6] Pulling gateway SSH private key out of the web container"
 WEB_CONTAINER=$(docker ps --filter "name=${CONTAINER_GLOB}" --format '{{.Names}}' | head -1)
 if [[ -z "$WEB_CONTAINER" ]]; then
   echo "  ERR: no running web container found (docker ps --filter 'name=${CONTAINER_GLOB}')" >&2
   exit 1
 fi
-docker exec "$WEB_CONTAINER" printenv WOKKU_GATEWAY_SSH_PRIVATE_KEY > "$WOKKU_DIR/gateway_id_ed25519"
-chmod 600 "$WOKKU_DIR/gateway_id_ed25519"
-chown git:git "$WOKKU_DIR/gateway_id_ed25519"
 
-echo "[3/6] Installing host-side wokku-git-shell wrapper"
+echo "[2/5] Installing host-side wokku-git-shell wrapper"
 cat > "$WOKKU_BIN/wokku-git-shell" <<'BASH'
 #!/bin/bash
 # Host-side wrapper. sshd invokes this; it docker-execs into the current
@@ -51,7 +53,17 @@ exec docker exec -i \
 BASH
 chmod 755 "$WOKKU_BIN/wokku-git-shell"
 
-echo "[4/6] sshd Match User git block"
+echo "[3/5] sshd config fragments"
+
+# PermitUserEnvironment must be at top level — sshd doesn't allow it
+# inside a Match block. Whitelist only WOKKU_GIT_KEY_ID so other users'
+# authorized_keys can't smuggle arbitrary environment variables.
+cat > /etc/ssh/sshd_config.d/59-wokku-env.conf <<'CONF'
+# Managed by bin/provision-ssh-gateway. Do not edit.
+PermitUserEnvironment WOKKU_GIT_KEY_ID
+CONF
+chmod 644 /etc/ssh/sshd_config.d/59-wokku-env.conf
+
 SSHD_FRAGMENT=/etc/ssh/sshd_config.d/60-wokku-git-gateway.conf
 cat > "$SSHD_FRAGMENT" <<CONF
 # Managed by bin/provision-ssh-gateway. Do not edit.
@@ -62,7 +74,6 @@ Match User git
     AllowAgentForwarding no
     AllowTcpForwarding no
     PermitOpen none
-    PermitUserEnvironment WOKKU_GIT_KEY_ID
     ForceCommand ${WOKKU_BIN}/wokku-git-shell
 CONF
 chmod 644 "$SSHD_FRAGMENT"
@@ -74,12 +85,12 @@ else
   exit 1
 fi
 
-echo "[5/6] Seeding authorized_keys + known_hosts from Rails"
+echo "[4/5] Seeding authorized_keys + known_hosts from Rails"
 docker exec "$WEB_CONTAINER" bin/rails wokku:gateway:write_authorized_keys || true
 docker exec "$WEB_CONTAINER" bin/rails runner \
   "Server.find_each { |s| SeedKnownHostsJob.perform_later(s.id) }" || true
 
-echo "[6/6] Installing gateway pubkey on existing Dokku servers"
+echo "[5/5] Installing gateway pubkey on existing Dokku servers"
 docker exec "$WEB_CONTAINER" bin/rails wokku:gateway:install_on_all_servers || true
 
 echo ""
