@@ -53,6 +53,27 @@ exec docker exec -i \
 BASH
 chmod 755 "$WOKKU_BIN/wokku-git-shell"
 
+# Authorized-keys lookup script for sshd's AuthorizedKeysCommand. sshd
+# runs this as root (AuthorizedKeysCommandUser below) and reads the
+# result from stdout — bypassing StrictModes checks on the underlying
+# file, which is owned by uid 1000 (the container writer) and would
+# otherwise be rejected. The script is install-owned by root:root, mode
+# 755, in a root-owned dir (/opt/wokku/bin) — so an attacker would need
+# root on the host to change what sshd trusts.
+cat > "$WOKKU_BIN/wokku-git-authorized-keys" <<BASH
+#!/bin/bash
+# Managed by bin/provision-ssh-gateway. sshd runs this to enumerate
+# trusted keys for git@wokku.cloud. Must print each authorized_keys
+# line to stdout. Non-existence (= no keys yet) is not an error.
+set -e
+FILE="${WOKKU_DIR}/git-authorized-keys"
+if [[ -r "\$FILE" ]]; then
+  cat "\$FILE"
+fi
+BASH
+chmod 755 "$WOKKU_BIN/wokku-git-authorized-keys"
+chown root:root "$WOKKU_BIN/wokku-git-authorized-keys"
+
 echo "[3/5] sshd config fragments"
 
 # PermitUserEnvironment must be at top level — sshd doesn't allow it
@@ -68,12 +89,19 @@ SSHD_FRAGMENT=/etc/ssh/sshd_config.d/60-wokku-git-gateway.conf
 cat > "$SSHD_FRAGMENT" <<CONF
 # Managed by bin/provision-ssh-gateway. Do not edit.
 Match User git
-    AuthorizedKeysFile ${WOKKU_DIR}/git-authorized-keys
+    # Look keys up via a root-owned script instead of reading the raw
+    # file. The file is written by the container (uid 1000), which
+    # would otherwise fail sshd's StrictModes owner check.
+    AuthorizedKeysFile none
+    AuthorizedKeysCommand ${WOKKU_BIN}/wokku-git-authorized-keys
+    AuthorizedKeysCommandUser root
     PermitTTY no
     X11Forwarding no
     AllowAgentForwarding no
     AllowTcpForwarding no
     PermitOpen none
+    PasswordAuthentication no
+    KbdInteractiveAuthentication no
     ForceCommand ${WOKKU_BIN}/wokku-git-shell
 CONF
 chmod 644 "$SSHD_FRAGMENT"
