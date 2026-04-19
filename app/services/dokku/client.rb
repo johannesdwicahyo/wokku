@@ -16,7 +16,7 @@ module Dokku
       @server = server
     end
 
-    def run(command, timeout: 30)
+    def run(command, timeout: 30, stdin: nil)
       output = ""
       error = ""
       exit_code = nil
@@ -30,6 +30,11 @@ module Dokku
               ch.on_data { |_, data| output << data }
               ch.on_extended_data { |_, _, data| error << data }
               ch.on_request("exit-status") { |_, buf| exit_code = buf.read_long }
+
+              if stdin
+                ch.send_data(stdin)
+                ch.eof!
+              end
             end
           end
           channel.wait
