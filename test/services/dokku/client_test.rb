@@ -39,9 +39,9 @@ class Dokku::ClientTest < ActiveSupport::TestCase
 
   def stub_ssh_session(output: "", error: "", exit_code: 0, exec_success: true, capture_cmd: nil)
     fake_ch = Object.new
-    data_handler = ->(_, _) {}
-    extended_handler = ->(_, _, _) {}
-    exit_handler = ->(_, _) {}
+    data_handler = ->(_, _) { }
+    extended_handler = ->(_, _, _) { }
+    exit_handler = ->(_, _) { }
     fake_ch.define_singleton_method(:on_data) { |&b| data_handler = b }
     fake_ch.define_singleton_method(:on_extended_data) { |&b| extended_handler = b }
     fake_ch.define_singleton_method(:on_request) { |_name, &b| exit_handler = b }
