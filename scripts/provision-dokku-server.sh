@@ -123,6 +123,11 @@ section "5. SSH Hardening"
 # Backup original config
 cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
 
+# Cloud-init drops 50-cloud-init.conf with `PasswordAuthentication yes` which
+# sshd honours over our 99-* drop-in (first-occurrence-wins semantics). Remove
+# it so our hardening takes effect.
+rm -f /etc/ssh/sshd_config.d/50-cloud-init.conf
+
 cat > /etc/ssh/sshd_config.d/99-wokku-hardening.conf <<'SSHD'
 # Wokku SSH hardening
 PermitRootLogin prohibit-password
@@ -407,7 +412,7 @@ dokku plugin:install https://github.com/dokku/dokku-mongo.git mongo
 # SSL + maintenance + ACL
 dokku plugin:install https://github.com/dokku/dokku-letsencrypt.git letsencrypt
 dokku plugin:install https://github.com/dokku/dokku-maintenance.git maintenance
-dokku plugin:install https://github.com/dokku/dokku-acl.git acl
+dokku plugin:install https://github.com/dokku-community/dokku-acl.git acl
 
 # Enable ACL per-app enforcement by default
 dokku config:set --global DOKKU_ACL_ALLOW_UNCONTROLLED=0
