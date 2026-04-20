@@ -1,5 +1,8 @@
 Rails.application.routes.draw do
   devise_for :users, controllers: { omniauth_callbacks: "users/omniauth_callbacks" }
+  # Registrations are OAuth-only — redirect any lingering /users/sign_up links
+  # to the sign-in page so they don't 404.
+  get "/users/sign_up", to: redirect("/users/sign_in")
 
   namespace :api do
     namespace :v1 do
