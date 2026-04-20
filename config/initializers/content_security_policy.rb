@@ -11,7 +11,13 @@ Rails.application.configure do
     policy.connect_src :self, "wss://wokku.cloud", "https://wokku.cloud"
     policy.frame_src   :none
     policy.base_uri    :self
-    policy.form_action :self, "https://sandbox.ipaymu.com", "https://my.ipaymu.com"
+    policy.form_action :self,
+                       "https://sandbox.ipaymu.com",
+                       "https://sandbox-payment.ipaymu.com",
+                       "https://my.ipaymu.com",
+                       "https://payment.ipaymu.com",
+                       "https://accounts.google.com",
+                       "https://github.com"
   end
 
   # Report violations without enforcing initially.
