@@ -5,7 +5,6 @@ module Dashboard
     def show
       authorize @app, :show?
       @processes = fetch_processes
-      @resources = fetch_resources
       @container_stats = fetch_container_stats
       @metrics = @app.metrics.where("recorded_at > ?", 24.hours.ago).order(recorded_at: :asc)
     end
@@ -37,24 +36,6 @@ module Dashboard
       []
     end
 
-    def fetch_resources
-      client = Dokku::Client.new(@app.server)
-      output = client.run("resource:report #{@app.name}")
-      result = {}
-      output.each_line do |line|
-        stripped = line.strip
-        next if stripped.blank? || stripped.start_with?("=")
-        idx = stripped.rindex(":")
-        next unless idx
-        key = stripped[0...idx].strip.parameterize(separator: "_")
-        value = stripped[(idx + 1)..].strip
-        result[key] = value
-      end
-      result
-    rescue => e
-      Rails.logger.warn "Failed to fetch resources for #{@app.name}: #{e.message}"
-      {}
-    end
 
     def fetch_container_stats
       server = @app.server

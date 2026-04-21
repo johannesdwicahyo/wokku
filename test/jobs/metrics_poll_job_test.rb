@@ -44,6 +44,29 @@ class MetricsPollJobTest < ActiveJob::TestCase
     Net::SSH.singleton_class.remove_method(:start) rescue nil
   end
 
+  test "SSHes as root with ssh_private_key from Server record" do
+    @server.update!(ssh_private_key: "fake-key-data")
+    captured = {}
+    mock_ssh = Object.new
+    mock_ssh.define_singleton_method(:exec!) { |_cmd| "" }
+
+    Net::SSH.class_eval do
+      define_singleton_method(:start) do |host, user, **opts, &block|
+        captured[:host] = host
+        captured[:user] = user
+        captured[:key_data] = opts[:key_data]
+        block.call(mock_ssh)
+      end
+    end
+
+    MetricsPollJob.perform_now(@server.id)
+    assert_equal "root", captured[:user], "metrics polling must run as root (dokku user is restricted)"
+    assert_kind_of Array, captured[:key_data], "key_data must be Array (nil is deprecated by Net::SSH)"
+    assert_includes captured[:key_data], "fake-key-data"
+  ensure
+    Net::SSH.singleton_class.remove_method(:start) rescue nil
+  end
+
   test "logs warning but does not raise on SSH failure" do
     Net::SSH.class_eval do
       define_singleton_method(:start) { |*_args, **_opts, &_block| raise Net::SSH::Exception, "connection refused" }

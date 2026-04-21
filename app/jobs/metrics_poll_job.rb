@@ -6,13 +6,15 @@ class MetricsPollJob < ApplicationJob
   def perform(server_id)
     server = Server.find(server_id)
 
-    # Use root SSH to access docker stats (dokku user can't run docker commands)
+    # Use root SSH to access docker stats (dokku user has a restricted shell).
+    # The provision script authorizes the same ssh_private_key for root.
     output = Net::SSH.start(
       server.host,
       "root",
       port: server.port,
       non_interactive: true,
-      timeout: 15
+      timeout: 15,
+      key_data: Array(server.ssh_private_key).reject(&:blank?)
     ) do |ssh|
       ssh.exec!("docker stats --no-stream --format '{{json .}}'")
     end

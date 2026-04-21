@@ -1,8 +1,8 @@
 require "test_helper"
 
 # Deep coverage tests for Dashboard::MetricsController
-# Stubs Dokku::Client#run and Net::SSH so fetch_processes and fetch_resources
-# internal logic actually executes.
+# Stubs Dokku::Client#run and Net::SSH so fetch_processes internal logic
+# actually executes.
 class Dashboard::MetricsControllerDeepTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
 
@@ -66,26 +66,6 @@ class Dashboard::MetricsControllerDeepTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "show: parses resource:report key/value pairs" do
-    sign_in @user
-    stub_net_ssh_noop
-
-    resource_report = <<~OUTPUT
-      =====> my-app-two resource information
-      Memory limit: 512mb
-      CPU limit: 1
-      Memory swap limit: 0
-    OUTPUT
-
-    stub_dokku_run(
-      "ps:report"       => "",
-      "resource:report" => resource_report
-    ) do
-      get "/dashboard/apps/#{@app.id}/metrics"
-      assert_response :success
-    end
-  end
-
   test "show: recovers when ps:report raises" do
     sign_in @user
     stub_net_ssh_noop
@@ -93,7 +73,7 @@ class Dashboard::MetricsControllerDeepTest < ActionDispatch::IntegrationTest
     Dokku::Client.define_method(:run) { |*| raise Dokku::Client::ConnectionError, "SSH down" }
 
     get "/dashboard/apps/#{@app.id}/metrics"
-    assert_response :success  # fetch_processes and fetch_resources both rescue
+    assert_response :success  # fetch_processes rescues SSH errors
   ensure
     Dokku::Client.define_method(:run, DOKKU_CLIENT_ORIGINAL_RUN) if DOKKU_CLIENT_ORIGINAL_RUN
   end
