@@ -22,6 +22,7 @@ module Dashboard
       @current_allocation = defined?(DynoAllocation) ? @app.dyno_allocations.includes(:dyno_tier).find_by(process_type: "web") : nil
       @logs = fetch_logs
       @preview_apps = @app.preview_apps.order(pr_number: :desc) unless @app.is_preview?
+      @maintenance_enabled = fetch_maintenance_enabled
     end
 
     def new
@@ -113,17 +114,17 @@ module Dashboard
       authorize @app, :update?
       client = Dokku::Client.new(@app.server)
       begin
-        output = client.run("maintenance:report #{@app.name}")
-        enabled = output.include?("true")
-        if enabled
+        if fetch_maintenance_enabled
           client.run("maintenance:disable #{@app.name}")
           track("app.maintenance_disabled", target: @app)
-          redirect_to dashboard_app_path(@app), notice: "Maintenance mode disabled."
+          notice = "Maintenance mode disabled."
         else
           client.run("maintenance:enable #{@app.name}")
           track("app.maintenance_enabled", target: @app)
-          redirect_to dashboard_app_path(@app), notice: "Maintenance mode enabled."
+          notice = "Maintenance mode enabled."
         end
+        Rails.cache.delete(maintenance_cache_key)
+        redirect_to dashboard_app_path(@app), notice: notice
       rescue => e
         redirect_to dashboard_app_path(@app), alert: "Failed: #{e.message}"
       end
@@ -137,6 +138,23 @@ module Dashboard
 
     def app_params
       params.require(:app_record).permit(:name, :deploy_branch)
+    end
+
+    # Live maintenance state from Dokku. Cached for 60s to keep the show
+    # page from paying an extra SSH round-trip on every refresh; the
+    # toggle action busts the cache so the UI flips immediately.
+    def fetch_maintenance_enabled
+      Rails.cache.fetch(maintenance_cache_key, expires_in: 60.seconds) do
+        output = Dokku::Client.new(@app.server).run("maintenance:report #{@app.name}")
+        output.to_s.match?(/Maintenance enabled:\s+true/i)
+      rescue StandardError => e
+        Rails.logger.warn "Failed to fetch maintenance state for #{@app.name}: #{e.message}"
+        false
+      end
+    end
+
+    def maintenance_cache_key
+      "app:#{@app.id}:maintenance_enabled"
     end
 
     def dokku_processes

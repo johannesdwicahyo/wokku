@@ -403,8 +403,8 @@
             <span class="material-symbols-outlined text-[14px] text-outline">construction</span>
             <span class="text-xs text-outline">Maintenance Mode</span>
           </div>
-          <%= button_to toggle_maintenance_dashboard_app_path(@app), method: :post, data: { turbo_confirm: "Toggle maintenance mode for #{@app.name}?" }, class: "relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer #{@app.try(:maintenance_mode?) ? 'bg-primary' : 'bg-outline-variant/30'}" do %>
-            <span class="inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform <%= @app.try(:maintenance_mode?) ? 'translate-x-4' : 'translate-x-0.5' %>"></span>
+          <%= button_to toggle_maintenance_dashboard_app_path(@app), method: :post, data: { turbo_confirm: "Toggle maintenance mode for #{@app.name}?" }, class: "relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer #{@maintenance_enabled ? 'bg-primary' : 'bg-outline-variant/30'}" do %>
+            <span class="inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform <%= @maintenance_enabled ? 'translate-x-4' : 'translate-x-0.5' %>"></span>
           <% end %>
         </div>
       </div>
