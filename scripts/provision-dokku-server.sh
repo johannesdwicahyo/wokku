@@ -438,6 +438,19 @@ if [ -f /home/dokku/.ssh/authorized_keys ]; then
 fi
 
 # ══════════════════════════════════════════════════════════════════
+# Host nginx needs to read maintenance.html from /home/dokku/<app>/maintenance/
+# when `dokku maintenance:enable` is on. /home/dokku is mode 750 (dokku:dokku)
+# so www-data gets EACCES on traverse and nginx returns 403 instead of the
+# custom 503 page. Fix: put www-data in the dokku group, then restart nginx
+# (reload won't re-spawn workers with new supplementary groups).
+# ══════════════════════════════════════════════════════════════════
+if id www-data &>/dev/null && getent group dokku &>/dev/null; then
+  usermod -aG dokku www-data
+  systemctl restart nginx 2>/dev/null || true
+  log "www-data added to dokku group (nginx can serve maintenance pages)"
+fi
+
+# ══════════════════════════════════════════════════════════════════
 section "15. Let's Encrypt Auto-Renewal"
 # ══════════════════════════════════════════════════════════════════
 
