@@ -44,10 +44,6 @@
                 <span class="material-symbols-outlined text-[14px] text-outline">speed</span>
                 <span><%= tier.spec&.dig("cpu") %> <%= t('pricing.cpu') %></span>
               </div>
-              <div class="flex items-center gap-2 text-outline pt-1">
-                <span class="material-symbols-outlined text-[14px]"><%= tier.free? ? 'bedtime' : 'bolt' %></span>
-                <span><%= tier.free? ? t('pricing.sleeps_idle') : t('pricing.always_on') %></span>
-              </div>
             </div>
           </div>
         <% end %>
@@ -81,10 +77,6 @@
               <div class="flex items-center gap-2 text-on-surface-variant">
                 <span class="material-symbols-outlined text-[14px] text-outline">speed</span>
                 <span><%= tier[:cpu] %> <%= t('pricing.cpu') %></span>
-              </div>
-              <div class="flex items-center gap-2 text-outline pt-1">
-                <span class="material-symbols-outlined text-[14px]"><%= tier[:free] ? 'bedtime' : 'bolt' %></span>
-                <span><%= tier[:free] ? t('pricing.sleeps_idle') : t('pricing.always_on') %></span>
               </div>
             </div>
           </div>

@@ -9,8 +9,6 @@ id:
     databases_desc: "Layanan database terkelola"
     per_database: "Per database"
     max_monthly: "Maks %{price}%{period}"
-    always_on: "Selalu aktif"
-    sleeps_idle: "Tidur setelah 30 menit idle"
     ram: "RAM"
     cpu: "vCPU"
     storage: "Penyimpanan"

@@ -9,8 +9,6 @@ en:
     databases_desc: "Managed database services"
     per_database: "Per database"
     max_monthly: "Max %{price}%{period}"
-    always_on: "Always on"
-    sleeps_idle: "Sleeps after 30 min idle"
     ram: "RAM"
     cpu: "vCPU"
     storage: "Storage"

@@ -465,12 +465,6 @@
               <svg class="w-3.5 h-3.5 text-[#c0c1ff] mr-2 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
               <%= tier[:storage] %> disk
             </li>
-            <% if tier[:usd] == 0 %>
-              <li class="flex items-center text-[#4a4453]">
-                <svg class="w-3.5 h-3.5 text-[#4a4453] mr-2 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <%= t('pricing.sleeps_idle') %>
-              </li>
-            <% end %>
           </ul>
 
           <%= link_to new_user_session_path, class: "block w-full text-center py-2.5 text-sm font-medium rounded-lg transition #{tier[:highlight] ? 'text-[#282a64] hover:opacity-90' : 'text-[#c0c1ff] border border-[#c0c1ff]/30 hover:bg-[#c0c1ff]/10'}", style: tier[:highlight] ? "background: linear-gradient(135deg, #c0c1ff 0%, #5625ab 100%);" : "" do %>
