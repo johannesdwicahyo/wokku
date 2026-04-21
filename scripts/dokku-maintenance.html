@@ -28,49 +28,33 @@
         var(--bg);
       color: var(--text);
       font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      -webkit-font-smoothing: antialiased;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px; -webkit-font-smoothing: antialiased;
     }
 
     .card {
-      width: 100%;
-      max-width: 480px;
-      background: var(--surface);
-      border: 1px solid var(--outline);
-      border-radius: 16px;
-      padding: 40px 36px;
-      text-align: center;
+      width: 100%; max-width: 480px;
+      background: var(--surface); border: 1px solid var(--outline);
+      border-radius: 16px; padding: 40px 36px; text-align: center;
       box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
     }
 
     .brand {
-      font-weight: 700;
-      font-size: 14px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
+      font-weight: 700; font-size: 14px;
+      letter-spacing: 0.12em; text-transform: uppercase;
       background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      -webkit-background-clip: text; background-clip: text; color: transparent;
       margin-bottom: 28px;
     }
 
     .pulse {
-      width: 56px; height: 56px;
-      border-radius: 50%;
-      margin: 0 auto 24px;
+      width: 56px; height: 56px; border-radius: 50%;
+      margin: 0 auto 24px; position: relative;
       background: radial-gradient(circle at 30% 30%, var(--accent), var(--accent-deep));
-      position: relative;
     }
     .pulse::after {
-      content: "";
-      position: absolute; inset: -6px;
-      border-radius: 50%;
-      border: 1px solid var(--accent);
-      opacity: 0.6;
+      content: ""; position: absolute; inset: -6px; border-radius: 50%;
+      border: 1px solid var(--accent); opacity: 0.6;
       animation: ring 2s ease-out infinite;
     }
     @keyframes ring {
@@ -78,47 +62,55 @@
       100% { transform: scale(1.5); opacity: 0; }
     }
 
-    h1 {
-      font-size: 24px;
-      font-weight: 700;
-      margin: 0 0 12px;
-      letter-spacing: -0.01em;
-    }
-
-    p {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.55;
-      margin: 0 0 24px;
-    }
+    h1 { font-size: 24px; font-weight: 700; margin: 0 0 12px; letter-spacing: -0.01em; }
+    p  { color: var(--muted); font-size: 14px; line-height: 1.55; margin: 0 0 24px; }
 
     .status {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--accent);
-      font-size: 12px;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      font-weight: 600;
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--accent); font-size: 12px;
+      letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600;
     }
     .status .dot {
-      width: 6px; height: 6px;
-      background: var(--accent);
-      border-radius: 50%;
-      animation: blink 1.4s ease-in-out infinite;
+      width: 6px; height: 6px; background: var(--accent);
+      border-radius: 50%; animation: blink 1.4s ease-in-out infinite;
     }
-    @keyframes blink {
-      0%, 100% { opacity: 0.3; }
-      50%      { opacity: 1; }
+    @keyframes blink { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+    .play {
+      display: inline-block; margin-top: 20px; color: var(--muted);
+      font-size: 12px; text-decoration: none; border-bottom: 1px dashed rgba(192,193,255,0.25);
+      cursor: pointer; padding-bottom: 1px;
+    }
+    .play:hover { color: var(--accent); border-color: var(--accent); }
+
+    #game {
+      display: none; margin-top: 20px; width: 100%;
+      background: #0a0f1c; border: 1px solid var(--outline);
+      border-radius: 8px; overflow: hidden; position: relative;
+    }
+    #game.open { display: block; }
+    #game canvas { display: block; width: 100%; height: auto; touch-action: manipulation; }
+    #game .overlay {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 4px; pointer-events: none;
+      color: var(--text); text-shadow: 0 2px 6px rgba(0,0,0,0.7);
+    }
+    #game .overlay .title { font-weight: 700; font-size: 18px; }
+    #game .overlay .hint  { font-size: 11px; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+    #game .score {
+      position: absolute; top: 8px; right: 12px;
+      font-variant-numeric: tabular-nums; font-weight: 700;
+      color: var(--accent); font-size: 14px;
+    }
+    #game .hi {
+      position: absolute; top: 8px; left: 12px;
+      font-variant-numeric: tabular-nums;
+      color: var(--muted); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
     }
 
     footer {
-      margin-top: 32px;
-      color: var(--muted);
-      font-size: 11px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      margin-top: 32px; color: var(--muted);
+      font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
     }
     footer a { color: var(--muted); text-decoration: none; }
     footer a:hover { color: var(--accent); }
@@ -131,23 +123,30 @@
     <h1>Offline for maintenance</h1>
     <p>This app is temporarily offline while its owner rolls out an update or fixes something. It'll be back shortly — no need to refresh.</p>
     <div class="status"><span class="dot"></span>Checking back automatically</div>
+    <div><a class="play" id="playLink">🎮 Play Flappy Dyno while you wait</a></div>
+
+    <div id="game">
+      <canvas id="cv" width="420" height="300"></canvas>
+      <div class="hi" id="hi">Best 0</div>
+      <div class="score" id="sc">0</div>
+      <div class="overlay" id="ov">
+        <div class="title">Flappy Dyno</div>
+        <div class="hint">Tap / Space to flap</div>
+      </div>
+    </div>
+
     <footer>Powered by <a href="https://wokku.cloud">wokku.cloud</a></footer>
   </main>
 
   <script>
-    // Auto-reload once the app comes back. Exponential backoff up to ~68 min.
-    var retry_current = 2;
-    var retry_limit = 4096;
+    // ── auto-reload ────────────────────────────────────────────
+    var retry_current = 2, retry_limit = 4096;
     function check_gateway() {
       var r = new XMLHttpRequest();
       r.open('HEAD', window.location.href, true);
       r.onload = function () {
-        if (r.status >= 200 && r.status < 400) {
-          window.location.reload(true);
-        } else {
-          if (retry_current < retry_limit) retry_current *= 2;
-          setTimeout(check_gateway, retry_current * 1000);
-        }
+        if (r.status >= 200 && r.status < 400) { window.location.reload(true); }
+        else { if (retry_current < retry_limit) retry_current *= 2; setTimeout(check_gateway, retry_current * 1000); }
       };
       r.onerror = function () {
         if (retry_current < retry_limit) retry_current *= 2;
@@ -156,6 +155,155 @@
       r.send();
     }
     setTimeout(check_gateway, retry_current * 1000);
+
+    // ── Flappy Dyno ────────────────────────────────────────────
+    (function () {
+      var gameBox = document.getElementById('game');
+      var link = document.getElementById('playLink');
+      var cv = document.getElementById('cv');
+      var ctx = cv.getContext('2d');
+      var W = cv.width, H = cv.height;
+
+      var overlay = document.getElementById('ov');
+      var scoreEl = document.getElementById('sc');
+      var hiEl = document.getElementById('hi');
+
+      var COL = { bg: '#0a0f1c', accent: '#c0c1ff', deep: '#5625ab',
+                  muted: '#958e9e', outline: 'rgba(192,193,255,0.22)' };
+
+      var GRAVITY = 0.45, FLAP = -7.2, PIPE_SPEED = 2.2,
+          PIPE_GAP = 110, PIPE_W = 48, PIPE_EVERY = 90;
+
+      var state = 'idle';
+      var dyno, pipes, frame, score;
+      var hi = parseInt(localStorage.getItem('wokku_flappy_hi') || '0', 10);
+      hiEl.textContent = 'Best ' + hi;
+
+      function setOverlay(title, hint) {
+        while (overlay.firstChild) overlay.removeChild(overlay.firstChild);
+        var t = document.createElement('div'); t.className = 'title'; t.textContent = title;
+        var h = document.createElement('div'); h.className = 'hint';  h.textContent = hint;
+        overlay.appendChild(t); overlay.appendChild(h);
+      }
+
+      function reset() {
+        dyno = { x: 70, y: H / 2, r: 14, vy: 0, rot: 0 };
+        pipes = [];
+        frame = 0;
+        score = 0;
+        scoreEl.textContent = '0';
+      }
+      reset();
+
+      function flap() {
+        if (state === 'idle') { state = 'playing'; overlay.style.display = 'none'; }
+        else if (state === 'dead') { reset(); state = 'playing'; overlay.style.display = 'none'; }
+        if (state === 'playing') dyno.vy = FLAP;
+      }
+
+      function die() {
+        state = 'dead';
+        if (score > hi) {
+          hi = score;
+          localStorage.setItem('wokku_flappy_hi', String(hi));
+          hiEl.textContent = 'Best ' + hi;
+        }
+        setOverlay('Crashed!', 'Score ' + score + ' · Tap / Space to retry');
+        overlay.style.display = 'flex';
+      }
+
+      function step() {
+        ctx.fillStyle = COL.bg;
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.strokeStyle = COL.outline; ctx.lineWidth = 1;
+        for (var gx = frame % 40; gx < W; gx += 40) {
+          ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke();
+        }
+
+        if (state === 'playing') {
+          dyno.vy += GRAVITY;
+          dyno.y += dyno.vy;
+          dyno.rot = Math.max(-0.4, Math.min(1.1, dyno.vy / 10));
+
+          if (frame % PIPE_EVERY === 0) {
+            var gapY = 40 + Math.random() * (H - 80 - PIPE_GAP);
+            pipes.push({ x: W + 10, gapY: gapY, passed: false });
+          }
+
+          for (var i = 0; i < pipes.length; i++) {
+            var p = pipes[i];
+            p.x -= PIPE_SPEED;
+            if (!p.passed && p.x + PIPE_W < dyno.x) {
+              p.passed = true;
+              score += 1;
+              scoreEl.textContent = String(score);
+            }
+          }
+          pipes = pipes.filter(function (p) { return p.x + PIPE_W > -20; });
+
+          if (dyno.y + dyno.r > H - 2 || dyno.y - dyno.r < 0) die();
+
+          for (var j = 0; j < pipes.length; j++) {
+            var pp = pipes[j];
+            var inX = dyno.x + dyno.r > pp.x && dyno.x - dyno.r < pp.x + PIPE_W;
+            if (inX) {
+              var hitTop = dyno.y - dyno.r < pp.gapY;
+              var hitBot = dyno.y + dyno.r > pp.gapY + PIPE_GAP;
+              if (hitTop || hitBot) { die(); break; }
+            }
+          }
+        }
+
+        for (var k = 0; k < pipes.length; k++) {
+          var pk = pipes[k];
+          var grad = ctx.createLinearGradient(pk.x, 0, pk.x + PIPE_W, 0);
+          grad.addColorStop(0, COL.deep);
+          grad.addColorStop(1, COL.accent);
+          ctx.fillStyle = grad;
+          ctx.fillRect(pk.x, 0, PIPE_W, pk.gapY);
+          ctx.fillRect(pk.x, pk.gapY + PIPE_GAP, PIPE_W, H - (pk.gapY + PIPE_GAP));
+          ctx.strokeStyle = 'rgba(13,20,36,0.5)'; ctx.lineWidth = 1;
+          for (var ry = 14; ry < pk.gapY; ry += 18) {
+            ctx.beginPath(); ctx.moveTo(pk.x, ry); ctx.lineTo(pk.x + PIPE_W, ry); ctx.stroke();
+          }
+          for (var ry2 = pk.gapY + PIPE_GAP + 14; ry2 < H; ry2 += 18) {
+            ctx.beginPath(); ctx.moveTo(pk.x, ry2); ctx.lineTo(pk.x + PIPE_W, ry2); ctx.stroke();
+          }
+        }
+
+        ctx.save();
+        ctx.translate(dyno.x, dyno.y);
+        ctx.rotate(dyno.rot);
+        ctx.shadowColor = COL.accent; ctx.shadowBlur = 12;
+        ctx.font = '26px serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('🦕', 0, 1);
+        ctx.restore();
+
+        frame++;
+        requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+
+      function onFlap(e) {
+        if (!gameBox.classList.contains('open')) return;
+        if (e.type === 'keydown' && e.code !== 'Space') return;
+        if (e.preventDefault) e.preventDefault();
+        flap();
+      }
+      window.addEventListener('keydown', onFlap);
+      cv.addEventListener('mousedown', onFlap);
+      cv.addEventListener('touchstart', onFlap, { passive: false });
+
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+        gameBox.classList.toggle('open');
+        link.textContent = gameBox.classList.contains('open')
+          ? '✕ Hide game'
+          : '🎮 Play Flappy Dyno while you wait';
+      });
+    })();
   </script>
 </body>
 </html>
