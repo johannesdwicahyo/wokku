@@ -2,7 +2,8 @@ Rails.application.config.middleware.use OmniAuth::Builder do
   if ENV["GOOGLE_OAUTH_CLIENT_ID"].present?
     provider :google_oauth2,
       ENV["GOOGLE_OAUTH_CLIENT_ID"],
-      ENV["GOOGLE_OAUTH_CLIENT_SECRET"]
+      ENV["GOOGLE_OAUTH_CLIENT_SECRET"],
+      prompt: "select_account"
   end
 
   if ENV["GITHUB_OAUTH_CLIENT_ID"].present?
