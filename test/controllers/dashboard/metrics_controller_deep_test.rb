@@ -99,6 +99,30 @@ class Dashboard::MetricsControllerDeepTest < ActionDispatch::IntegrationTest
   end
 
   # ---------------------------------------------------------------------------
+  # fetch_container_stats — SSH user + key_data plumbing
+  # ---------------------------------------------------------------------------
+
+  test "show: SSHes as root for docker stats" do
+    sign_in @user
+
+    captured = {}
+    Net::SSH.define_singleton_method(:start) do |host, user, **opts, &_blk|
+      captured[:host] = host
+      captured[:user] = user
+      captured[:key_data] = opts[:key_data]
+      ""
+    end
+
+    stub_dokku_run("ps:report" => "", "resource:report" => "") do
+      get "/dashboard/apps/#{@app.id}/metrics"
+      assert_response :success
+    end
+
+    assert_equal "root", captured[:user], "docker stats must run as root (dokku user has restricted shell)"
+    assert_kind_of Array, captured[:key_data], "key_data must be an Array, never nil (Net::SSH deprecates nil)"
+  end
+
+  # ---------------------------------------------------------------------------
   # fetch_container_stats — Net::SSH error paths
   # ---------------------------------------------------------------------------
 

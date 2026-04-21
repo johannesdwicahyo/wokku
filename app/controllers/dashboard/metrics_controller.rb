@@ -58,16 +58,16 @@ module Dashboard
 
     def fetch_container_stats
       server = @app.server
-      # Use 'deploy' user for docker stats since 'dokku' user is a restricted shell
-      # that only accepts dokku commands, not arbitrary docker commands
-      stats_user = "deploy"
+      # docker stats requires an unrestricted shell. The `dokku` user is forced
+      # to a dokku-wrapper command, so we SSH as root — the provision script
+      # authorizes the same ssh_private_key for root as for dokku.
       output = Net::SSH.start(
         server.host,
-        stats_user,
+        "root",
         port: server.port,
         non_interactive: true,
         timeout: 10,
-        key_data: server.ssh_private_key.present? ? [ server.ssh_private_key ] : nil
+        key_data: Array(server.ssh_private_key).reject(&:blank?)
       ) do |ssh|
         ssh.exec!("docker stats --no-stream --format '{{json .}}'")
       end
@@ -91,7 +91,7 @@ module Dashboard
       end
       stats
     rescue Net::SSH::AuthenticationFailed
-      @metrics_error = "Authentication failed. Root SSH access is required for container metrics. The server is configured with user '#{@app.server.ssh_user || 'dokku'}' — add a root SSH key to enable metrics."
+      @metrics_error = "Root SSH refused the stored key. Re-run scripts/provision-dokku-server.sh on #{@app.server.host} (or copy dokku's pubkey into /root/.ssh/authorized_keys) so the metrics collector can run docker stats."
       []
     rescue Errno::ECONNREFUSED, Errno::ETIMEDOUT, Net::SSH::ConnectionTimeout
       @metrics_error = "Could not connect to server #{@app.server.host}. Check that the server is online and SSH port #{@app.server.port} is accessible."

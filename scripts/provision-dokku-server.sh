@@ -420,6 +420,24 @@ dokku config:set --global DOKKU_ACL_ALLOW_UNCONTROLLED=0
 log "Plugins: postgres, redis, mysql, mariadb, mongo, letsencrypt, maintenance, acl"
 
 # ══════════════════════════════════════════════════════════════════
+# Metrics SSH: authorize the dokku user's pubkeys to log in as root too,
+# so wokku.cloud's metrics collector (which uses the dokku-user SSH key
+# stored on Server.ssh_private_key) can run `docker stats` as root.
+# ══════════════════════════════════════════════════════════════════
+if [ -f /home/dokku/.ssh/authorized_keys ]; then
+  mkdir -p /root/.ssh && chmod 700 /root/.ssh
+  touch /root/.ssh/authorized_keys && chmod 600 /root/.ssh/authorized_keys
+  # Dokku wraps each entry with command="FINGERPRINT=... NAME=..."; strip
+  # the prefix so root gets an unrestricted shell (needed for docker stats).
+  grep -oE 'ssh-(rsa|ed25519|dss|ecdsa)[- a-zA-Z0-9+/=@._-]+' /home/dokku/.ssh/authorized_keys \
+    | while IFS= read -r pubkey; do
+        [ -z "$pubkey" ] && continue
+        grep -qxF "$pubkey" /root/.ssh/authorized_keys || echo "$pubkey" >> /root/.ssh/authorized_keys
+      done
+  log "dokku pubkeys authorized for root (unwrapped, for metrics SSH)"
+fi
+
+# ══════════════════════════════════════════════════════════════════
 section "15. Let's Encrypt Auto-Renewal"
 # ══════════════════════════════════════════════════════════════════
 
