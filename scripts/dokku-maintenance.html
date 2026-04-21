@@ -245,8 +245,9 @@
       }
 
       // Build an irregular asteroid cluster that fills the vertical band
-      // [yStart, yEnd]. Returned array describes circles + craters used to
-      // paint each obstacle. Collision stays rect-based (see below).
+      // [yStart, yEnd]. Each rock is a jagged polygon — N points around
+      // a center with radius randomly perturbed, so the silhouette looks
+      // chipped and asymmetric instead of a smooth ball.
       function buildRocks(width, yStart, yEnd) {
         var rocks = [];
         var yCursor = yStart;
@@ -255,16 +256,44 @@
           var cx = width / 2 + (Math.random() - 0.5) * (width - 10);
           var cy = yCursor + r * 0.7;
           if (cy + r > yEnd + 6) cy = yEnd - r * 0.3;
+
+          // jagged polygon: 11–15 points with ±25–45% radial jitter
+          var nPts = 11 + ((Math.random() * 5) | 0);
+          var roughness = 0.25 + Math.random() * 0.2;
+          var rotation = Math.random() * Math.PI * 2;
+          var poly = [];
+          for (var p = 0; p < nPts; p++) {
+            var ang = rotation + (p / nPts) * Math.PI * 2;
+            var rr = r * (1 - roughness + Math.random() * roughness * 2);
+            poly.push({ x: Math.cos(ang) * rr, y: Math.sin(ang) * rr });
+          }
+
+          // craters: small dark pits scattered on the sunlit side
           var craters = [];
-          var nCraters = 1 + (Math.random() * 3) | 0;
+          var nCraters = 3 + ((Math.random() * 4) | 0);
           for (var c = 0; c < nCraters; c++) {
             craters.push({
-              x: (Math.random() - 0.5) * r * 1.2,
-              y: (Math.random() - 0.5) * r * 1.2,
-              r: 1.5 + Math.random() * 2.5
+              x: (Math.random() - 0.3) * r * 0.9,     // biased toward lit side
+              y: (Math.random() - 0.3) * r * 0.9,
+              r: 1 + Math.random() * 2.5
             });
           }
-          rocks.push({ cx: cx, cy: cy, r: r, craters: craters });
+
+          // specks — tiny light/dark flecks for surface grit
+          var specks = [];
+          var nSpecks = 4 + ((Math.random() * 5) | 0);
+          for (var s = 0; s < nSpecks; s++) {
+            specks.push({
+              x: (Math.random() - 0.5) * r * 1.5,
+              y: (Math.random() - 0.5) * r * 1.5,
+              r: 0.6 + Math.random() * 0.9,
+              light: Math.random() > 0.5
+            });
+          }
+
+          // slight per-rock tint shift
+          var tint = 0.85 + Math.random() * 0.3;
+          rocks.push({ cx: cx, cy: cy, r: r, poly: poly, craters: craters, specks: specks, tint: tint });
           yCursor = cy + r * 0.55;
         }
         return rocks;
@@ -274,25 +303,55 @@
         for (var i = 0; i < rocks.length; i++) {
           var rk = rocks[i];
           var gx = px + rk.cx, gy = rk.cy;
-          // rock body
-          var g = ctx.createRadialGradient(gx - rk.r * 0.3, gy - rk.r * 0.4, rk.r * 0.1, gx, gy, rk.r);
-          g.addColorStop(0, '#8b8aa3');
-          g.addColorStop(0.55, '#4a4860');
-          g.addColorStop(1, '#1c1a2b');
-          ctx.fillStyle = g;
+
+          // jagged silhouette path
           ctx.beginPath();
-          ctx.arc(gx, gy, rk.r, 0, Math.PI * 2);
+          ctx.moveTo(gx + rk.poly[0].x, gy + rk.poly[0].y);
+          for (var n = 1; n < rk.poly.length; n++) {
+            ctx.lineTo(gx + rk.poly[n].x, gy + rk.poly[n].y);
+          }
+          ctx.closePath();
+
+          // shaded fill — off-centre radial so one side is lit
+          var mid = Math.floor(139 * rk.tint).toString();  // #8b = 139
+          var g = ctx.createRadialGradient(
+            gx - rk.r * 0.35, gy - rk.r * 0.45, rk.r * 0.1,
+            gx, gy, rk.r * 1.05
+          );
+          g.addColorStop(0,    'rgb(' + mid + ',' + mid + ',' + Math.floor(163 * rk.tint) + ')');  // lit
+          g.addColorStop(0.55, '#3a3850');
+          g.addColorStop(1,    '#14121f');
+          ctx.fillStyle = g;
           ctx.fill();
-          // faint purple rim light (accent color bleeding in)
-          ctx.strokeStyle = 'rgba(192,193,255,0.15)';
+
+          // rim light (lilac accent) — sharp bright stroke on lit side
+          ctx.save();
+          ctx.clip();
+          ctx.strokeStyle = 'rgba(192,193,255,0.25)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.restore();
+
+          // hard outline for silhouette contrast
+          ctx.strokeStyle = 'rgba(0,0,0,0.55)';
           ctx.lineWidth = 1;
           ctx.stroke();
+
           // craters
-          ctx.fillStyle = 'rgba(16,14,28,0.7)';
+          ctx.fillStyle = 'rgba(12,10,22,0.75)';
           for (var k = 0; k < rk.craters.length; k++) {
             var cr = rk.craters[k];
             ctx.beginPath();
             ctx.arc(gx + cr.x, gy + cr.y, cr.r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // specks — mineral flecks
+          for (var sp = 0; sp < rk.specks.length; sp++) {
+            var sk = rk.specks[sp];
+            ctx.fillStyle = sk.light ? 'rgba(220,220,240,0.5)' : 'rgba(10,8,16,0.6)';
+            ctx.beginPath();
+            ctx.arc(gx + sk.x, gy + sk.y, sk.r, 0, Math.PI * 2);
             ctx.fill();
           }
         }
