@@ -171,11 +171,13 @@
       var COL = { bg: '#0a0f1c', accent: '#c0c1ff', deep: '#5625ab',
                   muted: '#958e9e', outline: 'rgba(192,193,255,0.22)' };
 
-      var GRAVITY = 0.45, FLAP = -7.2, PIPE_SPEED = 2.2,
-          PIPE_GAP = 110, PIPE_W = 48, PIPE_EVERY = 90;
+      var GRAVITY = 0.28, FLAP = -5.8, PIPE_SPEED = 1.7,
+          PIPE_GAP = 150, PIPE_W = 48, PIPE_EVERY = 115;
+      var MAX_FALL = 7.5;        // terminal velocity — keeps falls manageable
+      var FLAP_COOLDOWN_MS = 90; // prevents machine-gun space triggering twice per frame
 
       var state = 'idle';
-      var dyno, pipes, frame, score;
+      var dyno, pipes, frame, score, lastFlapAt;
       var hi = parseInt(localStorage.getItem('wokku_flappy_hi') || '0', 10);
       hiEl.textContent = 'Best ' + hi;
 
@@ -187,18 +189,25 @@
       }
 
       function reset() {
-        dyno = { x: 70, y: H / 2, r: 14, vy: 0, rot: 0 };
+        dyno = { x: 70, y: H / 2, r: 14, vy: 0, rot: 0, flapAt: -9999 };
         pipes = [];
         frame = 0;
         score = 0;
+        lastFlapAt = 0;
         scoreEl.textContent = '0';
       }
       reset();
 
       function flap() {
+        var now = performance.now();
+        if (now - lastFlapAt < FLAP_COOLDOWN_MS) return;
+        lastFlapAt = now;
         if (state === 'idle') { state = 'playing'; overlay.style.display = 'none'; }
         else if (state === 'dead') { reset(); state = 'playing'; overlay.style.display = 'none'; }
-        if (state === 'playing') dyno.vy = FLAP;
+        if (state === 'playing') {
+          dyno.vy = FLAP;
+          dyno.flapAt = now;   // triggers a brief wing-spread animation
+        }
       }
 
       function die() {
@@ -223,8 +232,9 @@
 
         if (state === 'playing') {
           dyno.vy += GRAVITY;
+          if (dyno.vy > MAX_FALL) dyno.vy = MAX_FALL;
           dyno.y += dyno.vy;
-          dyno.rot = Math.max(-0.4, Math.min(1.1, dyno.vy / 10));
+          dyno.rot = Math.max(-0.35, Math.min(0.75, dyno.vy / 12));
 
           if (frame % PIPE_EVERY === 0) {
             var gapY = 40 + Math.random() * (H - 80 - PIPE_GAP);
@@ -272,9 +282,38 @@
           }
         }
 
+        // Winged dyno — 🦕 body + two canvas wings that flap on input.
+        // Wing angle: spread wide right after a flap, tuck while falling.
+        var sinceFlap = (performance.now() - dyno.flapAt) / 1000; // seconds
+        var wingPose;
+        if (sinceFlap < 0.12) wingPose = -1.25;       // full upstroke (spread)
+        else if (sinceFlap < 0.28) wingPose = -0.6;   // mid
+        else wingPose = Math.min(0.8, 0.1 + dyno.vy * 0.05); // tuck as falling
+
         ctx.save();
         ctx.translate(dyno.x, dyno.y);
         ctx.rotate(dyno.rot);
+
+        function drawWing(sign) {
+          ctx.save();
+          ctx.translate(-2, -4);
+          ctx.rotate(sign * wingPose);
+          var wg = ctx.createLinearGradient(0, -18, 0, 4);
+          wg.addColorStop(0, COL.accent);
+          wg.addColorStop(1, COL.deep);
+          ctx.fillStyle = wg;
+          ctx.globalAlpha = 0.92;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.quadraticCurveTo(sign * 16, -22, sign * 22, -6);
+          ctx.quadraticCurveTo(sign * 14, -2, 0, 2);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+        drawWing(-1);  // left wing
+        drawWing(1);   // right wing
+
         ctx.shadowColor = COL.accent; ctx.shadowBlur = 12;
         ctx.font = '26px serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
