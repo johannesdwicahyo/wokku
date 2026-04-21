@@ -1,3 +1,5 @@
+require "shellwords"
+
 class TerminalSession
   attr_reader :server, :last_activity_at
 
@@ -21,8 +23,13 @@ class TerminalSession
         ch.request_pty(term: "xterm-256color", chars_wide: 120, chars_high: 30) do |_ch, success|
           raise "Failed to get PTY" unless success
         end
-        # dokku SSH shell prepends 'dokku' to this, so it runs: dokku enter <app> web
-        ch.exec("enter #{@app_name} web") do |_ch, success|
+        # dokku SSH shell prepends 'dokku', so this runs:
+        #   dokku enter <app> web -- /bin/sh -lc '<fallback>'
+        # Without an explicit command, `dokku enter` defaults to /bin/bash —
+        # which fails on Alpine/busybox images with "/bin/bash: no such file".
+        # Try bash first (nicer UX on Debian-based images), fall back to sh.
+        fallback = "command -v bash >/dev/null 2>&1 && exec bash -l || exec /bin/sh -l"
+        ch.exec("enter #{Shellwords.escape(@app_name)} web -- /bin/sh -lc #{Shellwords.escape(fallback)}") do |_ch, success|
           raise "Failed to enter container" unless success
         end
       end
