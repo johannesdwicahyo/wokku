@@ -65,9 +65,18 @@
         usage_str.to_f
       end
     }
-    # Use configured limit if available, otherwise fall back to Docker's reported limit
-    configured_limit_mb = @resources["default_limit_memory"].to_i
-    per_container_limit = configured_limit_mb > 0 ? configured_limit_mb : nil
+    # Read the per-container memory limit from docker's own report
+    # (usage string is "128MiB / 512MiB"); no extra SSH round-trip needed.
+    per_container_limit = begin
+      first_limit = @container_stats.first&.dig(:mem_usage)&.split("/")&.last&.strip
+      if first_limit.nil?
+        nil
+      elsif first_limit.include?("GiB")
+        (first_limit.to_f * 1024).round
+      elsif first_limit.include?("MiB")
+        first_limit.to_f.round
+      end
+    end
     total_limit_mb = per_container_limit ? per_container_limit * @container_stats.size : nil
     mem_percent = total_limit_mb ? (total_mem_mb / total_limit_mb * 100).round(1) : total_mem_percent = @container_stats.sum { |s| s[:mem_percent] }
   %>
