@@ -49,7 +49,7 @@ en:
       title: "Databases"
       new_database: "New Database"
       create_database: "Create Database"
-      no_databases: "No databases yet"
+      no_databases: "No resources yet"
       engine: "Engine"
       linked_apps: "Linked Apps"
       backups: "Backups"

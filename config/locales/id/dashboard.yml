@@ -49,7 +49,7 @@ id:
       title: "Database"
       new_database: "Database Baru"
       create_database: "Buat Database"
-      no_databases: "Belum ada database"
+      no_databases: "Belum ada resource"
       engine: "Engine"
       linked_apps: "Aplikasi Terhubung"
       backups: "Backup"
