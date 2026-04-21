@@ -171,10 +171,33 @@
       var COL = { bg: '#0a0f1c', accent: '#c0c1ff', deep: '#5625ab',
                   muted: '#958e9e', outline: 'rgba(192,193,255,0.22)' };
 
-      var GRAVITY = 0.28, FLAP = -5.8, PIPE_SPEED = 1.7,
-          PIPE_GAP = 150, PIPE_W = 48, PIPE_EVERY = 115;
-      var MAX_FALL = 7.5;        // terminal velocity — keeps falls manageable
+      var GRAVITY = 0.22, FLAP = -5.2, PIPE_SPEED = 1.4,
+          PIPE_GAP = 170, PIPE_W = 48, PIPE_EVERY = 135;
+      var MAX_FALL = 5.5;        // terminal velocity — keeps falls manageable
       var FLAP_COOLDOWN_MS = 90; // prevents machine-gun space triggering twice per frame
+
+      // Parallax starfield — three layers that drift left. Regenerated on reset.
+      function makeStars(count, brightness) {
+        var arr = [];
+        for (var i = 0; i < count; i++) {
+          arr.push({
+            x: Math.random() * W,
+            y: Math.random() * H,
+            r: 0.6 + Math.random() * 1.4,
+            a: brightness * (0.4 + Math.random() * 0.6)
+          });
+        }
+        return arr;
+      }
+      var starsBack  = makeStars(50, 0.35); // slow, dim
+      var starsMid   = makeStars(28, 0.65); // medium
+      var starsFront = makeStars(14, 1.00); // fast, bright
+
+      // A couple of distant nebula patches drift at half-star speed.
+      var nebulae = [
+        { x: W * 0.2, y: H * 0.3, rx: 160, ry: 90,  color: 'rgba(86,37,171,0.18)' },
+        { x: W * 0.7, y: H * 0.7, rx: 130, ry: 80,  color: 'rgba(192,193,255,0.10)' }
+      ];
 
       var state = 'idle';
       var dyno, pipes, frame, score, lastFlapAt;
@@ -221,14 +244,46 @@
         overlay.style.display = 'flex';
       }
 
+      function drawStars(stars, speed) {
+        for (var i = 0; i < stars.length; i++) {
+          var s = stars[i];
+          s.x -= speed;
+          if (s.x < -2) { s.x = W + Math.random() * 20; s.y = Math.random() * H; }
+          ctx.globalAlpha = s.a;
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+
       function step() {
-        ctx.fillStyle = COL.bg;
+        // Deep-space gradient base
+        var skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+        skyGrad.addColorStop(0, '#050818');
+        skyGrad.addColorStop(1, '#0a0f1c');
+        ctx.fillStyle = skyGrad;
         ctx.fillRect(0, 0, W, H);
 
-        ctx.strokeStyle = COL.outline; ctx.lineWidth = 1;
-        for (var gx = frame % 40; gx < W; gx += 40) {
-          ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke();
+        // Drifting nebulae (back layer)
+        for (var ni = 0; ni < nebulae.length; ni++) {
+          var n = nebulae[ni];
+          n.x -= PIPE_SPEED * 0.15;
+          if (n.x + n.rx < 0) n.x = W + n.rx;
+          var ng = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, Math.max(n.rx, n.ry));
+          ng.addColorStop(0, n.color);
+          ng.addColorStop(1, 'transparent');
+          ctx.fillStyle = ng;
+          ctx.beginPath();
+          ctx.ellipse(n.x, n.y, n.rx, n.ry, 0, 0, Math.PI * 2);
+          ctx.fill();
         }
+
+        // Parallax starfield
+        drawStars(starsBack,  PIPE_SPEED * 0.25);
+        drawStars(starsMid,   PIPE_SPEED * 0.55);
+        drawStars(starsFront, PIPE_SPEED * 1.00);
 
         if (state === 'playing') {
           dyno.vy += GRAVITY;
