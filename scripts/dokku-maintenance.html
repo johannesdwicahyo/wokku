@@ -244,6 +244,60 @@
         overlay.style.display = 'flex';
       }
 
+      // Build an irregular asteroid cluster that fills the vertical band
+      // [yStart, yEnd]. Returned array describes circles + craters used to
+      // paint each obstacle. Collision stays rect-based (see below).
+      function buildRocks(width, yStart, yEnd) {
+        var rocks = [];
+        var yCursor = yStart;
+        while (yCursor < yEnd) {
+          var r = 14 + Math.random() * 14;
+          var cx = width / 2 + (Math.random() - 0.5) * (width - 10);
+          var cy = yCursor + r * 0.7;
+          if (cy + r > yEnd + 6) cy = yEnd - r * 0.3;
+          var craters = [];
+          var nCraters = 1 + (Math.random() * 3) | 0;
+          for (var c = 0; c < nCraters; c++) {
+            craters.push({
+              x: (Math.random() - 0.5) * r * 1.2,
+              y: (Math.random() - 0.5) * r * 1.2,
+              r: 1.5 + Math.random() * 2.5
+            });
+          }
+          rocks.push({ cx: cx, cy: cy, r: r, craters: craters });
+          yCursor = cy + r * 0.55;
+        }
+        return rocks;
+      }
+
+      function drawRockCluster(px, rocks) {
+        for (var i = 0; i < rocks.length; i++) {
+          var rk = rocks[i];
+          var gx = px + rk.cx, gy = rk.cy;
+          // rock body
+          var g = ctx.createRadialGradient(gx - rk.r * 0.3, gy - rk.r * 0.4, rk.r * 0.1, gx, gy, rk.r);
+          g.addColorStop(0, '#8b8aa3');
+          g.addColorStop(0.55, '#4a4860');
+          g.addColorStop(1, '#1c1a2b');
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(gx, gy, rk.r, 0, Math.PI * 2);
+          ctx.fill();
+          // faint purple rim light (accent color bleeding in)
+          ctx.strokeStyle = 'rgba(192,193,255,0.15)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          // craters
+          ctx.fillStyle = 'rgba(16,14,28,0.7)';
+          for (var k = 0; k < rk.craters.length; k++) {
+            var cr = rk.craters[k];
+            ctx.beginPath();
+            ctx.arc(gx + cr.x, gy + cr.y, cr.r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
       function drawStars(stars, speed) {
         for (var i = 0; i < stars.length; i++) {
           var s = stars[i];
@@ -293,7 +347,11 @@
 
           if (frame % PIPE_EVERY === 0) {
             var gapY = 40 + Math.random() * (H - 80 - PIPE_GAP);
-            pipes.push({ x: W + 10, gapY: gapY, passed: false });
+            pipes.push({
+              x: W + 10, gapY: gapY, passed: false,
+              rocksTop: buildRocks(PIPE_W, 0, gapY),
+              rocksBot: buildRocks(PIPE_W, gapY + PIPE_GAP, H)
+            });
           }
 
           for (var i = 0; i < pipes.length; i++) {
@@ -320,21 +378,14 @@
           }
         }
 
+        // Draw asteroid clusters (top + bottom of each gap). Collision
+        // below still uses a rect [x, x+PIPE_W] × [0, gapY] / [gapY+GAP, H]
+        // which is slightly more forgiving than the visible rock silhouette
+        // (craters don't count as hits) — intentional.
         for (var k = 0; k < pipes.length; k++) {
           var pk = pipes[k];
-          var grad = ctx.createLinearGradient(pk.x, 0, pk.x + PIPE_W, 0);
-          grad.addColorStop(0, COL.deep);
-          grad.addColorStop(1, COL.accent);
-          ctx.fillStyle = grad;
-          ctx.fillRect(pk.x, 0, PIPE_W, pk.gapY);
-          ctx.fillRect(pk.x, pk.gapY + PIPE_GAP, PIPE_W, H - (pk.gapY + PIPE_GAP));
-          ctx.strokeStyle = 'rgba(13,20,36,0.5)'; ctx.lineWidth = 1;
-          for (var ry = 14; ry < pk.gapY; ry += 18) {
-            ctx.beginPath(); ctx.moveTo(pk.x, ry); ctx.lineTo(pk.x + PIPE_W, ry); ctx.stroke();
-          }
-          for (var ry2 = pk.gapY + PIPE_GAP + 14; ry2 < H; ry2 += 18) {
-            ctx.beginPath(); ctx.moveTo(pk.x, ry2); ctx.lineTo(pk.x + PIPE_W, ry2); ctx.stroke();
-          }
+          drawRockCluster(pk.x, pk.rocksTop);
+          drawRockCluster(pk.x, pk.rocksBot);
         }
 
         // Winged dyno — 🦕 body + two canvas wings that flap on input.
