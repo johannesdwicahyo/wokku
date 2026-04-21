@@ -9,6 +9,7 @@ class ApplicationController < ActionController::Base
 
   rescue_from ActiveRecord::RecordNotFound, with: :not_found
   rescue_from Pundit::NotAuthorizedError, with: :forbidden
+  rescue_from ActionController::InvalidAuthenticityToken, with: :stale_csrf_recovery
 
   # Auth / account pages carry CSRF tokens tied to the session cookie. If the
   # browser re-renders a cached copy of these pages (bfcache, disk cache, or
@@ -35,6 +36,31 @@ class ApplicationController < ActionController::Base
     respond_to do |format|
       format.html { redirect_to root_path, alert: "You are not authorized to perform this action." }
       format.json { render json: { error: "Not authorized" }, status: :forbidden }
+    end
+  end
+
+  # Fires when a form POST arrives with a CSRF token that doesn't match the
+  # current session — almost always because the user sat idle past the
+  # :timeoutable window and their first click after reload used a stale
+  # token. For auth-related paths we reset the session (so the next page
+  # gets a fresh token) and bounce them back to sign-in with a friendly
+  # message instead of dumping them on a 422 page.
+  def stale_csrf_recovery
+    reset_session
+    if request.path.start_with?("/users/")
+      respond_to do |format|
+        format.html do
+          redirect_to new_user_session_path,
+            alert: "Your session expired. Please sign in again."
+        end
+        format.json { render json: { error: "Session expired" }, status: :unprocessable_entity }
+      end
+    else
+      # Non-auth CSRF failures are genuinely suspicious — still render 422.
+      respond_to do |format|
+        format.html { render file: Rails.public_path.join("422.html"), status: :unprocessable_entity, layout: false }
+        format.json { render json: { error: "Invalid authenticity token" }, status: :unprocessable_entity }
+      end
     end
   end
 end
