@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Offline for maintenance · Wokku</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0D1424;
+      --surface: #1e1e32;
+      --outline: rgba(192, 193, 255, 0.12);
+      --text: #ffffff;
+      --muted: #958e9e;
+      --accent: #c0c1ff;
+      --accent-deep: #5625ab;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(86, 37, 171, 0.35), transparent 60%),
+        radial-gradient(900px 500px at 90% 110%, rgba(192, 193, 255, 0.18), transparent 55%),
+        var(--bg);
+      color: var(--text);
+      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 480px;
+      background: var(--surface);
+      border: 1px solid var(--outline);
+      border-radius: 16px;
+      padding: 40px 36px;
+      text-align: center;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+    }
+
+    .brand {
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 28px;
+    }
+
+    .pulse {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      margin: 0 auto 24px;
+      background: radial-gradient(circle at 30% 30%, var(--accent), var(--accent-deep));
+      position: relative;
+    }
+    .pulse::after {
+      content: "";
+      position: absolute; inset: -6px;
+      border-radius: 50%;
+      border: 1px solid var(--accent);
+      opacity: 0.6;
+      animation: ring 2s ease-out infinite;
+    }
+    @keyframes ring {
+      0%   { transform: scale(0.9); opacity: 0.6; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0 0 12px;
+      letter-spacing: -0.01em;
+    }
+
+    p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+      margin: 0 0 24px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent);
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .status .dot {
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: blink 1.4s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 0.3; }
+      50%      { opacity: 1; }
+    }
+
+    footer {
+      margin-top: 32px;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="brand">Wokku</div>
+    <div class="pulse" aria-hidden="true"></div>
+    <h1>Offline for maintenance</h1>
+    <p>This app is temporarily offline while its owner rolls out an update or fixes something. It'll be back shortly — no need to refresh.</p>
+    <div class="status"><span class="dot"></span>Checking back automatically</div>
+    <footer>Powered by <a href="https://wokku.cloud">wokku.cloud</a></footer>
+  </main>
+
+  <script>
+    // Auto-reload once the app comes back. Exponential backoff up to ~68 min.
+    var retry_current = 2;
+    var retry_limit = 4096;
+    function check_gateway() {
+      var r = new XMLHttpRequest();
+      r.open('HEAD', window.location.href, true);
+      r.onload = function () {
+        if (r.status >= 200 && r.status < 400) {
+          window.location.reload(true);
+        } else {
+          if (retry_current < retry_limit) retry_current *= 2;
+          setTimeout(check_gateway, retry_current * 1000);
+        }
+      };
+      r.onerror = function () {
+        if (retry_current < retry_limit) retry_current *= 2;
+        setTimeout(check_gateway, retry_current * 1000);
+      };
+      r.send();
+    }
+    setTimeout(check_gateway, retry_current * 1000);
+  </script>
+</body>
+</html>
