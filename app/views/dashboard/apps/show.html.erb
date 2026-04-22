@@ -220,18 +220,6 @@
       <% end %>
     </div>
 
-    <%# Scaling & Plan — link row above Add-ons %>
-    <%= link_to dashboard_app_scaling_path(@app), class: "block bg-surface-container-low rounded-md px-6 py-3 hover:bg-surface-container-high/40 transition flex items-center justify-between group" do %>
-      <div class="flex items-center gap-3">
-        <span class="material-symbols-outlined text-primary text-[18px]">swap_vert</span>
-        <div>
-          <p class="text-sm font-bold text-on-surface font-headline">Scaling & Plan</p>
-          <p class="text-[10px] text-outline">Change container tier and dyno count</p>
-        </div>
-      </div>
-      <span class="material-symbols-outlined text-outline group-hover:text-primary text-[18px]">chevron_right</span>
-    <% end %>
-
     <%# Add-ons %>
     <div class="bg-surface-container-low rounded-md overflow-hidden">
       <div class="px-6 py-3 border-b border-outline-variant/10 flex items-center justify-between">
