@@ -1,0 +1,61 @@
+<%# Populated frame for the CPU / Memory / Containers cards. Rendered from
+    AppsController#runtime_metrics_frame. The enclosing <turbo-frame id=
+    "runtime_metrics"> tag is critical — it matches the placeholder on #show
+    so Turbo swaps this in once the SSH round-trip completes. %>
+<%= turbo_frame_tag "runtime_metrics" do %>
+  <% if @container_stats.any? %>
+    <%
+      total_cpu    = @container_stats.sum { |s| s[:cpu_percent] }
+      total_mem_mb = @container_stats.sum do |s|
+        u = s[:mem_usage].split("/").first.strip
+        u.include?("GiB") ? u.to_f * 1024 : u.to_f
+      end
+      # Pull the per-container memory limit from docker's own "usage / limit"
+      # string so we don't need a second SSH call for resource:report.
+      first_limit = @container_stats.first&.dig(:mem_usage)&.split("/")&.last&.strip
+      per_container_limit = if first_limit.blank?
+        nil
+      elsif first_limit.include?("GiB")
+        (first_limit.to_f * 1024).round
+      elsif first_limit.include?("MiB")
+        first_limit.to_f.round
+      end
+      total_limit = per_container_limit ? per_container_limit * @container_stats.size : nil
+      mem_pct = total_limit ? (total_mem_mb / total_limit * 100).round(1) : @container_stats.sum { |s| s[:mem_percent] }
+    %>
+    <div class="grid grid-cols-3 gap-4">
+      <div class="bg-surface-container-low rounded-md p-5">
+        <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-2">CPU Usage</p>
+        <span class="text-3xl font-bold text-on-surface font-headline"><%= "%.1f" % total_cpu %>%</span>
+        <div class="mt-3 h-1.5 bg-surface rounded-full overflow-hidden">
+          <div class="h-full bg-primary rounded-full" style="width: <%= [total_cpu, 100].min %>%"></div>
+        </div>
+      </div>
+      <div class="bg-surface-container-low rounded-md p-5">
+        <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-2">Memory Usage</p>
+        <div class="flex items-end gap-2">
+          <span class="text-3xl font-bold text-on-surface font-headline"><%= "%.0f" % total_mem_mb %></span>
+          <span class="text-sm text-outline mb-1">MB<%= total_limit ? " / #{total_limit} MB" : "" %></span>
+        </div>
+        <% if total_limit %>
+          <div class="mt-3 h-1.5 bg-surface rounded-full overflow-hidden">
+            <div class="h-full rounded-full <%= mem_pct > 80 ? 'bg-error' : mem_pct > 60 ? 'bg-tertiary' : 'bg-primary' %>" style="width: <%= [mem_pct, 100].min %>%"></div>
+          </div>
+        <% end %>
+      </div>
+      <div class="bg-surface-container-low rounded-md p-5">
+        <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-2">Containers</p>
+        <span class="text-3xl font-bold text-on-surface font-headline"><%= @container_stats.size %></span>
+        <p class="text-xs text-outline mt-1">
+          <% @container_stats.each_with_index do |s, i| %>
+            <span class="font-mono"><%= s[:name].sub("#{@app.name}.", "") %></span><%= i < @container_stats.size - 1 ? ", " : "" %>
+          <% end %>
+        </p>
+      </div>
+    </div>
+  <% else %>
+    <div class="bg-surface-container-low rounded-md p-6 text-center">
+      <p class="text-xs text-outline">No running containers.</p>
+    </div>
+  <% end %>
+<% end %>

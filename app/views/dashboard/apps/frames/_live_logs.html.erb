@@ -1,0 +1,35 @@
+<%= turbo_frame_tag "live_logs" do %>
+  <div class="bg-surface-container-lowest rounded-md overflow-hidden">
+    <div class="px-6 py-3 border-b border-outline-variant/10 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <h2 class="font-headline text-sm font-bold text-on-surface"><%= t("dashboard.apps.logs") %></h2>
+        <% if @processes.any? %>
+          <span class="text-[10px] text-outline font-mono">
+            STREAMS: <%= @processes.map { |p| "#{p[:type]}.#{p[:index]}" }.join(", ") %>
+          </span>
+        <% end %>
+        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span><span class="text-[10px] text-secondary uppercase font-bold">Live</span></span>
+      </div>
+      <%= link_to dashboard_app_logs_path(@app), class: "text-xs text-outline hover:text-primary transition" do %>
+        Full Logs <span class="material-symbols-outlined text-[14px] align-middle">open_in_new</span>
+      <% end %>
+    </div>
+    <div class="p-4 font-mono text-xs leading-relaxed max-h-80 overflow-y-auto">
+      <% if @logs.any? %>
+        <% @logs.each do |line| %>
+          <div class="py-0.5 text-on-surface-variant hover:text-on-surface transition">
+            <% if line.include?("ERROR") || line.include?("error") %>
+              <span class="text-error"><%= line %></span>
+            <% elsif line.include?("WARN") || line.include?("warn") %>
+              <span class="text-tertiary"><%= line %></span>
+            <% else %>
+              <%= line %>
+            <% end %>
+          </div>
+        <% end %>
+      <% else %>
+        <p class="text-outline py-4 text-center">No recent logs.</p>
+      <% end %>
+    </div>
+  </div>
+<% end %>

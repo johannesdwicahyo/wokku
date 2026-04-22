@@ -87,6 +87,12 @@ Rails.application.routes.draw do
         post :start
         post :toggle_https
         post :toggle_maintenance
+        # Lazy-loaded Turbo Frame sections on the app show page — each
+        # opens its own SSH round-trip, letting them load in parallel
+        # instead of serially blocking #show.
+        get :runtime_metrics_frame
+        get :live_logs_frame
+        get :resource_limits_frame
       end
       resources :config, only: [ :index, :create, :update, :destroy ], controller: "config"
       resources :domains, only: [ :index, :create, :destroy ], controller: "domains" do

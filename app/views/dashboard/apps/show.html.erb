@@ -127,84 +127,35 @@
   <%# ===== LEFT COLUMN (8-col) ===== %>
   <div class="col-span-8 space-y-6">
 
-    <%# Live Metrics %>
-    <% if @container_stats.any? %>
-      <%
-        total_cpu = @container_stats.sum { |s| s[:cpu_percent] }
-        total_mem_mb = @container_stats.sum { |s|
-          u = s[:mem_usage].split("/").first.strip
-          u.include?("GiB") ? u.to_f * 1024 : u.to_f
-        }
-        configured_limit = @resources["default_limit_memory"].to_i
-        total_limit = configured_limit > 0 ? configured_limit * @container_stats.size : nil
-        mem_pct = total_limit ? (total_mem_mb / total_limit * 100).round(1) : @container_stats.sum { |s| s[:mem_percent] }
-      %>
+    <%# Live Metrics — lazy-loaded Turbo Frame (defers SSH to keep #show fast) %>
+    <%= turbo_frame_tag "runtime_metrics", src: runtime_metrics_frame_dashboard_app_path(@app), loading: "lazy" do %>
       <div class="grid grid-cols-3 gap-4">
-        <div class="bg-surface-container-low rounded-md p-5">
-          <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-2">CPU Usage</p>
-          <span class="text-3xl font-bold text-on-surface font-headline"><%= "%.1f" % total_cpu %>%</span>
-          <div class="mt-3 h-1.5 bg-surface rounded-full overflow-hidden">
-            <div class="h-full bg-primary rounded-full" style="width: <%= [total_cpu, 100].min %>%"></div>
+        <% 3.times do %>
+          <div class="bg-surface-container-low rounded-md p-5">
+            <div class="h-3 w-20 bg-surface rounded animate-pulse mb-3"></div>
+            <div class="h-8 w-24 bg-surface rounded animate-pulse mb-3"></div>
+            <div class="h-1.5 w-full bg-surface rounded animate-pulse"></div>
           </div>
-        </div>
-        <div class="bg-surface-container-low rounded-md p-5">
-          <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-2">Memory Usage</p>
-          <div class="flex items-end gap-2">
-            <span class="text-3xl font-bold text-on-surface font-headline"><%= "%.0f" % total_mem_mb %></span>
-            <span class="text-sm text-outline mb-1">MB<%= total_limit ? " / #{total_limit} MB" : "" %></span>
-          </div>
-          <% if total_limit %>
-            <div class="mt-3 h-1.5 bg-surface rounded-full overflow-hidden">
-              <div class="h-full rounded-full <%= mem_pct > 80 ? 'bg-error' : mem_pct > 60 ? 'bg-tertiary' : 'bg-primary' %>" style="width: <%= [mem_pct, 100].min %>%"></div>
-            </div>
-          <% end %>
-        </div>
-        <div class="bg-surface-container-low rounded-md p-5">
-          <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-2">Containers</p>
-          <span class="text-3xl font-bold text-on-surface font-headline"><%= @container_stats.size %></span>
-          <p class="text-xs text-outline mt-1">
-            <% @container_stats.each_with_index do |s, i| %>
-              <span class="font-mono"><%= s[:name].sub("#{@app.name}.", "") %></span><%= i < @container_stats.size - 1 ? ", " : "" %>
-            <% end %>
-          </p>
-        </div>
+        <% end %>
       </div>
     <% end %>
 
-    <%# Live Logs %>
-    <div class="bg-surface-container-lowest rounded-md overflow-hidden">
-      <div class="px-6 py-3 border-b border-outline-variant/10 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <h2 class="font-headline text-sm font-bold text-on-surface"><%= t("dashboard.apps.logs") %></h2>
-          <% if @processes.any? %>
-            <span class="text-[10px] text-outline font-mono">
-              STREAMS: <%= @processes.map { |p| "#{p[:type]}.#{p[:index]}" }.join(", ") %>
-            </span>
-          <% end %>
-          <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span><span class="text-[10px] text-secondary uppercase font-bold">Live</span></span>
+    <%# Live Logs — lazy-loaded Turbo Frame %>
+    <%= turbo_frame_tag "live_logs", src: live_logs_frame_dashboard_app_path(@app), loading: "lazy" do %>
+      <div class="bg-surface-container-lowest rounded-md overflow-hidden">
+        <div class="px-6 py-3 border-b border-outline-variant/10 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <h2 class="font-headline text-sm font-bold text-on-surface"><%= t("dashboard.apps.logs") %></h2>
+            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-outline-variant animate-pulse"></span><span class="text-[10px] text-outline uppercase font-bold">Loading</span></span>
+          </div>
         </div>
-        <%= link_to dashboard_app_logs_path(@app), class: "text-xs text-outline hover:text-primary transition" do %>
-          Full Logs <span class="material-symbols-outlined text-[14px] align-middle">open_in_new</span>
-        <% end %>
-      </div>
-      <div class="p-4 font-mono text-xs leading-relaxed max-h-80 overflow-y-auto">
-        <% if @logs.any? %>
-          <% @logs.each do |line| %>
-            <div class="py-0.5 text-on-surface-variant hover:text-on-surface transition">
-              <% if line.include?("ERROR") || line.include?("error") %>
-                <span class="text-error"><%= line %></span>
-              <% elsif line.include?("WARN") || line.include?("warn") %>
-                <span class="text-tertiary"><%= line %></span>
-              <% else %>
-                <%= line %>
-              <% end %>
-            </div>
+        <div class="p-4 font-mono text-xs leading-relaxed h-40 flex flex-col gap-2">
+          <% 4.times do |i| %>
+            <div class="h-3 bg-surface rounded animate-pulse" style="width: <%= [60, 80, 70, 90][i] %>%"></div>
           <% end %>
-        <% else %>
-          <p class="text-outline py-4 text-center">No recent logs.</p>
-        <% end %>
+        </div>
       </div>
-    </div>
+    <% end %>
 
     <%# Environment Variables %>
     <div class="bg-surface-container-low rounded-md overflow-hidden">
@@ -443,32 +394,21 @@
       </div>
     <% end %>
 
-    <%# Resource Limits %>
-    <% if @resources.any? %>
-      <%
-        mem_limit = @resources["default_limit_memory"]
-        cpu_limit = @resources["default_limit_cpu"]
-      %>
-      <% if mem_limit.present? || cpu_limit.present? %>
-        <div class="bg-surface-container-low rounded-md overflow-hidden">
-          <div class="px-5 py-3 border-b border-outline-variant/10">
-            <p class="text-[10px] text-outline uppercase tracking-widest font-bold">Resource Limits</p>
-          </div>
-          <div class="grid grid-cols-2 divide-x divide-outline-variant/10">
-            <div class="p-4 text-center">
-              <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Memory</p>
-              <span class="text-lg font-bold text-on-surface font-mono"><%= mem_limit || "—" %> MB</span>
-            </div>
-            <div class="p-4 text-center">
-              <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">CPU</p>
-              <span class="text-lg font-bold text-on-surface font-mono"><%= cpu_limit || "—" %> vCPU</span>
-            </div>
-          </div>
-          <div class="px-5 py-2.5 bg-surface/30 text-center">
-            <%= link_to "Change Plan", dashboard_app_scaling_path(@app), class: "text-xs text-primary hover:underline font-semibold" %>
-          </div>
+    <%# Resource Limits — lazy-loaded Turbo Frame %>
+    <%= turbo_frame_tag "resource_limits", src: resource_limits_frame_dashboard_app_path(@app), loading: "lazy" do %>
+      <div class="bg-surface-container-low rounded-md overflow-hidden">
+        <div class="px-5 py-3 border-b border-outline-variant/10">
+          <p class="text-[10px] text-outline uppercase tracking-widest font-bold">Resource Limits</p>
         </div>
-      <% end %>
+        <div class="grid grid-cols-2 divide-x divide-outline-variant/10">
+          <% 2.times do %>
+            <div class="p-4 text-center">
+              <div class="h-3 w-12 bg-surface rounded animate-pulse mx-auto mb-2"></div>
+              <div class="h-5 w-16 bg-surface rounded animate-pulse mx-auto"></div>
+            </div>
+          <% end %>
+        </div>
+      </div>
     <% end %>
 
     <%# Pipeline Status — Recent Deploys %>

@@ -2,7 +2,7 @@ module Dashboard
   class AppsController < BaseController
     include PlanEnforceable
     before_action :enforce_free_container_limit!, only: [ :create ]
-    before_action :set_app, only: [ :show, :destroy, :restart, :stop, :start, :toggle_https, :toggle_maintenance ]
+    before_action :set_app, only: [ :show, :destroy, :restart, :stop, :start, :toggle_https, :toggle_maintenance, :runtime_metrics_frame, :live_logs_frame, :resource_limits_frame ]
 
     def index
       @apps = policy_scope(AppRecord).main_apps.includes(:server, :team, :domains)
@@ -12,17 +12,38 @@ module Dashboard
 
     def show
       authorize @app
+      # SSH-backed data is deferred to Turbo Frame sub-requests so the
+      # page itself renders from DB only and returns in <200 ms.
+      # See #runtime_metrics_frame, #live_logs_frame, #resource_limits_frame.
       @releases = @app.releases.includes(:deploy).order(version: :desc).limit(5)
       @addons = @app.database_services.includes(:server)
       @domains = @app.domains
       @env_vars = @app.env_vars.order(:key)
-      @processes = fetch_processes
-      @container_stats = fetch_container_stats
-      @resources = fetch_resources
       @current_allocation = defined?(DynoAllocation) ? @app.dyno_allocations.includes(:dyno_tier).find_by(process_type: "web") : nil
-      @logs = fetch_logs
       @preview_apps = @app.preview_apps.order(pr_number: :desc) unless @app.is_preview?
-      @maintenance_enabled = fetch_maintenance_enabled
+      @maintenance_enabled = fetch_maintenance_enabled # cached 60 s
+    end
+
+    # Turbo-frame: CPU / memory / container count cards. One SSH call.
+    def runtime_metrics_frame
+      authorize @app, :show?
+      @container_stats = fetch_container_stats
+      render partial: "dashboard/apps/frames/runtime_metrics", layout: false
+    end
+
+    # Turbo-frame: live log tail + process stream labels. Two SSH calls.
+    def live_logs_frame
+      authorize @app, :show?
+      @processes = fetch_processes
+      @logs = fetch_logs
+      render partial: "dashboard/apps/frames/live_logs", layout: false
+    end
+
+    # Turbo-frame: configured resource limits (Mem / CPU). One SSH call.
+    def resource_limits_frame
+      authorize @app, :show?
+      @resources = fetch_resources
+      render partial: "dashboard/apps/frames/resource_limits", layout: false
     end
 
     def new
