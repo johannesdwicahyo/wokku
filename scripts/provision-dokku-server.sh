@@ -531,6 +531,44 @@ systemctl enable --now wokku-host-backup.timer
 log "Host-state backup timer enabled (daily at 04:00 UTC)"
 
 # ══════════════════════════════════════════════════════════════════
+# Weekly docker cleanup — keeps image layers / stopped containers /
+# dangling volumes from accumulating. Runs Mondays 05:00 UTC.
+# ══════════════════════════════════════════════════════════════════
+CLEANUP_URL="${WOKKU_CLEANUP_SCRIPT_URL:-https://raw.githubusercontent.com/johannesdwicahyo/wokku.dev/main/scripts/wokku-docker-cleanup.sh}"
+if curl -fsSL "$CLEANUP_URL" -o /usr/local/sbin/wokku-docker-cleanup; then
+  chmod 755 /usr/local/sbin/wokku-docker-cleanup
+
+  cat > /etc/systemd/system/wokku-docker-cleanup.service <<'CLEANUP_UNIT'
+[Unit]
+Description=Wokku docker cleanup (images + volumes + journal)
+After=docker.service
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/wokku-docker-cleanup
+Nice=15
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+CLEANUP_UNIT
+
+  cat > /etc/systemd/system/wokku-docker-cleanup.timer <<'CLEANUP_TIMER'
+[Unit]
+Description=Run wokku-docker-cleanup weekly (Mon 05:00 UTC)
+[Timer]
+OnCalendar=Mon *-*-* 05:00:00 UTC
+RandomizedDelaySec=30min
+Persistent=true
+[Install]
+WantedBy=timers.target
+CLEANUP_TIMER
+
+  systemctl daemon-reload
+  systemctl enable --now wokku-docker-cleanup.timer
+  log "Docker cleanup timer enabled (weekly, Mon 05:00 UTC)"
+else
+  warn "Failed to fetch cleanup script from $CLEANUP_URL — skipping timer"
+fi
+
+# ══════════════════════════════════════════════════════════════════
 # Replace Dokku's default blue maintenance page with a Wokku-branded
 # dark theme. Per-app copies created later inherit this template, and
 # we also rewrite any existing per-app copies so they pick up the new
