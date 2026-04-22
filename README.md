@@ -114,9 +114,9 @@ wokku (Rails 8.1)
 ## CLI
 
 ```bash
-gem install wokku
+brew install johannesdwicahyo/tap/wokku
 
-wokku login
+wokku auth:login
 wokku apps:create my-app --server my-server
 wokku config:set my-app DATABASE_URL=postgres://...
 wokku domains:add my-app app.example.com

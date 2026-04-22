@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # Wokku CLI — manage your Wokku apps from the terminal
-# Install: curl -sL https://wokku.cloud/cli/install.sh | bash
-# Or:      cp cli/wokku /usr/local/bin/wokku && chmod +x /usr/local/bin/wokku
+# Install (recommended): brew install johannesdwicahyo/tap/wokku
+# Install (fallback):    curl -sL https://wokku.cloud/cli/install.sh | bash
 
 require "json"
 require "net/http"
