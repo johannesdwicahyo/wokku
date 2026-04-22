@@ -451,6 +451,86 @@ if id www-data &>/dev/null && getent group dokku &>/dev/null; then
 fi
 
 # ══════════════════════════════════════════════════════════════════
+# Host-state backup (nightly → Cloudflare R2).
+# Tars /etc/wokku + /home/dokku + /var/lib/dokku/data/storage +
+# plugin configs into s3://<bucket>/hosts/<hostname>/… Tenant DB
+# service data is excluded (that's handled by Wokku's BackupJob).
+# Credentials are loaded from /etc/wokku/host-backup.env at runtime —
+# operator populates that file once.
+# ══════════════════════════════════════════════════════════════════
+# AWS CLI v2 (Debian trixie dropped the `awscli` apt package). Install
+# the official static bundle — ~40 MB, self-contained Python runtime.
+if ! command -v aws >/dev/null 2>&1; then
+  AWS_ARCH=$(uname -m)
+  case "$AWS_ARCH" in
+    x86_64)  AWS_BUNDLE="awscli-exe-linux-x86_64.zip" ;;
+    aarch64) AWS_BUNDLE="awscli-exe-linux-aarch64.zip" ;;
+    *)       err "Unsupported arch for AWS CLI: $AWS_ARCH" ;;
+  esac
+  apt-get install -y --no-install-recommends unzip
+  curl -fsSL "https://awscli.amazonaws.com/${AWS_BUNDLE}" -o /tmp/awscli.zip
+  unzip -q -o /tmp/awscli.zip -d /tmp
+  /tmp/aws/install --update
+  rm -rf /tmp/aws /tmp/awscli.zip
+  log "Installed AWS CLI v2 ($(aws --version 2>&1))"
+fi
+
+BACKUP_URL="${WOKKU_HOST_BACKUP_SCRIPT_URL:-https://raw.githubusercontent.com/johannesdwicahyo/wokku.dev/main/scripts/dokku-host-backup.sh}"
+if curl -fsSL "$BACKUP_URL" -o /usr/local/sbin/wokku-host-backup; then
+  chmod 755 /usr/local/sbin/wokku-host-backup
+  log "Installed /usr/local/sbin/wokku-host-backup"
+else
+  warn "Failed to fetch host-backup script from $BACKUP_URL — skipping timer"
+fi
+
+# Environment file (placeholders — operator fills these after provision).
+mkdir -p /etc/wokku
+if [ ! -f /etc/wokku/host-backup.env ]; then
+  cat > /etc/wokku/host-backup.env <<'ENV'
+# Fill in after provision + reload via `systemctl restart wokku-host-backup.timer`
+WOKKU_HOST_BACKUP_S3_BUCKET=
+WOKKU_HOST_BACKUP_S3_ENDPOINT=
+WOKKU_HOST_BACKUP_S3_ACCESS_KEY_ID=
+WOKKU_HOST_BACKUP_S3_SECRET_ACCESS_KEY=
+# WOKKU_HOST_BACKUP_HOSTNAME=
+# WOKKU_HOST_BACKUP_RETENTION_DAYS=30
+ENV
+  chmod 600 /etc/wokku/host-backup.env
+  log "Created /etc/wokku/host-backup.env (fill in to enable uploads)"
+fi
+
+# systemd service + daily timer at 04:00 UTC (offset from Wokku's other jobs).
+cat > /etc/systemd/system/wokku-host-backup.service <<'UNIT'
+[Unit]
+Description=Wokku Dokku host-state backup to R2
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/wokku/host-backup.env
+ExecStart=/usr/local/sbin/wokku-host-backup
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+UNIT
+
+cat > /etc/systemd/system/wokku-host-backup.timer <<'UNIT'
+[Unit]
+Description=Run wokku-host-backup daily
+[Timer]
+OnCalendar=*-*-* 04:00:00 UTC
+RandomizedDelaySec=15min
+Persistent=true
+[Install]
+WantedBy=timers.target
+UNIT
+
+systemctl daemon-reload
+systemctl enable --now wokku-host-backup.timer
+log "Host-state backup timer enabled (daily at 04:00 UTC)"
+
+# ══════════════════════════════════════════════════════════════════
 # Replace Dokku's default blue maintenance page with a Wokku-branded
 # dark theme. Per-app copies created later inherit this template, and
 # we also rewrite any existing per-app copies so they pick up the new
