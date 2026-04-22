@@ -146,8 +146,11 @@ class User < ApplicationRecord
   def free_tier_counts
     active = resource_usages.active
     {
-      eco_containers: active.where(resource_type: "container", tier_name: "eco").count,
-      mini_databases: active.where(resource_type: "database").where("tier_name LIKE ?", "mini%").count,
+      # Count by price (0 = free), not tier name. Tiers have been
+      # renamed between "eco" and "free" and the free-tier limit
+      # must not leak when names drift.
+      eco_containers: active.where(resource_type: "container", price_cents_per_hour: 0).count,
+      mini_databases: active.where(resource_type: "database", price_cents_per_hour: 0).count,
       starter_minio: active.where(resource_type: "database", tier_name: "starter").count
     }
   end

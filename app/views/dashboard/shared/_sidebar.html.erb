@@ -17,7 +17,7 @@
     nav_items = [
       { name: t("dashboard.nav.dashboard"), path: dashboard_root_path, pattern: "/dashboard", icon: "dashboard", exact: true },
       { name: t("dashboard.nav.apps"), path: dashboard_apps_path, pattern: "/dashboard/apps", icon: "terminal" },
-      { name: t("dashboard.nav.databases"), path: dashboard_resources_path, pattern: "/dashboard/resources", icon: "database" },
+      { name: t("dashboard.nav.resources"), path: dashboard_resources_path, pattern: "/dashboard/resources", icon: "dns" },
     ]
   %>
   <nav class="flex-1 space-y-0.5">
@@ -45,9 +45,10 @@
   </nav>
 
   <div class="mt-auto px-6 pt-6 border-t border-outline-variant/10 space-y-1">
-    <a href="/docs" target="_blank" class="flex items-center py-2 text-outline hover:text-on-surface-variant transition-all">
+    <a href="/docs" target="_blank" rel="noopener" class="flex items-center py-2 text-outline hover:text-on-surface-variant transition-all">
       <span class="material-symbols-outlined mr-3 text-[18px]">menu_book</span>
-      <span class="text-xs font-medium font-label"><%= t("dashboard.nav.documentation") %></span>
+      <span class="text-xs font-medium font-label flex-1"><%= t("dashboard.nav.documentation") %></span>
+      <span class="material-symbols-outlined text-[14px] text-outline-variant">open_in_new</span>
     </a>
     <a href="mailto:support@wokku.cloud" class="flex items-center py-2 text-outline hover:text-on-surface-variant transition-all">
       <span class="material-symbols-outlined mr-3 text-[18px]">contact_support</span>
