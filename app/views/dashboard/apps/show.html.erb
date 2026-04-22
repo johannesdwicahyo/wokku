@@ -26,6 +26,11 @@
     <% end %>
   </div>
   <div class="flex items-center gap-2">
+    <% if @app.server && !@app.created? %>
+      <%= link_to dashboard_app_terminal_path(@app), class: "inline-flex items-center px-3 py-1.5 text-xs text-on-surface-variant border border-outline-variant/15 rounded-md hover:border-primary/50 hover:text-primary transition" do %>
+        <span class="material-symbols-outlined text-[16px] mr-1">terminal</span> Console
+      <% end %>
+    <% end %>
     <% if @app.created? %>
       <%# No actions for apps that haven't been deployed yet %>
     <% elsif @app.stopped? %>
@@ -215,6 +220,18 @@
       <% end %>
     </div>
 
+    <%# Scaling & Plan — link row above Add-ons %>
+    <%= link_to dashboard_app_scaling_path(@app), class: "block bg-surface-container-low rounded-md px-6 py-3 hover:bg-surface-container-high/40 transition flex items-center justify-between group" do %>
+      <div class="flex items-center gap-3">
+        <span class="material-symbols-outlined text-primary text-[18px]">swap_vert</span>
+        <div>
+          <p class="text-sm font-bold text-on-surface font-headline">Scaling & Plan</p>
+          <p class="text-[10px] text-outline">Change container tier and dyno count</p>
+        </div>
+      </div>
+      <span class="material-symbols-outlined text-outline group-hover:text-primary text-[18px]">chevron_right</span>
+    <% end %>
+
     <%# Add-ons %>
     <div class="bg-surface-container-low rounded-md overflow-hidden">
       <div class="px-6 py-3 border-b border-outline-variant/10 flex items-center justify-between">
@@ -250,6 +267,19 @@
         </div>
       <% end %>
     </div>
+
+    <%# Full Metrics — link row below Add-ons %>
+    <%= link_to dashboard_app_metrics_path(@app), class: "block bg-surface-container-low rounded-md px-6 py-3 hover:bg-surface-container-high/40 transition flex items-center justify-between group" do %>
+      <div class="flex items-center gap-3">
+        <span class="material-symbols-outlined text-primary text-[18px]">monitoring</span>
+        <div>
+          <p class="text-sm font-bold text-on-surface font-headline">Full Metrics</p>
+          <p class="text-[10px] text-outline">CPU, memory, and request charts over time</p>
+        </div>
+      </div>
+      <span class="material-symbols-outlined text-outline group-hover:text-primary text-[18px]">chevron_right</span>
+    <% end %>
+
     <%# Preview Apps (only shown for main apps that have PR previews) %>
     <% if @preview_apps&.any? %>
       <div class="bg-surface-container-low rounded-md overflow-hidden">
@@ -457,32 +487,6 @@
           <p class="text-xs text-outline">No deploys yet.</p>
         </div>
       <% end %>
-    </div>
-
-    <%# Quick Links %>
-    <div class="bg-surface-container-low rounded-md overflow-hidden">
-      <div class="px-5 py-3 border-b border-outline-variant/10">
-        <p class="text-[10px] text-outline uppercase tracking-widest font-bold">Quick Links</p>
-      </div>
-      <div class="divide-y divide-outline-variant/10">
-        <%= link_to dashboard_app_config_index_path(@app), class: "px-5 py-2.5 flex items-center gap-3 text-xs text-on-surface-variant hover:bg-surface-container-high/30 hover:text-on-surface transition" do %>
-          <span class="material-symbols-outlined text-[16px]">tune</span> Config Vars
-        <% end %>
-        <%= link_to dashboard_app_scaling_path(@app), class: "px-5 py-2.5 flex items-center gap-3 text-xs text-on-surface-variant hover:bg-surface-container-high/30 hover:text-on-surface transition" do %>
-          <span class="material-symbols-outlined text-[16px]">swap_vert</span> Scaling & Plan
-        <% end %>
-        <%= link_to dashboard_app_metrics_path(@app), class: "px-5 py-2.5 flex items-center gap-3 text-xs text-on-surface-variant hover:bg-surface-container-high/30 hover:text-on-surface transition" do %>
-          <span class="material-symbols-outlined text-[16px]">monitoring</span> Full Metrics
-        <% end %>
-        <%= link_to dashboard_app_logs_path(@app), class: "px-5 py-2.5 flex items-center gap-3 text-xs text-on-surface-variant hover:bg-surface-container-high/30 hover:text-on-surface transition" do %>
-          <span class="material-symbols-outlined text-[16px]">receipt_long</span> Full Logs
-        <% end %>
-        <% if @app.server %>
-          <%= link_to dashboard_app_terminal_path(@app), class: "px-5 py-2.5 flex items-center gap-3 text-xs text-on-surface-variant hover:bg-surface-container-high/30 hover:text-on-surface transition" do %>
-            <span class="material-symbols-outlined text-[16px]">terminal</span> Console
-          <% end %>
-        <% end %>
-      </div>
     </div>
 
     <%# Ownership %>
