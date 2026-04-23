@@ -5,6 +5,7 @@
 # tags: automation, workflow, node
 # icon: automation
 # port: 5678
+# postgres_components: true
 
 services:
   n8n:

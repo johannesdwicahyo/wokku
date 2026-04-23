@@ -1,0 +1,100 @@
+- generic [ref=e1]:
+  - generic [ref=e4]:
+    - generic [ref=e5]: Public Beta
+    - generic [ref=e7]:
+      - text: Wokku Cloud is in public beta — not recommended for production workloads yet. See the
+      - link "beta notice" [ref=e8] [cursor=pointer]:
+        - /url: /docs/beta
+      - text: .
+  - generic [ref=e9]:
+    - complementary [ref=e10]:
+      - link "Wokku Dokku v0.37.2 · CE v1.0" [ref=e12] [cursor=pointer]:
+        - /url: /
+        - heading "Wokku" [level=1] [ref=e13]
+        - paragraph [ref=e14]: Dokku v0.37.2 · CE v1.0
+      - navigation [ref=e15]:
+        - link "dashboard Dashboard" [ref=e16] [cursor=pointer]:
+          - /url: /dashboard
+          - generic [ref=e17]: dashboard
+          - generic [ref=e18]: Dashboard
+        - link "terminal Apps" [ref=e19] [cursor=pointer]:
+          - /url: /dashboard/apps
+          - generic [ref=e20]: terminal
+          - generic [ref=e21]: Apps
+        - link "dns Resources" [ref=e22] [cursor=pointer]:
+          - /url: /dashboard/resources
+          - generic [ref=e23]: dns
+          - generic [ref=e24]: Resources
+        - link "storage Servers" [ref=e25] [cursor=pointer]:
+          - /url: /dashboard/servers
+          - generic [ref=e26]: storage
+          - generic [ref=e27]: Servers
+      - generic [ref=e28]:
+        - link "menu_book Documentation open_in_new" [ref=e29] [cursor=pointer]:
+          - /url: /docs
+          - generic [ref=e30]: menu_book
+          - generic [ref=e31]: Documentation
+          - generic [ref=e32]: open_in_new
+        - link "contact_support Support" [ref=e33] [cursor=pointer]:
+          - /url: mailto:support@wokku.cloud
+          - generic [ref=e34]: contact_support
+          - generic [ref=e35]: Support
+        - link "payments Billing" [ref=e36] [cursor=pointer]:
+          - /url: /dashboard/billing
+          - generic [ref=e37]: payments
+          - generic [ref=e38]: Billing
+        - link "settings Settings" [ref=e39] [cursor=pointer]:
+          - /url: /dashboard/profile
+          - generic [ref=e40]: settings
+          - generic [ref=e41]: Settings
+    - banner [ref=e42]:
+      - generic [ref=e44]:
+        - generic [ref=e45]: search
+        - textbox "Search apps..." [ref=e46]
+      - generic [ref=e47]:
+        - link "notifications" [ref=e48] [cursor=pointer]:
+          - /url: /dashboard/notifications
+          - generic [ref=e49]: notifications
+        - button "EN" [ref=e51] [cursor=pointer]
+        - link "Deploy" [ref=e52] [cursor=pointer]:
+          - /url: /dashboard/templates
+        - button "Avatar" [ref=e54] [cursor=pointer]:
+          - img "Avatar" [ref=e55]
+    - main [ref=e56]:
+      - generic [ref=e58]:
+        - link "arrow_back Back to Marketplace" [ref=e59] [cursor=pointer]:
+          - /url: /dashboard/templates
+          - generic [ref=e60]: arrow_back
+          - text: Back to Marketplace
+        - generic [ref=e61]:
+          - generic [ref=e62]:
+            - generic [ref=e64]: 📝
+            - generic [ref=e65]:
+              - heading "Ghost" [level=1] [ref=e66]
+              - paragraph [ref=e67]: Professional publishing and blogging platform
+              - generic [ref=e68]:
+                - generic [ref=e69]: blog
+                - generic [ref=e70]: cms
+                - generic [ref=e71]: node
+          - generic [ref=e72]:
+            - heading "Included Add-ons" [level=3] [ref=e73]
+            - generic [ref=e75]: Mysql (mini)
+          - link "TryGhost/Ghost" [ref=e77] [cursor=pointer]:
+            - /url: https://github.com/TryGhost/Ghost
+            - img [ref=e78]
+            - text: TryGhost/Ghost
+        - generic [ref=e80]:
+          - heading "Deploy this template" [level=2] [ref=e81]
+          - generic [ref=e82]:
+            - generic [ref=e83]:
+              - generic [ref=e84]: App Name
+              - textbox "Lowercase letters, numbers, and hyphens" [ref=e85]:
+                - /placeholder: my-app
+                - text: smoke-ghost
+              - paragraph [ref=e86]: Lowercase letters, numbers, and hyphens only
+            - generic [ref=e87]:
+              - generic [ref=e88]: Server
+              - combobox [active] [ref=e89]:
+                - option "Select a server" [selected]
+                - option "jkt-01"
+            - button "Deploy Ghost" [ref=e91] [cursor=pointer]

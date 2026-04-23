@@ -71,6 +71,12 @@ class TemplateDeployer
       end
     end
 
+    if template[:postgres_components]
+      step("Expanding DATABASE_URL into DB_POSTGRESDB_* components...") do
+        expand_postgres_components!(client, app, app_name)
+      end
+    end
+
     if template[:deploy_method] == "docker_image" && template[:docker_image].present?
       # Set port mapping before deploying (Docker images often expose non-standard ports)
       container_port = template[:container_port] || 3000
@@ -191,5 +197,27 @@ class TemplateDeployer
     @log << { step: "Failed: #{message}", error: e.message, at: Time.current }
     @on_progress&.call("FAILED: #{message} — #{e.message}")
     raise
+  end
+
+  # Some apps (n8n, strapi, keycloak) don't accept DATABASE_URL — they
+  # want DB_POSTGRESDB_HOST, DB_POSTGRESDB_PORT, etc. as separate vars.
+  # Dokku's postgres plugin only exposes DATABASE_URL, so after linking
+  # we parse it and set the component vars explicitly.
+  def expand_postgres_components!(client, app, app_name)
+    database_url = Dokku::Config.new(client).get(app_name, "DATABASE_URL")
+    return if database_url.blank?
+
+    uri = URI.parse(database_url)
+    components = {
+      "DB_POSTGRESDB_HOST"     => uri.host,
+      "DB_POSTGRESDB_PORT"     => (uri.port || 5432).to_s,
+      "DB_POSTGRESDB_DATABASE" => uri.path.to_s.sub(%r{\A/}, ""),
+      "DB_POSTGRESDB_USER"     => uri.user.to_s,
+      "DB_POSTGRESDB_PASSWORD" => URI.decode_www_form_component(uri.password.to_s)
+    }
+    Dokku::Config.new(client).set(app_name, components)
+    components.each do |key, value|
+      app.env_vars.find_or_create_by!(key: key) { |ev| ev.value = value }
+    end
   end
 end

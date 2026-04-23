@@ -41,6 +41,12 @@ class TemplateParser
       addons: addons,
       env: env,
       post_deploy: metadata["post_deploy"] || "",
+      # Apps like n8n don't accept DATABASE_URL — they expect individual
+      # DB_POSTGRESDB_HOST/PORT/DATABASE/USER/PASSWORD vars. When the
+      # template sets `# postgres_components: true`, the deployer will
+      # parse the DATABASE_URL set by Dokku's postgres addon and write
+      # those 5 vars after linking.
+      postgres_components: metadata["postgres_components"].to_s == "true",
       services: services
     }
   end
