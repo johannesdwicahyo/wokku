@@ -10,7 +10,12 @@ production:
 
   sync_servers:
     class: SyncServerSchedulerJob
-    schedule: every 10 minutes
+    # Every 3 hours — out-of-band Dokku changes (someone SSH'd in and
+    # ran a command directly) are rare, and HealthCheckSchedulerJob at
+    # every 5 minutes catches the common "an app stopped running" case.
+    # Users who know they made an out-of-band change can hit the manual
+    # Sync button on /dashboard/servers/:id.
+    schedule: every 3 hours
     queue: default
 
   metrics_poll:
