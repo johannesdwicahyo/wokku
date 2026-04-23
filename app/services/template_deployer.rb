@@ -133,43 +133,50 @@ class TemplateDeployer
     { success: false, error: e.message, log: @log }
   end
 
-  # Clean up any partially-created resources when a deploy step fails.
-  # This prevents users from being stuck with half-configured apps and orphaned
-  # databases that continue to consume server resources.
+  # Clean up any partially-created resources when a deploy step fails,
+  # but PRESERVE the Rails AppRecord + Deploy row so the user can read
+  # what went wrong. Previous behaviour hard-deleted everything, which
+  # left users at a 404 with zero explanation.
+  #
+  # Dokku-side (app, DBs, DNS) is still cleaned so the host doesn't
+  # accumulate half-provisioned junk.
   def rollback_partial_deploy!(original_error)
     client = Dokku::Client.new(server)
     app = AppRecord.find_by(name: app_name, server: server)
     return unless app
 
-    # Tear down any databases that were created for this app
     begin
       app.app_databases.includes(:database_service).each do |ad|
         db = ad.database_service
         next unless db
-        begin
-          Dokku::Databases.new(client).unlink(db.service_type, db.name, app_name) rescue nil
-          Dokku::Databases.new(client).destroy(db.service_type, db.name) rescue nil
-          db.destroy
-        rescue StandardError => e
-          @log << { step: "Rollback warning: could not clean up database #{db.name}", error: e.message, at: Time.current }
-        end
+        Dokku::Databases.new(client).unlink(db.service_type, db.name, app_name) rescue nil
+        Dokku::Databases.new(client).destroy(db.service_type, db.name) rescue nil
+        db.destroy
+      rescue StandardError => e
+        @log << { step: "Rollback warning: could not clean up database #{db.name}", error: e.message, at: Time.current }
       end
 
-      # Clean up DNS record
       Cloudflare::Dns.new.delete_app_record(app_name) rescue nil
-
-      # Destroy the Dokku app
       Dokku::Apps.new(client).destroy(app_name) rescue nil
+    rescue StandardError => cleanup_error
+      @log << { step: "Cleanup warning", error: cleanup_error.message, at: Time.current }
+      Rails.logger.warn("TemplateDeployer cleanup warning: #{cleanup_error.message} (original: #{original_error.message})")
+    end
 
-      # Remove the Rails record
-      app.destroy
-      @log << { step: "Rollback complete. Partial resources removed.", at: Time.current }
-    rescue StandardError => rollback_error
-      # If cleanup itself fails, at least leave the app in a crashed state so
-      # the user sees something went wrong.
-      app.update!(status: :crashed)
-      @log << { step: "Rollback failed", error: rollback_error.message, at: Time.current }
-      Rails.logger.error("TemplateDeployer rollback failed: #{rollback_error.message} (original: #{original_error.message})")
+    # Write a failed Deploy record (or update the existing one) so the
+    # user's deploy URL stays valid and shows the log + error.
+    app.update!(status: :crashed)
+    deploy = app.deploys.order(created_at: :desc).first
+    log_payload = { error: original_error.message, steps: @log }.to_json
+    if deploy
+      deploy.update!(status: :failed, log: log_payload, finished_at: Time.current)
+    else
+      app.deploys.create!(
+        status: :failed,
+        log: log_payload,
+        started_at: @log.first&.dig(:at) || Time.current,
+        finished_at: Time.current
+      )
     end
   end
 
