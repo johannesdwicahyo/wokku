@@ -22,7 +22,17 @@ class SyncServerJob < ApplicationJob
     end
 
     (local_app_names - remote_app_names).each do |name|
-      server.app_records.find_by(name: name)&.destroy
+      local = server.app_records.find_by(name: name)
+      next unless local
+      # Don't sync-destroy apps whose initial deploy crashed —
+      # TemplateDeployer's rollback intentionally removes the Dokku app
+      # but preserves the Rails AppRecord + failed Deploy so the user
+      # can read the log. Destroying it here would nuke the failure
+      # trail. Only sweep crashed apps if they once had a successful
+      # deploy (i.e. this really is a vanished-from-Dokku app, not a
+      # never-succeeded-in-the-first-place deploy failure).
+      next if local.status == "crashed" && !local.deploys.where(status: :succeeded).exists?
+      local.destroy
     end
 
     # Sync domains for each app (preload domains to avoid N+1)

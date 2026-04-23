@@ -8,7 +8,7 @@
 
 services:
   plausible:
-    image: ghcr.io/plausible/community-edition:v2.1:latest
+    image: ghcr.io/plausible/community-edition:v2.1
     ports:
       - "8000:8000"
     depends_on:
