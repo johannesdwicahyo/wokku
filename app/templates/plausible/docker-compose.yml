@@ -5,6 +5,8 @@
 # tags: analytics, privacy, elixir
 # icon: analytics
 # port: 8000
+# set_url: BASE_URL
+# generate_secrets: SECRET_KEY_BASE,TOTP_VAULT_KEY
 
 services:
   plausible:

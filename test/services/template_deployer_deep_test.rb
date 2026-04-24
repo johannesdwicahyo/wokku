@@ -169,6 +169,31 @@ class TemplateDeployerDeepTest < ActiveSupport::TestCase
     }
   end
 
+  test "generate_secrets produces a random value per key" do
+    template = { repo: "https://github.com/x/y", generate_secrets: %w[JWT_SECRET CREDS_KEY] }
+    captured = capture_config_set_calls
+
+    TemplateDeployer.new(template: template, app_name: "sigapp", server: @server, user: @user).deploy!
+
+    secrets_call = captured.find { |h| h.keys.sort == %w[CREDS_KEY JWT_SECRET] }
+    refute_nil secrets_call
+    assert secrets_call["JWT_SECRET"].length >= 32
+    refute_equal secrets_call["JWT_SECRET"], secrets_call["CREDS_KEY"]
+  end
+
+  test "alias_env reads source env from Dokku and sets target to same value" do
+    template = {
+      repo: "https://github.com/x/y",
+      alias_env: { "HASURA_GRAPHQL_DATABASE_URL" => "DATABASE_URL" }
+    }
+    Dokku::Config.any_instance.stubs(:get).with(anything, "DATABASE_URL").returns("postgres://u:p@host:5432/db")
+    captured = capture_config_set_calls
+
+    TemplateDeployer.new(template: template, app_name: "aliasapp", server: @server, user: @user).deploy!
+
+    assert_includes captured, { "HASURA_GRAPHQL_DATABASE_URL" => "postgres://u:p@host:5432/db" }
+  end
+
   test "set_url populates each key with https://<app>.wokku.cloud" do
     template = { repo: "https://github.com/x/y", set_url: %w[url BASE_URL] }
     captured = capture_config_set_calls
@@ -180,7 +205,9 @@ class TemplateDeployerDeepTest < ActiveSupport::TestCase
 
   private def capture_config_set_calls
     captured = []
-    Dokku::Config.any_instance.unstub(:set)
+    # Rebind set to capture via side effect. Don't unstub first — that's
+    # what was leaking mocha's stub state across tests and leaving Dokku::Config
+    # with an undefined :set method for later test files.
     Dokku::Config.any_instance.stubs(:set).with { |_app, vars| captured << vars; true }.returns(nil)
     captured
   end

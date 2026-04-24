@@ -95,6 +95,18 @@ class TemplateDeployer
       end
     end
 
+    if template[:generate_secrets].present?
+      step("Generating random secrets: #{template[:generate_secrets].join(', ')}...") do
+        apply_generate_secrets!(client, app, app_name, keys: template[:generate_secrets])
+      end
+    end
+
+    if template[:alias_env].present?
+      step("Aliasing env vars: #{template[:alias_env].map { |t, s| "#{s}→#{t}" }.join(', ')}...") do
+        apply_alias_env!(client, app, app_name, aliases: template[:alias_env])
+      end
+    end
+
     if template[:deploy_method] == "docker_image" && template[:docker_image].present?
       # Set port mapping before deploying (Docker images often expose non-standard ports)
       container_port = template[:container_port] || 3000
@@ -256,6 +268,38 @@ class TemplateDeployer
     }
     Dokku::Config.new(client).set(app_name, components)
     components.each do |key, value|
+      app.env_vars.find_or_create_by!(key: key) { |ev| ev.value = value }
+    end
+  end
+
+  # Read SOURCE env var from Dokku and set TARGET to the same value. Used
+  # when an app expects a differently-named var than what the addon plugin
+  # provides (e.g. Hasura wants HASURA_GRAPHQL_DATABASE_URL, Dokku's postgres
+  # plugin sets DATABASE_URL).
+  def apply_alias_env!(client, app, app_name, aliases:)
+    cfg = Dokku::Config.new(client)
+    vars = aliases.each_with_object({}) do |(target, source), h|
+      val = cfg.get(app_name, source).to_s.strip
+      h[target] = val if val.present?
+    end
+    return if vars.empty?
+    cfg.set(app_name, vars)
+    vars.each do |key, value|
+      app.env_vars.find_or_create_by!(key: key) { |ev| ev.value = value }
+    end
+  end
+
+  # Generate a cryptographically strong random value for each requested env key
+  # and persist to both Dokku and the EnvVar mirror. Skip any key that already
+  # exists so redeploys don't rotate live credentials.
+  def apply_generate_secrets!(client, app, app_name, keys:)
+    vars = keys.each_with_object({}) do |key, h|
+      next if app.env_vars.exists?(key: key)
+      h[key] = SecureRandom.urlsafe_base64(32)
+    end
+    return if vars.empty?
+    Dokku::Config.new(client).set(app_name, vars)
+    vars.each do |key, value|
       app.env_vars.find_or_create_by!(key: key) { |ev| ev.value = value }
     end
   end

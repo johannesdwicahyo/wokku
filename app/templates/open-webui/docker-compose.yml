@@ -6,12 +6,11 @@
 # icon: ai
 # deploy_method: docker_image
 # port: 8080
+# generate_secrets: WEBUI_SECRET_KEY
 
 services:
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
-    environment:
-      - WEBUI_SECRET_KEY=changeme
     volumes:
       - open-webui-data:/app/backend/data
 

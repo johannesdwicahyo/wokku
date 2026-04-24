@@ -5,6 +5,7 @@
 # tags: analytics, node, lightweight
 # icon: analytics
 # port: 3000
+# generate_secrets: HASH_SALT,APP_SECRET
 
 services:
   umami:

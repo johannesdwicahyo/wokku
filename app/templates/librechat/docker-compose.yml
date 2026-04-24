@@ -1,0 +1,33 @@
+# name: LibreChat
+# documentation: https://github.com/danny-avila/LibreChat
+# slogan: Feature-rich multi-provider ChatGPT clone — OpenAI, Anthropic, Google, local models
+# category: ai
+# tags: ai, chat, llm, openai, anthropic
+# icon: ai
+# port: 3080
+# set_url: DOMAIN_CLIENT,DOMAIN_SERVER
+# generate_secrets: JWT_SECRET,JWT_REFRESH_SECRET,CREDS_KEY,CREDS_IV,MEILI_MASTER_KEY
+# alias_env: MONGO_URI=DATABASE_URL
+
+services:
+  librechat:
+    image: ghcr.io/danny-avila/librechat:latest
+    environment:
+      - HOST=0.0.0.0
+      - PORT=3080
+      - ALLOW_REGISTRATION=true
+      - ALLOW_SOCIAL_LOGIN=false
+      - SEARCH=false
+      - APP_TITLE=LibreChat
+    ports:
+      - "3080:3080"
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo:7
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:

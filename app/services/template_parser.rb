@@ -56,6 +56,15 @@ class TemplateParser
       mysql_components:    parse_components_prefix(metadata["mysql_components"],    default: nil),
       mongo_components:    parse_components_prefix(metadata["mongo_components"],    default: nil),
       set_url:             metadata["set_url"].to_s.split(",").map(&:strip).reject(&:blank?),
+      # Comma-separated list of env keys that should be populated with
+      # freshly generated random strings. Used for app-specific secrets
+      # (APP_KEYS, JWT_SECRET, WEBUI_SECRET_KEY, HASURA_GRAPHQL_ADMIN_SECRET).
+      generate_secrets:    metadata["generate_secrets"].to_s.split(",").map(&:strip).reject(&:blank?),
+      # "TARGET=SOURCE,TARGET2=SOURCE2" — after provisioning, read SOURCE env
+      # var from Dokku and set TARGET to the same value. Used for apps that
+      # want a renamed URL (e.g. Hasura wants HASURA_GRAPHQL_DATABASE_URL,
+      # but Dokku sets DATABASE_URL).
+      alias_env:           parse_alias_env(metadata["alias_env"]),
       services: services
     }
   end
@@ -93,6 +102,13 @@ class TemplateParser
   # "true"  → default prefix (backward compat for postgres_components: true)
   # "false" / nil → nil (feature off)
   # any other string → treated as the literal prefix (e.g. "database__connection__")
+  def self.parse_alias_env(value)
+    value.to_s.split(",").each_with_object({}) do |pair, h|
+      target, source = pair.split("=", 2).map(&:strip)
+      h[target] = source if target.present? && source.present?
+    end
+  end
+
   def self.parse_components_prefix(value, default:)
     str = value.to_s.strip
     return nil if str.empty? || str == "false"
@@ -107,5 +123,5 @@ class TemplateParser
     port_str.include?(":") ? port_str.split(":").last.to_i : port_str.to_i
   end
 
-  private_class_method :find_main_service, :extract_addons, :extract_port, :parse_components_prefix
+  private_class_method :find_main_service, :extract_addons, :extract_port, :parse_components_prefix, :parse_alias_env
 end

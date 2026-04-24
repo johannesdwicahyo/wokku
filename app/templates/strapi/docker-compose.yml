@@ -5,6 +5,8 @@
 # tags: headless-cms, api, node
 # icon: cms
 # port: 1337
+# set_url: PUBLIC_URL
+# generate_secrets: APP_KEYS,API_TOKEN_SALT,ADMIN_JWT_SECRET,JWT_SECRET,TRANSFER_TOKEN_SALT
 
 services:
   strapi:
