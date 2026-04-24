@@ -161,11 +161,11 @@ class TemplateDeployerDeepTest < ActiveSupport::TestCase
     TemplateDeployer.new(template: template, app_name: "ghostapp", server: @server, user: @user).deploy!
 
     assert_includes captured, {
-      "database__connection__HOST"     => "mysql-host",
-      "database__connection__PORT"     => "3306",
-      "database__connection__DATABASE" => "ghost",
-      "database__connection__USER"     => "u",
-      "database__connection__PASSWORD" => "p"
+      "database__connection__host"     => "mysql-host",
+      "database__connection__port"     => "3306",
+      "database__connection__database" => "ghost",
+      "database__connection__user"     => "u",
+      "database__connection__password" => "p"
     }
   end
 

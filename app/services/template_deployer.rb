@@ -238,13 +238,21 @@ class TemplateDeployer
     url = Dokku::Config.new(client).get(app_name, url_key)
     return if url.blank?
 
+    # Suffix case follows the prefix. DB_POSTGRESDB_ → uppercase suffixes
+    # (HOST/PORT/…). database__connection__ → lowercase (host/port/…).
+    # Ghost explicitly demands lowercase; n8n demands uppercase; the prefix
+    # is the unambiguous signal for which convention the target app uses.
+    suffixes = prefix.match?(/[a-z]/) ?
+      %w[host port database user password] :
+      %w[HOST PORT DATABASE USER PASSWORD]
+
     uri = URI.parse(url)
     components = {
-      "#{prefix}HOST"     => uri.host,
-      "#{prefix}PORT"     => (uri.port || default_port).to_s,
-      "#{prefix}DATABASE" => uri.path.to_s.sub(%r{\A/}, ""),
-      "#{prefix}USER"     => uri.user.to_s,
-      "#{prefix}PASSWORD" => URI.decode_www_form_component(uri.password.to_s)
+      "#{prefix}#{suffixes[0]}" => uri.host,
+      "#{prefix}#{suffixes[1]}" => (uri.port || default_port).to_s,
+      "#{prefix}#{suffixes[2]}" => uri.path.to_s.sub(%r{\A/}, ""),
+      "#{prefix}#{suffixes[3]}" => uri.user.to_s,
+      "#{prefix}#{suffixes[4]}" => URI.decode_www_form_component(uri.password.to_s)
     }
     Dokku::Config.new(client).set(app_name, components)
     components.each do |key, value|
