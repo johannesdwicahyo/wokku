@@ -129,6 +129,63 @@ class TemplateDeployerDeepTest < ActiveSupport::TestCase
     assert_nil DatabaseService.find_by(name: "rollback-me-postgres", server: @server)
   end
 
+  test "postgres_components expands DATABASE_URL into DB_POSTGRESDB_* vars (n8n convention)" do
+    template = {
+      repo: "https://github.com/x/y",
+      addons: [ { "type" => "postgres", "tier" => "basic" } ],
+      postgres_components: "DB_POSTGRESDB_"
+    }
+    Dokku::Config.any_instance.stubs(:get).with(anything, "DATABASE_URL").returns("postgres://u:p%40ss@pg-host:5432/mydb")
+    captured = capture_config_set_calls
+
+    TemplateDeployer.new(template: template, app_name: "pgapp", server: @server, user: @user).deploy!
+
+    assert_includes captured, {
+      "DB_POSTGRESDB_HOST"     => "pg-host",
+      "DB_POSTGRESDB_PORT"     => "5432",
+      "DB_POSTGRESDB_DATABASE" => "mydb",
+      "DB_POSTGRESDB_USER"     => "u",
+      "DB_POSTGRESDB_PASSWORD" => "p@ss"
+    }
+  end
+
+  test "mysql_components accepts a custom prefix (Ghost's database__connection__)" do
+    template = {
+      repo: "https://github.com/x/y",
+      addons: [ { "type" => "mysql", "tier" => "basic" } ],
+      mysql_components: "database__connection__"
+    }
+    Dokku::Config.any_instance.stubs(:get).with(anything, "DATABASE_URL").returns("mysql://u:p@mysql-host:3306/ghost")
+    captured = capture_config_set_calls
+
+    TemplateDeployer.new(template: template, app_name: "ghostapp", server: @server, user: @user).deploy!
+
+    assert_includes captured, {
+      "database__connection__HOST"     => "mysql-host",
+      "database__connection__PORT"     => "3306",
+      "database__connection__DATABASE" => "ghost",
+      "database__connection__USER"     => "u",
+      "database__connection__PASSWORD" => "p"
+    }
+  end
+
+  test "set_url populates each key with https://<app>.wokku.cloud" do
+    template = { repo: "https://github.com/x/y", set_url: %w[url BASE_URL] }
+    captured = capture_config_set_calls
+
+    TemplateDeployer.new(template: template, app_name: "setapp", server: @server, user: @user).deploy!
+
+    assert_includes captured, { "url" => "https://setapp.wokku.cloud", "BASE_URL" => "https://setapp.wokku.cloud" }
+  end
+
+  private def capture_config_set_calls
+    captured = []
+    Dokku::Config.any_instance.unstub(:set)
+    Dokku::Config.any_instance.stubs(:set).with { |_app, vars| captured << vars; true }.returns(nil)
+    captured
+  end
+  public
+
   test "on_progress callback is invoked for each step" do
     progress = []
     template = { repo: "https://github.com/x/y" }

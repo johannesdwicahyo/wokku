@@ -67,4 +67,29 @@ class TemplateParserTest < ActiveSupport::TestCase
     assert template[:addons].any? { |a| a["type"] == "postgres" }
     assert template[:addons].any? { |a| a["type"] == "redis" }
   end
+
+  test "postgres_components: true uses the n8n-default prefix" do
+    yaml = "# postgres_components: true\nservices:\n  app:\n    image: foo\n"
+    assert_equal "DB_POSTGRESDB_", TemplateParser.parse(yaml, slug: "x")[:postgres_components]
+  end
+
+  test "postgres_components absent returns nil (no expansion)" do
+    yaml = "services:\n  app:\n    image: foo\n"
+    assert_nil TemplateParser.parse(yaml, slug: "x")[:postgres_components]
+  end
+
+  test "mysql_components accepts a custom prefix (Ghost convention)" do
+    yaml = "# mysql_components: database__connection__\nservices:\n  app:\n    image: foo\n"
+    assert_equal "database__connection__", TemplateParser.parse(yaml, slug: "x")[:mysql_components]
+  end
+
+  test "set_url splits comma list and strips whitespace" do
+    yaml = "# set_url: url, BASE_URL ,APP_URL\nservices:\n  app:\n    image: foo\n"
+    assert_equal %w[url BASE_URL APP_URL], TemplateParser.parse(yaml, slug: "x")[:set_url]
+  end
+
+  test "set_url defaults to empty array when absent" do
+    yaml = "services:\n  app:\n    image: foo\n"
+    assert_equal [], TemplateParser.parse(yaml, slug: "x")[:set_url]
+  end
 end

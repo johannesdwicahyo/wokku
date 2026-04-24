@@ -41,12 +41,21 @@ class TemplateParser
       addons: addons,
       env: env,
       post_deploy: metadata["post_deploy"] || "",
-      # Apps like n8n don't accept DATABASE_URL — they expect individual
-      # DB_POSTGRESDB_HOST/PORT/DATABASE/USER/PASSWORD vars. When the
-      # template sets `# postgres_components: true`, the deployer will
-      # parse the DATABASE_URL set by Dokku's postgres addon and write
-      # those 5 vars after linking.
-      postgres_components: metadata["postgres_components"].to_s == "true",
+      # Apps that want DATABASE_URL broken into individual host/port/user/
+      # password/database env vars. Each flag declares the per-var name prefix;
+      # the deployer writes <PREFIX>HOST, <PREFIX>PORT, etc. after linking.
+      #
+      #   postgres_components: true                  # n8n default → DB_POSTGRESDB_*
+      #   mysql_components: database__connection__   # Ghost → database__connection__host etc.
+      #   mongo_components: MONGODB_                 # MongoDB-backed apps
+      #
+      # set_url is a comma-separated list of env keys that should be populated
+      # with the app's public URL (https://<app>.wokku.cloud). Ghost needs
+      # `url=`, Plausible wants `BASE_URL=`, Strapi `APP_URL,ADMIN_URL`, etc.
+      postgres_components: parse_components_prefix(metadata["postgres_components"], default: "DB_POSTGRESDB_"),
+      mysql_components:    parse_components_prefix(metadata["mysql_components"],    default: nil),
+      mongo_components:    parse_components_prefix(metadata["mongo_components"],    default: nil),
+      set_url:             metadata["set_url"].to_s.split(",").map(&:strip).reject(&:blank?),
       services: services
     }
   end
@@ -81,6 +90,16 @@ class TemplateParser
     addons.uniq { |a| a["type"] }
   end
 
+  # "true"  → default prefix (backward compat for postgres_components: true)
+  # "false" / nil → nil (feature off)
+  # any other string → treated as the literal prefix (e.g. "database__connection__")
+  def self.parse_components_prefix(value, default:)
+    str = value.to_s.strip
+    return nil if str.empty? || str == "false"
+    return default if str == "true"
+    str
+  end
+
   def self.extract_port(service)
     ports = service&.dig("ports")
     return nil unless ports&.any?
@@ -88,5 +107,5 @@ class TemplateParser
     port_str.include?(":") ? port_str.split(":").last.to_i : port_str.to_i
   end
 
-  private_class_method :find_main_service, :extract_addons, :extract_port
+  private_class_method :find_main_service, :extract_addons, :extract_port, :parse_components_prefix
 end

@@ -72,8 +72,26 @@ class TemplateDeployer
     end
 
     if template[:postgres_components]
-      step("Expanding DATABASE_URL into DB_POSTGRESDB_* components...") do
-        expand_postgres_components!(client, app, app_name)
+      step("Expanding DATABASE_URL into #{template[:postgres_components]}* components...") do
+        expand_url_components!(client, app, app_name, url_key: "DATABASE_URL", prefix: template[:postgres_components], default_port: 5432)
+      end
+    end
+
+    if template[:mysql_components]
+      step("Expanding DATABASE_URL into #{template[:mysql_components]}* components...") do
+        expand_url_components!(client, app, app_name, url_key: "DATABASE_URL", prefix: template[:mysql_components], default_port: 3306)
+      end
+    end
+
+    if template[:mongo_components]
+      step("Expanding DATABASE_URL into #{template[:mongo_components]}* components...") do
+        expand_url_components!(client, app, app_name, url_key: "DATABASE_URL", prefix: template[:mongo_components], default_port: 27017)
+      end
+    end
+
+    if template[:set_url].present?
+      step("Setting public URL env vars: #{template[:set_url].join(', ')}...") do
+        apply_set_url!(client, app, app_name, keys: template[:set_url])
       end
     end
 
@@ -210,20 +228,38 @@ class TemplateDeployer
   # want DB_POSTGRESDB_HOST, DB_POSTGRESDB_PORT, etc. as separate vars.
   # Dokku's postgres plugin only exposes DATABASE_URL, so after linking
   # we parse it and set the component vars explicitly.
-  def expand_postgres_components!(client, app, app_name)
-    database_url = Dokku::Config.new(client).get(app_name, "DATABASE_URL")
-    return if database_url.blank?
+  # Parse a DB connection URL (DATABASE_URL from Dokku's postgres/mysql/mongo
+  # addon) into 5 per-component env vars, using the provided prefix. The
+  # key suffixes follow n8n's convention (HOST/PORT/DATABASE/USER/PASSWORD)
+  # which most apps either match directly or accept with a different prefix.
+  # Ghost's "database__connection__host" is one example; DB_POSTGRESDB_* is
+  # another.
+  def expand_url_components!(client, app, app_name, url_key:, prefix:, default_port:)
+    url = Dokku::Config.new(client).get(app_name, url_key)
+    return if url.blank?
 
-    uri = URI.parse(database_url)
+    uri = URI.parse(url)
     components = {
-      "DB_POSTGRESDB_HOST"     => uri.host,
-      "DB_POSTGRESDB_PORT"     => (uri.port || 5432).to_s,
-      "DB_POSTGRESDB_DATABASE" => uri.path.to_s.sub(%r{\A/}, ""),
-      "DB_POSTGRESDB_USER"     => uri.user.to_s,
-      "DB_POSTGRESDB_PASSWORD" => URI.decode_www_form_component(uri.password.to_s)
+      "#{prefix}HOST"     => uri.host,
+      "#{prefix}PORT"     => (uri.port || default_port).to_s,
+      "#{prefix}DATABASE" => uri.path.to_s.sub(%r{\A/}, ""),
+      "#{prefix}USER"     => uri.user.to_s,
+      "#{prefix}PASSWORD" => URI.decode_www_form_component(uri.password.to_s)
     }
     Dokku::Config.new(client).set(app_name, components)
     components.each do |key, value|
+      app.env_vars.find_or_create_by!(key: key) { |ev| ev.value = value }
+    end
+  end
+
+  # Some apps (Ghost's `url=`, Plausible's `BASE_URL=`, etc.) refuse to boot
+  # unless told their own public URL. Dokku sets this up via domains but
+  # the app reads it from an env var.
+  def apply_set_url!(client, app, app_name, keys:)
+    url = "https://#{app_name}.wokku.cloud"
+    vars = keys.each_with_object({}) { |k, h| h[k] = url }
+    Dokku::Config.new(client).set(app_name, vars)
+    vars.each do |key, value|
       app.env_vars.find_or_create_by!(key: key) { |ev| ev.value = value }
     end
   end

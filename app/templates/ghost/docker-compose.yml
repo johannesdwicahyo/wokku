@@ -5,12 +5,15 @@
 # tags: blog, cms, node
 # icon: cms
 # port: 2368
+# mysql_components: database__connection__
+# set_url: url
 
 services:
   ghost:
     image: ghost:5
     environment:
       - NODE_ENV=production
+      - database__client=mysql2
     ports:
       - "2368:2368"
     depends_on:
