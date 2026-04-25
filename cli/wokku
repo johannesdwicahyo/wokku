@@ -9,7 +9,7 @@ require "uri"
 require "io/console"
 require "fileutils"
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 CONFIG_DIR = File.expand_path("~/.wokku")
 CONFIG_FILE = File.join(CONFIG_DIR, "config.json")
 
@@ -391,6 +391,102 @@ register "deploy", "Deploy template (usage: wokku deploy TEMPLATE --server ID [-
   data = api(:post, "/templates/deploy", body)
   puts "Deploying #{slug}..."
   puts_json data
+end
+
+# --- Run ---
+register "run", "Run a one-off command in an app (usage: wokku run APP_ID -- CMD ...)" do
+  app_id = ARGV.shift || abort("Usage: wokku run APP_ID -- COMMAND")
+  ARGV.shift if ARGV.first == "--"
+  command = ARGV.join(" ")
+  abort "Missing command" if command.empty?
+  data = api(:post, "/apps/#{app_id}/run", { command: command })
+  print data["output"]
+  exit (data["exit_code"] || 0).to_i
+end
+
+# --- Git ---
+register "git:remote", "Add wokku git remote to current repo (usage: wokku git:remote APP_ID [--name wokku])" do
+  app_id = ARGV.shift || abort("Usage: wokku git:remote APP_ID [--name wokku]")
+  remote = "wokku"
+  while arg = ARGV.shift
+    remote = ARGV.shift if arg == "--name"
+  end
+  app = api(:get, "/apps/#{app_id}")
+  url = app["git_remote"] || app["git_remote_url"] || abort("App has no git remote URL")
+  abort "Not in a git repository" unless system("git rev-parse --git-dir > /dev/null 2>&1")
+  if system("git remote get-url #{remote} > /dev/null 2>&1")
+    system("git remote set-url #{remote} #{url}")
+  else
+    system("git remote add #{remote} #{url}")
+  end
+  puts "Set git remote '#{remote}' → #{url}"
+  puts "Push with:  git push #{remote} #{app['deploy_branch'] || 'main'}"
+end
+
+register "git:clone", "Clone an app's repo (usage: wokku git:clone APP_ID [DIR])" do
+  app_id = ARGV.shift || abort("Usage: wokku git:clone APP_ID [DIR]")
+  dir = ARGV.shift
+  app = api(:get, "/apps/#{app_id}")
+  url = app["git_remote"] || app["git_remote_url"] || abort("App has no git remote URL")
+  cmd = dir ? "git clone #{url} #{dir}" : "git clone #{url}"
+  exec(cmd)
+end
+
+# --- Heroku-style addons aliases ---
+register "addons:create", "Create and attach an add-on (usage: wokku addons:create APP_ID TYPE[:tier] [--name X])" do
+  app_id = ARGV.shift || abort("Usage: wokku addons:create APP_ID TYPE[:tier]")
+  spec = ARGV.shift || abort("Missing add-on spec, e.g. redis or postgres:basic")
+  service_type, tier = spec.split(":", 2)
+  name = nil
+  while arg = ARGV.shift
+    name = ARGV.shift if arg == "--name"
+  end
+  body = { service_type: service_type }
+  body[:tier] = tier if tier
+  body[:name] = name if name
+  data = api(:post, "/apps/#{app_id}/addons", body)
+  puts "Created #{service_type}: #{data['name'] || data['id']}"
+end
+
+register "addons:destroy", "Destroy an add-on (usage: wokku addons:destroy APP_ID ADDON_ID)" do
+  app_id = ARGV.shift || abort("Usage: wokku addons:destroy APP_ID ADDON_ID")
+  addon_id = ARGV.shift || abort("Missing ADDON_ID")
+  api(:delete, "/apps/#{app_id}/addons/#{addon_id}")
+  puts "Destroyed add-on #{addon_id}"
+end
+
+register "addons:attach", "Link an existing add-on to an app (usage: wokku addons:attach DB_ID --to APP_ID)" do
+  db_id = ARGV.shift || abort("Usage: wokku addons:attach DB_ID --to APP_ID")
+  app_id = nil
+  while arg = ARGV.shift
+    app_id = ARGV.shift if arg == "--to"
+  end
+  abort "Missing --to APP_ID" unless app_id
+  api(:post, "/databases/#{db_id}/link", { app_id: app_id })
+  puts "Attached add-on #{db_id} → app #{app_id}"
+end
+
+register "addons:detach", "Unlink an add-on from an app (usage: wokku addons:detach DB_ID --from APP_ID)" do
+  db_id = ARGV.shift || abort("Usage: wokku addons:detach DB_ID --from APP_ID")
+  app_id = nil
+  while arg = ARGV.shift
+    app_id = ARGV.shift if arg == "--from"
+  end
+  abort "Missing --from APP_ID" unless app_id
+  api(:post, "/databases/#{db_id}/unlink", { app_id: app_id })
+  puts "Detached add-on #{db_id} from app #{app_id}"
+end
+
+# --- Self-update ---
+register "update", "Update the wokku CLI to the latest version" do
+  bin = `which wokku`.strip
+  if bin.include?("homebrew")
+    puts "Updating via Homebrew..."
+    exec("brew update && brew upgrade wokku")
+  else
+    puts "Updating via install script..."
+    exec("curl -sL https://wokku.cloud/cli/install.sh | bash")
+  end
 end
 
 # --- Activity ---
