@@ -9,7 +9,7 @@ require "uri"
 require "io/console"
 require "fileutils"
 
-VERSION = "1.3.1"
+VERSION = "1.4.0"
 CONFIG_DIR = File.expand_path("~/.wokku")
 CONFIG_FILE = File.join(CONFIG_DIR, "config.json")
 
@@ -433,6 +433,53 @@ register "git:clone", "Clone an app's repo (usage: wokku git:clone APP [DIR])" d
 end
 
 # --- Heroku-style addons aliases ---
+register "buildpacks", "List buildpacks for an app (usage: wokku buildpacks APP)" do
+  app = ARGV.shift || abort("Usage: wokku buildpacks APP")
+  data = api(:get, "/apps/#{app}/buildpacks")
+  list = data.is_a?(Hash) ? Array(data["buildpacks"]) : []
+  if list.empty?
+    puts "No buildpacks set — Dokku will auto-detect."
+  else
+    list.each_with_index { |url, i| puts "  #{i + 1}. #{url}" }
+  end
+end
+
+register "buildpacks:add", "Add a buildpack (usage: wokku buildpacks:add APP URL [--index N])" do
+  app = ARGV.shift || abort("Usage: wokku buildpacks:add APP URL [--index N]")
+  url = ARGV.shift || abort("Missing buildpack URL (e.g. https://github.com/heroku/heroku-buildpack-nodejs)")
+  index = nil
+  while arg = ARGV.shift
+    index = ARGV.shift if arg == "--index"
+  end
+  body = { url: url }
+  body[:index] = index if index
+  api(:post, "/apps/#{app}/buildpacks", body)
+  puts "Added buildpack: #{url}#{index ? " at index #{index}" : ""}"
+end
+
+register "buildpacks:remove", "Remove a buildpack (usage: wokku buildpacks:remove APP URL)" do
+  app = ARGV.shift || abort("Usage: wokku buildpacks:remove APP URL")
+  url = ARGV.shift || abort("Missing buildpack URL")
+  api(:delete, "/apps/#{app}/buildpacks", { url: url })
+  puts "Removed buildpack: #{url}"
+end
+
+register "buildpacks:clear", "Remove all buildpacks (usage: wokku buildpacks:clear APP)" do
+  app = ARGV.shift || abort("Usage: wokku buildpacks:clear APP")
+  api(:delete, "/apps/#{app}/buildpacks")
+  puts "Cleared all buildpacks for #{app}"
+end
+
+register "buildpacks:set", "Replace the entire buildpack stack (usage: wokku buildpacks:set APP URL1 [URL2 ...])" do
+  app = ARGV.shift || abort("Usage: wokku buildpacks:set APP URL [URL ...]")
+  urls = ARGV.dup
+  ARGV.clear
+  abort "Provide at least one buildpack URL" if urls.empty?
+  api(:put, "/apps/#{app}/buildpacks", { urls: urls })
+  puts "Set buildpacks for #{app}:"
+  urls.each_with_index { |url, i| puts "  #{i + 1}. #{url}" }
+end
+
 register "addons:create", "Create and attach an add-on (usage: wokku addons:create APP TYPE[:tier] [--name X])" do
   app_id = ARGV.shift || abort("Usage: wokku addons:create APP TYPE[:tier]")
   spec = ARGV.shift || abort("Missing add-on spec, e.g. redis or postgres:basic")
