@@ -385,6 +385,9 @@ cat > /etc/docker/daemon.json <<'DOCKER'
       "Hard": 4096,
       "Soft": 4096
     }
+  },
+  "default-sysctls": {
+    "net.ipv6.conf.all.disable_ipv6": "1"
   }
 }
 DOCKER
