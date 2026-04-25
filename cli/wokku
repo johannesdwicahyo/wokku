@@ -9,7 +9,7 @@ require "uri"
 require "io/console"
 require "fileutils"
 
-VERSION = "1.3.0"
+VERSION = "1.3.1"
 CONFIG_DIR = File.expand_path("~/.wokku")
 CONFIG_FILE = File.join(CONFIG_DIR, "config.json")
 
@@ -284,7 +284,7 @@ register "config:set", "Set config vars (usage: wokku config:set APP KEY=VAL ...
   end
   ARGV.clear
   abort "No KEY=VALUE pairs given." if vars.empty?
-  api(:put, "/apps/#{id}/config", vars)
+  api(:put, "/apps/#{id}/config", { vars: vars })
   puts "Config updated: #{vars.keys.join(', ')}"
 end
 
