@@ -195,18 +195,32 @@ register "apps:info", "Show app details (usage: wokku apps:info APP_ID)" do
   puts_json api(:get, "/apps/#{id}")
 end
 
-register "apps:create", "Create app (usage: wokku apps:create NAME --server ID)" do
-  name = ARGV.shift || abort("Usage: wokku apps:create NAME --server ID")
-  server_id = nil
+register "servers", "List available servers" do
+  rows = api(:get, "/servers").map { |s| { "id" => s["id"], "name" => s["name"], "host" => s["host"] } }
+  table(rows, headers: %w[id name host])
+end
+
+register "apps:create", "Create app (usage: wokku apps:create NAME --server ID|NAME)" do
+  name = ARGV.shift || abort("Usage: wokku apps:create NAME --server ID|NAME")
+  server_arg = nil
   branch = "main"
   while arg = ARGV.shift
     case arg
-    when "--server" then server_id = ARGV.shift
+    when "--server" then server_arg = ARGV.shift
     when "--branch" then branch = ARGV.shift
     end
   end
-  abort "Missing --server ID" unless server_id
-  data = api(:post, "/apps", { name: name, server_id: server_id.to_i, deploy_branch: branch })
+  abort "Missing --server ID|NAME (run: wokku servers)" unless server_arg
+
+  server_id = if server_arg.match?(/\A\d+\z/)
+    server_arg.to_i
+  else
+    match = api(:get, "/servers").find { |s| s["name"] == server_arg }
+    abort "Server '#{server_arg}' not found. Run: wokku servers" unless match
+    match["id"]
+  end
+
+  data = api(:post, "/apps", { name: name, server_id: server_id, deploy_branch: branch })
   puts "Created app: #{data['name']} (id: #{data['id']})"
 end
 
