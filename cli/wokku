@@ -9,7 +9,7 @@ require "uri"
 require "io/console"
 require "fileutils"
 
-VERSION = "1.4.0"
+VERSION = "1.5.0"
 CONFIG_DIR = File.expand_path("~/.wokku")
 CONFIG_FILE = File.join(CONFIG_DIR, "config.json")
 
@@ -58,6 +58,38 @@ def api(method, path, body = nil)
   req["Content-Type"] = "application/json"
   req["User-Agent"] = "WokkuCLI/#{VERSION}"
   req.body = body.to_json if body
+
+  resp = http.request(req)
+  data = JSON.parse(resp.body) rescue resp.body
+
+  unless resp.is_a?(Net::HTTPSuccess)
+    error = data.is_a?(Hash) ? (data["error"] || data["errors"]&.join(", ") || resp.code) : resp.code
+    abort "Error: #{error}"
+  end
+
+  data
+end
+
+# Streams a local file as the request body to a Wokku API endpoint.
+# Used by addons:import — gigabyte-size dumps shouldn't load into memory.
+def api_stream_file(method, path, file_path, content_type: "application/octet-stream", read_timeout: 1800)
+  token = api_token
+  abort "Not logged in. Run: wokku auth:login" unless token
+  abort "File not found: #{file_path}" unless File.exist?(file_path)
+
+  uri = URI("#{api_url}#{path}")
+  http = Net::HTTP.new(uri.host, uri.port)
+  http.use_ssl = uri.scheme == "https"
+  http.open_timeout = 10
+  http.read_timeout = read_timeout
+
+  req_class = method == :put ? Net::HTTP::Put : Net::HTTP::Post
+  req = req_class.new(uri)
+  req["Authorization"] = "Bearer #{token}"
+  req["Content-Type"] = content_type
+  req["User-Agent"] = "WokkuCLI/#{VERSION}"
+  req["Content-Length"] = File.size(file_path).to_s
+  req.body_stream = File.open(file_path, "rb")
 
   resp = http.request(req)
   data = JSON.parse(resp.body) rescue resp.body
@@ -478,6 +510,17 @@ register "buildpacks:set", "Replace the entire buildpack stack (usage: wokku bui
   api(:put, "/apps/#{app}/buildpacks", { urls: urls })
   puts "Set buildpacks for #{app}:"
   urls.each_with_index { |url, i| puts "  #{i + 1}. #{url}" }
+end
+
+register "addons:import", "Import a dump file into a database addon (usage: wokku addons:import DB_ID FILE)" do
+  db_id = ARGV.shift || abort("Usage: wokku addons:import DB_ID FILE")
+  file = ARGV.shift || abort("Missing FILE — local path to a .dump / .sql / .gz dump")
+  abort "File not found: #{file}" unless File.exist?(file)
+
+  size_mb = (File.size(file).to_f / (1024 * 1024)).round(1)
+  puts "Streaming #{file} (#{size_mb} MB) to addon #{db_id}…"
+  data = api_stream_file(:post, "/databases/#{db_id}/import", file)
+  puts "✓ Imported into #{data["database"] || db_id}"
 end
 
 register "addons:create", "Create and attach an add-on (usage: wokku addons:create APP TYPE[:tier] [--name X])" do
