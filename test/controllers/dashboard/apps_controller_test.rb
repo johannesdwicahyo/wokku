@@ -18,6 +18,40 @@ class Dashboard::AppsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "check_name returns available true for unused name" do
+    sign_in users(:one)
+    get check_name_dashboard_apps_path, params: { name: "totally-fresh-name" }
+    body = JSON.parse(response.body)
+    assert body["available"]
+    assert_equal "totally-fresh-name", body["name"]
+  end
+
+  test "check_name returns taken with suggestions for existing name" do
+    sign_in users(:one)
+    get check_name_dashboard_apps_path, params: { name: app_records(:one).name }
+    body = JSON.parse(response.body)
+    refute body["available"]
+    assert_equal "taken", body["reason"]
+    assert body["suggestions"].is_a?(Array)
+    assert body["suggestions"].any?
+  end
+
+  test "check_name flags invalid format" do
+    sign_in users(:one)
+    get check_name_dashboard_apps_path, params: { name: "1bad" } # must start with a letter
+    body = JSON.parse(response.body)
+    refute body["available"]
+    assert_equal "invalid", body["reason"]
+  end
+
+  test "check_name auto-sanitizes friendly typos and returns the cleaned name" do
+    sign_in users(:one)
+    get check_name_dashboard_apps_path, params: { name: "My Cool App!" }
+    body = JSON.parse(response.body)
+    assert body["available"]
+    assert_equal "mycoolapp", body["name"]
+  end
+
   # Turbo-frame sub-requests on the app show page. They each do their own
   # SSH round-trip; these tests stub the fetches to verify the partial
   # renders + the enclosing turbo_frame_tag is present.

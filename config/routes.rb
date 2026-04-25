@@ -81,6 +81,9 @@ Rails.application.routes.draw do
     get "/", to: "dashboard#show", as: :root
     resources :templates, only: [ :index, :show, :create ]
     resources :apps do
+      collection do
+        get :check_name
+      end
       member do
         post :restart
         post :stop

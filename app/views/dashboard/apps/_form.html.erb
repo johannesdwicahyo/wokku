@@ -1,4 +1,5 @@
-<%= form_with(model: app, url: dashboard_apps_path, class: "space-y-4") do |f| %>
+<%= form_with(model: app, url: dashboard_apps_path, class: "space-y-4",
+              data: { controller: "app-name-check searchable-select" }) do |f| %>
   <% if app.errors.any? %>
     <div class="rounded-md bg-error-container/20 border border-error/20 p-3">
       <ul class="text-xs text-error space-y-1">
@@ -9,23 +10,57 @@
     </div>
   <% end %>
 
+  <%# Name with live availability check %>
   <div>
     <%= f.label :name, class: "block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider" %>
-    <%= f.text_field :name, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-mono", placeholder: "my-app" %>
+    <%= f.text_field :name,
+        class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-mono",
+        placeholder: "my-app",
+        autocomplete: "off",
+        pattern: "[a-z][a-z0-9\\-]*",
+        title: "Lowercase letters, numbers, and hyphens",
+        data: {
+          app_name_check_target: "input",
+          action: "input->app-name-check#check"
+        } %>
+    <p class="mt-1 text-[11px] text-outline" data-app-name-check-target="status"></p>
+    <div class="mt-1.5 hidden flex flex-wrap gap-1.5" data-app-name-check-target="suggestions"></div>
   </div>
 
+  <%# Server with searchable combobox %>
   <div>
     <%= f.label :server_id, "Server", class: "block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider" %>
-    <%= f.collection_select :server_id, servers, :id, :name, { prompt: "Select a server" }, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary" %>
+    <input type="text"
+           list="server-options"
+           data-searchable-select-target="input"
+           data-action="input->searchable-select#sync"
+           autocomplete="off"
+           placeholder="<%= servers.size == 1 ? servers.first.name : 'Type to search a server...' %>"
+           value="<%= servers.size == 1 ? servers.first.name : '' %>"
+           class="w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+    <datalist id="server-options">
+      <% servers.each do |s| %>
+        <option value="<%= s.name %>" data-id="<%= s.id %>"><%= s.host %></option>
+      <% end %>
+    </datalist>
+    <%= f.hidden_field :server_id, data: { searchable_select_target: "value" }, value: (servers.size == 1 ? servers.first.id : nil) %>
+    <p class="mt-1 text-[11px] text-outline">
+      <%= servers.size %> <%= "server".pluralize(servers.size) %> available
+    </p>
   </div>
 
-  <div>
-    <%= f.label :deploy_branch, "Deploy Branch", class: "block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider" %>
-    <%= f.text_field :deploy_branch, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-mono", placeholder: "main", value: app.deploy_branch || "main" %>
-  </div>
+  <%# Branch — collapsed under Advanced (most users want main) %>
+  <details class="text-xs">
+    <summary class="cursor-pointer text-outline hover:text-on-surface select-none">Advanced</summary>
+    <div class="mt-3">
+      <%= f.label :deploy_branch, "Deploy Branch", class: "block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider" %>
+      <%= f.text_field :deploy_branch, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-mono", placeholder: "main", value: app.deploy_branch || "main" %>
+      <p class="mt-1 text-[11px] text-outline">Defaults to <code>main</code>. Change only if your repo deploys from a different branch.</p>
+    </div>
+  </details>
 
   <div class="flex items-center space-x-3 pt-2">
-    <%= f.submit "Create App", class: "flex-1 py-2 px-4 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer text-center" %>
+    <%= f.submit "Create App", class: "flex-1 py-2 px-4 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer text-center", data: { app_name_check_target: "submit" } %>
     <button type="button" data-action="click->slide-panel#close" class="py-2 px-4 text-sm text-on-surface-variant hover:text-on-surface transition cursor-pointer">Cancel</button>
   </div>
 <% end %>

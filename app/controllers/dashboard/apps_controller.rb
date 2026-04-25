@@ -51,6 +51,32 @@ module Dashboard
       @servers = policy_scope(Server)
     end
 
+    # GET /dashboard/apps/check_name?name=foo
+    # Returns { available, suggestions } for the New App modal's
+    # live-validation field. Suggestions only computed when taken.
+    def check_name
+      raw = params[:name].to_s.strip.downcase
+      sanitized = raw.gsub(/[^a-z0-9-]/, "").sub(/^-+/, "").sub(/-+$/, "")
+
+      if sanitized.blank? || sanitized !~ /\A[a-z][a-z0-9-]*\z/
+        return render json: {
+          available: false,
+          reason: "invalid",
+          message: "Use lowercase letters, numbers, and hyphens. Must start with a letter."
+        }
+      end
+
+      if AppRecord.exists?(name: sanitized)
+        render json: {
+          available: false,
+          reason: "taken",
+          suggestions: name_suggestions(sanitized)
+        }
+      else
+        render json: { available: true, name: sanitized }
+      end
+    end
+
     def create
       team = current_team
       server = policy_scope(Server).find(params[:app_record][:server_id])
@@ -159,6 +185,25 @@ module Dashboard
 
     def app_params
       params.require(:app_record).permit(:name, :deploy_branch)
+    end
+
+    # Try a few stable variations before falling back to a random suffix.
+    def name_suggestions(base, count: 3)
+      adjectives = %w[bot api app web svc node]
+      suggestions = []
+
+      adjectives.each do |suffix|
+        candidate = "#{base}-#{suffix}"
+        suggestions << candidate if !AppRecord.exists?(name: candidate)
+        break if suggestions.size >= count
+      end
+
+      while suggestions.size < count
+        candidate = "#{base}-#{SecureRandom.hex(2)}"
+        suggestions << candidate unless AppRecord.exists?(name: candidate)
+      end
+
+      suggestions
     end
 
     # Live maintenance state from Dokku. Cached for 60s to keep the show
