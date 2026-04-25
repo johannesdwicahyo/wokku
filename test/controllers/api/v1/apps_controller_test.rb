@@ -69,16 +69,15 @@ class Api::V1::AppsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "newapp", body["name"]
   end
 
-  test "create returns 403 when user is not team member of server's team" do
-    other_team = Team.create!(name: "Other Team", owner: @user)
-    other_server = Server.create!(name: "other", host: "9.9.9.9", team: other_team)
-    # @user is NOT a member of other_team
+  test "create on a platform server (no team) places the app in user's team" do
+    platform_server = Server.create!(name: "platform", host: "9.9.9.9")
     stub_dokku_apps_create do
       post api_v1_apps_path,
-           params: { name: "blocked-app", server_id: other_server.id },
+           params: { name: "platform-app", server_id: platform_server.id },
            headers: auth_headers
     end
-    assert_includes [ 403, 422 ], response.status
+    assert_response :created
+    assert_equal @team.id, AppRecord.find_by(name: "platform-app").team_id
   end
 
   test "create returns 503 on Dokku::Client::ConnectionError" do

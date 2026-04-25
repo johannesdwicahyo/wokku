@@ -22,9 +22,12 @@ module Api
 
       def create
         server = Server.find(params[:server_id])
+        team = current_user.teams.first
+        return render json: { error: "User has no team" }, status: :unprocessable_entity if team.nil?
+
         app = server.app_records.build(
           name: params[:name],
-          team: server.team,
+          team: team,
           creator: current_user,
           deploy_branch: params[:deploy_branch] || "main",
           status: :created
