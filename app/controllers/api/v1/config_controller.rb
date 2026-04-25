@@ -16,8 +16,10 @@ module Api
       end
 
       def update
-        vars = params.permit(:vars).to_h.fetch("vars", params[:vars])
-        return render json: { error: "vars parameter required" }, status: :bad_request unless vars.is_a?(Hash)
+        raw = params[:vars]
+        return render json: { error: "vars parameter required" }, status: :bad_request unless raw.respond_to?(:to_h)
+        vars = raw.respond_to?(:permit!) ? raw.permit!.to_h : raw.to_h.stringify_keys
+        return render json: { error: "vars parameter required" }, status: :bad_request if vars.empty?
 
         client = Dokku::Client.new(@app_record.server)
         config = Dokku::Config.new(client)
