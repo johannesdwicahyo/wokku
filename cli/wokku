@@ -9,7 +9,7 @@ require "uri"
 require "io/console"
 require "fileutils"
 
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 CONFIG_DIR = File.expand_path("~/.wokku")
 CONFIG_FILE = File.join(CONFIG_DIR, "config.json")
 
@@ -190,8 +190,8 @@ register "apps", "List all apps" do
   table(apps.map { |a| { "name" => a["name"], "status" => a["status"], "server" => a["server_id"] } })
 end
 
-register "apps:info", "Show app details (usage: wokku apps:info APP_ID)" do
-  id = ARGV.shift || abort("Usage: wokku apps:info APP_ID")
+register "apps:info", "Show app details (usage: wokku apps:info APP)" do
+  id = ARGV.shift || abort("Usage: wokku apps:info APP")
   puts_json api(:get, "/apps/#{id}")
 end
 
@@ -224,8 +224,8 @@ register "apps:create", "Create app (usage: wokku apps:create NAME --server ID|N
   puts "Created app: #{data['name']} (id: #{data['id']})"
 end
 
-register "apps:destroy", "Delete app (usage: wokku apps:destroy APP_ID)" do
-  id = ARGV.shift || abort("Usage: wokku apps:destroy APP_ID")
+register "apps:destroy", "Delete app (usage: wokku apps:destroy APP)" do
+  id = ARGV.shift || abort("Usage: wokku apps:destroy APP")
   print "Are you sure you want to delete this app? (y/N): "
   confirm = $stdin.gets.strip
   abort "Cancelled." unless confirm.downcase == "y"
@@ -233,26 +233,26 @@ register "apps:destroy", "Delete app (usage: wokku apps:destroy APP_ID)" do
   puts "App deleted."
 end
 
-register "ps:restart", "Restart app (usage: wokku ps:restart APP_ID)" do
-  id = ARGV.shift || abort("Usage: wokku ps:restart APP_ID")
+register "ps:restart", "Restart app (usage: wokku ps:restart APP)" do
+  id = ARGV.shift || abort("Usage: wokku ps:restart APP")
   api(:post, "/apps/#{id}/restart")
   puts "Restarting..."
 end
 
-register "ps:stop", "Stop app (usage: wokku ps:stop APP_ID)" do
-  id = ARGV.shift || abort("Usage: wokku ps:stop APP_ID")
+register "ps:stop", "Stop app (usage: wokku ps:stop APP)" do
+  id = ARGV.shift || abort("Usage: wokku ps:stop APP")
   api(:post, "/apps/#{id}/stop")
   puts "Stopped."
 end
 
-register "ps:start", "Start app (usage: wokku ps:start APP_ID)" do
-  id = ARGV.shift || abort("Usage: wokku ps:start APP_ID")
+register "ps:start", "Start app (usage: wokku ps:start APP)" do
+  id = ARGV.shift || abort("Usage: wokku ps:start APP")
   api(:post, "/apps/#{id}/start")
   puts "Started."
 end
 
-register "ps:scale", "Scale processes (usage: wokku ps:scale APP_ID web=2 worker=1)" do
-  id = ARGV.shift || abort("Usage: wokku ps:scale APP_ID web=N worker=N")
+register "ps:scale", "Scale processes (usage: wokku ps:scale APP web=2 worker=1)" do
+  id = ARGV.shift || abort("Usage: wokku ps:scale APP web=N worker=N")
   scaling = {}
   ARGV.each do |pair|
     type, count = pair.split("=")
@@ -265,8 +265,8 @@ register "ps:scale", "Scale processes (usage: wokku ps:scale APP_ID web=2 worker
 end
 
 # --- Config ---
-register "config", "Show config vars (usage: wokku config APP_ID)" do
-  id = ARGV.shift || abort("Usage: wokku config APP_ID")
+register "config", "Show config vars (usage: wokku config APP)" do
+  id = ARGV.shift || abort("Usage: wokku config APP")
   data = api(:get, "/apps/#{id}/config")
   if data.is_a?(Hash)
     data.each { |k, v| puts "#{k}=#{v}" }
@@ -275,8 +275,8 @@ register "config", "Show config vars (usage: wokku config APP_ID)" do
   end
 end
 
-register "config:set", "Set config vars (usage: wokku config:set APP_ID KEY=VAL ...)" do
-  id = ARGV.shift || abort("Usage: wokku config:set APP_ID KEY=VALUE ...")
+register "config:set", "Set config vars (usage: wokku config:set APP KEY=VAL ...)" do
+  id = ARGV.shift || abort("Usage: wokku config:set APP KEY=VALUE ...")
   vars = {}
   ARGV.each do |pair|
     key, val = pair.split("=", 2)
@@ -289,8 +289,8 @@ register "config:set", "Set config vars (usage: wokku config:set APP_ID KEY=VAL 
 end
 
 # --- Domains ---
-register "domains", "List domains (usage: wokku domains APP_ID)" do
-  id = ARGV.shift || abort("Usage: wokku domains APP_ID")
+register "domains", "List domains (usage: wokku domains APP)" do
+  id = ARGV.shift || abort("Usage: wokku domains APP")
   data = api(:get, "/apps/#{id}/domains")
   if data.is_a?(Array)
     data.each { |d| puts d["hostname"] || d }
@@ -299,16 +299,16 @@ register "domains", "List domains (usage: wokku domains APP_ID)" do
   end
 end
 
-register "domains:add", "Add domain (usage: wokku domains:add APP_ID DOMAIN)" do
-  id = ARGV.shift || abort("Usage: wokku domains:add APP_ID DOMAIN")
+register "domains:add", "Add domain (usage: wokku domains:add APP DOMAIN)" do
+  id = ARGV.shift || abort("Usage: wokku domains:add APP DOMAIN")
   domain = ARGV.shift || abort("Missing domain name")
   api(:post, "/apps/#{id}/domains", { hostname: domain })
   puts "Added domain: #{domain}"
 end
 
 # --- Logs ---
-register "logs", "View logs (usage: wokku logs APP_ID [--lines N])" do
-  id = ARGV.shift || abort("Usage: wokku logs APP_ID")
+register "logs", "View logs (usage: wokku logs APP [--lines N])" do
+  id = ARGV.shift || abort("Usage: wokku logs APP")
   lines = 100
   while arg = ARGV.shift
     lines = ARGV.shift.to_i if arg == "--lines"
@@ -324,8 +324,8 @@ register "logs", "View logs (usage: wokku logs APP_ID [--lines N])" do
 end
 
 # --- Releases ---
-register "releases", "List releases (usage: wokku releases APP_ID)" do
-  id = ARGV.shift || abort("Usage: wokku releases APP_ID")
+register "releases", "List releases (usage: wokku releases APP)" do
+  id = ARGV.shift || abort("Usage: wokku releases APP")
   data = api(:get, "/apps/#{id}/releases")
   if data.is_a?(Array)
     table(data.map { |r| { "version" => "v#{r['version']}", "description" => r["description"].to_s[0..40], "created" => r["created_at"].to_s[0..18] } })
@@ -334,16 +334,16 @@ register "releases", "List releases (usage: wokku releases APP_ID)" do
   end
 end
 
-register "rollback", "Rollback to release (usage: wokku rollback APP_ID RELEASE_ID)" do
-  id = ARGV.shift || abort("Usage: wokku rollback APP_ID RELEASE_ID")
+register "rollback", "Rollback to release (usage: wokku rollback APP RELEASE_ID)" do
+  id = ARGV.shift || abort("Usage: wokku rollback APP RELEASE_ID")
   release_id = ARGV.shift || abort("Missing release ID")
   api(:post, "/apps/#{id}/releases/#{release_id}/rollback")
   puts "Rolling back..."
 end
 
 # --- Add-ons ---
-register "addons", "List add-ons (usage: wokku addons APP_ID)" do
-  id = ARGV.shift || abort("Usage: wokku addons APP_ID")
+register "addons", "List add-ons (usage: wokku addons APP)" do
+  id = ARGV.shift || abort("Usage: wokku addons APP")
   data = api(:get, "/apps/#{id}/addons")
   if data.is_a?(Array)
     table(data.map { |a| { "name" => a["name"], "type" => a["service_type"], "status" => a["status"] } })
@@ -352,8 +352,8 @@ register "addons", "List add-ons (usage: wokku addons APP_ID)" do
   end
 end
 
-register "addons:add", "Add add-on (usage: wokku addons:add APP_ID postgres)" do
-  id = ARGV.shift || abort("Usage: wokku addons:add APP_ID SERVICE_TYPE")
+register "addons:add", "Add add-on (usage: wokku addons:add APP postgres)" do
+  id = ARGV.shift || abort("Usage: wokku addons:add APP SERVICE_TYPE")
   service_type = ARGV.shift || abort("Missing service type (postgres, redis, mysql, etc)")
   name = nil
   while arg = ARGV.shift
@@ -394,8 +394,8 @@ register "deploy", "Deploy template (usage: wokku deploy TEMPLATE --server ID [-
 end
 
 # --- Run ---
-register "run", "Run a one-off command in an app (usage: wokku run APP_ID -- CMD ...)" do
-  app_id = ARGV.shift || abort("Usage: wokku run APP_ID -- COMMAND")
+register "run", "Run a one-off command in an app (usage: wokku run APP -- CMD ...)" do
+  app_id = ARGV.shift || abort("Usage: wokku run APP -- COMMAND")
   ARGV.shift if ARGV.first == "--"
   command = ARGV.join(" ")
   abort "Missing command" if command.empty?
@@ -405,8 +405,8 @@ register "run", "Run a one-off command in an app (usage: wokku run APP_ID -- CMD
 end
 
 # --- Git ---
-register "git:remote", "Add wokku git remote to current repo (usage: wokku git:remote APP_ID [--name wokku])" do
-  app_id = ARGV.shift || abort("Usage: wokku git:remote APP_ID [--name wokku]")
+register "git:remote", "Add wokku git remote to current repo (usage: wokku git:remote APP [--name wokku])" do
+  app_id = ARGV.shift || abort("Usage: wokku git:remote APP [--name wokku]")
   remote = "wokku"
   while arg = ARGV.shift
     remote = ARGV.shift if arg == "--name"
@@ -423,8 +423,8 @@ register "git:remote", "Add wokku git remote to current repo (usage: wokku git:r
   puts "Push with:  git push #{remote} #{app['deploy_branch'] || 'main'}"
 end
 
-register "git:clone", "Clone an app's repo (usage: wokku git:clone APP_ID [DIR])" do
-  app_id = ARGV.shift || abort("Usage: wokku git:clone APP_ID [DIR]")
+register "git:clone", "Clone an app's repo (usage: wokku git:clone APP [DIR])" do
+  app_id = ARGV.shift || abort("Usage: wokku git:clone APP [DIR]")
   dir = ARGV.shift
   app = api(:get, "/apps/#{app_id}")
   url = app["git_remote"] || app["git_remote_url"] || abort("App has no git remote URL")
@@ -433,8 +433,8 @@ register "git:clone", "Clone an app's repo (usage: wokku git:clone APP_ID [DIR])
 end
 
 # --- Heroku-style addons aliases ---
-register "addons:create", "Create and attach an add-on (usage: wokku addons:create APP_ID TYPE[:tier] [--name X])" do
-  app_id = ARGV.shift || abort("Usage: wokku addons:create APP_ID TYPE[:tier]")
+register "addons:create", "Create and attach an add-on (usage: wokku addons:create APP TYPE[:tier] [--name X])" do
+  app_id = ARGV.shift || abort("Usage: wokku addons:create APP TYPE[:tier]")
   spec = ARGV.shift || abort("Missing add-on spec, e.g. redis or postgres:basic")
   service_type, tier = spec.split(":", 2)
   name = nil
@@ -448,31 +448,31 @@ register "addons:create", "Create and attach an add-on (usage: wokku addons:crea
   puts "Created #{service_type}: #{data['name'] || data['id']}"
 end
 
-register "addons:destroy", "Destroy an add-on (usage: wokku addons:destroy APP_ID ADDON_ID)" do
-  app_id = ARGV.shift || abort("Usage: wokku addons:destroy APP_ID ADDON_ID")
+register "addons:destroy", "Destroy an add-on (usage: wokku addons:destroy APP ADDON_ID)" do
+  app_id = ARGV.shift || abort("Usage: wokku addons:destroy APP ADDON_ID")
   addon_id = ARGV.shift || abort("Missing ADDON_ID")
   api(:delete, "/apps/#{app_id}/addons/#{addon_id}")
   puts "Destroyed add-on #{addon_id}"
 end
 
-register "addons:attach", "Link an existing add-on to an app (usage: wokku addons:attach DB_ID --to APP_ID)" do
-  db_id = ARGV.shift || abort("Usage: wokku addons:attach DB_ID --to APP_ID")
+register "addons:attach", "Link an existing add-on to an app (usage: wokku addons:attach DB_ID --to APP)" do
+  db_id = ARGV.shift || abort("Usage: wokku addons:attach DB_ID --to APP")
   app_id = nil
   while arg = ARGV.shift
     app_id = ARGV.shift if arg == "--to"
   end
-  abort "Missing --to APP_ID" unless app_id
+  abort "Missing --to APP" unless app_id
   api(:post, "/databases/#{db_id}/link", { app_id: app_id })
   puts "Attached add-on #{db_id} → app #{app_id}"
 end
 
-register "addons:detach", "Unlink an add-on from an app (usage: wokku addons:detach DB_ID --from APP_ID)" do
-  db_id = ARGV.shift || abort("Usage: wokku addons:detach DB_ID --from APP_ID")
+register "addons:detach", "Unlink an add-on from an app (usage: wokku addons:detach DB_ID --from APP)" do
+  db_id = ARGV.shift || abort("Usage: wokku addons:detach DB_ID --from APP")
   app_id = nil
   while arg = ARGV.shift
     app_id = ARGV.shift if arg == "--from"
   end
-  abort "Missing --from APP_ID" unless app_id
+  abort "Missing --from APP" unless app_id
   api(:post, "/databases/#{db_id}/unlink", { app_id: app_id })
   puts "Detached add-on #{db_id} from app #{app_id}"
 end
