@@ -1,3 +1,13 @@
+featured:
+  - n8n
+  - ghost
+  - ghost-coqm
+  - dify
+  - directus
+  - listmonk
+  - nextcloud
+  - umami
+
 categories:
   - name: Frameworks
     slug: frameworks

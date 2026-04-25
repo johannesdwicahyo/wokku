@@ -31,6 +31,19 @@ class TemplateRegistry
     @registry["categories"] || []
   end
 
+  def featured
+    slugs = @registry["featured"] || []
+    slugs.map { |slug| find(slug) }.compact
+  end
+
+  def by_category_with_templates
+    categories.map do |cat|
+      templates = by_category(cat["slug"])
+      next nil if templates.empty?
+      cat.merge("templates" => templates)
+    end.compact
+  end
+
   private
 
   def load_templates

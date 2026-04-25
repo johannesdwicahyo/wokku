@@ -3,14 +3,16 @@ module Dashboard
     def index
       registry = TemplateRegistry.new
       @categories = registry.categories
-      @templates = if params[:q].present?
-        registry.search(params[:q])
-      elsif params[:category].present?
-        registry.by_category(params[:category])
-      else
-        registry.all
-      end
       @servers = policy_scope(Server)
+
+      if params[:q].present?
+        @search_results = registry.search(params[:q])
+      elsif params[:category].present?
+        @category_results = registry.by_category(params[:category])
+      else
+        @featured = registry.featured
+        @category_rows = registry.by_category_with_templates
+      end
     end
 
     def show

@@ -1,14 +1,14 @@
 <% content_for(:title, "1 Click Deploy - Wokku") %>
 
 <%# Header %>
-<div class="mb-8">
+<div class="mb-6">
   <h1 class="font-headline text-3xl font-bold text-on-surface mb-2"><%= t("dashboard.templates.title") %></h1>
-  <p class="text-sm text-outline">Deploy production-ready stacks in seconds. Each template is optimized for high-performance orchestration.</p>
+  <p class="text-sm text-outline">Deploy production-ready stacks in seconds. Pick from curated stacks or browse by use case.</p>
 </div>
 
-<%# Search %>
+<%# Search + category quick-pills %>
 <div class="mb-8" data-controller="template-filter">
-  <div class="relative">
+  <div class="relative mb-3">
     <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
     <input type="text" placeholder="<%= t('dashboard.templates.search_placeholder') %>" value="<%= params[:q] %>"
            data-template-filter-target="input"
@@ -16,96 +16,96 @@
            class="w-full pl-10 pr-4 py-2.5 rounded-md bg-surface-container-low border-none text-sm text-on-surface placeholder-outline/50 focus:ring-1 focus:ring-primary"
            <%= "autofocus" if params[:q].present? %>>
   </div>
-  <div data-template-filter-target="empty" class="hidden text-center py-16 bg-surface-container-low rounded-md mt-8">
-    <span class="material-symbols-outlined text-outline-variant text-[40px] mb-3">search_off</span>
-    <p class="text-sm text-outline">No templates found.</p>
-  </div>
-</div>
 
-<div class="grid grid-cols-12 gap-8">
-  <%# Left Sidebar — Categories %>
-  <div class="col-span-3">
-    <div class="sticky top-24 space-y-6">
-      <div>
-        <p class="text-[10px] text-outline uppercase tracking-widest font-bold mb-3"><%= t("dashboard.templates.categories") %></p>
-        <div class="space-y-0.5">
-          <%= link_to dashboard_templates_path, class: "flex items-center justify-between px-3 py-2 rounded-md text-sm transition #{params[:category].blank? && params[:q].blank? ? 'bg-surface-container-high text-primary font-semibold' : 'text-on-surface-variant hover:bg-surface-container-high/50 hover:text-on-surface'}" do %>
-            <span><%= t("dashboard.templates.all_templates") %></span>
-            <span class="text-[10px] font-mono bg-surface-container-highest px-1.5 py-0.5 rounded"><%= @templates.size %></span>
-          <% end %>
-          <% @categories.each do |cat| %>
-            <% cat_count = TemplateRegistry.new.by_category(cat["slug"]).size rescue 0 %>
-            <%= link_to dashboard_templates_path(category: cat["slug"]), class: "flex items-center justify-between px-3 py-2 rounded-md text-sm transition #{params[:category] == cat['slug'] ? 'bg-surface-container-high text-primary font-semibold' : 'text-on-surface-variant hover:bg-surface-container-high/50 hover:text-on-surface'}" do %>
-              <span><%= cat["name"] %></span>
-              <span class="text-[10px] font-mono text-outline"><%= cat_count %></span>
-            <% end %>
-          <% end %>
-        </div>
-      </div>
-
-      <%# Promo Card %>
-      <div class="bg-primary-container/20 rounded-md p-4">
-        <div class="flex items-center gap-2 mb-2">
-          <span class="material-symbols-outlined text-primary text-[18px]">auto_awesome</span>
-          <span class="text-xs font-bold text-primary uppercase tracking-wider">Custom Deploy</span>
-        </div>
-        <p class="text-[10px] text-on-surface-variant leading-relaxed">Deploy any app from a GitHub repo or Docker image using the API or CLI.</p>
-        <a href="/docs" target="_blank" class="text-[10px] text-primary hover:underline mt-2 inline-block">Learn more →</a>
-      </div>
-    </div>
-  </div>
-
-  <%# Right Content — Template Grid %>
-  <div class="col-span-9">
-    <% if @templates.any? %>
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        <% @templates.each do |template| %>
-          <div data-template-wrapper data-template-filter-target="card" data-name="<%= template[:name] %>" data-tags="<%= (template[:tags] || []).join(' ') %> <%= template[:category] %>" class="bg-surface-container-low rounded-md overflow-hidden hover:bg-surface-container-high/60 transition group">
-            <div class="p-5">
-              <%# Icon + Category Badge %>
-              <div class="flex items-start justify-between mb-4">
-                <div class="w-11 h-11 rounded-lg bg-surface border border-outline-variant/15 flex items-center justify-center flex-shrink-0">
-                  <span class="text-xl"><%= template_icon(template[:icon]) %></span>
-                </div>
-                <% if (template[:tags] || []).first %>
-                  <span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider"><%= template[:tags].first %></span>
-                <% elsif template[:category].present? %>
-                  <span class="bg-surface-container-highest text-on-surface-variant px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider"><%= template[:category] %></span>
-                <% end %>
-              </div>
-
-              <%# Name + Description %>
-              <h3 class="font-headline text-base font-bold text-on-surface group-hover:text-primary transition mb-1"><%= template[:name] %></h3>
-              <p class="text-xs text-outline leading-relaxed mb-4 h-8 overflow-hidden"><%= template[:description] %></p>
-
-              <%# Footer: Cost + Deploy Button %>
-              <div class="flex items-center justify-between pt-3 border-t border-outline-variant/10">
-                <div>
-                  <p class="text-[9px] text-outline uppercase tracking-wider font-bold">Est. Cost</p>
-                  <p class="text-xs font-bold text-on-surface font-mono">
-                    <% if template[:addons]&.any? %>
-                      From $1.50<span class="text-outline font-normal">/mo</span>
-                    <% else %>
-                      Free Tier
-                    <% end %>
-                  </p>
-                </div>
-                <%= link_to dashboard_template_path(template[:slug]), class: "px-4 py-2 rounded-md text-xs font-bold technical-gradient text-on-primary hover:opacity-90 transition-all" do %>
-                  Deploy Now
-                <% end %>
-              </div>
-            </div>
-          </div>
-        <% end %>
-      </div>
-    <% else %>
-      <div class="text-center py-16 bg-surface-container-low rounded-md">
-        <span class="material-symbols-outlined text-outline-variant text-[40px] mb-3">search_off</span>
-        <p class="text-sm text-outline">No templates found<%= " for '#{params[:q]}'" if params[:q].present? %>.</p>
-        <% if params[:q].present? || params[:category].present? %>
-          <%= link_to "Clear filters", dashboard_templates_path, class: "text-xs text-primary hover:underline mt-2 inline-block" %>
-        <% end %>
-      </div>
+  <div class="flex flex-wrap gap-1.5">
+    <%= link_to t("dashboard.templates.all_templates"), dashboard_templates_path,
+                class: "px-3 py-1 rounded-full text-[11px] font-semibold transition #{params[:category].blank? && params[:q].blank? ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-outline hover:bg-surface-container-high hover:text-on-surface'}" %>
+    <% @categories.each do |cat| %>
+      <%= link_to cat["name"], dashboard_templates_path(category: cat["slug"]),
+                  class: "px-3 py-1 rounded-full text-[11px] font-semibold transition #{params[:category] == cat['slug'] ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-outline hover:bg-surface-container-high hover:text-on-surface'}" %>
     <% end %>
   </div>
 </div>
+
+<%# Render mode: search / category / hero+rows %>
+<% if @search_results %>
+  <% if @search_results.any? %>
+    <p class="text-xs text-outline uppercase tracking-wider font-bold mb-4">
+      <%= @search_results.size %> <%= "result".pluralize(@search_results.size) %> for "<%= params[:q] %>"
+    </p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+      <% @search_results.each do |t| %>
+        <%= render "card", template: t %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="text-center py-16 bg-surface-container-low rounded-md">
+      <span class="material-symbols-outlined text-outline-variant text-[40px] mb-3">search_off</span>
+      <p class="text-sm text-outline">No templates found for "<%= params[:q] %>".</p>
+    </div>
+  <% end %>
+
+<% elsif @category_results %>
+  <% cat = @categories.find { |c| c["slug"] == params[:category] } %>
+  <h2 class="font-headline text-lg font-bold text-on-surface mb-4"><%= cat&.dig("name") || params[:category].to_s.titleize %></h2>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+    <% @category_results.each do |t| %>
+      <%= render "card", template: t %>
+    <% end %>
+  </div>
+
+<% else %>
+  <%# Featured hero %>
+  <% if @featured.any? %>
+    <section class="mb-10">
+      <div class="flex items-baseline justify-between mb-4">
+        <h2 class="font-headline text-lg font-bold text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-[20px]">auto_awesome</span>
+          Featured
+        </h2>
+        <span class="text-[10px] text-outline uppercase tracking-widest">Curated picks</span>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+        <% @featured.first(4).each do |t| %>
+          <%= link_to dashboard_template_path(t[:slug]),
+                      class: "group relative overflow-hidden rounded-xl bg-gradient-to-br from-primary-container/30 via-surface-container-low to-secondary-container/20 border border-outline-variant/20 hover:border-primary/40 transition p-5 min-h-[180px] flex flex-col justify-between" do %>
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <div class="w-12 h-12 rounded-lg bg-surface border border-outline-variant/20 flex items-center justify-center">
+                  <span class="text-2xl"><%= template_icon(t[:icon]) %></span>
+                </div>
+                <span class="text-[9px] font-bold text-primary uppercase tracking-widest">Featured</span>
+              </div>
+              <h3 class="font-headline text-base font-bold text-on-surface group-hover:text-primary transition mb-1"><%= t[:name] %></h3>
+              <p class="text-xs text-outline leading-relaxed line-clamp-2"><%= t[:description] %></p>
+            </div>
+            <div class="flex items-center justify-between mt-4 pt-3 border-t border-outline-variant/10">
+              <span class="text-[10px] text-outline font-mono">
+                <% if t[:addons]&.any? %>From $1.50/mo<% else %>Free Tier<% end %>
+              </span>
+              <span class="px-3 py-1 rounded-md text-[10px] font-bold technical-gradient text-on-primary">Deploy →</span>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+
+  <%# Per-category rows %>
+  <% @category_rows.each do |row| %>
+    <section class="mb-8">
+      <div class="flex items-baseline justify-between mb-3">
+        <h2 class="font-headline text-base font-bold text-on-surface"><%= row["name"] %></h2>
+        <%= link_to "View all (#{row['templates'].size}) →", dashboard_templates_path(category: row["slug"]),
+                    class: "text-[11px] text-outline hover:text-primary transition" %>
+      </div>
+      <div class="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory scroll-smooth scrollbar-thin">
+        <% row["templates"].each do |t| %>
+          <div class="snap-start shrink-0 w-[260px]">
+            <%= render "card", template: t %>
+          </div>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+<% end %>
