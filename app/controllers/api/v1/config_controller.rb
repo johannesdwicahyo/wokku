@@ -18,7 +18,11 @@ module Api
       def update
         raw = params[:vars]
         return render json: { error: "vars parameter required" }, status: :bad_request unless raw.respond_to?(:to_h)
-        vars = raw.respond_to?(:permit!) ? raw.permit!.to_h : raw.to_h.stringify_keys
+        # vars is a dynamic key-value map (env var names are user-defined),
+        # so we can't enumerate via permit. to_unsafe_h is the documented
+        # API for free-form param hashes; values still flow through Dokku
+        # which validates env-var name shape.
+        vars = raw.respond_to?(:to_unsafe_h) ? raw.to_unsafe_h.stringify_keys : raw.to_h.stringify_keys
         return render json: { error: "vars parameter required" }, status: :bad_request if vars.empty?
 
         client = Dokku::Client.new(@app_record.server)

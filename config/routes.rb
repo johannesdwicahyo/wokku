@@ -41,6 +41,7 @@ Rails.application.routes.draw do
         resources :logs, only: [ :index ]
         resources :deploys, only: [ :index, :show ]
         resources :addons, only: [ :index, :create, :destroy ]
+        resource :buildpacks, only: [ :show, :create, :destroy, :update ], controller: "buildpacks"
         resources :log_drains, only: [ :index, :create, :destroy ]
       end
 
