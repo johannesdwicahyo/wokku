@@ -92,9 +92,8 @@ class RestoreServiceTest < ActiveSupport::TestCase
 
   test "perform! raises for unsupported db type" do
     service = build_restore_service(db_type: "cassandra")
-    assert_raises(RuntimeError, /Unsupported database type/) do
-      service.perform!
-    end
+    error = assert_raises(RuntimeError) { service.perform! }
+    assert_match(/Unsupported database type/, error.message)
   end
 
   test "perform! downloads from S3 and runs ssh import for postgres" do
