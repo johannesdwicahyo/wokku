@@ -28,19 +28,31 @@ class DatabaseServicePolicy < ApplicationPolicy
   end
 
   class Scope < ApplicationPolicy::Scope
+    # Visible if (a) linked to an app in one of the user's teams (wokku.cloud
+    # platform model — servers have no team) OR (b) hosted on a server whose
+    # team the user belongs to (OSS self-hosted model). System admins see all.
     def resolve
-      scope.joins(server: { team: :team_memberships })
-           .where(team_memberships: { user_id: user.id })
+      return scope.all if user&.admin?
+      via_apps = scope.joins(:app_records).where(app_records: { team_id: user.team_ids })
+      via_server = scope.joins(server: { team: :team_memberships })
+                        .where(team_memberships: { user_id: user.id })
+      scope.where(id: via_apps).or(scope.where(id: via_server)).distinct
     end
   end
 
   private
 
   def user_in_team?
-    record.server.team.team_memberships.exists?(user_id: user.id)
+    return true if user&.admin?
+    record.app_records.exists?(team_id: user.team_ids) ||
+      record.server.team&.team_memberships&.exists?(user_id: user.id)
   end
 
   def team_admin?
-    record.server.team.team_memberships.exists?(user_id: user.id, role: :admin)
+    return true if user&.admin?
+    record.app_records
+          .joins(team: :team_memberships)
+          .exists?(team_memberships: { user_id: user.id, role: :admin }) ||
+      record.server.team&.team_memberships&.exists?(user_id: user.id, role: :admin)
   end
 end
