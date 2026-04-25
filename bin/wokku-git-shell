@@ -29,7 +29,7 @@
 require_relative "../config/environment"
 
 ssh_command = ENV["SSH_ORIGINAL_COMMAND"].to_s
-key_id      = ENV["WOKKU_GIT_KEY_ID"]&.to_i
+key_id      = ENV["WOKKU_GIT_KEY_ID"]
 dry_run     = ENV["WOKKU_GIT_DRY_RUN"] == "1"
 
 if ssh_command.empty?
@@ -44,7 +44,7 @@ if ssh_command.empty?
   exit 1
 end
 
-key = SshPublicKey.find_by(id: key_id) if key_id&.positive?
+key = SshPublicKey.find_by(id: key_id) if key_id.present?
 unless key
   warn "wokku: key not recognized. Re-upload your public key at https://wokku.cloud/dashboard/profile"
   exit 1
