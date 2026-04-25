@@ -9,7 +9,7 @@ require "uri"
 require "io/console"
 require "fileutils"
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 CONFIG_DIR = File.expand_path("~/.wokku")
 CONFIG_FILE = File.join(CONFIG_DIR, "config.json")
 
@@ -95,32 +95,77 @@ def register(name, desc, &block)
 end
 
 # --- Auth ---
-register "auth:login", "Authenticate with Wokku" do
+register "auth:login", "Authenticate with Wokku via browser (OAuth device flow)" do
   print "Wokku API URL [https://wokku.cloud/api/v1]: "
   url = $stdin.gets.strip
   url = "https://wokku.cloud/api/v1" if url.empty?
 
-  print "Email: "
-  email = $stdin.gets.strip
-  print "Password: "
-  password = $stdin.noecho(&:gets).strip
-  puts
-
-  uri = URI("#{url}/auth/login")
-  http = Net::HTTP.new(uri.host, uri.port)
-  http.use_ssl = uri.scheme == "https"
-  req = Net::HTTP::Post.new(uri)
-  req["Content-Type"] = "application/json"
-  req.body = { email: email, password: password }.to_json
-
+  # Step 1: request a device + user code
+  start_uri = URI("#{url}/auth/device/code")
+  http = Net::HTTP.new(start_uri.host, start_uri.port)
+  http.use_ssl = start_uri.scheme == "https"
+  req = Net::HTTP::Post.new(start_uri)
+  req["User-Agent"] = "WokkuCLI/#{VERSION}"
   resp = http.request(req)
   data = JSON.parse(resp.body) rescue {}
+  abort "Failed to start device flow: #{data['error'] || resp.code}" unless resp.is_a?(Net::HTTPSuccess)
 
-  if resp.is_a?(Net::HTTPSuccess) && data["token"]
-    save_config({ "api_url" => url, "token" => data["token"], "email" => email })
-    puts "Logged in as #{email}"
-  else
-    abort "Login failed: #{data['error'] || resp.code}"
+  device_code = data["device_code"]
+  user_code = data["user_code"]
+  verify_url = data["verification_uri_complete"] || data["verification_uri"]
+  interval = (data["interval"] || 5).to_i
+  expires_in = (data["expires_in"] || 600).to_i
+
+  puts ""
+  puts "  Open in your browser: #{verify_url}"
+  puts "  Code:                 #{user_code}"
+  puts ""
+  puts "Waiting for authorization..."
+
+  # Try to open browser (best-effort)
+  opener = case RUBY_PLATFORM
+           when /darwin/ then "open"
+           when /linux/  then "xdg-open"
+           when /mingw|mswin/ then "start"
+           end
+  system(opener, verify_url, [:out, :err] => "/dev/null") if opener
+
+  # Step 2: poll for token
+  poll_uri = URI("#{url}/auth/device/token")
+  poll_http = Net::HTTP.new(poll_uri.host, poll_uri.port)
+  poll_http.use_ssl = poll_uri.scheme == "https"
+  deadline = Time.now + expires_in
+
+  loop do
+    if Time.now > deadline
+      abort "Authorization timed out. Run wokku auth:login to try again."
+    end
+    sleep interval
+
+    poll_req = Net::HTTP::Post.new(poll_uri)
+    poll_req["Content-Type"] = "application/json"
+    poll_req["User-Agent"] = "WokkuCLI/#{VERSION}"
+    poll_req.body = { device_code: device_code }.to_json
+    poll_resp = poll_http.request(poll_req)
+    poll_data = JSON.parse(poll_resp.body) rescue {}
+
+    case poll_resp.code.to_i
+    when 200
+      email = poll_data.dig("user", "email")
+      save_config({ "api_url" => url, "token" => poll_data["token"], "email" => email })
+      puts "Logged in as #{email}"
+      break
+    when 202
+      next # authorization_pending
+    when 400
+      interval += 1 if poll_data["error"] == "slow_down"
+    when 403
+      abort "Authorization denied."
+    when 410
+      abort "Authorization #{poll_data['error'] || 'expired'}. Run wokku auth:login to try again."
+    else
+      abort "Unexpected response (#{poll_resp.code}): #{poll_data['error'] || poll_resp.body}"
+    end
   end
 end
 
