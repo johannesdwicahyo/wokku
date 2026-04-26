@@ -17,7 +17,7 @@
     nav_items = [
       { name: t("dashboard.nav.dashboard"), path: dashboard_root_path, pattern: "/dashboard", icon: "dashboard", exact: true },
       { name: t("dashboard.nav.apps"), path: dashboard_apps_path, pattern: "/dashboard/apps", icon: "terminal" },
-      { name: t("dashboard.nav.resources"), path: dashboard_resources_path, pattern: "/dashboard/resources", icon: "dns" },
+      { name: t("dashboard.nav.addons"), path: dashboard_addons_path, pattern: "/dashboard/addons", icon: "extension" },
       { name: t("dashboard.nav.one_click_deploy"), path: dashboard_templates_path, pattern: "/dashboard/templates", icon: "rocket_launch" },
     ]
   %>
@@ -33,7 +33,7 @@
         <span class="font-medium"><%= item[:name] %></span>
       </a>
     <% end %>
-    <% if current_user.admin? %>
+    <% if current_user&.admin? %>
       <%
         server_active = request.path.start_with?("/dashboard/servers")
         server_classes = server_active ? "text-primary bg-surface-container-high border-r-2 border-primary font-semibold" : "text-outline hover:text-on-surface-variant hover:bg-surface transition-all"

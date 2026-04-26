@@ -28,4 +28,12 @@ class PagesController < ApplicationController
   def terms
     render layout: "landing"
   end
+
+  def faq
+    render layout: "landing"
+  end
+
+  def refund
+    render layout: "landing"
+  end
 end

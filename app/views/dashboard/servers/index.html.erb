@@ -2,78 +2,121 @@
   <div class="flex items-center justify-between mb-6">
     <div>
       <h1 class="text-xl font-headline text-on-surface"><%= t("dashboard.servers.title") %></h1>
-      <p class="mt-0.5 text-sm text-outline">Manage your Dokku servers</p>
+      <p class="mt-0.5 text-sm text-outline">
+        <% if @can_manage %>Manage your Dokku servers<% else %>Pick a server when deploying — read-only for non-admins<% end %>
+      </p>
     </div>
-    <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">
-      <span class="material-symbols-outlined text-[18px] mr-1.5">add</span>
-      <%= t("dashboard.servers.add_server") %>
-    </button>
+    <% if @can_manage %>
+      <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">
+        <span class="material-symbols-outlined text-[18px] mr-1.5">add</span>
+        <%= t("dashboard.servers.add_server") %>
+      </button>
+    <% end %>
   </div>
 
   <% if @servers.any? %>
-    <div class="bg-surface-container-low rounded-lg border border-outline-variant/15 overflow-hidden">
-      <table class="min-w-full">
-        <thead>
-          <tr class="border-b border-outline-variant/15 bg-surface-container-highest">
-            <th class="px-4 py-2.5 text-left text-xs font-medium text-outline uppercase tracking-wider">Name</th>
-            <th class="px-4 py-2.5 text-left text-xs font-medium text-outline uppercase tracking-wider">Host</th>
-            <th class="px-4 py-2.5 text-left text-xs font-medium text-outline uppercase tracking-wider">Status</th>
-            <th class="px-4 py-2.5 text-left text-xs font-medium text-outline uppercase tracking-wider">Apps</th>
-            <th class="px-4 py-2.5"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @servers.each do |server| %>
-            <tr class="border-b border-outline-variant/15 last:border-b-0 hover:bg-surface-container-highest transition">
-              <td class="px-4 py-3">
-                <%= link_to server.name, dashboard_server_path(server), class: "text-sm font-semibold text-on-surface font-mono hover:text-primary transition cursor-pointer" %>
-              </td>
-              <td class="px-4 py-3 text-sm text-on-surface-variant font-mono"><%= server.host %>:<%= server.port %></td>
-              <td class="px-4 py-3">
-                <% case server.status %>
-                <% when "connected" %>
-                  <span class="inline-flex items-center space-x-1 text-xs text-primary">
-                    <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                    <span><%= t("dashboard.servers.connected") %></span>
-                  </span>
-                <% when "unreachable" %>
-                  <span class="inline-flex items-center space-x-1 text-xs text-error">
-                    <span class="w-1.5 h-1.5 rounded-full bg-error"></span>
-                    <span><%= t("dashboard.servers.unreachable") %></span>
-                  </span>
-                <% when "auth_failed" %>
-                  <span class="inline-flex items-center space-x-1 text-xs text-orange-800">
-                    <span class="w-1.5 h-1.5 rounded-full bg-orange-800"></span>
-                    <span><%= t("dashboard.servers.auth_failed") %></span>
-                  </span>
-                <% when "syncing" %>
-                  <span class="inline-flex items-center space-x-1 text-xs text-yellow-500">
-                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span>
-                    <span><%= t("dashboard.servers.syncing") %></span>
-                  </span>
-                <% end %>
-              </td>
-              <td class="px-4 py-3 text-sm text-on-surface-variant font-mono"><%= server.app_records.size %></td>
-              <td class="px-4 py-3 text-right">
-                <%= link_to "View", dashboard_server_path(server), class: "text-xs text-outline hover:text-primary transition cursor-pointer" %>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <% @servers.each do |server| %>
+        <%
+          # Prefer live metrics from MetricsPollJob (every 1m). When the poll
+          # is stale (server unreachable / first boot), fall back to the
+          # allocation-based estimate.
+          live = server.live_metrics_fresh?
+          if live
+            allocated = server.live_mem_used_mb
+            total = server.live_mem_total_mb
+            pct = server.live_mem_pct
+            cpu_pct = server.live_cpu_pct
+            cont_count = server.live_container_count
+          else
+            allocated = server.allocated_memory_mb
+            total = server.capacity_total_mb_or_nil
+            pct = server.capacity_pct
+            cpu_pct = nil
+            cont_count = nil
+          end
+          pct_color = pct.nil? ? "bg-outline-variant" : (pct > 85 ? "bg-error" : pct > 65 ? "bg-orange-500" : "bg-primary")
+        %>
+        <%= link_to dashboard_server_path(server), class: "block bg-surface-container-low rounded-lg border border-outline-variant/15 hover:border-primary/40 transition p-4" do %>
+          <div class="flex items-start justify-between mb-3">
+            <div class="min-w-0">
+              <p class="text-sm font-bold text-on-surface font-mono truncate"><%= server.name %></p>
+              <p class="text-[11px] text-outline font-mono mt-0.5"><%= server.host %><% if server.region.present? %> · <%= server.region %><% end %></p>
+            </div>
+            <% case server.status %>
+            <% when "connected" %>
+              <span class="inline-flex items-center text-[10px] text-primary"><span class="w-1.5 h-1.5 rounded-full bg-primary mr-1"></span><%= t("dashboard.servers.connected") %></span>
+            <% when "unreachable" %>
+              <span class="inline-flex items-center text-[10px] text-error"><span class="w-1.5 h-1.5 rounded-full bg-error mr-1"></span><%= t("dashboard.servers.unreachable") %></span>
+            <% when "auth_failed" %>
+              <span class="inline-flex items-center text-[10px] text-orange-800"><span class="w-1.5 h-1.5 rounded-full bg-orange-800 mr-1"></span><%= t("dashboard.servers.auth_failed") %></span>
+            <% when "syncing" %>
+              <span class="inline-flex items-center text-[10px] text-yellow-500"><span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse mr-1"></span><%= t("dashboard.servers.syncing") %></span>
+            <% end %>
+          </div>
+
+          <div class="space-y-2">
+            <div>
+              <div class="flex items-center justify-between text-[10px] text-outline mb-1">
+                <span class="uppercase tracking-wider"><%= live ? "Memory (live)" : "Capacity" %></span>
+                <span class="font-mono">
+                  <% if pct %>
+                    <%= pct %>% (<%= allocated %>MB / <%= total %>MB)
+                  <% else %>
+                    <%= allocated %>MB allocated
+                  <% end %>
+                </span>
+              </div>
+              <div class="h-1.5 rounded-full bg-surface-container-highest overflow-hidden">
+                <div class="h-full <%= pct_color %> transition-all" style="width: <%= pct ? [pct, 100].min : 0 %>%"></div>
+              </div>
+            </div>
+
+            <% if cpu_pct %>
+              <div>
+                <div class="flex items-center justify-between text-[10px] text-outline mb-1">
+                  <span class="uppercase tracking-wider">CPU (live)</span>
+                  <span class="font-mono"><%= cpu_pct %>%</span>
+                </div>
+                <div class="h-1.5 rounded-full bg-surface-container-highest overflow-hidden">
+                  <%
+                    cpu_color = cpu_pct > 80 ? "bg-error" : cpu_pct > 50 ? "bg-orange-500" : "bg-primary"
+                    cpu_bar = [ cpu_pct, 100 ].min
+                  %>
+                  <div class="h-full <%= cpu_color %> transition-all" style="width: <%= cpu_bar %>%"></div>
+                </div>
+              </div>
+            <% end %>
+
+            <div class="flex items-center justify-between text-[11px] text-outline">
+              <span>
+                <%= server.app_records.size %> apps
+                <% if cont_count %><span class="text-outline-variant"> · <%= cont_count %> containers</span><% end %>
+              </span>
+              <span class="font-mono">:<%= server.port %></span>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
     </div>
   <% else %>
     <div class="text-center py-16 bg-surface-container-low rounded-lg border border-outline-variant/15">
       <span class="material-symbols-outlined text-[40px] text-outline-variant mb-2">dns</span>
       <h3 class="mt-3 text-sm font-medium text-on-surface-variant"><%= t("dashboard.servers.no_servers") %></h3>
-      <p class="mt-1 text-xs text-outline">Connect your first Dokku server to get started.</p>
-      <div class="mt-4">
-        <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer"><%= t("dashboard.servers.add_server") %></button>
-      </div>
+      <% if @can_manage %>
+        <p class="mt-1 text-xs text-outline">Connect your first Dokku server to get started.</p>
+        <div class="mt-4">
+          <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer"><%= t("dashboard.servers.add_server") %></button>
+        </div>
+      <% else %>
+        <p class="mt-1 text-xs text-outline">No platform servers available yet — check back soon.</p>
+      <% end %>
     </div>
   <% end %>
 
-  <%= render layout: "dashboard/shared/slide_panel", locals: { title: t("dashboard.servers.add_server"), subtitle: "Connect a Dokku server via SSH" } do %>
-    <%= render "form", server: @server %>
+  <% if @can_manage %>
+    <%= render layout: "dashboard/shared/slide_panel", locals: { title: t("dashboard.servers.add_server"), subtitle: "Connect a Dokku server via SSH" } do %>
+      <%= render "form", server: @server %>
+    <% end %>
   <% end %>
 </div>

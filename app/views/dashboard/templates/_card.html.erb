@@ -1,22 +1,19 @@
-<%= link_to dashboard_template_path(template[:slug]), class: "block bg-surface-container-low p-6 rounded-lg border border-transparent hover:bg-surface-container-high hover:border-primary/20 transition-all group" do %>
-  <div class="flex items-start justify-between mb-4">
-    <div class="w-12 h-12 rounded-lg bg-surface border border-outline-variant/15 flex items-center justify-center flex-shrink-0">
+<%= link_to dashboard_template_path(template[:slug]), class: "block bg-surface-container-low p-5 rounded-lg border border-transparent hover:bg-surface-container-high hover:border-primary/20 transition-all group h-full flex flex-col" do %>
+  <div class="flex items-start justify-between mb-3">
+    <div class="w-11 h-11 rounded-lg bg-surface border border-outline-variant/15 flex items-center justify-center flex-shrink-0">
       <span class="text-xl"><%= template_icon(template[:icon]) %></span>
     </div>
     <% if (template[:tags] || []).first %>
       <span class="bg-primary-container text-on-primary-container px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"><%= template[:tags].first %></span>
     <% end %>
   </div>
-  <h3 class="font-headline text-lg font-bold text-on-surface group-hover:text-primary transition mb-1"><%= template[:name] %></h3>
-  <p class="text-sm text-on-surface-variant leading-relaxed mb-6 line-clamp-2 min-h-[2.75rem]"><%= template[:description] %></p>
-  <div class="flex items-center justify-between pt-4 border-t border-outline-variant/10">
-    <div class="flex flex-wrap gap-1.5">
-      <% if template[:addons]&.any? %>
-        <% template[:addons].each do |addon| %>
-          <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary"><%= addon["type"] %></span>
-        <% end %>
-      <% end %>
+  <h3 class="font-headline text-base font-bold text-on-surface group-hover:text-primary transition mb-1"><%= template[:name] %></h3>
+  <p class="text-xs text-on-surface-variant leading-relaxed mb-4 line-clamp-2 min-h-[2.5rem]"><%= template[:description] %></p>
+  <div class="mt-auto flex items-center justify-between pt-3 border-t border-outline-variant/10">
+    <div>
+      <p class="text-[9px] text-outline uppercase tracking-wider font-bold">From</p>
+      <p class="text-xs font-bold text-on-surface font-mono"><%= template_total_label(template) %></p>
     </div>
-    <span class="bg-surface-variant text-on-surface px-4 py-2 rounded-md text-xs font-bold group-hover:bg-primary group-hover:text-on-primary transition-all">Deploy</span>
+    <span class="bg-surface-variant text-on-surface px-3 py-1.5 rounded-md text-[11px] font-bold group-hover:bg-primary group-hover:text-on-primary transition-all">Deploy</span>
   </div>
 <% end %>

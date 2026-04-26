@@ -51,4 +51,45 @@ class ServerTest < ActiveSupport::TestCase
     assert_not server.valid?
     assert_includes server.errors[:port], "must be greater than 0"
   end
+
+  # --- Platform-owned BackupDestination ---
+
+  ENV_VARS_FOR_BACKUP = %w[
+    WOKKU_TENANT_BACKUP_S3_BUCKET
+    WOKKU_TENANT_BACKUP_S3_ENDPOINT
+    WOKKU_TENANT_BACKUP_S3_ACCESS_KEY_ID
+    WOKKU_TENANT_BACKUP_S3_SECRET_ACCESS_KEY
+  ].freeze
+
+  def with_backup_env(values)
+    original = ENV_VARS_FOR_BACKUP.to_h { |k| [ k, ENV[k] ] }
+    values.each { |k, v| ENV[k] = v }
+    yield
+  ensure
+    original.each { |k, v| v.nil? ? ENV.delete(k) : ENV[k] = v }
+  end
+
+  test "ensure_platform_backup_destination creates a destination when env is set" do
+    with_backup_env(
+      "WOKKU_TENANT_BACKUP_S3_BUCKET"        => "wokku-dataplane",
+      "WOKKU_TENANT_BACKUP_S3_ENDPOINT"      => "https://example.r2.cloudflarestorage.com",
+      "WOKKU_TENANT_BACKUP_S3_ACCESS_KEY_ID" => "akid",
+      "WOKKU_TENANT_BACKUP_S3_SECRET_ACCESS_KEY" => "secret"
+    ) do
+      server = Server.create!(name: "plat-backup-test", host: "10.0.0.99", team: @team)
+      assert server.backup_destination.present?, "expected backup_destination to be auto-created"
+      dest = server.backup_destination
+      assert_equal "wokku-dataplane", dest.bucket
+      assert_equal "dbs/plat-backup-test", dest.path_prefix
+      assert_equal "r2", dest.provider
+      assert dest.enabled?
+    end
+  end
+
+  test "ensure_platform_backup_destination no-ops when env is unset" do
+    with_backup_env(ENV_VARS_FOR_BACKUP.to_h { |k| [ k, nil ] }) do
+      server = Server.create!(name: "no-env-test", host: "10.0.0.88", team: @team)
+      assert_nil server.backup_destination
+    end
+  end
 end

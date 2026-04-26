@@ -26,6 +26,17 @@ module Dashboard
       redirect_to dashboard_notifications_path, notice: "Notification rule removed."
     end
 
+    # Fire a sample message right now so the user can verify config
+    # without waiting for a real deploy event. Sentinel deploy_id=0
+    # tells NotifyJob to render with no Deploy context.
+    def test
+      @notification = current_team.notifications.find(params[:id])
+      authorize @notification, :create?
+      event = @notification.events.first || "deploy_succeeded"
+      NotifyJob.perform_later(@notification.id, event, 0)
+      redirect_to dashboard_notifications_path, notice: "Test #{@notification.channel} notification queued — should arrive in a few seconds."
+    end
+
     private
 
     def notification_params

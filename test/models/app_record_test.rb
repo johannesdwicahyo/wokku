@@ -127,4 +127,43 @@ class AppRecordTest < ActiveSupport::TestCase
   test "has many notifications" do
     assert_respond_to app_records(:one), :notifications
   end
+
+  # --- Encryption ---
+
+  test "webhook secrets are encrypted at rest" do
+    app = AppRecord.create!(
+      name: "crypto-check", server: @server, team: @team, creator: @owner,
+      git_webhook_secret: "secret-abc-123",
+      github_webhook_secret: "secret-def-456"
+    )
+
+    raw_git    = ActiveRecord::Base.connection.execute("SELECT git_webhook_secret FROM app_records WHERE id = '#{app.id}'").first
+    raw_github = ActiveRecord::Base.connection.execute("SELECT github_webhook_secret FROM app_records WHERE id = '#{app.id}'").first
+
+    assert_not_equal "secret-abc-123", raw_git["git_webhook_secret"]
+    assert_not_equal "secret-def-456", raw_github["github_webhook_secret"]
+    # Still reads back as plaintext through the model
+    assert_equal "secret-abc-123", app.reload.git_webhook_secret
+    assert_equal "secret-def-456", app.reload.github_webhook_secret
+  end
+
+  # --- lookup! ---
+
+  test "lookup! finds by uuid" do
+    app = AppRecord.create!(name: "lookup-uuid", server: @server, team: @team, creator: @owner)
+    assert_equal app, AppRecord.lookup!(app.id)
+  end
+
+  test "lookup! finds by name" do
+    app = AppRecord.create!(name: "lookup-name", server: @server, team: @team, creator: @owner)
+    assert_equal app, AppRecord.lookup!("lookup-name")
+  end
+
+  test "lookup! raises RecordNotFound for unknown name" do
+    assert_raises(ActiveRecord::RecordNotFound) { AppRecord.lookup!("does-not-exist") }
+  end
+
+  test "lookup! raises RecordNotFound for unknown uuid" do
+    assert_raises(ActiveRecord::RecordNotFound) { AppRecord.lookup!("00000000-0000-0000-0000-000000000000") }
+  end
 end

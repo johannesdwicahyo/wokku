@@ -87,10 +87,8 @@
               <p class="text-xs text-outline leading-relaxed line-clamp-2"><%= t[:description] %></p>
             </div>
             <div class="flex items-center justify-between mt-4 pt-3 border-t border-outline-variant/10">
-              <span class="text-[10px] text-outline font-mono">
-                <% if t[:addons]&.any? %>From $1.50/mo<% else %>Free Tier<% end %>
-              </span>
-              <span class="px-3 py-1 rounded-md text-[10px] font-bold technical-gradient text-on-primary">Deploy →</span>
+              <span class="text-[10px] text-outline font-mono">From <%= template_total_label(t) %></span>
+              <span class="px-3 py-1 rounded-md text-[10px] font-bold bg-primary text-on-primary">Deploy →</span>
             </div>
           <% end %>
         <% end %>

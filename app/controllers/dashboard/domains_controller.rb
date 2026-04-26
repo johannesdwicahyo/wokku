@@ -15,6 +15,7 @@ module Dashboard
         # Add domain on the Dokku server
         client = Dokku::Client.new(@app.server)
         Dokku::Domains.new(client).add(@app.name, @domain.hostname)
+        track("domain.added", target: @domain, metadata: { app: @app.name, hostname: @domain.hostname })
         redirect_to dashboard_app_domains_path(@app), notice: "Domain added successfully."
       else
         @domains = @app.domains.reload
@@ -30,6 +31,7 @@ module Dashboard
       Dokku::Domains.new(client).enable_ssl(@app.name)
       domain.update!(ssl_enabled: true)
       domain.create_certificate!(auto_renew: true, expires_at: 90.days.from_now) unless domain.certificate
+      track("domain.ssl_enabled", target: domain, metadata: { app: @app.name, hostname: domain.hostname })
 
       redirect_to dashboard_app_domains_path(@app), notice: "SSL enabled for #{domain.hostname}."
     rescue => e
@@ -44,7 +46,9 @@ module Dashboard
       client = Dokku::Client.new(@app.server)
       Dokku::Domains.new(client).remove(@app.name, domain.hostname)
 
+      hostname = domain.hostname
       domain.destroy
+      track("domain.removed", target: @app, metadata: { app: @app.name, hostname: hostname })
       redirect_to dashboard_app_domains_path(@app), notice: "Domain removed successfully."
     end
 

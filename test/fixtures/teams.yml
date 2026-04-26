@@ -1,7 +1,7 @@
 one:
   name: Team One
-  owner_id: <%= ActiveRecord::FixtureSet.identify(:one) %>
+  owner_id: <%= ActiveRecord::FixtureSet.identify(:one, :uuid) %>
 
 two:
   name: Team Two
-  owner_id: <%= ActiveRecord::FixtureSet.identify(:two) %>
+  owner_id: <%= ActiveRecord::FixtureSet.identify(:two, :uuid) %>

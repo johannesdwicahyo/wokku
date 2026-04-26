@@ -12,7 +12,7 @@ class Dashboard::BackupsControllerTest < ActionDispatch::IntegrationTest
   # --- Authentication ---
 
   test "index redirects to login when not authenticated" do
-    get "/dashboard/resources/#{@database.id}/backups"
+    get "/dashboard/addons/#{@database.id}/backups"
     assert_response :redirect
   end
 
@@ -20,20 +20,20 @@ class Dashboard::BackupsControllerTest < ActionDispatch::IntegrationTest
 
   test "index shows backups for authenticated admin" do
     sign_in @user
-    get "/dashboard/resources/#{@database.id}/backups"
+    get "/dashboard/addons/#{@database.id}/backups"
     assert_response :success
   end
 
   # --- create (enqueues job) ---
 
   test "create redirects when not authenticated" do
-    post "/dashboard/resources/#{@database.id}/backups"
+    post "/dashboard/addons/#{@database.id}/backups"
     assert_response :redirect
   end
 
   test "create redirects after enqueueing backup job" do
     sign_in @user
-    post "/dashboard/resources/#{@database.id}/backups"
-    assert_redirected_to "/dashboard/resources/#{@database.id}/backups"
+    post "/dashboard/addons/#{@database.id}/backups"
+    assert_redirected_to "/dashboard/addons/#{@database.id}/backups"
   end
 end

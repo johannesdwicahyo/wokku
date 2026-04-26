@@ -21,8 +21,10 @@ class BackupSchedulerJobTest < ActiveJob::TestCase
       path_prefix: "backups"
     )
 
-    ServiceTier.find_or_create_by!(name: "basic", service_type: "postgres") do |t|
-      t.price_cents_per_hour = 0.137
+    # Dyno-aligned tiers: "basic" is manual-backup only. Use "standard" so
+    # the scheduler actually enqueues a backup for this DB.
+    ServiceTier.find_or_create_by!(name: "standard", service_type: "postgres") do |t|
+      t.price_cents_per_hour = 0.274
       t.spec = { storage_gb: 4, connections: 50 }
     end
     db = DatabaseService.create!(
@@ -30,7 +32,7 @@ class BackupSchedulerJobTest < ActiveJob::TestCase
       service_type: "postgres",
       name: "pg-scheduler-test",
       status: :running,
-      tier_name: "basic"
+      tier_name: "standard"
     )
 
     assert_enqueued_with(job: BackupJob) do

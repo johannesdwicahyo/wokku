@@ -26,7 +26,7 @@ class NotifyJob < ApplicationJob
   private
 
   def build_message(deploy, event)
-    return event.humanize if deploy.nil?
+    return "Wokku test notification — channel is working ✅" if deploy.nil?
 
     app_name = deploy.app_record.name
     commit = deploy.commit_sha&.first(7)

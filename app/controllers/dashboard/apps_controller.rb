@@ -157,6 +157,47 @@ module Dashboard
       redirect_to dashboard_app_path(@app), alert: "Failed: #{e.message}"
     end
 
+    # Transfer app ownership to another user. The target's personal team
+    # becomes the new owner, all open ResourceUsage segments close on the
+    # transferring user and reopen on the target so daily debits flip
+    # immediately. Linked databases follow the app — they're scoped to
+    # the team via app_databases.
+    def transfer
+      authorize @app, :destroy?
+      target_email = params[:email].to_s.strip.downcase
+      target = User.find_by("LOWER(email) = ?", target_email)
+
+      if target.nil?
+        return redirect_to dashboard_app_path(@app), alert: "No user found with email #{target_email}."
+      end
+      if target == current_user
+        return redirect_to dashboard_app_path(@app), alert: "App is already yours."
+      end
+      target_team = target.teams.first
+      if target_team.nil?
+        return redirect_to dashboard_app_path(@app), alert: "Target user has no team. Ask them to log in once first."
+      end
+
+      ActiveRecord::Base.transaction do
+        @app.update!(team: target_team, created_by_id: target.id)
+        # Close every open segment on the transferring user, reopen
+        # under the target. Segment math (cost_cents_in_period) keeps the
+        # historical rows intact — only future hours bill against target.
+        rotate_app_segments(@app, target, at: Time.current)
+        # Linked databases: their app_records.team_id changed via the
+        # update above (cascades through app_databases). Rotate their
+        # open segments too.
+        @app.database_services.find_each { |db| rotate_db_segments(db, target, at: Time.current) }
+      end
+
+      track("app.transferred", target: @app, metadata: { from: current_user.email, to: target.email })
+      Activity.log(user: target, team: target_team, action: "app.received_transfer",
+                   target: @app, metadata: { from: current_user.email })
+      redirect_to dashboard_apps_path, notice: "#{@app.name} transferred to #{target.email}."
+    rescue ActiveRecord::RecordInvalid => e
+      redirect_to dashboard_app_path(@app), alert: "Transfer failed: #{e.message}"
+    end
+
     def toggle_maintenance
       authorize @app, :update?
       client = Dokku::Client.new(@app.server)
@@ -181,6 +222,43 @@ module Dashboard
 
     def set_app
       @app = AppRecord.find(params[:id])
+    end
+
+    # Close every open container ResourceUsage segment for this app and
+    # reopen it under the target user. Segments freeze on close, so the
+    # historical hours billed against the previous owner are preserved.
+    def rotate_app_segments(app, new_owner, at:)
+      app.dyno_allocations.includes(:dyno_tier).find_each do |alloc|
+        ResourceUsage.where(resource_id_ref: alloc.resource_id_ref, stopped_at: nil)
+                     .find_each { |u| u.stop!(at: at) }
+        next unless alloc.dyno_tier
+        ResourceUsage.create!(
+          user_id: new_owner.id,
+          resource_type: "container",
+          resource_id_ref: alloc.resource_id_ref,
+          tier_name: alloc.dyno_tier.name,
+          price_cents_per_hour: alloc.dyno_tier.price_cents_per_hour * alloc.count,
+          started_at: at,
+          metadata: { app: app.name, process_type: alloc.process_type, count: alloc.count }
+        )
+      end
+    end
+
+    def rotate_db_segments(db, new_owner, at:)
+      return if db.shared?
+      ResourceUsage.where(resource_id_ref: "DatabaseService:#{db.id}", stopped_at: nil)
+                   .find_each { |u| u.stop!(at: at) }
+      rate = db.service_tier&.hourly_price_cents.to_f
+      return if rate.zero?
+      ResourceUsage.create!(
+        user_id: new_owner.id,
+        resource_type: "database",
+        resource_id_ref: "DatabaseService:#{db.id}",
+        tier_name: db.tier_name,
+        price_cents_per_hour: rate,
+        started_at: at,
+        metadata: { name: db.name, type: db.service_type, app: db.app_records.first&.name }
+      )
     end
 
     def app_params

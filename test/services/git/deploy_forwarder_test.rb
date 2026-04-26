@@ -16,7 +16,7 @@ class Git::DeployForwarderTest < ActiveSupport::TestCase
       forwarder = Git::DeployForwarder.new(@user, @app.name)
       forwarder.forward
 
-      deploy = @app.deploys.last
+      deploy = @app.deploys.order(:created_at).last
       assert_not_nil deploy
       assert_equal "succeeded", deploy.status
       assert_not_nil deploy.log
@@ -43,7 +43,7 @@ class Git::DeployForwarderTest < ActiveSupport::TestCase
 
       assert_raises(StandardError) { forwarder.forward }
 
-      deploy = @app.deploys.last
+      deploy = @app.deploys.order(:created_at).last
       assert_not_nil deploy
       assert_equal "failed", deploy.status
       assert_includes deploy.log, "connection lost"

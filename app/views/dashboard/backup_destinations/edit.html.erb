@@ -12,8 +12,8 @@
 
     <%= form_with model: @destination, url: dashboard_server_backup_destination_path(@server), method: :patch, class: "space-y-4" do |f| %>
       <div>
-        <%= f.label :provider, "Provider", class: "block text-xs text-gray-400 uppercase tracking-wider mb-1" %>
-        <%= f.select :provider, BackupDestination::PROVIDERS.map { |k, v| [v[:name], k] }, {}, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white text-sm focus:ring-green-500 focus:border-green-500" %>
+        <label class="block text-xs text-gray-400 uppercase tracking-wider mb-1">Provider</label>
+        <%= combobox_tag "backup_destination[provider]", BackupDestination::PROVIDERS.map { |k, v| [v[:name], k] }, value: @destination.provider, placeholder: "Select a provider" %>
       </div>
 
       <div>

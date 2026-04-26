@@ -123,9 +123,14 @@ class TemplateDeployerDeepTest < ActiveSupport::TestCase
 
     assert_equal false, result[:success]
     assert_match(/build failed/, result[:error])
-    # The rollback should destroy the app record
-    assert_nil AppRecord.find_by(name: "rollback-me", server: @server)
-    # And any databases created for it
+    # Rollback preserves the AppRecord with status=crashed so the user can
+    # read the failed Deploy log (see SyncServerJob skip for crashed+no-success
+    # apps). It does NOT delete the Rails record anymore.
+    app = AppRecord.find_by(name: "rollback-me", server: @server)
+    assert_not_nil app, "AppRecord should be preserved after rollback for failure trail"
+    assert_equal "crashed", app.status
+    assert app.deploys.any? { |d| d.status == "failed" }, "a failed Deploy row should exist"
+    # Databases created for it are still cleaned up on rollback
     assert_nil DatabaseService.find_by(name: "rollback-me-postgres", server: @server)
   end
 

@@ -1,4 +1,10 @@
 <%= render "dashboard/apps/tabs", app: @app %>
+<%# Adding/removing an add-on involves SSH work and invalidates most of
+    the panel state; Turbo's preview cache can show a pre-submit snapshot
+    after the redirect completes. Disable the preview for this page. %>
+<% content_for(:head) do %>
+  <meta name="turbo-cache-control" content="no-preview">
+<% end %>
 
 <div data-controller="slide-panel">
 
@@ -98,7 +104,7 @@
         <h2 class="text-base font-semibold text-on-surface font-headline">Add-ons</h2>
         <p class="text-sm text-outline mt-1">Databases, caches, and services attached to this app</p>
       </div>
-      <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">
+      <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">
         <span class="material-symbols-outlined text-[16px] mr-1.5">add</span>
         Add
       </button>
@@ -107,43 +113,37 @@
     <% if @addons.any? %>
       <div class="divide-y divide-outline-variant/15">
         <% @addons.each do |addon| %>
+          <% addon_tier = addon.service_tier %>
+          <% addon_monthly = addon_tier&.monthly_price_dollars.to_f %>
           <div class="px-6 py-4 flex items-center justify-between hover:bg-surface-container-high/30 transition">
-            <div class="flex items-center space-x-4">
-              <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-surface border border-outline-variant/15">
-                <% case addon.service_type %>
-                <% when "postgres", "mysql", "mariadb", "mongodb", "clickhouse" %>
-                  <span class="material-symbols-outlined text-secondary text-[20px]">database</span>
-                <% when "redis", "memcached" %>
-                  <span class="material-symbols-outlined text-tertiary text-[20px]">bolt</span>
-                <% when "rabbitmq", "nats" %>
-                  <span class="material-symbols-outlined text-primary text-[20px]">forum</span>
-                <% when "elasticsearch", "meilisearch" %>
-                  <span class="material-symbols-outlined text-tertiary-fixed-dim text-[20px]">search</span>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-semibold text-on-surface"><%= addon.name %></span>
+                <span class="text-xs text-outline capitalize"><%= addon.service_type %></span>
+                <% if addon.tier_name.present? %>
+                  <span class="text-xs text-outline">·</span>
+                  <span class="text-xs text-outline capitalize"><%= addon.tier_name.tr("_", " ") %></span>
                 <% end %>
               </div>
-              <div>
-                <div class="flex items-center space-x-2">
-                  <span class="text-sm font-semibold text-on-surface font-mono"><%= addon.name %></span>
-                  <span class="px-1.5 py-0.5 text-[10px] font-mono text-on-surface-variant bg-surface-container-highest rounded"><%= addon.service_type %></span>
-                </div>
-                <div class="flex items-center space-x-2 mt-0.5">
-                  <% case addon.status %>
-                  <% when "running" %>
-                    <span class="flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-secondary glow-running"></span><span class="text-xs text-outline">Running</span></span>
-                  <% when "error" %>
-                    <span class="flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-error glow-error"></span><span class="text-xs text-outline">Error</span></span>
-                  <% end %>
-                  <span class="text-xs text-outline-variant">on <%= addon.server.name %></span>
-                </div>
-              </div>
+              <% if addon.status != "running" %>
+                <p class="text-xs text-outline mt-0.5 capitalize"><%= addon.status %></p>
+              <% end %>
             </div>
-            <div class="flex items-center space-x-3">
-              <%= link_to "Info", dashboard_resource_path(addon), class: "text-xs text-on-surface-variant hover:text-primary border border-outline-variant/15 px-2 py-1 rounded transition" %>
+            <div class="flex items-center gap-4">
+              <div class="text-right">
+                <% if addon.shared? || addon_monthly.zero? %>
+                  <span class="text-xs text-outline">Free</span>
+                <% else %>
+                  <span class="text-sm font-semibold text-on-surface-variant"><%= format_usd_for_user(addon_monthly) %></span>
+                  <span class="text-xs text-outline">/bln</span>
+                <% end %>
+              </div>
+              <%= link_to "Info", dashboard_addon_path(addon), class: "text-xs text-on-surface-variant hover:text-primary border border-outline-variant/30 px-2 py-1 rounded transition" %>
               <%= button_to "Remove",
                     dashboard_app_resources_path(@app, addon_id: addon.id),
                     method: :delete,
                     data: { turbo_confirm: "Remove #{addon.name}? This will delete all data in this service." },
-                    class: "text-xs text-outline hover:text-error transition cursor-pointer" %>
+                    class: "text-xs text-outline hover:text-error transition cursor-pointer bg-transparent border-0" %>
             </div>
           </div>
         <% end %>
@@ -154,57 +154,97 @@
         <h3 class="text-sm font-medium text-on-surface-variant">No add-ons yet</h3>
         <p class="text-xs text-outline mt-1">Add a database, cache, or other service to get started.</p>
         <div class="mt-4">
-          <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">Add an Add-on</button>
+          <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">Add an Add-on</button>
         </div>
       </div>
     <% end %>
   </div>
 
-  <%# Add-on Slide Panel %>
-  <%= render layout: "dashboard/shared/slide_panel", locals: { title: "Add an Add-on", subtitle: "Choose a service to provision and attach to #{@app.name}" } do %>
-    <div class="space-y-5">
-      <% @available_types.group_by { |a| a[:category] }.each do |category, addons| %>
-        <div>
-          <h3 class="text-[10px] font-bold text-outline uppercase tracking-widest mb-2"><%= category %></h3>
-          <div class="space-y-2">
-            <% addons.each do |addon| %>
-              <% already_has = @addons.any? { |a| a.service_type == addon[:type] } %>
-              <div class="rounded-md border border-outline-variant/15 bg-surface p-3 <%= 'opacity-50' if already_has %>">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center space-x-3">
-                    <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-surface-container-low border border-outline-variant/15">
-                      <% case category %>
-                      <% when "Databases" %>
-                        <span class="material-symbols-outlined text-secondary text-[16px]">database</span>
-                      <% when "Caching" %>
-                        <span class="material-symbols-outlined text-tertiary text-[16px]">bolt</span>
-                      <% when "Search" %>
-                        <span class="material-symbols-outlined text-tertiary-fixed-dim text-[16px]">search</span>
-                      <% when "Messaging" %>
-                        <span class="material-symbols-outlined text-primary text-[16px]">forum</span>
-                      <% end %>
-                    </div>
-                    <div>
-                      <h4 class="text-sm font-semibold text-on-surface"><%= addon[:label] %></h4>
-                      <p class="text-xs text-outline"><%= addon[:description] %></p>
-                    </div>
-                  </div>
-                  <% if already_has %>
-                    <span class="text-[10px] text-outline font-mono">Attached</span>
-                  <% else %>
-                    <%= button_to "Add",
-                          dashboard_app_resources_path(@app, service_type: addon[:type]),
-                          method: :post,
-                          data: { turbo_confirm: "Add #{addon[:label]} to #{@app.name}?" },
-                          class: "px-3 py-1 text-xs font-semibold rounded-md technical-gradient text-on-primary hover:opacity-90 transition cursor-pointer" %>
-                  <% end %>
-                </div>
-              </div>
-            <% end %>
-          </div>
+  <%# Estimated total — container + addons. Mirrors the right-side card on
+      apps#show so users see the same number wherever they land. %>
+  <%
+    container_monthly_usd = tier ? total_dynos * tier.monthly_price_dollars : 0.0
+    addons_monthly_usd = @addons.sum { |a| a.shared? ? 0.0 : (a.service_tier&.monthly_price_dollars.to_f) }
+    total_monthly_usd = container_monthly_usd + addons_monthly_usd
+  %>
+  <div class="bg-surface-container-low rounded-md overflow-hidden mb-6">
+    <div class="px-6 py-4">
+      <p class="text-xs text-outline uppercase tracking-wider font-medium mb-3">Estimated Monthly Cost</p>
+      <div class="space-y-1.5 text-sm">
+        <div class="flex items-center justify-between text-on-surface-variant">
+          <span>Container · <span class="text-outline"><%= tier&.name&.upcase || "—" %> × <%= total_dynos %></span></span>
+          <span class="font-mono"><%= tier&.free? ? "Free" : format_usd_for_user(container_monthly_usd) %></span>
         </div>
-      <% end %>
+        <% @addons.each do |a| %>
+          <% am = a.shared? ? 0.0 : (a.service_tier&.monthly_price_dollars.to_f) %>
+          <% atier = a.tier_name.to_s.tr("_", " ").upcase.presence || a.service_type.upcase %>
+          <div class="flex items-center justify-between text-on-surface-variant">
+            <span><%= a.name %> <span class="text-outline"><%= atier %></span></span>
+            <span class="font-mono"><%= a.shared? || am.zero? ? "Free" : format_usd_for_user(am) %></span>
+          </div>
+        <% end %>
+      </div>
+      <div class="border-t border-outline-variant/15 mt-3 pt-3 flex items-baseline justify-between">
+        <span class="text-sm font-semibold text-on-surface">Total</span>
+        <span class="text-lg font-bold text-primary font-mono"><%= format_usd_for_user(total_monthly_usd) %><%= price_period(Wokku::LaunchMode.idr_only? ? "idr" : nil) %></span>
+      </div>
     </div>
+  </div>
+
+  <%# Add-on Slide Panel %>
+  <%= render layout: "dashboard/shared/slide_panel", locals: { title: "New Add-on", subtitle: "Provision a database or service for #{@app.name}" } do %>
+    <%
+      tiers_by_type = ServiceTier.available.where.not(name: "shared_free")
+                                 .order(:monthly_price_cents).group_by(&:service_type)
+      tier_payload = tiers_by_type.transform_values do |tiers|
+        tiers.map { |t| { name: t.name, monthly_price_cents: t.monthly_price_cents, spec: t.spec } }
+      end
+      service_type_options = [
+        ["PostgreSQL", "postgres"], ["MySQL", "mysql"], ["MongoDB", "mongodb"],
+        ["Redis", "redis"], ["Memcached", "memcached"],
+        ["Elasticsearch", "elasticsearch"], ["RabbitMQ", "rabbitmq"]
+      ]
+      label_classes = "block text-xs font-semibold text-on-surface-variant mb-1.5 uppercase tracking-wider"
+      input_classes = "w-full rounded-md bg-surface-container-low border border-outline-variant/15 px-4 py-2.5 text-sm text-on-surface placeholder-outline-variant font-mono focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
+    %>
+    <%= form_with url: dashboard_addons_path, method: :post, class: "space-y-5",
+                  data: { controller: "addon-tier-picker", "addon-tier-picker-tiers-value": tier_payload.to_json } do |f| %>
+      <%# App is fixed on this page — submit it as hidden so the form
+          posts to the canonical DatabasesController#create path. %>
+      <%= hidden_field_tag "database_service[app_id]", @app.id %>
+
+      <div>
+        <label class="<%= label_classes %>">Attached to</label>
+        <div class="rounded-md bg-surface-container-low border border-outline-variant/15 px-4 py-2.5 text-sm text-on-surface font-mono">
+          <%= @app.name %> <span class="text-outline">· <%= @app.server.name %></span>
+        </div>
+        <p class="text-[11px] text-outline mt-1">Linked automatically; runs on the same server.</p>
+      </div>
+
+      <div>
+        <label for="database_service_name" class="<%= label_classes %>">Name</label>
+        <%= text_field_tag "database_service[name]", nil, class: input_classes, placeholder: "my-database" %>
+      </div>
+
+      <div>
+        <label class="<%= label_classes %>">Service Type</label>
+        <%= combobox_tag "database_service[service_type]", service_type_options, value: "postgres", placeholder: "Select a service type",
+            data: { "addon-tier-picker-target": "serviceType", action: "change->addon-tier-picker#refresh" } %>
+      </div>
+
+      <div>
+        <label class="<%= label_classes %>">Plan</label>
+        <%= hidden_field_tag "database_service[tier_name]", "basic", data: { "addon-tier-picker-target": "tierInput" } %>
+        <div class="grid grid-cols-1 gap-2" data-addon-tier-picker-target="cards">
+          <div class="text-xs text-outline px-3 py-2">Loading plans…</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 pt-2">
+        <button type="submit" class="flex-1 py-2.5 px-4 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">Create Add-on</button>
+        <button type="button" data-action="click->slide-panel#close" class="py-2.5 px-4 text-sm font-medium text-on-surface-variant border border-outline-variant/30 rounded-md hover:bg-surface-container-high transition cursor-pointer">Cancel</button>
+      </div>
+    <% end %>
   <% end %>
 
 </div>

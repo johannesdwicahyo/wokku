@@ -1,49 +1,41 @@
 <%# App Header %>
-<div class="flex items-center justify-between mb-8">
-  <div class="flex items-center gap-4">
-    <div class="flex items-center gap-3">
-      <%= link_to t("dashboard.apps.title"), dashboard_apps_path, class: "text-sm text-outline hover:text-primary transition" %>
-      <span class="material-symbols-outlined text-outline-variant text-[16px]">chevron_right</span>
-    </div>
-    <div class="flex items-center gap-3">
-      <span class="material-symbols-outlined text-primary text-[24px]">terminal</span>
+<div class="mb-4">
+  <%= link_to "← #{t('dashboard.apps.title')}", dashboard_apps_path, class: "text-sm text-outline hover:text-on-surface transition" %>
+</div>
+<div class="flex items-start justify-between mb-8">
+  <div>
+    <div class="flex items-center gap-3 mb-1">
       <h1 class="text-2xl font-bold text-on-surface font-headline"><%= @app.name %></h1>
+      <%# Status only when not running %>
+      <% case @app.status %>
+      <% when "crashed" %>
+        <span class="text-xs text-error font-medium">Crashed</span>
+      <% when "stopped" %>
+        <span class="text-xs text-outline">Stopped</span>
+      <% when "deploying" %>
+        <span class="text-xs text-tertiary flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+          Deploying…
+        </span>
+      <% when "created" %>
+        <span class="text-xs text-outline">Awaiting deploy</span>
+      <% end %>
     </div>
-    <% case @app.status %>
-    <% when "running" %>
-      <span class="bg-secondary-container text-on-secondary-container text-[10px] px-2.5 py-1 rounded-full font-bold uppercase glow-running"><%= t("common.running") %></span>
-    <% when "crashed" %>
-      <span class="bg-error-container text-on-error-container text-[10px] px-2.5 py-1 rounded-full font-bold uppercase glow-error"><%= t("common.crashed") %></span>
-    <% when "stopped" %>
-      <span class="bg-surface-variant text-outline text-[10px] px-2.5 py-1 rounded-full font-bold uppercase"><%= t("common.stopped") %></span>
-    <% when "deploying" %>
-      <span class="bg-primary/15 text-primary text-[10px] px-2.5 py-1 rounded-full font-bold uppercase flex items-center gap-1.5">
-        <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-        <%= t("common.deploying") %>
-      </span>
-    <% when "created" %>
-      <span class="bg-surface-variant text-outline text-[10px] px-2.5 py-1 rounded-full font-bold uppercase">AWAITING DEPLOY</span>
+    <% if (domain = @app.domains.first) %>
+      <p class="text-sm text-outline"><%= domain.hostname %></p>
     <% end %>
   </div>
   <div class="flex items-center gap-2">
     <% if @app.server && !@app.created? %>
-      <%= link_to dashboard_app_terminal_path(@app), class: "inline-flex items-center px-3 py-1.5 text-xs text-on-surface-variant border border-outline-variant/15 rounded-md hover:border-primary/50 hover:text-primary transition" do %>
-        <span class="material-symbols-outlined text-[16px] mr-1">terminal</span> Console
-      <% end %>
+      <%= link_to "Console", dashboard_app_terminal_path(@app), class: "px-3 py-1.5 text-sm font-medium text-on-surface-variant border border-outline-variant/30 rounded-md hover:bg-surface-container-high transition" %>
     <% end %>
     <% if @app.created? %>
       <%# No actions for apps that haven't been deployed yet %>
     <% elsif @app.stopped? %>
-      <%= button_to start_dashboard_app_path(@app), method: :post, class: "inline-flex items-center px-3 py-1.5 text-xs text-primary border border-primary/30 rounded-md hover:bg-secondary-container/20 transition cursor-pointer" do %>
-        <span class="material-symbols-outlined text-[16px] mr-1">play_arrow</span> Start
-      <% end %>
+      <%= button_to "Start", start_dashboard_app_path(@app), method: :post, class: "px-3 py-1.5 text-sm font-semibold bg-primary text-on-primary rounded-md hover:opacity-90 transition cursor-pointer border-0" %>
     <% else %>
-      <%= button_to restart_dashboard_app_path(@app), method: :post, class: "inline-flex items-center px-3 py-1.5 text-xs text-on-surface-variant border border-outline-variant/15 rounded-md hover:border-primary/50 hover:text-primary transition cursor-pointer" do %>
-        <span class="material-symbols-outlined text-[16px] mr-1">refresh</span> Restart
-      <% end %>
-      <%= button_to stop_dashboard_app_path(@app), method: :post, data: { turbo_confirm: "Stop #{@app.name}?" }, class: "inline-flex items-center px-3 py-1.5 text-xs text-on-surface-variant border border-outline-variant/15 rounded-md hover:border-error/50 hover:text-error transition cursor-pointer" do %>
-        <span class="material-symbols-outlined text-[16px] mr-1">stop_circle</span> Stop
-      <% end %>
+      <%= button_to "Restart", restart_dashboard_app_path(@app), method: :post, class: "px-3 py-1.5 text-sm font-medium text-on-surface-variant border border-outline-variant/30 rounded-md hover:bg-surface-container-high transition cursor-pointer bg-transparent" %>
+      <%= button_to "Stop", stop_dashboard_app_path(@app), method: :post, data: { turbo_confirm: "Stop #{@app.name}?" }, class: "px-3 py-1.5 text-sm font-medium text-on-surface-variant border border-outline-variant/30 rounded-md hover:border-error/50 hover:text-error transition cursor-pointer bg-transparent" %>
     <% end %>
   </div>
 </div>
@@ -107,7 +99,7 @@
             </p>
             <%# Indeterminate progress bar %>
             <div class="relative h-1 bg-surface-container rounded-full overflow-hidden">
-              <div class="absolute inset-y-0 w-1/3 technical-gradient rounded-full animate-pulse"
+              <div class="absolute inset-y-0 w-1/3 bg-primary rounded-full animate-pulse"
                    style="animation: deploy-progress 2s ease-in-out infinite;"></div>
             </div>
           </div>
@@ -379,12 +371,14 @@
       </div>
     </div>
 
-    <%# Billing %>
+    <%# Billing — container + addons combined estimate %>
     <% if @current_allocation %>
       <%
         tier = @current_allocation.dyno_tier
         total_dynos = @app.dyno_allocations.sum(:count)
-        monthly_cost_usd = total_dynos * tier.monthly_price_dollars
+        container_usd = total_dynos * tier.monthly_price_dollars
+        addons_usd = @addons.sum { |a| a.shared? ? 0.0 : (a.service_tier&.monthly_price_dollars.to_f) }
+        total_usd = container_usd + addons_usd
       %>
       <div class="bg-surface-container-low rounded-md overflow-hidden">
         <div class="px-5 py-3 border-b border-outline-variant/10 flex items-center justify-between">
@@ -393,20 +387,20 @@
         </div>
         <div class="divide-y divide-outline-variant/10">
           <div class="px-5 py-3 flex items-center justify-between">
-            <span class="text-xs text-outline">Tier</span>
-            <span class="text-xs font-bold text-on-surface capitalize"><%= tier.name %></span>
+            <span class="text-xs text-outline">Container · <%= tier.name.upcase %> × <%= total_dynos %></span>
+            <span class="text-xs font-mono text-on-surface-variant"><%= tier.free? ? "Free" : format_usd_for_user(container_usd) %></span>
           </div>
-          <div class="px-5 py-3 flex items-center justify-between">
-            <span class="text-xs text-outline">Dynos</span>
-            <span class="text-xs font-mono text-on-surface-variant"><%= total_dynos %></span>
-          </div>
-          <div class="px-5 py-3 flex items-center justify-between">
-            <span class="text-xs text-outline">Estimated / month</span>
-            <% if tier.free? %>
-              <span class="text-xs font-bold text-on-surface">Free</span>
-            <% else %>
-              <span class="text-xs font-bold text-primary font-mono"><%= format_usd_for_user(monthly_cost_usd) %><%= price_period(Wokku::LaunchMode.idr_only? ? "idr" : nil) %></span>
-            <% end %>
+          <% @addons.each do |a| %>
+            <% am = a.shared? ? 0.0 : (a.service_tier&.monthly_price_dollars.to_f) %>
+            <% addon_tier_label = a.tier_name.to_s.tr("_", " ").upcase.presence || a.service_type.upcase %>
+            <div class="px-5 py-3 flex items-center justify-between">
+              <span class="text-xs text-outline truncate pr-3"><%= a.name %> · <%= addon_tier_label %></span>
+              <span class="text-xs font-mono text-on-surface-variant"><%= a.shared? || am.zero? ? "Free" : format_usd_for_user(am) %></span>
+            </div>
+          <% end %>
+          <div class="px-5 py-3 flex items-center justify-between bg-surface-container/40">
+            <span class="text-xs font-semibold text-on-surface">Estimated / month</span>
+            <span class="text-xs font-bold text-primary font-mono"><%= format_usd_for_user(total_usd) %><%= price_period(Wokku::LaunchMode.idr_only? ? "idr" : nil) %></span>
           </div>
         </div>
       </div>
@@ -490,6 +484,29 @@
         </div>
       </div>
     </div>
+
+    <%# Transfer ownership %>
+    <% if policy(@app).destroy? %>
+      <div class="bg-surface-container-low rounded-md overflow-hidden mb-4" data-controller="slide-panel">
+        <div class="px-5 py-3 border-b border-outline-variant/10">
+          <p class="text-[10px] text-outline uppercase tracking-widest font-bold">Transfer ownership</p>
+        </div>
+        <div class="p-5">
+          <p class="text-xs text-outline mb-3">Move this app to another Wokku user. Future daily debits will bill them — historical usage stays on your account.</p>
+          <%= form_with url: transfer_dashboard_app_path(@app), method: :post, local: true, class: "space-y-2",
+                onsubmit: "return confirm('Transfer #{@app.name} to ' + this.email.value + '? This cannot be undone — only they can transfer it back.');" do %>
+            <div class="flex items-stretch gap-2">
+              <input type="email" name="email" required placeholder="recipient@example.com"
+                     class="flex-1 bg-surface border border-outline-variant/20 rounded-md px-3 py-2 text-sm text-on-surface focus:border-primary outline-none">
+              <button type="submit"
+                      class="px-4 py-2 bg-primary text-on-primary text-sm font-bold rounded-md hover:opacity-90 transition cursor-pointer">
+                Transfer
+              </button>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
 
     <%# Danger Zone %>
     <div class="bg-error-container/10 border border-error/20 rounded-md p-5 text-center">

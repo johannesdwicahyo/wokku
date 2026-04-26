@@ -45,7 +45,7 @@ module Api
       private
 
       def set_app_record
-        @app_record = AppRecord.find(params[:app_id])
+        @app_record = AppRecord.lookup!(params[:app_id])
       end
 
       def log_drain_params

@@ -1,5 +1,5 @@
 <%= form_with(model: app, url: dashboard_apps_path, class: "space-y-4",
-              data: { controller: "app-name-check searchable-select" }) do |f| %>
+              data: { controller: "app-name-check" }) do |f| %>
   <% if app.errors.any? %>
     <div class="rounded-md bg-error-container/20 border border-error/20 p-3">
       <ul class="text-xs text-error space-y-1">
@@ -27,23 +27,14 @@
     <div class="mt-1.5 hidden flex flex-wrap gap-1.5" data-app-name-check-target="suggestions"></div>
   </div>
 
-  <%# Server with searchable combobox %>
+  <%# Server picker — themed combobox (search-as-you-type) %>
   <div>
-    <%= f.label :server_id, "Server", class: "block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider" %>
-    <input type="text"
-           list="server-options"
-           data-searchable-select-target="input"
-           data-action="input->searchable-select#sync"
-           autocomplete="off"
-           placeholder="<%= servers.size == 1 ? servers.first.name : 'Type to search a server...' %>"
-           value="<%= servers.size == 1 ? servers.first.name : '' %>"
-           class="w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
-    <datalist id="server-options">
-      <% servers.each do |s| %>
-        <option value="<%= s.name %>" data-id="<%= s.id %>"><%= s.host %></option>
-      <% end %>
-    </datalist>
-    <%= f.hidden_field :server_id, data: { searchable_select_target: "value" }, value: (servers.size == 1 ? servers.first.id : nil) %>
+    <label class="block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider">Server</label>
+    <%
+      server_options = servers.map { |s| { value: s.id, label: s.name, description: s.host } }
+      preset = servers.size == 1 ? servers.first.id : nil
+    %>
+    <%= combobox_tag "app_record[server_id]", server_options, value: preset, placeholder: "Search servers…", required: true %>
     <p class="mt-1 text-[11px] text-outline">
       <%= servers.size %> <%= "server".pluralize(servers.size) %> available
     </p>
@@ -59,8 +50,8 @@
     </div>
   </details>
 
-  <div class="flex items-center space-x-3 pt-2">
-    <%= f.submit "Create App", class: "flex-1 py-2 px-4 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer text-center", data: { app_name_check_target: "submit" } %>
-    <button type="button" data-action="click->slide-panel#close" class="py-2 px-4 text-sm text-on-surface-variant hover:text-on-surface transition cursor-pointer">Cancel</button>
+  <div class="flex items-center gap-2 pt-2">
+    <%= f.submit "Create App", class: "flex-1 py-2.5 px-4 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer text-center", data: { app_name_check_target: "submit" } %>
+    <button type="button" data-action="click->slide-panel#close" class="py-2.5 px-4 text-sm font-medium text-on-surface-variant border border-outline-variant/30 rounded-md hover:bg-surface-container-high transition cursor-pointer">Cancel</button>
   </div>
 <% end %>

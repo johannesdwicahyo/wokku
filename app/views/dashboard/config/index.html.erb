@@ -1,6 +1,6 @@
 <%= render "dashboard/apps/tabs", app: @app %>
 
-<div data-controller="config-vars">
+<div data-controller="config-vars slide-panel">
   <%# Config Vars List %>
   <div class="bg-surface-container-low rounded-xl overflow-hidden mb-6">
     <div class="px-6 py-4 border-b border-outline-variant/15 flex items-center justify-between">
@@ -8,13 +8,18 @@
         <h2 class="text-base font-semibold text-on-surface font-headline">Config Vars</h2>
         <p class="text-sm text-outline mt-1">Environment variables for <span class="font-mono"><%= @app.name %></span></p>
       </div>
-      <% if @env_vars.any? %>
-        <button data-action="click->config-vars#toggleAll" data-config-vars-target="revealAllBtn"
-                class="inline-flex items-center px-3 py-1.5 text-xs text-on-surface-variant border border-outline-variant/15 rounded-md hover:border-primary/50 hover:text-primary transition cursor-pointer">
-          <span class="material-symbols-outlined text-[16px] mr-1.5">visibility</span>
-          <span data-config-vars-target="revealAllText">Reveal Values</span>
+      <div class="flex items-center gap-2">
+        <% if @env_vars.any? %>
+          <button data-action="click->config-vars#toggleAll" data-config-vars-target="revealAllBtn"
+                  class="inline-flex items-center px-3 py-1.5 text-xs text-on-surface-variant border border-outline-variant/15 rounded-md hover:border-primary/50 hover:text-primary transition cursor-pointer">
+            <span class="material-symbols-outlined text-[16px] mr-1.5">visibility</span>
+            <span data-config-vars-target="revealAllText">Reveal Values</span>
+          </button>
+        <% end %>
+        <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">
+          <span class="material-symbols-outlined text-[16px] mr-1">add</span> Add Config Var
         </button>
-      <% end %>
+      </div>
     </div>
 
     <% if @env_vars.any? %>
@@ -69,25 +74,26 @@
         <div class="flex justify-end space-x-3">
           <button type="button" data-action="click->config-vars#closeEdit"
                   class="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface transition cursor-pointer">Cancel</button>
-          <button type="submit" class="px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">Save</button>
+          <button type="submit" class="px-4 py-2 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">Save</button>
         </div>
       <% end %>
     </div>
   </div>
 
-  <%# Add Config Var %>
-  <div class="bg-surface-container-low rounded-xl p-6">
-    <h3 class="text-sm font-semibold text-on-surface font-headline mb-4">Add Config Var</h3>
-    <%= form_with(model: EnvVar.new, url: dashboard_app_config_index_path(@app), class: "flex items-end space-x-3") do |f| %>
-      <div class="w-1/3">
+  <%= render layout: "dashboard/shared/slide_panel", locals: { title: "Add Config Var", subtitle: "New environment variable for #{@app.name}" } do %>
+    <%= form_with(model: EnvVar.new, url: dashboard_app_config_index_path(@app), class: "space-y-4") do |f| %>
+      <div>
         <%= f.label :key, class: "block text-[10px] text-outline uppercase tracking-wider font-bold mb-1" %>
-        <%= f.text_field :key, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface font-mono text-sm focus:ring-primary focus:border-primary", placeholder: "SECRET_KEY" %>
+        <%= f.text_field :key, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface font-mono text-sm focus:ring-primary focus:border-primary", placeholder: "SECRET_KEY", autofocus: true %>
       </div>
-      <div class="flex-1">
+      <div>
         <%= f.label :value, class: "block text-[10px] text-outline uppercase tracking-wider font-bold mb-1" %>
-        <%= f.text_field :value, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface font-mono text-sm focus:ring-primary focus:border-primary", placeholder: "value" %>
+        <%= f.text_area :value, rows: 4, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface font-mono text-sm focus:ring-primary focus:border-primary", placeholder: "value" %>
       </div>
-      <%= f.submit "Add", class: "px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
+      <div class="flex items-center gap-3">
+        <%= f.submit "Add Config Var", class: "px-4 py-2 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
+        <button type="button" data-action="click->slide-panel#close" class="text-sm text-outline hover:text-on-surface transition cursor-pointer">Cancel</button>
+      </div>
     <% end %>
-  </div>
+  <% end %>
 </div>

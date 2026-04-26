@@ -1,49 +1,52 @@
 class ServerPolicy < ApplicationPolicy
+  # Servers are platform infrastructure:
+  # - Scope stays open so any signed-in user can pick a server when deploying
+  #   an app, and `show?` stays open so users can open their own app's
+  #   container console (TerminalsController uses `authorize @server, :show?`).
+  # - The servers admin surface (`/dashboard/servers`, API index/show/status,
+  #   sync, create, destroy, admin terminal) is gated behind `manage?` and
+  #   admin-only mutating actions.
+
+  def manage?
+    user&.admin?
+  end
+
   def index?
-    true
+    manage?
   end
 
   def show?
-    user_in_team?
-  end
-
-  def create?
-    true
-  end
-
-  def destroy?
-    team_admin?
+    user.present?
   end
 
   def status?
-    user_in_team?
-  end
-
-  def update?
-    team_admin?
+    manage?
   end
 
   def sync?
-    user_in_team?
+    manage?
+  end
+
+  def create?
+    user&.admin?
+  end
+
+  def update?
+    user&.admin?
+  end
+
+  def destroy?
+    user&.admin?
   end
 
   def admin_terminal?
-    team_admin?
+    user&.admin?
   end
 
   class Scope < ApplicationPolicy::Scope
     def resolve
-      scope.joins(team: :team_memberships).where(team_memberships: { user_id: user.id })
+      # Any signed-in user sees every server so they can deploy apps to it.
+      scope.all
     end
-  end
-
-  private
-
-  def user_in_team?
-    record.team.team_memberships.exists?(user_id: user.id)
-  end
-
-  def team_admin?
-    record.team.team_memberships.exists?(user_id: user.id, role: :admin)
   end
 end

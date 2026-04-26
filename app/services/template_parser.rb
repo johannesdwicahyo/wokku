@@ -94,7 +94,7 @@ class TemplateParser
       next if name == main_service_name
       image = config&.dig("image").to_s.split(":").first.to_s.split("/").last
       addon_type = ADDON_IMAGES[image]
-      addons << { "type" => addon_type, "tier" => "mini" } if addon_type
+      addons << { "type" => addon_type, "tier" => "basic" } if addon_type
     end
     addons.uniq { |a| a["type"] }
   end

@@ -2,7 +2,7 @@ module Api
   module V1
     class LogsController < BaseController
       def index
-        app_record = AppRecord.find(params[:app_id])
+        app_record = AppRecord.lookup!(params[:app_id])
         authorize app_record, :show?
 
         lines = (params[:lines] || 100).to_i

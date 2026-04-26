@@ -11,7 +11,7 @@
       <p class="mt-1 text-[10px] text-outline uppercase tracking-wider font-bold"><%= t("dashboard.home.subtitle") %></p>
     </div>
     <div class="flex items-center gap-3">
-      <button data-action="click->slide-panel#open" class="inline-flex items-center gap-2 px-5 py-2 technical-gradient text-on-primary text-sm font-bold rounded-md hover:opacity-90 active:scale-95 transition-all cursor-pointer">
+      <button data-action="click->slide-panel#open" class="inline-flex items-center gap-2 px-5 py-2 bg-primary text-on-primary text-sm font-bold rounded-md hover:opacity-90 active:scale-95 transition-all cursor-pointer">
         <span class="material-symbols-outlined text-base">add</span>
         <%= t("dashboard.apps.new_app") %>
       </button>
@@ -50,7 +50,7 @@
     <div class="bg-surface-container-low p-5 rounded-md flex items-center justify-between group hover:bg-surface-container transition-colors">
       <div>
         <p class="text-outline uppercase tracking-wider text-[10px] font-bold mb-1"><%= t("dashboard.home.cost_mtd") %></p>
-        <h3 class="font-headline text-2xl font-bold text-on-surface">$<%= "%.2f" % @stats[:cost_mtd] %></h3>
+        <h3 class="font-headline text-2xl font-bold text-on-surface"><%= format_usd_for_user(@stats[:cost_mtd]) %></h3>
       </div>
       <div class="w-10 h-10 rounded bg-tertiary-container/20 flex items-center justify-center text-tertiary group-hover:scale-110 transition-transform">
         <span class="material-symbols-outlined">payments</span>
@@ -74,11 +74,11 @@
               <%# Gradient progress bar at top %>
               <% if app.deploying? %>
                 <div class="h-0.5 w-full bg-outline-variant/20 absolute top-0 left-0 overflow-hidden">
-                  <div class="h-full technical-gradient w-1/3 animate-pulse"></div>
+                  <div class="h-full bg-primary w-1/3 animate-pulse"></div>
                 </div>
               <% elsif app.running? %>
                 <div class="h-0.5 w-full bg-outline-variant/20 absolute top-0 left-0">
-                  <div class="h-full technical-gradient w-full"></div>
+                  <div class="h-full bg-primary w-full"></div>
                 </div>
               <% end %>
 
@@ -192,19 +192,18 @@
       </div>
     </div>
   <% else %>
-    <%# Onboarding — role-aware.
-       We show a different checklist depending on whether this user is
-       expected to provision servers or just deploy apps on servers their
-       team admin (or wokku.cloud) has already set up. %>
+    <%# Onboarding — platform-server model.
+       Servers are platform infrastructure: only system admins can add them,
+       but any signed-in user can deploy to any server that exists. %>
     <%
-      server_count = policy_scope(Server).size
-      has_server_access = server_count > 0
-      user_can_add_server = current_user.teams.any? { |t| t.team_memberships.exists?(user_id: current_user.id, role: :admin) } || current_user.admin?
+      any_server_exists = Server.exists?
+      is_system_admin   = current_user.admin?
 
-      # Steps presented to the user depend on their situation
-      show_server_step = !has_server_access && user_can_add_server
+      # System admins see "Add Server" only when no server has been added yet
+      # (bootstrap step). Regular users never see it.
+      show_server_step = is_system_admin && !any_server_exists
 
-      step_server_done = has_server_access
+      step_server_done = any_server_exists
       step_deploy_done = false # always false in this branch (no apps)
       step_token_done  = current_user.api_tokens.active.exists?
 
@@ -222,17 +221,16 @@
       total_steps = onboarding_steps.length
     %>
 
-    <% if !has_server_access && !user_can_add_server %>
-      <%# Regular team member whose team doesn't have a server yet —
-          they can't do anything productive until an admin acts. Be honest
-          and explain rather than dumping technical onboarding on them. %>
+    <% if !any_server_exists && !is_system_admin %>
+      <%# Non-admin user arrived before a platform server has been provisioned.
+          There's nothing productive they can do until an admin acts. %>
       <div class="max-w-2xl mx-auto text-center py-12">
         <div class="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center mx-auto mb-4">
           <span class="material-symbols-outlined text-3xl text-primary">hourglass_empty</span>
         </div>
-        <h2 class="font-headline text-2xl font-bold text-on-surface mb-2"><%= t("dashboard.onboarding.waiting_title", default: "You're all set — waiting on your team") %></h2>
+        <h2 class="font-headline text-2xl font-bold text-on-surface mb-2"><%= t("dashboard.onboarding.waiting_title", default: "Hang tight — the platform isn't quite ready") %></h2>
         <p class="text-sm text-outline max-w-md mx-auto mb-6">
-          <%= t("dashboard.onboarding.waiting_desc", default: "Your team admin needs to connect a server before you can deploy. Once that's done, this page will show your apps.") %>
+          <%= t("dashboard.onboarding.waiting_desc", default: "An administrator needs to connect the first server before deploys can start. Check back shortly.") %>
         </p>
         <%= link_to dashboard_templates_path, class: "inline-flex items-center gap-2 px-5 py-2 border border-outline-variant/20 text-on-surface-variant rounded-md text-sm hover:bg-surface-container transition" do %>
           <span class="material-symbols-outlined text-[18px]">rocket_launch</span>
@@ -243,7 +241,7 @@
 
     <div class="max-w-3xl mx-auto">
       <div class="text-center mb-8">
-        <div class="w-16 h-16 rounded-full technical-gradient flex items-center justify-center mx-auto mb-4">
+        <div class="w-16 h-16 rounded-full bg-primary flex items-center justify-center mx-auto mb-4">
           <span class="material-symbols-outlined text-3xl text-on-primary">waving_hand</span>
         </div>
         <h2 class="font-headline text-2xl font-bold text-on-surface mb-2"><%= t("dashboard.onboarding.welcome") %></h2>
@@ -257,7 +255,7 @@
             <p class="text-xs text-outline mt-0.5"><%= completed_count %>/<%= total_steps %> <%= t("dashboard.onboarding.completed") %></p>
           </div>
           <div class="w-32 bg-surface-container rounded-full h-1.5 overflow-hidden">
-            <div class="h-full technical-gradient transition-all" style="width: <%= (completed_count.to_f / total_steps * 100).round %>%"></div>
+            <div class="h-full bg-primary transition-all" style="width: <%= (completed_count.to_f / total_steps * 100).round %>%"></div>
           </div>
         </div>
 
@@ -275,7 +273,7 @@
             <h4 class="text-sm font-bold text-on-surface mb-1"><%= t("dashboard.onboarding.add_server") %></h4>
             <p class="text-xs text-outline mb-3"><%= t("dashboard.onboarding.add_server_desc") %></p>
             <% unless step_server_done %>
-              <%= link_to dashboard_servers_path + "/new", class: "inline-flex items-center gap-1 px-3 py-1.5 technical-gradient text-on-primary text-xs font-bold rounded-md hover:opacity-90 transition" do %>
+              <%= link_to dashboard_servers_path + "/new", class: "inline-flex items-center gap-1 px-3 py-1.5 bg-primary text-on-primary text-xs font-bold rounded-md hover:opacity-90 transition" do %>
                 <span class="material-symbols-outlined text-[14px]">add</span>
                 <%= t("dashboard.onboarding.add_server_btn") %>
               <% end %>
@@ -302,7 +300,7 @@
             <h4 class="text-sm font-bold <%= step_server_done ? 'text-on-surface' : 'text-outline-variant' %> mb-1"><%= t("dashboard.onboarding.deploy_app") %></h4>
             <p class="text-xs text-outline mb-3"><%= t("dashboard.onboarding.deploy_app_desc") %></p>
             <% if step_server_done %>
-              <%= link_to dashboard_templates_path, class: "inline-flex items-center gap-1 px-3 py-1.5 technical-gradient text-on-primary text-xs font-bold rounded-md hover:opacity-90 transition" do %>
+              <%= link_to dashboard_templates_path, class: "inline-flex items-center gap-1 px-3 py-1.5 bg-primary text-on-primary text-xs font-bold rounded-md hover:opacity-90 transition" do %>
                 <span class="material-symbols-outlined text-[14px]">rocket_launch</span>
                 <%= t("dashboard.onboarding.browse_templates") %>
               <% end %>

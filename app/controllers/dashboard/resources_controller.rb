@@ -19,27 +19,19 @@ module Dashboard
       authorize @app, :update?
 
       service_type = params[:service_type]
-      name = params[:addon_name].presence || "#{@app.name}-#{service_type}"
+      tier = params[:tier].presence || DatabaseProvisioner::DEFAULT_TIER
 
-      server = @app.server
-      client = Dokku::Client.new(server)
-
-      db = DatabaseService.create!(
-        name: name,
+      db = DatabaseProvisioner.new(
+        app: @app,
         service_type: service_type,
-        server: server,
-        status: :creating
-      )
-
-      Dokku::Databases.new(client).create(service_type, name)
-      Dokku::Databases.new(client).link(service_type, name, @app.name)
-      db.update!(status: :running)
-      @app.app_databases.create!(database_service: db, alias_name: service_type.upcase)
+        tier: tier,
+        name: params[:addon_name].presence
+      ).call
 
       track("addon.created", target: db)
-      redirect_to dashboard_app_resources_path(@app), notice: "#{addon_label(service_type)} added and linked."
+      notice = tier == DatabaseProvisioner::SHARED_TIER ? "Free shared Postgres added and linked." : "#{addon_label(service_type)} added and linked."
+      redirect_to dashboard_app_resources_path(@app), notice: notice
     rescue => e
-      db&.update(status: :error)
       redirect_to dashboard_app_resources_path(@app), alert: "Failed to add #{service_type}: #{e.message}"
     end
 
@@ -49,14 +41,17 @@ module Dashboard
       db = DatabaseService.find(params[:addon_id])
       client = Dokku::Client.new(@app.server)
 
-      begin
-        Dokku::Databases.new(client).unlink(db.service_type, db.name, @app.name)
-      rescue => e
-        Rails.logger.warn "Unlink failed (may already be unlinked): #{e.message}"
+      # Dedicated DBs need an explicit unlink; shared DBs are attached only via
+      # DATABASE_URL config and are torn down by DatabaseProvisioner.destroy!
+      unless db.shared?
+        begin
+          Dokku::Databases.new(client).unlink(db.service_type, db.name, @app.name)
+        rescue => e
+          Rails.logger.warn "Unlink failed (may already be unlinked): #{e.message}"
+        end
       end
 
-      Dokku::Databases.new(client).destroy(db.service_type, db.name)
-      db.destroy
+      DatabaseProvisioner.destroy!(database_service: db, client: client)
       track("addon.destroyed", target: db)
 
       redirect_to dashboard_app_resources_path(@app), notice: "#{db.name} removed."
@@ -73,9 +68,9 @@ module Dashboard
     def addon_types
       [
         # Databases
+        { type: "postgres", tier: "shared_free", label: "PostgreSQL — Free (Shared)", category: "Databases", description: "150 MB, 5 connections, shared cluster — free tier" },
         { type: "postgres", label: "PostgreSQL", category: "Databases", description: "Reliable and powerful relational database" },
         { type: "mysql", label: "MySQL", category: "Databases", description: "Popular open source relational database" },
-        { type: "mariadb", label: "MariaDB", category: "Databases", description: "MySQL-compatible database" },
         { type: "mongodb", label: "MongoDB", category: "Databases", description: "Document database for modern apps" },
         { type: "clickhouse", label: "ClickHouse", category: "Databases", description: "Column-oriented analytics database" },
         # Caching

@@ -21,7 +21,7 @@
       </div>
       <div class="p-6">
         <div class="flex items-center gap-4 mb-6">
-          <div class="w-14 h-14 rounded-lg technical-gradient flex items-center justify-center text-on-primary text-xl font-bold font-headline">
+          <div class="w-14 h-14 rounded-lg bg-primary flex items-center justify-center text-on-primary text-xl font-bold font-headline">
             <% if current_user.avatar_url.present? %>
               <img src="<%= current_user.avatar_url %>" alt="Avatar" class="w-full h-full object-cover rounded-lg">
             <% else %>
@@ -36,10 +36,6 @@
         </div>
         <div class="grid grid-cols-3 gap-4">
           <div class="bg-surface rounded-md p-3 text-center">
-            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Teams</p>
-            <span class="text-lg font-bold text-on-surface font-headline"><%= current_user.teams.size %></span>
-          </div>
-          <div class="bg-surface rounded-md p-3 text-center">
             <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Apps</p>
             <span class="text-lg font-bold text-on-surface font-headline"><%= policy_scope(AppRecord).size %></span>
           </div>
@@ -47,7 +43,48 @@
             <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Servers</p>
             <span class="text-lg font-bold text-on-surface font-headline"><%= policy_scope(Server).size %></span>
           </div>
+          <div class="bg-surface rounded-md p-3 text-center">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Member Since</p>
+            <span class="text-lg font-bold text-on-surface font-headline"><%= current_user.created_at.strftime("%b %Y") %></span>
+          </div>
         </div>
+      </div>
+    </div>
+
+    <%# Preferences — language + currency (independent) %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-6 py-4 border-b border-outline-variant/10">
+        <h2 class="font-headline text-base font-bold text-on-surface"><%= t("dashboard.profile.preferences", default: "Preferences") %></h2>
+        <p class="text-xs text-outline mt-0.5"><%= t("dashboard.profile.preferences_hint", default: "Display language and billing currency can be set independently.") %></p>
+      </div>
+      <div class="p-6">
+        <%= form_with url: dashboard_profile_path, method: :patch, local: true, class: "grid grid-cols-2 gap-4" do |f| %>
+          <%= f.fields_for :user, current_user do |u| %>
+            <div>
+              <label class="block text-xs text-outline uppercase tracking-wider font-bold mb-2"><%= t("dashboard.profile.language", default: "Language") %></label>
+              <%= u.select :locale,
+                    [["English", "en"], ["Bahasa Indonesia", "id"]],
+                    {},
+                    class: "w-full bg-surface text-on-surface border border-outline-variant/30 rounded-md px-3 py-2 text-sm",
+                    onchange: "this.form.requestSubmit()" %>
+            </div>
+            <div>
+              <label class="block text-xs text-outline uppercase tracking-wider font-bold mb-2"><%= t("dashboard.profile.currency", default: "Billing currency") %></label>
+              <% if Wokku::LaunchMode.idr_only? %>
+                <div class="flex items-center gap-2 h-[38px]">
+                  <span class="text-sm text-on-surface font-mono font-bold">IDR (Rp)</span>
+                  <span class="text-[10px] text-outline">USD billing available after international expansion</span>
+                </div>
+              <% else %>
+                <%= u.select :currency,
+                      [["USD ($)", "usd"], ["IDR (Rp)", "idr"]],
+                      {},
+                      class: "w-full bg-surface text-on-surface border border-outline-variant/30 rounded-md px-3 py-2 text-sm",
+                      onchange: "this.form.requestSubmit()" %>
+              <% end %>
+            </div>
+          <% end %>
+        <% end %>
       </div>
     </div>
 
@@ -57,7 +94,7 @@
         <div class="flex items-center justify-between">
           <h2 class="font-headline text-base font-bold text-on-surface"><%= t("dashboard.profile.resource_overview") %></h2>
           <div class="text-right">
-            <span class="text-lg font-bold text-primary font-headline">$<%= "%.2f" % (policy_scope(AppRecord).includes(dyno_allocations: :dyno_tier).flat_map(&:dyno_allocations).sum { |a| a.dyno_tier.monthly_price_dollars * a.count } rescue 0) %></span>
+            <span class="text-lg font-bold text-primary font-headline"><%= format_usd_for_user((policy_scope(AppRecord).includes(dyno_allocations: :dyno_tier).flat_map(&:dyno_allocations).sum { |a| a.dyno_tier.monthly_price_dollars * a.count } rescue 0)) %></span>
             <p class="text-[10px] text-outline uppercase tracking-wider"><%= t("dashboard.profile.estimated_monthly") %></p>
           </div>
         </div>
@@ -83,33 +120,6 @@
             <p class="text-[10px] text-outline mt-1">active containers</p>
           </div>
         </div>
-      </div>
-    </div>
-
-    <%# Teams %>
-    <div class="bg-surface-container-low rounded-md overflow-hidden">
-      <div class="px-6 py-4 border-b border-outline-variant/10 flex items-center justify-between">
-        <h2 class="font-headline text-base font-bold text-on-surface"><%= t("dashboard.profile.teams") %></h2>
-        <%= link_to dashboard_teams_path, class: "text-xs text-primary hover:underline" do %>
-          Manage Teams
-        <% end %>
-      </div>
-      <div class="divide-y divide-outline-variant/10">
-        <% current_user.teams.each do |team| %>
-          <div class="px-6 py-3 flex items-center justify-between hover:bg-surface-container-high/20 transition">
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-md bg-primary-container/30 flex items-center justify-center">
-                <span class="text-primary text-xs font-bold"><%= team.name[0].upcase %></span>
-              </div>
-              <div>
-                <span class="text-sm font-bold text-on-surface"><%= team.name %></span>
-                <span class="text-[10px] text-outline ml-2"><%= team.users.size %> member<%= team.users.size == 1 ? '' : 's' %></span>
-              </div>
-            </div>
-            <% membership = current_user.team_memberships.find_by(team: team) %>
-            <span class="text-[10px] text-outline uppercase font-bold tracking-wider"><%= membership&.role %></span>
-          </div>
-        <% end %>
       </div>
     </div>
 
@@ -181,14 +191,17 @@
       </div>
       <div class="p-5">
         <p class="text-xs text-outline mb-3">Add your SSH public key to enable <code class="text-primary font-mono">git push</code> deployments.</p>
-        <div class="bg-surface-container-lowest rounded-md p-3 mb-3">
-          <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Git Remote</p>
-          <code class="text-xs font-mono text-primary">dokku@<%= policy_scope(Server).first&.host || 'server' %>:APP_NAME</code>
-        </div>
-        <div class="bg-surface-container-lowest rounded-md p-3">
-          <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Deploy Command</p>
-          <code class="text-xs font-mono text-on-surface-variant">git remote add dokku dokku@<%= policy_scope(Server).first&.host || 'server' %>:APP_NAME</code><br>
-          <code class="text-xs font-mono text-on-surface-variant">git push dokku main</code>
+
+        <%= turbo_frame_tag "ssh_keys" do %>
+          <%= render "dashboard/ssh_keys/key_list", keys: current_user.ssh_public_keys.order(created_at: :desc), key: nil %>
+        <% end %>
+
+        <div class="mt-4 pt-4 border-t border-outline-variant/10 space-y-2">
+          <div class="bg-surface rounded-md p-3">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Deploy Command</p>
+            <code class="block text-xs font-mono text-on-surface-variant">git remote add wokku git@<%= ENV.fetch("WOKKU_GIT_HOST", "wokku.cloud") %>:APP_NAME</code>
+            <code class="block text-xs font-mono text-on-surface-variant">git push wokku main</code>
+          </div>
         </div>
       </div>
     </div>
@@ -227,9 +240,6 @@
       <div class="divide-y divide-outline-variant/10">
         <%= link_to dashboard_notifications_path, class: "px-5 py-2.5 flex items-center gap-3 text-xs text-on-surface-variant hover:bg-surface-container-high/30 hover:text-on-surface transition" do %>
           <span class="material-symbols-outlined text-[16px]">notifications</span> Notifications
-        <% end %>
-        <%= link_to dashboard_teams_path, class: "px-5 py-2.5 flex items-center gap-3 text-xs text-on-surface-variant hover:bg-surface-container-high/30 hover:text-on-surface transition" do %>
-          <span class="material-symbols-outlined text-[16px]">group</span> Teams
         <% end %>
         <%= link_to dashboard_activities_path, class: "px-5 py-2.5 flex items-center gap-3 text-xs text-on-surface-variant hover:bg-surface-container-high/30 hover:text-on-surface transition" do %>
           <span class="material-symbols-outlined text-[16px]">history</span> Activity Log

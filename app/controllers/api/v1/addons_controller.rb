@@ -32,7 +32,7 @@ module Api
 
       def destroy
         authorize @app, :update?
-        db = DatabaseService.find(params[:id])
+        db = DatabaseService.lookup!(params[:id])
         client = Dokku::Client.new(@app.server)
         begin
           Dokku::Databases.new(client).unlink(db.service_type, db.name, @app.name)
@@ -50,7 +50,7 @@ module Api
       private
 
       def set_app
-        @app = AppRecord.find(params[:app_id])
+        @app = AppRecord.lookup!(params[:app_id])
       end
     end
   end

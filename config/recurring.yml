@@ -47,3 +47,23 @@ production:
     class: DailyDebitSchedulerJob
     schedule: every day at 1am
     queue: default
+
+  control_plane_backup:
+    class: ControlPlaneBackupJob
+    schedule: every day at 2:30am
+    queue: backups
+
+  activity_digest:
+    class: ActivityDigestJob
+    schedule: every day at 3:30am
+    queue: default
+
+  shared_database_quota:
+    class: SharedDatabaseQuotaJob
+    schedule: every 30 minutes
+    queue: default
+
+  dedicated_database_quota:
+    class: DedicatedDatabaseQuotaJob
+    schedule: every 30 minutes
+    queue: default

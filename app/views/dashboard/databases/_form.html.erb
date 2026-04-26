@@ -1,4 +1,27 @@
-<%= form_with(model: database, url: dashboard_resources_path, class: "space-y-4") do |f| %>
+<%
+  tiers_by_type ||= {}
+  apps ||= []
+  default_type = (database.service_type.presence || "postgres")
+  tier_payload = tiers_by_type.transform_values do |tiers|
+    tiers.map { |t| { name: t.name, monthly_price_cents: t.monthly_price_cents, spec: t.spec } }
+  end
+  text_input_classes = "w-full rounded-md bg-surface-container-low border border-outline-variant/15 px-4 py-2.5 text-sm text-on-surface placeholder-outline-variant focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
+  label_classes      = "block text-xs font-semibold text-on-surface-variant mb-1.5 uppercase tracking-wider"
+
+  app_options = apps.map do |a|
+    { value: a.id, label: a.name, description: "Server: #{a.server.name}" }
+  end
+  service_type_options = [
+    ["PostgreSQL", "postgres"],
+    ["MySQL", "mysql"],
+    ["MongoDB", "mongodb"],
+    ["Redis", "redis"],
+    ["Memcached", "memcached"],
+    ["Elasticsearch", "elasticsearch"],
+    ["RabbitMQ", "rabbitmq"]
+  ]
+%>
+<%= form_with(model: database, url: dashboard_addons_path, class: "space-y-5", data: { controller: "addon-tier-picker", "addon-tier-picker-tiers-value": tier_payload.to_json }) do |f| %>
   <% if database.errors.any? %>
     <div class="rounded-md bg-error-container/20 border border-error/20 p-3">
       <ul class="text-xs text-error space-y-1">
@@ -10,22 +33,39 @@
   <% end %>
 
   <div>
-    <%= f.label :name, class: "block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider" %>
-    <%= f.text_field :name, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline-variant focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-mono", placeholder: "my-database" %>
+    <label class="<%= label_classes %>">Attach to App</label>
+    <% if apps.any? %>
+      <%= combobox_tag "database_service[app_id]", app_options, value: database.app_records.first&.id, placeholder: "Select an app", required: true %>
+      <p class="text-[11px] text-outline mt-1">The add-on will run on the same server as the app and be linked automatically.</p>
+    <% else %>
+      <div class="rounded-md bg-surface-container-low border border-outline-variant/15 px-4 py-3 text-xs text-outline">
+        Create an app first — add-ons attach to apps.
+      </div>
+    <% end %>
   </div>
 
   <div>
-    <%= f.label :service_type, "Service Type", class: "block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider" %>
-    <%= f.select :service_type, [["PostgreSQL", "postgres"], ["Redis", "redis"], ["MySQL", "mysql"], ["MongoDB", "mongodb"], ["Memcached", "memcached"], ["RabbitMQ", "rabbitmq"], ["Elasticsearch", "elasticsearch"], ["MariaDB", "mariadb"], ["MinIO", "minio"]], { prompt: "Select a service type" }, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline-variant focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary" %>
+    <%= f.label :name, class: label_classes %>
+    <%= f.text_field :name, class: "#{text_input_classes} font-mono", placeholder: "my-database" %>
   </div>
 
   <div>
-    <%= f.label :server_id, "Server", class: "block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider" %>
-    <%= f.collection_select :server_id, servers, :id, :name, { prompt: "Select a server" }, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline-variant focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary" %>
+    <label class="<%= label_classes %>">Service Type</label>
+    <%= combobox_tag "database_service[service_type]", service_type_options, value: default_type, placeholder: "Select a service type",
+        data: { "addon-tier-picker-target": "serviceType", action: "change->addon-tier-picker#refresh" } %>
   </div>
 
-  <div class="flex items-center space-x-3 pt-2">
-    <%= f.submit "Create Database", class: "flex-1 py-2 px-4 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer text-center" %>
-    <button type="button" data-action="click->slide-panel#close" class="py-2 px-4 text-sm text-on-surface-variant hover:text-on-surface transition cursor-pointer">Cancel</button>
+  <%# Plan picker — populated by addon-tier-picker Stimulus controller %>
+  <div>
+    <label class="<%= label_classes %>">Plan</label>
+    <%= f.hidden_field :tier_name, value: "basic", data: { "addon-tier-picker-target": "tierInput" } %>
+    <div class="grid grid-cols-1 gap-2" data-addon-tier-picker-target="cards">
+      <div class="text-xs text-outline px-3 py-2">Loading plans…</div>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-2 pt-2">
+    <%= f.submit "Create Add-on", class: "flex-1 py-2.5 px-4 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer text-center disabled:opacity-50", disabled: apps.empty? %>
+    <button type="button" data-action="click->slide-panel#close" class="py-2.5 px-4 text-sm font-medium text-on-surface-variant border border-outline-variant/30 rounded-md hover:bg-surface-container-high transition cursor-pointer">Cancel</button>
   </div>
 <% end %>

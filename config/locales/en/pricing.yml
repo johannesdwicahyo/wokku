@@ -1,7 +1,7 @@
 en:
   pricing:
     title: "Simple, transparent pricing"
-    subtitle: "Billed per hour. Maximum monthly cap. No hidden fees."
+    subtitle: "Simple monthly pricing. Debited daily from your deposit. No hidden fees."
     app_containers: "App Containers"
     app_containers_desc: "Run your web and worker processes"
     per_container: "Per container"
@@ -11,6 +11,9 @@ en:
     max_monthly: "Max %{price}%{period}"
     ram: "RAM"
     cpu: "vCPU"
+    disk: "SSD"
+    shared: "Shared"
+    dedicated: "Dedicated"
     storage: "Storage"
     auto_backup: "Auto backup"
     retention: "%{days}-day retention"

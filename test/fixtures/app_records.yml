@@ -3,7 +3,7 @@ one:
   server: one
   team: one
   status: 0
-  created_by_id: <%= ActiveRecord::FixtureSet.identify(:one) %>
+  created_by_id: <%= ActiveRecord::FixtureSet.identify(:one, :uuid) %>
   deploy_branch: main
   synced_at: 2026-03-13 13:04:17
 
@@ -12,6 +12,6 @@ two:
   server: two
   team: two
   status: 0
-  created_by_id: <%= ActiveRecord::FixtureSet.identify(:two) %>
+  created_by_id: <%= ActiveRecord::FixtureSet.identify(:two, :uuid) %>
   deploy_branch: main
   synced_at: 2026-03-13 13:04:17

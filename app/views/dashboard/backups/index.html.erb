@@ -1,70 +1,82 @@
 <% content_for(:title, "Backups — #{@database.name}") %>
 
-<div class="space-y-6">
-  <div class="flex items-center justify-between">
-    <div class="flex items-center space-x-3">
-      <%= link_to dashboard_resource_path(@database), class: "text-sm text-gray-500 hover:text-gray-300 transition" do %>
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-      <% end %>
-      <h1 class="text-lg font-semibold text-white">Backups</h1>
-      <span class="text-sm text-gray-400 font-mono"><%= @database.name %> (<%= @database.service_type %>)</span>
-    </div>
-    <% if @destination&.enabled? %>
-      <%= button_to "Backup Now", dashboard_resource_backups_path(@database), method: :post, class: "inline-flex items-center px-3 py-1.5 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer" %>
-    <% else %>
-      <span class="text-xs text-gray-600">No backup destination configured. <%= link_to "Configure", edit_dashboard_server_backup_destination_path(@database.server), class: "text-green-400 hover:text-green-300" %></span>
-    <% end %>
-  </div>
+<div class="mb-4">
+  <%= link_to "← #{@database.name}", dashboard_addon_path(@database), class: "text-sm text-outline hover:text-on-surface transition" %>
+</div>
 
-  <% if @backups.any? %>
-    <div class="bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 overflow-hidden">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="text-xs text-gray-500 uppercase tracking-wider border-b border-[#334155]/30">
-            <th class="px-5 py-2 text-left">Date</th>
-            <th class="px-5 py-2 text-left">Status</th>
-            <th class="px-5 py-2 text-right">Size</th>
-            <th class="px-5 py-2 text-right">Duration</th>
-            <th class="px-5 py-2 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @backups.each do |backup| %>
-            <tr class="border-b border-[#334155]/20">
-              <td class="px-5 py-3 text-gray-300"><%= backup.created_at.strftime("%b %d, %Y %H:%M") %></td>
-              <td class="px-5 py-3">
-                <% case backup.status %>
-                <% when "completed" %>
-                  <span class="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-green-500/10 text-green-400">Completed</span>
-                <% when "running" %>
-                  <span class="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/10 text-yellow-400">Running</span>
-                <% when "failed" %>
-                  <span class="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-red-500/10 text-red-400" title="<%= backup.error_message %>">Failed</span>
-                <% when "pending" %>
-                  <span class="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-gray-500/10 text-gray-400">Pending</span>
-                <% end %>
-              </td>
-              <td class="px-5 py-3 text-right text-gray-400 font-mono"><%= backup.size_human %></td>
-              <td class="px-5 py-3 text-right text-gray-500"><%= backup.duration ? "#{backup.duration.round(1)}s" : "—" %></td>
-              <td class="px-5 py-3 text-right">
-                <% if backup.status == "completed" %>
-                  <div class="flex items-center justify-end space-x-3">
-                    <%= link_to "Download", download_dashboard_resource_backup_path(@database, backup), class: "text-xs text-gray-400 hover:text-white transition" %>
-                    <%= button_to "Restore", restore_dashboard_resource_backup_path(@database, backup), method: :post, class: "text-xs text-yellow-400 hover:text-yellow-300 transition", data: { turbo_confirm: "Restore #{@database.name} from this backup? Current data will be overwritten." } %>
-                  </div>
-                <% end %>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
+<div class="flex items-start justify-between mb-8">
+  <div>
+    <h1 class="text-2xl font-headline text-on-surface">Backups</h1>
+    <p class="text-sm text-outline mt-0.5"><%= @database.name %> · <%= @database.service_type %></p>
+  </div>
+  <% if @destination&.enabled? %>
+    <%= button_to "Backup Now", dashboard_addon_backups_path(@database), method: :post, class: "px-3 py-1.5 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
   <% else %>
-    <div class="text-center py-16 bg-[#1E293B]/40 rounded-lg border border-[#334155]/30">
-      <p class="text-gray-500">No backups yet.</p>
-      <% if @destination&.enabled? %>
-        <p class="text-xs text-gray-600 mt-1">Automatic backups run daily at 2am UTC.</p>
-      <% end %>
+    <div class="text-xs text-outline">
+      No backup destination configured.
+      <%= link_to "Configure", edit_dashboard_server_backup_destination_path(@database.server), class: "text-primary hover:underline" %>
     </div>
   <% end %>
 </div>
+
+<% if @backups.any? %>
+  <div class="bg-surface-container-low rounded-lg overflow-hidden">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-xs text-outline border-b border-outline-variant/10">
+          <th class="px-5 py-3 text-left font-medium uppercase tracking-wider">Date</th>
+          <th class="px-5 py-3 text-left font-medium uppercase tracking-wider">Status</th>
+          <th class="px-5 py-3 text-right font-medium uppercase tracking-wider">Size</th>
+          <th class="px-5 py-3 text-right font-medium uppercase tracking-wider">Duration</th>
+          <th class="px-5 py-3 text-right font-medium uppercase tracking-wider">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant/10">
+        <% @backups.each do |backup| %>
+          <tr class="hover:bg-surface-container/50 transition">
+            <td class="px-5 py-3 text-on-surface-variant"><%= backup.created_at.strftime("%b %d, %Y %H:%M") %></td>
+            <td class="px-5 py-3">
+              <% case backup.status %>
+              <% when "completed" %>
+                <span class="text-xs text-primary">Completed</span>
+              <% when "running" %>
+                <span class="text-xs text-tertiary">Running…</span>
+              <% when "failed" %>
+                <span class="text-xs text-error" title="<%= backup.error_message %>">Failed</span>
+              <% when "pending" %>
+                <span class="text-xs text-outline">Pending</span>
+              <% end %>
+            </td>
+            <td class="px-5 py-3 text-right text-on-surface-variant font-mono"><%= backup.size_human %></td>
+            <td class="px-5 py-3 text-right text-outline"><%= backup.duration ? "#{backup.duration.round(1)}s" : "—" %></td>
+            <td class="px-5 py-3 text-right">
+              <% if backup.status == "completed" %>
+                <div class="flex items-center justify-end gap-3">
+                  <%= link_to "Download", download_dashboard_addon_backup_path(@database, backup), class: "text-xs text-on-surface-variant hover:text-primary transition" %>
+                  <%= button_to "Restore", restore_dashboard_addon_backup_path(@database, backup),
+                        method: :post,
+                        form: {
+                          data: {
+                            controller: "confirm-delete",
+                            confirm_delete_name_value: @database.name,
+                            confirm_delete_impact_value: "This will OVERWRITE the current contents of #{@database.name} with the backup from #{backup.created_at.strftime('%b %d, %Y %H:%M')}. This action cannot be undone.",
+                            confirm_delete_resource_value: "database"
+                          }
+                        },
+                        class: "text-xs text-tertiary hover:text-tertiary/80 transition cursor-pointer bg-transparent border-0" %>
+                </div>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <div class="text-center py-16 bg-surface-container-low rounded-lg">
+    <p class="text-sm text-outline">No backups yet.</p>
+    <% if @destination&.enabled? %>
+      <p class="text-xs text-outline mt-1">Automatic backups run daily at 2am UTC.</p>
+    <% end %>
+  </div>
+<% end %>

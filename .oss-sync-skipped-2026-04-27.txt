@@ -1,0 +1,90 @@
+5e1e1a1a  fix: decouple locale/currency + complete i18n on dashboard + harden topup
+88acc1bb  feat: servers are platform infrastructure (Heroku model)
+fbc8542d  feat(gate 2): gateway key install + authorized_keys writer + host-provisioning doc
+661d966a  feat(gate 2b): auto-seed known_hosts + shared /etc/wokku volume mount
+7c9e1b57  feat: gateway SSH key rotation tooling
+b2ef8f0e  feat: dashboard UI for managing SSH public keys
+f6261dc5  feat: IDR-only launch mode, channel-stamped activity, git-push deploy status
+70509b51  fix: render billing UI + user balance as IDR under launch mode
+ef82710f  fix: assign default dyno tier + IDR-format remaining billing views
+c7c0589b  fix: IDR + Shared vCPU across public pricing pages and docs
+2e23146a  feat: promote Monthly pricing, drop hourly from user-facing pages
+bda6032b  fix: lock profile currency to IDR in idr_only launch mode
+84636f41  fix: restrict servers admin surface to platform admins
+da1f359c  test: update server controllers to expect admin-only access
+5c039836  fix: billing shows free-tier containers + safer SSH key error + multi-account docs
+e63534f0  fix(security): encrypt webhook secrets + device push tokens at rest
+f2daf18d  security: hard-fail AR encryption keys in prod + new-device sign-in alerts
+4b187ac0  fix: allow assets:precompile through the encryption-keys check
+7111fd54  security: append-only activity log + off-box control-plane backup
+9ae13b59  security: container egress filter + expanded TOS prohibited uses
+87a938eb  feat: simplify database catalog — drop MariaDB, fold MongoDB into Databases
+10af6cb8  feat(backups): tenant DB auto-backup via platform-owned R2 destination
+c77e6bcf  feat: move inline forms into slide-panel drawers
+69b14750  fix: billing page daily-first; estimated_daily_cost reads DynoAllocation
+5cf6e3e8  fix: billing uses segment ledger so tier changes don't retro-bill
+8f569b42  feat: billing page rewrite — deposit-hero, hourly semantics, Jakarta tz
+5d97f91c  feat: daily usage chart + CSV ledger export on billing page
+52d67ea7  fix: backfill initial balance as manual credit for ledger continuity
+b34adfc2  chore: single MCP gate + privacy/terms footer links
+2d089863  feat: bilingual Privacy Policy + Terms of Service (EN + ID)
+bd9ccf32  fix: allow www.wokku.cloud host + fix .wokku.dev regex typo
+51086d77  revert: remove MinIO from database add-on UI — no Dokku plugin exists
+ef12f4e8  feat(cli/mcp): surface the active instance after connection
+70f2b406  feat: rate-limit and fail2ban on API login endpoint
+3665d6c4  feat: show disk size per container tier on pricing page
+5dc344ca  fix: backfill DynoTier storage_mb on existing production rows
+340371c7  feat: Dokku::SharedPostgres service for free-tier shared cluster
+1edddece  feat: wire DatabaseProvisioner into dashboard resources flow
+35bc11cd  feat: quota enforcement + pricing page for shared free Postgres
+aa2a9d68  feat: rename DB tiers to follow dyno naming + IDR-aligned prices
+b1f0e5dc  fix(migration): scope DB tier rename to postgres/mysql/mongodb only
+0dd8165e  fix: destroy shared Postgres tenant also unsets DATABASE_URL; full-page reload after add/remove
+5e9ccb1e  fix(resources): drop data-turbo:false; use turbo-cache-control no-preview meta
+5356abd4  fix: shared PG polish — unlimited cap, fix backdrop click blocking, parallel destroy
+9ee2ce01  feat: add FAQ + refund policy pages, update footer with contact info
+2a646218  feat: device-code OAuth flow for CLI authentication
+9f62d031  fix(device-auth): disable Turbo on authorize form
+48f14b87  fix: API servers index/show open to any signed-in user
+9c0657d9  feat(api): add POST /apps/:id/run for one-off commands
+54e971a2  feat: servers menu visible to all users with capacity bars
+d7445eea  feat: migrate all primary keys to UUIDv7
+2e7be0cc  fix: inline EXCLUDED_TABLES in UUID backfill/swap migrations
+f3ddc658  fix: disable activities triggers during uuid backfill
+47df259b  feat(templates): IDR/USD-aware pricing + monthly cost breakdown
+09f9636e  feat(api): apps lookup accepts uuid or name
+184ad618  feat: DB restore API + live host metrics on Servers page
+62fa8cc1  feat(api): POST /databases/:id/import streams dump to dokku <type>:import
+07caafb8  fix(api): DatabaseService.lookup! accepts uuid OR name
+95bd5c7e  fix(api): Server.lookup! accepts uuid or name (third entity)
+b5ac75e5  fix(ssl): set Let's Encrypt global email before enabling certs
+a15a0657  fix(deploy): widen container-port detection for nginx vhost
+6d34f516  feat(addons): rename Resources→Add-ons, add tier change UI for dedicated DBs
+01755249  fix(addons): correct usage queries, RAM panel, backup label, billing cap
+35f9001f  fix(addons): query usage via dokku-shell-friendly commands
+c53fed49  fix(addons): RAM probe via inline cmd to postgres:enter, not piped stdin
+6cc29c63  feat(pricing): monthly_price_cents canonical, plan picker on new add-on
+e246c0c0  feat(addons): admin-only Servers nav, attach-to-app form, larger inputs
+e7c85674  feat(ui): visual cleanup pass on apps + addons (Heroku-style density)
+68b45131  feat(ui): themed search-select combobox + visible secondary buttons
+e10d45ca  feat(ui): migrate all selects to themed combobox
+0feac6e9  feat(metrics): consolidate collection — one SSH/min/server, no per-render
+8fd5466c  feat(quota): soft storage enforcement for dedicated DBs
+18a5a6f2  feat(ui): replace technical-gradient with bg-primary across dashboard
+b18781db  fix(addons): friendlier errors + roll back on Dokku failure
+845cf86e  ops: provision-dokku-server installs memcached/rabbitmq/elasticsearch
+383f4e11  fix(addons): async provisioning + restore button polish + memcached unblock
+a68c0e8a  fix(pricing): round IDR figures for redis/elasticsearch/rabbitmq/etc.
+5ef92f8b  fix(billing): meter dedicated addons via ResourceUsage segments
+b22e3640  feat(billing): show addon prices + combined total on Resources + apps#show
+d806cf26  fix(billing): show addon tier on each line (e.g. 'batumas-postgres · BASIC')
+394cd87a  fix(billing): uppercase the container tier label to match addon format
+011b41fa  fix(billing): team-scoped ledger + dedupe deploy activity feed
+fcd35529  feat: per-user billing + Transfer App + hide Teams UI
+d3f8980b  fix(billing): anchor display to monthly_price_cents
+96130eae  fix(ui): convert add-on picker to standard combobox form
+9bfedf37  fix(ui): use the standalone Add-on form in resources page panel
+6cdf9cf8  fix(addons): sweep stuck error/creating rows before retrying same name
+42068822  fix(addons): redirect to resources page after create, not addon show
+930737c7  fix(notifications): config key mismatch + add Test button
+1d9c6dd1  fix(notifications): channel-config sections never showed up

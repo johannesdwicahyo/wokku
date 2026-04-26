@@ -10,13 +10,13 @@ module Api
       end
 
       def show
-        database = DatabaseService.find(params[:id])
+        database = DatabaseService.lookup!(params[:id])
         authorize database
         render json: database
       end
 
       def create
-        server = Server.find(params[:server_id])
+        server = Server.lookup!(params[:server_id])
         database = server.database_services.build(
           name: params[:name],
           service_type: params[:service_type]
@@ -35,7 +35,7 @@ module Api
       end
 
       def destroy
-        database = DatabaseService.find(params[:id])
+        database = DatabaseService.lookup!(params[:id])
         authorize database
 
         client = Dokku::Client.new(database.server)
@@ -50,9 +50,9 @@ module Api
       end
 
       def link
-        database = DatabaseService.find(params[:id])
+        database = DatabaseService.lookup!(params[:id])
         authorize database
-        app_record = AppRecord.find(params[:app_id])
+        app_record = AppRecord.lookup!(params[:app_id])
 
         client = Dokku::Client.new(database.server)
         Dokku::Databases.new(client).link(database.service_type, database.name, app_record.name)
@@ -70,10 +70,30 @@ module Api
         render json: { error: "Cannot connect to server: #{e.message}" }, status: :service_unavailable
       end
 
+      def import
+        database = DatabaseService.lookup!(params[:id])
+        authorize database, :update?
+
+        # Body is the raw dump in the format `dokku <type>:import` accepts
+        # (Heroku/pg_dump -Fc for postgres, mysqldump for mysql, etc.).
+        dump_io = request.body
+        if dump_io.nil? || (dump_io.respond_to?(:size) && dump_io.size.to_i.zero?)
+          return render json: { error: "Empty request body — pipe the dump file as the body" }, status: :unprocessable_entity
+        end
+
+        ImportService.new(database_service: database, dump_io: dump_io).perform!
+        track("database.imported", target: database)
+        render json: { message: "Imported", database: database.name }
+      rescue ImportService::UnsupportedTypeError => e
+        render json: { error: e.message }, status: :unprocessable_entity
+      rescue => e
+        render json: { error: e.message }, status: :unprocessable_entity
+      end
+
       def unlink
-        database = DatabaseService.find(params[:id])
+        database = DatabaseService.lookup!(params[:id])
         authorize database
-        app_record = AppRecord.find(params[:app_id])
+        app_record = AppRecord.lookup!(params[:app_id])
 
         client = Dokku::Client.new(database.server)
         Dokku::Databases.new(client).unlink(database.service_type, database.name, app_record.name)

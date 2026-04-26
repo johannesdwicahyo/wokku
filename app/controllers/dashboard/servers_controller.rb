@@ -3,13 +3,16 @@ module Dashboard
     before_action :set_server, only: [ :show, :destroy, :sync ]
 
     def index
+      authorize Server, :show?
       @servers = policy_scope(Server).includes(:app_records)
       @server = Server.new
+      @can_manage = Pundit.policy(current_user, Server).manage?
     end
 
     def show
-      authorize @server
-      @apps = @server.app_records
+      authorize @server, :show?
+      @apps = @server.app_records.where(team: current_user.teams)
+      @can_manage = Pundit.policy(current_user, @server).manage?
     end
 
     def new
@@ -17,7 +20,9 @@ module Dashboard
     end
 
     def create
-      @server = Server.new(server_params.merge(team: current_team))
+      # Platform servers — no team ownership; track the adding admin via
+      # the activity log instead.
+      @server = Server.new(server_params)
       authorize @server
 
       if @server.save
@@ -33,6 +38,8 @@ module Dashboard
     end
 
     def provision
+      authorize Server, :create?
+
       credential = current_team.cloud_credentials.find(params[:cloud_credential_id])
       provider = CloudProviders.const_get(credential.provider.capitalize).new(credential)
 
@@ -48,8 +55,8 @@ module Dashboard
         size: params[:size]
       )
 
-      # Create server record
-      server = current_team.servers.create!(
+      # Platform server — no team assignment
+      server = Server.create!(
         name: params[:name],
         host: result[:ip],
         port: 22,
@@ -77,7 +84,7 @@ module Dashboard
     end
 
     def sync
-      authorize @server
+      authorize @server, :manage?
       SyncServerJob.perform_later(@server.id)
       redirect_to dashboard_server_path(@server), notice: "Server sync started. Apps will appear shortly."
     end

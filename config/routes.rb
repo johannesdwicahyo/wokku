@@ -1,4 +1,10 @@
 Rails.application.routes.draw do
+  # Canonicalize www → apex. wokku.cloud is the brand host; www is
+  # listed on kamal-proxy only to avoid 404s from typed-in URLs.
+  constraints host: "www.wokku.cloud" do
+    match "(*path)", to: redirect { |params, _req| "https://wokku.cloud/#{params[:path]}" }, via: :all
+  end
+
   devise_for :users, controllers: { omniauth_callbacks: "users/omniauth_callbacks" }
   # Registrations are OAuth-only — redirect any lingering /users/sign_up links
   # to the sign-in page so they don't 404.
@@ -11,6 +17,8 @@ Rails.application.routes.draw do
         delete :logout
         get :whoami
         resources :tokens, only: [ :index, :create, :destroy ]
+        post "device/code", to: "devices#code"
+        post "device/token", to: "devices#token"
       end
 
       resources :servers, only: [ :index, :show, :create, :destroy ] do
@@ -24,6 +32,10 @@ Rails.application.routes.draw do
           post :restart
           post :stop
           post :start
+          post :deploy
+          post :run
+          post :github_connect
+          delete :github_disconnect
         end
         resource :config, only: [ :show, :update, :destroy ], controller: "config"
         resources :domains, only: [ :index, :create, :destroy ] do
@@ -57,8 +69,14 @@ Rails.application.routes.draw do
         member do
           post :link
           post :unlink
+          post :import
         end
-        resources :backups, only: [ :index, :create ]
+        resources :backups, only: [ :index, :create ] do
+          member do
+            get :download
+            post :restore
+          end
+        end
       end
 
       resources :activities, only: [ :index ]
@@ -91,6 +109,7 @@ Rails.application.routes.draw do
         post :start
         post :toggle_https
         post :toggle_maintenance
+        post :transfer
         # Lazy-loaded Turbo Frame sections on the app show page — each
         # opens its own SSH round-trip, letting them load in parallel
         # instead of serially blocking #show.
@@ -136,10 +155,11 @@ Rails.application.routes.draw do
       resource :terminal, only: [ :show ], controller: "terminals"
       resource :backup_destination, only: [ :edit, :update ], controller: "backup_destinations"
     end
-    resources :resources, controller: "databases" do
+    resources :addons, controller: "databases" do
       member do
         post :link
         post :unlink
+        post :change_tier
       end
       resources :backups, only: [ :index, :create ], controller: "backups" do
         member do
@@ -148,11 +168,27 @@ Rails.application.routes.draw do
         end
       end
     end
+    # Old "resources" URL kept as redirect so external links and bookmarks
+    # don't 404 after the Heroku-style "add-ons" rename.
+    get "/resources", to: redirect("/dashboard/addons")
+    get "/resources/*path", to: redirect("/dashboard/addons/%{path}")
     resources :cloud_credentials, only: [ :index, :create, :destroy ]
-    resources :teams
-    resources :notifications, only: [ :index, :create, :destroy ]
+    # Teams UI is hidden pre-launch — keep route name (helpers still
+    # exist for any stragglers) but bounce visitors to the dashboard.
+    # The Team model and team_memberships stay intact for future use.
+    get "/teams(/*path)", to: redirect("/dashboard"), as: :teams
+    resources :notifications, only: [ :index, :create, :destroy ] do
+      member do
+        post :test
+      end
+    end
     resources :activities, only: [ :index ]
     resource :profile, only: [ :show, :edit, :update ], controller: "profile"
+    resources :api_tokens, only: [ :create, :destroy ]
+    resource :device, only: [ :show ], controller: "devices" do
+      post :authorize
+    end
+    resources :ssh_keys, only: [ :create, :destroy ]
     resource :two_factor, only: [ :show ], controller: "two_factor" do
       post :enable
       delete :disable
@@ -160,9 +196,40 @@ Rails.application.routes.draw do
     post "locale", to: "locales#update", as: :locale
   end
 
-  # Load Enterprise Edition routes if available
-  ee_routes = Rails.root.join("ee/config/routes/ee.rb")
-  instance_eval(File.read(ee_routes)) if ee_routes.exist?
+  # Enterprise features
+  namespace :dashboard do
+    resource :billing, only: [ :show ], controller: "billing" do
+      member do
+        post :pay
+        post :deposit
+        post :deposit_stripe
+        get :export
+      end
+    end
+    resource :payment_method, only: [ :create, :destroy ], controller: "payment_methods" do
+      post :confirm
+    end
+    post "ai/diagnose", to: "ai#diagnose", as: :ai_diagnose
+  end
+
+  namespace :api do
+    namespace :v1 do
+      resources :dyno_tiers, only: [ :index ]
+      resource :billing, only: [], controller: "billing" do
+        get :current_plan
+        get :usage
+        post :create_checkout
+        post :portal
+      end
+      resources :apps do
+        resources :dynos, only: [ :index, :update ]
+      end
+      post "ai/diagnose", to: "ai#diagnose"
+    end
+  end
+
+  post "/webhooks/stripe", to: "webhooks/stripe#create"
+  post "/webhooks/ipaymu", to: "webhooks/ipaymu#create"
 
   # Clean URL shortcuts
   get "/apps", to: redirect("/dashboard/apps")
@@ -171,9 +238,16 @@ Rails.application.routes.draw do
   get "/servers", to: redirect("/dashboard/servers")
   get "/activity", to: redirect("/dashboard/activities")
 
+  # Locale switching (public, no auth required)
+  post "/locale", to: "locales#update", as: :public_locale
+
   # Marketing pages
   get "/deploy", to: "pages#deploy"
   get "/pricing", to: "pages#pricing"
+  get "/privacy", to: "pages#privacy"
+  get "/terms", to: "pages#terms"
+  get "/faq", to: "pages#faq"
+  get "/refund", to: "pages#refund"
   get "/docs", to: "docs#show", as: :docs
   get "/docs/search-index.json", to: "docs#search_index", as: :docs_search_index
   get "/docs/*path", to: "docs#show", as: :docs_page

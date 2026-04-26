@@ -4,7 +4,7 @@ class Dashboard::BackupDestinationsControllerTest < ActionDispatch::IntegrationT
   include Devise::Test::IntegrationHelpers
 
   setup do
-    @user   = users(:two)   # admin, team two
+    @user   = users(:admin)
     @server = servers(:two) # team two
   end
 

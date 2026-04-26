@@ -82,7 +82,8 @@ Rails.application.configure do
   # Enable DNS rebinding protection.
   config.hosts = [
     "wokku.cloud",
-    /.*\.wokku\.dev/  # Allow subdomains (app.wokku.cloud, mochi.wokku.cloud, etc.)
+    "www.wokku.cloud",
+    /.*\.wokku\.cloud/  # Allow subdomains (app.wokku.cloud, mochi.wokku.cloud, etc.)
   ]
 
   # Skip DNS rebinding protection for the health check endpoint.

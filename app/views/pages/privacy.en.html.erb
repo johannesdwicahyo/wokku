@@ -1,0 +1,174 @@
+<% content_for(:title, "Privacy Policy - Wokku") %>
+
+<div class="min-h-screen bg-surface text-on-surface">
+  <div class="max-w-3xl mx-auto px-6 py-16">
+    <div class="mb-12">
+      <div class="flex items-center justify-between mb-4">
+        <a href="/" class="text-sm text-primary hover:underline">← Back to Wokku</a>
+        <%= button_to "Bahasa Indonesia", public_locale_path(locale: :id), method: :post, class: "text-xs text-outline hover:text-on-surface-variant border border-outline-variant/20 rounded px-2 py-1 cursor-pointer" %>
+      </div>
+      <h1 class="font-headline text-4xl font-bold text-on-surface mb-3">Privacy Policy</h1>
+      <p class="text-sm text-outline">Last updated: April 22, 2026</p>
+    </div>
+
+    <div class="prose prose-invert max-w-none space-y-8">
+
+      <section>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          This Privacy Policy describes how Wokku ("we", "us", "our") collects, uses, and protects your information when you use our services at <a href="https://wokku.cloud" class="text-primary hover:underline">wokku.cloud</a>, our API, CLI, mobile app, and the Wokku Claude Code plugin.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">1. Information We Collect</h2>
+
+        <h3 class="text-sm font-bold text-on-surface mt-4 mb-2">Account Information</h3>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li>Email address and name (required for account creation)</li>
+          <li>Password (hashed, never stored in plaintext)</li>
+          <li>GitHub or Google profile data (if you sign in via OAuth)</li>
+          <li>Two-factor authentication secrets (encrypted at rest)</li>
+        </ul>
+
+        <h3 class="text-sm font-bold text-on-surface mt-4 mb-2">Application Data</h3>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li>Application metadata (name, environment variables, domains, deployment configuration)</li>
+          <li>SSH public keys you provide for git push deployments</li>
+          <li>SSH private keys for connected Dokku servers (encrypted at rest)</li>
+          <li>Application logs (retained for up to 30 days)</li>
+          <li>Deploy history and release information</li>
+          <li>Usage metrics (CPU, memory, bandwidth)</li>
+        </ul>
+
+        <h3 class="text-sm font-bold text-on-surface mt-4 mb-2">Billing Information</h3>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li>Payment method details are processed by our payment provider (iPaymu) and are not stored on our servers</li>
+          <li>Invoice history, subscription status, and billing addresses</li>
+        </ul>
+
+        <h3 class="text-sm font-bold text-on-surface mt-4 mb-2">Technical Data</h3>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li>IP addresses, user agent, and request logs (retained for 30 days)</li>
+          <li>Error reports via Sentry (no personally identifiable information)</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">2. Claude Code Plugin Data Handling</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed mb-3">
+          The Wokku Claude Code plugin runs locally on your machine and connects directly to the Wokku API using an API token you provide. We want to be explicit about how data flows:
+        </p>
+        <ul class="text-sm text-on-surface-variant space-y-2 list-disc pl-5">
+          <li><strong class="text-on-surface">Local execution:</strong> The plugin is a Ruby script that runs on your local machine. It does not run on our servers.</li>
+          <li><strong class="text-on-surface">API token storage:</strong> Your Wokku API token is stored locally by Claude Code in your plugin configuration. We never receive a copy of this configuration.</li>
+          <li><strong class="text-on-surface">Data transmitted:</strong> When you invoke a plugin tool (e.g., "list my apps"), the plugin sends an HTTPS request to <code class="text-primary">wokku.cloud/api/v1</code> using your API token. We only receive the data necessary to fulfill that request.</li>
+          <li><strong class="text-on-surface">What we log:</strong> Standard API request logs (endpoint, timestamp, response status). Request bodies are not logged.</li>
+          <li><strong class="text-on-surface">Anthropic's role:</strong> Claude (the AI) interprets your prompts and decides which tools to call. The prompts you send to Claude are governed by Anthropic's privacy policy, not ours. We do not receive your prompt text — only the tool arguments Claude constructs.</li>
+          <li><strong class="text-on-surface">Self-hosted instances:</strong> If you configure the plugin to use a self-hosted Wokku instance, no data is sent to wokku.cloud.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">3. How We Use Your Information</h2>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li>Provide, maintain, and improve the Wokku service</li>
+          <li>Deploy and manage your applications on connected servers</li>
+          <li>Process payments and send billing notifications</li>
+          <li>Send transactional emails (deploy notifications, security alerts, account updates)</li>
+          <li>Detect and prevent abuse, fraud, and security incidents</li>
+          <li>Comply with legal obligations</li>
+        </ul>
+        <p class="text-sm text-on-surface-variant mt-3">
+          We do not sell your data, use it for advertising, or share it with third parties for marketing purposes.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">4. Third-Party Services</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed mb-3">We use the following third-party services to operate Wokku:</p>
+        <ul class="text-sm text-on-surface-variant space-y-2 list-disc pl-5">
+          <li><strong class="text-on-surface">iPaymu</strong> — Payment processing (Indonesia). <a href="https://ipaymu.com/privacy" class="text-primary hover:underline">Privacy policy</a></li>
+          <li><strong class="text-on-surface">Stripe</strong> — International payment processing. <a href="https://stripe.com/privacy" class="text-primary hover:underline">Privacy policy</a></li>
+          <li><strong class="text-on-surface">Resend</strong> — Transactional email delivery. <a href="https://resend.com/legal/privacy-policy" class="text-primary hover:underline">Privacy policy</a></li>
+          <li><strong class="text-on-surface">Sentry</strong> — Error tracking (no PII sent). <a href="https://sentry.io/privacy/" class="text-primary hover:underline">Privacy policy</a></li>
+          <li><strong class="text-on-surface">GitHub</strong> — OAuth sign-in and repository access. <a href="https://docs.github.com/en/site-policy/privacy-policies" class="text-primary hover:underline">Privacy policy</a></li>
+          <li><strong class="text-on-surface">Google</strong> — OAuth sign-in. <a href="https://policies.google.com/privacy" class="text-primary hover:underline">Privacy policy</a></li>
+          <li><strong class="text-on-surface">Cloudflare R2 / AWS S3</strong> — Database backup storage (only if you enable backups)</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">5. Data Retention</h2>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li><strong class="text-on-surface">Account data:</strong> Retained while your account is active</li>
+          <li><strong class="text-on-surface">Application logs:</strong> 30 days</li>
+          <li><strong class="text-on-surface">Database backups:</strong> Per your configured retention policy (1-30 days)</li>
+          <li><strong class="text-on-surface">Invoice records:</strong> 7 years (for tax and legal compliance)</li>
+          <li><strong class="text-on-surface">Deleted accounts:</strong> Data permanently removed within 30 days of deletion request, except where retention is legally required</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">6. Data Security</h2>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li>All data transmitted to and from Wokku is encrypted in transit using TLS 1.2 or higher</li>
+          <li>Sensitive fields (SSH keys, API tokens, 2FA secrets) are encrypted at rest using AES-256</li>
+          <li>Passwords are hashed using bcrypt</li>
+          <li>Database backups are encrypted before upload to object storage</li>
+          <li>Infrastructure runs on secured servers with regular security updates</li>
+          <li>Two-factor authentication (TOTP) available for all accounts</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">7. Your Rights</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed mb-3">You have the right to:</p>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li><strong class="text-on-surface">Access</strong> your personal data — available via the dashboard or by email request</li>
+          <li><strong class="text-on-surface">Correct</strong> inaccurate data through your profile settings</li>
+          <li><strong class="text-on-surface">Delete</strong> your account and all associated data — contact support</li>
+          <li><strong class="text-on-surface">Export</strong> your data in a portable format</li>
+          <li><strong class="text-on-surface">Revoke API tokens</strong> at any time from the dashboard</li>
+          <li><strong class="text-on-surface">Opt out</strong> of non-essential emails</li>
+        </ul>
+        <p class="text-sm text-on-surface-variant mt-3">
+          To exercise any of these rights, contact us at <a href="mailto:privacy@wokku.cloud" class="text-primary hover:underline">privacy@wokku.cloud</a>.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">8. International Data Transfers</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Wokku is operated from Indonesia with infrastructure in multiple regions. By using our service, you consent to the transfer of your data across international borders as necessary to provide the service. We use industry-standard safeguards for all cross-border data transfers.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">9. Children's Privacy</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Wokku is not intended for users under the age of 13. We do not knowingly collect personal information from children. If you believe we have collected information from a child, please contact us immediately.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">10. Changes to This Policy</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          We may update this Privacy Policy from time to time. Significant changes will be communicated via email to registered users at least 30 days before taking effect. The "Last updated" date at the top of this page reflects the most recent revision.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">11. Contact</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Questions about this Privacy Policy or our data practices? Contact us:
+        </p>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5 mt-2">
+          <li>Email: <a href="mailto:privacy@wokku.cloud" class="text-primary hover:underline">privacy@wokku.cloud</a></li>
+          <li>Support: <a href="mailto:support@wokku.cloud" class="text-primary hover:underline">support@wokku.cloud</a></li>
+          <li>Website: <a href="https://wokku.cloud" class="text-primary hover:underline">wokku.cloud</a></li>
+        </ul>
+      </section>
+
+    </div>
+  </div>
+</div>

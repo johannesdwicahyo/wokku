@@ -12,7 +12,7 @@ module Api
       end
 
       def show
-        app = AppRecord.find(params[:id])
+        app = AppRecord.lookup!(params[:id])
         authorize app
         render json: app.as_json.merge(
           git_remote: app.git_remote_url,
@@ -21,7 +21,7 @@ module Api
       end
 
       def create
-        server = Server.find(params[:server_id])
+        server = Server.lookup!(params[:server_id])
         team = current_user.teams.first
         return render json: { error: "User has no team" }, status: :unprocessable_entity if team.nil?
 
@@ -58,7 +58,7 @@ module Api
       end
 
       def update
-        app = AppRecord.find(params[:id])
+        app = AppRecord.lookup!(params[:id])
         authorize app
 
         begin
@@ -76,7 +76,7 @@ module Api
       end
 
       def destroy
-        app = AppRecord.find(params[:id])
+        app = AppRecord.lookup!(params[:id])
         authorize app
 
         begin
@@ -94,25 +94,25 @@ module Api
       end
 
       def restart
-        app = AppRecord.find(params[:id])
+        app = AppRecord.lookup!(params[:id])
         authorize app
         dokku_process_action(app, :restart)
       end
 
       def stop
-        app = AppRecord.find(params[:id])
+        app = AppRecord.lookup!(params[:id])
         authorize app
         dokku_process_action(app, :stop)
       end
 
       def start
-        app = AppRecord.find(params[:id])
+        app = AppRecord.lookup!(params[:id])
         authorize app
         dokku_process_action(app, :start)
       end
 
       def deploy
-        app = AppRecord.find(params[:id])
+        app = AppRecord.lookup!(params[:id])
         authorize app, :update?
 
         release = app.releases.create!(description: "Deploy via API")
@@ -123,8 +123,26 @@ module Api
         render json: { message: "Deploy triggered", deploy_id: deploy.id, release_id: release.id }, status: :accepted
       end
 
+      def run
+        app = AppRecord.lookup!(params[:id])
+        authorize app, :update?
+
+        command = params[:command].to_s
+        return render json: { error: "Missing command" }, status: :unprocessable_entity if command.blank?
+
+        client = Dokku::Client.new(app.server)
+        begin
+          output = client.run("run #{Shellwords.escape(app.name)} -- #{command}", timeout: 60)
+          render json: { output: output, exit_code: 0 }
+        rescue Dokku::Client::CommandError => e
+          render json: { output: e.message, exit_code: e.exit_code || 1, stderr: e.stderr }, status: :unprocessable_entity
+        rescue Dokku::Client::ConnectionError => e
+          render json: { error: e.message }, status: :service_unavailable
+        end
+      end
+
       def github_connect
-        app = AppRecord.find(params[:id])
+        app = AppRecord.lookup!(params[:id])
         authorize app, :update?
 
         repo = params[:repo]
@@ -143,7 +161,7 @@ module Api
       end
 
       def github_disconnect
-        app = AppRecord.find(params[:id])
+        app = AppRecord.lookup!(params[:id])
         authorize app, :update?
 
         app.update!(

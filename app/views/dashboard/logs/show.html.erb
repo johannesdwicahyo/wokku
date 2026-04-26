@@ -37,10 +37,15 @@
 </div>
 
 <%# Log Drains Section %>
-<div class="bg-surface-container-low rounded-xl overflow-hidden mt-6">
-  <div class="px-6 py-4 border-b border-outline-variant/15">
-    <h2 class="text-base font-semibold text-on-surface font-headline">Log Drains</h2>
-    <p class="text-sm text-outline mt-1">Forward application logs to an external service</p>
+<div class="bg-surface-container-low rounded-xl overflow-hidden mt-6" data-controller="slide-panel">
+  <div class="px-6 py-4 border-b border-outline-variant/15 flex items-center justify-between">
+    <div>
+      <h2 class="text-base font-semibold text-on-surface font-headline">Log Drains</h2>
+      <p class="text-sm text-outline mt-1">Forward application logs to an external service</p>
+    </div>
+    <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">
+      <span class="material-symbols-outlined text-[16px] mr-1">add</span> Add Drain
+    </button>
   </div>
 
   <% if @log_drains.any? %>
@@ -67,22 +72,22 @@
       <p class="text-sm text-outline">No log drains configured.</p>
     </div>
   <% end %>
-</div>
 
-<%# Add Log Drain %>
-<div class="bg-surface-container-low rounded-xl p-6 mt-6">
-  <h3 class="text-sm font-semibold text-on-surface font-headline mb-1">Add Log Drain</h3>
-  <p class="text-xs text-outline mb-4">Forward logs to a syslog or HTTP endpoint. Example: <span class="font-mono text-on-surface-variant">syslog://logs.example.com:514</span></p>
-  <%= form_with(model: LogDrain.new, url: dashboard_app_log_drains_path(@app), class: "flex items-end space-x-3") do |f| %>
-    <div class="flex-1">
-      <%= f.label :url, "Drain URL", class: "block text-[10px] text-outline uppercase tracking-wider font-bold mb-1" %>
-      <%= f.text_field :url, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface font-mono text-sm focus:ring-primary focus:border-primary", placeholder: "syslog://logs.example.com:514" %>
-    </div>
-    <div>
-      <%= f.label :drain_type, "Type", class: "block text-[10px] text-outline uppercase tracking-wider font-bold mb-1" %>
-      <%= f.select :drain_type, [["Syslog", "syslog"], ["HTTPS", "https"]], {}, class: "rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary" %>
-    </div>
-    <%= f.submit "Add Drain", class: "px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
+  <%= render layout: "dashboard/shared/slide_panel", locals: { title: "Add Log Drain", subtitle: "Forward logs to a syslog or HTTP endpoint" } do %>
+    <%= form_with(model: LogDrain.new, url: dashboard_app_log_drains_path(@app), class: "space-y-4") do |f| %>
+      <div>
+        <%= f.label :url, "Drain URL", class: "block text-[10px] text-outline uppercase tracking-wider font-bold mb-1" %>
+        <%= f.text_field :url, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface font-mono text-sm focus:ring-primary focus:border-primary", placeholder: "syslog://logs.example.com:514", autofocus: true %>
+      </div>
+      <div>
+        <label class="block text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Type</label>
+        <%= combobox_tag "log_drain[drain_type]", [["Syslog", "syslog"], ["HTTPS", "https"]], placeholder: "Select a type" %>
+      </div>
+      <div class="flex items-center gap-2">
+        <%= f.submit "Add Drain", class: "px-4 py-2.5 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
+        <button type="button" data-action="click->slide-panel#close" class="px-4 py-2.5 text-sm font-medium text-on-surface-variant border border-outline-variant/30 rounded-md hover:bg-surface-container-high transition cursor-pointer">Cancel</button>
+      </div>
+    <% end %>
   <% end %>
 </div>
 

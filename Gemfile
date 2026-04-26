@@ -70,6 +70,9 @@ gem "redis"
 gem "chartkick"
 gem "groupdate"
 
+# Ruby 3.4 removed csv from default gems; billing ledger export uses it.
+gem "csv"
+
 # API
 gem "rack-cors"
 gem "rack-attack"

@@ -31,8 +31,10 @@
             <h3 class="font-headline text-base font-bold text-on-surface mb-3"><%= tier.name %></h3>
 
             <div class="mb-4">
-              <div class="font-headline text-xl font-bold text-on-surface">~<%= format_hourly_price(tier.price_cents_per_hour) %><span class="text-xs text-outline font-body font-normal"><%= hourly_price_label %></span></div>
-              <div class="text-xs text-outline mt-0.5"><%= t('pricing.max_monthly', price: format_price(tier.monthly_price_dollars), period: price_period) %></div>
+              <div class="font-headline text-xl font-bold text-on-surface"><%= format_price(tier.monthly_price_dollars) %><span class="text-xs text-outline font-body font-normal"><%= price_period %></span></div>
+              <% if tier.monthly_price_dollars.to_f > 0 %>
+                <div class="text-xs text-outline mt-0.5">≈ <%= format_daily_from_monthly(tier.monthly_price_dollars) %><%= daily_price_label %></div>
+              <% end %>
             </div>
 
             <div class="space-y-1.5 text-xs pt-3 border-t border-outline-variant/10 flex-1">
@@ -42,8 +44,14 @@
               </div>
               <div class="flex items-center gap-2 text-on-surface-variant">
                 <span class="material-symbols-outlined text-[14px] text-outline">speed</span>
-                <span><%= tier.spec&.dig("cpu") %> <%= t('pricing.cpu') %></span>
+                <span><%= vcpu_display(tier.spec&.dig("cpu")) %> <%= t('pricing.cpu') %></span>
               </div>
+              <% if tier.spec&.dig("disk").present? %>
+                <div class="flex items-center gap-2 text-on-surface-variant">
+                  <span class="material-symbols-outlined text-[14px] text-outline">hard_drive</span>
+                  <span><%= tier.spec.dig("disk") %> <%= t('pricing.disk') %></span>
+                </div>
+              <% end %>
             </div>
           </div>
         <% end %>
@@ -52,11 +60,11 @@
       <%# Hardcoded fallback when no ServiceTier records exist %>
       <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
         <% [
-          { name: "Free", ram: "256 MB", cpu: "0.15", hourly_cents: 0, monthly_usd: 0, free: true },
-          { name: "Basic", ram: "512 MB", cpu: "0.3", hourly_cents: 0.2, monthly_usd: 1.50, free: false },
-          { name: "Standard", ram: "1 GB", cpu: "0.5", hourly_cents: 0.5, monthly_usd: 4, free: false },
-          { name: "Performance", ram: "2 GB", cpu: "1.0", hourly_cents: 1.1, monthly_usd: 8, highlight: true, free: false },
-          { name: "Performance 2x", ram: "4 GB", cpu: "2.0", hourly_cents: 2.1, monthly_usd: 15, free: false }
+          { name: "Free",          ram: "256 MB", cpu: "0.15", disk: "2 GB",  hourly_cents: 0,   monthly_usd: 0,    free: true },
+          { name: "Basic",         ram: "512 MB", cpu: "0.3",  disk: "5 GB",  hourly_cents: 0.2, monthly_usd: 1.50, free: false },
+          { name: "Standard",      ram: "1 GB",   cpu: "0.5",  disk: "15 GB", hourly_cents: 0.5, monthly_usd: 4,    free: false },
+          { name: "Performance",   ram: "2 GB",   cpu: "1.0",  disk: "30 GB", hourly_cents: 1.1, monthly_usd: 8,    highlight: true, free: false },
+          { name: "Performance 2x", ram: "4 GB",  cpu: "2.0",  disk: "60 GB", hourly_cents: 2.1, monthly_usd: 15,   free: false }
         ].each do |tier| %>
           <div class="<%= tier[:highlight] ? 'border-primary/50 bg-primary/5' : 'border-outline-variant/20 bg-surface-container-low' %> rounded-lg border p-5 relative flex flex-col">
             <% if tier[:highlight] %>
@@ -65,8 +73,10 @@
             <h3 class="font-headline text-base font-bold text-on-surface mb-3"><%= tier[:name] %></h3>
 
             <div class="mb-4">
-              <div class="font-headline text-xl font-bold text-on-surface">~<%= format_hourly_price(tier[:hourly_cents]) %><span class="text-xs text-outline font-body font-normal"><%= hourly_price_label %></span></div>
-              <div class="text-xs text-outline mt-0.5"><%= t('pricing.max_monthly', price: format_price(tier[:monthly_usd]), period: price_period) %></div>
+              <div class="font-headline text-xl font-bold text-on-surface"><%= format_price(tier[:monthly_usd]) %><span class="text-xs text-outline font-body font-normal"><%= price_period %></span></div>
+              <% if tier[:monthly_usd].to_f > 0 %>
+                <div class="text-xs text-outline mt-0.5">≈ <%= format_daily_from_monthly(tier[:monthly_usd]) %><%= daily_price_label %></div>
+              <% end %>
             </div>
 
             <div class="space-y-1.5 text-xs pt-3 border-t border-outline-variant/10 flex-1">
@@ -76,7 +86,11 @@
               </div>
               <div class="flex items-center gap-2 text-on-surface-variant">
                 <span class="material-symbols-outlined text-[14px] text-outline">speed</span>
-                <span><%= tier[:cpu] %> <%= t('pricing.cpu') %></span>
+                <span><%= vcpu_display(tier[:cpu]) %> <%= t('pricing.cpu') %></span>
+              </div>
+              <div class="flex items-center gap-2 text-on-surface-variant">
+                <span class="material-symbols-outlined text-[14px] text-outline">hard_drive</span>
+                <span><%= tier[:disk] %> <%= t('pricing.disk') %></span>
               </div>
             </div>
           </div>
@@ -91,6 +105,7 @@
       <div>
         <h2 class="font-headline text-xl font-bold text-on-surface"><%= t('pricing.databases') %></h2>
         <p class="text-sm text-outline mt-0.5"><%= t('pricing.databases_desc') %></p>
+        <p class="text-[10px] text-outline uppercase tracking-wider font-bold mt-1">PostgreSQL · MySQL · MongoDB</p>
       </div>
       <span class="text-[10px] text-outline uppercase tracking-wider font-bold"><%= t('pricing.per_database') %></span>
     </div>
@@ -108,8 +123,10 @@
             <h3 class="font-headline text-base font-bold text-on-surface mb-3"><%= tier.name %></h3>
 
             <div class="mb-4">
-              <div class="font-headline text-xl font-bold text-on-surface">~<%= format_hourly_price(tier.price_cents_per_hour) %><span class="text-xs text-outline font-body font-normal"><%= hourly_price_label %></span></div>
-              <div class="text-xs text-outline mt-0.5"><%= t('pricing.max_monthly', price: format_price(tier.monthly_price_dollars), period: price_period) %></div>
+              <div class="font-headline text-xl font-bold text-on-surface"><%= format_price(tier.monthly_price_dollars) %><span class="text-xs text-outline font-body font-normal"><%= price_period %></span></div>
+              <% if tier.monthly_price_dollars.to_f > 0 %>
+                <div class="text-xs text-outline mt-0.5">≈ <%= format_daily_from_monthly(tier.monthly_price_dollars) %><%= daily_price_label %></div>
+              <% end %>
             </div>
 
             <div class="space-y-1.5 text-xs pt-3 border-t border-outline-variant/10 flex-1">
@@ -148,46 +165,61 @@
       </div>
     <% else %>
       <%# Hardcoded fallback when no ServiceTier records exist %>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
         <% [
           {
-            name: "Mini",
+            name: "Free",
+            architecture: t('pricing.shared'),
+            storage: "150 MB",
+            connections: "5",
+            backup: t('pricing.manual_only'),
+            backup_detail: t('pricing.retention', days: 1),
+            monthly_usd: 0,
+            postgres_only: true
+          },
+          {
+            name: "Basic",
+            architecture: t('pricing.dedicated'),
             storage: "1 GB",
             connections: "20",
             backup: t('pricing.manual_only'),
             backup_detail: "#{t('pricing.max_backups', count: 2)}, #{t('pricing.retention', days: 1)}",
-            hourly_cents: 0,
-            monthly_usd: 0
+            monthly_usd: 1
           },
           {
-            name: "Basic",
+            name: "Standard",
+            architecture: t('pricing.dedicated'),
             storage: "4 GB",
             connections: "50",
             backup: "#{t('pricing.daily')} #{t('pricing.auto_backup')}",
             backup_detail: t('pricing.retention', days: 7),
-            hourly_cents: 0.1,
-            monthly_usd: 1,
+            monthly_usd: 2,
             highlight: true
           },
           {
-            name: "Standard",
+            name: "Performance",
+            architecture: t('pricing.dedicated'),
             storage: "16 GB",
             connections: "120",
             backup: "#{t('pricing.daily')} #{t('pricing.auto_backup')}",
             backup_detail: t('pricing.retention', days: 14),
-            hourly_cents: 0.5,
-            monthly_usd: 4
+            monthly_usd: 6
           }
         ].each do |tier| %>
           <div class="<%= tier[:highlight] ? 'border-primary/50 bg-primary/5' : 'border-outline-variant/20 bg-surface-container-low' %> rounded-lg border p-5 relative flex flex-col">
             <% if tier[:highlight] %>
               <span class="absolute top-2 right-2 text-[9px] text-primary bg-primary/15 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider"><%= t('pricing.popular') %></span>
             <% end %>
-            <h3 class="font-headline text-base font-bold text-on-surface mb-3"><%= tier[:name] %></h3>
+            <h3 class="font-headline text-base font-bold text-on-surface mb-1"><%= tier[:name] %></h3>
+            <% if tier[:architecture] %>
+              <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-2"><%= tier[:architecture] %><%= tier[:postgres_only] ? " · PostgreSQL" : "" %></p>
+            <% end %>
 
             <div class="mb-4">
-              <div class="font-headline text-xl font-bold text-on-surface">~<%= format_hourly_price(tier[:hourly_cents]) %><span class="text-xs text-outline font-body font-normal"><%= hourly_price_label %></span></div>
-              <div class="text-xs text-outline mt-0.5"><%= t('pricing.max_monthly', price: format_price(tier[:monthly_usd]), period: price_period) %></div>
+              <div class="font-headline text-xl font-bold text-on-surface"><%= format_price(tier[:monthly_usd]) %><span class="text-xs text-outline font-body font-normal"><%= price_period %></span></div>
+              <% if tier[:monthly_usd].to_f > 0 %>
+                <div class="text-xs text-outline mt-0.5">≈ <%= format_daily_from_monthly(tier[:monthly_usd]) %><%= daily_price_label %></div>
+              <% end %>
             </div>
 
             <div class="space-y-1.5 text-xs pt-3 border-t border-outline-variant/10 flex-1">
@@ -226,14 +258,12 @@
           <div class="flex justify-between items-center">
             <div>
               <div class="text-on-surface-variant">Mini (25 MB)</div>
-              <div class="text-[10px] text-outline">~<%= format_hourly_price(0) %><%= hourly_price_label %></div>
             </div>
             <span class="font-mono text-primary text-xs"><%= t('pricing.free_label') %></span>
           </div>
           <div class="flex justify-between items-center pt-2 border-t border-outline-variant/10">
             <div>
               <div class="text-on-surface-variant">Basic (100 MB)</div>
-              <div class="text-[10px] text-outline">~<%= format_hourly_price(0.07) %><%= hourly_price_label %></div>
             </div>
             <span class="font-mono text-on-surface text-xs"><%= format_price(0.5) %><%= price_period %></span>
           </div>
@@ -248,21 +278,18 @@
           <div class="flex justify-between items-center">
             <div>
               <div class="text-on-surface-variant">Mini (128 MB)</div>
-              <div class="text-[10px] text-outline">~<%= format_hourly_price(0) %><%= hourly_price_label %></div>
             </div>
             <span class="font-mono text-primary text-xs"><%= t('pricing.free_label') %></span>
           </div>
           <div class="flex justify-between items-center pt-2 border-t border-outline-variant/10">
             <div>
               <div class="text-on-surface-variant">Basic (512 MB)</div>
-              <div class="text-[10px] text-outline">~<%= format_hourly_price(0.3) %><%= hourly_price_label %></div>
             </div>
             <span class="font-mono text-on-surface text-xs"><%= format_price(2) %><%= price_period %></span>
           </div>
           <div class="flex justify-between items-center pt-2 border-t border-outline-variant/10">
             <div>
               <div class="text-on-surface-variant">Standard (2 GB)</div>
-              <div class="text-[10px] text-outline">~<%= format_hourly_price(0.8) %><%= hourly_price_label %></div>
             </div>
             <span class="font-mono text-on-surface text-xs"><%= format_price(6) %><%= price_period %></span>
           </div>
@@ -277,21 +304,18 @@
           <div class="flex justify-between items-center">
             <div>
               <div class="text-on-surface-variant">Mini (64 MB)</div>
-              <div class="text-[10px] text-outline">~<%= format_hourly_price(0) %><%= hourly_price_label %></div>
             </div>
             <span class="font-mono text-primary text-xs"><%= t('pricing.free_label') %></span>
           </div>
           <div class="flex justify-between items-center pt-2 border-t border-outline-variant/10">
             <div>
               <div class="text-on-surface-variant">Basic (256 MB)</div>
-              <div class="text-[10px] text-outline">~<%= format_hourly_price(0.3) %><%= hourly_price_label %></div>
             </div>
             <span class="font-mono text-on-surface text-xs"><%= format_price(2) %><%= price_period %></span>
           </div>
           <div class="flex justify-between items-center pt-2 border-t border-outline-variant/10">
             <div>
               <div class="text-on-surface-variant">Standard (1 GB)</div>
-              <div class="text-[10px] text-outline">~<%= format_hourly_price(0.8) %><%= hourly_price_label %></div>
             </div>
             <span class="font-mono text-on-surface text-xs"><%= format_price(6) %><%= price_period %></span>
           </div>
@@ -299,60 +323,6 @@
       </div>
     </div>
 
-    <%# NoSQL (separate row) %>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
-      <div class="bg-surface-container-low rounded-lg border border-outline-variant/20 p-5">
-        <h3 class="font-headline text-sm font-bold text-on-surface mb-3"><%= t('pricing.nosql') %></h3>
-        <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-3">MongoDB</p>
-        <div class="space-y-2 text-xs">
-          <div class="flex justify-between items-center">
-            <div>
-              <div class="text-on-surface-variant">Mini (64 MB)</div>
-              <div class="text-[10px] text-outline">~<%= format_hourly_price(0) %><%= hourly_price_label %></div>
-            </div>
-            <span class="font-mono text-primary text-xs"><%= t('pricing.free_label') %></span>
-          </div>
-          <div class="flex justify-between items-center pt-2 border-t border-outline-variant/10">
-            <div>
-              <div class="text-on-surface-variant">Basic (256 MB)</div>
-              <div class="text-[10px] text-outline">~<%= format_hourly_price(0.3) %><%= hourly_price_label %></div>
-            </div>
-            <span class="font-mono text-on-surface text-xs"><%= format_price(2) %><%= price_period %></span>
-          </div>
-          <div class="flex justify-between items-center pt-2 border-t border-outline-variant/10">
-            <div>
-              <div class="text-on-surface-variant">Standard (1 GB)</div>
-              <div class="text-[10px] text-outline">~<%= format_hourly_price(0.8) %><%= hourly_price_label %></div>
-            </div>
-            <span class="font-mono text-on-surface text-xs"><%= format_price(6) %><%= price_period %></span>
-          </div>
-        </div>
-      </div>
-
-      <%# Analytics %>
-      <div class="bg-surface-container-low rounded-lg border border-outline-variant/20 p-5">
-        <h3 class="font-headline text-sm font-bold text-on-surface mb-3"><%= t('pricing.analytics') %></h3>
-        <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-3">ClickHouse</p>
-        <div class="space-y-2 text-xs">
-          <div class="flex justify-between items-center">
-            <div>
-              <div class="text-on-surface-variant">Basic (512 MB + 10 GB)</div>
-              <div class="text-[10px] text-outline">~$0.005<%= hourly_price_label %></div>
-            </div>
-            <span class="font-mono text-on-surface text-xs"><%= format_price(4) %><%= price_period %></span>
-          </div>
-          <div class="flex justify-between items-center pt-2 border-t border-outline-variant/10">
-            <div>
-              <div class="text-on-surface-variant">Standard (2 GB + 50 GB)</div>
-              <div class="text-[10px] text-outline">~<%= format_hourly_price(1.4) %><%= hourly_price_label %></div>
-            </div>
-            <span class="font-mono text-on-surface text-xs"><%= format_price(10) %><%= price_period %></span>
-          </div>
-        </div>
-      </div>
-
-      <div></div>
-    </div>
   </div>
 
   <%# What's Included %>

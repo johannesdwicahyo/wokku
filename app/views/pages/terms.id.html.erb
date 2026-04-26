@@ -1,0 +1,134 @@
+<% content_for(:title, "Syarat Layanan - Wokku") %>
+
+<div class="min-h-screen bg-surface text-on-surface">
+  <div class="max-w-3xl mx-auto px-6 py-16">
+    <div class="mb-12">
+      <div class="flex items-center justify-between mb-4">
+        <a href="/" class="text-sm text-primary hover:underline">← Kembali ke Wokku</a>
+        <%= button_to "English", public_locale_path(locale: :en), method: :post, class: "text-xs text-outline hover:text-on-surface-variant border border-outline-variant/20 rounded px-2 py-1 cursor-pointer" %>
+      </div>
+      <h1 class="font-headline text-4xl font-bold text-on-surface mb-3">Syarat Layanan</h1>
+      <p class="text-sm text-outline">Terakhir diperbarui: 22 April 2026</p>
+    </div>
+
+    <div class="space-y-8">
+
+      <section>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Dengan menggunakan Wokku ("Layanan"), Anda setuju pada Syarat Layanan ini. Jika Anda tidak setuju, mohon untuk tidak menggunakan Layanan.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">1. Deskripsi Layanan</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Wokku adalah platform-as-a-service yang membantu Anda men-deploy dan mengelola aplikasi pada server Dokku. Layanan mencakup dashboard web, REST API, command-line interface, aplikasi mobile, dan plugin Claude Code.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">2. Ketentuan Akun</h2>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li>Anda harus berusia minimal 13 tahun untuk menggunakan Layanan</li>
+          <li>Anda bertanggung jawab menjaga keamanan akun dan kata sandi Anda</li>
+          <li>Anda bertanggung jawab atas semua konten yang di-deploy melalui akun Anda</li>
+          <li>Anda dilarang menggunakan Layanan untuk kegiatan ilegal atau menghosting konten berbahaya</li>
+          <li>Satu orang atau entitas tidak boleh memiliki beberapa akun tier gratis</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">3. Penggunaan yang Diperbolehkan</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed mb-3">
+          Wokku dimaksudkan untuk menghosting aplikasi web, API, background worker, dan database yang Anda miliki atau berwenang untuk jalankan. Penggunaan berikut <strong class="text-on-surface">sangat dilarang</strong> dan akan mengakibatkan penangguhan segera:
+        </p>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li>Melanggar hukum Indonesia yang berlaku atau hukum yurisdiksi pengguna</li>
+          <li>Menyebarkan malware, virus, ransomware, rootkit, atau kode berbahaya</li>
+          <li>Mengirim email yang tidak diminta (spam), spam SMS, atau konten phishing</li>
+          <li>Mengoperasikan proxy HTTP, SOCKS, atau proxy anonim terbuka untuk pihak ketiga</li>
+          <li>Menjalankan VPN exit node, Tor exit relay, atau layanan egress anonim sejenis</li>
+          <li>Mining cryptocurrency, workload proof-of-work, atau penyalahgunaan CPU/GPU berkelanjutan lainnya</li>
+          <li>Mengoperasikan layanan DDoS, stresser, atau booter; berpartisipasi dalam credential stuffing atau serangan brute-force</li>
+          <li>Menghosting CSAM, konten intim non-konsensual, atau konten yang mempromosikan kekerasan terhadap orang lain</li>
+          <li>Melanggar hak kekayaan intelektual atau rahasia dagang pihak ketiga</li>
+          <li>Mencoba akses tidak sah ke akun Wokku lain, infrastruktur Wokku, atau data pelanggan lain</li>
+          <li>Memeriksa, memindai, atau menguji kerentanan sistem yang bukan milik Anda tanpa izin tertulis kami</li>
+          <li>Mengakali batas resource, penagihan, atau kontrol pembuatan akun</li>
+        </ul>
+        <p class="text-sm text-on-surface-variant leading-relaxed mt-3">
+          Kami menegakkan batasan ini di lapisan jaringan bila memungkinkan — SMTP keluar pada port 25 dan 465 diblokir secara default untuk mencegah penyalahgunaan open-relay, dan akses ke rentang private-network RFC1918 (di luar jaringan internal aplikasi Anda sendiri) ditolak untuk mencegah serangan server-side-request-forgery. Kontrol teknis ini bukan pengganti kewajiban Anda untuk mematuhi ketentuan pada bagian ini.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">4. Penegakan</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Jika kami memutuskan, atas kebijakan kami sendiri, bahwa penggunaan Wokku oleh Anda melanggar Bagian 3, kami dapat: (a) menangguhkan atau menghentikan akun Anda tanpa pemberitahuan sebelumnya; (b) menghapus aplikasi dan data yang melanggar; (c) menahan saldo deposit yang tidak terpakai untuk menutup biaya penanganan insiden dan biaya chargeback; (d) membagikan informasi relevan dengan aparat penegak hukum atau pihak ketiga yang terdampak; (e) memblokir secara permanen metode pembayaran dan alamat IP yang terkait dengan akun. Pengembalian dana tidak diberikan untuk penangguhan yang disebabkan oleh pelanggaran Bagian 3.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">5. Penagihan dan Pembayaran</h2>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li>Tier gratis tersedia dengan batas resource</li>
+          <li>Model penagihan: prabayar via deposit IDR, pemotongan harian berdasarkan penggunaan per jam hari sebelumnya</li>
+          <li>Pembayaran diproses oleh iPaymu (QRIS, transfer bank) dan Stripe (kartu kredit)</li>
+          <li>Aplikasi berjalan akan otomatis dijeda saat deposit mencapai Rp 0</li>
+          <li>Pengembalian dana tersedia untuk kredit prabayar yang tidak terpakai dalam 14 hari sejak pembelian</li>
+          <li>Minimum top-up: Rp 25.000</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">6. Data dan Privasi</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Penggunaan Layanan oleh Anda juga diatur oleh <a href="/privacy" class="text-primary hover:underline">Kebijakan Privasi</a> kami. Anda tetap memiliki kepemilikan atas kode aplikasi, data, dan konten pengguna Anda.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">7. Ketersediaan Layanan</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Kami berupaya menjaga Layanan tetap tersedia namun tidak menjamin uptime 100%. Pemeliharaan terjadwal dan gangguan tak terduga dapat terjadi. Kami tidak bertanggung jawab atas downtime, kehilangan data, atau gangguan bisnis.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">8. Penghentian</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Anda dapat membatalkan akun kapan saja dari dashboard. Kami berhak menangguhkan atau menghentikan akun yang melanggar Syarat ini. Setelah penghentian, data Anda akan dihapus sesuai Kebijakan Privasi kami.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">9. Penafian Jaminan</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Layanan disediakan "sebagaimana adanya" tanpa jaminan dalam bentuk apa pun, tersurat maupun tersirat. Kami tidak menjamin Layanan akan berjalan tanpa gangguan, bebas dari error, atau aman.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">10. Batasan Tanggung Jawab</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Sejauh diizinkan oleh hukum, Wokku tidak bertanggung jawab atas kerugian tidak langsung, insidental, khusus, konsekuensial, atau punitif, termasuk hilangnya keuntungan, data, atau reputasi.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">11. Perubahan Syarat</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Kami dapat memperbarui Syarat ini dari waktu ke waktu. Penggunaan Layanan setelah perubahan berlaku merupakan penerimaan Syarat yang baru.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">12. Kontak</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Pertanyaan tentang Syarat ini? Email <a href="mailto:legal@wokku.cloud" class="text-primary hover:underline">legal@wokku.cloud</a>.
+        </p>
+      </section>
+
+    </div>
+  </div>
+</div>

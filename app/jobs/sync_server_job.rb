@@ -74,7 +74,9 @@ class SyncServerJob < ApplicationJob
     # Preload app_records once instead of querying per database
     apps_by_name = server.app_records.index_by(&:name)
 
-    server.database_services.includes(app_databases: :app_record).find_each do |db|
+    # Shared tenants are attached via DATABASE_URL env var, not Dokku's
+    # postgres:link — they have no dokku-native link metadata to reconcile.
+    server.database_services.dedicated.includes(app_databases: :app_record).find_each do |db|
       info = dokku_databases.info(db.service_type, db.name)
       links_value = info["links"] || info["Links"] || ""
       remote_app_names = links_value.split(/[\s,]+/).reject(&:blank?)
@@ -103,14 +105,17 @@ class SyncServerJob < ApplicationJob
   def sync_databases(dokku_databases, server)
     Dokku::Databases::SUPPORTED_TYPES.each do |service_type|
       remote_names = dokku_databases.list(service_type)
-      local_names = server.database_services.where(service_type: service_type).pluck(:name)
+      # Shared tenants are logical roles inside the shared host container —
+      # they never appear in Dokku's postgres:list, so they must be excluded
+      # from the reconciliation or sync will destroy them every run.
+      local_names = server.database_services.dedicated.where(service_type: service_type).pluck(:name)
 
       (remote_names - local_names).each do |name|
         server.database_services.create!(name: name, service_type: service_type, status: :running)
       end
 
       (local_names - remote_names).each do |name|
-        server.database_services.find_by(name: name, service_type: service_type)&.destroy
+        server.database_services.dedicated.find_by(name: name, service_type: service_type)&.destroy
       end
     end
   rescue => e

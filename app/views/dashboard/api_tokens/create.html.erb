@@ -1,0 +1,3 @@
+<%= turbo_frame_tag "api_tokens" do %>
+  <%= render "dashboard/api_tokens/token_list", tokens: @tokens, new_token: @plain_token %>
+<% end %>

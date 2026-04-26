@@ -2,7 +2,7 @@ module Api
   module V1
     class BackupsController < BaseController
       def index
-        db = DatabaseService.find(params[:database_id])
+        db = DatabaseService.lookup!(params[:database_id])
         authorize db.server, :show?
         backups = db.backups.order(created_at: :desc)
         render json: backups.map { |b|
@@ -11,7 +11,7 @@ module Api
       end
 
       def create
-        db = DatabaseService.find(params[:database_id])
+        db = DatabaseService.lookup!(params[:database_id])
         authorize db.server, :update?
 
         if db.backup_limit_reached?
@@ -23,6 +23,24 @@ module Api
 
         BackupJob.perform_later(db.id)
         render json: { message: "Backup started" }, status: :created
+      rescue => e
+        render json: { error: e.message }, status: :unprocessable_entity
+      end
+
+      def download
+        db = DatabaseService.lookup!(params[:database_id])
+        authorize db, :show?
+        backup = db.backups.find(params[:id])
+        render json: { url: backup.download_url(expires_in: 300), expires_in: 300 }
+      end
+
+      def restore
+        db = DatabaseService.lookup!(params[:database_id])
+        authorize db, :update?
+        backup = db.backups.find(params[:id])
+
+        RestoreService.new(backup).perform!
+        render json: { message: "Restore completed", restored_to: db.name, from_backup: backup.id }
       rescue => e
         render json: { error: e.message }, status: :unprocessable_entity
       end

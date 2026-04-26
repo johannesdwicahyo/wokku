@@ -17,7 +17,7 @@
     <% @members.each do |membership| %>
       <div class="px-6 py-3 flex items-center justify-between hover:bg-surface-container-highest transition">
         <div class="flex items-center space-x-3">
-          <div class="w-8 h-8 technical-gradient rounded-full flex items-center justify-center text-on-primary text-sm font-semibold">
+          <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-on-primary text-sm font-semibold">
             <%= membership.user.email[0].upcase %>
           </div>
           <span class="text-sm font-medium text-on-surface"><%= membership.user.email %></span>

@@ -12,17 +12,17 @@ class Dashboard::DatabasesControllerTest < ActionDispatch::IntegrationTest
   # --- Authentication ---
 
   test "index redirects to login when not authenticated" do
-    get "/dashboard/resources"
+    get "/dashboard/addons"
     assert_response :redirect
   end
 
   test "show redirects to login when not authenticated" do
-    get "/dashboard/resources/#{@database.id}"
+    get "/dashboard/addons/#{@database.id}"
     assert_response :redirect
   end
 
   test "new redirects to login when not authenticated" do
-    get "/dashboard/resources/new"
+    get "/dashboard/addons/new"
     assert_response :redirect
   end
 
@@ -30,13 +30,13 @@ class Dashboard::DatabasesControllerTest < ActionDispatch::IntegrationTest
 
   test "index returns 200 for authenticated admin" do
     sign_in @user
-    get "/dashboard/resources"
+    get "/dashboard/addons"
     assert_response :success
   end
 
   test "index filters by type param" do
     sign_in @user
-    get "/dashboard/resources", params: { group: "app" }
+    get "/dashboard/addons", params: { group: "app" }
     assert_response :success
   end
 
@@ -44,29 +44,29 @@ class Dashboard::DatabasesControllerTest < ActionDispatch::IntegrationTest
 
   test "show returns 200 for authenticated admin" do
     sign_in @user
-    get "/dashboard/resources/#{@database.id}"
+    get "/dashboard/addons/#{@database.id}"
     assert_response :success
   end
 
   # --- new ---
 
-  test "new returns 200 for authenticated admin" do
+  test "new redirects to addons index (slide-panel form is the source of truth)" do
     sign_in @user
-    get "/dashboard/resources/new"
-    assert_response :success
+    get "/dashboard/addons/new"
+    assert_redirected_to "/dashboard/addons"
   end
 
   # --- create (SSH call will fail; assert redirect with alert) ---
 
   test "create redirects when not authenticated" do
-    post "/dashboard/resources",
+    post "/dashboard/addons",
          params: { database_service: { name: "new-pg", service_type: "postgres", server_id: @server.id } }
     assert_response :redirect
   end
 
   test "create rescues SSH error and redirects with alert" do
     sign_in @user
-    post "/dashboard/resources",
+    post "/dashboard/addons",
          params: { database_service: { name: "new-pg-test", service_type: "postgres", server_id: @server.id } }
     assert_response :redirect
   end
@@ -74,13 +74,13 @@ class Dashboard::DatabasesControllerTest < ActionDispatch::IntegrationTest
   # --- destroy (SSH call will fail; assert redirect) ---
 
   test "destroy redirects when not authenticated" do
-    delete "/dashboard/resources/#{@database.id}"
+    delete "/dashboard/addons/#{@database.id}"
     assert_response :redirect
   end
 
   test "destroy rescues SSH error and redirects" do
     sign_in @user
-    delete "/dashboard/resources/#{@database.id}"
+    delete "/dashboard/addons/#{@database.id}"
     assert_response :redirect
   end
 
@@ -88,27 +88,27 @@ class Dashboard::DatabasesControllerTest < ActionDispatch::IntegrationTest
 
   test "link redirects when not authenticated" do
     app = app_records(:two)
-    post "/dashboard/resources/#{@database.id}/link", params: { app_id: app.id }
+    post "/dashboard/addons/#{@database.id}/link", params: { app_id: app.id }
     assert_response :redirect
   end
 
   test "link rescues SSH error and redirects" do
     sign_in @user
     app = app_records(:two)
-    post "/dashboard/resources/#{@database.id}/link", params: { app_id: app.id }
+    post "/dashboard/addons/#{@database.id}/link", params: { app_id: app.id }
     assert_response :redirect
   end
 
   test "unlink redirects when not authenticated" do
     app = app_records(:two)
-    post "/dashboard/resources/#{@database.id}/unlink", params: { app_id: app.id }
+    post "/dashboard/addons/#{@database.id}/unlink", params: { app_id: app.id }
     assert_response :redirect
   end
 
   test "unlink rescues SSH error and redirects" do
     sign_in @user
     app = app_records(:two)
-    post "/dashboard/resources/#{@database.id}/unlink", params: { app_id: app.id }
+    post "/dashboard/addons/#{@database.id}/unlink", params: { app_id: app.id }
     assert_response :redirect
   end
 end

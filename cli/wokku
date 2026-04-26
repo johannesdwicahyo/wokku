@@ -9,7 +9,7 @@ require "uri"
 require "io/console"
 require "fileutils"
 
-VERSION = "1.6.0"
+VERSION = "1.0.0"
 CONFIG_DIR = File.expand_path("~/.wokku")
 CONFIG_FILE = File.join(CONFIG_DIR, "config.json")
 
@@ -70,38 +70,6 @@ def api(method, path, body = nil)
   data
 end
 
-# Streams a local file as the request body to a Wokku API endpoint.
-# Used by addons:import — gigabyte-size dumps shouldn't load into memory.
-def api_stream_file(method, path, file_path, content_type: "application/octet-stream", read_timeout: 1800)
-  token = api_token
-  abort "Not logged in. Run: wokku auth:login" unless token
-  abort "File not found: #{file_path}" unless File.exist?(file_path)
-
-  uri = URI("#{api_url}#{path}")
-  http = Net::HTTP.new(uri.host, uri.port)
-  http.use_ssl = uri.scheme == "https"
-  http.open_timeout = 10
-  http.read_timeout = read_timeout
-
-  req_class = method == :put ? Net::HTTP::Put : Net::HTTP::Post
-  req = req_class.new(uri)
-  req["Authorization"] = "Bearer #{token}"
-  req["Content-Type"] = content_type
-  req["User-Agent"] = "WokkuCLI/#{VERSION}"
-  req["Content-Length"] = File.size(file_path).to_s
-  req.body_stream = File.open(file_path, "rb")
-
-  resp = http.request(req)
-  data = JSON.parse(resp.body) rescue resp.body
-
-  unless resp.is_a?(Net::HTTPSuccess)
-    error = data.is_a?(Hash) ? (data["error"] || data["errors"]&.join(", ") || resp.code) : resp.code
-    abort "Error: #{error}"
-  end
-
-  data
-end
-
 # === Formatting ===
 def table(rows, headers: nil)
   return if rows.empty?
@@ -127,77 +95,34 @@ def register(name, desc, &block)
 end
 
 # --- Auth ---
-register "auth:login", "Authenticate with Wokku via browser (OAuth device flow)" do
+register "auth:login", "Authenticate with Wokku" do
   print "Wokku API URL [https://wokku.cloud/api/v1]: "
   url = $stdin.gets.strip
   url = "https://wokku.cloud/api/v1" if url.empty?
 
-  # Step 1: request a device + user code
-  start_uri = URI("#{url}/auth/device/code")
-  http = Net::HTTP.new(start_uri.host, start_uri.port)
-  http.use_ssl = start_uri.scheme == "https"
-  req = Net::HTTP::Post.new(start_uri)
-  req["User-Agent"] = "WokkuCLI/#{VERSION}"
+  print "Email: "
+  email = $stdin.gets.strip
+  print "Password: "
+  password = $stdin.noecho(&:gets).strip
+  puts
+
+  uri = URI("#{url}/auth/login")
+  http = Net::HTTP.new(uri.host, uri.port)
+  http.use_ssl = uri.scheme == "https"
+  req = Net::HTTP::Post.new(uri)
+  req["Content-Type"] = "application/json"
+  req.body = { email: email, password: password }.to_json
+
   resp = http.request(req)
   data = JSON.parse(resp.body) rescue {}
-  abort "Failed to start device flow: #{data['error'] || resp.code}" unless resp.is_a?(Net::HTTPSuccess)
 
-  device_code = data["device_code"]
-  user_code = data["user_code"]
-  verify_url = data["verification_uri_complete"] || data["verification_uri"]
-  interval = (data["interval"] || 5).to_i
-  expires_in = (data["expires_in"] || 600).to_i
-
-  puts ""
-  puts "  Open in your browser: #{verify_url}"
-  puts "  Code:                 #{user_code}"
-  puts ""
-  puts "Waiting for authorization..."
-
-  # Try to open browser (best-effort)
-  opener = case RUBY_PLATFORM
-           when /darwin/ then "open"
-           when /linux/  then "xdg-open"
-           when /mingw|mswin/ then "start"
-           end
-  system(opener, verify_url, [:out, :err] => "/dev/null") if opener
-
-  # Step 2: poll for token
-  poll_uri = URI("#{url}/auth/device/token")
-  poll_http = Net::HTTP.new(poll_uri.host, poll_uri.port)
-  poll_http.use_ssl = poll_uri.scheme == "https"
-  deadline = Time.now + expires_in
-
-  loop do
-    if Time.now > deadline
-      abort "Authorization timed out. Run wokku auth:login to try again."
-    end
-    sleep interval
-
-    poll_req = Net::HTTP::Post.new(poll_uri)
-    poll_req["Content-Type"] = "application/json"
-    poll_req["User-Agent"] = "WokkuCLI/#{VERSION}"
-    poll_req.body = { device_code: device_code }.to_json
-    poll_resp = poll_http.request(poll_req)
-    poll_data = JSON.parse(poll_resp.body) rescue {}
-
-    case poll_resp.code.to_i
-    when 200
-      email = poll_data.dig("user", "email")
-      save_config({ "api_url" => url, "token" => poll_data["token"], "email" => email })
-      puts "Logged in as #{email}"
-      break
-    when 202
-      next # authorization_pending
-    when 400
-      interval += 1 if poll_data["error"] == "slow_down"
-    when 403
-      abort "Authorization denied."
-    when 410
-      abort "Authorization #{poll_data['error'] || 'expired'}. Run wokku auth:login to try again."
-    else
-      abort "Unexpected response (#{poll_resp.code}): #{poll_data['error'] || poll_resp.body}"
-    end
+  if resp.is_a?(Net::HTTPSuccess) && data["token"]
+    save_config({ "api_url" => url, "token" => data["token"], "email" => email })
+    instance = url.include?("wokku.cloud") ? "wokku.cloud (managed)" : "#{URI(url).host} (self-hosted)"
+    puts "Logged in as #{email}"
+    puts "Connected to: #{instance}"
+  else
+    abort "Login failed: #{data['error'] || resp.code}"
   end
 end
 
@@ -222,42 +147,28 @@ register "apps", "List all apps" do
   table(apps.map { |a| { "name" => a["name"], "status" => a["status"], "server" => a["server_id"] } })
 end
 
-register "apps:info", "Show app details (usage: wokku apps:info APP)" do
-  id = ARGV.shift || abort("Usage: wokku apps:info APP")
+register "apps:info", "Show app details (usage: wokku apps:info APP_ID)" do
+  id = ARGV.shift || abort("Usage: wokku apps:info APP_ID")
   puts_json api(:get, "/apps/#{id}")
 end
 
-register "servers", "List available servers" do
-  rows = api(:get, "/servers").map { |s| { "id" => s["id"], "name" => s["name"], "host" => s["host"] } }
-  table(rows, headers: %w[id name host])
-end
-
-register "apps:create", "Create app (usage: wokku apps:create NAME --server ID|NAME)" do
-  name = ARGV.shift || abort("Usage: wokku apps:create NAME --server ID|NAME")
-  server_arg = nil
+register "apps:create", "Create app (usage: wokku apps:create NAME --server ID)" do
+  name = ARGV.shift || abort("Usage: wokku apps:create NAME --server ID")
+  server_id = nil
   branch = "main"
   while arg = ARGV.shift
     case arg
-    when "--server" then server_arg = ARGV.shift
+    when "--server" then server_id = ARGV.shift
     when "--branch" then branch = ARGV.shift
     end
   end
-  abort "Missing --server ID|NAME (run: wokku servers)" unless server_arg
-
-  server_id = if server_arg.match?(/\A\d+\z/)
-    server_arg.to_i
-  else
-    match = api(:get, "/servers").find { |s| s["name"] == server_arg }
-    abort "Server '#{server_arg}' not found. Run: wokku servers" unless match
-    match["id"]
-  end
-
-  data = api(:post, "/apps", { name: name, server_id: server_id, deploy_branch: branch })
+  abort "Missing --server ID" unless server_id
+  data = api(:post, "/apps", { name: name, server_id: server_id.to_i, deploy_branch: branch })
   puts "Created app: #{data['name']} (id: #{data['id']})"
 end
 
-register "apps:destroy", "Delete app (usage: wokku apps:destroy APP)" do
-  id = ARGV.shift || abort("Usage: wokku apps:destroy APP")
+register "apps:destroy", "Delete app (usage: wokku apps:destroy APP_ID)" do
+  id = ARGV.shift || abort("Usage: wokku apps:destroy APP_ID")
   print "Are you sure you want to delete this app? (y/N): "
   confirm = $stdin.gets.strip
   abort "Cancelled." unless confirm.downcase == "y"
@@ -265,26 +176,26 @@ register "apps:destroy", "Delete app (usage: wokku apps:destroy APP)" do
   puts "App deleted."
 end
 
-register "ps:restart", "Restart app (usage: wokku ps:restart APP)" do
-  id = ARGV.shift || abort("Usage: wokku ps:restart APP")
+register "ps:restart", "Restart app (usage: wokku ps:restart APP_ID)" do
+  id = ARGV.shift || abort("Usage: wokku ps:restart APP_ID")
   api(:post, "/apps/#{id}/restart")
   puts "Restarting..."
 end
 
-register "ps:stop", "Stop app (usage: wokku ps:stop APP)" do
-  id = ARGV.shift || abort("Usage: wokku ps:stop APP")
+register "ps:stop", "Stop app (usage: wokku ps:stop APP_ID)" do
+  id = ARGV.shift || abort("Usage: wokku ps:stop APP_ID")
   api(:post, "/apps/#{id}/stop")
   puts "Stopped."
 end
 
-register "ps:start", "Start app (usage: wokku ps:start APP)" do
-  id = ARGV.shift || abort("Usage: wokku ps:start APP")
+register "ps:start", "Start app (usage: wokku ps:start APP_ID)" do
+  id = ARGV.shift || abort("Usage: wokku ps:start APP_ID")
   api(:post, "/apps/#{id}/start")
   puts "Started."
 end
 
-register "ps:scale", "Scale processes (usage: wokku ps:scale APP web=2 worker=1)" do
-  id = ARGV.shift || abort("Usage: wokku ps:scale APP web=N worker=N")
+register "ps:scale", "Scale processes (usage: wokku ps:scale APP_ID web=2 worker=1)" do
+  id = ARGV.shift || abort("Usage: wokku ps:scale APP_ID web=N worker=N")
   scaling = {}
   ARGV.each do |pair|
     type, count = pair.split("=")
@@ -297,8 +208,8 @@ register "ps:scale", "Scale processes (usage: wokku ps:scale APP web=2 worker=1)
 end
 
 # --- Config ---
-register "config", "Show config vars (usage: wokku config APP)" do
-  id = ARGV.shift || abort("Usage: wokku config APP")
+register "config", "Show config vars (usage: wokku config APP_ID)" do
+  id = ARGV.shift || abort("Usage: wokku config APP_ID")
   data = api(:get, "/apps/#{id}/config")
   if data.is_a?(Hash)
     data.each { |k, v| puts "#{k}=#{v}" }
@@ -307,8 +218,8 @@ register "config", "Show config vars (usage: wokku config APP)" do
   end
 end
 
-register "config:set", "Set config vars (usage: wokku config:set APP KEY=VAL ...)" do
-  id = ARGV.shift || abort("Usage: wokku config:set APP KEY=VALUE ...")
+register "config:set", "Set config vars (usage: wokku config:set APP_ID KEY=VAL ...)" do
+  id = ARGV.shift || abort("Usage: wokku config:set APP_ID KEY=VALUE ...")
   vars = {}
   ARGV.each do |pair|
     key, val = pair.split("=", 2)
@@ -316,13 +227,13 @@ register "config:set", "Set config vars (usage: wokku config:set APP KEY=VAL ...
   end
   ARGV.clear
   abort "No KEY=VALUE pairs given." if vars.empty?
-  api(:put, "/apps/#{id}/config", { vars: vars })
+  api(:put, "/apps/#{id}/config", vars)
   puts "Config updated: #{vars.keys.join(', ')}"
 end
 
 # --- Domains ---
-register "domains", "List domains (usage: wokku domains APP)" do
-  id = ARGV.shift || abort("Usage: wokku domains APP")
+register "domains", "List domains (usage: wokku domains APP_ID)" do
+  id = ARGV.shift || abort("Usage: wokku domains APP_ID")
   data = api(:get, "/apps/#{id}/domains")
   if data.is_a?(Array)
     data.each { |d| puts d["hostname"] || d }
@@ -331,16 +242,16 @@ register "domains", "List domains (usage: wokku domains APP)" do
   end
 end
 
-register "domains:add", "Add domain (usage: wokku domains:add APP DOMAIN)" do
-  id = ARGV.shift || abort("Usage: wokku domains:add APP DOMAIN")
+register "domains:add", "Add domain (usage: wokku domains:add APP_ID DOMAIN)" do
+  id = ARGV.shift || abort("Usage: wokku domains:add APP_ID DOMAIN")
   domain = ARGV.shift || abort("Missing domain name")
   api(:post, "/apps/#{id}/domains", { hostname: domain })
   puts "Added domain: #{domain}"
 end
 
 # --- Logs ---
-register "logs", "View logs (usage: wokku logs APP [--lines N])" do
-  id = ARGV.shift || abort("Usage: wokku logs APP")
+register "logs", "View logs (usage: wokku logs APP_ID [--lines N])" do
+  id = ARGV.shift || abort("Usage: wokku logs APP_ID")
   lines = 100
   while arg = ARGV.shift
     lines = ARGV.shift.to_i if arg == "--lines"
@@ -356,8 +267,8 @@ register "logs", "View logs (usage: wokku logs APP [--lines N])" do
 end
 
 # --- Releases ---
-register "releases", "List releases (usage: wokku releases APP)" do
-  id = ARGV.shift || abort("Usage: wokku releases APP")
+register "releases", "List releases (usage: wokku releases APP_ID)" do
+  id = ARGV.shift || abort("Usage: wokku releases APP_ID")
   data = api(:get, "/apps/#{id}/releases")
   if data.is_a?(Array)
     table(data.map { |r| { "version" => "v#{r['version']}", "description" => r["description"].to_s[0..40], "created" => r["created_at"].to_s[0..18] } })
@@ -366,16 +277,16 @@ register "releases", "List releases (usage: wokku releases APP)" do
   end
 end
 
-register "rollback", "Rollback to release (usage: wokku rollback APP RELEASE_ID)" do
-  id = ARGV.shift || abort("Usage: wokku rollback APP RELEASE_ID")
+register "rollback", "Rollback to release (usage: wokku rollback APP_ID RELEASE_ID)" do
+  id = ARGV.shift || abort("Usage: wokku rollback APP_ID RELEASE_ID")
   release_id = ARGV.shift || abort("Missing release ID")
   api(:post, "/apps/#{id}/releases/#{release_id}/rollback")
   puts "Rolling back..."
 end
 
 # --- Add-ons ---
-register "addons", "List add-ons (usage: wokku addons APP)" do
-  id = ARGV.shift || abort("Usage: wokku addons APP")
+register "addons", "List add-ons (usage: wokku addons APP_ID)" do
+  id = ARGV.shift || abort("Usage: wokku addons APP_ID")
   data = api(:get, "/apps/#{id}/addons")
   if data.is_a?(Array)
     table(data.map { |a| { "name" => a["name"], "type" => a["service_type"], "status" => a["status"] } })
@@ -384,8 +295,8 @@ register "addons", "List add-ons (usage: wokku addons APP)" do
   end
 end
 
-register "addons:add", "Add add-on (usage: wokku addons:add APP postgres)" do
-  id = ARGV.shift || abort("Usage: wokku addons:add APP SERVICE_TYPE")
+register "addons:add", "Add add-on (usage: wokku addons:add APP_ID postgres)" do
+  id = ARGV.shift || abort("Usage: wokku addons:add APP_ID SERVICE_TYPE")
   service_type = ARGV.shift || abort("Missing service type (postgres, redis, mysql, etc)")
   name = nil
   while arg = ARGV.shift
@@ -423,216 +334,6 @@ register "deploy", "Deploy template (usage: wokku deploy TEMPLATE --server ID [-
   data = api(:post, "/templates/deploy", body)
   puts "Deploying #{slug}..."
   puts_json data
-end
-
-# --- Run ---
-register "run", "Run a one-off command in an app (usage: wokku run APP -- CMD ...)" do
-  app_id = ARGV.shift || abort("Usage: wokku run APP -- COMMAND")
-  ARGV.shift if ARGV.first == "--"
-  command = ARGV.join(" ")
-  abort "Missing command" if command.empty?
-  data = api(:post, "/apps/#{app_id}/run", { command: command })
-  print data["output"]
-  exit (data["exit_code"] || 0).to_i
-end
-
-# --- Git ---
-register "git:remote", "Add wokku git remote to current repo (usage: wokku git:remote APP [--name wokku])" do
-  app_id = ARGV.shift || abort("Usage: wokku git:remote APP [--name wokku]")
-  remote = "wokku"
-  while arg = ARGV.shift
-    remote = ARGV.shift if arg == "--name"
-  end
-  app = api(:get, "/apps/#{app_id}")
-  url = app["git_remote"] || app["git_remote_url"] || abort("App has no git remote URL")
-  abort "Not in a git repository" unless system("git rev-parse --git-dir > /dev/null 2>&1")
-  if system("git remote get-url #{remote} > /dev/null 2>&1")
-    system("git remote set-url #{remote} #{url}")
-  else
-    system("git remote add #{remote} #{url}")
-  end
-  puts "Set git remote '#{remote}' → #{url}"
-  puts "Push with:  git push #{remote} #{app['deploy_branch'] || 'main'}"
-end
-
-register "git:clone", "Clone an app's repo (usage: wokku git:clone APP [DIR])" do
-  app_id = ARGV.shift || abort("Usage: wokku git:clone APP [DIR]")
-  dir = ARGV.shift
-  app = api(:get, "/apps/#{app_id}")
-  url = app["git_remote"] || app["git_remote_url"] || abort("App has no git remote URL")
-  cmd = dir ? "git clone #{url} #{dir}" : "git clone #{url}"
-  exec(cmd)
-end
-
-# --- Heroku-style addons aliases ---
-register "buildpacks", "List buildpacks for an app (usage: wokku buildpacks APP)" do
-  app = ARGV.shift || abort("Usage: wokku buildpacks APP")
-  data = api(:get, "/apps/#{app}/buildpacks")
-  list = data.is_a?(Hash) ? Array(data["buildpacks"]) : []
-  if list.empty?
-    puts "No buildpacks set — Dokku will auto-detect."
-  else
-    list.each_with_index { |url, i| puts "  #{i + 1}. #{url}" }
-  end
-end
-
-register "buildpacks:add", "Add a buildpack (usage: wokku buildpacks:add APP URL [--index N])" do
-  app = ARGV.shift || abort("Usage: wokku buildpacks:add APP URL [--index N]")
-  url = ARGV.shift || abort("Missing buildpack URL (e.g. https://github.com/heroku/heroku-buildpack-nodejs)")
-  index = nil
-  while arg = ARGV.shift
-    index = ARGV.shift if arg == "--index"
-  end
-  body = { url: url }
-  body[:index] = index if index
-  api(:post, "/apps/#{app}/buildpacks", body)
-  puts "Added buildpack: #{url}#{index ? " at index #{index}" : ""}"
-end
-
-register "buildpacks:remove", "Remove a buildpack (usage: wokku buildpacks:remove APP URL)" do
-  app = ARGV.shift || abort("Usage: wokku buildpacks:remove APP URL")
-  url = ARGV.shift || abort("Missing buildpack URL")
-  api(:delete, "/apps/#{app}/buildpacks", { url: url })
-  puts "Removed buildpack: #{url}"
-end
-
-register "buildpacks:clear", "Remove all buildpacks (usage: wokku buildpacks:clear APP)" do
-  app = ARGV.shift || abort("Usage: wokku buildpacks:clear APP")
-  api(:delete, "/apps/#{app}/buildpacks")
-  puts "Cleared all buildpacks for #{app}"
-end
-
-register "buildpacks:set", "Replace the entire buildpack stack (usage: wokku buildpacks:set APP URL1 [URL2 ...])" do
-  app = ARGV.shift || abort("Usage: wokku buildpacks:set APP URL [URL ...]")
-  urls = ARGV.dup
-  ARGV.clear
-  abort "Provide at least one buildpack URL" if urls.empty?
-  api(:put, "/apps/#{app}/buildpacks", { urls: urls })
-  puts "Set buildpacks for #{app}:"
-  urls.each_with_index { |url, i| puts "  #{i + 1}. #{url}" }
-end
-
-register "addons:import", "Import a dump file into a database addon (usage: wokku addons:import DB_ID FILE)" do
-  db_id = ARGV.shift || abort("Usage: wokku addons:import DB_ID FILE")
-  file = ARGV.shift || abort("Missing FILE — local path to a .dump / .sql / .gz dump")
-  abort "File not found: #{file}" unless File.exist?(file)
-
-  size_mb = (File.size(file).to_f / (1024 * 1024)).round(1)
-  puts "Streaming #{file} (#{size_mb} MB) to addon #{db_id}…"
-  data = api_stream_file(:post, "/databases/#{db_id}/import", file)
-  puts "✓ Imported into #{data["database"] || db_id}"
-end
-
-register "addons:create", "Create and attach an add-on (usage: wokku addons:create APP TYPE[:tier] [--name X])" do
-  app_id = ARGV.shift || abort("Usage: wokku addons:create APP TYPE[:tier]")
-  spec = ARGV.shift || abort("Missing add-on spec, e.g. redis or postgres:basic")
-  service_type, tier = spec.split(":", 2)
-  name = nil
-  while arg = ARGV.shift
-    name = ARGV.shift if arg == "--name"
-  end
-  body = { service_type: service_type }
-  body[:tier] = tier if tier
-  body[:name] = name if name
-  data = api(:post, "/apps/#{app_id}/addons", body)
-  puts "Created #{service_type}: #{data['name'] || data['id']}"
-end
-
-register "addons:destroy", "Destroy an add-on (usage: wokku addons:destroy APP ADDON_ID)" do
-  app_id = ARGV.shift || abort("Usage: wokku addons:destroy APP ADDON_ID")
-  addon_id = ARGV.shift || abort("Missing ADDON_ID")
-  api(:delete, "/apps/#{app_id}/addons/#{addon_id}")
-  puts "Destroyed add-on #{addon_id}"
-end
-
-register "addons:attach", "Link an existing add-on to an app (usage: wokku addons:attach DB_ID --to APP)" do
-  db_id = ARGV.shift || abort("Usage: wokku addons:attach DB_ID --to APP")
-  app_id = nil
-  while arg = ARGV.shift
-    app_id = ARGV.shift if arg == "--to"
-  end
-  abort "Missing --to APP" unless app_id
-  api(:post, "/databases/#{db_id}/link", { app_id: app_id })
-  puts "Attached add-on #{db_id} → app #{app_id}"
-end
-
-register "addons:detach", "Unlink an add-on from an app (usage: wokku addons:detach DB_ID --from APP)" do
-  db_id = ARGV.shift || abort("Usage: wokku addons:detach DB_ID --from APP")
-  app_id = nil
-  while arg = ARGV.shift
-    app_id = ARGV.shift if arg == "--from"
-  end
-  abort "Missing --from APP" unless app_id
-  api(:post, "/databases/#{db_id}/unlink", { app_id: app_id })
-  puts "Detached add-on #{db_id} from app #{app_id}"
-end
-
-# --- Self-update ---
-register "update", "Update the wokku CLI to the latest version" do
-  bin = `which wokku`.strip
-  if bin.include?("homebrew")
-    puts "Updating via Homebrew..."
-    exec("brew update && brew upgrade wokku")
-  else
-    puts "Updating via install script..."
-    exec("curl -sL https://wokku.cloud/cli/install.sh | bash")
-  end
-end
-
-# --- MCP ---
-# `wokku mcp:install` writes a wokku entry into Claude Desktop's MCP config
-# so Claude can talk to wokku.cloud as tools (deploy, addons, billing, etc.).
-# Auth (login/switch/logout) lives inside the MCP server itself — see
-# wokku_auth_login / wokku_auth_switch / wokku_auth_logout tools.
-register "mcp:install", "Install the wokku MCP server into Claude Desktop config" do
-  apply = ARGV.delete("--apply")
-  config_path = case RUBY_PLATFORM
-                when /darwin/  then File.expand_path("~/Library/Application Support/Claude/claude_desktop_config.json")
-                when /linux/   then File.expand_path("~/.config/Claude/claude_desktop_config.json")
-                when /mingw|mswin/ then File.expand_path("~/AppData/Roaming/Claude/claude_desktop_config.json")
-                else nil
-                end
-
-  mcp_bin = `which wokku-mcp 2>/dev/null`.strip
-  mcp_bin = "wokku-mcp" if mcp_bin.empty?
-
-  entry = { "wokku" => { "command" => mcp_bin, "args" => [] } }
-
-  if !apply || config_path.nil?
-    puts "Add this to your MCP client config (e.g. #{config_path || 'Claude Desktop config'}):"
-    puts
-    puts JSON.pretty_generate({ "mcpServers" => entry })
-    puts
-    puts "Or run with --apply to merge automatically."
-    next
-  end
-
-  FileUtils.mkdir_p(File.dirname(config_path))
-  existing = File.exist?(config_path) ? (JSON.parse(File.read(config_path)) rescue {}) : {}
-  existing["mcpServers"] ||= {}
-  existing["mcpServers"].merge!(entry)
-  File.write(config_path, JSON.pretty_generate(existing))
-  puts "Installed wokku MCP into #{config_path}"
-  puts "Restart Claude Desktop to load the new server."
-end
-
-register "mcp:uninstall", "Remove the wokku MCP entry from Claude Desktop config" do
-  config_path = case RUBY_PLATFORM
-                when /darwin/  then File.expand_path("~/Library/Application Support/Claude/claude_desktop_config.json")
-                when /linux/   then File.expand_path("~/.config/Claude/claude_desktop_config.json")
-                when /mingw|mswin/ then File.expand_path("~/AppData/Roaming/Claude/claude_desktop_config.json")
-                end
-  abort("Could not locate Claude Desktop config for this platform.") unless config_path
-  abort("No config at #{config_path}") unless File.exist?(config_path)
-
-  data = JSON.parse(File.read(config_path)) rescue {}
-  if data.dig("mcpServers", "wokku")
-    data["mcpServers"].delete("wokku")
-    File.write(config_path, JSON.pretty_generate(data))
-    puts "Removed wokku MCP entry from #{config_path}"
-  else
-    puts "Wokku MCP entry not found."
-  end
 end
 
 # --- Activity ---

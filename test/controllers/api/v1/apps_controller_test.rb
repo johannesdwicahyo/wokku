@@ -46,6 +46,12 @@ class Api::V1::AppsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unauthorized
   end
 
+  test "show resolves app by name as well as uuid" do
+    get api_v1_app_path(@app_record.name), headers: auth_headers
+    assert_response :success
+    assert_equal @app_record.id, JSON.parse(response.body)["id"]
+  end
+
   test "show returns 404 for nonexistent app" do
     get api_v1_app_path(id: 999999), headers: auth_headers
     assert_response :not_found
@@ -218,5 +224,23 @@ class Api::V1::AppsControllerTest < ActionDispatch::IntegrationTest
     block.call
   ensure
     Dokku::Apps.define_method(:create, original)
+  end
+
+  test "run executes command and returns output" do
+    Dokku::Client.any_instance.stubs(:run).returns("hello\n")
+    post run_api_v1_app_path(@app_record), params: { command: "echo hello" }, headers: auth_headers
+    assert_response :success
+    assert_equal "hello\n", JSON.parse(response.body)["output"]
+  end
+
+  test "run rejects empty command" do
+    post run_api_v1_app_path(@app_record), params: { command: "" }, headers: auth_headers
+    assert_response :unprocessable_entity
+  end
+
+  test "run returns 503 on ConnectionError" do
+    Dokku::Client.any_instance.stubs(:run).raises(Dokku::Client::ConnectionError, "ssh down")
+    post run_api_v1_app_path(@app_record), params: { command: "ls" }, headers: auth_headers
+    assert_response :service_unavailable
   end
 end

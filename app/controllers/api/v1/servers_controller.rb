@@ -2,19 +2,20 @@ module Api
   module V1
     class ServersController < BaseController
       def index
+        authorize Server, :show?
         servers = policy_scope(Server)
         render json: servers.select(:id, :name, :host, :port, :status, :created_at)
       end
 
       def show
-        server = Server.find(params[:id])
-        authorize server
+        server = Server.lookup!(params[:id])
+        authorize server, :show?
         render json: server.as_json(except: [ :ssh_private_key ])
       end
 
       def create
-        team = current_user.teams.find(params[:team_id])
-        server = team.servers.build(server_params)
+        # Platform servers — no team ownership. Only system admins can add.
+        server = Server.new(server_params)
         authorize server
 
         if server.save
@@ -25,15 +26,15 @@ module Api
       end
 
       def destroy
-        server = Server.find(params[:id])
+        server = Server.lookup!(params[:id])
         authorize server
         server.destroy!
         render json: { message: "Server removed" }
       end
 
       def status
-        server = Server.find(params[:id])
-        authorize server
+        server = Server.lookup!(params[:id])
+        authorize server, :manage?
         client = Dokku::Client.new(server)
         connected = client.connected?
         server.update_column(:status, Server.statuses[connected ? :connected : :unreachable])

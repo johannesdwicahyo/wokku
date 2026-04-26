@@ -10,14 +10,14 @@
   </div>
 
   <%# Cloud Provisioning %>
-  <% if current_team.cloud_credentials.any? %>
+  <% if current_team&.cloud_credentials&.any? %>
     <div class="bg-surface-container-low rounded-xl border border-outline-variant/15 p-6 mb-6">
       <h2 class="text-sm font-semibold text-on-surface uppercase tracking-wider mb-4">Create with Cloud Provider</h2>
 
       <%= form_with url: provision_dashboard_servers_path, method: :post, class: "space-y-4" do |f| %>
         <div>
-          <%= f.label :cloud_credential_id, "Provider", class: "block text-xs text-on-surface-variant uppercase tracking-wider mb-1" %>
-          <%= f.select :cloud_credential_id, current_team.cloud_credentials.map { |c| ["#{c.provider.capitalize}#{c.name.present? ? " (#{c.name})" : ""}", c.id] }, { prompt: "Select provider" }, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary" %>
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wider mb-1">Provider</label>
+          <%= combobox_tag "cloud_credential_id", current_team.cloud_credentials.map { |c| ["#{c.provider.capitalize}#{c.name.present? ? " (#{c.name})" : ""}", c.id] }, placeholder: "Select provider" %>
         </div>
 
         <div>
@@ -27,17 +27,17 @@
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <%= f.label :region, class: "block text-xs text-on-surface-variant uppercase tracking-wider mb-1" %>
-            <%= f.select :region, [["US East (Ashburn)", "ash"], ["EU Central (Falkenstein)", "fsn1"], ["EU West (Helsinki)", "hel1"], ["Singapore", "sgp"]], { prompt: "Select region" }, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary" %>
+            <label class="block text-xs text-on-surface-variant uppercase tracking-wider mb-1">Region</label>
+            <%= combobox_tag "region", [["US East (Ashburn)", "ash"], ["EU Central (Falkenstein)", "fsn1"], ["EU West (Helsinki)", "hel1"], ["Singapore", "sgp"]], placeholder: "Select region" %>
           </div>
           <div>
-            <%= f.label :size, class: "block text-xs text-on-surface-variant uppercase tracking-wider mb-1" %>
-            <%= f.select :size, [["2 vCPU / 4 GB — $4/mo", "cx22"], ["4 vCPU / 8 GB — $8/mo", "cx32"], ["8 vCPU / 16 GB — $16/mo", "cx42"]], { prompt: "Select size" }, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary" %>
+            <label class="block text-xs text-on-surface-variant uppercase tracking-wider mb-1">Size</label>
+            <%= combobox_tag "size", [["2 vCPU / 4 GB — $4/mo", "cx22"], ["4 vCPU / 8 GB — $8/mo", "cx32"], ["8 vCPU / 16 GB — $16/mo", "cx42"]], placeholder: "Select size" %>
           </div>
         </div>
 
         <div class="pt-2">
-          <%= f.submit "Create Server", class: "px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
+          <%= f.submit "Create Server", class: "px-4 py-2.5 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
         </div>
       <% end %>
     </div>
@@ -45,10 +45,12 @@
     <div class="bg-surface-container-low rounded-xl border border-outline-variant/15 p-6 mb-6">
       <h2 class="text-sm font-semibold text-on-surface uppercase tracking-wider mb-2">Auto-Provision a Server</h2>
       <p class="text-xs text-outline mb-3">Connect a cloud provider API key to create Dokku servers with one click.</p>
-      <%= form_with url: dashboard_cloud_credentials_path, method: :post, class: "flex items-end space-x-3" do |f| %>
-        <%= f.select :provider, [["Hetzner", "hetzner"], ["Vultr", "vultr"], ["DigitalOcean", "digitalocean"], ["Linode", "linode"]], { prompt: "Provider" }, class: "rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary" %>
-        <%= f.text_field :api_key, placeholder: "API Key", class: "flex-1 rounded-md bg-surface border-outline-variant/15 text-on-surface font-mono text-sm focus:ring-primary focus:border-primary" %>
-        <%= f.submit "Connect", class: "px-3 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
+      <%= form_with url: dashboard_cloud_credentials_path, method: :post, class: "flex items-end gap-2" do |f| %>
+        <div class="w-44">
+          <%= combobox_tag "cloud_credential[provider]", [["Hetzner", "hetzner"], ["Vultr", "vultr"], ["DigitalOcean", "digitalocean"], ["Linode", "linode"]], placeholder: "Provider" %>
+        </div>
+        <%= f.text_field :api_key, placeholder: "API Key", class: "flex-1 rounded-md bg-surface-container-low border border-outline-variant/15 px-4 py-2.5 text-on-surface font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" %>
+        <%= f.submit "Connect", class: "px-4 py-2.5 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
       <% end %>
     </div>
   <% end %>
@@ -98,7 +100,7 @@
     </div>
 
     <div class="flex items-center space-x-3 pt-2">
-      <%= f.submit t("dashboard.servers.add_server"), class: "px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
+      <%= f.submit t("dashboard.servers.add_server"), class: "px-4 py-2 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
       <%= link_to t("common.cancel"), dashboard_servers_path, class: "text-sm text-outline hover:text-on-surface-variant transition cursor-pointer" %>
     </div>
   <% end %>

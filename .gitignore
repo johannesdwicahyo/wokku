@@ -43,4 +43,12 @@
 .claude/worktrees/
 .kamal/secrets
 coverage/
-/docs/
+
+# Local ops artifacts — not for git
+.playwright-mcp/
+/backups/
+
+# Playwright screenshots from ad-hoc smoke tests
+/resources-after.png
+/after-cleanup.png
+/stuck.png

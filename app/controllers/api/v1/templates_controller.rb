@@ -25,7 +25,7 @@ module Api
         template = registry.find(params[:slug])
         return render json: { error: "Template not found" }, status: :not_found unless template
 
-        server = policy_scope(Server).find(params[:server_id])
+        server = Server.lookup!(params[:server_id])
         app_name = params[:app_name].to_s.parameterize
 
         return render json: { error: "App name required" }, status: :unprocessable_entity if app_name.blank?

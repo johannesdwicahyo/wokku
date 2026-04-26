@@ -21,19 +21,23 @@
 
     <div>
       <%= f.label :currency, "Billing Currency", class: "block text-xs text-on-surface-variant uppercase tracking-wider mb-1" %>
-      <% if current_user.resource_usages.active.billable.any? %>
+      <% if Wokku::LaunchMode.idr_only? %>
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-on-surface font-mono font-bold">IDR</span>
+          <span class="text-[10px] text-outline">(USD billing available after international expansion)</span>
+        </div>
+      <% elsif current_user.resource_usages.active.billable.any? %>
         <div class="flex items-center gap-2">
           <span class="text-sm text-on-surface font-mono font-bold"><%= current_user.currency.upcase %></span>
           <span class="text-[10px] text-outline">(locked — active paid resources)</span>
         </div>
       <% else %>
-        <%= f.select :currency, [["US Dollar (USD)", "usd"], ["Indonesian Rupiah (IDR)", "idr"]],
-            {}, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary" %>
+        <%= combobox_tag "user[currency]", [["US Dollar (USD)", "usd"], ["Indonesian Rupiah (IDR)", "idr"]], value: current_user.currency, placeholder: "Select currency" %>
       <% end %>
     </div>
 
     <div class="flex items-center space-x-3 pt-2">
-      <%= f.submit "Save Changes", class: "px-4 py-2 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
+      <%= f.submit "Save Changes", class: "px-4 py-2 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
       <%= link_to "Cancel", dashboard_profile_path, class: "text-sm text-outline hover:text-on-surface-variant transition" %>
     </div>
   <% end %>

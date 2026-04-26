@@ -1,4 +1,23 @@
 class AppRecord < ApplicationRecord
+  # Webhook secrets are HMAC-SHA256 shared secrets — a leak lets an attacker
+  # forge push / pull_request events and trigger deploys. Encrypt at rest.
+  # Non-deterministic: we never look up rows by these values, only compare
+  # HMAC signatures after decryption.
+  encrypts :git_webhook_secret, :github_webhook_secret
+
+  UUID_PATTERN = /\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/i
+
+  # CLI/API consumers pass either an app's UUID or its human name.
+  # Names are what users actually type (heroku/fly/railway pattern); the
+  # UUID path stays for API integrations and dashboard URLs.
+  def self.lookup!(id_or_name)
+    if id_or_name.to_s.match?(UUID_PATTERN)
+      find(id_or_name)
+    else
+      find_by!(name: id_or_name)
+    end
+  end
+
   belongs_to :server
   belongs_to :team
   belongs_to :creator, class_name: "User", foreign_key: :created_by_id

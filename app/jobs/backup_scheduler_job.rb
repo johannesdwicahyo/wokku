@@ -1,7 +1,7 @@
 class BackupSchedulerJob < ApplicationJob
   queue_as :backups
 
-  BACKUPABLE_TYPES = %w[postgres mysql mariadb mongodb redis].freeze
+  BACKUPABLE_TYPES = %w[postgres mysql mongodb redis].freeze
 
   def perform
     Server.joins(:backup_destination)

@@ -7,7 +7,7 @@
 # Quick install:
 #   curl -fsSL https://raw.githubusercontent.com/johannesdwicahyo/wokku/main/mcp/server.rb -o wokku-mcp.rb
 #   claude mcp add wokku \
-#     -e WOKKU_API_URL=https://wokku.dev/api/v1 \
+#     -e WOKKU_API_URL=https://wokku.cloud/api/v1 \
 #     -e WOKKU_API_TOKEN=your-token-here \
 #     -- ruby wokku-mcp.rb
 #
@@ -16,43 +16,16 @@
 require "json"
 require "net/http"
 require "uri"
-require "fileutils"
 
-# Persisted multi-account credential store. Tokens land here when the
-# user calls wokku_auth_login from inside an MCP session, so they
-# survive restarts and can be switched without editing env config.
-CONFIG_DIR  = File.expand_path("~/.wokku")
-CONFIG_FILE = File.join(CONFIG_DIR, "mcp-accounts.json")
-ENV_API_URL   = ENV.fetch("WOKKU_API_URL",   "https://wokku.cloud/api/v1")
-ENV_API_TOKEN = ENV.fetch("WOKKU_API_TOKEN", "")
+WOKKU_API_URL = ENV.fetch("WOKKU_API_URL", "https://wokku.cloud/api/v1")
+WOKKU_API_TOKEN = ENV.fetch("WOKKU_API_TOKEN", "")
 
-def load_accounts
-  return { "active" => nil, "accounts" => {} } unless File.exist?(CONFIG_FILE)
-  JSON.parse(File.read(CONFIG_FILE))
-rescue JSON::ParserError
-  { "active" => nil, "accounts" => {} }
-end
-
-def save_accounts(data)
-  FileUtils.mkdir_p(CONFIG_DIR)
-  File.write(CONFIG_FILE, JSON.pretty_generate(data))
-  File.chmod(0600, CONFIG_FILE)
-end
-
-# Active credential resolution: persisted active account first,
-# fall back to the env vars the user set when adding the MCP server.
-def active_credentials
-  data = load_accounts
-  if data["active"] && data.dig("accounts", data["active"])
-    acc = data["accounts"][data["active"]]
-    return { url: acc["api_url"] || ENV_API_URL, token: acc["token"], email: data["active"] }
-  end
-  { url: ENV_API_URL, token: ENV_API_TOKEN, email: nil }
-end
+# Log endpoint to stderr so Claude Code's MCP debug logs show which
+# Wokku instance (managed vs self-hosted OSS) the plugin is talking to.
+$stderr.puts "wokku-mcp: connecting to #{WOKKU_API_URL} (#{WOKKU_API_URL.include?('wokku.cloud') ? 'managed' : 'self-hosted'})"
 
 def api_request(method, path, body = nil)
-  creds = active_credentials
-  uri = URI("#{creds[:url]}#{path}")
+  uri = URI("#{WOKKU_API_URL}#{path}")
   http = Net::HTTP.new(uri.host, uri.port)
   http.use_ssl = uri.scheme == "https"
   http.open_timeout = 10
@@ -66,9 +39,9 @@ def api_request(method, path, body = nil)
   when :delete then Net::HTTP::Delete.new(uri)
   end
 
-  request["Authorization"] = "Bearer #{creds[:token]}"
+  request["Authorization"] = "Bearer #{WOKKU_API_TOKEN}"
   request["Content-Type"] = "application/json"
-  request["User-Agent"] = "wokku-mcp/1.1"
+  request["User-Agent"] = "wokku-mcp/1.0"
   request.body = body.to_json if body
 
   response = http.request(request)
@@ -81,73 +54,8 @@ rescue => e
   { error: e.message }
 end
 
-def auth_login(args)
-  email = args["email"].to_s.strip
-  token = args["token"].to_s.strip
-  url   = args["api_url"].to_s.empty? ? ENV_API_URL : args["api_url"].to_s
-  return { error: "email and token required" } if email.empty? || token.empty?
-
-  # Verify the token works before saving — call /auth/whoami.
-  uri = URI("#{url}/auth/whoami")
-  http = Net::HTTP.new(uri.host, uri.port)
-  http.use_ssl = uri.scheme == "https"
-  req = Net::HTTP::Get.new(uri)
-  req["Authorization"] = "Bearer #{token}"
-  req["User-Agent"] = "wokku-mcp/1.1"
-  resp = http.request(req)
-  unless resp.is_a?(Net::HTTPSuccess)
-    return { error: "Token rejected by #{url} (status #{resp.code}). Generate one at <api_url>/dashboard/api_tokens." }
-  end
-
-  data = load_accounts
-  data["accounts"][email] = { "api_url" => url, "token" => token }
-  data["active"] = email
-  save_accounts(data)
-  { ok: true, active: email, accounts: data["accounts"].keys }
-rescue => e
-  { error: "Failed to verify token: #{e.message}" }
-end
-
-def auth_logout(args)
-  data = load_accounts
-  email = (args["email"].to_s.empty? ? nil : args["email"]) || data["active"]
-  return { error: "Not logged in" } if email.nil?
-  data["accounts"].delete(email)
-  data["active"] = nil if data["active"] == email
-  data["active"] ||= data["accounts"].keys.first
-  save_accounts(data)
-  { ok: true, logged_out: email, active: data["active"], accounts: data["accounts"].keys }
-end
-
-def auth_switch(args)
-  email = args["email"].to_s.strip
-  data = load_accounts
-  return { error: "No account for #{email}. Login first via wokku_auth_login." } unless data["accounts"][email]
-  data["active"] = email
-  save_accounts(data)
-  { ok: true, active: email }
-end
-
-def auth_whoami
-  data = load_accounts
-  creds = active_credentials
-  source = data["active"] ? "stored:#{data['active']}" : (ENV_API_TOKEN.empty? ? "none" : "env")
-  remote = api_request(:get, "/auth/whoami")
-  {
-    source: source,
-    api_url: creds[:url],
-    accounts: data["accounts"].keys,
-    active: data["active"],
-    remote: remote
-  }
-end
-
 def handle_tool(name, args)
   case name
-  when "wokku_auth_login"  then auth_login(args)
-  when "wokku_auth_logout" then auth_logout(args)
-  when "wokku_auth_switch" then auth_switch(args)
-  when "wokku_auth_whoami" then auth_whoami
   when "wokku_list_servers" then api_request(:get, "/servers")
   when "wokku_get_server" then api_request(:get, "/servers/#{args['server_id']}")
   when "wokku_server_status" then api_request(:get, "/servers/#{args['server_id']}/status")
@@ -223,14 +131,8 @@ def handle_tool(name, args)
   end
 end
 
-# Tool definitions — 59 tools (55 API ops + 4 auth tools)
+# Tool definitions — 55 tools, 100% coverage of Wokku API v1
 TOOLS = [
-  # --- Auth (multi-account session management) ---
-  { name: "wokku_auth_login", description: "Save an API token for an account and make it active. Generate the token at <wokku.cloud>/dashboard/api_tokens.", inputSchema: { type: "object", properties: { email: { type: "string", description: "Account email (used as the local label)" }, token: { type: "string", description: "Bearer token from the dashboard" }, api_url: { type: "string", description: "API base URL (default: https://wokku.cloud/api/v1)" } }, required: [ "email", "token" ] } },
-  { name: "wokku_auth_logout", description: "Remove a stored account. Defaults to the active one.", inputSchema: { type: "object", properties: { email: { type: "string", description: "Account email (default: active)" } } } },
-  { name: "wokku_auth_switch", description: "Switch the active account to a previously logged-in email.", inputSchema: { type: "object", properties: { email: { type: "string", description: "Account email to activate" } }, required: [ "email" ] } },
-  { name: "wokku_auth_whoami", description: "Show which account is active locally and confirm the token is accepted by the server.", inputSchema: { type: "object", properties: {} } },
-
   { name: "wokku_list_servers", description: "List all connected Dokku servers", inputSchema: { type: "object", properties: {} } },
   { name: "wokku_get_server", description: "Get server details", inputSchema: { type: "object", properties: { server_id: { type: "string", description: "The server ID" } }, required: [ "server_id" ] } },
   { name: "wokku_server_status", description: "Get server health (CPU, memory, disk)", inputSchema: { type: "object", properties: { server_id: { type: "string", description: "The server ID" } }, required: [ "server_id" ] } },
@@ -304,7 +206,7 @@ loop do
 
     case msg["method"]
     when "initialize"
-      $stdout.puts JSON.generate({ jsonrpc: "2.0", id: id, result: { protocolVersion: "2024-11-05", capabilities: { tools: {} }, serverInfo: { name: "wokku", version: "1.1.0" } } })
+      $stdout.puts JSON.generate({ jsonrpc: "2.0", id: id, result: { protocolVersion: "2024-11-05", capabilities: { tools: {} }, serverInfo: { name: "wokku", version: "1.0.0" } } })
     when "notifications/initialized"
       # No response needed
     when "tools/list"

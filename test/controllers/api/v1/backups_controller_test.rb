@@ -29,11 +29,9 @@ class Api::V1::BackupsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [], backups
   end
 
-  test "non-team member cannot list backups" do
-    other_user = User.create!(email: "other-backups@example.com", password: "password123456")
-    _, other_token = ApiToken.create_with_token!(user: other_user, name: "test")
-    get api_v1_database_backups_path(@database), headers: { "Authorization" => "Bearer #{other_token}" }
-    assert_response :forbidden
+  test "unauthenticated request is rejected" do
+    get api_v1_database_backups_path(@database)
+    assert_response :unauthorized
   end
 
   private

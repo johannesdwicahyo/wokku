@@ -11,9 +11,8 @@ class DashboardSmokeTest < ActionDispatch::IntegrationTest
     /dashboard
     /dashboard/apps
     /dashboard/servers
-    /dashboard/resources
+    /dashboard/addons
     /dashboard/templates
-    /dashboard/teams
     /dashboard/notifications
     /dashboard/activities
     /dashboard/profile

@@ -15,15 +15,23 @@
               <span class="text-xs text-on-surface-variant font-semibold"><%= activity.user.email[0].upcase %></span>
             </div>
             <div class="min-w-0">
-              <p class="text-sm text-on-surface-variant truncate">
+              <p class="text-sm text-on-surface-variant truncate flex items-center gap-2">
                 <span class="font-medium text-on-surface"><%= activity.user.email.split("@").first %></span>
                 <span class="text-outline"><%= activity.description %></span>
                 <% if activity.target_name.present? %>
                   <span class="font-mono text-primary"><%= activity.target_name %></span>
                 <% end %>
+                <%
+                  channel = (activity.metadata || {}).with_indifferent_access[:channel].to_s
+                  channel_label = { "app" => "Dashboard", "api" => "API", "cli" => "CLI", "mcp" => "MCP", "git_push" => "git push", "webhook" => "Webhook" }[channel]
+                %>
+                <% if channel_label %>
+                  <span class="ml-1 px-1.5 py-0.5 text-[9px] uppercase tracking-wider font-bold rounded bg-surface border border-outline-variant/20 text-outline"><%= channel_label %></span>
+                <% end %>
               </p>
-              <% if activity.metadata.present? && activity.metadata.any? %>
-                <p class="text-[10px] text-outline-variant font-mono truncate"><%= activity.metadata.to_json.truncate(80) %></p>
+              <% extra = (activity.metadata || {}).reject { |k, _| k.to_s == "channel" } %>
+              <% if extra.present? && extra.any? %>
+                <p class="text-[10px] text-outline-variant font-mono truncate"><%= extra.to_json.truncate(80) %></p>
               <% end %>
             </div>
           </div>

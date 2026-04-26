@@ -11,6 +11,14 @@ class ApplicationController < ActionController::Base
   rescue_from Pundit::NotAuthorizedError, with: :forbidden
   rescue_from ActionController::InvalidAuthenticityToken, with: :stale_csrf_recovery
 
+  # Fires after every successful Devise sign-in (form + OAuth). Checks the
+  # requesting IP+UA against the user's known devices; if it's new, sends
+  # an alert email and records an activity row before continuing.
+  def after_sign_in_path_for(resource)
+    check_new_device(resource) if resource.is_a?(User)
+    super
+  end
+
   # Auth / account pages carry CSRF tokens tied to the session cookie. If the
   # browser re-renders a cached copy of these pages (bfcache, disk cache, or
   # a 304 revalidation after Rails has rotated the session), the embedded
@@ -23,6 +31,10 @@ class ApplicationController < ActionController::Base
   def no_store_auth_pages
     return unless request.path.start_with?("/users/")
     response.headers["Cache-Control"] = "no-store"
+  end
+
+  def check_new_device(user)
+    KnownDevice.track!(user: user, ip: request.remote_ip, user_agent: request.user_agent)
   end
 
   def not_found

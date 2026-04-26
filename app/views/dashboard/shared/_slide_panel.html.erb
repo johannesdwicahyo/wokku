@@ -4,8 +4,12 @@
      class="hidden fixed inset-0 z-40 bg-black/50 opacity-0 transition-opacity duration-300">
 </div>
 <%# Panel %>
+<%
+  size = local_assigns[:size] || "md"
+  width_class = { "md" => "max-w-md", "lg" => "max-w-xl", "xl" => "max-w-2xl" }[size.to_s] || "max-w-md"
+%>
 <div data-slide-panel-target="panel"
-     class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-surface-container-lowest border-l border-outline-variant/20 shadow-2xl transform translate-x-full transition-transform duration-300 ease-out overflow-y-auto">
+     class="fixed inset-y-0 right-0 z-50 w-full <%= width_class %> bg-surface-container-lowest border-l border-outline-variant/20 shadow-2xl transform translate-x-full transition-transform duration-300 ease-out overflow-y-auto">
   <div class="flex items-center justify-between px-6 py-4 border-b border-outline-variant/15">
     <div>
       <h2 class="text-base font-semibold text-on-surface font-headline"><%= title %></h2>

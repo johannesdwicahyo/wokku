@@ -38,4 +38,38 @@ class PostDeploySetupJobTest < ActiveJob::TestCase
       PostDeploySetupJob.perform_now(@app.id)
     end
   end
+
+  test "sets letsencrypt global email before enable when env present" do
+    ENV["LETSENCRYPT_EMAIL"] = "ops@example.com"
+    Dokku::Client.any_instance.stubs(:run).returns("")
+    Dokku::Client.any_instance.expects(:run).with(regexp_matches(/letsencrypt:set --global email/)).at_least_once
+    PostDeploySetupJob.perform_now(@app.id)
+  ensure
+    ENV.delete("LETSENCRYPT_EMAIL")
+  end
+
+  test "rewrites detected non-80 mapping to http:80 (Rails 3000 case)" do
+    report = "Ports map:        \n       Ports map detected: https:3000:3000\n"
+    Dokku::Client.any_instance.stubs(:run).returns(report)
+    Dokku::Client.any_instance.expects(:run).with(regexp_matches(/ports:set .* http:80:3000/)).at_least_once
+    PostDeploySetupJob.perform_now(@app.id)
+  end
+
+  test "skips port rewrite when http:80 mapping already correct" do
+    report = "Ports map:        http:80:5000\n       Ports map detected: http:80:5000\n"
+    Dokku::Client.any_instance.stubs(:run).returns(report)
+    Dokku::Client.any_instance.expects(:run).with(regexp_matches(/ports:set/)).never
+    PostDeploySetupJob.perform_now(@app.id)
+  end
+
+  test "skips letsencrypt email set when no env configured" do
+    original_le = ENV.delete("LETSENCRYPT_EMAIL")
+    original_admin = ENV.delete("ADMIN_EMAIL")
+    Dokku::Client.any_instance.stubs(:run).returns("")
+    Dokku::Client.any_instance.expects(:run).with(regexp_matches(/letsencrypt:set --global email/)).never
+    PostDeploySetupJob.perform_now(@app.id)
+  ensure
+    ENV["LETSENCRYPT_EMAIL"] = original_le if original_le
+    ENV["ADMIN_EMAIL"] = original_admin if original_admin
+  end
 end

@@ -4,7 +4,7 @@ class Dashboard::TerminalsControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
 
   setup do
-    @user = users(:two)  # admin (system role 1)
+    @user = users(:admin)
     @app = app_records(:two)
     @server = servers(:two)
   end

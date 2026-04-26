@@ -1,7 +1,7 @@
 id:
   pricing:
     title: "Harga sederhana dan transparan"
-    subtitle: "Tagihan per jam. Batas maksimum bulanan. Tanpa biaya tersembunyi."
+    subtitle: "Harga bulanan sederhana. Didebet harian dari saldo deposit. Tanpa biaya tersembunyi."
     app_containers: "Container Aplikasi"
     app_containers_desc: "Jalankan proses web dan worker"
     per_container: "Per container"
@@ -11,6 +11,9 @@ id:
     max_monthly: "Maks %{price}%{period}"
     ram: "RAM"
     cpu: "vCPU"
+    disk: "SSD"
+    shared: "Berbagi"
+    dedicated: "Dedikasi"
     storage: "Penyimpanan"
     auto_backup: "Backup otomatis"
     retention: "Retensi %{days} hari"

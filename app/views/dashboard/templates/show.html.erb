@@ -22,15 +22,53 @@
       </div>
     </div>
 
-    <% if @template[:addons]&.any? %>
+    <% cost = template_cost(@template) %>
+    <% if cost[:dyno] %>
       <div class="mt-4 pt-4 border-t border-outline-variant/15">
-        <h3 class="text-[10px] font-bold text-outline uppercase tracking-widest mb-2">Included Add-ons</h3>
-        <div class="flex flex-wrap gap-2">
-          <% @template[:addons].each do |addon| %>
-            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-              <%= addon["type"].capitalize %> (<%= addon["tier"] || "mini" %>)
+        <h3 class="text-[10px] font-bold text-outline uppercase tracking-widest mb-3">Estimated Monthly Cost</h3>
+        <div class="space-y-2">
+          <%# App dyno row %>
+          <div class="flex items-start justify-between bg-surface rounded-md px-3 py-2.5 border border-outline-variant/10">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-[16px]">memory</span>
+                <span class="text-sm font-bold text-on-surface">App dyno · <%= cost[:dyno][:name] %></span>
+              </div>
+              <p class="mt-0.5 text-[11px] text-outline">
+                <%= cost[:dyno][:memory_mb] %>MB RAM · <%= vcpu_display(cost[:dyno][:cpu_shares]) %> vCPU · <%= cost[:dyno][:storage_mb] %>MB storage
+              </p>
+            </div>
+            <span class="text-sm font-bold text-on-surface font-mono whitespace-nowrap">
+              <%= format_price(cost[:dyno][:monthly_usd]) %><%= price_period %>
             </span>
+          </div>
+
+          <%# Add-on rows %>
+          <% cost[:addons].each do |addon| %>
+            <div class="flex items-start justify-between bg-surface rounded-md px-3 py-2.5 border border-outline-variant/10">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-primary text-[16px]">storage</span>
+                  <span class="text-sm font-bold text-on-surface"><%= addon[:type].capitalize %> · <%= addon[:tier] %></span>
+                </div>
+                <p class="mt-0.5 text-[11px] text-outline">
+                  <%= addon[:spec].map { |k, v| "#{k.to_s.tr('_', ' ')}: #{v}" }.join(" · ") %>
+                </p>
+              </div>
+              <span class="text-sm font-bold text-on-surface font-mono whitespace-nowrap">
+                <%= format_price(addon[:monthly_usd]) %><%= price_period %>
+              </span>
+            </div>
           <% end %>
+
+          <%# Total %>
+          <div class="flex items-center justify-between mt-3 pt-3 border-t border-outline-variant/15">
+            <span class="text-sm font-bold text-on-surface">Total</span>
+            <span class="text-base font-bold text-primary font-mono"><%= format_price(cost[:total_monthly_usd]) %><%= price_period %></span>
+          </div>
+          <p class="text-[10px] text-outline/70 mt-1">
+            Billed daily from your deposit balance — pause anytime, prorated.
+          </p>
         </div>
       </div>
     <% end %>
@@ -75,7 +113,7 @@
       </div>
 
       <div class="pt-2">
-        <button type="submit" data-deploy-button-target="button" data-app-name-check-target="submit" class="w-full py-2.5 px-4 technical-gradient text-on-primary text-sm font-bold rounded-md hover:opacity-90 transition cursor-pointer text-center disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2">
+        <button type="submit" data-deploy-button-target="button" data-app-name-check-target="submit" class="w-full py-2.5 px-4 bg-primary text-on-primary text-sm font-bold rounded-md hover:opacity-90 transition cursor-pointer text-center disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2">
           <span data-deploy-button-target="spinner" class="hidden w-4 h-4 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin"></span>
           <span data-deploy-button-target="label">Deploy <%= @template[:name] %></span>
         </button>

@@ -179,6 +179,48 @@ ufw --force enable
 log "UFW enabled: SSH(${SSH_PORT} rate-limited), HTTP(80), HTTPS(443)"
 
 # ══════════════════════════════════════════════════════════════════
+# Container egress filtering (abuse prevention).
+#
+# Tenant apps run as Docker containers; all outbound traffic flows through
+# the DOCKER-USER iptables chain (Docker's official extension point —
+# rules here survive docker-daemon restarts). We reject:
+#
+#   - Outbound SMTP on ports 25 and 465 to stop apps being used as
+#     open-relay spammers (the #1 reason a shared-IP PaaS gets blocklisted).
+#     Port 587 stays open so legitimate apps can send transactional email
+#     via Sendgrid / Postmark / Resend / SES.
+#   - Traffic to RFC1918 private ranges that aren't Docker's internal bridge
+#     subnets (10.0.0.0/8, 192.168.0.0/16, 169.254.0.0/16 — link-local /
+#     cloud-metadata endpoint). Prevents SSRF-to-metadata attacks and
+#     tenant-to-tenant poking of other hosts on the private LAN.
+#     172.16.0.0/12 is allowed because Docker's default bridge uses it for
+#     container-to-container traffic (postgres addon ↔ app, etc.).
+#
+# Persisted to /etc/iptables/rules.v4 via netfilter-persistent.
+# ══════════════════════════════════════════════════════════════════
+apt-get install -y iptables-persistent netfilter-persistent
+
+flush_then_insert() {
+  iptables -D DOCKER-USER "$@" 2>/dev/null || true
+  iptables -I DOCKER-USER "$@"
+}
+
+# Ensure the DOCKER-USER chain exists (Docker creates it on startup; be
+# defensive for pre-docker bring-ups).
+iptables -N DOCKER-USER 2>/dev/null || true
+
+flush_then_insert -p tcp --dport 25  -j REJECT --reject-with icmp-port-unreachable -m comment --comment "wokku:block smtp"
+flush_then_insert -p tcp --dport 465 -j REJECT --reject-with icmp-port-unreachable -m comment --comment "wokku:block smtps"
+flush_then_insert -d 169.254.0.0/16  -j REJECT --reject-with icmp-port-unreachable -m comment --comment "wokku:block link-local/metadata"
+flush_then_insert -d 192.168.0.0/16  -j REJECT --reject-with icmp-port-unreachable -m comment --comment "wokku:block rfc1918 192.168"
+flush_then_insert -d 10.0.0.0/8      -j REJECT --reject-with icmp-port-unreachable -m comment --comment "wokku:block rfc1918 10"
+
+mkdir -p /etc/iptables
+iptables-save > /etc/iptables/rules.v4
+systemctl enable netfilter-persistent 2>/dev/null || true
+log "DOCKER-USER egress filter: SMTP 25/465 + RFC1918 (ex-Docker) blocked"
+
+# ══════════════════════════════════════════════════════════════════
 section "7. Fail2ban"
 # ══════════════════════════════════════════════════════════════════
 
@@ -409,8 +451,14 @@ section "14. Dokku Plugins"
 dokku plugin:install https://github.com/dokku/dokku-postgres.git postgres
 dokku plugin:install https://github.com/dokku/dokku-redis.git redis
 dokku plugin:install https://github.com/dokku/dokku-mysql.git mysql
-dokku plugin:install https://github.com/dokku/dokku-mariadb.git mariadb
 dokku plugin:install https://github.com/dokku/dokku-mongo.git mongo
+dokku plugin:install https://github.com/dokku/dokku-memcached.git memcached
+dokku plugin:install https://github.com/dokku/dokku-rabbitmq.git rabbitmq
+dokku plugin:install https://github.com/dokku/dokku-elasticsearch.git elasticsearch
+# NOTE: No MinIO here. Dokku has no official/community MinIO service
+# plugin; MinIO is currently offered only as a one-click app template
+# (app/templates/minio/docker-compose.yml). A managed MinIO add-on
+# would require a custom Dokku plugin we haven't built yet.
 
 # SSL + maintenance + ACL
 dokku plugin:install https://github.com/dokku/dokku-letsencrypt.git letsencrypt
@@ -420,7 +468,7 @@ dokku plugin:install https://github.com/dokku-community/dokku-acl.git acl
 # Enable ACL per-app enforcement by default
 dokku config:set --global DOKKU_ACL_ALLOW_UNCONTROLLED=0
 
-log "Plugins: postgres, redis, mysql, mariadb, mongo, letsencrypt, maintenance, acl"
+log "Plugins: postgres, redis, mysql, mongo, letsencrypt, maintenance, acl"
 
 # ══════════════════════════════════════════════════════════════════
 # Metrics SSH: authorize the dokku user's pubkeys to log in as root too,
@@ -601,6 +649,13 @@ fi
 section "15. Let's Encrypt Auto-Renewal"
 # ══════════════════════════════════════════════════════════════════
 
+# Global email is required before `dokku letsencrypt:enable <app>` will issue
+# any cert. Without it, the plugin errors out and apps fall back to nginx's
+# self-signed cert (NET::ERR_CERT_COMMON_NAME_INVALID in browsers).
+LETSENCRYPT_EMAIL="${LETSENCRYPT_EMAIL:-admin@wokku.cloud}"
+dokku letsencrypt:set --global email "$LETSENCRYPT_EMAIL"
+log "Let's Encrypt global email set to $LETSENCRYPT_EMAIL"
+
 dokku letsencrypt:cron-job --add
 log "Let's Encrypt cron job added"
 
@@ -701,7 +756,7 @@ echo "  OS:            ${PRETTY_NAME:-unknown}"
 echo "  Dokku:         $(dokku version)"
 echo "  Docker:        $(docker --version | awk '{print $3}' | tr -d ',')"
 echo ""
-echo "  Plugins:       postgres, redis, mysql, mariadb, mongo,"
+echo "  Plugins:       postgres, redis, mysql, mongo,"
 echo "                 letsencrypt, maintenance"
 echo ""
 echo "  Security:"

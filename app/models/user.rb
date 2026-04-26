@@ -16,6 +16,13 @@ class User < ApplicationRecord
   validate :enforce_single_admin, if: :admin?
   validate :block_admin_email_for_members, if: -> { email == ADMIN_EMAIL && !admin? }
   validate :lock_currency_with_active_resources, if: :currency_changed?
+  before_validation :default_currency_for_launch_mode, on: :create
+
+  private def default_currency_for_launch_mode
+    # While we're IDR-only (Indonesia launch), override the schema
+    # default of "usd" so every new signup lands in the IDR/iPaymu flow.
+    self.currency = "idr" if Wokku::LaunchMode.idr_only? && (currency.blank? || currency == "usd")
+  end
 
   private def lock_currency_with_active_resources
     if resource_usages.active.billable.any?
@@ -50,6 +57,7 @@ class User < ApplicationRecord
   has_many :teams, through: :team_memberships
   has_many :app_records, through: :teams
   has_many :device_tokens, dependent: :destroy
+  has_many :known_devices, dependent: :destroy
   has_many :subscriptions, dependent: :destroy
   has_many :invoices, dependent: :destroy
   has_many :usage_events, dependent: :destroy
@@ -87,15 +95,23 @@ class User < ApplicationRecord
   end
 
   def balance
-    currency == "idr" ? balance_idr : balance_usd_cents
+    effective_currency == "idr" ? balance_idr : balance_usd_cents
   end
 
   def balance_formatted
-    if currency == "idr"
+    if effective_currency == "idr"
       "Rp #{ActiveSupport::NumberHelper.number_to_delimited(balance_idr, delimiter: '.')}"
     else
       "$#{'%.2f' % (balance_usd_cents / 100.0)}"
     end
+  end
+
+  # Display-layer currency resolution. In IDR-only launch mode, every
+  # UI path should render IDR regardless of what the user's row holds —
+  # we migrate stale USD balances via a backfill rake task, but the
+  # in-flight display falls through this shim.
+  def effective_currency
+    Wokku::LaunchMode.idr_only? ? "idr" : currency
   end
 
   def has_payment_method?
@@ -107,7 +123,7 @@ class User < ApplicationRecord
   end
 
   def has_deposit_balance?
-    currency == "idr" ? balance_idr > 0 : balance_usd_cents > 0
+    effective_currency == "idr" ? balance_idr > 0 : balance_usd_cents > 0
   end
 
   def deposit_user?
@@ -119,9 +135,31 @@ class User < ApplicationRecord
   end
 
   def estimated_daily_cost
-    hourly = resource_usages.active.billable.sum(:price_cents_per_hour)
-    daily_usd_cents = hourly * 24
-    if currency == "idr"
+    # Display anchored to the *current* tier price (monthly_price_cents/30),
+    # not the segment's frozen hourly × 24. Tier price changes show up
+    # in runway immediately, and rounding stays consistent with the
+    # billing table. Billing math (DailyDeduction) still uses segment
+    # rates so historical cost remains correct.
+    daily_usd_cents = 0.0
+    dyno_tiers = DynoTier.where(name: resource_usages.active.where(resource_type: "container").distinct.pluck(:tier_name)).index_by(&:name)
+    service_tiers = ServiceTier.all.index_by { |t| [ t.service_type, t.name ] }
+
+    resource_usages.active.find_each do |seg|
+      meta = seg.metadata.is_a?(String) ? (JSON.parse(seg.metadata) rescue {}) : (seg.metadata || {})
+      monthly_cents =
+        if seg.resource_type == "container"
+          tier = dyno_tiers[seg.tier_name]
+          count = (meta["count"] || meta[:count] || 1).to_i
+          tier ? tier.monthly_price_cents.to_f * count : seg.price_cents_per_hour.to_f * 720
+        else
+          addon_type = meta["type"] || meta[:type]
+          tier = service_tiers[[ addon_type, seg.tier_name ]]
+          tier ? tier.monthly_price_cents.to_f : seg.price_cents_per_hour.to_f * 720
+        end
+      daily_usd_cents += monthly_cents / 30.0
+    end
+
+    if effective_currency == "idr"
       (daily_usd_cents / 100.0 * 15_000).round
     else
       daily_usd_cents.round

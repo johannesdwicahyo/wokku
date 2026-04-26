@@ -15,13 +15,15 @@ class LocalesControllerTest < ActionDispatch::IntegrationTest
     assert_nil cookies[:locale]
   end
 
-  test "updates signed-in user's locale and currency" do
+  test "updates signed-in user's locale without touching currency" do
     user = users(:one)
+    user.update!(currency: "usd")
     sign_in user
     post "/locale", params: { locale: "id" }
     assert_response :redirect
     assert_equal "id", user.reload.locale
-    assert_equal "idr", user.currency
+    # Currency stays as-is; locale and currency are independent now
+    assert_equal "usd", user.currency
   end
 
   test "does not update user preferences when not signed in" do

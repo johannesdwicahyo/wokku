@@ -76,7 +76,7 @@
         <span>Manual Deploy</span>
       </h3>
       <p class="text-xs text-outline mb-3">Trigger a rebuild of the current codebase on the server.</p>
-      <%= button_to "Deploy Now", deploy_dashboard_app_releases_path(@app), method: :post, data: { turbo_confirm: "Rebuild and deploy #{@app.name}?" }, class: "inline-flex items-center px-3 py-1.5 technical-gradient text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
+      <%= button_to "Deploy Now", deploy_dashboard_app_releases_path(@app), method: :post, data: { turbo_confirm: "Rebuild and deploy #{@app.name}?" }, class: "inline-flex items-center px-3 py-1.5 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
     </div>
   </div>
 </div>

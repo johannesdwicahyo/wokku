@@ -26,7 +26,7 @@ class TemplateParserTest < ActiveSupport::TestCase
     assert_equal 5678, template[:container_port]
     assert_equal "n8nio/n8n:latest", template[:docker_image]
     assert_equal "docker_image", template[:deploy_method]
-    assert_equal [ { "type" => "postgres", "tier" => "mini" } ], template[:addons]
+    assert_equal [ { "type" => "postgres", "tier" => "basic" } ], template[:addons]
   end
 
   test "parses template with no database services" do

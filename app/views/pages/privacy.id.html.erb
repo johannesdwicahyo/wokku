@@ -1,0 +1,174 @@
+<% content_for(:title, "Kebijakan Privasi - Wokku") %>
+
+<div class="min-h-screen bg-surface text-on-surface">
+  <div class="max-w-3xl mx-auto px-6 py-16">
+    <div class="mb-12">
+      <div class="flex items-center justify-between mb-4">
+        <a href="/" class="text-sm text-primary hover:underline">← Kembali ke Wokku</a>
+        <%= button_to "English", public_locale_path(locale: :en), method: :post, class: "text-xs text-outline hover:text-on-surface-variant border border-outline-variant/20 rounded px-2 py-1 cursor-pointer" %>
+      </div>
+      <h1 class="font-headline text-4xl font-bold text-on-surface mb-3">Kebijakan Privasi</h1>
+      <p class="text-sm text-outline">Terakhir diperbarui: 22 April 2026</p>
+    </div>
+
+    <div class="prose prose-invert max-w-none space-y-8">
+
+      <section>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Kebijakan Privasi ini menjelaskan bagaimana Wokku ("kami") mengumpulkan, menggunakan, dan melindungi informasi Anda saat Anda menggunakan layanan kami di <a href="https://wokku.cloud" class="text-primary hover:underline">wokku.cloud</a>, API, CLI, aplikasi mobile, dan plugin Wokku untuk Claude Code.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">1. Informasi yang Kami Kumpulkan</h2>
+
+        <h3 class="text-sm font-bold text-on-surface mt-4 mb-2">Informasi Akun</h3>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li>Alamat email dan nama (wajib untuk pembuatan akun)</li>
+          <li>Kata sandi (di-hash, tidak pernah disimpan dalam bentuk teks biasa)</li>
+          <li>Data profil GitHub atau Google (jika Anda masuk melalui OAuth)</li>
+          <li>Rahasia autentikasi dua faktor (terenkripsi saat disimpan)</li>
+        </ul>
+
+        <h3 class="text-sm font-bold text-on-surface mt-4 mb-2">Data Aplikasi</h3>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li>Metadata aplikasi (nama, environment variable, domain, konfigurasi deploy)</li>
+          <li>Kunci publik SSH yang Anda berikan untuk deploy via git push</li>
+          <li>Kunci privat SSH untuk server Dokku yang terhubung (terenkripsi saat disimpan)</li>
+          <li>Log aplikasi (disimpan hingga 30 hari)</li>
+          <li>Riwayat deploy dan informasi rilis</li>
+          <li>Metrik penggunaan (CPU, memori, bandwidth)</li>
+        </ul>
+
+        <h3 class="text-sm font-bold text-on-surface mt-4 mb-2">Informasi Pembayaran</h3>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li>Rincian metode pembayaran diproses oleh penyedia pembayaran kami (iPaymu) dan tidak disimpan di server kami</li>
+          <li>Riwayat invoice, status langganan, dan alamat tagihan</li>
+        </ul>
+
+        <h3 class="text-sm font-bold text-on-surface mt-4 mb-2">Data Teknis</h3>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li>Alamat IP, user agent, dan log permintaan (disimpan 30 hari)</li>
+          <li>Laporan error via Sentry (tanpa informasi identitas pribadi)</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">2. Penanganan Data Plugin Claude Code</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed mb-3">
+          Plugin Wokku untuk Claude Code berjalan secara lokal di komputer Anda dan terhubung langsung ke Wokku API menggunakan token API yang Anda berikan. Alur datanya:
+        </p>
+        <ul class="text-sm text-on-surface-variant space-y-2 list-disc pl-5">
+          <li><strong class="text-on-surface">Eksekusi lokal:</strong> Plugin adalah skrip Ruby yang berjalan di komputer Anda sendiri, bukan di server kami.</li>
+          <li><strong class="text-on-surface">Penyimpanan token API:</strong> Token API Wokku Anda disimpan secara lokal oleh Claude Code dalam konfigurasi plugin. Kami tidak pernah menerima salinan konfigurasi tersebut.</li>
+          <li><strong class="text-on-surface">Data yang dikirim:</strong> Saat Anda menjalankan tool plugin (misalnya "list my apps"), plugin mengirim permintaan HTTPS ke <code class="text-primary">wokku.cloud/api/v1</code> menggunakan token API Anda. Kami hanya menerima data yang diperlukan untuk memenuhi permintaan tersebut.</li>
+          <li><strong class="text-on-surface">Apa yang kami catat:</strong> Log permintaan API standar (endpoint, waktu, status response). Isi permintaan tidak dicatat.</li>
+          <li><strong class="text-on-surface">Peran Anthropic:</strong> Claude (AI-nya) menafsirkan prompt Anda dan menentukan tool mana yang dipanggil. Prompt yang Anda kirim ke Claude tunduk pada kebijakan privasi Anthropic, bukan kami. Kami tidak menerima teks prompt Anda — hanya argumen tool yang dibuat oleh Claude.</li>
+          <li><strong class="text-on-surface">Instance self-hosted:</strong> Jika plugin dikonfigurasi untuk instance Wokku self-hosted, tidak ada data yang dikirim ke wokku.cloud.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">3. Cara Kami Menggunakan Informasi Anda</h2>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li>Menyediakan, memelihara, dan meningkatkan layanan Wokku</li>
+          <li>Men-deploy dan mengelola aplikasi Anda pada server yang terhubung</li>
+          <li>Memproses pembayaran dan mengirim notifikasi penagihan</li>
+          <li>Mengirim email transaksional (notifikasi deploy, peringatan keamanan, pembaruan akun)</li>
+          <li>Mendeteksi dan mencegah penyalahgunaan, penipuan, dan insiden keamanan</li>
+          <li>Memenuhi kewajiban hukum</li>
+        </ul>
+        <p class="text-sm text-on-surface-variant mt-3">
+          Kami tidak menjual data Anda, menggunakannya untuk iklan, atau membagikannya ke pihak ketiga untuk tujuan pemasaran.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">4. Layanan Pihak Ketiga</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed mb-3">Kami menggunakan layanan pihak ketiga berikut untuk mengoperasikan Wokku:</p>
+        <ul class="text-sm text-on-surface-variant space-y-2 list-disc pl-5">
+          <li><strong class="text-on-surface">iPaymu</strong> — Pemrosesan pembayaran (Indonesia). <a href="https://ipaymu.com/privacy" class="text-primary hover:underline">Kebijakan privasi</a></li>
+          <li><strong class="text-on-surface">Stripe</strong> — Pemrosesan pembayaran internasional. <a href="https://stripe.com/privacy" class="text-primary hover:underline">Kebijakan privasi</a></li>
+          <li><strong class="text-on-surface">Resend</strong> — Pengiriman email transaksional. <a href="https://resend.com/legal/privacy-policy" class="text-primary hover:underline">Kebijakan privasi</a></li>
+          <li><strong class="text-on-surface">Sentry</strong> — Pelacakan error (tanpa data pribadi). <a href="https://sentry.io/privacy/" class="text-primary hover:underline">Kebijakan privasi</a></li>
+          <li><strong class="text-on-surface">GitHub</strong> — Login OAuth dan akses repositori. <a href="https://docs.github.com/en/site-policy/privacy-policies" class="text-primary hover:underline">Kebijakan privasi</a></li>
+          <li><strong class="text-on-surface">Google</strong> — Login OAuth. <a href="https://policies.google.com/privacy" class="text-primary hover:underline">Kebijakan privasi</a></li>
+          <li><strong class="text-on-surface">Cloudflare R2 / AWS S3</strong> — Penyimpanan backup database (hanya jika Anda mengaktifkan backup)</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">5. Retensi Data</h2>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li><strong class="text-on-surface">Data akun:</strong> Disimpan selama akun aktif</li>
+          <li><strong class="text-on-surface">Log aplikasi:</strong> 30 hari</li>
+          <li><strong class="text-on-surface">Backup database:</strong> Sesuai kebijakan retensi yang Anda konfigurasi (1–30 hari)</li>
+          <li><strong class="text-on-surface">Catatan invoice:</strong> 7 tahun (untuk kepatuhan pajak dan hukum)</li>
+          <li><strong class="text-on-surface">Akun yang dihapus:</strong> Data dihapus permanen dalam 30 hari setelah permintaan penghapusan, kecuali jika retensi diwajibkan oleh hukum</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">6. Keamanan Data</h2>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li>Semua data yang dikirim ke dan dari Wokku dienkripsi saat transit menggunakan TLS 1.2 atau lebih tinggi</li>
+          <li>Field sensitif (kunci SSH, token API, rahasia 2FA) dienkripsi saat disimpan menggunakan AES-256</li>
+          <li>Kata sandi di-hash menggunakan bcrypt</li>
+          <li>Backup database dienkripsi sebelum diunggah ke object storage</li>
+          <li>Infrastruktur berjalan di server yang aman dengan pembaruan keamanan rutin</li>
+          <li>Autentikasi dua faktor (TOTP) tersedia untuk semua akun</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">7. Hak Anda</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed mb-3">Anda berhak untuk:</p>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li><strong class="text-on-surface">Mengakses</strong> data pribadi Anda — tersedia melalui dashboard atau via email</li>
+          <li><strong class="text-on-surface">Mengoreksi</strong> data yang tidak akurat melalui pengaturan profil</li>
+          <li><strong class="text-on-surface">Menghapus</strong> akun dan semua data terkait — hubungi support</li>
+          <li><strong class="text-on-surface">Mengekspor</strong> data Anda dalam format portable</li>
+          <li><strong class="text-on-surface">Mencabut token API</strong> kapan saja dari dashboard</li>
+          <li><strong class="text-on-surface">Menolak</strong> email non-esensial</li>
+        </ul>
+        <p class="text-sm text-on-surface-variant mt-3">
+          Untuk menggunakan hak-hak ini, hubungi kami di <a href="mailto:privacy@wokku.cloud" class="text-primary hover:underline">privacy@wokku.cloud</a>.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">8. Transfer Data Internasional</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Wokku dioperasikan dari Indonesia dengan infrastruktur di beberapa wilayah. Dengan menggunakan layanan kami, Anda menyetujui transfer data Anda lintas batas internasional sebagaimana diperlukan untuk menyediakan layanan. Kami menggunakan perlindungan standar industri untuk semua transfer data lintas batas.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">9. Privasi Anak</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Wokku tidak ditujukan bagi pengguna di bawah usia 13 tahun. Kami tidak dengan sengaja mengumpulkan informasi pribadi dari anak-anak. Jika Anda yakin kami telah mengumpulkan informasi dari anak-anak, segera hubungi kami.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">10. Perubahan Kebijakan Ini</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Kami dapat memperbarui Kebijakan Privasi ini dari waktu ke waktu. Perubahan signifikan akan diinformasikan via email kepada pengguna terdaftar setidaknya 30 hari sebelum berlaku. Tanggal "Terakhir diperbarui" di bagian atas halaman mencerminkan revisi terbaru.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">11. Kontak</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Pertanyaan tentang Kebijakan Privasi atau praktik data kami? Hubungi:
+        </p>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5 mt-2">
+          <li>Email: <a href="mailto:privacy@wokku.cloud" class="text-primary hover:underline">privacy@wokku.cloud</a></li>
+          <li>Dukungan: <a href="mailto:support@wokku.cloud" class="text-primary hover:underline">support@wokku.cloud</a></li>
+          <li>Situs web: <a href="https://wokku.cloud" class="text-primary hover:underline">wokku.cloud</a></li>
+        </ul>
+      </section>
+
+    </div>
+  </div>
+</div>
