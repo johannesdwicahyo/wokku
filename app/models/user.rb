@@ -23,9 +23,11 @@ class User < ApplicationRecord
     end
   end
 
-  # Admin sessions timeout faster (15 min vs 30 min for regular users)
+  # Sliding session timeout. Devise resets the clock on every authenticated
+  # request, so an active user effectively stays logged in. Admins still
+  # get a tighter window because their actions are higher-stakes.
   def timeout_in
-    admin? ? 15.minutes : 30.minutes
+    admin? ? 1.day : 30.days
   end
 
   private def enforce_single_admin
