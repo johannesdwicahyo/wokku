@@ -115,18 +115,83 @@
   </div>
 <% end %>
 
-<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
-  <div class="bg-surface-container-low rounded-lg border border-outline-variant/15 p-4">
+<%# Host info row %>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+  <div class="bg-surface-container-low rounded-lg p-4">
     <p class="text-xs text-outline uppercase tracking-wider font-medium mb-1">Host</p>
     <p class="text-sm font-semibold text-on-surface font-mono"><%= @server.host %>:<%= @server.port %></p>
   </div>
-  <div class="bg-surface-container-low rounded-lg border border-outline-variant/15 p-4">
+  <div class="bg-surface-container-low rounded-lg p-4">
     <p class="text-xs text-outline uppercase tracking-wider font-medium mb-1">SSH User</p>
     <p class="text-sm font-semibold text-on-surface font-mono"><%= @server.ssh_user %></p>
   </div>
-  <div class="bg-surface-container-low rounded-lg border border-outline-variant/15 p-4">
+  <div class="bg-surface-container-low rounded-lg p-4">
     <p class="text-xs text-outline uppercase tracking-wider font-medium mb-1">Apps</p>
     <p class="text-sm font-semibold text-on-surface"><%= @apps.size %></p>
+  </div>
+</div>
+
+<%# Live host metrics — populated by MetricsPollJob each minute. Stale > 5 min
+    is dimmed; nil means no successful poll yet. %>
+<%
+  fresh = @server.live_metrics_fresh?
+  cpu_pct = @server.live_cpu_pct
+  mem_used = @server.live_mem_used_mb
+  mem_total = @server.live_mem_total_mb
+  mem_pct = @server.live_mem_pct
+  containers = @server.live_container_count
+  collected = @server.live_metrics_at
+%>
+<div class="bg-surface-container-low rounded-lg p-5 mb-8 <%= 'opacity-60' unless fresh %>">
+  <div class="flex items-baseline justify-between mb-4">
+    <p class="text-xs text-outline uppercase tracking-wider font-medium">Live Host Metrics</p>
+    <p class="text-[11px] text-outline">
+      <% if collected %>
+        Updated <%= time_ago_in_words(collected) %> ago<%= " · stale" unless fresh %>
+      <% else %>
+        Awaiting first poll
+      <% end %>
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <%# CPU %>
+    <div>
+      <div class="flex items-baseline justify-between mb-1.5">
+        <span class="text-xs text-outline">CPU</span>
+        <span class="text-base font-semibold text-on-surface font-mono"><%= cpu_pct ? "#{cpu_pct.to_f.round(1)}%" : "—" %></span>
+      </div>
+      <% if cpu_pct %>
+        <% display_pct = [cpu_pct.to_f, 100].min %>
+        <div class="w-full h-1 bg-surface-container rounded-full overflow-hidden">
+          <div class="h-full <%= display_pct >= 90 ? "bg-error" : display_pct >= 70 ? "bg-tertiary" : "bg-primary" %>" style="width: <%= display_pct %>%"></div>
+        </div>
+      <% end %>
+    </div>
+
+    <%# RAM %>
+    <div>
+      <div class="flex items-baseline justify-between mb-1.5">
+        <span class="text-xs text-outline">RAM</span>
+        <span class="text-base font-semibold text-on-surface font-mono">
+          <%= mem_used ? "#{mem_used} MB" : "—" %><% if mem_total && mem_total.positive? %> / <%= mem_total %> MB<% end %>
+        </span>
+      </div>
+      <% if mem_pct %>
+        <div class="w-full h-1 bg-surface-container rounded-full overflow-hidden">
+          <div class="h-full <%= mem_pct >= 90 ? "bg-error" : mem_pct >= 75 ? "bg-tertiary" : "bg-primary" %>" style="width: <%= mem_pct %>%"></div>
+        </div>
+      <% end %>
+    </div>
+
+    <%# Containers %>
+    <div>
+      <div class="flex items-baseline justify-between mb-1.5">
+        <span class="text-xs text-outline">Containers</span>
+        <span class="text-base font-semibold text-on-surface font-mono"><%= containers || "—" %></span>
+      </div>
+      <p class="text-[11px] text-outline">Running on this host</p>
+    </div>
   </div>
 </div>
 
