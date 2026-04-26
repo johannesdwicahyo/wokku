@@ -89,7 +89,7 @@
 
         <%# Slack %>
         <div data-notification-config-target="slack" class="hidden space-y-2">
-          <input type="text" name="notification[config][webhook_url]" placeholder="https://hooks.slack.com/services/T00.../B00.../xxxx" class="w-full rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary font-mono">
+          <input type="text" name="notification[config][webhook_url]" placeholder="https://hooks.slack.com/services/T00.../B00.../xxxx" class="w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline font-mono focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
           <div class="bg-surface rounded-md p-3">
             <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1.5">Setup Guide</p>
             <ol class="text-[11px] text-outline space-y-1 list-decimal list-inside">
@@ -104,7 +104,7 @@
 
         <%# Discord %>
         <div data-notification-config-target="discord" class="hidden space-y-2">
-          <input type="text" name="notification[config][webhook_url]" placeholder="https://discord.com/api/webhooks/1234.../abcd..." class="w-full rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary font-mono">
+          <input type="text" name="notification[config][webhook_url]" placeholder="https://discord.com/api/webhooks/1234.../abcd..." class="w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline font-mono focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
           <div class="bg-surface rounded-md p-3">
             <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1.5">Setup Guide</p>
             <ol class="text-[11px] text-outline space-y-1 list-decimal list-inside">
@@ -118,8 +118,8 @@
 
         <%# Telegram %>
         <div data-notification-config-target="telegram" class="hidden space-y-2">
-          <input type="text" name="notification[config][bot_token]" placeholder="123456:ABC-DEF1234..." class="w-full rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary font-mono">
-          <input type="text" name="notification[config][chat_id]" placeholder="-1001234567890" class="w-full rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary font-mono">
+          <input type="text" name="notification[config][bot_token]" placeholder="123456:ABC-DEF1234..." class="w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline font-mono focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+          <input type="text" name="notification[config][chat_id]" placeholder="-1001234567890" class="w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline font-mono focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
           <div class="bg-surface rounded-md p-3">
             <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1.5">Setup Guide</p>
             <ol class="text-[11px] text-outline space-y-1 list-decimal list-inside">
@@ -134,7 +134,7 @@
 
         <%# Webhook %>
         <div data-notification-config-target="webhook" class="hidden space-y-2">
-          <input type="text" name="notification[config][url]" placeholder="https://example.com/webhooks/wokku" class="w-full rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary font-mono">
+          <input type="text" name="notification[config][url]" placeholder="https://example.com/webhooks/wokku" class="w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline font-mono focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
           <div class="bg-surface rounded-md p-3">
             <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1.5">Setup Guide</p>
             <p class="text-[11px] text-outline mb-2">We'll send a <span class="font-mono text-on-surface-variant">POST</span> request with a JSON body on each event:</p>

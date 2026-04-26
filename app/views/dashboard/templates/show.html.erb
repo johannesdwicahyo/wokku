@@ -47,13 +47,13 @@
     <h2 class="text-[10px] font-bold text-outline uppercase tracking-widest mb-4">Deploy this template</h2>
 
     <%= form_with url: dashboard_templates_path, method: :post, class: "space-y-4",
-                  data: { controller: "deploy-button app-name-check searchable-select" } do |f| %>
+                  data: { controller: "deploy-button app-name-check" } do |f| %>
       <%= f.hidden_field :template_slug, value: @template[:slug] %>
 
       <div>
-        <label class="block text-xs text-outline uppercase tracking-wider mb-1">App Name</label>
+        <label class="block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider">App Name</label>
         <input type="text" name="app_name" required placeholder="my-app" value="<%= @suggested_app_name %>"
-               class="w-full rounded-md bg-surface border border-outline-variant/15 text-on-surface font-mono text-sm focus:ring-1 focus:ring-primary focus:border-primary"
+               class="w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline font-mono focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
                pattern="[a-z][a-z0-9\-]*"
                title="Lowercase letters, numbers, and hyphens"
                autocomplete="off"
@@ -64,22 +64,14 @@
       </div>
 
       <div>
-        <label class="block text-xs text-outline uppercase tracking-wider mb-1">Server</label>
-        <% suggested = @servers.find { |s| s.id == @suggested_server_id } %>
-        <input type="text"
-               list="template-server-options"
-               data-searchable-select-target="input"
-               data-action="input->searchable-select#sync"
-               autocomplete="off"
-               placeholder="Type to search a server..."
-               value="<%= suggested&.name %>"
-               class="w-full rounded-md bg-surface border border-outline-variant/15 text-on-surface text-sm focus:ring-1 focus:ring-primary focus:border-primary">
-        <datalist id="template-server-options">
-          <% @servers.each do |server| %>
-            <option value="<%= server.name %>" data-id="<%= server.id %>"><%= server.host %></option>
-          <% end %>
-        </datalist>
-        <input type="hidden" name="server_id" data-searchable-select-target="value" value="<%= @suggested_server_id %>">
+        <label class="block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider">Server</label>
+        <%
+          server_options = @servers.map { |s| { value: s.id, label: s.name, description: s.host } }
+        %>
+        <%= combobox_tag "server_id", server_options, value: @suggested_server_id, placeholder: "Search servers…", required: true %>
+        <p class="mt-1 text-[11px] text-outline">
+          <%= @servers.size %> <%= "server".pluralize(@servers.size) %> available
+        </p>
       </div>
 
       <div class="pt-2">
