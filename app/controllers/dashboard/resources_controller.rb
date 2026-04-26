@@ -6,6 +6,13 @@ module Dashboard
       authorize @app, :show?
       @addons = @app.database_services.includes(:server)
       @available_types = addon_types
+
+      # Dyno scaling content was on /scaling — merged here so a single
+      # Resources tab shows compute + add-ons + cost (Heroku model).
+      sync_process_scales_safely
+      @process_scales = @app.process_scales.order(:process_type)
+      @dyno_tiers = defined?(DynoTier) ? DynoTier.available.order(:memory_mb) : []
+      @current_allocation = defined?(DynoAllocation) ? @app.dyno_allocations.includes(:dyno_tier).find_by(process_type: "web") : nil
     end
 
     def create
@@ -85,6 +92,25 @@ module Dashboard
 
     def addon_label(type)
       addon_types.find { |a| a[:type] == type }&.dig(:label) || type.capitalize
+    end
+
+    def sync_process_scales_safely
+      return unless defined?(Dokku::Processes)
+      client = Dokku::Client.new(@app.server)
+      report = Dokku::Processes.new(client).list(@app.name)
+      types = {}
+      report.each do |k, _v|
+        if k.match?(/status_\w+_\d+/)
+          t = k.split("_")[1]
+          types[t] = (types[t] || 0) + 1
+        end
+      end
+      types.each do |t, count|
+        ps = @app.process_scales.find_or_initialize_by(process_type: t)
+        ps.update!(count: count) if ps.new_record?
+      end
+    rescue StandardError => e
+      Rails.logger.warn "ResourcesController: scale sync skipped for #{@app.name}: #{e.message}"
     end
   end
 end

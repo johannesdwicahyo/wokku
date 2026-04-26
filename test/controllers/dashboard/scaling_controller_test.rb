@@ -38,10 +38,10 @@ class Dashboard::ScalingControllerTest < ActionDispatch::IntegrationTest
 
   # --- show ---
 
-  test "shows scaling page when authenticated" do
+  test "scaling page redirects to merged Resources tab" do
     sign_in @user
     get "/dashboard/apps/#{@app.id}/scaling"
-    assert_response :success
+    assert_redirected_to dashboard_app_resources_path(@app)
   end
 
   # --- update ---

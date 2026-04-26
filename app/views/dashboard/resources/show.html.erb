@@ -2,20 +2,18 @@
 
 <div data-controller="slide-panel">
 
-  <%# Container / Dyno overview — mirrors the scaling page summary so
-      users can see what the app is running on without leaving Resources. %>
+  <%# Container / Dyno overview + inline tier picker (Heroku-style — was
+      its own /scaling page; merged here so the user sees compute, add-ons,
+      and total cost without navigating away). %>
   <%
     web_allocation = @app.dyno_allocations.includes(:dyno_tier).find_by(process_type: "web")
     tier = web_allocation&.dyno_tier
     total_dynos = @app.dyno_allocations.sum(:count)
   %>
   <div class="bg-surface-container-low rounded-md overflow-hidden mb-6">
-    <div class="px-6 py-4 border-b border-outline-variant/15 flex items-center justify-between">
-      <div>
-        <h2 class="text-base font-semibold text-on-surface font-headline">Container</h2>
-        <p class="text-sm text-outline mt-1">Compute + memory allocated to <span class="font-mono"><%= @app.name %></span></p>
-      </div>
-      <%= link_to "Change tier", dashboard_app_scaling_path(@app), class: "inline-flex items-center px-3 py-1.5 border border-outline-variant/15 text-xs text-on-surface-variant hover:border-primary/50 hover:text-primary rounded-md transition" %>
+    <div class="px-6 py-4 border-b border-outline-variant/15">
+      <h2 class="text-base font-semibold text-on-surface font-headline">Container</h2>
+      <p class="text-sm text-outline mt-1">Compute + memory allocated to <span class="font-mono"><%= @app.name %></span></p>
     </div>
     <% if tier %>
       <div class="px-6 py-4 grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -51,6 +49,44 @@
     <% else %>
       <div class="px-6 py-6 text-center">
         <p class="text-xs text-outline">No container tier assigned yet — deploy the app once to pick the free tier automatically.</p>
+      </div>
+    <% end %>
+
+    <%# Inline tier picker (was the /scaling page) %>
+    <% if @dyno_tiers.any? %>
+      <div class="px-6 py-4 border-t border-outline-variant/10">
+        <p class="text-xs text-outline mb-3">Change tier</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          <% @dyno_tiers.each do |dt| %>
+            <% is_current = @current_allocation&.dyno_tier_id == dt.id %>
+            <div class="rounded-md p-3 transition <%= is_current ? 'bg-primary/5 ring-1 ring-primary/40' : 'bg-surface-container hover:bg-surface-container-high' %>">
+              <div class="flex items-baseline justify-between mb-1">
+                <h3 class="text-sm font-semibold text-on-surface capitalize"><%= dt.name %></h3>
+                <% if is_current %>
+                  <span class="text-[10px] font-bold uppercase text-primary">Current</span>
+                <% end %>
+              </div>
+              <p class="text-xs text-on-surface-variant mb-2">
+                <%= dt.free? ? "Free" : "#{format_usd_for_user(dt.monthly_price_dollars)}#{price_period(Wokku::LaunchMode.idr_only? ? 'idr' : nil)}" %>
+              </p>
+              <ul class="text-[11px] text-outline space-y-0.5 mb-3">
+                <li><%= dt.memory_mb >= 1024 ? "#{dt.memory_mb / 1024} GB" : "#{dt.memory_mb} MB" %> RAM</li>
+                <li><%= dt.vcpu_label %></li>
+                <% if dt.respond_to?(:storage_mb) && dt.storage_mb > 0 %>
+                  <li><%= dt.storage_mb >= 1024 ? "#{dt.storage_mb / 1024} GB" : "#{dt.storage_mb} MB" %> storage</li>
+                <% end %>
+              </ul>
+              <% unless is_current %>
+                <%= button_to((@current_allocation && dt.memory_mb > @current_allocation.dyno_tier.memory_mb) ? "Upgrade" : "Select",
+                      change_tier_dashboard_app_scaling_path(@app),
+                      params: { dyno_tier_id: dt.id, process_type: "web" },
+                      method: :post,
+                      data: { turbo_confirm: "Change to #{dt.name} (#{dt.memory_mb >= 1024 ? "#{dt.memory_mb / 1024}GB" : "#{dt.memory_mb}MB"}, #{dt.vcpu_label})?" },
+                      class: "w-full text-center px-2 py-1 text-[11px] font-semibold rounded-md #{(@current_allocation && dt.memory_mb > @current_allocation.dyno_tier.memory_mb) ? 'bg-primary text-on-primary hover:opacity-90' : 'bg-surface-container-highest text-on-surface-variant hover:text-on-surface'} transition cursor-pointer border-0") %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
       </div>
     <% end %>
   </div>

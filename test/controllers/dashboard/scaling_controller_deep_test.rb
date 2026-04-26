@@ -35,7 +35,7 @@ class Dashboard::ScalingControllerDeepTest < ActionDispatch::IntegrationTest
     OUTPUT
 
     stub_dokku_run("ps:report" => ps_report) do
-      get "/dashboard/apps/#{@app.id}/scaling"
+      get "/dashboard/apps/#{@app.id}/resources"
       assert_response :success
     end
   end
@@ -44,7 +44,7 @@ class Dashboard::ScalingControllerDeepTest < ActionDispatch::IntegrationTest
     sign_in @user
 
     stub_dokku_run("ps:report" => "") do
-      get "/dashboard/apps/#{@app.id}/scaling"
+      get "/dashboard/apps/#{@app.id}/resources"
       assert_response :success
     end
   end
@@ -54,7 +54,7 @@ class Dashboard::ScalingControllerDeepTest < ActionDispatch::IntegrationTest
 
     Dokku::Client.define_method(:run) { |*| raise Dokku::Client::ConnectionError, "SSH down" }
 
-    get "/dashboard/apps/#{@app.id}/scaling"
+    get "/dashboard/apps/#{@app.id}/resources"
     assert_response :success  # sync_process_scales rescues
   ensure
     Dokku::Client.define_method(:run, DOKKU_CLIENT_ORIGINAL_RUN) if DOKKU_CLIENT_ORIGINAL_RUN
@@ -133,7 +133,7 @@ class Dashboard::ScalingControllerDeepTest < ActionDispatch::IntegrationTest
     ps_report = "status sidekiq 1:     running (CID: xyz999)\n"
 
     stub_dokku_run("ps:report" => ps_report) do
-      get "/dashboard/apps/#{@app.id}/scaling"
+      get "/dashboard/apps/#{@app.id}/resources"
       assert_response :success
       # sidekiq scale record should now exist
       assert @app.process_scales.exists?(process_type: "sidekiq")

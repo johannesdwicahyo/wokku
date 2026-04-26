@@ -7,7 +7,7 @@
   <div class="bg-surface-container-low rounded-md overflow-hidden">
     <div class="px-5 py-3 border-b border-outline-variant/10 flex items-center justify-between">
       <p class="text-[10px] text-outline uppercase tracking-widest font-bold">Resource Limits</p>
-      <%= link_to "Change Plan", dashboard_app_scaling_path(@app), class: "text-[10px] text-primary hover:underline font-semibold" %>
+      <%= link_to "Change Plan", dashboard_app_resources_path(@app), class: "text-[10px] text-primary hover:underline font-semibold" %>
     </div>
     <% if any_limit %>
       <div class="grid grid-cols-2 divide-x divide-outline-variant/10">
