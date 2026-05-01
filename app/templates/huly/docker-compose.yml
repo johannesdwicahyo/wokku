@@ -1,0 +1,33 @@
+# name: Huly
+# documentation: https://github.com/hcengineering/huly-selfhost
+# slogan: All-in-one project management platform — issues, docs, chat, HR
+# category: productivity
+# tags: project-management, issues, docs, chat, collaboration
+# icon: productivity
+# deploy_method: docker_image
+# port: 8087
+
+services:
+  huly:
+    image: hardcoreeng/huly:latest
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - mongodb
+      - elastic
+
+  mongodb:
+    image: mongo:7
+    volumes:
+      - mongo-data:/data/db
+
+  elastic:
+    image: elasticsearch:7.14.2
+    environment:
+      - discovery.type=single-node
+    volumes:
+      - elastic-data:/usr/share/elasticsearch/data
+
+volumes:
+  mongo-data:
+  elastic-data:

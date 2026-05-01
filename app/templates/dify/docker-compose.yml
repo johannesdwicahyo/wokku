@@ -1,0 +1,31 @@
+# name: Dify
+# documentation: https://github.com/langgenius/dify
+# slogan: Open-source AI workflow and LLM application development platform
+# category: ai
+# tags: ai, llm, workflow, chatbot, rag
+# icon: ai
+# deploy_method: docker_image
+# port: 3000
+
+services:
+  dify:
+    image: langgenius/dify-web:latest
+    environment:
+      - EDITION=SELF_HOSTED
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+
+volumes:
+  postgres-data:
+  redis-data:

@@ -1,0 +1,40 @@
+# name: Tandoor Recipes
+# documentation: https://github.com/TandoorRecipes/recipes
+# slogan: Application for managing, tagging, and searching recipes with meal planning
+# category: productivity
+# tags: recipes, cooking, meal-planning, food
+# icon: productivity
+# port: 8080
+
+services:
+  tandoor:
+    image: vabene1111/recipes:latest
+    environment:
+      - SECRET_KEY=changeme-secret-key
+      - DB_ENGINE=django.db.backends.postgresql
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=tandoor
+      - POSTGRES_PASSWORD=tandoor
+      - POSTGRES_DB=tandoor
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    volumes:
+      - tandoor-mediafiles:/opt/recipes/mediafiles
+      - tandoor-staticfiles:/opt/recipes/staticfiles
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=tandoor
+      - POSTGRES_USER=tandoor
+      - POSTGRES_PASSWORD=tandoor
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  tandoor-mediafiles:
+  tandoor-staticfiles:
+  postgres-data:

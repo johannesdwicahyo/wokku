@@ -1,0 +1,36 @@
+# name: Matomo
+# documentation: https://github.com/matomo-org/matomo
+# slogan: Open-source web analytics platform that respects user privacy
+# category: analytics
+# tags: analytics, privacy, tracking, gdpr
+# icon: analytics
+# port: 80
+
+services:
+  matomo:
+    image: matomo:latest
+    environment:
+      - MATOMO_DATABASE_HOST=mysql
+      - MATOMO_DATABASE_DBNAME=matomo
+      - MATOMO_DATABASE_USERNAME=matomo
+      - MATOMO_DATABASE_PASSWORD=matomo
+    ports:
+      - "80:80"
+    depends_on:
+      - mysql
+    volumes:
+      - matomo-data:/var/www/html
+
+  mysql:
+    image: mysql:8
+    environment:
+      - MYSQL_DATABASE=matomo
+      - MYSQL_USER=matomo
+      - MYSQL_PASSWORD=matomo
+      - MYSQL_ROOT_PASSWORD=rootpassword
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+volumes:
+  matomo-data:
+  mysql-data:

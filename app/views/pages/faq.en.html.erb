@@ -1,0 +1,128 @@
+<% content_for(:title, "FAQ - Wokku") %>
+
+<div class="min-h-screen bg-surface text-on-surface">
+  <div class="max-w-3xl mx-auto px-6 py-16">
+    <div class="mb-12">
+      <div class="flex items-center justify-between mb-4">
+        <a href="/" class="text-sm text-primary hover:underline">← Back to Wokku</a>
+        <%= button_to "Bahasa Indonesia", public_locale_path(locale: :id), method: :post, class: "text-xs text-outline hover:text-on-surface-variant border border-outline-variant/20 rounded px-2 py-1 cursor-pointer" %>
+      </div>
+      <h1 class="font-headline text-4xl font-bold text-on-surface mb-3">Frequently Asked Questions</h1>
+      <p class="text-sm text-outline">Last updated: April 24, 2026</p>
+    </div>
+
+    <div class="space-y-10">
+
+      <section>
+        <h2 class="font-headline text-2xl font-bold text-on-surface mb-4">Getting Started</h2>
+        <div class="space-y-5">
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">What is Wokku?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Wokku is a managed web UI for <a href="https://dokku.com" class="text-primary hover:underline" target="_blank" rel="noopener">Dokku</a>, an open-source platform-as-a-service. It lets you deploy apps via <code class="font-mono text-xs text-primary">git push</code>, install open-source tools like n8n or Ghost in one click, and manage databases, domains, and SSL from a dashboard.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">How do I sign up?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Create an account with email, Google, or GitHub. You can start deploying immediately on the free tier — no credit card required.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Do I need to provide my own server?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">No. Wokku Cloud runs your apps on our managed infrastructure. If you prefer self-hosting, Wokku is open source (AGPL-3.0) and can run on any Dokku server you own.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">What languages and frameworks are supported?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Anything Dokku supports via Heroku buildpacks or a <code class="font-mono text-xs text-primary">Dockerfile</code>: Ruby, Python, Node.js, Go, PHP, Java, Rust, Elixir, and more.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-2xl font-bold text-on-surface mb-4">Billing & Pricing</h2>
+        <div class="space-y-5">
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">How does billing work?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Wokku uses a prepaid deposit model. Top up your balance in IDR (via iPaymu) or USD (via Stripe). Usage is debited daily based on the dyno tiers and add-ons you run.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Is there a free tier?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Yes. Free dynos and a shared PostgreSQL add-on (up to 150 MB) are available for hobby projects. See the <a href="/pricing" class="text-primary hover:underline">pricing page</a> for details.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">What payment methods do you accept?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">In Indonesia: QRIS, Virtual Account (BCA, BNI, BRI, Mandiri, Permata), and e-wallets via iPaymu. Internationally: credit/debit cards via Stripe.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Will I be charged automatically?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">No. Wokku never charges your card without a top-up action you initiate. When your balance runs out, apps enter a grace period before being paused.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Can I get a refund?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Unused prepaid credits can be refunded within 14 days of the top-up. See our <a href="/refund" class="text-primary hover:underline">Refund Policy</a> for the full details.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-2xl font-bold text-on-surface mb-4">Deployment</h2>
+        <div class="space-y-5">
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">How do I deploy my app?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Create an app from the dashboard, add your SSH public key, then <code class="font-mono text-xs text-primary">git push</code> to the Wokku remote. You can also connect a GitHub repo for deploy-on-push.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Can I deploy a Docker image?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Yes. Push a <code class="font-mono text-xs text-primary">Dockerfile</code> in your repo, or deploy an existing image from a registry.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Can I use a custom domain?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Yes. Add your domain from the dashboard and point a CNAME to your app. SSL via Let's Encrypt is automatic and free.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">How many apps can I deploy?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">There is no hard limit — you can run as many apps as your balance supports. Shared PostgreSQL add-ons are unlimited on the free tier.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-2xl font-bold text-on-surface mb-4">Data & Security</h2>
+        <div class="space-y-5">
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Where is my data stored?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Your application data runs on servers we operate. Backups are stored encrypted in Cloudflare R2. We do not share your data with third parties outside the processors needed to operate the Service (see <a href="/privacy" class="text-primary hover:underline">Privacy Policy</a>).</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Are backups included?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Managed databases on paid tiers include daily backups with 7-day retention. You can also trigger on-demand backups from the dashboard.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">What happens if I delete my account?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">All apps, databases, and backups associated with your account are permanently deleted within 30 days. Any remaining balance can be refunded — see the <a href="/refund" class="text-primary hover:underline">Refund Policy</a>.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Is two-factor authentication supported?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Yes. TOTP-based 2FA is available for all accounts and required for admin users.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-2xl font-bold text-on-surface mb-4">Support</h2>
+        <div class="space-y-5">
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">How do I contact support?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Email <a href="mailto:support@wokku.cloud" class="text-primary hover:underline">support@wokku.cloud</a> or message us on WhatsApp at <a href="https://wa.me/6285121948822" class="text-primary hover:underline" target="_blank" rel="noopener">+62 851 2194 8822</a>.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Where is Wokku based?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Our office is at Jl. Ir. Sutami, Sukawati, Gianyar, Bali, Indonesia.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Can I contribute or report a bug?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Yes — issues and pull requests are welcome at <a href="https://github.com/johannesdwicahyo/wokku" class="text-primary hover:underline" target="_blank" rel="noopener">github.com/johannesdwicahyo/wokku</a>.</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>

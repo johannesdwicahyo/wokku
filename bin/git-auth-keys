@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+# Called by sshd's AuthorizedKeysCommand to look up SSH public keys
+# Usage: git-auth-keys <fingerprint>
+require_relative "../config/environment"
+
+fingerprint = ARGV[0]
+key = SshPublicKey.find_by(fingerprint: fingerprint)
+
+if key
+  puts "command=\"#{File.expand_path('../bin/git-receive', __dir__)} #{key.user_id}\",no-port-forwarding,no-agent-forwarding,no-pty #{key.public_key}"
+end

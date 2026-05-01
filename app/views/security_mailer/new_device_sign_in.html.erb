@@ -1,0 +1,25 @@
+<h2>New sign-in to your Wokku account</h2>
+
+<p>Hi <%= @user.name.presence || @user.email %>,</p>
+
+<p>We noticed a new sign-in from a device we haven't seen on this account before:</p>
+
+<ul>
+  <li><strong>When:</strong> <%= @first_seen_at.strftime("%B %-d, %Y at %H:%M %Z") %></li>
+  <li><strong>Device:</strong> <%= @browser_label %></li>
+  <li><strong>IP address:</strong> <%= @ip %></li>
+</ul>
+
+<p><strong>Was this you?</strong> If yes, nothing to do — we'll remember this device and stop alerting for it.</p>
+
+<p><strong>Wasn't you?</strong> Your account may be compromised. Act quickly:</p>
+<ol>
+  <li>Change your Google / GitHub password (whichever you sign in with), or generate a new one in your password manager.</li>
+  <li>Go to your Wokku Settings, sign out every session, and review recent activity.</li>
+  <li>Rotate any API tokens you've issued.</li>
+</ol>
+
+<p><a href="<%= dashboard_profile_url %>">Open Wokku Settings →</a></p>
+
+<hr>
+<p style="color:#888;font-size:12px;">You're receiving this because a sign-in happened on your Wokku account from an unfamiliar device. If you'd rather not get these alerts you can't currently opt out — they're part of account safety.</p>

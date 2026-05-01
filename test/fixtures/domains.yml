@@ -1,0 +1,9 @@
+one:
+  app_record: one
+  hostname: app-one.example.com
+  ssl_enabled: false
+
+two:
+  app_record: two
+  hostname: app-two.example.com
+  ssl_enabled: true

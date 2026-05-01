@@ -1,0 +1,178 @@
+<div data-controller="slide-panel">
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-xl font-headline text-on-surface"><%= t("dashboard.notifications.title") %></h1>
+    <p class="mt-0.5 text-sm text-outline">Get notified about deploys, failures, and other events</p>
+  </div>
+  <button data-action="click->slide-panel#open" class="inline-flex items-center px-4 py-2 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">
+    <span class="material-symbols-outlined text-[18px] mr-1.5">add</span>
+    <%= t("dashboard.notifications.add_rule") %>
+  </button>
+</div>
+
+<%# Existing Rules %>
+<div class="bg-surface-container-low rounded-xl border border-outline-variant/15 overflow-hidden mb-6">
+  <div class="px-6 py-4 border-b border-outline-variant/15">
+    <h2 class="text-base font-semibold text-on-surface"><%= t("dashboard.notifications.notification_rules") %></h2>
+  </div>
+
+  <% if @notifications.any? %>
+    <div class="divide-y divide-outline-variant/15">
+      <% @notifications.each do |notification| %>
+        <div class="px-6 py-4 flex items-center justify-between hover:bg-surface-container-highest transition">
+          <div class="flex items-center space-x-4">
+            <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-surface border border-outline-variant/15">
+              <% case notification.channel %>
+              <% when "email" %>
+                <span class="material-symbols-outlined text-[18px] text-primary">mail</span>
+              <% when "slack" %>
+                <span class="material-symbols-outlined text-[18px] text-secondary">tag</span>
+              <% when "discord" %>
+                <span class="material-symbols-outlined text-[18px] text-[#5865F2]">forum</span>
+              <% when "telegram" %>
+                <span class="material-symbols-outlined text-[18px] text-[#26A5E4]">send</span>
+              <% when "webhook" %>
+                <span class="material-symbols-outlined text-[18px] text-tertiary">webhook</span>
+              <% end %>
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="text-sm font-semibold text-on-surface capitalize"><%= notification.channel %></span>
+                <% if notification.app_record %>
+                  <span class="text-xs text-outline font-mono bg-surface px-1.5 py-0.5 rounded"><%= notification.app_record.name %></span>
+                <% else %>
+                  <span class="text-xs text-outline">All apps</span>
+                <% end %>
+              </div>
+              <div class="flex items-center space-x-2 mt-0.5">
+                <% (notification.events || []).each do |event| %>
+                  <span class="text-xs text-on-surface-variant"><%= event.humanize %></span>
+                <% end %>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <%= button_to "Test", test_dashboard_notification_path(notification), method: :post, class: "text-xs text-primary/80 hover:text-primary transition bg-transparent border-0 cursor-pointer" %>
+            <%= link_to "Remove", dashboard_notification_path(notification), data: { turbo_method: :delete, turbo_confirm: "Remove this notification rule?" }, class: "text-xs text-error/70 hover:text-error transition" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="px-6 py-8 text-center">
+      <span class="material-symbols-outlined text-[40px] text-outline-variant mb-3">notifications_off</span>
+      <p class="text-sm text-on-surface-variant">No notification rules configured.</p>
+      <p class="text-xs text-outline mt-1">Add a rule below to get notified about events.</p>
+    </div>
+  <% end %>
+</div>
+
+<%= render layout: "dashboard/shared/slide_panel", locals: { title: t("dashboard.notifications.add_rule"), subtitle: "Choose channel, app, and events", size: "lg" } do %>
+  <%= form_with(model: @notification, url: dashboard_notifications_path, class: "space-y-4") do |f| %>
+    <%# Wraps the channel combobox AND the channel-config sections so the
+        notification-config Stimulus controller can hear `change` events
+        bubbling up from the combobox's hidden input. %>
+    <div class="space-y-4" data-controller="notification-config" data-action="change->notification-config#toggle">
+      <div>
+        <label class="block text-xs text-on-surface-variant uppercase tracking-wider mb-1">Channel</label>
+        <%= combobox_tag "notification[channel]", [
+          ["Email", "email"],
+          ["Slack", "slack"],
+          ["Discord", "discord"],
+          ["Telegram", "telegram"],
+          ["Webhook", "webhook"]
+        ], placeholder: "Select channel" %>
+      </div>
+
+      <%# Channel-specific config fields %>
+      <div>
+        <label class="block text-xs text-on-surface-variant uppercase tracking-wider mb-1">Channel Config</label>
+
+        <%# Email %>
+        <div data-notification-config-target="email" class="hidden">
+          <div class="bg-surface rounded-md p-3 space-y-2">
+            <p class="text-xs text-on-surface-variant">Notifications will be sent to <span class="font-mono font-bold text-on-surface"><%= current_user.email %></span></p>
+            <p class="text-[10px] text-outline">No additional setup needed.</p>
+          </div>
+        </div>
+
+        <%# Slack %>
+        <div data-notification-config-target="slack" class="hidden space-y-2">
+          <input type="text" name="notification[config][url]" placeholder="https://hooks.slack.com/services/T00.../B00.../xxxx" class="w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline font-mono focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+          <div class="bg-surface rounded-md p-3">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1.5">Setup Guide</p>
+            <ol class="text-[11px] text-outline space-y-1 list-decimal list-inside">
+              <li>Open your Slack workspace and go to <span class="text-on-surface-variant">Apps</span></li>
+              <li>Search for <span class="font-bold text-on-surface-variant">Incoming Webhooks</span> and install it</li>
+              <li>Click <span class="font-bold text-on-surface-variant">Add New Webhook to Workspace</span></li>
+              <li>Choose a channel (e.g. #deploys) and authorize</li>
+              <li>Copy the <span class="font-bold text-on-surface-variant">Webhook URL</span> and paste it above</li>
+            </ol>
+          </div>
+        </div>
+
+        <%# Discord %>
+        <div data-notification-config-target="discord" class="hidden space-y-2">
+          <input type="text" name="notification[config][url]" placeholder="https://discord.com/api/webhooks/1234.../abcd..." class="w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline font-mono focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+          <div class="bg-surface rounded-md p-3">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1.5">Setup Guide</p>
+            <ol class="text-[11px] text-outline space-y-1 list-decimal list-inside">
+              <li>Open your Discord server and go to <span class="text-on-surface-variant">Server Settings > Integrations</span></li>
+              <li>Click <span class="font-bold text-on-surface-variant">Webhooks > New Webhook</span></li>
+              <li>Name it (e.g. "Wokku") and choose a channel</li>
+              <li>Click <span class="font-bold text-on-surface-variant">Copy Webhook URL</span> and paste it above</li>
+            </ol>
+          </div>
+        </div>
+
+        <%# Telegram %>
+        <div data-notification-config-target="telegram" class="hidden space-y-2">
+          <input type="text" name="notification[config][bot_token]" placeholder="123456:ABC-DEF1234..." class="w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline font-mono focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+          <input type="text" name="notification[config][chat_id]" placeholder="-1001234567890" class="w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline font-mono focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+          <div class="bg-surface rounded-md p-3">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1.5">Setup Guide</p>
+            <ol class="text-[11px] text-outline space-y-1 list-decimal list-inside">
+              <li>Open Telegram and message <a href="https://t.me/BotFather" class="text-primary hover:underline" target="_blank">@BotFather</a></li>
+              <li>Send <span class="font-mono text-on-surface-variant">/newbot</span>, follow the prompts, and copy the <span class="font-bold text-on-surface-variant">Bot Token</span></li>
+              <li>Add the bot to your group or channel</li>
+              <li>To find your <span class="font-bold text-on-surface-variant">Chat ID</span>: message <a href="https://t.me/userinfobot" class="text-primary hover:underline" target="_blank">@userinfobot</a>, or for groups forward a message to <a href="https://t.me/JsonDumpBot" class="text-primary hover:underline" target="_blank">@JsonDumpBot</a></li>
+              <li>Paste both values in the fields above</li>
+            </ol>
+          </div>
+        </div>
+
+        <%# Webhook %>
+        <div data-notification-config-target="webhook" class="hidden space-y-2">
+          <input type="text" name="notification[config][url]" placeholder="https://example.com/webhooks/wokku" class="w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline font-mono focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+          <div class="bg-surface rounded-md p-3">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1.5">Setup Guide</p>
+            <p class="text-[11px] text-outline mb-2">We'll send a <span class="font-mono text-on-surface-variant">POST</span> request with a JSON body on each event:</p>
+            <code class="block text-[10px] font-mono text-on-surface-variant bg-surface-container-low rounded p-2 whitespace-pre">{ "event": "deploy_succeeded",
+  "app": "my-app",
+  "timestamp": "2026-..." }</code>
+          </div>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs text-on-surface-variant uppercase tracking-wider mb-1">App (optional)</label>
+        <%= combobox_tag "notification[app_record_id]", @apps.map { |a| { value: a.id, label: a.name, description: a.server.name } }, placeholder: "All apps" %>
+      </div>
+      <div>
+        <label class="block text-xs text-on-surface-variant uppercase tracking-wider mb-1">Events</label>
+        <div class="space-y-1.5 mt-1">
+          <% [ "deploy_succeeded", "deploy_failed", "app_crashed", "domain_added", "app_created", "app_deleted", "daily_debit_summary" ].each do |event| %>
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" name="notification[events][]" value="<%= event %>" class="rounded bg-surface border-outline-variant/15 text-primary focus:ring-primary">
+              <span class="text-xs text-on-surface-variant"><%= event.humanize %></span>
+            </label>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    <div class="flex items-center gap-3 pt-2">
+      <%= f.submit "Add Rule", class: "px-4 py-2 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
+      <button type="button" data-action="click->slide-panel#close" class="text-sm text-outline hover:text-on-surface transition cursor-pointer">Cancel</button>
+    </div>
+  <% end %>
+<% end %>
+</div>

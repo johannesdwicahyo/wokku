@@ -1,0 +1,89 @@
+<% content_for(:title, "Transfer #{@transfer.app_record.name}") %>
+
+<%
+  app  = @transfer.app_record
+  alloc = defined?(DynoAllocation) ? app.dyno_allocations.includes(:dyno_tier).find_by(process_type: "web") : nil
+  tier  = alloc&.dyno_tier
+  monthly_cents = tier ? tier.price_cents_per_hour * 24 * 30 * (alloc.count || 1) : 0
+  addons = app.database_services.includes(:service_tier)
+  domains = app.domains
+%>
+
+<div class="space-y-6 max-w-3xl">
+  <div>
+    <%= link_to dashboard_app_transfers_path, class: "text-xs text-outline hover:text-on-surface-variant" do %>
+      ← Back to transfers
+    <% end %>
+    <h1 class="mt-2 text-xl font-headline text-on-surface">Accept transfer of <%= app.name %>?</h1>
+    <p class="mt-1 text-sm text-outline">
+      <%= @transfer.from_user.email %> wants to transfer this app to you.
+      Once you accept, billing for the container and any non-shared add-ons will start hitting your account
+      from the moment of acceptance. Expires <%= time_ago_in_words(@transfer.expires_at) %> from now.
+    </p>
+  </div>
+
+  <div class="bg-surface-container-low rounded-xl border border-outline-variant/15 divide-y divide-outline-variant/15">
+    <div class="px-5 py-3 flex items-center justify-between">
+      <p class="text-[10px] uppercase tracking-wider text-outline font-bold">App</p>
+      <p class="text-sm text-on-surface font-mono"><%= app.name %></p>
+    </div>
+    <div class="px-5 py-3 flex items-center justify-between">
+      <p class="text-[10px] uppercase tracking-wider text-outline font-bold">Server</p>
+      <p class="text-sm text-on-surface"><%= app.server&.name || "—" %></p>
+    </div>
+    <div class="px-5 py-3 flex items-center justify-between">
+      <p class="text-[10px] uppercase tracking-wider text-outline font-bold">Container Tier</p>
+      <p class="text-sm text-on-surface">
+        <% if tier %>
+          <span class="font-semibold"><%= tier.name.titleize %></span>
+          · <%= tier.memory_mb %> MB · <%= vcpu_display(tier.cpu_shares) %> vCPU
+          × <%= alloc.count || 1 %>
+        <% else %>
+          —
+        <% end %>
+      </p>
+    </div>
+    <div class="px-5 py-3 flex items-center justify-between">
+      <p class="text-[10px] uppercase tracking-wider text-outline font-bold">Estimated Monthly Cost</p>
+      <p class="text-sm text-on-surface font-semibold"><%= format_cents_for_user(monthly_cents, override: "idr") %><%= price_period("idr") %></p>
+    </div>
+    <div class="px-5 py-3">
+      <p class="text-[10px] uppercase tracking-wider text-outline font-bold mb-2">Linked Add-ons</p>
+      <% if addons.any? %>
+        <ul class="space-y-1">
+          <% addons.each do |db| %>
+            <li class="text-sm text-on-surface flex items-center justify-between">
+              <span><span class="font-mono"><%= db.name %></span> <span class="text-outline text-xs">· <%= db.service_type %> <%= db.tier_name %></span></span>
+              <% if db.shared? %>
+                <span class="text-xs text-outline">shared (no extra charge)</span>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="text-sm text-outline">None.</p>
+      <% end %>
+    </div>
+    <div class="px-5 py-3">
+      <p class="text-[10px] uppercase tracking-wider text-outline font-bold mb-2">Domains</p>
+      <% if domains.any? %>
+        <ul class="space-y-1">
+          <% domains.each do |d| %>
+            <li class="text-sm text-on-surface font-mono"><%= d.host %></li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="text-sm text-outline">None.</p>
+      <% end %>
+    </div>
+  </div>
+
+  <% if @transfer.pending? %>
+    <div class="flex items-center space-x-3">
+      <%= button_to "Accept transfer", accept_dashboard_app_transfer_path(@transfer), data: { turbo_confirm: "Accept ownership of #{app.name}? Billing will start on your account immediately." }, class: "px-4 py-2 rounded-md bg-primary text-on-primary text-sm font-semibold hover:opacity-90" %>
+      <%= button_to "Decline", decline_dashboard_app_transfer_path(@transfer), data: { turbo_confirm: "Decline this transfer?" }, class: "px-4 py-2 rounded-md bg-surface-container text-on-surface text-sm font-semibold hover:bg-surface-container-high" %>
+    </div>
+  <% else %>
+    <p class="text-sm text-outline">This transfer is no longer pending (<%= @transfer.status %>).</p>
+  <% end %>
+</div>

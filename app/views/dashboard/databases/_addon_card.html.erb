@@ -1,0 +1,58 @@
+<%# Single source of truth for addon row rendering. Used inline by
+    /dashboard/addons, by the per-app Resources page, and as the
+    Turbo Stream target so status changes (creating → running, or
+    creating → error) replace the row in place without a refresh. %>
+<%= turbo_frame_tag dom_id(addon) do %>
+  <div id="<%= dom_id(addon) %>" class="px-5 py-3 flex items-center justify-between gap-3 hover:bg-surface-container transition">
+    <div class="min-w-0 flex-1">
+      <div class="flex items-center gap-2">
+        <p class="text-sm font-semibold text-on-surface truncate"><%= addon.name %></p>
+        <% case addon.status %>
+        <% when "creating" %>
+          <span class="inline-flex items-center gap-1 text-[10px] font-bold text-tertiary uppercase tracking-wider">
+            <span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+            Provisioning
+          </span>
+        <% when "error" %>
+          <span class="inline-flex items-center gap-1 text-[10px] font-bold text-error uppercase tracking-wider">
+            <span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+            Failed
+          </span>
+        <% when "running" %>
+          <span class="inline-flex items-center gap-1 text-[10px] font-bold text-primary uppercase tracking-wider">
+            <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+            Running
+          </span>
+        <% end %>
+      </div>
+      <div class="flex items-center gap-2 mt-0.5 text-xs text-outline">
+        <span class="capitalize"><%= addon.service_type %></span>
+        <span>·</span>
+        <span><%= addon.tier_name %></span>
+        <% if addon.app_records.any? %>
+          <span>·</span>
+          <span class="truncate">linked to <%= addon.app_records.map(&:name).join(", ") %></span>
+        <% end %>
+      </div>
+      <% if addon.status == "error" && addon.last_error.present? %>
+        <p class="mt-2 text-xs text-error font-mono break-all line-clamp-2"><%= addon.last_error %></p>
+      <% end %>
+    </div>
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <% if addon.status == "error" %>
+        <%# data-turbo-frame=_top so the redirect after Retry / Destroy
+            navigates the whole page instead of trying to render inside
+            this card's frame (which would show "Content missing"). %>
+        <%= button_to "Retry", retry_dashboard_addon_path(addon), method: :post, form: { data: { turbo_frame: "_top" } }, class: "text-xs px-3 py-1.5 bg-primary text-on-primary rounded-md font-semibold hover:opacity-90 transition cursor-pointer" %>
+        <%= button_to "Destroy", dashboard_addon_path(addon), method: :delete, data: { turbo_confirm: "Destroy #{addon.name}? Cannot be undone." }, form: { data: { turbo_frame: "_top" } }, class: "text-xs px-3 py-1.5 bg-error-container text-on-error-container rounded-md font-semibold hover:opacity-90 transition cursor-pointer" %>
+      <% else %>
+        <%# data-turbo-frame=_top so the navigation escapes the
+            turbo_frame_tag wrapping this card. Without it, Turbo
+            tries to render the destination page inside this frame
+            and shows "Content missing" because the addon show page
+            doesn't have a matching frame. %>
+        <%= link_to "Open →", dashboard_addon_path(addon), class: "text-xs text-primary hover:underline font-semibold", data: { turbo_frame: "_top" } %>
+      <% end %>
+    </div>
+  </div>
+<% end %>

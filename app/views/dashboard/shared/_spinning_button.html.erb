@@ -1,0 +1,12 @@
+<%# Reusable disabled-with-spinner button for in-flight async actions.
+    Use whenever a row's action is queued and we want a sticky loading
+    state until the job's broadcast replaces the partial.
+    Locals:
+      label   — text after the spinner (e.g. "Restarting", "Issuing SSL")
+      classes — Tailwind classes for the surrounding button (caller picks
+                size + colour to match siblings)
+%>
+<button disabled class="inline-flex items-center gap-2 cursor-wait opacity-80 <%= classes %>">
+  <span class="inline-block w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+  <%= label %>…
+</button>

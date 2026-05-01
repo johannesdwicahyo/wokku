@@ -1,0 +1,48 @@
+# name: Appwrite
+# documentation: https://github.com/appwrite/appwrite
+# slogan: Secure backend platform for web, mobile, and Flutter developers
+# category: developer-tools
+# tags: backend, baas, api, database, storage
+# icon: developer-tools
+# port: 80
+
+services:
+  appwrite:
+    image: appwrite/appwrite:latest
+    environment:
+      - _APP_ENV=production
+      - _APP_OPENSSL_KEY_V1=your-secret-key
+      - _APP_DOMAIN=localhost
+      - _APP_DOMAIN_TARGET=localhost
+      - _APP_DB_HOST=mariadb
+      - _APP_DB_PORT=3306
+      - _APP_DB_SCHEMA=appwrite
+      - _APP_DB_USER=appwrite
+      - _APP_DB_PASS=appwrite
+      - _APP_REDIS_HOST=redis
+      - _APP_REDIS_PORT=6379
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - mariadb
+      - redis
+
+  mariadb:
+    image: mariadb:10.11
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=appwrite
+      - MYSQL_USER=appwrite
+      - MYSQL_PASSWORD=appwrite
+    volumes:
+      - mariadb-data:/var/lib/mysql
+
+  redis:
+    image: redis:7
+    volumes:
+      - redis-data:/data
+
+volumes:
+  mariadb-data:
+  redis-data:

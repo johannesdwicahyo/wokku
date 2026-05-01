@@ -1,0 +1,25 @@
+# name: Netdata
+# documentation: https://github.com/netdata/netdata
+# slogan: Real-time performance monitoring for systems, containers, and applications
+# category: monitoring
+# tags: monitoring, metrics, performance, apm
+# icon: monitoring
+# port: 19999
+
+services:
+  netdata:
+    image: netdata/netdata:latest
+    environment:
+      - NETDATA_CLAIM_TOKEN=
+      - NETDATA_CLAIM_URL=https://app.netdata.cloud
+    ports:
+      - "19999:19999"
+    volumes:
+      - netdata-config:/etc/netdata
+      - netdata-lib:/var/lib/netdata
+      - netdata-cache:/var/cache/netdata
+
+volumes:
+  netdata-config:
+  netdata-lib:
+  netdata-cache:

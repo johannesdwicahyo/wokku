@@ -1,0 +1,48 @@
+# name: TubeArchivist
+# documentation: https://github.com/tubearchivist/tubearchivist
+# slogan: Your self-hosted YouTube media server for organizing and watching archived videos
+# category: media
+# tags: youtube, video, archiver, media-server
+# icon: media
+# port: 8000
+
+services:
+  tubearchivist:
+    image: bbilly1/tubearchivist:latest
+    environment:
+      - ES_URL=http://elasticsearch:9200
+      - REDIS_HOST=redis
+      - HOST_UID=1000
+      - HOST_GID=1000
+      - TA_HOST=localhost:8000
+      - TA_USERNAME=tubearchivist
+      - TA_PASSWORD=verysecret
+      - ELASTIC_PASSWORD=verysecret
+      - TZ=UTC
+    ports:
+      - "8000:8000"
+    depends_on:
+      - elasticsearch
+      - redis
+    volumes:
+      - tubearchivist-cache:/cache
+
+  elasticsearch:
+    image: elasticsearch:8.12.0
+    environment:
+      - ELASTIC_PASSWORD=verysecret
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=true
+      - discovery.type=single-node
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+
+  redis:
+    image: redis:7
+    volumes:
+      - redis-data:/data
+
+volumes:
+  tubearchivist-cache:
+  elasticsearch-data:
+  redis-data:

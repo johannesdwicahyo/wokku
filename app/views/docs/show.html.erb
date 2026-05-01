@@ -1,0 +1,24 @@
+<% content_for(:title, docs_page_title) %>
+
+<article class="docs-content max-w-3xl">
+  <%= raw @content %>
+</article>
+
+<%# Prev / Next navigation %>
+<nav class="docs-prev-next max-w-3xl mt-12 pt-6 border-t border-outline-variant/20 flex items-center justify-between">
+  <% if @prev_page %>
+    <a href="/docs/<%= @prev_page['path'] %>" class="group flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition">
+      <span class="material-symbols-outlined text-[16px] group-hover:-translate-x-0.5 transition-transform">arrow_back</span>
+      <span><%= @prev_page['title'] %></span>
+    </a>
+  <% else %>
+    <div></div>
+  <% end %>
+
+  <% if @next_page %>
+    <a href="/docs/<%= @next_page['path'] %>" class="group flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary transition">
+      <span><%= @next_page['title'] %></span>
+      <span class="material-symbols-outlined text-[16px] group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+    </a>
+  <% end %>
+</nav>

@@ -1,0 +1,87 @@
+<% content_for(:title, "Status — Wokku") %>
+
+<%
+  pill = ->(state) {
+    case state
+    when :operational then [ "All systems operational", "bg-secondary/15 text-secondary border-secondary/30" ]
+    when :degraded    then [ "Degraded performance",     "bg-tertiary/15 text-tertiary border-tertiary/30" ]
+    when :down        then [ "Major outage",             "bg-error/15 text-error border-error/30" ]
+    end
+  }
+  overall_label, overall_classes = pill.call(@overall)
+  row_class = "flex items-center justify-between px-4 py-3 border-b border-outline-variant/15 last:border-b-0"
+  ok_dot   = "<span class='w-2 h-2 rounded-full bg-secondary'></span>".html_safe
+  bad_dot  = "<span class='w-2 h-2 rounded-full bg-error'></span>".html_safe
+  warn_dot = "<span class='w-2 h-2 rounded-full bg-tertiary'></span>".html_safe
+%>
+
+<div class="min-h-screen bg-surface text-on-surface">
+  <div class="max-w-3xl mx-auto px-6 py-16">
+    <a href="/" class="text-sm text-primary hover:underline">← Back to Wokku</a>
+    <h1 class="font-headline text-3xl font-bold text-on-surface mt-4 mb-2">System Status</h1>
+
+    <div class="my-6 flex items-center gap-3">
+      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border <%= overall_classes %>"><%= overall_label %></span>
+      <span class="text-[11px] text-outline">Updated <%= Time.current.strftime("%H:%M:%S WIB · %b %-d") %></span>
+    </div>
+
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="<%= row_class %>">
+        <div class="flex items-center gap-3">
+          <%= @web_ok ? ok_dot : bad_dot %>
+          <div>
+            <p class="text-sm font-bold text-on-surface">Dashboard</p>
+            <p class="text-[11px] text-outline">Web requests · this very page</p>
+          </div>
+        </div>
+        <span class="text-xs font-mono text-on-surface-variant"><%= @web_ok ? "OK" : "DOWN" %></span>
+      </div>
+      <div class="<%= row_class %>">
+        <div class="flex items-center gap-3">
+          <%= @db_ok ? ok_dot : bad_dot %>
+          <div>
+            <p class="text-sm font-bold text-on-surface">Database</p>
+            <p class="text-[11px] text-outline">Postgres primary</p>
+          </div>
+        </div>
+        <span class="text-xs font-mono text-on-surface-variant"><%= @db_ok ? "OK" : "DOWN" %></span>
+      </div>
+      <div class="<%= row_class %>">
+        <div class="flex items-center gap-3">
+          <% if @worker_ok %><%= ok_dot %><% elsif @worker_lag_seconds %><%= warn_dot %><% else %><%= bad_dot %><% end %>
+          <div>
+            <p class="text-sm font-bold text-on-surface">Background workers</p>
+            <p class="text-[11px] text-outline">
+              Deploys, billing, notifications
+              <% if @queue_depth %> · <%= @queue_depth %> in queue<% end %>
+            </p>
+          </div>
+        </div>
+        <span class="text-xs font-mono text-on-surface-variant">
+          <% if @worker_lag_seconds %>last job <%= @worker_lag_seconds %>s ago<% else %>UNKNOWN<% end %>
+        </span>
+      </div>
+    </div>
+
+    <div class="mt-8">
+      <h2 class="font-headline text-base font-bold text-on-surface mb-3">Recent incidents</h2>
+      <% if @recent_incidents.any? %>
+        <ul class="space-y-2">
+          <% @recent_incidents.each do |incident| %>
+            <li class="bg-surface-container-low rounded-md px-4 py-3 text-xs text-on-surface-variant">
+              <p class="text-on-surface font-bold mb-1"><%= incident.action.humanize %></p>
+              <p><%= (incident.metadata || {})["message"] %></p>
+              <p class="text-outline mt-1"><%= incident.created_at.strftime("%b %-d, %H:%M WIB") %></p>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="text-xs text-outline">No incidents reported in the last 30 days. 🎉</p>
+      <% end %>
+    </div>
+
+    <p class="mt-12 text-[11px] text-outline">
+      Subscribe to incident updates? <%= link_to "Send feedback", feedback_path, class: "text-primary hover:underline" %> with your email and we'll add you to the list.
+    </p>
+  </div>
+</div>

@@ -1,0 +1,31 @@
+# name: Trigger.dev
+# documentation: https://github.com/triggerdotdev/trigger.dev
+# slogan: Open-source background jobs and workflow automation platform
+# category: developer-tools
+# tags: jobs, workflows, automation, queues, cron
+# icon: developer-tools
+# deploy_method: docker_image
+# port: 3030
+
+services:
+  trigger-dev:
+    image: ghcr.io/triggerdotdev/trigger.dev:latest
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+
+volumes:
+  postgres-data:
+  redis-data:

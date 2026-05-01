@@ -1,0 +1,18 @@
+<% if @is_test %>
+Channel test ✅
+
+This is a test notification from Wokku — your <%= @notification.channel.capitalize %> channel is configured correctly.
+
+You'll receive notifications for the events you subscribed to.
+
+Manage rules: <%= dashboard_notifications_url %>
+<% else %>
+<%= @app.name %> — <%= @event.humanize %>
+<% if @deploy&.commit_sha.present? %>
+Commit: <%= @deploy.commit_sha[0, 7] %>
+<% end %>
+<% if @deploy&.release&.version %>
+Release: v<%= @deploy.release.version %>
+<% end %>
+Open: <%= dashboard_app_url(@app) %>
+<% end %>

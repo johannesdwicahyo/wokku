@@ -1,0 +1,360 @@
+class TemplateDeployer
+  attr_reader :template, :app_name, :server, :user, :log
+
+  def initialize(template:, app_name:, server:, user:, on_progress: nil)
+    @template = template
+    @app_name = app_name
+    @server = server
+    @user = user
+    @on_progress = on_progress
+    @log = []
+  end
+
+  def deploy!
+    client = Dokku::Client.new(server)
+
+    step("Creating app #{app_name}...") do
+      Dokku::Apps.new(client).create(app_name)
+      AppRecord.find_or_initialize_by(name: app_name, server: server).tap do |a|
+        a.assign_attributes(
+          # Use the deploying user's own team. server.team is the
+          # platform admin team on wokku.cloud (servers are shared
+          # infra) — assigning the app there would hide it from the
+          # customer's dashboard.
+          team: user.teams.first,
+          creator: user,
+          deploy_branch: template[:branch] || "main",
+          git_repository_url: template[:repo],
+          status: :deploying
+        )
+        a.save!
+      end
+    end
+
+    app = AppRecord.find_by!(name: app_name, server: server)
+
+    # Container tier: templates that ship with addons (n8n + postgres,
+    # ghost + mysql, etc.) need real RAM. Match the UI/pricing helper's
+    # assumption (basic) instead of dropping every customer onto free
+    # — the cost card on the template page already advertises basic.
+    step("Setting resource limits...") do
+      tier_name = template[:min_tier].presence ||
+                  ((template[:addons] || []).any? ? "basic" : "free")
+      tier = DynoTier.find_by(name: tier_name) || DynoTier.order(:monthly_price_cents).first
+      if tier
+        app.dyno_allocations.find_or_create_by!(process_type: "web") do |a|
+          a.dyno_tier = tier
+          a.count = 1
+        end
+        resources = Dokku::Resources.new(client)
+        resources.apply_limits(app_name, memory_mb: tier.memory_mb, cpu_shares: tier.cpu_shares)
+        resources.apply_reservation(app_name, memory_mb: tier.memory_mb)
+      end
+    end
+
+    (template[:addons] || []).each do |addon|
+      step("Provisioning #{addon['type']}...") do
+        db_name = "#{app_name}-#{addon['type']}"
+        Dokku::Databases.new(client).create(addon["type"], db_name)
+        Dokku::Databases.new(client).link(addon["type"], db_name, app_name)
+        DatabaseService.create!(
+          name: db_name,
+          service_type: addon["type"],
+          # Carry the tier through from the template definition so the
+          # add-on row in billing/resources matches what the UI showed.
+          tier_name: addon["tier"] || addon[:tier] || "basic",
+          server: server,
+          status: :running
+        )
+        db = DatabaseService.find_by!(name: db_name, server: server)
+        AppDatabase.create!(
+          app_record: app,
+          database_service: db,
+          alias_name: db_name
+        )
+        # Open the billing segment so the addon shows up in the user's
+        # billing table and gets debited daily. Without this, template-
+        # provisioned addons were "free" — caught when 3 postgres
+        # databases were missing from the customer's billing page.
+        db.open_billing_segment(user: user, app_record: app) if user
+      end
+    end
+
+    if template[:env].present?
+      step("Setting environment variables...") do
+        Dokku::Config.new(client).set(app_name, template[:env])
+        template[:env].each do |key, value|
+          app.env_vars.find_or_create_by!(key: key) { |ev| ev.value = value }
+        end
+      end
+    end
+
+    if template[:postgres_components]
+      step("Expanding DATABASE_URL into #{template[:postgres_components]}* components...") do
+        expand_url_components!(client, app, app_name, url_key: "DATABASE_URL", prefix: template[:postgres_components], default_port: 5432)
+      end
+    end
+
+    if template[:mysql_components]
+      step("Expanding DATABASE_URL into #{template[:mysql_components]}* components...") do
+        expand_url_components!(client, app, app_name, url_key: "DATABASE_URL", prefix: template[:mysql_components], default_port: 3306)
+      end
+    end
+
+    if template[:mongo_components]
+      step("Expanding DATABASE_URL into #{template[:mongo_components]}* components...") do
+        expand_url_components!(client, app, app_name, url_key: "DATABASE_URL", prefix: template[:mongo_components], default_port: 27017)
+      end
+    end
+
+    if template[:set_url].present?
+      step("Setting public URL env vars: #{template[:set_url].join(', ')}...") do
+        apply_set_url!(client, app, app_name, keys: template[:set_url])
+      end
+    end
+
+    if template[:generate_secrets].present?
+      step("Generating random secrets: #{template[:generate_secrets].join(', ')}...") do
+        apply_generate_secrets!(client, app, app_name, keys: template[:generate_secrets])
+      end
+      @log << {
+        step: "Hint: open the app's Environment Variables to copy the generated values for #{template[:generate_secrets].join(', ')}.",
+        at: Time.current
+      }
+    end
+
+    if template[:alias_env].present?
+      step("Aliasing env vars: #{template[:alias_env].map { |t, s| "#{s}→#{t}" }.join(', ')}...") do
+        apply_alias_env!(client, app, app_name, aliases: template[:alias_env])
+      end
+    end
+
+    if template[:storage_mounts].present?
+      step("Mounting persistent storage: #{template[:storage_mounts].join(', ')}...") do
+        apply_storage_mounts!(client, app_name, paths: template[:storage_mounts])
+      end
+    end
+
+    if template[:deploy_method] == "docker_image" && template[:docker_image].present?
+      # Set port mapping before deploying (Docker images often expose non-standard ports)
+      container_port = template[:container_port] || 3000
+      step("Configuring port mapping (80 → #{container_port})...") do
+        client.run("ports:set #{app_name} http:80:#{container_port}")
+      end
+
+      step("Deploying Docker image #{template[:docker_image]}...") do
+        client.run("git:from-image #{app_name} #{template[:docker_image]}", timeout: 300)
+      end
+
+      # Enable Let's Encrypt SSL
+      step("Enabling SSL...") do
+        client.run("letsencrypt:enable #{app_name}", timeout: 120)
+      rescue Dokku::Client::CommandError => e
+        @log << { step: "SSL setup skipped: #{e.message}", at: Time.current }
+      end
+    else
+      step("Cloning #{template[:repo]} and deploying...") do
+        begin
+          client.run(
+            "git:sync --build #{app_name} #{template[:repo]} #{template[:branch] || 'main'}",
+            timeout: 300
+          )
+        rescue Dokku::Client::CommandError => e
+          raise unless e.message.include?("is not a dokku command")
+          client.run("git:from-url #{app_name} #{template[:repo]}", timeout: 300)
+        end
+      end
+    end
+
+    if template[:post_deploy].present?
+      step("Running post-deploy: #{template[:post_deploy]}") do
+        client.run("run #{app_name} #{template[:post_deploy]}", timeout: 120)
+      end
+    end
+
+    # Create DNS record: app-name.wokku.cloud → server IP
+    step("Configuring DNS...") do
+      Cloudflare::Dns.new.create_app_record(app_name, server.host)
+    rescue => e
+      @log << { step: "DNS setup skipped: #{e.message}", at: Time.current }
+    end
+
+    app.update!(status: :running)
+    @log << { step: "Deploy complete!", at: Time.current }
+    @on_progress&.call("Deploy complete!")
+
+    { success: true, app: app, log: @log }
+  rescue => e
+    @log << { step: "Error", message: e.message, at: Time.current }
+    @on_progress&.call("Deploy failed: #{e.message}. Rolling back...")
+    rollback_partial_deploy!(e)
+    { success: false, error: e.message, log: @log }
+  end
+
+  # Clean up any partially-created resources when a deploy step fails,
+  # but PRESERVE the Rails AppRecord + Deploy row so the user can read
+  # what went wrong. Previous behaviour hard-deleted everything, which
+  # left users at a 404 with zero explanation.
+  #
+  # Dokku-side (app, DBs, DNS) is still cleaned so the host doesn't
+  # accumulate half-provisioned junk.
+  def rollback_partial_deploy!(original_error)
+    client = Dokku::Client.new(server)
+    app = AppRecord.find_by(name: app_name, server: server)
+    return unless app
+
+    begin
+      app.app_databases.includes(:database_service).each do |ad|
+        db = ad.database_service
+        next unless db
+        Dokku::Databases.new(client).unlink(db.service_type, db.name, app_name) rescue nil
+        Dokku::Databases.new(client).destroy(db.service_type, db.name) rescue nil
+        db.destroy
+      rescue StandardError => e
+        @log << { step: "Rollback warning: could not clean up database #{db.name}", error: e.message, at: Time.current }
+      end
+
+      Cloudflare::Dns.new.delete_app_record(app_name) rescue nil
+      Dokku::Apps.new(client).destroy(app_name) rescue nil
+    rescue StandardError => cleanup_error
+      @log << { step: "Cleanup warning", error: cleanup_error.message, at: Time.current }
+      Rails.logger.warn("TemplateDeployer cleanup warning: #{cleanup_error.message} (original: #{original_error.message})")
+    end
+
+    # Write a failed Deploy record (or update the existing one) so the
+    # user's deploy URL stays valid and shows the log + error.
+    app.update!(status: :crashed)
+    deploy = app.deploys.order(created_at: :desc).first
+    log_payload = { error: original_error.message, steps: @log }.to_json
+    if deploy
+      deploy.update!(status: :failed, log: log_payload, finished_at: Time.current)
+    else
+      app.deploys.create!(
+        status: :failed,
+        log: log_payload,
+        started_at: @log.first&.dig(:at) || Time.current,
+        finished_at: Time.current
+      )
+    end
+  end
+
+  def build_steps
+    steps = [ { action: :create_app, detail: app_name } ]
+
+    (template[:addons] || []).each do |addon|
+      steps << { action: :provision_addon, detail: addon }
+    end
+
+    steps << { action: :set_env, detail: template[:env] } if template[:env].present?
+    steps << { action: :deploy, detail: template[:repo] }
+    steps << { action: :post_deploy, detail: template[:post_deploy] } if template[:post_deploy].present?
+
+    steps
+  end
+
+  private
+
+  def step(message)
+    @log << { step: message, at: Time.current }
+    @on_progress&.call(message)
+    yield
+  rescue => e
+    @log << { step: "Failed: #{message}", error: e.message, at: Time.current }
+    @on_progress&.call("FAILED: #{message} — #{e.message}")
+    raise
+  end
+
+  # Some apps (n8n, strapi, keycloak) don't accept DATABASE_URL — they
+  # want DB_POSTGRESDB_HOST, DB_POSTGRESDB_PORT, etc. as separate vars.
+  # Dokku's postgres plugin only exposes DATABASE_URL, so after linking
+  # we parse it and set the component vars explicitly.
+  # Parse a DB connection URL (DATABASE_URL from Dokku's postgres/mysql/mongo
+  # addon) into 5 per-component env vars, using the provided prefix. The
+  # key suffixes follow n8n's convention (HOST/PORT/DATABASE/USER/PASSWORD)
+  # which most apps either match directly or accept with a different prefix.
+  # Ghost's "database__connection__host" is one example; DB_POSTGRESDB_* is
+  # another.
+  def expand_url_components!(client, app, app_name, url_key:, prefix:, default_port:)
+    url = Dokku::Config.new(client).get(app_name, url_key)
+    return if url.blank?
+
+    # Suffix case follows the prefix. DB_POSTGRESDB_ → uppercase suffixes
+    # (HOST/PORT/…). database__connection__ → lowercase (host/port/…).
+    # Ghost explicitly demands lowercase; n8n demands uppercase; the prefix
+    # is the unambiguous signal for which convention the target app uses.
+    suffixes = prefix.match?(/[a-z]/) ?
+      %w[host port database user password] :
+      %w[HOST PORT DATABASE USER PASSWORD]
+
+    uri = URI.parse(url)
+    components = {
+      "#{prefix}#{suffixes[0]}" => uri.host,
+      "#{prefix}#{suffixes[1]}" => (uri.port || default_port).to_s,
+      "#{prefix}#{suffixes[2]}" => uri.path.to_s.sub(%r{\A/}, ""),
+      "#{prefix}#{suffixes[3]}" => uri.user.to_s,
+      "#{prefix}#{suffixes[4]}" => URI.decode_www_form_component(uri.password.to_s)
+    }
+    Dokku::Config.new(client).set(app_name, components)
+    components.each do |key, value|
+      app.env_vars.find_or_create_by!(key: key) { |ev| ev.value = value }
+    end
+  end
+
+  # Read SOURCE env var from Dokku and set TARGET to the same value. Used
+  # when an app expects a differently-named var than what the addon plugin
+  # provides (e.g. Hasura wants HASURA_GRAPHQL_DATABASE_URL, Dokku's postgres
+  # plugin sets DATABASE_URL).
+  def apply_alias_env!(client, app, app_name, aliases:)
+    cfg = Dokku::Config.new(client)
+    vars = aliases.each_with_object({}) do |(target, source), h|
+      val = cfg.get(app_name, source).to_s.strip
+      h[target] = val if val.present?
+    end
+    return if vars.empty?
+    cfg.set(app_name, vars)
+    vars.each do |key, value|
+      app.env_vars.find_or_create_by!(key: key) { |ev| ev.value = value }
+    end
+  end
+
+  # Generate a cryptographically strong random value for each requested env key
+  # and persist to both Dokku and the EnvVar mirror. Skip any key that already
+  # exists so redeploys don't rotate live credentials.
+  def apply_generate_secrets!(client, app, app_name, keys:)
+    vars = keys.each_with_object({}) do |key, h|
+      next if app.env_vars.exists?(key: key)
+      h[key] = SecureRandom.urlsafe_base64(32)
+    end
+    return if vars.empty?
+    Dokku::Config.new(client).set(app_name, vars)
+    vars.each do |key, value|
+      app.env_vars.find_or_create_by!(key: key) { |ev| ev.value = value }
+    end
+  end
+
+  # Create a host directory under Dokku's storage area and bind-mount it
+  # into the app container. Without this, stateful templates (Uptime Kuma's
+  # monitor history, etc.) reset to zero on every redeploy.
+  def apply_storage_mounts!(client, app_name, paths:)
+    # Create /var/lib/dokku/data/storage/<app>/ owned by the dokku user
+    # so subsequent `storage:mount` calls have a writable host dir.
+    client.run("storage:ensure-directory #{app_name}") rescue nil
+    paths.each do |container_path|
+      basename = File.basename(container_path.to_s).presence || "data"
+      host_dir = "/var/lib/dokku/data/storage/#{app_name}/#{basename}"
+      client.run("storage:mount #{app_name} #{host_dir}:#{container_path}")
+    end
+  end
+
+  # Some apps (Ghost's `url=`, Plausible's `BASE_URL=`, etc.) refuse to boot
+  # unless told their own public URL. Dokku sets this up via domains but
+  # the app reads it from an env var.
+  def apply_set_url!(client, app, app_name, keys:)
+    url = "https://#{app_name}.wokku.cloud"
+    vars = keys.each_with_object({}) { |k, h| h[k] = url }
+    Dokku::Config.new(client).set(app_name, vars)
+    vars.each do |key, value|
+      app.env_vars.find_or_create_by!(key: key) { |ev| ev.value = value }
+    end
+  end
+end

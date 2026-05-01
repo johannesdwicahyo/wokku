@@ -1,0 +1,73 @@
+<%#
+  Renders inside turbo_frame "ssh_keys". Shows the list of keys plus an
+  "Add SSH key" button that opens a slide-panel drawer with the form.
+
+  On create error the server re-renders this partial with `key.errors.any?`
+  true — we auto-open the drawer in that case via data-slide-panel-auto-open.
+%>
+<%
+  auto_open = local_assigns[:key] && key && key.errors.any?
+%>
+<div data-controller="slide-panel"
+     <%= auto_open ? "data-slide-panel-auto-open-value=true" : "" %>>
+
+  <div class="flex items-center justify-end mb-3">
+    <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 text-xs text-on-surface-variant border border-outline-variant/15 rounded-md hover:border-primary/50 hover:text-primary transition cursor-pointer">
+      <span class="material-symbols-outlined text-[14px] mr-1">add</span> Add key
+    </button>
+  </div>
+
+  <%# Key list %>
+  <% if keys.any? %>
+    <div class="space-y-2">
+      <% keys.each do |k| %>
+        <div class="flex items-center justify-between bg-surface rounded-md px-3 py-2 gap-3">
+          <div class="min-w-0 flex-1">
+            <span class="text-xs font-bold text-on-surface"><%= k.name %></span>
+            <span class="block text-[10px] font-mono text-outline truncate">SHA256:<%= k.fingerprint.first(16) %>…</span>
+            <span class="text-[10px] text-outline">Added <%= time_ago_in_words(k.created_at) %> ago</span>
+          </div>
+          <%= button_to dashboard_ssh_key_path(k), method: :delete,
+              class: "text-[10px] text-error hover:text-error/80 font-bold shrink-0",
+              data: { turbo_frame: "ssh_keys", turbo_confirm: "Remove this SSH key?" } do %>
+            Remove
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="text-xs text-outline text-center py-2">No keys yet. Add one to enable <code class="font-mono">git push</code>.</p>
+  <% end %>
+
+  <%= render layout: "dashboard/shared/slide_panel", locals: { title: "Add SSH Key", subtitle: "Paste your public key to enable git push" } do %>
+    <% if local_assigns[:key] && key && key.errors.any? %>
+      <div class="bg-error-container/20 border border-error/30 rounded-md p-3 mb-4">
+        <p class="text-xs text-error font-bold mb-1">Couldn't add key</p>
+        <ul class="text-[11px] text-error/90 list-disc list-inside">
+          <% key.errors.full_messages.each do |msg| %>
+            <li><%= msg %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <%= form_with url: dashboard_ssh_keys_path, method: :post, scope: :ssh_public_key,
+                  class: "space-y-3", data: { turbo_frame: "ssh_keys" } do |f| %>
+      <div>
+        <label class="block text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Name</label>
+        <input type="text" name="ssh_public_key[name]" placeholder="e.g. laptop" required autofocus
+               class="w-full bg-surface border border-outline-variant/30 rounded-md px-3 py-2 text-sm text-on-surface placeholder-outline focus:outline-none focus:border-primary/50">
+      </div>
+      <div>
+        <label class="block text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Public Key</label>
+        <textarea name="ssh_public_key[public_key]" placeholder="ssh-ed25519 AAAA... user@host" required rows="5"
+                  class="w-full bg-surface border border-outline-variant/30 rounded-md px-3 py-2 text-xs font-mono text-on-surface placeholder-outline focus:outline-none focus:border-primary/50"></textarea>
+        <p class="text-[10px] text-outline mt-1">Paste the contents of <code class="font-mono text-on-surface-variant">~/.ssh/id_ed25519.pub</code> (or similar).</p>
+      </div>
+      <div class="flex items-center gap-3 pt-2">
+        <button type="submit" class="px-4 py-2 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">Add Key</button>
+        <button type="button" data-action="click->slide-panel#close" class="text-sm text-outline hover:text-on-surface transition cursor-pointer">Cancel</button>
+      </div>
+    <% end %>
+  <% end %>
+</div>

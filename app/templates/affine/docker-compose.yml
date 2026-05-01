@@ -1,0 +1,31 @@
+# name: AFFiNE
+# documentation: https://github.com/toeverything/AFFiNE
+# slogan: Open-source Notion alternative with docs, whiteboards, and databases
+# category: productivity
+# tags: notes, wiki, docs, whiteboard, collaboration
+# icon: productivity
+# deploy_method: docker_image
+# port: 3010
+
+services:
+  affine:
+    image: ghcr.io/toeverything/affine-graphql:stable
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+
+volumes:
+  postgres-data:
+  redis-data:

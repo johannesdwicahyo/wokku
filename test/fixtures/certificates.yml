@@ -1,0 +1,9 @@
+one:
+  domain: one
+  expires_at: 2027-03-13 13:06:35
+  auto_renew: true
+
+two:
+  domain: two
+  expires_at: 2027-03-13 13:06:35
+  auto_renew: false

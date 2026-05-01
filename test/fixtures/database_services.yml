@@ -1,0 +1,11 @@
+one:
+  server: one
+  service_type: postgres
+  name: pg-main
+  status: 0
+
+two:
+  server: two
+  service_type: redis
+  name: redis-cache
+  status: 0

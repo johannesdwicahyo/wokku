@@ -1,0 +1,14 @@
+id:
+  activerecord:
+    models:
+      app_record: "Aplikasi"
+      server: "Server"
+      database_service: "Database"
+      notification: "Notifikasi"
+    attributes:
+      app_record:
+        name: "Nama"
+        status: "Status"
+      server:
+        name: "Nama"
+        host: "Host"

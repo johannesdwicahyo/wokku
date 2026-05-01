@@ -1,0 +1,14 @@
+# name: Streamlit
+# documentation: https://github.com/streamlit/streamlit
+# slogan: Python framework for building interactive data apps in minutes
+# category: frameworks
+# tags: python, streamlit, data, dashboard
+# icon: python
+# deploy_method: docker_image
+# port: 8501
+
+services:
+  streamlit:
+    image: ghcr.io/streamlit/streamlit:latest
+    environment:
+      - STREAMLIT_SERVER_PORT=8501

@@ -1,0 +1,231 @@
+class User < ApplicationRecord
+  devise :two_factor_authenticatable, :rememberable, :validatable, :lockable,
+         :timeoutable,
+         :omniauthable, omniauth_providers: [ :google_oauth2, :github ],
+         otp_secret_encryption_key: Rails.application.credentials.secret_key_base
+
+  def two_factor_enabled?
+    otp_required_for_login?
+  end
+
+  ADMIN_EMAIL = "admin@wokku.cloud".freeze
+
+  enum :role, { member: 0, admin: 1 }
+  enum :billing_status, { active: 0, grace_period: 1, suspended: 2 }, prefix: :billing
+
+  validate :enforce_single_admin, if: :admin?
+  validate :block_admin_email_for_members, if: -> { email == ADMIN_EMAIL && !admin? }
+  validate :lock_currency_with_active_resources, if: :currency_changed?
+  before_validation :default_currency_for_launch_mode, on: :create
+
+  private def default_currency_for_launch_mode
+    # While we're IDR-only (Indonesia launch), override the schema
+    # default of "usd" so every new signup lands in the IDR/iPaymu flow.
+    self.currency = "idr" if Wokku::LaunchMode.idr_only? && (currency.blank? || currency == "usd")
+  end
+
+  private def lock_currency_with_active_resources
+    if resource_usages.active.billable.any?
+      errors.add(:currency, "cannot be changed while you have active paid resources")
+    end
+  end
+
+  # Sliding session timeout. Devise resets the clock on every authenticated
+  # request, so an active user effectively stays logged in. Admins still
+  # get a tighter window because their actions are higher-stakes.
+  def timeout_in
+    admin? ? 1.day : 30.days
+  end
+
+  private def enforce_single_admin
+    unless email == ADMIN_EMAIL
+      errors.add(:role, "admin role is restricted to #{ADMIN_EMAIL}")
+    end
+    if User.where(role: :admin).where.not(id: id).exists?
+      errors.add(:role, "only one admin account is allowed")
+    end
+  end
+
+  # Prevent anyone from creating a member account with the admin email
+  private def block_admin_email_for_members
+    errors.add(:email, "is reserved")
+  end
+
+  has_many :api_tokens, dependent: :destroy
+  has_many :ssh_public_keys, dependent: :destroy
+  has_many :team_memberships, dependent: :destroy
+  has_many :teams, through: :team_memberships
+  has_many :app_records, through: :teams
+  has_many :device_tokens, dependent: :destroy
+  has_many :known_devices, dependent: :destroy
+  has_many :subscriptions, dependent: :destroy
+  has_many :invoices, dependent: :destroy
+  has_many :usage_events, dependent: :destroy
+  has_many :resource_usages, dependent: :destroy
+  has_many :deposit_transactions, dependent: :destroy
+  has_many :promo_redemptions, foreign_key: :redeemer_user_id, dependent: :destroy
+  has_one  :referral_promo_code, -> { where(kind: "referral") }, class_name: "PromoCode", foreign_key: :inviter_user_id, dependent: :destroy
+
+  after_create :ensure_referral_promo_code
+
+  # Phase 3 referral: every user gets a personal code at signup. Idempotent
+  # so the after_create can be re-run for backfill on existing users.
+  def ensure_referral_promo_code!
+    return referral_promo_code if referral_promo_code
+
+    code = nil
+    20.times do
+      candidate = "REF-#{SecureRandom.alphanumeric(6).upcase}"
+      next if PromoCode.exists?(code: candidate)
+      code = candidate
+      break
+    end
+    raise "could not generate unique referral code" unless code
+
+    PromoCode.create!(
+      code: code,
+      kind: "referral",
+      redeemer_bonus_idr: 10_000,
+      inviter_bonus_idr: 10_000,
+      min_deposit_idr: 25_000,
+      inviter_user: self,
+      description: "Auto-generated referral code"
+    )
+  end
+
+  private def ensure_referral_promo_code
+    ensure_referral_promo_code!
+  rescue StandardError => e
+    # Don't break signup if code generation hits a uniqueness collision —
+    # ProfileController exposes a "regenerate referral code" affordance,
+    # and the after_create can be retried.
+    Rails.logger.warn("ensure_referral_promo_code failed for user #{id}: #{e.message}")
+  end
+
+  def self.from_omniauth(auth)
+    email = auth.info.email&.downcase
+
+    # Admin email: link OAuth to existing seed account, never create a new one
+    if email == ADMIN_EMAIL
+      admin = find_by(email: ADMIN_EMAIL, role: :admin)
+      unless admin
+        Rails.logger.warn("OAuth attempt for admin email but no seed account exists")
+        return new # unpersisted — triggers failure redirect
+      end
+      # Link OAuth provider on first sign-in so future logins find by provider+uid
+      if admin.provider.blank?
+        admin.update_columns(provider: auth.provider, uid: auth.uid, avatar_url: auth.info.image, name: auth.info.name)
+      end
+      return admin
+    end
+
+    where(provider: auth.provider, uid: auth.uid).first_or_create do |user|
+      user.email = email
+      user.password = Devise.friendly_token[0, 20]
+      user.name = auth.info.name
+      user.avatar_url = auth.info.image
+      user.github_username = auth.info.nickname if auth.provider == "github"
+    end
+  end
+
+  def current_plan
+    subscriptions.current.includes(:plan).first&.plan || Plan.find_by(name: "free")
+  end
+
+  def balance
+    effective_currency == "idr" ? balance_idr : balance_usd_cents
+  end
+
+  def balance_formatted
+    if effective_currency == "idr"
+      "Rp #{ActiveSupport::NumberHelper.number_to_delimited(balance_idr, delimiter: '.')}"
+    else
+      "$#{'%.2f' % (balance_usd_cents / 100.0)}"
+    end
+  end
+
+  # Display-layer currency resolution. In IDR-only launch mode, every
+  # UI path should render IDR regardless of what the user's row holds —
+  # we migrate stale USD balances via a backfill rake task, but the
+  # in-flight display falls through this shim.
+  def effective_currency
+    Wokku::LaunchMode.idr_only? ? "idr" : currency
+  end
+
+  def has_payment_method?
+    has_credit_card? || has_deposit_balance?
+  end
+
+  def has_credit_card?
+    stripe_payment_method_id.present?
+  end
+
+  def has_deposit_balance?
+    effective_currency == "idr" ? balance_idr > 0 : balance_usd_cents > 0
+  end
+
+  def deposit_user?
+    payment_method_type == "deposit"
+  end
+
+  def card_user?
+    payment_method_type == "card"
+  end
+
+  def estimated_daily_cost
+    # Display anchored to the *current* tier price (monthly_price_cents/30),
+    # not the segment's frozen hourly × 24. Tier price changes show up
+    # in runway immediately, and rounding stays consistent with the
+    # billing table. Billing math (DailyDeduction) still uses segment
+    # rates so historical cost remains correct.
+    daily_usd_cents = 0.0
+    dyno_tiers = DynoTier.where(name: resource_usages.active.where(resource_type: "container").distinct.pluck(:tier_name)).index_by(&:name)
+    service_tiers = ServiceTier.all.index_by { |t| [ t.service_type, t.name ] }
+
+    resource_usages.active.find_each do |seg|
+      meta = seg.metadata.is_a?(String) ? (JSON.parse(seg.metadata) rescue {}) : (seg.metadata || {})
+      monthly_cents =
+        if seg.resource_type == "container"
+          tier = dyno_tiers[seg.tier_name]
+          count = (meta["count"] || meta[:count] || 1).to_i
+          tier ? tier.monthly_price_cents.to_f * count : seg.price_cents_per_hour.to_f * 720
+        else
+          addon_type = meta["type"] || meta[:type]
+          tier = service_tiers[[ addon_type, seg.tier_name ]]
+          tier ? tier.monthly_price_cents.to_f : seg.price_cents_per_hour.to_f * 720
+        end
+      daily_usd_cents += monthly_cents / 30.0
+    end
+
+    Billing::Money.to_currency(daily_usd_cents.round, currency: effective_currency)
+  end
+
+  def days_of_balance_remaining
+    daily = estimated_daily_cost
+    return Float::INFINITY if daily <= 0
+    (balance.to_f / daily).floor
+  end
+
+  def active_resource_usages
+    resource_usages.active
+  end
+
+  def estimated_monthly_cost_cents
+    now = Time.current
+    period_start = now.beginning_of_month
+    period_end = now.end_of_month
+    resource_usages.active.billable.sum { |u| u.cost_cents_in_period(period_start, period_end) }
+  end
+
+  def free_tier_counts
+    active = resource_usages.active
+    {
+      # Count by price (0 = free), not tier name. Tiers have been
+      # renamed between "eco" and "free" and the free-tier limit
+      # must not leak when names drift.
+      eco_containers: active.where(resource_type: "container", price_cents_per_hour: 0).count,
+      mini_databases: active.where(resource_type: "database", price_cents_per_hour: 0).count,
+      starter_minio: active.where(resource_type: "database", tier_name: "starter").count
+    }
+  end
+end

@@ -1,0 +1,28 @@
+# name: Wekan
+# documentation: https://github.com/wekan/wekan
+# slogan: Open-source kanban board for task and project management
+# category: productivity
+# tags: kanban, project-management, tasks, boards
+# icon: productivity
+# port: 8080
+
+services:
+  wekan:
+    image: ghcr.io/wekan/wekan:latest
+    environment:
+      - MONGO_URL=mongodb://mongo:27017/wekan
+      - ROOT_URL=http://localhost:8080
+      - PORT=8080
+      - WITH_API=true
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:5
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:

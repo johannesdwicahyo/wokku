@@ -1,0 +1,9 @@
+<%# Umami page-view tracking. Loaded from every HTML layout (landing,
+    dashboard, docs, application) so we get full-funnel visibility from
+    public pages → signup → in-product behaviour. Gated to production:
+    development and test runs MUST NOT pollute the analytics. %>
+<% if Rails.env.production? && ENV["UMAMI_DISABLED"].blank? %>
+  <script defer
+          src="<%= ENV.fetch('UMAMI_SCRIPT_URL', 'https://umami-inwz.wokku.cloud/script.js') %>"
+          data-website-id="<%= ENV.fetch('UMAMI_WEBSITE_ID', '6641c22f-4106-4dbc-a4fb-25d8fdfae4f6') %>"></script>
+<% end %>

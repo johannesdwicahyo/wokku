@@ -1,0 +1,15 @@
+# name: Twake
+# documentation: https://github.com/linagora/Twake
+# slogan: Open-source collaborative workspace with chat, calendar, drive, and tasks
+# category: communication
+# tags: collaboration, chat, calendar, workspace, team
+# icon: communication
+# port: 8000
+
+services:
+  twake:
+    image: linagora/twake-web:latest
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "8000:80"

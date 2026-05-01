@@ -1,0 +1,12 @@
+<h2>New feedback submission</h2>
+
+<p><strong>From:</strong> <%= @feedback.name.presence || "(anonymous)" %><% if @feedback.email.present? %> &lt;<%= @feedback.email %>&gt;<% end %></p>
+<% if @feedback.user %>
+  <p><strong>User:</strong> <%= @feedback.user.email %></p>
+<% end %>
+<% if @feedback.page.present? %>
+  <p><strong>Page:</strong> <%= @feedback.page %></p>
+<% end %>
+
+<hr>
+<p style="white-space: pre-wrap;"><%= @feedback.message %></p>

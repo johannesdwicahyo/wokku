@@ -1,0 +1,107 @@
+<div class="max-w-lg">
+  <div class="mb-4">
+    <div class="flex items-center space-x-2 text-sm mb-4">
+      <%= link_to t("dashboard.servers.title"), dashboard_servers_path, class: "text-outline hover:text-primary transition cursor-pointer" %>
+      <span class="material-symbols-outlined text-[16px] text-outline-variant">chevron_right</span>
+      <span class="text-on-surface-variant">New</span>
+    </div>
+    <h1 class="text-xl font-headline text-on-surface"><%= t("dashboard.servers.add_server") %></h1>
+    <p class="mt-0.5 text-sm text-outline">Connect a Dokku server via SSH</p>
+  </div>
+
+  <%# Cloud Provisioning %>
+  <% if current_team&.cloud_credentials&.any? %>
+    <div class="bg-surface-container-low rounded-xl border border-outline-variant/15 p-6 mb-6">
+      <h2 class="text-sm font-semibold text-on-surface uppercase tracking-wider mb-4">Create with Cloud Provider</h2>
+
+      <%= form_with url: provision_dashboard_servers_path, method: :post, class: "space-y-4" do |f| %>
+        <div>
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wider mb-1">Provider</label>
+          <%= combobox_tag "cloud_credential_id", current_team.cloud_credentials.map { |c| ["#{c.provider.capitalize}#{c.name.present? ? " (#{c.name})" : ""}", c.id] }, placeholder: "Select provider" %>
+        </div>
+
+        <div>
+          <%= f.label :name, "Server Name", class: "block text-xs text-on-surface-variant uppercase tracking-wider mb-1" %>
+          <%= f.text_field :name, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface font-mono text-sm focus:ring-primary focus:border-primary", placeholder: "my-dokku-server" %>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs text-on-surface-variant uppercase tracking-wider mb-1">Region</label>
+            <%= combobox_tag "region", [["US East (Ashburn)", "ash"], ["EU Central (Falkenstein)", "fsn1"], ["EU West (Helsinki)", "hel1"], ["Singapore", "sgp"]], placeholder: "Select region" %>
+          </div>
+          <div>
+            <label class="block text-xs text-on-surface-variant uppercase tracking-wider mb-1">Size</label>
+            <%= combobox_tag "size", [["2 vCPU / 4 GB — $4/mo", "cx22"], ["4 vCPU / 8 GB — $8/mo", "cx32"], ["8 vCPU / 16 GB — $16/mo", "cx42"]], placeholder: "Select size" %>
+          </div>
+        </div>
+
+        <div class="pt-2">
+          <%= f.submit "Create Server", class: "px-4 py-2.5 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="bg-surface-container-low rounded-xl border border-outline-variant/15 p-6 mb-6">
+      <h2 class="text-sm font-semibold text-on-surface uppercase tracking-wider mb-2">Auto-Provision a Server</h2>
+      <p class="text-xs text-outline mb-3">Connect a cloud provider API key to create Dokku servers with one click.</p>
+      <%= form_with url: dashboard_cloud_credentials_path, method: :post, class: "flex items-end gap-2" do |f| %>
+        <div class="w-44">
+          <%= combobox_tag "cloud_credential[provider]", [["Hetzner", "hetzner"], ["Vultr", "vultr"], ["DigitalOcean", "digitalocean"], ["Linode", "linode"]], placeholder: "Provider" %>
+        </div>
+        <%= f.text_field :api_key, placeholder: "API Key", class: "flex-1 rounded-md bg-surface-container-low border border-outline-variant/15 px-4 py-2.5 text-on-surface font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" %>
+        <%= f.submit "Connect", class: "px-4 py-2.5 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="flex items-center space-x-3 mb-6">
+    <div class="h-px flex-1 bg-outline-variant/15"></div>
+    <span class="text-xs text-outline uppercase tracking-wider">or add existing server manually</span>
+    <div class="h-px flex-1 bg-outline-variant/15"></div>
+  </div>
+
+  <%= form_with(model: @server, url: dashboard_servers_path, class: "bg-surface-container-low rounded-lg border border-outline-variant/15 p-6 space-y-4") do |f| %>
+    <% if @server.errors.any? %>
+      <div class="rounded-md bg-error-container/20 border border-error/20 p-3">
+        <ul class="text-xs text-error space-y-1">
+          <% @server.errors.full_messages.each do |msg| %>
+            <li><%= msg %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div>
+      <%= f.label :name, class: "block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider" %>
+      <%= f.text_field :name, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline-variant focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-mono", placeholder: "production", autofocus: true %>
+    </div>
+
+    <div>
+      <%= f.label :host, class: "block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider" %>
+      <%= f.text_field :host, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline-variant focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-mono", placeholder: "dokku.example.com" %>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <%= f.label :port, class: "block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider" %>
+        <%= f.number_field :port, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline-variant focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-mono", value: 22 %>
+      </div>
+      <div>
+        <%= f.label :ssh_user, "SSH User", class: "block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider" %>
+        <%= f.text_field :ssh_user, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline-variant focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-mono", value: "dokku" %>
+      </div>
+    </div>
+
+    <div>
+      <%= f.label :ssh_private_key, "SSH Private Key", class: "block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider" %>
+      <%= f.text_area :ssh_private_key, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline-variant focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-mono text-xs", rows: 5, placeholder: "-----BEGIN OPENSSH PRIVATE KEY-----\n..." %>
+      <p class="mt-1 text-xs text-outline-variant">Stored encrypted at rest</p>
+    </div>
+
+    <div class="flex items-center space-x-3 pt-2">
+      <%= f.submit t("dashboard.servers.add_server"), class: "px-4 py-2 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
+      <%= link_to t("common.cancel"), dashboard_servers_path, class: "text-sm text-outline hover:text-on-surface-variant transition cursor-pointer" %>
+    </div>
+  <% end %>
+</div>
