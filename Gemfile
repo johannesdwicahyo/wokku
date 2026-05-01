@@ -90,7 +90,7 @@ gem "commonmarker"
 gem "rouge"
 
 # Billing
-gem "pay", "~> 7.0"
+gem "pay", "~> 11.6"
 gem "stripe", "~> 12.0"
 
 # Invoice PDF generation. Pure Ruby, no system dependencies. Used to
