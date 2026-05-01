@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Offline for maintenance · Wokku</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0D1424;
+      --surface: #1e1e32;
+      --outline: rgba(192, 193, 255, 0.12);
+      --text: #ffffff;
+      --muted: #958e9e;
+      --accent: #c0c1ff;
+      --accent-deep: #5625ab;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(86, 37, 171, 0.35), transparent 60%),
+        radial-gradient(900px 500px at 90% 110%, rgba(192, 193, 255, 0.18), transparent 55%),
+        var(--bg);
+      color: var(--text);
+      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px; -webkit-font-smoothing: antialiased;
+    }
+
+    .card {
+      width: 100%; max-width: 480px;
+      background: var(--surface); border: 1px solid var(--outline);
+      border-radius: 16px; padding: 40px 36px; text-align: center;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+    }
+
+    .brand {
+      font-weight: 700; font-size: 14px;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      margin-bottom: 28px;
+    }
+
+    .pulse {
+      width: 56px; height: 56px; border-radius: 50%;
+      margin: 0 auto 24px; position: relative;
+      background: radial-gradient(circle at 30% 30%, var(--accent), var(--accent-deep));
+    }
+    .pulse::after {
+      content: ""; position: absolute; inset: -6px; border-radius: 50%;
+      border: 1px solid var(--accent); opacity: 0.6;
+      animation: ring 2s ease-out infinite;
+    }
+    @keyframes ring {
+      0%   { transform: scale(0.9); opacity: 0.6; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+
+    h1 { font-size: 24px; font-weight: 700; margin: 0 0 12px; letter-spacing: -0.01em; }
+    p  { color: var(--muted); font-size: 14px; line-height: 1.55; margin: 0 0 24px; }
+
+    .status {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--accent); font-size: 12px;
+      letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600;
+    }
+    .status .dot {
+      width: 6px; height: 6px; background: var(--accent);
+      border-radius: 50%; animation: blink 1.4s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+    .play {
+      display: inline-block; margin-top: 20px; color: var(--muted);
+      font-size: 12px; text-decoration: none; border-bottom: 1px dashed rgba(192,193,255,0.25);
+      cursor: pointer; padding-bottom: 1px;
+    }
+    .play:hover { color: var(--accent); border-color: var(--accent); }
+
+    #game {
+      display: none; margin-top: 20px; width: 100%;
+      background: #0a0f1c; border: 1px solid var(--outline);
+      border-radius: 8px; overflow: hidden; position: relative;
+    }
+    #game.open { display: block; }
+    #game canvas { display: block; width: 100%; height: auto; touch-action: manipulation; }
+    #game .overlay {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 4px; pointer-events: none;
+      color: var(--text); text-shadow: 0 2px 6px rgba(0,0,0,0.7);
+    }
+    #game .overlay .title { font-weight: 700; font-size: 18px; }
+    #game .overlay .hint  { font-size: 11px; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+    #game .score {
+      position: absolute; top: 8px; right: 12px;
+      font-variant-numeric: tabular-nums; font-weight: 700;
+      color: var(--accent); font-size: 14px;
+    }
+    #game .hi {
+      position: absolute; top: 8px; left: 12px;
+      font-variant-numeric: tabular-nums;
+      color: var(--muted); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    }
+
+    footer {
+      margin-top: 32px; color: var(--muted);
+      font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="brand">Wokku</div>
+    <div class="pulse" aria-hidden="true"></div>
+    <h1>Offline for maintenance</h1>
+    <p>This app is temporarily offline while its owner rolls out an update or fixes something. It'll be back shortly — no need to refresh.</p>
+    <div class="status"><span class="dot"></span>Checking back automatically</div>
+    <div><a class="play" id="playLink">🎮 Play Flappy Dyno while you wait</a></div>
+
+    <div id="game">
+      <canvas id="cv" width="420" height="300"></canvas>
+      <div class="hi" id="hi">Best 0</div>
+      <div class="score" id="sc">0</div>
+      <div class="overlay" id="ov">
+        <div class="title">Flappy Dyno</div>
+        <div class="hint">Tap / Space to flap</div>
+      </div>
+    </div>
+
+    <footer>Powered by <a href="https://wokku.cloud">wokku.cloud</a></footer>
+  </main>
+
+  <script>
+    // ── auto-reload ────────────────────────────────────────────
+    var retry_current = 2, retry_limit = 4096;
+    function check_gateway() {
+      var r = new XMLHttpRequest();
+      r.open('HEAD', window.location.href, true);
+      r.onload = function () {
+        if (r.status >= 200 && r.status < 400) { window.location.reload(true); }
+        else { if (retry_current < retry_limit) retry_current *= 2; setTimeout(check_gateway, retry_current * 1000); }
+      };
+      r.onerror = function () {
+        if (retry_current < retry_limit) retry_current *= 2;
+        setTimeout(check_gateway, retry_current * 1000);
+      };
+      r.send();
+    }
+    setTimeout(check_gateway, retry_current * 1000);
+
+    // ── Flappy Dyno ────────────────────────────────────────────
+    (function () {
+      var gameBox = document.getElementById('game');
+      var link = document.getElementById('playLink');
+      var cv = document.getElementById('cv');
+      var ctx = cv.getContext('2d');
+      var W = cv.width, H = cv.height;
+
+      var overlay = document.getElementById('ov');
+      var scoreEl = document.getElementById('sc');
+      var hiEl = document.getElementById('hi');
+
+      var COL = { bg: '#0a0f1c', accent: '#c0c1ff', deep: '#5625ab',
+                  muted: '#958e9e', outline: 'rgba(192,193,255,0.22)' };
+
+      var GRAVITY = 0.22, FLAP = -5.2, PIPE_SPEED = 1.4,
+          PIPE_GAP = 170, PIPE_W = 48, PIPE_EVERY = 135;
+      var MAX_FALL = 5.5;        // terminal velocity — keeps falls manageable
+      var FLAP_COOLDOWN_MS = 90; // prevents machine-gun space triggering twice per frame
+
+      // Parallax starfield — three layers that drift left. Regenerated on reset.
+      function makeStars(count, brightness) {
+        var arr = [];
+        for (var i = 0; i < count; i++) {
+          arr.push({
+            x: Math.random() * W,
+            y: Math.random() * H,
+            r: 0.6 + Math.random() * 1.4,
+            a: brightness * (0.4 + Math.random() * 0.6)
+          });
+        }
+        return arr;
+      }
+      var starsBack  = makeStars(50, 0.35); // slow, dim
+      var starsMid   = makeStars(28, 0.65); // medium
+      var starsFront = makeStars(14, 1.00); // fast, bright
+
+      // A couple of distant nebula patches drift at half-star speed.
+      var nebulae = [
+        { x: W * 0.2, y: H * 0.3, rx: 160, ry: 90,  color: 'rgba(86,37,171,0.18)' },
+        { x: W * 0.7, y: H * 0.7, rx: 130, ry: 80,  color: 'rgba(192,193,255,0.10)' }
+      ];
+
+      var state = 'idle';
+      var dyno, pipes, frame, score, lastFlapAt;
+      var hi = parseInt(localStorage.getItem('wokku_flappy_hi') || '0', 10);
+      hiEl.textContent = 'Best ' + hi;
+
+      function setOverlay(title, hint) {
+        while (overlay.firstChild) overlay.removeChild(overlay.firstChild);
+        var t = document.createElement('div'); t.className = 'title'; t.textContent = title;
+        var h = document.createElement('div'); h.className = 'hint';  h.textContent = hint;
+        overlay.appendChild(t); overlay.appendChild(h);
+      }
+
+      function reset() {
+        dyno = { x: 70, y: H / 2, r: 14, vy: 0, rot: 0, flapAt: -9999 };
+        pipes = [];
+        frame = 0;
+        score = 0;
+        lastFlapAt = 0;
+        scoreEl.textContent = '0';
+      }
+      reset();
+
+      function flap() {
+        var now = performance.now();
+        if (now - lastFlapAt < FLAP_COOLDOWN_MS) return;
+        lastFlapAt = now;
+        if (state === 'idle') { state = 'playing'; overlay.style.display = 'none'; }
+        else if (state === 'dead') { reset(); state = 'playing'; overlay.style.display = 'none'; }
+        if (state === 'playing') {
+          dyno.vy = FLAP;
+          dyno.flapAt = now;   // triggers a brief wing-spread animation
+        }
+      }
+
+      function die() {
+        state = 'dead';
+        if (score > hi) {
+          hi = score;
+          localStorage.setItem('wokku_flappy_hi', String(hi));
+          hiEl.textContent = 'Best ' + hi;
+        }
+        setOverlay('Crashed!', 'Score ' + score + ' · Tap / Space to retry');
+        overlay.style.display = 'flex';
+      }
+
+      // Build an irregular asteroid cluster that fills the vertical band
+      // [yStart, yEnd]. Each rock is a jagged polygon — N points around
+      // a center with radius randomly perturbed, so the silhouette looks
+      // chipped and asymmetric instead of a smooth ball.
+      function buildRocks(width, yStart, yEnd) {
+        var rocks = [];
+        var yCursor = yStart;
+        while (yCursor < yEnd) {
+          var r = 14 + Math.random() * 14;
+          var cx = width / 2 + (Math.random() - 0.5) * (width - 10);
+          var cy = yCursor + r * 0.7;
+          if (cy + r > yEnd + 6) cy = yEnd - r * 0.3;
+
+          // jagged polygon: 11–15 points with ±25–45% radial jitter
+          var nPts = 11 + ((Math.random() * 5) | 0);
+          var roughness = 0.25 + Math.random() * 0.2;
+          var rotation = Math.random() * Math.PI * 2;
+          var poly = [];
+          for (var p = 0; p < nPts; p++) {
+            var ang = rotation + (p / nPts) * Math.PI * 2;
+            var rr = r * (1 - roughness + Math.random() * roughness * 2);
+            poly.push({ x: Math.cos(ang) * rr, y: Math.sin(ang) * rr });
+          }
+
+          // craters: small dark pits scattered on the sunlit side
+          var craters = [];
+          var nCraters = 3 + ((Math.random() * 4) | 0);
+          for (var c = 0; c < nCraters; c++) {
+            craters.push({
+              x: (Math.random() - 0.3) * r * 0.9,     // biased toward lit side
+              y: (Math.random() - 0.3) * r * 0.9,
+              r: 1 + Math.random() * 2.5
+            });
+          }
+
+          // specks — tiny light/dark flecks for surface grit
+          var specks = [];
+          var nSpecks = 4 + ((Math.random() * 5) | 0);
+          for (var s = 0; s < nSpecks; s++) {
+            specks.push({
+              x: (Math.random() - 0.5) * r * 1.5,
+              y: (Math.random() - 0.5) * r * 1.5,
+              r: 0.6 + Math.random() * 0.9,
+              light: Math.random() > 0.5
+            });
+          }
+
+          // slight per-rock tint shift
+          var tint = 0.85 + Math.random() * 0.3;
+          rocks.push({ cx: cx, cy: cy, r: r, poly: poly, craters: craters, specks: specks, tint: tint });
+          yCursor = cy + r * 0.55;
+        }
+        return rocks;
+      }
+
+      function drawRockCluster(px, rocks) {
+        for (var i = 0; i < rocks.length; i++) {
+          var rk = rocks[i];
+          var gx = px + rk.cx, gy = rk.cy;
+
+          // jagged silhouette path
+          ctx.beginPath();
+          ctx.moveTo(gx + rk.poly[0].x, gy + rk.poly[0].y);
+          for (var n = 1; n < rk.poly.length; n++) {
+            ctx.lineTo(gx + rk.poly[n].x, gy + rk.poly[n].y);
+          }
+          ctx.closePath();
+
+          // shaded fill — off-centre radial so one side is lit
+          var mid = Math.floor(139 * rk.tint).toString();  // #8b = 139
+          var g = ctx.createRadialGradient(
+            gx - rk.r * 0.35, gy - rk.r * 0.45, rk.r * 0.1,
+            gx, gy, rk.r * 1.05
+          );
+          g.addColorStop(0,    'rgb(' + mid + ',' + mid + ',' + Math.floor(163 * rk.tint) + ')');  // lit
+          g.addColorStop(0.55, '#3a3850');
+          g.addColorStop(1,    '#14121f');
+          ctx.fillStyle = g;
+          ctx.fill();
+
+          // rim light (lilac accent) — sharp bright stroke on lit side
+          ctx.save();
+          ctx.clip();
+          ctx.strokeStyle = 'rgba(192,193,255,0.25)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.restore();
+
+          // hard outline for silhouette contrast
+          ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          // craters
+          ctx.fillStyle = 'rgba(12,10,22,0.75)';
+          for (var k = 0; k < rk.craters.length; k++) {
+            var cr = rk.craters[k];
+            ctx.beginPath();
+            ctx.arc(gx + cr.x, gy + cr.y, cr.r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // specks — mineral flecks
+          for (var sp = 0; sp < rk.specks.length; sp++) {
+            var sk = rk.specks[sp];
+            ctx.fillStyle = sk.light ? 'rgba(220,220,240,0.5)' : 'rgba(10,8,16,0.6)';
+            ctx.beginPath();
+            ctx.arc(gx + sk.x, gy + sk.y, sk.r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
+      function drawStars(stars, speed) {
+        for (var i = 0; i < stars.length; i++) {
+          var s = stars[i];
+          s.x -= speed;
+          if (s.x < -2) { s.x = W + Math.random() * 20; s.y = Math.random() * H; }
+          ctx.globalAlpha = s.a;
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      function step() {
+        // Deep-space gradient base
+        var skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+        skyGrad.addColorStop(0, '#050818');
+        skyGrad.addColorStop(1, '#0a0f1c');
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, W, H);
+
+        // Drifting nebulae (back layer)
+        for (var ni = 0; ni < nebulae.length; ni++) {
+          var n = nebulae[ni];
+          n.x -= PIPE_SPEED * 0.15;
+          if (n.x + n.rx < 0) n.x = W + n.rx;
+          var ng = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, Math.max(n.rx, n.ry));
+          ng.addColorStop(0, n.color);
+          ng.addColorStop(1, 'transparent');
+          ctx.fillStyle = ng;
+          ctx.beginPath();
+          ctx.ellipse(n.x, n.y, n.rx, n.ry, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Parallax starfield
+        drawStars(starsBack,  PIPE_SPEED * 0.25);
+        drawStars(starsMid,   PIPE_SPEED * 0.55);
+        drawStars(starsFront, PIPE_SPEED * 1.00);
+
+        if (state === 'playing') {
+          dyno.vy += GRAVITY;
+          if (dyno.vy > MAX_FALL) dyno.vy = MAX_FALL;
+          dyno.y += dyno.vy;
+          dyno.rot = Math.max(-0.35, Math.min(0.75, dyno.vy / 12));
+
+          if (frame % PIPE_EVERY === 0) {
+            var gapY = 40 + Math.random() * (H - 80 - PIPE_GAP);
+            pipes.push({
+              x: W + 10, gapY: gapY, passed: false,
+              rocksTop: buildRocks(PIPE_W, 0, gapY),
+              rocksBot: buildRocks(PIPE_W, gapY + PIPE_GAP, H)
+            });
+          }
+
+          for (var i = 0; i < pipes.length; i++) {
+            var p = pipes[i];
+            p.x -= PIPE_SPEED;
+            if (!p.passed && p.x + PIPE_W < dyno.x) {
+              p.passed = true;
+              score += 1;
+              scoreEl.textContent = String(score);
+            }
+          }
+          pipes = pipes.filter(function (p) { return p.x + PIPE_W > -20; });
+
+          if (dyno.y + dyno.r > H - 2 || dyno.y - dyno.r < 0) die();
+
+          for (var j = 0; j < pipes.length; j++) {
+            var pp = pipes[j];
+            var inX = dyno.x + dyno.r > pp.x && dyno.x - dyno.r < pp.x + PIPE_W;
+            if (inX) {
+              var hitTop = dyno.y - dyno.r < pp.gapY;
+              var hitBot = dyno.y + dyno.r > pp.gapY + PIPE_GAP;
+              if (hitTop || hitBot) { die(); break; }
+            }
+          }
+        }
+
+        // Draw asteroid clusters (top + bottom of each gap). Collision
+        // below still uses a rect [x, x+PIPE_W] × [0, gapY] / [gapY+GAP, H]
+        // which is slightly more forgiving than the visible rock silhouette
+        // (craters don't count as hits) — intentional.
+        for (var k = 0; k < pipes.length; k++) {
+          var pk = pipes[k];
+          drawRockCluster(pk.x, pk.rocksTop);
+          drawRockCluster(pk.x, pk.rocksBot);
+        }
+
+        // Winged dyno — 🦕 body + two canvas wings that flap on input.
+        // Wing angle: spread wide right after a flap, tuck while falling.
+        var sinceFlap = (performance.now() - dyno.flapAt) / 1000; // seconds
+        var wingPose;
+        if (sinceFlap < 0.12) wingPose = -1.25;       // full upstroke (spread)
+        else if (sinceFlap < 0.28) wingPose = -0.6;   // mid
+        else wingPose = Math.min(0.8, 0.1 + dyno.vy * 0.05); // tuck as falling
+
+        ctx.save();
+        ctx.translate(dyno.x, dyno.y);
+        ctx.rotate(dyno.rot);
+
+        function drawWing(sign) {
+          ctx.save();
+          ctx.translate(-2, -4);
+          ctx.rotate(sign * wingPose);
+          var wg = ctx.createLinearGradient(0, -18, 0, 4);
+          wg.addColorStop(0, COL.accent);
+          wg.addColorStop(1, COL.deep);
+          ctx.fillStyle = wg;
+          ctx.globalAlpha = 0.92;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.quadraticCurveTo(sign * 16, -22, sign * 22, -6);
+          ctx.quadraticCurveTo(sign * 14, -2, 0, 2);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+        drawWing(-1);  // left wing
+        drawWing(1);   // right wing
+
+        ctx.shadowColor = COL.accent; ctx.shadowBlur = 12;
+        ctx.font = '26px serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('🦕', 0, 1);
+        ctx.restore();
+
+        frame++;
+        requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+
+      function onFlap(e) {
+        if (!gameBox.classList.contains('open')) return;
+        if (e.type === 'keydown' && e.code !== 'Space') return;
+        if (e.preventDefault) e.preventDefault();
+        flap();
+      }
+      window.addEventListener('keydown', onFlap);
+      cv.addEventListener('mousedown', onFlap);
+      cv.addEventListener('touchstart', onFlap, { passive: false });
+
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+        gameBox.classList.toggle('open');
+        link.textContent = gameBox.classList.contains('open')
+          ? '✕ Hide game'
+          : '🎮 Play Flappy Dyno while you wait';
+      });
+    })();
+  </script>
+</body>
+</html>

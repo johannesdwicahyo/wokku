@@ -1,0 +1,105 @@
+<div data-controller="slide-panel">
+<%= render "dashboard/apps/tabs", app: @app %>
+
+<%
+  # Separate the auto-assigned Wokku domain from custom domains
+  server_global_domain = @app.server.host # fallback
+  begin
+    # Try to detect the wokku subdomain pattern (e.g. app-name.mochi.wokku.cloud)
+  rescue
+  end
+  wokku_domain = @domains.find { |d| d.hostname.end_with?(".wokku.cloud") }
+  custom_domains = @domains.reject { |d| d.hostname.end_with?(".wokku.cloud") }
+%>
+
+<%# Wokku Domain (auto-assigned) %>
+<div class="bg-surface-container-low rounded-xl overflow-hidden mb-6">
+  <div class="px-6 py-4 border-b border-outline-variant/15">
+    <h2 class="text-base font-semibold text-on-surface font-headline">Wokku Domain</h2>
+    <p class="text-sm text-outline mt-1">Your app is available at this auto-assigned URL</p>
+  </div>
+
+  <% if wokku_domain %>
+    <div class="px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary-container/20 border border-primary/20">
+          <span class="material-symbols-outlined text-primary text-[18px]">language</span>
+        </div>
+        <div>
+          <%= link_to "https://#{wokku_domain.hostname}", "https://#{wokku_domain.hostname}", target: "_blank", rel: "noopener", class: "text-sm font-medium text-primary font-mono hover:text-primary/80 transition" %>
+          <div class="flex items-center space-x-2 mt-0.5">
+            <% if wokku_domain.ssl_enabled? %>
+              <span class="flex items-center space-x-1 text-xs text-primary/70"><span class="material-symbols-outlined text-[14px]">lock</span><span>SSL</span></span>
+            <% end %>
+            <span class="text-xs text-outline">Auto-managed</span>
+          </div>
+        </div>
+      </div>
+      <%= link_to "https://#{wokku_domain.hostname}", target: "_blank", rel: "noopener", class: "inline-flex items-center px-3 py-1.5 bg-surface border border-outline-variant/15 text-sm text-on-surface-variant rounded-md hover:border-primary/50 hover:text-primary transition" do %>
+        <span class="material-symbols-outlined text-[16px] mr-1.5">open_in_new</span>
+        Open App
+      <% end %>
+    </div>
+  <% else %>
+    <div class="px-6 py-4 text-sm text-outline">
+      No Wokku domain assigned. Sync the server to detect domains.
+    </div>
+  <% end %>
+</div>
+
+<%# Custom Domains %>
+<div class="bg-surface-container-low rounded-xl overflow-hidden mb-6">
+  <div class="px-6 py-4 border-b border-outline-variant/15 flex items-center justify-between">
+    <div>
+      <h2 class="text-base font-semibold text-on-surface font-headline">Custom Domains</h2>
+      <p class="text-sm text-outline mt-1">Domains pointing to <span class="font-mono"><%= @app.name %></span></p>
+    </div>
+    <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">
+      <span class="material-symbols-outlined text-[16px] mr-1">add</span> Add Domain
+    </button>
+  </div>
+
+  <%# Two streams: per-row replacement (frame swaps) + the app-level
+      actions stream so toasts from EnableSslJob also surface here. %>
+  <%= turbo_stream_from "app_#{@app.id}_domains" %>
+  <%= turbo_stream_from @app.action_stream_name %>
+
+  <% if custom_domains.any? %>
+    <div class="divide-y divide-outline-variant/15">
+      <% custom_domains.each do |domain| %>
+        <%= render "row", domain: domain, app: @app %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="px-6 py-8 text-center">
+      <p class="text-sm text-outline">No custom domains configured.</p>
+    </div>
+  <% end %>
+</div>
+
+<%= render layout: "dashboard/shared/slide_panel", locals: { title: "Add Domain", subtitle: "Configure DNS at your registrar, then add the hostname below" } do %>
+  <%# DNS spec forbids CNAME on apex/root domains — show both paths. %>
+  <div class="space-y-3 mb-5 text-xs">
+    <div class="rounded-md border border-outline-variant/15 bg-surface p-3">
+      <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Subdomain (e.g. <code class="font-mono">app.example.com</code>)</p>
+      <p class="text-on-surface-variant">Add a <span class="font-mono text-on-surface">CNAME</span> → <span class="font-mono text-primary break-all"><%= wokku_domain&.hostname || "#{@app.name}.wokku.cloud" %></span></p>
+    </div>
+    <div class="rounded-md border border-outline-variant/15 bg-surface p-3">
+      <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Root domain (e.g. <code class="font-mono">example.com</code>)</p>
+      <p class="text-on-surface-variant">Add an <span class="font-mono text-on-surface">A record</span> → <span class="font-mono text-primary"><%= @app.server&.host %></span></p>
+      <p class="text-[10px] text-outline mt-1">Or <span class="font-mono">ALIAS</span>/<span class="font-mono">ANAME</span> to <span class="font-mono break-all"><%= wokku_domain&.hostname || "#{@app.name}.wokku.cloud" %></span> if your DNS provider supports CNAME flattening.</p>
+    </div>
+  </div>
+
+  <%= form_with(model: Domain.new, url: dashboard_app_domains_path(@app), class: "space-y-4") do |f| %>
+    <div>
+      <%= f.label :hostname, class: "block text-[10px] text-outline uppercase tracking-wider font-bold mb-1" %>
+      <%= f.text_field :hostname, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface font-mono text-sm focus:ring-primary focus:border-primary", placeholder: "app.example.com", autofocus: true %>
+    </div>
+    <div class="flex items-center gap-3">
+      <%= f.submit "Add Domain", class: "px-4 py-2 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
+      <button type="button" data-action="click->slide-panel#close" class="text-sm text-outline hover:text-on-surface transition cursor-pointer">Cancel</button>
+    </div>
+  <% end %>
+<% end %>
+</div>

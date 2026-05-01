@@ -1,0 +1,29 @@
+<div class="mb-6">
+  <div class="flex items-center space-x-3 mb-1">
+    <%= link_to "Teams", dashboard_teams_path, class: "text-sm text-outline hover:text-primary transition" %>
+    <span class="material-symbols-outlined text-[16px] text-outline-variant">chevron_right</span>
+    <span class="text-sm text-on-surface font-medium"><%= @team.name %></span>
+  </div>
+</div>
+
+<h1 class="text-2xl font-headline text-on-surface mb-6"><%= @team.name %></h1>
+
+<div class="bg-surface-container-low rounded-xl border border-outline-variant/15 overflow-hidden">
+  <div class="px-6 py-4 border-b border-outline-variant/15">
+    <h2 class="text-base font-semibold text-on-surface">Members</h2>
+  </div>
+
+  <div class="divide-y divide-outline-variant/15">
+    <% @members.each do |membership| %>
+      <div class="px-6 py-3 flex items-center justify-between hover:bg-surface-container-highest transition">
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-on-primary text-sm font-semibold">
+            <%= membership.user.email[0].upcase %>
+          </div>
+          <span class="text-sm font-medium text-on-surface"><%= membership.user.email %></span>
+        </div>
+        <span class="text-xs text-on-surface-variant uppercase tracking-wider"><%= membership.role.capitalize %></span>
+      </div>
+    <% end %>
+  </div>
+</div>

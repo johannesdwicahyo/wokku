@@ -1,0 +1,25 @@
+# name: Plausible
+# documentation: https://github.com/plausible/analytics
+# slogan: Privacy-friendly Google Analytics alternative
+# category: analytics
+# tags: analytics, privacy, elixir
+# icon: analytics
+# port: 8000
+# set_url: BASE_URL
+# generate_secrets: SECRET_KEY_BASE,TOTP_VAULT_KEY
+
+services:
+  plausible:
+    image: ghcr.io/plausible/community-edition:v2.1
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

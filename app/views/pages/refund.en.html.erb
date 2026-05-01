@@ -1,0 +1,112 @@
+<% content_for(:title, "Refund Policy - Wokku") %>
+
+<div class="min-h-screen bg-surface text-on-surface">
+  <div class="max-w-3xl mx-auto px-6 py-16">
+    <div class="mb-12">
+      <div class="flex items-center justify-between mb-4">
+        <a href="/" class="text-sm text-primary hover:underline">← Back to Wokku</a>
+        <%= button_to "Bahasa Indonesia", public_locale_path(locale: :id), method: :post, class: "text-xs text-outline hover:text-on-surface-variant border border-outline-variant/20 rounded px-2 py-1 cursor-pointer" %>
+      </div>
+      <h1 class="font-headline text-4xl font-bold text-on-surface mb-3">Refund Policy</h1>
+      <p class="text-sm text-outline">Last updated: April 24, 2026</p>
+    </div>
+
+    <div class="space-y-8">
+
+      <section>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          This Refund Policy explains when and how you can request a refund for payments made to Wokku. It applies to all top-ups and paid plans on <a href="https://wokku.cloud" class="text-primary hover:underline">wokku.cloud</a>. By making a payment you agree to the terms below, in addition to our <a href="/terms" class="text-primary hover:underline">Terms of Service</a>.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">1. Prepaid Deposit Model</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Wokku operates on a prepaid deposit model. When you top up, your payment is converted into account credit (in IDR or USD) and debited daily based on your usage of dynos, databases, and add-ons. You are not locked into a subscription — you can stop using the Service at any time and request a refund for the unused balance under the terms below.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">2. 14-Day Refund Window for Unused Credits</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed mb-3">
+          You may request a refund of any <strong class="text-on-surface">unused prepaid credit</strong> within <strong class="text-on-surface">14 days</strong> of the date of the top-up that generated that credit. Refunds are limited to the unused portion — any amount already consumed by dynos, databases, backups, bandwidth, or add-ons cannot be refunded.
+        </p>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li>IDR deposits paid via iPaymu are refunded to the original bank account, VA, or e-wallet used for the payment.</li>
+          <li>USD deposits paid via Stripe are refunded to the original card. Card issuers typically post refunds within 5–10 business days.</li>
+          <li>Refunds are processed in the original currency of the payment — we do not convert between IDR and USD.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">3. Non-Refundable Charges</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed mb-3">
+          The following charges are <strong class="text-on-surface">not eligible for refund</strong>:
+        </p>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li>Usage that has already been debited from your balance (dyno hours, database storage, bandwidth, backup storage, add-on fees).</li>
+          <li>Payment processor fees charged by iPaymu, Stripe, or your bank.</li>
+          <li>Top-ups older than 14 days, unless required by applicable consumer-protection law.</li>
+          <li>Balances on accounts suspended or terminated for violating Section 3 of our <a href="/terms" class="text-primary hover:underline">Terms of Service</a> (e.g. spam, abuse, illegal content). We may retain the unused balance to cover incident-response and chargeback costs.</li>
+          <li>Promotional credits, referral bonuses, or any amount not paid in cash.</li>
+          <li>One-time service fees for migration assistance, custom configuration, or professional-services engagements, once the work has been started or delivered.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">4. Service Outages and Billing Errors</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          If a Wokku-side outage, billing error, or incorrect charge caused you to be debited for usage you did not receive, we will issue a credit or refund for the affected amount regardless of the 14-day window. Contact support with the timestamp and details of the issue and we will investigate and correct the billing record within 5 business days.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">5. Chargebacks</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Please contact us before initiating a chargeback with your bank or card issuer — we can almost always resolve billing disputes faster through direct support. Accounts with an open chargeback may be suspended pending resolution. If a chargeback is initiated for charges that are valid under this policy, we may recover the disputed amount and associated chargeback fees from any remaining balance on the account.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">6. How to Request a Refund</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed mb-3">
+          Email <a href="mailto:support@wokku.cloud" class="text-primary hover:underline">support@wokku.cloud</a> from the address registered on your account, or message us on WhatsApp at <a href="https://wa.me/6285121948822" class="text-primary hover:underline" target="_blank" rel="noopener">+62 851 2194 8822</a>. Please include:
+        </p>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li>The email address on your Wokku account.</li>
+          <li>The date and amount of the top-up you'd like refunded.</li>
+          <li>The transaction or invoice ID, if you have it.</li>
+          <li>Your reason for the request (optional, but helps us improve).</li>
+        </ul>
+        <p class="text-sm text-on-surface-variant leading-relaxed mt-3">
+          We respond to refund requests within 3 business days and complete processing within 10 business days of approval. The time for funds to reach your account depends on your bank or card issuer.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">7. Account Closure</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          If you close your Wokku account with a remaining balance, you may request a refund of that balance within 14 days of the most recent top-up. Balances from top-ups older than 14 days at the time of closure are forfeited unless otherwise required by law.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">8. Changes to this Policy</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          We may update this Refund Policy from time to time. Changes apply to top-ups made after the effective date of the update. Continued use of the Service after a change constitutes acceptance of the revised policy.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">9. Contact</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          PT Wokku (or operating entity of wokku.cloud)<br>
+          Jl. Ir. Sutami, Sukawati, Gianyar, Bali, Indonesia<br>
+          WhatsApp: <a href="https://wa.me/6285121948822" class="text-primary hover:underline" target="_blank" rel="noopener">+62 851 2194 8822</a><br>
+          Email: <a href="mailto:support@wokku.cloud" class="text-primary hover:underline">support@wokku.cloud</a>
+        </p>
+      </section>
+
+    </div>
+  </div>
+</div>

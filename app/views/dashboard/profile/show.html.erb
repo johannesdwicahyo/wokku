@@ -1,0 +1,266 @@
+<%# Header %>
+<div class="mb-8">
+  <h1 class="font-headline text-3xl font-bold text-on-surface mb-2"><%= t("dashboard.profile.title") %></h1>
+  <p class="text-sm text-outline">Manage your account, security, API credentials, and billing.</p>
+</div>
+
+<div class="grid grid-cols-12 gap-6">
+  <%# ===== LEFT COLUMN (8-col) ===== %>
+  <div class="col-span-8 space-y-6">
+
+    <%# Account Info %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-6 py-4 border-b border-outline-variant/10 flex items-center justify-between">
+        <div>
+          <h2 class="font-headline text-base font-bold text-on-surface"><%= t("dashboard.profile.account") %></h2>
+          <p class="text-xs text-outline mt-0.5">Your profile and account details</p>
+        </div>
+        <%= link_to edit_dashboard_profile_path, class: "text-xs text-primary hover:underline flex items-center gap-1" do %>
+          <span class="material-symbols-outlined text-[14px]">edit</span> Edit
+        <% end %>
+      </div>
+      <div class="p-6">
+        <div class="flex items-center gap-4 mb-6">
+          <div class="w-14 h-14 rounded-lg bg-primary flex items-center justify-center text-on-primary text-xl font-bold font-headline">
+            <% if current_user.avatar_url.present? %>
+              <img src="<%= current_user.avatar_url %>" alt="Avatar" class="w-full h-full object-cover rounded-lg">
+            <% else %>
+              <%= current_user.email[0].upcase %>
+            <% end %>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface"><%= current_user.name.presence || current_user.email %></h3>
+            <p class="text-xs text-outline font-mono"><%= current_user.email %></p>
+            <p class="text-[10px] text-outline-variant mt-0.5">Member since <%= current_user.created_at.strftime("%B %Y") %> · <%= current_user.role.capitalize %></p>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-4">
+          <div class="bg-surface rounded-md p-3 text-center">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Apps</p>
+            <span class="text-lg font-bold text-on-surface font-headline"><%= policy_scope(AppRecord).size %></span>
+          </div>
+          <div class="bg-surface rounded-md p-3 text-center">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Servers</p>
+            <span class="text-lg font-bold text-on-surface font-headline"><%= policy_scope(Server).size %></span>
+          </div>
+          <div class="bg-surface rounded-md p-3 text-center">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Member Since</p>
+            <span class="text-lg font-bold text-on-surface font-headline"><%= current_user.created_at.strftime("%b %Y") %></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%# Preferences — language + currency (independent) %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-6 py-4 border-b border-outline-variant/10">
+        <h2 class="font-headline text-base font-bold text-on-surface"><%= t("dashboard.profile.preferences", default: "Preferences") %></h2>
+        <p class="text-xs text-outline mt-0.5"><%= t("dashboard.profile.preferences_hint", default: "Display language and billing currency can be set independently.") %></p>
+      </div>
+      <div class="p-6">
+        <%= form_with url: dashboard_profile_path, method: :patch, local: true, class: "grid grid-cols-2 gap-4" do |f| %>
+          <%= f.fields_for :user, current_user do |u| %>
+            <div>
+              <label class="block text-xs text-outline uppercase tracking-wider font-bold mb-2"><%= t("dashboard.profile.language", default: "Language") %></label>
+              <%= u.select :locale,
+                    [["English", "en"], ["Bahasa Indonesia", "id"]],
+                    {},
+                    class: "w-full bg-surface text-on-surface border border-outline-variant/30 rounded-md px-3 py-2 text-sm",
+                    onchange: "this.form.requestSubmit()" %>
+            </div>
+            <div>
+              <label class="block text-xs text-outline uppercase tracking-wider font-bold mb-2"><%= t("dashboard.profile.currency", default: "Billing currency") %></label>
+              <% if Wokku::LaunchMode.idr_only? %>
+                <div class="flex items-center gap-2 h-[38px]">
+                  <span class="text-sm text-on-surface font-mono font-bold">IDR (Rp)</span>
+                  <span class="text-[10px] text-outline">USD billing available after international expansion</span>
+                </div>
+              <% else %>
+                <%= u.select :currency,
+                      [["USD ($)", "usd"], ["IDR (Rp)", "idr"]],
+                      {},
+                      class: "w-full bg-surface text-on-surface border border-outline-variant/30 rounded-md px-3 py-2 text-sm",
+                      onchange: "this.form.requestSubmit()" %>
+              <% end %>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+
+    <%# Resource Overview %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-6 py-4 border-b border-outline-variant/10">
+        <div class="flex items-center justify-between">
+          <h2 class="font-headline text-base font-bold text-on-surface"><%= t("dashboard.profile.resource_overview") %></h2>
+          <div class="text-right">
+            <span class="text-lg font-bold text-primary font-headline"><%= format_usd_for_user((policy_scope(AppRecord).includes(dyno_allocations: :dyno_tier).flat_map(&:dyno_allocations).sum { |a| a.dyno_tier.monthly_price_dollars * a.count } rescue 0)) %></span>
+            <p class="text-[10px] text-outline uppercase tracking-wider"><%= t("dashboard.profile.estimated_monthly") %></p>
+          </div>
+        </div>
+      </div>
+      <div class="p-6">
+        <div class="grid grid-cols-3 gap-4">
+          <div class="bg-surface rounded-md p-4">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Active Apps</p>
+            <span class="text-2xl font-bold text-on-surface font-headline"><%= policy_scope(AppRecord).select(&:running?).size %></span>
+            <p class="text-[10px] text-outline mt-1">of <%= policy_scope(AppRecord).size %> total</p>
+          </div>
+          <div class="bg-surface rounded-md p-4">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Add-ons</p>
+            <span class="text-2xl font-bold text-on-surface font-headline"><%= DatabaseService.count rescue 0 %></span>
+            <p class="text-[10px] text-outline mt-1">databases & services</p>
+          </div>
+          <div class="bg-surface rounded-md p-4">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Dynos</p>
+            <%
+              total_dynos = DynoAllocation.sum(:count) rescue 0
+            %>
+            <span class="text-2xl font-bold text-on-surface font-headline"><%= total_dynos %></span>
+            <p class="text-[10px] text-outline mt-1">active containers</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%# Recent Activity %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-6 py-4 border-b border-outline-variant/10 flex items-center justify-between">
+        <h2 class="font-headline text-base font-bold text-on-surface">Recent Activity</h2>
+        <%= link_to dashboard_activities_path, class: "text-xs text-outline hover:text-primary transition" do %>
+          View All
+        <% end %>
+      </div>
+      <%
+        recent = Activity.where(user: current_user).order(created_at: :desc).limit(5) rescue []
+      %>
+      <% if recent.any? %>
+        <div class="divide-y divide-outline-variant/10">
+          <% recent.each do |activity| %>
+            <div class="px-6 py-3 flex items-center justify-between hover:bg-surface-container-high/20 transition">
+              <div class="flex items-center gap-3">
+                <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                <span class="text-xs text-on-surface-variant"><%= activity.description %> <span class="font-mono text-primary"><%= activity.target_name %></span></span>
+              </div>
+              <span class="text-[10px] text-outline"><%= time_ago_in_words(activity.created_at) %> ago</span>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="px-6 py-6 text-center">
+          <p class="text-xs text-outline">No recent activity.</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%# ===== RIGHT COLUMN (4-col) ===== %>
+  <div class="col-span-4 space-y-6">
+
+    <%# Security — 2FA %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-5 py-3 border-b border-outline-variant/10">
+        <p class="text-[10px] text-outline uppercase tracking-widest font-bold"><%= t("dashboard.profile.security") %></p>
+      </div>
+      <div class="p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px] <%= current_user.respond_to?(:two_factor_enabled?) && current_user.two_factor_enabled? ? 'text-secondary' : 'text-outline' %>">
+              <%= current_user.respond_to?(:two_factor_enabled?) && current_user.two_factor_enabled? ? 'verified_user' : 'shield' %>
+            </span>
+            <span class="text-xs font-bold text-on-surface">Two-Factor Auth</span>
+          </div>
+          <% if current_user.respond_to?(:two_factor_enabled?) && current_user.two_factor_enabled? %>
+            <span class="text-[10px] font-bold text-secondary uppercase tracking-wider bg-secondary-container/20 px-2 py-0.5 rounded">Enabled</span>
+          <% else %>
+            <span class="text-[10px] font-bold text-outline uppercase tracking-wider">Disabled</span>
+          <% end %>
+        </div>
+        <% if respond_to?(:dashboard_two_factor_path) %>
+          <%= link_to dashboard_two_factor_path, class: "block w-full text-center py-2 text-xs font-semibold border border-outline-variant/15 rounded-md text-on-surface-variant hover:text-on-surface hover:border-outline transition" do %>
+            <%= current_user.respond_to?(:two_factor_enabled?) && current_user.two_factor_enabled? ? "Manage 2FA" : "Enable 2FA" %>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+
+    <%# SSH Keys %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-5 py-3 border-b border-outline-variant/10 flex items-center justify-between">
+        <p class="text-[10px] text-outline uppercase tracking-widest font-bold"><%= t("dashboard.profile.ssh_keys") %></p>
+      </div>
+      <div class="p-5">
+        <p class="text-xs text-outline mb-3">Add your SSH public key to enable <code class="text-primary font-mono">git push</code> deployments.</p>
+
+        <%= turbo_frame_tag "ssh_keys" do %>
+          <%= render "dashboard/ssh_keys/key_list", keys: current_user.ssh_public_keys.order(created_at: :desc), key: nil %>
+        <% end %>
+
+        <div class="mt-4 pt-4 border-t border-outline-variant/10 space-y-2">
+          <div class="bg-surface rounded-md p-3">
+            <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Deploy Command</p>
+            <code class="block text-xs font-mono text-on-surface-variant">git remote add wokku git@<%= ENV.fetch("WOKKU_GIT_HOST", "wokku.cloud") %>:APP_NAME</code>
+            <code class="block text-xs font-mono text-on-surface-variant">git push wokku main</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%# API Tokens %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-5 py-3 border-b border-outline-variant/10 flex items-center justify-between">
+        <p class="text-[10px] text-outline uppercase tracking-widest font-bold"><%= t("dashboard.profile.api_tokens") %></p>
+      </div>
+      <div class="p-5">
+        <p class="text-xs text-outline mb-3">Use tokens to authenticate CLI, API, and MCP requests.</p>
+
+        <%= turbo_frame_tag "api_tokens" do %>
+          <%= render "dashboard/api_tokens/token_list", tokens: current_user.api_tokens.active.order(created_at: :desc), new_token: nil %>
+        <% end %>
+
+        <%# API info %>
+        <div class="mt-4 pt-4 border-t border-outline-variant/10">
+          <div class="bg-surface rounded-md p-3 mb-2">
+            <span class="text-[10px] text-outline uppercase tracking-wider font-bold">API Endpoint</span>
+            <code class="block text-xs font-mono text-primary mt-1">https://wokku.cloud/api/v1</code>
+          </div>
+          <div class="bg-surface rounded-md p-3">
+            <span class="text-[10px] text-outline uppercase tracking-wider font-bold">Auth Header</span>
+            <code class="block text-xs font-mono text-on-surface-variant mt-1">Authorization: Bearer <span class="text-primary">YOUR_TOKEN</span></code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%# Quick Links %>
+    <div class="bg-surface-container-low rounded-md overflow-hidden">
+      <div class="px-5 py-3 border-b border-outline-variant/10">
+        <p class="text-[10px] text-outline uppercase tracking-widest font-bold">Quick Links</p>
+      </div>
+      <div class="divide-y divide-outline-variant/10">
+        <%= link_to dashboard_notifications_path, class: "px-5 py-2.5 flex items-center gap-3 text-xs text-on-surface-variant hover:bg-surface-container-high/30 hover:text-on-surface transition" do %>
+          <span class="material-symbols-outlined text-[16px]">notifications</span> Notifications
+        <% end %>
+        <%= link_to dashboard_activities_path, class: "px-5 py-2.5 flex items-center gap-3 text-xs text-on-surface-variant hover:bg-surface-container-high/30 hover:text-on-surface transition" do %>
+          <span class="material-symbols-outlined text-[16px]">history</span> Activity Log
+        <% end %>
+        <a href="/docs" target="_blank" class="px-5 py-2.5 flex items-center gap-3 text-xs text-on-surface-variant hover:bg-surface-container-high/30 hover:text-on-surface transition">
+          <span class="material-symbols-outlined text-[16px]">menu_book</span> Documentation
+        </a>
+      </div>
+    </div>
+
+    <%# Danger Zone %>
+    <div class="bg-error-container/10 border border-error/20 rounded-md p-5">
+      <h3 class="text-sm font-bold text-error mb-2"><%= t("dashboard.profile.danger_zone") %></h3>
+      <p class="text-xs text-on-error-container/70 mb-4">Permanently delete your account and all associated data. This action cannot be undone.</p>
+      <button type="button" class="w-full py-2 text-xs font-bold text-error border border-error/30 rounded-md hover:bg-error/10 transition cursor-pointer"
+              data-controller="contact-modal"
+              data-contact-modal-message-value="Contact support@wokku.cloud to delete your account."
+              data-contact-modal-email-value="support@wokku.cloud"
+              data-action="click->contact-modal#show">
+        <%= t("dashboard.profile.delete_account") %>
+      </button>
+    </div>
+  </div>
+</div>

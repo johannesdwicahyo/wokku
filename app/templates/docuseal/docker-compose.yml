@@ -1,0 +1,19 @@
+# name: DocuSeal
+# documentation: https://github.com/docusealco/docuseal
+# slogan: Open-source document signing and e-signature platform
+# category: productivity
+# tags: esignature, documents, signing, forms, pdf
+# icon: productivity
+# deploy_method: docker_image
+# port: 3000
+
+services:
+  docuseal:
+    image: docuseal/docuseal:latest
+    environment:
+      - RAILS_ENV=production
+    volumes:
+      - docuseal-data:/data
+
+volumes:
+  docuseal-data:

@@ -1,0 +1,31 @@
+# name: Plane
+# documentation: https://github.com/makeplane/plane
+# slogan: Open-source project management tool — the Jira alternative
+# category: productivity
+# tags: project-management, issues, roadmap, agile
+# icon: productivity
+# deploy_method: docker_image
+# port: 80
+
+services:
+  plane:
+    image: makeplane/plane-ce:latest
+    environment:
+      - DJANGO_SETTINGS_MODULE=plane.settings.production
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:15
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+
+volumes:
+  postgres-data:
+  redis-data:

@@ -1,0 +1,20 @@
+# name: Trilium Notes
+# documentation: https://github.com/zadam/trilium
+# slogan: Hierarchical note-taking application with scripting and graph visualization
+# category: productivity
+# tags: notes, wiki, knowledge-base, hierarchical
+# icon: productivity
+# port: 8080
+
+services:
+  trilium:
+    image: zadam/trilium:latest
+    environment:
+      - TRILIUM_DATA_DIR=/home/node/trilium-data
+    ports:
+      - "8080:8080"
+    volumes:
+      - trilium-data:/home/node/trilium-data
+
+volumes:
+  trilium-data:

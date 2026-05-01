@@ -1,0 +1,25 @@
+<div id="<%= dom_id(domain) %>" class="px-6 py-3 flex items-center justify-between hover:bg-surface-container-high/30">
+  <div class="flex items-center space-x-3">
+    <span class="text-sm font-medium text-on-surface font-mono"><%= domain.hostname %></span>
+    <% if domain.ssl_enabled? %>
+      <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-primary"></span><span class="text-xs text-on-surface-variant">SSL</span></span>
+    <% end %>
+    <% if domain.dns_verified? %>
+      <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-primary"></span><span class="text-xs text-on-surface-variant">Verified</span></span>
+    <% else %>
+      <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-tertiary"></span><span class="text-xs text-on-surface-variant">Pending DNS</span></span>
+    <% end %>
+  </div>
+  <div class="flex items-center space-x-3">
+    <% if domain.pending_action == "ssl_enable" %>
+      <%= render "dashboard/shared/spinning_button",
+          label: "Issuing SSL",
+          classes: "px-2 py-1 text-xs text-primary border border-outline-variant/20 rounded-md bg-surface-container-low" %>
+    <% elsif !domain.ssl_enabled? %>
+      <%= button_to "Enable SSL", ssl_dashboard_app_domain_path(app, domain), method: :post,
+          data: { turbo_submits_with: "Issuing SSL…" },
+          class: "text-xs text-primary hover:text-primary/80 transition cursor-pointer" %>
+    <% end %>
+    <%= link_to "Remove", dashboard_app_domain_path(app, domain), data: { turbo_method: :delete, turbo_confirm: "Remove #{domain.hostname}?" }, class: "text-xs text-error/70 hover:text-error transition" %>
+  </div>
+</div>

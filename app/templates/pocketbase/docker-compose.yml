@@ -1,0 +1,15 @@
+# name: PocketBase
+# documentation: https://github.com/pocketbase/pocketbase
+# slogan: Open-source backend with embedded database, auth, and real-time subscriptions
+# category: developer-tools
+# tags: backend, database, auth, realtime, baas
+# icon: developer-tools
+# port: 8090
+
+services:
+  pocketbase:
+    image: ghcr.io/muchobien/pocketbase:latest
+    ports:
+      - "8090:8090"
+    volumes:
+      - pocketbase-data:/pb_data

@@ -1,0 +1,18 @@
+Welcome to Wokku<% if @user.name.present? %>, <%= @user.name.split.first %><% end %>!
+
+Thanks for signing up. You're on the public beta — great for side projects and testing.
+
+Three quick things to get started:
+
+1. Deploy a template — one-click deploys for n8n, Ghost, NextCloud, WordPress and 50+ more.
+   <%= dashboard_templates_url %>
+
+2. Or push your own code. Create an app, add it as a git remote, `git push wokku main`.
+   <%= dashboard_apps_url %>
+
+3. Top up your balance. Wokku is prepaid — Rp 25.000 minimum, billed daily from your deposit.
+   <%= dashboard_billing_url %>
+
+Need help? Reply to this email or check the docs at <%= docs_url %>.
+
+— Johannes, building Wokku

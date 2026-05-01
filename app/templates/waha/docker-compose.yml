@@ -1,0 +1,16 @@
+# name: Waha
+# documentation: https://github.com/devlikeapro/waha
+# slogan: WhatsApp HTTP API for messaging automation
+# category: communication
+# tags: whatsapp, api, messaging
+# icon: whatsapp
+# port: 3000
+# min_tier: basic
+# generate_secrets: WAHA_DASHBOARD_PASSWORD,WHATSAPP_API_KEY
+
+services:
+  waha:
+    image: devlikeapro/waha:latest
+    environment:
+      - WHATSAPP_DEFAULT_ENGINE=WEBJS
+      - WAHA_DASHBOARD_USERNAME=admin

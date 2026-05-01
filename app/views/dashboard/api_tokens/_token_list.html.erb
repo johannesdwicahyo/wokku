@@ -1,0 +1,51 @@
+<%# New token banner %>
+<% if local_assigns[:new_token] && new_token %>
+  <div class="bg-secondary-container/20 border border-secondary/30 rounded-md p-4 mb-4">
+    <div class="flex items-center gap-2 mb-2">
+      <span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+      <p class="text-xs text-secondary font-bold">Token created — copy it now, it won't be shown again</p>
+    </div>
+    <div class="relative" data-controller="clipboard">
+      <code data-clipboard-target="source" class="block text-xs font-mono text-on-surface bg-surface rounded px-3 py-2.5 select-all break-all pr-16"><%= new_token %></code>
+      <button type="button" data-action="click->clipboard#copyFromSource"
+              class="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-[10px] font-bold text-primary bg-primary/10 rounded hover:bg-primary/20 transition">
+        <span data-clipboard-target="label">Copy</span>
+      </button>
+    </div>
+  </div>
+<% end %>
+
+<%# Generate form %>
+<%= form_tag dashboard_api_tokens_path, method: :post, class: "flex gap-2 mb-4", data: { turbo_frame: "api_tokens" } do %>
+  <input type="text" name="name" placeholder="Token name (e.g. claude-mcp)" required
+         class="flex-1 bg-surface border border-outline-variant/30 rounded-md px-3 py-1.5 text-xs text-on-surface placeholder-outline focus:outline-none focus:border-primary/50">
+  <button type="submit" class="px-3 py-1.5 text-xs font-bold text-surface bg-primary rounded-md hover:bg-primary/80 transition">
+    Generate
+  </button>
+<% end %>
+
+<%# Token list %>
+<% if tokens.any? %>
+  <div class="space-y-2">
+    <% tokens.each do |token| %>
+      <div class="flex items-center justify-between bg-surface rounded-md px-3 py-2">
+        <div>
+          <span class="text-xs font-bold text-on-surface"><%= token.name %></span>
+          <span class="text-[10px] text-outline ml-2">
+            Created <%= time_ago_in_words(token.created_at) %> ago
+            <% if token.last_used_at %>
+              · Last used <%= time_ago_in_words(token.last_used_at) %> ago
+            <% end %>
+          </span>
+        </div>
+        <%= button_to dashboard_api_token_path(token), method: :delete,
+            class: "text-[10px] text-error hover:text-error/80 font-bold",
+            data: { turbo_frame: "api_tokens", turbo_confirm: "Revoke this token?" } do %>
+          Revoke
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <p class="text-xs text-outline text-center py-2">No tokens yet. Generate one above.</p>
+<% end %>

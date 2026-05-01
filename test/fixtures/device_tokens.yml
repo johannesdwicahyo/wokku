@@ -1,0 +1,9 @@
+one:
+  user: one
+  token: device-token-abc123
+  platform: ios
+
+two:
+  user: two
+  token: device-token-xyz456
+  platform: android

@@ -1,0 +1,22 @@
+# name: Jellyfin
+# documentation: https://github.com/jellyfin/jellyfin
+# slogan: Free software media system for managing and streaming personal media
+# category: media
+# tags: media, streaming, video, music, photos
+# icon: media
+# port: 8096
+
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    environment:
+      - JELLYFIN_PublishedServerUrl=http://localhost:8096
+    ports:
+      - "8096:8096"
+    volumes:
+      - jellyfin-config:/config
+      - jellyfin-cache:/cache
+
+volumes:
+  jellyfin-config:
+  jellyfin-cache:

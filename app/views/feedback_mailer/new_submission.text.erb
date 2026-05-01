@@ -1,0 +1,8 @@
+New feedback submission
+
+From: <%= @feedback.name.presence || "(anonymous)" %><% if @feedback.email.present? %> <<%= @feedback.email %>><% end %>
+<% if @feedback.user %>User: <%= @feedback.user.email %>
+<% end %><% if @feedback.page.present? %>Page: <%= @feedback.page %>
+<% end %>
+---
+<%= @feedback.message %>

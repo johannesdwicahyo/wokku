@@ -1,0 +1,16 @@
+# name: ASP.NET Core
+# documentation: https://github.com/dotnet/aspnetcore
+# slogan: Cross-platform .NET framework for building modern web apps and APIs
+# category: frameworks
+# tags: dotnet, csharp, aspnet, api
+# icon: dotnet
+# deploy_method: git
+# repo: https://github.com/dotnet/aspnetcore
+# port: 8080
+
+services:
+  aspnet:
+    image: aspnet:latest
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080

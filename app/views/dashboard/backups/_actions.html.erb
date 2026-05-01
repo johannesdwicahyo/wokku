@@ -1,0 +1,21 @@
+<%# Sticky button area for the Backup Now action. Replaced via Turbo
+    Stream broadcast when a backup is created (in_flight) or completes
+    (status flips). %>
+<div id="backup_actions">
+  <% destination = database.server.backup_destination %>
+  <% in_flight = database.backups.in_flight.exists? %>
+  <% if in_flight %>
+    <%= render "dashboard/shared/spinning_button",
+        label: "Backing up",
+        classes: "px-3 py-1.5 text-sm font-semibold text-on-primary bg-primary/70 rounded-md" %>
+  <% elsif destination&.enabled? %>
+    <%= button_to "Backup Now", dashboard_addon_backups_path(database), method: :post,
+        data: { turbo_submits_with: "Starting…" },
+        class: "px-3 py-1.5 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
+  <% else %>
+    <div class="text-xs text-outline">
+      No backup destination configured.
+      <%= link_to "Configure", edit_dashboard_server_backup_destination_path(database.server), class: "text-primary hover:underline" %>
+    </div>
+  <% end %>
+</div>

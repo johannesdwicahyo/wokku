@@ -1,0 +1,112 @@
+<% content_for(:title, "Kebijakan Refund - Wokku") %>
+
+<div class="min-h-screen bg-surface text-on-surface">
+  <div class="max-w-3xl mx-auto px-6 py-16">
+    <div class="mb-12">
+      <div class="flex items-center justify-between mb-4">
+        <a href="/" class="text-sm text-primary hover:underline">← Kembali ke Wokku</a>
+        <%= button_to "English", public_locale_path(locale: :en), method: :post, class: "text-xs text-outline hover:text-on-surface-variant border border-outline-variant/20 rounded px-2 py-1 cursor-pointer" %>
+      </div>
+      <h1 class="font-headline text-4xl font-bold text-on-surface mb-3">Kebijakan Refund</h1>
+      <p class="text-sm text-outline">Terakhir diperbarui: 24 April 2026</p>
+    </div>
+
+    <div class="space-y-8">
+
+      <section>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Kebijakan Refund ini menjelaskan kapan dan bagaimana Anda dapat meminta pengembalian dana atas pembayaran ke Wokku. Berlaku untuk seluruh top-up dan paket berbayar di <a href="https://wokku.cloud" class="text-primary hover:underline">wokku.cloud</a>. Dengan melakukan pembayaran, Anda menyetujui ketentuan di bawah ini, selain <a href="/terms" class="text-primary hover:underline">Syarat Layanan</a> kami.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">1. Model Deposit Prabayar</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Wokku menggunakan model deposit prabayar. Saat Anda top-up, pembayaran dikonversi menjadi saldo akun (dalam IDR atau USD) dan dipotong harian sesuai pemakaian dyno, database, dan add-on. Anda tidak terikat langganan — Anda dapat berhenti kapan saja dan meminta refund atas sisa saldo sesuai ketentuan berikut.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">2. Jendela Refund 14 Hari untuk Saldo yang Belum Terpakai</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed mb-3">
+          Anda dapat meminta refund atas <strong class="text-on-surface">saldo prabayar yang belum terpakai</strong> dalam <strong class="text-on-surface">14 hari</strong> sejak tanggal top-up yang menghasilkan saldo tersebut. Refund terbatas pada bagian yang belum terpakai — nominal yang sudah terpakai untuk dyno, database, backup, bandwidth, atau add-on tidak dapat direfund.
+        </p>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li>Deposit IDR via iPaymu direfund ke rekening bank, VA, atau e-wallet asal pembayaran.</li>
+          <li>Deposit USD via Stripe direfund ke kartu asal. Umumnya refund terlihat di kartu dalam 5–10 hari kerja.</li>
+          <li>Refund diproses dalam mata uang asli pembayaran — kami tidak melakukan konversi antara IDR dan USD.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">3. Biaya yang Tidak Dapat Direfund</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed mb-3">
+          Biaya berikut <strong class="text-on-surface">tidak memenuhi syarat refund</strong>:
+        </p>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li>Pemakaian yang sudah dipotong dari saldo Anda (jam dyno, penyimpanan database, bandwidth, penyimpanan backup, biaya add-on).</li>
+          <li>Biaya payment processor yang dibebankan oleh iPaymu, Stripe, atau bank Anda.</li>
+          <li>Top-up yang lebih lama dari 14 hari, kecuali diwajibkan oleh hukum perlindungan konsumen yang berlaku.</li>
+          <li>Saldo pada akun yang ditangguhkan atau dihentikan karena melanggar Bagian 3 <a href="/terms" class="text-primary hover:underline">Syarat Layanan</a> (mis. spam, penyalahgunaan, konten ilegal). Kami dapat menahan sisa saldo untuk menutup biaya penanganan insiden dan chargeback.</li>
+          <li>Kredit promosi, bonus referral, atau nominal apapun yang tidak dibayar tunai.</li>
+          <li>Biaya jasa satu-kali untuk bantuan migrasi, konfigurasi khusus, atau jasa profesional lainnya, setelah pekerjaan dimulai atau diserahkan.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">4. Gangguan Layanan dan Kesalahan Tagihan</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Jika gangguan di sisi Wokku, kesalahan tagihan, atau pembebanan yang salah menyebabkan Anda tertagih untuk pemakaian yang tidak Anda terima, kami akan menerbitkan kredit atau refund atas nominal terkait tanpa memandang jendela 14 hari. Hubungi dukungan dengan timestamp dan detail masalah; kami akan menelusuri dan memperbaiki catatan tagihan dalam 5 hari kerja.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">5. Chargeback</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Mohon hubungi kami terlebih dahulu sebelum mengajukan chargeback ke bank atau penerbit kartu Anda — hampir semua sengketa tagihan dapat kami selesaikan lebih cepat melalui dukungan langsung. Akun dengan chargeback terbuka dapat ditangguhkan sampai penyelesaian. Jika chargeback diajukan atas tagihan yang sah menurut kebijakan ini, kami dapat memulihkan nominal sengketa dan biaya chargeback terkait dari sisa saldo di akun.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">6. Cara Meminta Refund</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed mb-3">
+          Email ke <a href="mailto:support@wokku.cloud" class="text-primary hover:underline">support@wokku.cloud</a> dari alamat email yang terdaftar di akun Anda, atau WhatsApp ke <a href="https://wa.me/6285121948822" class="text-primary hover:underline" target="_blank" rel="noopener">+62 851 2194 8822</a>. Mohon sertakan:
+        </p>
+        <ul class="text-sm text-on-surface-variant space-y-1 list-disc pl-5">
+          <li>Alamat email akun Wokku Anda.</li>
+          <li>Tanggal dan nominal top-up yang ingin direfund.</li>
+          <li>ID transaksi atau faktur, jika tersedia.</li>
+          <li>Alasan permintaan Anda (opsional, membantu kami memperbaiki layanan).</li>
+        </ul>
+        <p class="text-sm text-on-surface-variant leading-relaxed mt-3">
+          Kami membalas permintaan refund dalam 3 hari kerja dan menyelesaikan pemrosesan dalam 10 hari kerja setelah disetujui. Waktu dana tiba di rekening Anda tergantung bank atau penerbit kartu.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">7. Penutupan Akun</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Jika Anda menutup akun Wokku dengan saldo tersisa, Anda dapat meminta refund atas saldo tersebut dalam 14 hari sejak top-up terakhir. Saldo dari top-up yang lebih lama dari 14 hari pada saat penutupan hangus, kecuali diwajibkan lain oleh hukum.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">8. Perubahan Kebijakan</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Kami dapat memperbarui Kebijakan Refund ini dari waktu ke waktu. Perubahan berlaku untuk top-up yang dilakukan setelah tanggal efektif pembaruan. Penggunaan Layanan secara terus-menerus setelah perubahan berarti Anda menerima kebijakan yang direvisi.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-xl font-bold text-on-surface mb-3">9. Kontak</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          PT Wokku (atau entitas operasi wokku.cloud)<br>
+          Jl. Ir. Sutami, Sukawati, Gianyar, Bali, Indonesia<br>
+          WhatsApp: <a href="https://wa.me/6285121948822" class="text-primary hover:underline" target="_blank" rel="noopener">+62 851 2194 8822</a><br>
+          Email: <a href="mailto:support@wokku.cloud" class="text-primary hover:underline">support@wokku.cloud</a>
+        </p>
+      </section>
+
+    </div>
+  </div>
+</div>

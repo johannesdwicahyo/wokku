@@ -1,0 +1,54 @@
+<% content_for(:title, "#{@post.title} - Wokku Blog") %>
+<% content_for(:description, @post.description) if @post.description.present? %>
+
+<div class="min-h-screen bg-surface text-on-surface">
+  <article class="max-w-3xl mx-auto px-6 py-16">
+    <div class="mb-10">
+      <a href="<%= blog_path %>" class="text-sm text-primary hover:underline">← All posts</a>
+    </div>
+
+    <header class="mb-10 pb-8 border-b border-outline-variant/15">
+      <p class="text-xs text-outline font-mono mb-3"><%= @post.date.strftime("%B %-d, %Y") %><% if @post.author.present? %> · <%= @post.author %><% end %></p>
+      <h1 class="font-headline text-4xl font-bold text-on-surface leading-tight mb-4"><%= @post.title %></h1>
+      <% if @post.description.present? %>
+        <p class="text-base text-on-surface-variant leading-relaxed"><%= @post.description %></p>
+      <% end %>
+      <% if @post.tags.any? %>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <% @post.tags.each do |tag| %>
+            <span class="text-[10px] text-outline font-mono bg-surface-container-low border border-outline-variant/15 rounded px-2 py-0.5"><%= tag %></span>
+          <% end %>
+        </div>
+      <% end %>
+    </header>
+
+    <%# Manual typography via arbitrary child selectors — Tailwind v4 here
+        without @tailwindcss/typography. Targets the markdown-rendered HTML. %>
+    <div class="text-sm text-on-surface-variant leading-relaxed
+                [&_h2]:font-headline [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:text-on-surface [&_h2]:mt-10 [&_h2]:mb-4
+                [&_h3]:font-headline [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-on-surface [&_h3]:mt-8 [&_h3]:mb-3
+                [&_h4]:font-headline [&_h4]:text-base [&_h4]:font-bold [&_h4]:text-on-surface [&_h4]:mt-6 [&_h4]:mb-2
+                [&_p]:my-4
+                [&_a]:text-primary hover:[&_a]:underline
+                [&_strong]:text-on-surface [&_strong]:font-bold
+                [&_em]:italic
+                [&_code]:text-primary [&_code]:bg-surface-container-low [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:font-mono [&_code]:text-xs
+                [&_pre]:bg-surface-container-low [&_pre]:border [&_pre]:border-outline-variant/15 [&_pre]:rounded-md [&_pre]:p-4 [&_pre]:my-6 [&_pre]:overflow-x-auto [&_pre]:text-xs
+                [&_pre>code]:bg-transparent [&_pre>code]:text-on-surface-variant [&_pre>code]:p-0
+                [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-4 [&_ul]:space-y-1
+                [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-4 [&_ol]:space-y-1
+                [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:my-6 [&_blockquote]:italic
+                [&_hr]:border-outline-variant/15 [&_hr]:my-10
+                [&_img]:rounded-md [&_img]:my-6
+                [&_table]:my-6 [&_table]:w-full [&_table]:text-xs
+                [&_th]:text-left [&_th]:font-bold [&_th]:text-on-surface [&_th]:border-b [&_th]:border-outline-variant/15 [&_th]:py-2
+                [&_td]:py-2 [&_td]:border-b [&_td]:border-outline-variant/10">
+      <%= @post.body_html %>
+    </div>
+
+    <div class="mt-16 pt-8 border-t border-outline-variant/15 flex items-center justify-between">
+      <a href="<%= blog_path %>" class="text-sm text-primary hover:underline">← All posts</a>
+      <a href="/" class="text-sm text-outline hover:text-on-surface-variant">Back to Wokku →</a>
+    </div>
+  </article>
+</div>

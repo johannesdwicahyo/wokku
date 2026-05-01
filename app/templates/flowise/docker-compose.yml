@@ -1,0 +1,21 @@
+# name: Flowise
+# documentation: https://github.com/FlowiseAI/Flowise
+# slogan: Drag-and-drop LLM chatbot builder
+# category: ai
+# tags: ai, llm, chatbot, node
+# icon: ai
+# port: 3000
+
+services:
+  flowise:
+    image: flowiseai/flowise:latest
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

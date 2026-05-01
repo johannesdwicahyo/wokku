@@ -1,0 +1,75 @@
+name: Release CLI to Homebrew Tap
+
+# Updates johannesdwicahyo/homebrew-tap's Formula/wokku.rb whenever
+# cli/wokku or cli/VERSION changes on main. Computes the new sha256,
+# reads the version from cli/VERSION (single source of truth), and
+# pushes a single commit to the tap repo.
+#
+# Required repo secret:
+#   HOMEBREW_TAP_TOKEN — a fine-grained PAT with `contents: write`
+#   scoped to johannesdwicahyo/homebrew-tap.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'cli/wokku'
+      - 'cli/VERSION'
+  workflow_dispatch:
+
+concurrency:
+  group: release-cli
+  cancel-in-progress: false
+
+jobs:
+  update-tap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main repo
+        uses: actions/checkout@v6
+
+      - name: Compute sha256 + read version
+        id: meta
+        run: |
+          echo "sha256=$(sha256sum cli/wokku | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "version=$(tr -d '[:space:]' < cli/VERSION)" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout tap repo
+        uses: actions/checkout@v6
+        with:
+          repository: johannesdwicahyo/homebrew-tap
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: tap
+
+      - name: Rewrite Formula/wokku.rb
+        working-directory: tap
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+          SHA256: ${{ steps.meta.outputs.sha256 }}
+        run: |
+          sed -i -E \
+            -e "s|version \"[^\"]+\"|version \"${VERSION}\"|" \
+            -e "s|sha256 \"[^\"]+\"|sha256 \"${SHA256}\"|" \
+            Formula/wokku.rb
+          echo "--- diff ---"
+          git diff --no-color Formula/wokku.rb || true
+
+      - name: Commit + push (only if changed)
+        working-directory: tap
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+          SHA256: ${{ steps.meta.outputs.sha256 }}
+          SHORT_SHA: ${{ github.sha }}
+        run: |
+          if git diff --quiet Formula/wokku.rb; then
+            echo "Formula already up to date; nothing to push."
+            exit 0
+          fi
+          git config user.name  "wokku-release-bot"
+          git config user.email "release-bot@wokku.cloud"
+          git add Formula/wokku.rb
+          git commit -m "chore: wokku v${VERSION}
+
+          Auto-synced from wokku-cloud@${SHORT_SHA:0:7}.
+          sha256: ${SHA256}"
+          git push origin main

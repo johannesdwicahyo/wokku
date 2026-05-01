@@ -1,0 +1,3 @@
+<%= turbo_frame_tag "ssh_keys" do %>
+  <%= render "dashboard/ssh_keys/key_list", keys: @keys, key: nil %>
+<% end %>

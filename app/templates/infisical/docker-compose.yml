@@ -1,0 +1,31 @@
+# name: Infisical
+# documentation: https://github.com/Infisical/infisical
+# slogan: Open-source secrets management platform for teams and infrastructure
+# category: security
+# tags: secrets, security, environment, vault, devops
+# icon: security
+# deploy_method: docker_image
+# port: 8080
+
+services:
+  infisical:
+    image: infisical/infisical:latest
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+
+volumes:
+  postgres-data:
+  redis-data:

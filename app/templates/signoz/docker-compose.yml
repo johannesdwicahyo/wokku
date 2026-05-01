@@ -1,0 +1,24 @@
+# name: SigNoz
+# documentation: https://github.com/SigNoz/signoz
+# slogan: Open-source observability platform for traces, metrics, and logs
+# category: monitoring
+# tags: monitoring, observability, tracing, metrics, logs
+# icon: monitoring
+# deploy_method: docker_image
+# port: 3301
+
+services:
+  signoz:
+    image: signoz/signoz:latest
+    environment:
+      - DEPLOYMENT_TYPE=docker-standalone
+    depends_on:
+      - clickhouse
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.1
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+
+volumes:
+  clickhouse-data:

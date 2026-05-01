@@ -1,0 +1,21 @@
+# name: Bookstack
+# documentation: https://github.com/BookStackApp/BookStack
+# slogan: Simple wiki and documentation platform
+# category: cms
+# tags: wiki, docs, php
+# icon: wiki
+# port: 80
+
+services:
+  bookstack:
+    image: bookstack:latest
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8
+    volumes:
+      - mysql-data:/var/lib/mysql/data
+
+volumes:
+  mysql-data:

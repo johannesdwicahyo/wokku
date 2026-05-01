@@ -1,0 +1,21 @@
+# name: Typebot
+# documentation: https://github.com/baptisteArno/typebot.io
+# slogan: Conversational form and chatbot builder
+# category: communication
+# tags: chatbot, forms, node
+# icon: chat
+# port: 3000
+
+services:
+  typebot:
+    image: typebot:latest
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

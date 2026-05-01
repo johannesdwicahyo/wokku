@@ -1,0 +1,128 @@
+<% content_for(:title, "FAQ - Wokku") %>
+
+<div class="min-h-screen bg-surface text-on-surface">
+  <div class="max-w-3xl mx-auto px-6 py-16">
+    <div class="mb-12">
+      <div class="flex items-center justify-between mb-4">
+        <a href="/" class="text-sm text-primary hover:underline">← Kembali ke Wokku</a>
+        <%= button_to "English", public_locale_path(locale: :en), method: :post, class: "text-xs text-outline hover:text-on-surface-variant border border-outline-variant/20 rounded px-2 py-1 cursor-pointer" %>
+      </div>
+      <h1 class="font-headline text-4xl font-bold text-on-surface mb-3">Pertanyaan yang Sering Diajukan</h1>
+      <p class="text-sm text-outline">Terakhir diperbarui: 24 April 2026</p>
+    </div>
+
+    <div class="space-y-10">
+
+      <section>
+        <h2 class="font-headline text-2xl font-bold text-on-surface mb-4">Memulai</h2>
+        <div class="space-y-5">
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Apa itu Wokku?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Wokku adalah antarmuka web terkelola untuk <a href="https://dokku.com" class="text-primary hover:underline" target="_blank" rel="noopener">Dokku</a>, platform-as-a-service open-source. Anda dapat men-deploy aplikasi lewat <code class="font-mono text-xs text-primary">git push</code>, memasang tools open-source seperti n8n atau Ghost dalam satu klik, dan mengelola database, domain, serta SSL dari dasbor.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Bagaimana cara mendaftar?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Buat akun dengan email, Google, atau GitHub. Anda bisa langsung men-deploy di tier gratis — tanpa perlu kartu kredit.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Apakah saya harus menyediakan server sendiri?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Tidak. Wokku Cloud menjalankan aplikasi Anda di infrastruktur kami. Jika Anda ingin self-hosting, Wokku bersifat open source (AGPL-3.0) dan dapat berjalan di server Dokku manapun yang Anda miliki.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Bahasa dan framework apa saja yang didukung?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Apapun yang didukung Dokku melalui Heroku buildpacks atau <code class="font-mono text-xs text-primary">Dockerfile</code>: Ruby, Python, Node.js, Go, PHP, Java, Rust, Elixir, dan lainnya.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-2xl font-bold text-on-surface mb-4">Tagihan & Harga</h2>
+        <div class="space-y-5">
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Bagaimana sistem tagihannya?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Wokku menggunakan model deposit prabayar. Isi saldo Anda dalam IDR (via iPaymu) atau USD (via Stripe). Pemakaian dipotong harian berdasarkan tier dyno dan add-on yang Anda jalankan.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Apakah ada tier gratis?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Ya. Dyno gratis dan add-on PostgreSQL bersama (hingga 150 MB) tersedia untuk proyek hobi. Lihat <a href="/pricing" class="text-primary hover:underline">halaman harga</a> untuk detail lengkap.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Metode pembayaran apa yang diterima?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Di Indonesia: QRIS, Virtual Account (BCA, BNI, BRI, Mandiri, Permata), dan e-wallet via iPaymu. Internasional: kartu kredit/debit via Stripe.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Apakah saya akan ditagih otomatis?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Tidak. Wokku tidak pernah menarik kartu Anda tanpa tindakan top-up yang Anda mulai. Saat saldo habis, aplikasi masuk masa tenggang sebelum dihentikan.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Bisakah saya mendapatkan refund?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Sisa saldo prabayar yang belum terpakai dapat direfund dalam 14 hari sejak top-up. Lihat <a href="/refund" class="text-primary hover:underline">Kebijakan Refund</a> untuk detail lengkap.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-2xl font-bold text-on-surface mb-4">Deployment</h2>
+        <div class="space-y-5">
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Bagaimana cara men-deploy aplikasi?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Buat app dari dasbor, tambahkan SSH public key Anda, lalu <code class="font-mono text-xs text-primary">git push</code> ke remote Wokku. Anda juga bisa menghubungkan repo GitHub untuk deploy-on-push.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Bisakah saya men-deploy Docker image?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Bisa. Sertakan <code class="font-mono text-xs text-primary">Dockerfile</code> di repo Anda, atau deploy image yang sudah ada di registry.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Bisakah pakai domain sendiri?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Bisa. Tambahkan domain dari dasbor dan arahkan CNAME ke app Anda. SSL via Let's Encrypt otomatis dan gratis.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Berapa banyak app yang bisa saya jalankan?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Tidak ada batas keras — selama saldo Anda mencukupi. Add-on PostgreSQL bersama tanpa batas di tier gratis.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-2xl font-bold text-on-surface mb-4">Data & Keamanan</h2>
+        <div class="space-y-5">
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Dimana data saya disimpan?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Data aplikasi Anda berjalan di server yang kami kelola. Backup disimpan terenkripsi di Cloudflare R2. Kami tidak membagikan data Anda kepada pihak ketiga di luar processor yang diperlukan untuk menjalankan Layanan (lihat <a href="/privacy" class="text-primary hover:underline">Kebijakan Privasi</a>).</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Apakah backup termasuk?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Database terkelola di tier berbayar mencakup backup harian dengan retensi 7 hari. Anda juga bisa memicu backup on-demand dari dasbor.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Apa yang terjadi jika saya menghapus akun?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Semua app, database, dan backup yang terkait dengan akun Anda dihapus permanen dalam 30 hari. Sisa saldo dapat direfund — lihat <a href="/refund" class="text-primary hover:underline">Kebijakan Refund</a>.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Apakah tersedia autentikasi dua faktor?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Ya. 2FA berbasis TOTP tersedia untuk semua akun dan wajib untuk admin.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="font-headline text-2xl font-bold text-on-surface mb-4">Dukungan</h2>
+        <div class="space-y-5">
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Bagaimana cara menghubungi dukungan?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Email ke <a href="mailto:support@wokku.cloud" class="text-primary hover:underline">support@wokku.cloud</a> atau WhatsApp ke <a href="https://wa.me/6285121948822" class="text-primary hover:underline" target="_blank" rel="noopener">+62 851 2194 8822</a>.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Dimana kantor Wokku?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Kantor kami di Jl. Ir. Sutami, Sukawati, Gianyar, Bali, Indonesia.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Bisakah saya berkontribusi atau melaporkan bug?</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">Ya — issue dan pull request dipersilakan di <a href="https://github.com/johannesdwicahyo/wokku" class="text-primary hover:underline" target="_blank" rel="noopener">github.com/johannesdwicahyo/wokku</a>.</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>

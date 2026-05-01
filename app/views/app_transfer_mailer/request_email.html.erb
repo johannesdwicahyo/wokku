@@ -1,0 +1,11 @@
+<h2><%= @from.email %> wants to transfer ownership of <strong><%= @app.name %></strong> to you</h2>
+
+<p>If you accept, the app and all its linked add-ons (databases, domains, env vars) move under your account, and future hourly billing for the container starts hitting your balance immediately. Historical usage stays billed to <%= @from.email %>.</p>
+
+<p>You'll see the full details — server, container tier, estimated monthly cost, linked add-ons, and domains — on the review page before deciding.</p>
+
+<p>
+  <a href="<%= @url %>">Review and respond</a>
+</p>
+
+<p style="color:#666;font-size:12px">This request expires <%= time_ago_in_words(@transfer.expires_at) %> from now. If you didn't expect this, you can safely ignore the email — nothing changes until you click Accept.</p>

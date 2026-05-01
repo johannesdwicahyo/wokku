@@ -1,0 +1,15 @@
+<% if @is_test %>
+  <h2>Channel test ✅</h2>
+  <p>This is a test notification from Wokku — your <strong><%= @notification.channel.capitalize %></strong> channel is configured correctly.</p>
+  <p>You'll receive notifications for the events you subscribed to (deploy succeeded, deploy failed, app crashed, etc.).</p>
+  <p><a href="<%= dashboard_notifications_url %>">Manage notification rules</a></p>
+<% else %>
+  <h2><%= @app.name %> · <%= @event.humanize %></h2>
+  <% if @deploy&.commit_sha.present? %>
+    <p>Commit: <code><%= @deploy.commit_sha[0, 7] %></code></p>
+  <% end %>
+  <% if @deploy&.release&.version %>
+    <p>Release: v<%= @deploy.release.version %></p>
+  <% end %>
+  <p><a href="<%= dashboard_app_url(@app) %>">Open <%= @app.name %> dashboard</a></p>
+<% end %>

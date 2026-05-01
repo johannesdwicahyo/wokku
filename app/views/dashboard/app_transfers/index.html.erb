@@ -1,0 +1,46 @@
+<% content_for(:title, "App Transfers") %>
+
+<div class="space-y-6">
+  <div>
+    <h1 class="text-xl font-headline text-on-surface">App Transfers</h1>
+    <p class="mt-0.5 text-sm text-outline">Pending ownership transfers — review incoming requests and manage outgoing ones.</p>
+  </div>
+
+  <section class="space-y-3">
+    <h2 class="text-sm font-semibold text-on-surface">Incoming</h2>
+    <% if @incoming.any? %>
+      <div class="bg-surface-container-low rounded-xl border border-outline-variant/15 overflow-hidden divide-y divide-outline-variant/15">
+        <% @incoming.each do |t| %>
+          <div class="px-5 py-3 flex items-center justify-between">
+            <div class="min-w-0">
+              <p class="text-sm text-on-surface font-semibold truncate"><%= t.app_record.name %></p>
+              <p class="text-xs text-outline truncate">From <%= t.from_user.email %> · expires <%= time_ago_in_words(t.expires_at) %> from now</p>
+            </div>
+            <%= link_to "Review", dashboard_app_transfer_path(t), class: "text-xs text-primary hover:underline font-semibold" %>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-sm text-outline">No incoming transfers.</p>
+    <% end %>
+  </section>
+
+  <section class="space-y-3">
+    <h2 class="text-sm font-semibold text-on-surface">Outgoing</h2>
+    <% if @outgoing.any? %>
+      <div class="bg-surface-container-low rounded-xl border border-outline-variant/15 overflow-hidden divide-y divide-outline-variant/15">
+        <% @outgoing.each do |t| %>
+          <div class="px-5 py-3 flex items-center justify-between">
+            <div class="min-w-0">
+              <p class="text-sm text-on-surface font-semibold truncate"><%= t.app_record.name %></p>
+              <p class="text-xs text-outline truncate">To <%= t.to_user.email %> · expires <%= time_ago_in_words(t.expires_at) %> from now</p>
+            </div>
+            <%= button_to "Cancel", dashboard_app_transfer_path(t), method: :delete, data: { turbo_confirm: "Cancel transfer of #{t.app_record.name}?" }, class: "text-xs text-error hover:underline font-semibold bg-transparent" %>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-sm text-outline">No pending outgoing transfers.</p>
+    <% end %>
+  </section>
+</div>

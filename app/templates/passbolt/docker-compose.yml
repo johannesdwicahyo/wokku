@@ -1,0 +1,36 @@
+# name: Passbolt
+# documentation: https://github.com/passbolt/passbolt_api
+# slogan: Open-source password manager designed for teams and businesses
+# category: security
+# tags: passwords, security, team, credentials
+# icon: security
+# port: 8080
+
+services:
+  passbolt:
+    image: passbolt/passbolt:latest-ce
+    command: ["/usr/bin/wait-for.sh", "-t", "0", "mariadb:3306", "--", "/docker-entrypoint.sh"]
+    environment:
+      - APP_FULL_BASE_URL=http://localhost:8080
+      - DATASOURCES_DEFAULT_HOST=mariadb
+      - DATASOURCES_DEFAULT_USERNAME=passbolt
+      - DATASOURCES_DEFAULT_PASSWORD=passbolt
+      - DATASOURCES_DEFAULT_DATABASE=passbolt
+    ports:
+      - "8080:80"
+      - "4433:443"
+    depends_on:
+      - mariadb
+
+  mariadb:
+    image: mariadb:10.11
+    environment:
+      - MYSQL_RANDOM_ROOT_PASSWORD=true
+      - MYSQL_DATABASE=passbolt
+      - MYSQL_USER=passbolt
+      - MYSQL_PASSWORD=passbolt
+    volumes:
+      - mariadb-data:/var/lib/mysql
+
+volumes:
+  mariadb-data:

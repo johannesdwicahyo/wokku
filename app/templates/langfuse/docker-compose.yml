@@ -1,0 +1,24 @@
+# name: Langfuse
+# documentation: https://github.com/langfuse/langfuse
+# slogan: Open-source LLM observability, tracing, and analytics platform
+# category: ai
+# tags: ai, llm, observability, tracing, analytics
+# icon: ai
+# deploy_method: docker_image
+# port: 3000
+
+services:
+  langfuse:
+    image: langfuse/langfuse:latest
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

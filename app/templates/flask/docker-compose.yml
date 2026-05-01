@@ -1,0 +1,15 @@
+# name: Flask
+# documentation: https://github.com/pallets/flask
+# slogan: Lightweight Python microframework for web applications and APIs
+# category: frameworks
+# tags: python, flask, api
+# icon: python
+# deploy_method: git
+# repo: https://github.com/pallets/flask
+# port: 5000
+
+services:
+  flask:
+    image: flask:latest
+    environment:
+      - FLASK_ENV=production

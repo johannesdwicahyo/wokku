@@ -1,0 +1,21 @@
+<%= form_with(model: team, url: dashboard_teams_path, class: "space-y-4") do |f| %>
+  <% if team.errors.any? %>
+    <div class="rounded-md bg-error-container/20 border border-error/20 p-3">
+      <ul class="text-xs text-error space-y-1">
+        <% team.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= f.label :name, class: "block text-xs font-medium text-on-surface-variant mb-1.5 uppercase tracking-wider" %>
+    <%= f.text_field :name, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface placeholder-outline-variant focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-mono", placeholder: "my-team" %>
+  </div>
+
+  <div class="flex items-center space-x-3 pt-2">
+    <%= f.submit "Create Team", class: "flex-1 py-2 px-4 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer text-center" %>
+    <button type="button" data-action="click->slide-panel#close" class="py-2 px-4 text-sm text-on-surface-variant hover:text-on-surface transition cursor-pointer">Cancel</button>
+  </div>
+<% end %>

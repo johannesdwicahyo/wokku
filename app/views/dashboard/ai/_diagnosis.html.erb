@@ -1,0 +1,13 @@
+<div class="bg-[#1E293B]/60 rounded-lg border border-[#334155]/50 p-4 mt-4">
+  <div class="flex items-center space-x-2 mb-3">
+    <span class="text-sm">🤖</span>
+    <h3 class="text-xs font-semibold text-white uppercase tracking-wider">AI Diagnosis</h3>
+  </div>
+  <% if result[:diagnosis] %>
+    <div class="prose prose-invert prose-sm max-w-none text-gray-300 text-xs leading-relaxed">
+      <%= simple_format(result[:diagnosis]) %>
+    </div>
+  <% elsif result[:error] %>
+    <p class="text-xs text-red-400"><%= result[:error] %></p>
+  <% end %>
+</div>

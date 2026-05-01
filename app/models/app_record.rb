@@ -1,0 +1,109 @@
+class AppRecord < ApplicationRecord
+  # Webhook secrets are HMAC-SHA256 shared secrets — a leak lets an attacker
+  # forge push / pull_request events and trigger deploys. Encrypt at rest.
+  # Non-deterministic: we never look up rows by these values, only compare
+  # HMAC signatures after decryption.
+  encrypts :git_webhook_secret, :github_webhook_secret
+
+  UUID_PATTERN = /\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/i
+
+  # CLI/API consumers pass either an app's UUID or its human name.
+  # Names are what users actually type (heroku/fly/railway pattern); the
+  # UUID path stays for API integrations and dashboard URLs.
+  def self.lookup!(id_or_name)
+    if id_or_name.to_s.match?(UUID_PATTERN)
+      find(id_or_name)
+    else
+      find_by!(name: id_or_name)
+    end
+  end
+
+  belongs_to :server
+  belongs_to :team
+  belongs_to :creator, class_name: "User", foreign_key: :created_by_id
+  belongs_to :parent_app, class_name: "AppRecord", optional: true
+  has_many :preview_apps, class_name: "AppRecord", foreign_key: :parent_app_id, dependent: :destroy
+
+  has_many :releases, dependent: :destroy
+  has_many :deploys, dependent: :destroy
+  has_many :domains, dependent: :destroy
+  has_many :env_vars, dependent: :destroy
+  has_many :process_scales, dependent: :destroy
+  has_many :app_databases, dependent: :destroy
+  has_many :database_services, through: :app_databases
+  has_many :metrics, dependent: :destroy
+  has_many :notifications, dependent: :destroy
+  has_many :log_drains, dependent: :destroy
+  has_many :dyno_allocations, dependent: :destroy
+
+  # DynoAllocation's `after_destroy :close_usage_segment` only closes
+  # the modern `AppRecord:<id>:<process_type>` segments. Apps that
+  # pre-date DynoAllocation (or that never had ps:scale run) only have
+  # the legacy `AppRecord:<id>` shape, with nothing tied to it. Catch
+  # both shapes here so a delete always leaves a clean ledger.
+  before_destroy :close_all_resource_segments
+
+  enum :status, { running: 0, stopped: 1, crashed: 2, deploying: 3, sleeping: 4, created: 5 }
+
+  # Live-update the action button area on the show page when an
+  # async action (restart/stop/start) starts or finishes. The button
+  # frame is rendered server-side and replaced via Turbo Stream from
+  # this hook so users see "Restarting…" disabled until the job
+  # completes — see DokkuAppActionJob.
+  after_update_commit :broadcast_actions_frame, if: :saved_change_to_pending_action?
+
+  def broadcast_actions_frame
+    broadcast_replace_to action_stream_name,
+      target: ActionView::RecordIdentifier.dom_id(self, :actions),
+      partial: "dashboard/apps/actions",
+      locals: { app: self }
+  end
+
+  # Append a toast notification to subscribed pages. Used by the action
+  # job to surface success/failure when the SSH call completes.
+  def broadcast_action_toast(level:, message:)
+    Turbo::StreamsChannel.broadcast_append_to(
+      action_stream_name,
+      target: "toasts",
+      partial: "dashboard/shared/toast",
+      locals: { id: "toast_#{SecureRandom.hex(6)}", level: level, message: message }
+    )
+  end
+
+  def action_stream_name
+    "app_#{id}_actions"
+  end
+
+  validates :name, presence: true,
+    uniqueness: { scope: :server_id },
+    format: { with: /\A[a-z][a-z0-9-]*\z/, message: "must be lowercase alphanumeric with hyphens" }
+  validates :pr_number, uniqueness: { scope: :parent_app_id }, if: :is_preview?
+
+  scope :stale, -> { where("synced_at < ? OR synced_at IS NULL", 5.minutes.ago) }
+  scope :main_apps, -> { where(is_preview: false) }
+  scope :previews, -> { where(is_preview: true) }
+
+  # Canonical git remote URL shown to users everywhere (dashboard, API,
+  # CLI). Goes through the wokku SSH gateway rather than exposing the
+  # underlying Dokku server IP.
+  def git_remote_url
+    host = ENV.fetch("WOKKU_GIT_HOST", "wokku.cloud")
+    "git@#{host}:#{name}"
+  end
+
+  # Direct-to-Dokku URL. Still works and can be used as a bypass if the
+  # gateway is down. Kept separately so we can display it in admin
+  # views if needed.
+  def direct_git_remote_url
+    "dokku@#{server.host}:#{name}"
+  end
+
+  private
+
+  def close_all_resource_segments
+    ResourceUsage.where(stopped_at: nil)
+                 .where("resource_id_ref = :exact OR resource_id_ref LIKE :prefix",
+                        exact: "AppRecord:#{id}", prefix: "AppRecord:#{id}:%")
+                 .find_each(&:stop!)
+  end
+end
