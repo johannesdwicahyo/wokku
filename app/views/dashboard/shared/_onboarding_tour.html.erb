@@ -1,0 +1,15 @@
+<% if current_user&.tour_active? %>
+  <div data-controller="onboarding-tour"
+       data-onboarding-tour-step-value="<%= current_user.onboarding_step %>"
+       data-onboarding-tour-skip-url-value="<%= dashboard_onboarding_skip_path %>"
+       data-onboarding-tour-skip-label-value="<%= t('onboarding_tour.skip') %>"
+       data-onboarding-tour-next-label-value="<%= t('onboarding_tour.next') %>"
+       data-onboarding-tour-copy-value="<%= {
+         s0: { title: t('onboarding_tour.s0_title'), body: t('onboarding_tour.s0_body'), cta: t('onboarding_tour.s0_start') },
+         s1: { body: t('onboarding_tour.s1') },
+         s2: { server: t('onboarding_tour.s2_server'), dyno: t('onboarding_tour.s2_dyno'), deploy: t('onboarding_tour.s2_deploy') },
+         s3: { body: t('onboarding_tour.s3') },
+         s4: { title: t('onboarding_tour.s4_title'), body: t('onboarding_tour.s4_body'), cta: t('onboarding_tour.s4_open') },
+         s5: { title: t('onboarding_tour.s5_title'), body: t('onboarding_tour.s5_body'), cta: t('onboarding_tour.s5_retry') }
+       }.to_json %>"></div>
+<% end %>

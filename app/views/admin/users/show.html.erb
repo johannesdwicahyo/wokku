@@ -1,0 +1,81 @@
+<% row = "flex justify-between font-mono text-sm" %>
+<div class="max-w-2xl">
+  <div class="mb-6 flex items-center gap-3 flex-wrap">
+    <%= link_to "← Users", admin_users_path, class: "font-mono text-sm text-dim hover:text-accent transition" %>
+    <h1 class="font-mono text-xl font-semibold tracking-tighter text-ink"><%= @target_user.email %></h1>
+    <% if @target_user.deleted? %>
+      <span class="text-xs px-2 py-0.5 border border-danger text-danger">Deleted</span>
+    <% elsif @target_user.deletion_pending? %>
+      <span class="text-xs px-2 py-0.5 border border-warn text-warn">Deletion pending</span>
+    <% end %>
+  </div>
+
+  <%# User details %>
+  <div class="border-1.5 border-ink bg-paper p-5 mb-4 space-y-3">
+    <div class="<%= row %>"><span class="text-dim">Role</span><span class="text-ink"><%= @target_user.role %></span></div>
+    <div class="<%= row %>"><span class="text-dim">Joined</span><span class="text-ink"><%= @target_user.created_at.strftime("%B %-d, %Y") %></span></div>
+    <% if @target_user.respond_to?(:last_sign_in_at) %>
+      <div class="<%= row %>"><span class="text-dim">Last sign-in</span><span class="text-ink"><%= @target_user.last_sign_in_at&.strftime("%B %-d, %Y %H:%M UTC") || "Never" %></span></div>
+    <% end %>
+    <div class="<%= row %>"><span class="text-dim">Balance</span><span class="text-ink font-bold"><%= @balance %></span></div>
+    <% if @target_user.deletion_scheduled_at %>
+      <div class="<%= row %> text-warn"><span>Deletion scheduled</span><span><%= @target_user.deletion_scheduled_at.strftime("%B %-d, %Y %H:%M UTC") %></span></div>
+    <% end %>
+    <% if @target_user.deleted_at %>
+      <div class="<%= row %> text-danger"><span>Hard-deleted at</span><span><%= @target_user.deleted_at.strftime("%B %-d, %Y %H:%M UTC") %></span></div>
+    <% end %>
+  </div>
+
+  <%# Apps %>
+  <div class="border-1.5 border-ink bg-paper p-5 mb-4">
+    <p class="font-mono text-sm font-semibold text-ink mb-3">Apps (<%= @apps.count %>)</p>
+    <% if @apps.any? %>
+      <ul class="space-y-1 font-mono">
+        <% @apps.each do |app| %>
+          <li class="text-xs text-ink-soft"><%= app.name %> <span class="text-dim">[<%= app.status %>]</span></li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="font-mono text-sm text-dim italic">No apps.</p>
+    <% end %>
+  </div>
+
+  <%# Databases %>
+  <div class="border-1.5 border-ink bg-paper p-5 mb-6">
+    <p class="font-mono text-sm font-semibold text-ink mb-3">Databases (<%= @databases.count %>)</p>
+    <% if @databases.any? %>
+      <ul class="space-y-1 font-mono">
+        <% @databases.each do |db| %>
+          <li class="text-xs text-ink-soft"><%= db.name %> <span class="text-dim">(<%= db.service_type %>)</span></li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="font-mono text-sm text-dim italic">No databases.</p>
+    <% end %>
+  </div>
+
+  <%# Admin actions %>
+  <% unless @target_user.deleted? || @target_user.admin? %>
+    <div class="border-1.5 border-danger bg-danger-soft p-5 space-y-3">
+      <p class="font-mono text-sm font-bold text-danger"># admin_actions</p>
+
+      <% unless @target_user.deletion_pending? %>
+        <%= button_to t("admin.users.actions.soft_delete", default: "Schedule deletion (3-day grace)"),
+              admin_user_path(@target_user),
+              method: :delete,
+              params: { hard: false },
+              data: { turbo_confirm: t("admin.users.soft_delete_confirm",
+                default: "Schedule this user for 3-day grace period deletion?") },
+              class: "w-full text-left px-4 py-2 border-1.5 border-danger text-danger font-mono text-sm hover:bg-danger-soft transition cursor-pointer" %>
+      <% end %>
+
+      <%= button_to t("admin.users.actions.hard_delete", default: "Hard delete now"),
+            admin_user_path(@target_user),
+            method: :delete,
+            params: { hard: true },
+            data: { turbo_confirm: t("admin.users.hard_delete_confirm",
+              default: "PERMANENTLY delete this user and all their data now? This cannot be undone.") },
+            class: "w-full text-left px-4 py-2 bg-danger text-bg font-mono text-sm font-semibold border-1.5 border-danger hover:opacity-90 transition cursor-pointer" %>
+    </div>
+  <% end %>
+</div>

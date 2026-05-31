@@ -1,35 +1,35 @@
 <% content_for(:title, "1 Click Deploy - Wokku") %>
 
-<%# Header %>
 <div class="mb-6">
-  <h1 class="font-headline text-3xl font-bold text-on-surface mb-2"><%= t("dashboard.templates.title") %></h1>
-  <p class="text-sm text-outline">Deploy production-ready stacks in seconds. Pick from curated stacks or browse by use case.</p>
+  <h1 class="font-mono text-3xl md:text-4xl font-semibold tracking-tighter text-ink mb-2"><span class="text-dim"># </span><%= t("dashboard.templates.title") %></h1>
+  <p class="font-mono text-sm text-dim">// deploy production-ready stacks in seconds — pick from curated stacks or browse by use case</p>
 </div>
 
-<%# Search + category quick-pills %>
-<div class="mb-8">
-  <%= form_with url: dashboard_templates_path, method: :get, local: true do %>
+<%# Search + category quick-pills — live-filtered by the templates-search controller. %>
+<div class="mb-8" data-controller="templates-search">
+  <%= form_with url: dashboard_templates_path, method: :get, local: true,
+                data: { templates_search_target: "form" } do %>
     <div class="relative mb-3">
-      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
+      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-dim font-mono text-sm">$</span>
       <input type="text" name="q" placeholder="<%= t('dashboard.templates.search_placeholder') %>" value="<%= params[:q] %>"
-             class="w-full pl-10 pr-10 py-2.5 rounded-md bg-surface-container-low border-none text-sm text-on-surface placeholder-outline/50 focus:ring-1 focus:ring-primary"
+             data-templates-search-target="input"
+             data-action="input->templates-search#filter"
+             class="w-full pl-8 pr-10 py-2.5 bg-paper border-1.5 border-ink font-mono text-sm text-ink placeholder-dim focus:outline-none focus:border-accent"
              <%= "autofocus" if params[:q].present? %>>
       <% if params[:q].present? %>
         <%= link_to dashboard_templates_path,
-                    class: "absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface",
-                    aria: { label: "Clear search" } do %>
-          <span class="material-symbols-outlined text-[16px]">close</span>
-        <% end %>
+                    class: "absolute right-3 top-1/2 -translate-y-1/2 font-mono text-dim hover:text-ink",
+                    aria: { label: "Clear search" } do %>✕<% end %>
       <% end %>
     </div>
   <% end %>
 
-  <div class="flex flex-wrap gap-1.5">
+  <div class="flex flex-wrap gap-1.5 font-mono">
     <%= link_to t("dashboard.templates.all_templates"), dashboard_templates_path,
-                class: "px-3 py-1 rounded-full text-[11px] font-semibold transition #{params[:category].blank? && params[:q].blank? ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-outline hover:bg-surface-container-high hover:text-on-surface'}" %>
+                class: "px-3 py-1 text-[11px] font-semibold border transition #{params[:category].blank? && params[:q].blank? ? 'bg-accent-soft border-accent text-accent' : 'border-rule-soft text-dim hover:text-ink'}" %>
     <% @categories.each do |cat| %>
       <%= link_to cat["name"], dashboard_templates_path(category: cat["slug"]),
-                  class: "px-3 py-1 rounded-full text-[11px] font-semibold transition #{params[:category] == cat['slug'] ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-outline hover:bg-surface-container-high hover:text-on-surface'}" %>
+                  class: "px-3 py-1 text-[11px] font-semibold border transition #{params[:category] == cat['slug'] ? 'bg-accent-soft border-accent text-accent' : 'border-rule-soft text-dim hover:text-ink'}" %>
     <% end %>
   </div>
 </div>
@@ -37,7 +37,7 @@
 <%# Render mode: search / category / hero+rows %>
 <% if @search_results %>
   <% if @search_results.any? %>
-    <p class="text-xs text-outline uppercase tracking-wider font-bold mb-4">
+    <p class="font-mono text-xs text-dim uppercase tracking-widest font-bold mb-4">
       <%= @search_results.size %> <%= "result".pluralize(@search_results.size) %> for "<%= params[:q] %>"
     </p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
@@ -46,15 +46,17 @@
       <% end %>
     </div>
   <% else %>
-    <div class="text-center py-16 bg-surface-container-low rounded-md">
-      <span class="material-symbols-outlined text-outline-variant text-[40px] mb-3">search_off</span>
-      <p class="text-sm text-outline">No templates found for "<%= params[:q] %>".</p>
-    </div>
+    <%= render Organisms::EmptyStateComponent.new(
+          headline: "No templates match \"#{params[:q]}\".",
+          body: "Try a shorter search term, or browse by category below.",
+          cta_label: "Clear search",
+          cta_href: dashboard_templates_path
+        ) %>
   <% end %>
 
 <% elsif @category_results %>
   <% cat = @categories.find { |c| c["slug"] == params[:category] } %>
-  <h2 class="font-headline text-lg font-bold text-on-surface mb-4"><%= cat&.dig("name") || params[:category].to_s.titleize %></h2>
+  <h2 class="font-mono text-lg font-semibold text-ink mb-4"># <%= cat&.dig("name") || params[:category].to_s.titleize %></h2>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
     <% @category_results.each do |t| %>
       <%= render "card", template: t %>
@@ -65,30 +67,27 @@
   <%# Featured hero %>
   <% if @featured.any? %>
     <section class="mb-10">
-      <div class="flex items-baseline justify-between mb-4">
-        <h2 class="font-headline text-lg font-bold text-on-surface flex items-center gap-2">
-          <span class="material-symbols-outlined text-primary text-[20px]">auto_awesome</span>
-          Featured
-        </h2>
-        <span class="text-[10px] text-outline uppercase tracking-widest">Curated picks</span>
+      <div class="flex items-baseline justify-between mb-4 font-mono">
+        <h2 class="text-lg font-semibold text-ink"># featured</h2>
+        <span class="text-[10px] text-dim uppercase tracking-widest">curated picks</span>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
         <% @featured.first(4).each do |t| %>
           <%= link_to dashboard_template_path(t[:slug]),
-                      class: "group relative overflow-hidden rounded-xl bg-gradient-to-br from-primary-container/30 via-surface-container-low to-secondary-container/20 border border-outline-variant/20 hover:border-primary/40 transition p-5 min-h-[180px] flex flex-col justify-between" do %>
+                      class: "group relative overflow-hidden border-1.5 border-ink bg-accent-soft hover:bg-paper transition p-5 min-h-[180px] flex flex-col justify-between" do %>
             <div>
               <div class="flex items-center justify-between mb-3">
-                <div class="w-12 h-12 rounded-lg bg-surface border border-outline-variant/20 flex items-center justify-center">
+                <div class="w-12 h-12 border-1.5 border-ink bg-bg flex items-center justify-center">
                   <span class="text-2xl"><%= template_icon(t[:icon]) %></span>
                 </div>
-                <span class="text-[9px] font-bold text-primary uppercase tracking-widest">Featured</span>
+                <span class="font-mono text-[9px] font-bold text-accent uppercase tracking-widest">featured</span>
               </div>
-              <h3 class="font-headline text-base font-bold text-on-surface group-hover:text-primary transition mb-1"><%= t[:name] %></h3>
-              <p class="text-xs text-outline leading-relaxed line-clamp-2"><%= t[:description] %></p>
+              <h3 class="font-mono text-base font-semibold text-ink group-hover:text-accent transition mb-1"><%= t[:name] %></h3>
+              <p class="font-mono text-xs text-dim leading-relaxed line-clamp-2"><%= t[:description] %></p>
             </div>
-            <div class="flex items-center justify-between mt-4 pt-3 border-t border-outline-variant/10">
-              <span class="text-[10px] text-outline font-mono">From <%= template_total_label(t) %></span>
-              <span class="px-3 py-1 rounded-md text-[10px] font-bold bg-primary text-on-primary">Deploy →</span>
+            <div class="flex items-center justify-between mt-4 pt-3 border-t border-rule-soft font-mono">
+              <span class="text-[10px] text-dim">From <%= template_total_label(t) %></span>
+              <span class="px-3 py-1 text-[10px] font-bold bg-ink text-bg">Deploy →</span>
             </div>
           <% end %>
         <% end %>
@@ -99,12 +98,12 @@
   <%# Per-category rows %>
   <% @category_rows.each do |row| %>
     <section class="mb-8">
-      <div class="flex items-baseline justify-between mb-3">
-        <h2 class="font-headline text-base font-bold text-on-surface"><%= row["name"] %></h2>
-        <%= link_to "View all (#{row['templates'].size}) →", dashboard_templates_path(category: row["slug"]),
-                    class: "text-[11px] text-outline hover:text-primary transition" %>
+      <div class="flex items-baseline justify-between mb-3 font-mono">
+        <h2 class="text-base font-semibold text-ink"># <%= row["name"] %></h2>
+        <%= link_to "view all (#{row['templates'].size}) →", dashboard_templates_path(category: row["slug"]),
+                    class: "text-[11px] text-dim hover:text-accent transition" %>
       </div>
-      <div class="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory scroll-smooth scrollbar-thin">
+      <div class="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory scroll-smooth">
         <% row["templates"].each do |t| %>
           <div class="snap-start shrink-0 w-[260px]">
             <%= render "card", template: t %>

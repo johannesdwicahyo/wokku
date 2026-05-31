@@ -1,0 +1,38 @@
+<div class="wk-container">
+  <div class="wk-header">
+    <h1>// account_deletion_scheduled()</h1>
+    <h2>Your Wokku account is scheduled for deletion.</h2>
+  </div>
+  <div class="wk-body">
+    <div class="wk-alert wk-alert-danger">
+      All of your apps, databases, and data will be <strong>permanently deleted on <%= @grace_until %></strong>.
+    </div>
+
+    <% if @apps.any? %>
+      <div class="wk-label">// apps_to_be_deleted()</div>
+      <ul class="wk-list">
+        <% @apps.each do |app| %>
+          <li><%= app.name %></li>
+        <% end %>
+      </ul>
+    <% end %>
+
+    <% if @databases.any? %>
+      <div class="wk-label">// databases_to_be_deleted()</div>
+      <ul class="wk-list">
+        <% @databases.each do |db| %>
+          <li><%= db.name %> (<%= db.service_type %>)</li>
+        <% end %>
+      </ul>
+    <% end %>
+
+    <p>If this was a mistake, reply to this email or contact <a href="mailto:support@wokku.cloud">support@wokku.cloud</a> before the deadline and we'll cancel the deletion.</p>
+
+    <hr class="wk-divider">
+
+    <a href="mailto:support@wokku.cloud" class="wk-cta" style="background: #E5484D;">Contact support to cancel →</a>
+  </div>
+  <div class="wk-footer">
+    Wokku · Invoice-based billing · jakarta, id
+  </div>
+</div>

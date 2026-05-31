@@ -1,0 +1,17 @@
+<div class="flex gap-6 border-b border-rule-soft mb-6 font-mono text-[12px]">
+  <% Organisms::AppSettingsComponent::SECTIONS.each do |s| %>
+    <%= link_to s.to_s, helpers.section_path(:settings, app, s),
+                class: "py-2 border-b-2 #{active == s ? 'border-accent text-ink font-bold' : 'border-transparent text-dim hover:text-ink'}" %>
+  <% end %>
+</div>
+<div><%= content %></div>
+
+<% if Addons::SharedProvisioner.feature_enabled? %>
+  <section class="app-settings__addons mt-8" data-controller="addons-stream"
+           data-turbo-stream-channel="user_<%= app.created_by_id %>_addons">
+    <h2 class="font-mono text-[13px] font-bold uppercase mb-4">Add-ons</h2>
+    <% app.database_services.shared_tenants.order(:service_type).each do |db| %>
+      <%= render Organisms::App::SharedAddonCardComponent.new(app: app, database_service: db) %>
+    <% end %>
+  </section>
+<% end %>

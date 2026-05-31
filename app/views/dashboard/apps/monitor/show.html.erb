@@ -1,0 +1,169 @@
+<%
+  fmt_ms = ->(n) { n ? "#{n}ms" : "—" }
+
+  err_pct = (@totals[:error_rate] * 100).round(2)
+  err_tone =
+    if err_pct >= 5 then :danger
+    elsif err_pct >= 1 then :warn
+    else :success
+    end
+
+  # Sparkline data: req_count per 5-min bucket, last 24h. Render as
+  # inline SVG so we don't need a chart lib for v1.
+  spark_max = [ @buckets.map(&:req_count).max.to_i, 1 ].max
+  spark_w = 480
+  spark_h = 56
+  spark_points = @buckets.each_with_index.map { |b, i|
+    x = @buckets.size > 1 ? (i.to_f / (@buckets.size - 1)) * spark_w : 0
+    y = spark_h - (b.req_count.to_f / spark_max) * spark_h
+    "#{x.round(1)},#{y.round(1)}"
+  }.join(" ")
+
+  p95_max = [ @buckets.map { |b| b.p95_ms.to_i }.max.to_i, 1 ].max
+  p50_pts = @buckets.each_with_index.map { |b, i|
+    x = @buckets.size > 1 ? (i.to_f / (@buckets.size - 1)) * spark_w : 0
+    y = spark_h - (b.p50_ms.to_i.to_f / p95_max) * spark_h
+    "#{x.round(1)},#{y.round(1)}"
+  }.join(" ")
+  p95_pts = @buckets.each_with_index.map { |b, i|
+    x = @buckets.size > 1 ? (i.to_f / (@buckets.size - 1)) * spark_w : 0
+    y = spark_h - (b.p95_ms.to_i.to_f / p95_max) * spark_h
+    "#{x.round(1)},#{y.round(1)}"
+  }.join(" ")
+%>
+
+<%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :runtime) do %>
+<div class="flex flex-col gap-6">
+  <%# Runtime sub-nav: logs / metrics / monitor — three coordinate pages under the runtime tab %>
+  <div class="flex items-center gap-1 font-mono text-[11px] uppercase tracking-widest">
+    <%= link_to "logs",    dashboard_app_logs_path(@app),    class: "px-3 py-1.5 border border-rule-soft text-dim hover:border-ink hover:text-ink" %>
+    <%= link_to "metrics", dashboard_app_metrics_path(@app), class: "px-3 py-1.5 border border-rule-soft text-dim hover:border-ink hover:text-ink" %>
+    <span class="px-3 py-1.5 border border-ink bg-ink text-paper">monitor</span>
+  </div>
+
+  <div class="flex flex-wrap items-baseline justify-between gap-4">
+    <%= render Atoms::HashHeaderComponent.new(
+          title: "#{@app.name} · Monitor",
+          kicker: "// http requests · last 24h · 5-min buckets",
+          size: :md) %>
+    <div class="flex items-center gap-2">
+      <%= link_to "← back to app", dashboard_app_path(@app), class: "font-mono text-xs text-dim hover:text-ink" %>
+    </div>
+  </div>
+
+  <% if @buckets.empty? %>
+    <div class="border-1.5 border-warn bg-warn-soft px-5 py-4 font-mono text-xs text-ink">
+      // no request data yet · Vector ships nginx-proxy access logs every ~5s · RequestAggregateRollupJob runs every 5 min · check back shortly
+    </div>
+  <% end %>
+
+  <%# ── Hero stat tiles ─────────────────────────────────────── %>
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <%= render Molecules::StatTileComponent.new(
+          label: "Req / minute",
+          value: @totals[:rpm],
+          sub: "// #{number_with_delimiter(@totals[:req_count])} over 24h",
+          glyph: "⇉") %>
+
+    <%= render Molecules::StatTileComponent.new(
+          label: "p95 latency",
+          value: fmt_ms.call(@totals[:p95_ms]),
+          sub: "// window-max across 5-min buckets",
+          glyph: "⌁") %>
+
+    <%= render Molecules::StatTileComponent.new(
+          label: "Error rate",
+          value: "#{err_pct}%",
+          sub: "// 4xx: #{@totals[:error_4xx]} · 5xx: #{@totals[:error_5xx]}",
+          tone: err_tone,
+          glyph: "!") %>
+
+    <%= render Molecules::StatTileComponent.new(
+          label: "Monitoring status",
+          value: @latest ? "Live ●" : "Idle",
+          sub: @latest ? "// last bucket #{time_ago_in_words(@latest.bucket_start)} ago" : "// awaiting first bucket",
+          tone: @latest ? :success : :warn,
+          glyph: @latest ? "●" : "○") %>
+  </div>
+
+  <%# ── Req-rate sparkline ──────────────────────────────────── %>
+  <div class="border-1.5 border-ink bg-paper px-6 py-5">
+    <div class="font-mono text-[10px] text-dim tracking-widest uppercase mb-2">// req_rate(24h)</div>
+    <% if @buckets.any? %>
+      <svg viewBox="0 0 <%= spark_w %> <%= spark_h %>" preserveAspectRatio="none" class="w-full h-14">
+        <polyline points="<%= spark_points %>" fill="none" stroke="currentColor" stroke-width="1.5" class="text-ink" />
+      </svg>
+      <div class="flex justify-between font-mono text-[10px] text-dim mt-1">
+        <span>// 24h ago</span>
+        <span>// peak <%= spark_max %> req/5min</span>
+        <span>// now</span>
+      </div>
+    <% else %>
+      <div class="font-mono text-xs text-dim text-center py-6">// no buckets yet</div>
+    <% end %>
+  </div>
+
+  <%# ── p50/p95 latency chart ───────────────────────────────── %>
+  <div class="border-1.5 border-ink bg-paper px-6 py-5">
+    <div class="flex items-baseline justify-between mb-2">
+      <div class="font-mono text-[10px] text-dim tracking-widest uppercase">// latency_ms(24h)</div>
+      <div class="font-mono text-[10px] text-dim flex items-center gap-4">
+        <span class="flex items-center gap-1"><span class="inline-block w-3 h-px bg-ink-soft"></span> p50</span>
+        <span class="flex items-center gap-1"><span class="inline-block w-3 h-px bg-ink"></span> p95</span>
+      </div>
+    </div>
+    <% if @buckets.any? %>
+      <svg viewBox="0 0 <%= spark_w %> <%= spark_h %>" preserveAspectRatio="none" class="w-full h-14">
+        <polyline points="<%= p50_pts %>" fill="none" stroke="currentColor" stroke-width="1" class="text-ink-soft" stroke-dasharray="2 2" />
+        <polyline points="<%= p95_pts %>" fill="none" stroke="currentColor" stroke-width="1.5" class="text-ink" />
+      </svg>
+      <div class="flex justify-between font-mono text-[10px] text-dim mt-1">
+        <span>// 0 ms</span>
+        <span>// max p95 <%= p95_max %> ms</span>
+      </div>
+    <% else %>
+      <div class="font-mono text-xs text-dim text-center py-6">// no buckets yet</div>
+    <% end %>
+  </div>
+
+  <%# ── Recent slow requests ─────────────────────────────────── %>
+  <div class="border-1.5 border-ink bg-paper">
+    <div class="px-6 py-4 border-b border-rule-soft">
+      <h2 class="font-mono text-base font-semibold text-ink"># slow_requests</h2>
+      <p class="font-mono text-xs text-dim mt-1">// top 10 by response_time_ms · last hour · raw RequestSample rows</p>
+    </div>
+    <% if @recent_slow.any? %>
+      <div class="overflow-x-auto">
+        <table class="w-full font-mono text-xs">
+          <thead>
+            <tr class="text-left text-[10px] text-dim tracking-widest uppercase border-b border-rule-soft">
+              <th class="px-6 py-3">Time</th>
+              <th class="px-3 py-3">Method</th>
+              <th class="px-3 py-3 w-1/2">Path</th>
+              <th class="px-3 py-3 text-right">Status</th>
+              <th class="px-6 py-3 text-right">Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @recent_slow.each do |s| %>
+              <tr class="border-b border-rule-soft hover:bg-bg">
+                <td class="px-6 py-3 text-ink-soft tabular-nums"><%= s.ts.strftime("%H:%M:%S") %></td>
+                <td class="px-3 py-3 text-ink-soft"><%= s.method %></td>
+                <td class="px-3 py-3 text-ink break-all"><%= s.path %></td>
+                <td class="px-3 py-3 text-right tabular-nums <%= s.status.to_i >= 500 ? 'text-danger' : (s.status.to_i >= 400 ? 'text-warn' : 'text-ink-soft') %>">
+                  <%= s.status %>
+                </td>
+                <td class="px-6 py-3 text-right text-ink tabular-nums"><%= fmt_ms.call(s.response_time_ms) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="px-6 py-8 font-mono text-xs text-dim text-center">
+        // no slow requests in the last hour
+      </div>
+    <% end %>
+  </div>
+</div>
+<% end %>

@@ -1,0 +1,53 @@
+<% content_for :title, "Transfer #{@app.name}" %>
+
+<%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :settings) do %>
+  <%= render Organisms::AppSettingsComponent.new(app: @app, active: :transfer) do %>
+
+    <div class="border-1.5 border-ink bg-paper">
+      <div class="px-6 py-4 border-b border-rule-soft">
+        <h2 class="font-mono text-base font-semibold text-ink"># transfer ownership</h2>
+        <p class="font-mono text-xs text-dim mt-1">// hand off this app to another user — they pick up future billing once they accept</p>
+      </div>
+
+      <% if @pending_transfer %>
+        <div class="px-6 py-5 border-b border-rule-soft bg-warn-soft">
+          <div class="font-mono text-xs uppercase tracking-widest text-dim mb-1">// pending</div>
+          <p class="text-sm text-ink">
+            Awaiting acceptance from <span class="font-mono font-bold"><%= @pending_transfer.to_user.email %></span>.
+            Expires <%= time_ago_in_words(@pending_transfer.expires_at) %> from now.
+          </p>
+          <div class="mt-3">
+            <%= link_to "Cancel transfer", dashboard_app_transfer_path(@pending_transfer),
+                  data: { turbo_method: :delete, turbo_confirm: "Cancel the pending transfer to #{@pending_transfer.to_user.email}?" },
+                  class: "inline-block border-1.5 border-ink bg-paper text-ink font-mono text-[11px] uppercase tracking-widest px-3 py-2 shadow-brutal hover:bg-danger-soft transition" %>
+          </div>
+        </div>
+      <% end %>
+
+      <div class="px-6 py-5">
+        <%= form_with url: transfer_dashboard_app_path(@app), method: :post, class: "space-y-4" do |f| %>
+          <div>
+            <label class="block font-mono text-[11px] uppercase tracking-widest text-ink-soft mb-2" for="transfer_email">
+              Recipient email
+            </label>
+            <input type="email" name="email" id="transfer_email" required
+                   placeholder="someone@example.com"
+                   <%= "disabled" if @pending_transfer %>
+                   class="w-full border-1.5 border-ink bg-bg px-4 py-2.5 font-mono text-sm text-ink placeholder:text-dim focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition disabled:opacity-50">
+            <p class="font-mono text-[11px] text-dim mt-2">
+              The recipient must already have a Wokku account. They'll get an email and can accept from their inbox at /dashboard/app_transfers.
+            </p>
+          </div>
+
+          <div class="flex items-center justify-between gap-4 flex-wrap">
+            <p class="font-mono text-[11px] text-dim">// agency-friendly: hand the build to your client, they pick up the bill</p>
+            <%= f.submit @pending_transfer ? "Transfer pending" : "Send transfer request",
+                  class: "border-1.5 border-ink bg-ink text-bg font-mono text-[11px] uppercase tracking-widest px-5 py-3 shadow-brutal hover:bg-accent hover:text-ink transition disabled:opacity-50 disabled:cursor-not-allowed",
+                  disabled: @pending_transfer.present? %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+  <% end %>
+<% end %>

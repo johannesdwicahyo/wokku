@@ -1,0 +1,87 @@
+<% content_for(:title, "Admin · Analytics") %>
+
+<%
+  fmt = ->(idr) { "Rp #{ActiveSupport::NumberHelper.number_to_delimited((idr || 0).to_i, delimiter: '.')}" }
+  stat = "border-1.5 border-ink bg-paper p-5 font-mono"
+  stat_label = "text-[10px] uppercase tracking-widest text-dim font-bold mb-2"
+  stat_val = "text-2xl font-bold text-ink tracking-tighter"
+%>
+
+<div class="space-y-6 max-w-6xl">
+  <div>
+    <h1 class="font-mono text-xl font-semibold tracking-tighter text-ink"># admin · analytics</h1>
+    <p class="mt-0.5 font-mono text-sm text-dim">// platform-wide metrics. Visible to admins only.</p>
+  </div>
+
+  <%# ── Revenue ── %>
+  <section class="space-y-2">
+    <h2 class="font-mono text-sm font-semibold text-ink">revenue (real money in)</h2>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="<%= stat %>"><p class="<%= stat_label %>">Today</p><p class="<%= stat_val %>"><%= fmt.call(@revenue[:today_idr]) %></p></div>
+      <div class="<%= stat %>"><p class="<%= stat_label %>">Month-to-date</p><p class="<%= stat_val %>"><%= fmt.call(@revenue[:mtd_idr]) %></p></div>
+      <div class="<%= stat %>"><p class="<%= stat_label %>">All time</p><p class="<%= stat_val %>"><%= fmt.call(@revenue[:all_time_idr]) %></p></div>
+      <div class="<%= stat %>"><p class="<%= stat_label %>">Unique payers</p><p class="<%= stat_val %>"><%= @revenue[:unique_payers] %></p></div>
+    </div>
+    <p class="font-mono text-xs text-dim">// excludes manual credits and promo bonus payouts — only iPaymu / Stripe deposits</p>
+  </section>
+
+  <%# ── Users ── %>
+  <section class="space-y-2">
+    <h2 class="font-mono text-sm font-semibold text-ink">users</h2>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="<%= stat %>"><p class="<%= stat_label %>">Total</p><p class="<%= stat_val %>"><%= @users[:total] %></p></div>
+      <div class="<%= stat %>"><p class="<%= stat_label %>">New today</p><p class="<%= stat_val %>"><%= @users[:new_today] %></p></div>
+      <div class="<%= stat %>"><p class="<%= stat_label %>">New this week</p><p class="<%= stat_val %>"><%= @users[:new_this_week] %></p></div>
+      <div class="<%= stat %>"><p class="<%= stat_label %>">With balance &gt; 0</p><p class="<%= stat_val %>"><%= @users[:with_balance] %></p></div>
+    </div>
+  </section>
+
+  <%# ── Apps ── %>
+  <section class="space-y-2">
+    <h2 class="font-mono text-sm font-semibold text-ink">apps + servers</h2>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="<%= stat %>"><p class="<%= stat_label %>">Total apps</p><p class="<%= stat_val %>"><%= @apps[:total] %></p></div>
+      <div class="<%= stat %>"><p class="<%= stat_label %>">Running</p><p class="<%= stat_val %>"><%= @apps[:running] %></p></div>
+      <div class="<%= stat %>"><p class="<%= stat_label %>">New today</p><p class="<%= stat_val %>"><%= @apps[:new_today] %></p></div>
+      <div class="<%= stat %>"><p class="<%= stat_label %>">Dokku servers</p><p class="<%= stat_val %>"><%= @apps[:servers] %></p></div>
+    </div>
+  </section>
+
+  <%# ── Promo redemptions ── %>
+  <section class="space-y-2">
+    <div class="flex items-center justify-between">
+      <h2 class="font-mono text-sm font-semibold text-ink">promo redemptions</h2>
+      <%= link_to "manage codes →", admin_promo_codes_path, class: "font-mono text-xs text-accent hover:underline font-semibold" %>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="<%= stat %>"><p class="<%= stat_label %>">Pending</p><p class="<%= stat_val %>"><%= @promos[:pending] %></p></div>
+      <div class="<%= stat %>"><p class="<%= stat_label %>">Applied today</p><p class="<%= stat_val %>"><%= @promos[:applied_today] %></p></div>
+      <div class="<%= stat %>"><p class="<%= stat_label %>">Applied all time</p><p class="<%= stat_val %>"><%= @promos[:applied_total] %></p></div>
+    </div>
+
+    <div class="border-1.5 border-ink bg-paper overflow-x-auto mt-3">
+      <div class="px-5 py-3 border-b border-rule-soft">
+        <p class="font-mono text-[10px] uppercase tracking-widest text-dim font-bold">top channel codes by redemptions</p>
+      </div>
+      <% if @promos[:top_codes].any? %>
+        <table class="w-full font-mono text-sm">
+          <thead class="text-[10px] uppercase tracking-widest text-dim border-b border-rule-soft">
+            <tr><th class="text-left px-5 py-2">Code</th><th class="text-left">Kind</th><th class="text-right px-5">Redemptions</th><th class="text-right px-5">Bonus</th></tr>
+          </thead>
+          <tbody class="divide-y divide-rule-soft">
+            <% @promos[:top_codes].each do |c| %>
+              <tr>
+                <td class="px-5 py-2 text-accent"><%= c.code %></td>
+                <td><%= c.kind.titleize %></td>
+                <td class="text-right px-5"><%= c.redemptions_count %><%= c.max_redemptions ? "/#{c.max_redemptions}" : "" %></td>
+                <td class="text-right px-5"><%= fmt.call(c.redeemer_bonus_idr) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p class="px-5 py-6 font-mono text-sm text-dim text-center">// no redeemable codes yet</p>
+      <% end %>
+    </div>
+  </section>
+</div>

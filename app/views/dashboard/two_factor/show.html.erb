@@ -1,48 +1,43 @@
-<div class="max-w-lg mx-auto">
-  <div class="mb-6">
-    <%= link_to dashboard_profile_path, class: "flex items-center gap-2 text-sm text-outline hover:text-primary transition" do %>
-      <span class="material-symbols-outlined text-[18px]">arrow_back</span> Settings
-    <% end %>
-  </div>
+<%= render Organisms::SettingsTabsComponent.new(active_tab: :security) do %>
 
-  <h1 class="font-headline text-2xl font-bold text-on-surface mb-2"><%= t("auth.two_factor.title") %></h1>
-  <p class="text-sm text-outline mb-8"><%= t("auth.two_factor.subtitle") %></p>
+<div class="max-w-lg mx-auto">
+  <h1 class="font-mono text-2xl font-semibold tracking-tighter text-ink mb-2"><span class="text-dim"># </span><%= t("auth.two_factor.title") %></h1>
+  <p class="font-mono text-sm text-dim mb-8">// <%= t("auth.two_factor.subtitle") %></p>
 
   <% if current_user.two_factor_enabled? %>
-    <div class="bg-secondary-container/20 border border-secondary/30 rounded-md p-6 mb-6">
-      <div class="flex items-center gap-3 mb-3">
-        <span class="material-symbols-outlined text-secondary text-[24px]">verified_user</span>
-        <h2 class="text-sm font-bold text-on-surface"><%= t("auth.two_factor.enabled") %></h2>
-      </div>
-      <p class="text-xs text-outline mb-4"><%= t("auth.two_factor.enabled_desc") %></p>
+    <div class="border-1.5 border-success bg-success-soft p-6 mb-6">
+      <h2 class="font-mono text-sm font-semibold text-ink mb-3">✓ <%= t("auth.two_factor.enabled") %></h2>
+      <p class="font-mono text-xs text-dim mb-4"><%= t("auth.two_factor.enabled_desc") %></p>
       <%= form_with url: disable_dashboard_two_factor_path, method: :delete, class: "space-y-3" do |f| %>
         <div>
-          <label class="block text-xs text-on-surface-variant mb-1 uppercase tracking-wider font-bold"><%= t("auth.two_factor.enter_to_disable") %></label>
-          <%= f.text_field :otp_code, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface font-mono focus:ring-1 focus:ring-primary", placeholder: "000000", maxlength: 6, autocomplete: "one-time-code" %>
+          <label class="block font-mono text-xs text-dim mb-1 uppercase tracking-widest font-bold"><%= t("auth.two_factor.enter_to_disable") %></label>
+          <%= f.text_field :otp_code, class: "w-full bg-bg border-1.5 border-ink px-3 py-2 font-mono text-sm text-ink focus:outline-none focus:border-accent", placeholder: "000000", maxlength: 6, autocomplete: "one-time-code" %>
         </div>
-        <%= f.submit t("auth.two_factor.disable"), class: "px-4 py-2 text-sm font-semibold text-error border border-error/30 rounded-md hover:bg-error/10 transition cursor-pointer" %>
+        <%= f.submit t("auth.two_factor.disable"), class: "px-4 py-2 font-mono text-sm font-semibold text-danger border-1.5 border-danger bg-danger-soft hover:opacity-90 transition cursor-pointer" %>
       <% end %>
     </div>
   <% else %>
-    <div class="bg-surface-container-low rounded-md p-6 mb-6">
-      <h2 class="text-sm font-bold text-on-surface mb-4">1. <%= t("auth.two_factor.scan_qr") %></h2>
-      <p class="text-xs text-outline mb-4"><%= t("auth.two_factor.scan_qr_desc") %></p>
-      <div class="bg-white rounded-md p-4 inline-block mb-4">
+    <div class="border-1.5 border-ink bg-paper p-6 mb-6">
+      <h2 class="font-mono text-sm font-semibold text-ink mb-4">1. <%= t("auth.two_factor.scan_qr") %></h2>
+      <p class="font-mono text-xs text-dim mb-4"><%= t("auth.two_factor.scan_qr_desc") %></p>
+      <div class="bg-white border-1.5 border-ink p-4 inline-block mb-4">
         <%= sanitize @qr_code,
             tags: %w[svg g path rect circle title desc],
             attributes: %w[xmlns width height viewBox fill stroke stroke-width d x y rx ry cx cy r transform shape-rendering version] %>
       </div>
     </div>
 
-    <div class="bg-surface-container-low rounded-md p-6">
-      <h2 class="text-sm font-bold text-on-surface mb-4">2. <%= t("auth.two_factor.enter_code") %></h2>
+    <div class="border-1.5 border-ink bg-paper p-6">
+      <h2 class="font-mono text-sm font-semibold text-ink mb-4">2. <%= t("auth.two_factor.enter_code") %></h2>
       <%= form_with url: enable_dashboard_two_factor_path, method: :post, class: "space-y-4" do |f| %>
         <div>
-          <label class="block text-xs text-on-surface-variant mb-1 uppercase tracking-wider font-bold"><%= t("auth.two_factor.six_digit") %></label>
-          <%= f.text_field :otp_code, class: "w-full rounded-md bg-surface border border-outline-variant/15 px-3 py-2 text-sm text-on-surface font-mono text-center text-lg tracking-[0.5em] focus:ring-1 focus:ring-primary", placeholder: "000000", maxlength: 6, autocomplete: "one-time-code" %>
+          <label class="block font-mono text-xs text-dim mb-1 uppercase tracking-widest font-bold"><%= t("auth.two_factor.six_digit") %></label>
+          <%= f.text_field :otp_code, class: "w-full bg-bg border-1.5 border-ink px-3 py-2 font-mono text-sm text-ink text-center text-lg tracking-[0.5em] focus:outline-none focus:border-accent", placeholder: "000000", maxlength: 6, autocomplete: "one-time-code" %>
         </div>
-        <%= f.submit t("auth.two_factor.enable"), class: "w-full py-2 px-4 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer text-center" %>
+        <%= f.submit t("auth.two_factor.enable"), class: "w-full py-2 px-4 bg-ink text-bg font-mono text-sm font-semibold border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer text-center" %>
       <% end %>
     </div>
   <% end %>
 </div>
+
+<% end %>

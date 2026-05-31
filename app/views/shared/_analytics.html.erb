@@ -1,9 +1,10 @@
-<%# Umami page-view tracking. Loaded from every HTML layout (landing,
-    dashboard, docs, application) so we get full-funnel visibility from
-    public pages → signup → in-product behaviour. Gated to production:
-    development and test runs MUST NOT pollute the analytics. %>
-<% if Rails.env.production? && ENV["UMAMI_DISABLED"].blank? %>
-  <script defer
-          src="<%= ENV.fetch('UMAMI_SCRIPT_URL', 'https://umami-inwz.wokku.cloud/script.js') %>"
-          data-website-id="<%= ENV.fetch('UMAMI_WEBSITE_ID', '6641c22f-4106-4dbc-a4fb-25d8fdfae4f6') %>"></script>
-<% end %>
+<%# OSS no-op analytics partial.
+
+The wokku-cloud version hardcodes a phone-home to umami-inwz.wokku.cloud
+plus the wokku.cloud Umami website id. Self-hosted Wokku must not ship
+that — every install would feed user behaviour into our analytics
+without consent.
+
+Self-hosters who want Umami or PostHog: override this partial in your
+own fork, or set ENV vars and reinstate the gated <script> tags.
+%>

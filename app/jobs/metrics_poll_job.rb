@@ -17,7 +17,7 @@ class MetricsPollJob < ApplicationJob
       "root",
       port: server.port,
       non_interactive: true,
-      timeout: 15,
+      timeout: 5,
       key_data: Array(server.ssh_private_key).reject(&:blank?)
     ) do |ssh|
       ssh.exec!("docker stats --no-stream --format '{{json .}}'")
@@ -98,8 +98,16 @@ class MetricsPollJob < ApplicationJob
       live_container_count: container_count,
       live_metrics_at: now
     )
-  rescue Net::SSH::Exception, Errno::ECONNREFUSED, JSON::ParserError => e
+  rescue Net::SSH::Exception, Errno::ECONNREFUSED, Errno::ETIMEDOUT, Errno::EHOSTUNREACH, Errno::ENETUNREACH, SocketError, JSON::ParserError => e
     Rails.logger.warn("MetricsPollJob failed for server #{server_id}: #{e.message}")
+    if defined?(Sentry)
+      Sentry.capture_exception(e, level: :warning, extra: {
+        server_id: server_id,
+        host: server&.host,
+        port: server&.port,
+        errno: e.class.name
+      })
+    end
   end
 
   private

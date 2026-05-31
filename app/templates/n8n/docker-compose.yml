@@ -4,6 +4,8 @@
 # category: automation
 # tags: automation, workflow, node
 # icon: automation
+# icon_slug: n8n
+# icon_color: EA4B71
 # port: 5678
 # postgres_components: true
 

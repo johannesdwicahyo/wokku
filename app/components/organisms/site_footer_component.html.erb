@@ -1,0 +1,31 @@
+<footer class="relative bg-bg text-ink border-t-1.5 border-ink px-5 sm:px-8 md:px-14 pt-12 md:pt-16 pb-8 overflow-hidden">
+  <div class="absolute inset-0 bg-dotted opacity-40 pointer-events-none"></div>
+  <div class="relative max-w-[1180px] mx-auto">
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-[1.3fr_repeat(5,1fr)] gap-7 items-start">
+      <div>
+        <%= render Atoms::LogoComponent.new(size: :md) %>
+        <p class="font-sans text-sm text-ink-soft leading-snug mt-4 mb-0 max-w-[260px]">
+          <%= t('footer.tagline') %>
+        </p>
+        <div class="mt-4 flex items-center gap-2.5 font-mono text-[11px] text-dim tracking-tight">
+          <%= render Atoms::FlagComponent.new(size: :sm) %>
+          <span><%= t('brand.company') %></span>
+        </div>
+        <div class="mt-3.5 inline-flex items-center gap-2 px-2.5 py-1.5 rounded-full border-1.5 border-ink bg-paper font-mono text-[11px] text-ink">
+          <span class="w-1.5 h-1.5 rounded-full bg-success"></span>
+          <%= t('footer.status_ok') %>
+        </div>
+      </div>
+
+      <% cols.each do |col| %>
+        <%= render Molecules::FooterColumnComponent.new(head: col[:head], links: col[:links]) %>
+      <% end %>
+    </div>
+
+    <div class="mt-14 pt-5 border-t-1.5 border-dashed border-rule-soft flex flex-wrap justify-between items-center gap-3.5 font-mono text-[11px] text-dim tracking-tight">
+      <span><%= t('footer.legal') %></span>
+      <span><%= t('footer.license') %></span>
+      <span><%= t('brand.location') %> · 🇮🇩</span>
+    </div>
+  </div>
+</footer>

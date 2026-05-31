@@ -18,8 +18,16 @@ module Dokku
     # `--no-restart`; callers that need an immediate restart (rare) pass
     # `restart: true`. The dashboard surfaces a "Restart for changes to
     # take effect" hint after a config write.
+    #
+    # Values are single-quote-wrapped instead of using Shellwords.escape:
+    # the dokku ssh shell parses arguments via `xargs`, which doesn't
+    # accept Bash's backslash-escape form for strings that contain { } "
+    # — it surfaces as `xargs: unmatched single quote` once the value is
+    # large or has nested JSON. Single quotes preserve everything
+    # literally in both Bash and xargs; the only char needing escape is
+    # the apostrophe itself, replaced with the standard '\'' dance.
     def set(app_name, vars = {}, restart: false)
-      pairs = vars.map { |k, v| "#{Shellwords.escape(k.to_s)}=#{Shellwords.escape(v.to_s)}" }.join(" ")
+      pairs = vars.map { |k, v| "#{Shellwords.escape(k.to_s)}=#{sq_escape(v.to_s)}" }.join(" ")
       flag = restart ? "" : "--no-restart "
       @client.run("config:set #{flag}#{Shellwords.escape(app_name)} #{pairs}")
     end
@@ -35,6 +43,22 @@ module Dokku
     end
 
     private
+
+    # Wrap a value in single quotes so it survives the dokku ssh shell
+    # (xargs-based) unchanged regardless of the special chars it contains.
+    # The only char single quotes can't hold literally is the apostrophe
+    # itself, which gets the standard '\'' substitution.
+    #
+    # Trailing newlines must also be stripped: dokku's ssh shell parses
+    # SSH_ORIGINAL_COMMAND line by line, so a `\n` inside a single-quoted
+    # value splits the command in two and xargs sees an orphan `'` on the
+    # next line ("unmatched single quote"). EnvVar#strip_trailing_newlines
+    # handles this on save, but other callers (and stray legacy DB rows)
+    # get the same defense here.
+    def sq_escape(value)
+      cleaned = value.gsub(/[\r\n]+\z/, "")
+      "'#{cleaned.gsub("'", "'\\\\''")}'"
+    end
 
     def parse_env(output)
       result = {}

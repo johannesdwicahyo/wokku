@@ -1,0 +1,10 @@
+<div>
+  <div class="font-mono text-[10px] text-dim tracking-widest uppercase mb-4"><%= head %></div>
+  <ul class="list-none p-0 m-0 flex flex-col gap-2.5">
+    <% links.each do |l| %>
+      <% label = l.is_a?(Hash) ? l[:label] : l %>
+      <% href  = l.is_a?(Hash) ? l[:href]  : "#" %>
+      <li><a href="<%= href %>" class="font-sans text-sm text-ink no-underline hover:text-accent transition-colors"><%= label %></a></li>
+    <% end %>
+  </ul>
+</div>

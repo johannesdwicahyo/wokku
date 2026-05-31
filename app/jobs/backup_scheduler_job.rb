@@ -1,7 +1,10 @@
 class BackupSchedulerJob < ApplicationJob
   queue_as :backups
 
-  BACKUPABLE_TYPES = %w[postgres mysql mongodb redis].freeze
+  # Cache-type services (redis, memcached, valkey) are excluded by policy:
+  # they hold ephemeral state by design, and a stale RDB snapshot is rarely
+  # what users actually want on restore.
+  BACKUPABLE_TYPES = %w[postgres mysql mariadb mongodb].freeze
 
   def perform
     Server.joins(:backup_destination)

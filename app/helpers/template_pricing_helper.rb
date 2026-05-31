@@ -1,47 +1,28 @@
 module TemplatePricingHelper
-  # Compute the monthly cost breakdown for a 1-Click Deploy template,
-  # using the cheapest paid dyno (basic) plus the explicitly required
-  # add-on tiers from the template definition. Returns USD numbers;
-  # views format with format_price for IDR/USD output.
-  def template_cost(template)
-    dyno_tier = DynoTier.find_by(name: default_dyno_tier_name)
-    dyno_monthly = dyno_tier ? dyno_tier.monthly_price_dollars : 0.0
-
-    addons = (template[:addons] || []).filter_map do |addon|
-      type = addon["type"] || addon[:type]
-      tier_name = addon["tier"] || addon[:tier] || "basic"
-      service_tier = ServiceTier.find_by(service_type: type, name: tier_name)
-      next nil unless service_tier
-      {
-        type: type,
-        tier: tier_name,
-        monthly_usd: service_tier.monthly_price_dollars,
-        spec: service_tier.spec || {}
-      }
-    end
-
-    {
-      dyno: dyno_tier && {
-        name: dyno_tier.name,
-        memory_mb: dyno_tier.memory_mb,
-        cpu_shares: dyno_tier.cpu_shares,
-        storage_mb: dyno_tier.storage_mb,
-        monthly_usd: dyno_monthly,
-        sleeps: dyno_tier.sleeps
-      },
-      addons: addons,
-      total_monthly_usd: dyno_monthly + addons.sum { |a| a[:monthly_usd] }
-    }
+  # Bundle v2 REVISED 2026-05-31: templates consume a box + optional
+  # shared engines from the user's plan quota — no per-resource pricing.
+  # See memory/project_bundle_v2_locked_spec.md.
+  #
+  # Returns the box-size category the template's :min_tier maps to.
+  # Mirrors Dashboard::TemplatesController#box_size_for_template so the
+  # marketplace card preview agrees with the actual deploy.
+  def template_box_size(template)
+    tier_name = template[:min_tier].presence ||
+                ((template[:addons] || []).any? ? "basic" : "free")
+    { "free" => "sleeping", "basic" => "small", "standard" => "medium",
+      "performance" => "large", "performance-2x" => "xlarge" }[tier_name] || "small"
   end
 
+  # Short label for template cards / index rows — surfaces what the
+  # template consumes from the user's plan instead of legacy per-addon
+  # pricing.
   def template_total_label(template)
-    cost = template_cost(template)
-    format_price(cost[:total_monthly_usd]) + price_period
-  end
-
-  private
-
-  def default_dyno_tier_name
-    "basic"
+    box = template_box_size(template)
+    addon_count = (template[:addons] || []).size
+    if addon_count.zero?
+      "1 #{box.capitalize} box · plan-included"
+    else
+      "1 #{box.capitalize} box + #{addon_count} shared add-on#{'s' if addon_count != 1} · plan-included"
+    end
   end
 end

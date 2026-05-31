@@ -1,15 +1,16 @@
 # name: Astro
-# documentation: https://github.com/withastro/astro
-# slogan: Fast static site builder with islands architecture for any UI framework
+# documentation: https://github.com/johannesdwicahyo/wokku-astro-starter
+# slogan: Modern static site builder — built static, served fast
 # category: frameworks
-# tags: node, astro, static, frontend
+# tags: astro, static, frontend
 # icon: node
-# deploy_method: git
-# repo: https://github.com/withastro/astro
-# port: 4321
+# icon_slug: astro
+# icon_color: BC52EE
+# version: 6.3
+# port: 80
+# min_tier: free
 
 services:
   astro:
-    image: astro:latest
     environment:
       - NODE_ENV=production

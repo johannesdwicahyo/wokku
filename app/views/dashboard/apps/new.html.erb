@@ -1,41 +1,17 @@
-<div class="max-w-lg">
+<%# Standalone Create App page. Kept as a direct-link fallback;
+    the apps index opens the same form inside a modal via the
+    "+ NEW APP" button. %>
+<div class="container py-6 max-w-xl">
   <div class="mb-6">
-    <h1 class="text-2xl font-bold text-white"><%= t("dashboard.apps.create_app") %></h1>
-    <p class="mt-1 text-sm text-gray-500">Deploy a new application to one of your servers</p>
+    <a href="<%= dashboard_apps_path %>"
+       class="font-mono text-[11px] uppercase tracking-widest text-ink-soft hover:text-ink">
+      ← back to apps
+    </a>
+    <h1 class="mt-2 font-headline text-2xl font-extrabold text-ink"><%= t("dashboard.apps.create_app") %></h1>
+    <p class="mt-1 font-mono text-xs text-ink-soft">// deploy a new application to one of your servers</p>
   </div>
 
-  <%= form_with(model: @app, url: dashboard_apps_path, class: "bg-[#1E293B]/60 rounded-xl border border-[#334155]/50 p-6 space-y-5") do |f| %>
-    <% if @app.errors.any? %>
-      <div class="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-        <ul class="list-disc list-inside text-sm text-red-400 space-y-1">
-          <% @app.errors.full_messages.each do |msg| %>
-            <li><%= msg %></li>
-          <% end %>
-        </ul>
-      </div>
-    <% end %>
-
-    <div>
-      <%= f.label :name, class: "block text-xs text-gray-400 uppercase tracking-wider mb-1" %>
-      <%= f.text_field :name, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white font-mono text-sm focus:ring-green-500 focus:border-green-500", placeholder: "my-app", autofocus: true %>
-      <p class="mt-1 text-xs text-gray-600">Lowercase letters, numbers, and hyphens only</p>
-    </div>
-
-    <div>
-      <%= f.label :server_id, t("dashboard.apps.server"), class: "block text-xs text-gray-400 uppercase tracking-wider mb-1" %>
-      <%= f.select :server_id, @servers.map { |s| [s.name, s.id] }, { prompt: "Select a server" }, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white text-sm focus:ring-green-500 focus:border-green-500" %>
-    </div>
-
-    <%= render "dashboard/apps/dyno_tier_picker" %>
-
-    <div>
-      <%= f.label :deploy_branch, class: "block text-xs text-gray-400 uppercase tracking-wider mb-1" %>
-      <%= f.text_field :deploy_branch, class: "w-full rounded-md bg-[#0B1120] border-[#334155] text-white font-mono text-sm focus:ring-green-500 focus:border-green-500", placeholder: "main", value: "main" %>
-    </div>
-
-    <div class="flex items-center space-x-3 pt-2">
-      <%= f.submit t("dashboard.apps.create_app"), class: "px-4 py-2 bg-green-500 text-[#0B1120] text-sm font-semibold rounded-md hover:bg-green-400 transition cursor-pointer" %>
-      <%= link_to t("common.cancel"), dashboard_apps_path, class: "text-sm text-gray-500 hover:text-gray-400 transition" %>
-    </div>
-  <% end %>
+  <div class="border-1.5 border-ink bg-paper p-6">
+    <%= render "form", app: @app, servers: @servers %>
+  </div>
 </div>

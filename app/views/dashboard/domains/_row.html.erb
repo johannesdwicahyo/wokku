@@ -1,25 +1,46 @@
-<div id="<%= dom_id(domain) %>" class="px-6 py-3 flex items-center justify-between hover:bg-surface-container-high/30">
-  <div class="flex items-center space-x-3">
-    <span class="text-sm font-medium text-on-surface font-mono"><%= domain.hostname %></span>
-    <% if domain.ssl_enabled? %>
-      <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-primary"></span><span class="text-xs text-on-surface-variant">SSL</span></span>
-    <% end %>
-    <% if domain.dns_verified? %>
-      <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-primary"></span><span class="text-xs text-on-surface-variant">Verified</span></span>
-    <% else %>
-      <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-tertiary"></span><span class="text-xs text-on-surface-variant">Pending DNS</span></span>
-    <% end %>
+<div id="<%= dom_id(domain) %>" class="px-6 py-3 hover:bg-bg-deep transition-colors font-mono">
+  <div class="flex items-center justify-between gap-3 flex-wrap">
+    <div class="flex items-center gap-3 flex-wrap">
+      <span class="text-sm font-medium text-ink"><%= domain.hostname %></span>
+      <% if domain.ssl_enabled? %>
+        <span class="inline-flex items-center gap-1.5 text-xs text-success"><span class="w-1.5 h-1.5 bg-success"></span>ssl</span>
+      <% end %>
+      <% if domain.dns_verified? %>
+        <span class="inline-flex items-center gap-1.5 text-xs text-success"><span class="w-1.5 h-1.5 bg-success"></span>verified</span>
+      <% else %>
+        <span class="inline-flex items-center gap-1.5 text-xs text-warn"><span class="w-1.5 h-1.5 bg-warn"></span>pending dns</span>
+      <% end %>
+    </div>
+    <div class="flex items-center gap-3">
+      <% if domain.pending_action == "ssl_enable" %>
+        <%= render "dashboard/shared/spinning_button",
+            label: "Issuing SSL",
+            classes: "px-2 py-1 text-xs text-accent border-1.5 border-ink bg-bg-deep" %>
+      <% elsif !domain.ssl_enabled? %>
+        <%= button_to "enable_ssl", ssl_dashboard_app_domain_path(app, domain), method: :post,
+            data: { turbo_submits_with: "Issuing SSL…" },
+            class: "text-xs text-accent hover:underline transition cursor-pointer bg-transparent border-0" %>
+      <% end %>
+      <%= link_to "remove", dashboard_app_domain_path(app, domain), data: { turbo_method: :delete, turbo_confirm: "Remove #{domain.hostname}?" }, class: "text-xs text-dim hover:text-danger transition" %>
+    </div>
   </div>
-  <div class="flex items-center space-x-3">
-    <% if domain.pending_action == "ssl_enable" %>
-      <%= render "dashboard/shared/spinning_button",
-          label: "Issuing SSL",
-          classes: "px-2 py-1 text-xs text-primary border border-outline-variant/20 rounded-md bg-surface-container-low" %>
-    <% elsif !domain.ssl_enabled? %>
-      <%= button_to "Enable SSL", ssl_dashboard_app_domain_path(app, domain), method: :post,
-          data: { turbo_submits_with: "Issuing SSL…" },
-          class: "text-xs text-primary hover:text-primary/80 transition cursor-pointer" %>
-    <% end %>
-    <%= link_to "Remove", dashboard_app_domain_path(app, domain), data: { turbo_method: :delete, turbo_confirm: "Remove #{domain.hostname}?" }, class: "text-xs text-error/70 hover:text-error transition" %>
-  </div>
+
+  <%# Inline DNS hint when verification is pending — saves the user a
+      trip back to the add-domain panel to re-read the CNAME/A guidance. %>
+  <% unless domain.dns_verified? %>
+    <%
+      apex = !domain.hostname.include?(".") || domain.hostname.count(".") <= 1
+      wokku_target = "#{app.name}.wokku.cloud"
+    %>
+    <div class="mt-3 border-1.5 border-warn bg-warn-soft px-4 py-3 text-xs">
+      <p class="text-[10px] uppercase tracking-widest text-warn font-bold mb-2">// add this DNS record at your registrar</p>
+      <% if apex %>
+        <p class="text-ink-soft">Add an <span class="text-ink font-bold">A record</span> for <span class="text-ink"><%= domain.hostname %></span> → <span class="text-accent select-all"><%= app.server&.host %></span></p>
+        <p class="text-[10px] text-dim mt-1">Or ALIAS/ANAME to <span class="select-all"><%= wokku_target %></span> if your DNS provider supports CNAME flattening.</p>
+      <% else %>
+        <p class="text-ink-soft">Add a <span class="text-ink font-bold">CNAME</span> for <span class="text-ink"><%= domain.hostname %></span> → <span class="text-accent select-all"><%= wokku_target %></span></p>
+      <% end %>
+      <p class="text-[10px] text-dim mt-2">Propagation usually takes 5-30 minutes. The pill flips to "verified" once DNS resolves correctly.</p>
+    </div>
+  <% end %>
 </div>

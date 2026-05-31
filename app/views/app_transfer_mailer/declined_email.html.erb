@@ -1,3 +1,12 @@
-<h2><%= @transfer.to_user.email %> declined the transfer of <%= @app.name %></h2>
-
-<p>The app stays on your account and your billing is unchanged. You can send a new transfer request from the app page if you'd like.</p>
+<div class="wk-container">
+  <div class="wk-header">
+    <h1>// app_transfer_declined()</h1>
+    <h2><%= @transfer.to_user.email %> declined the transfer of <%= @app.name %>.</h2>
+  </div>
+  <div class="wk-body">
+    <p>The app stays on your account and your billing is unchanged. You can send a new transfer request from the app page if you'd like.</p>
+  </div>
+  <div class="wk-footer">
+    Wokku · Invoice-based billing · jakarta, id
+  </div>
+</div>

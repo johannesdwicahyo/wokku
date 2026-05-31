@@ -6,9 +6,10 @@ Rails.application.configure do
     policy.font_src    :self, :data, "https://fonts.gstatic.com"
     policy.img_src     :self, :data, :https
     policy.object_src  :none
-    policy.script_src  :self, "https://cdn.jsdelivr.net", "https://umami-inwz.wokku.cloud"
+    policy.script_src  :self, :unsafe_inline, "https://cdn.jsdelivr.net", "https://umami-inwz.wokku.cloud", "https://us.i.posthog.com", "https://us-assets.i.posthog.com", "https://eu.i.posthog.com", "https://eu-assets.i.posthog.com"
     policy.style_src   :self, :unsafe_inline, "https://fonts.googleapis.com"
-    policy.connect_src :self, "wss://wokku.cloud", "https://wokku.cloud", "https://umami-inwz.wokku.cloud"
+    policy.connect_src :self, "wss://wokku.cloud", "https://wokku.cloud", "https://umami-inwz.wokku.cloud", "https://us.i.posthog.com", "https://us-assets.i.posthog.com", "https://eu.i.posthog.com", "https://eu-assets.i.posthog.com"
+    policy.worker_src  :self, :blob
     policy.frame_src   :none
     policy.base_uri    :self
     policy.form_action :self,

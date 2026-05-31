@@ -4,6 +4,8 @@
 # category: monitoring
 # tags: metrics, dashboards, go
 # icon: monitor
+# icon_slug: grafana
+# icon_color: F46800
 # port: 3000
 
 services:

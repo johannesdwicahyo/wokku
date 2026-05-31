@@ -1,0 +1,12 @@
+{
+  "name": "wokku-cloud-visual-regression",
+  "private": true,
+  "description": "Playwright dev dependencies for /dashboard/* + public-page visual regression. Phase 3 backlog #15/#16.",
+  "scripts": {
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0"
+  }
+}

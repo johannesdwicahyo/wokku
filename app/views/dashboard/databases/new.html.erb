@@ -1,13 +1,13 @@
 <div class="max-w-lg">
   <div class="mb-6">
-    <h1 class="text-2xl font-headline text-on-surface">New Database</h1>
-    <p class="mt-1 text-sm text-outline">Provision a new database service</p>
+    <h2 class="font-mono text-3xl font-semibold tracking-tighter text-ink m-0"><span class="text-dim"># </span>new_database</h2>
+    <p class="mt-1 font-mono text-xs text-dim">// provision a new database service</p>
   </div>
 
-  <%= form_with(model: @database, url: dashboard_addons_path, class: "bg-surface-container-low rounded-xl border border-outline-variant/15 p-6 space-y-5") do |f| %>
+  <%= form_with(model: @database, url: dashboard_addons_path, class: "border-1.5 border-ink bg-paper p-6 space-y-5") do |f| %>
     <% if @database.errors.any? %>
-      <div class="bg-error-container/20 border border-error/20 rounded-lg p-4">
-        <ul class="list-disc list-inside text-sm text-error space-y-1">
+      <div class="border-1.5 border-danger bg-danger-soft p-4">
+        <ul class="list-disc list-inside font-mono text-sm text-danger space-y-1">
           <% @database.errors.full_messages.each do |msg| %>
             <li><%= msg %></li>
           <% end %>
@@ -16,23 +16,23 @@
     <% end %>
 
     <div>
-      <%= f.label :name, class: "block text-xs text-on-surface-variant uppercase tracking-wider mb-1" %>
-      <%= f.text_field :name, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface font-mono text-sm focus:ring-primary focus:border-primary", placeholder: "pg-main", autofocus: true %>
+      <%= f.label :name, class: "block font-mono text-[10px] text-dim uppercase tracking-widest mb-1.5" %>
+      <%= f.text_field :name, class: "w-full bg-bg border-1.5 border-ink text-ink font-mono text-sm px-3 py-2 focus:outline-none focus:border-accent", placeholder: "pg-main", autofocus: true %>
     </div>
 
     <div>
-      <%= f.label :service_type, "Type", class: "block text-xs text-on-surface-variant uppercase tracking-wider mb-1" %>
-      <%= f.select :service_type, %w[postgres mysql mongodb redis memcached elasticsearch rabbitmq].map { |t| [t.capitalize, t] }, { prompt: "Select type" }, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary" %>
+      <%= f.label :service_type, "Type", class: "block font-mono text-[10px] text-dim uppercase tracking-widest mb-1.5" %>
+      <%= f.select :service_type, %w[postgres mysql mongodb redis memcached elasticsearch rabbitmq].map { |t| [t.capitalize, t] }, { prompt: "Select type" }, class: "w-full bg-bg border-1.5 border-ink text-ink font-mono text-sm px-3 py-2 focus:outline-none focus:border-accent" %>
     </div>
 
     <div>
-      <%= f.label :server_id, "Server", class: "block text-xs text-on-surface-variant uppercase tracking-wider mb-1" %>
-      <%= f.select :server_id, @servers.map { |s| [s.name, s.id] }, { prompt: "Select a server" }, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface text-sm focus:ring-primary focus:border-primary" %>
+      <%= f.label :server_id, "Server", class: "block font-mono text-[10px] text-dim uppercase tracking-widest mb-1.5" %>
+      <%= f.select :server_id, @servers.map { |s| [s.name, s.id] }, { prompt: "Select a server" }, class: "w-full bg-bg border-1.5 border-ink text-ink font-mono text-sm px-3 py-2 focus:outline-none focus:border-accent" %>
     </div>
 
-    <div class="flex items-center space-x-3 pt-2">
-      <%= f.submit "Create Database", class: "px-4 py-2 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
-      <%= link_to "Cancel", dashboard_addons_path, class: "text-sm text-outline hover:text-on-surface-variant transition" %>
+    <div class="flex items-center gap-3 pt-2">
+      <%= f.submit "Create Database", class: "px-4 py-2 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer" %>
+      <%= link_to "Cancel", dashboard_addons_path, class: "font-mono text-sm text-dim hover:text-ink transition" %>
     </div>
   <% end %>
 </div>

@@ -32,6 +32,20 @@ class TemplateParser
       description: metadata["slogan"] || metadata["description"] || "",
       category: metadata["category"] || "uncategorized",
       icon: metadata["icon"] || "docker",
+      # Simple Icons brand slug (e.g. "nextdotjs", "rubyonrails"). When
+      # present, the gallery renders the real brand SVG via
+      # cdn.simpleicons.org instead of the generic emoji.
+      icon_slug: metadata["icon_slug"].to_s.strip.presence,
+      # Brand color for the simpleicons CDN — six hex chars, no leading
+      # `#`. simpleicons defaults to black on a light background; we
+      # pass a brand color so the icon stays recognizable on the dark
+      # surface. Fall back to neutral white when unset.
+      icon_color: metadata["icon_color"].to_s.strip.presence || "FFFFFF",
+      # Framework/app version surfaced as a small badge on cards. Keep
+      # short ("8.1", "11", "1.23"). The starter scaffold's actual
+      # framework version is the source of truth — this field exists
+      # so the gallery can advertise it.
+      version: metadata["version"].to_s.strip.presence,
       repo: metadata["documentation"] || "",
       branch: "main",
       tags: (metadata["tags"] || "").split(",").map(&:strip),

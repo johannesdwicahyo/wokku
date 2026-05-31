@@ -1,0 +1,26 @@
+<%= t("account_mailer.deletion_scheduled.heading", default: "Your Wokku account is scheduled for deletion") %>
+
+<%= t("account_mailer.deletion_scheduled.line_grace",
+       date: @grace_until,
+       default: "Your account and all its resources will be permanently deleted on #{@grace_until}.") %>
+
+<% if @apps.any? %>
+<%= t("account_mailer.deletion_scheduled.apps_header", default: "Apps that will be deleted:") %>
+<% @apps.each do |app| %>
+  - <%= app.name %>
+<% end %>
+<% end %>
+
+<% if @databases.any? %>
+<%= t("account_mailer.deletion_scheduled.databases_header", default: "Databases that will be deleted:") %>
+<% @databases.each do |db| %>
+  - <%= db.name %> (<%= db.service_type %>)
+<% end %>
+<% end %>
+
+<%= t("account_mailer.deletion_scheduled.line_balance",
+       balance: @balance,
+       default: "Your current balance of #{@balance} will be forfeit.") %>
+
+<%= t("account_mailer.deletion_scheduled.line_mistake",
+       default: "If this was a mistake, contact support@wokku.cloud before the deadline and we'll cancel the deletion.") %>

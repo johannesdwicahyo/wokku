@@ -4,6 +4,8 @@
 # category: monitoring
 # tags: monitoring, metrics, alerting, time-series
 # icon: monitoring
+# icon_slug: prometheus
+# icon_color: E6522C
 # port: 9090
 
 services:

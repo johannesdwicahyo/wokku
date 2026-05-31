@@ -23,40 +23,36 @@
         tier_limit_mb * container_count
       end
       mem_pct = total_limit ? (total_mem_mb / total_limit * 100).round(1) : @container_stats.sum { |s| s[:mem_percent] }
+      mem_bar = mem_pct > 80 ? "bg-danger" : mem_pct > 60 ? "bg-warn" : "bg-accent"
     %>
-    <div class="grid grid-cols-3 gap-4">
-      <div class="bg-surface-container-low rounded-md p-5">
-        <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-2">CPU Usage</p>
-        <span class="text-3xl font-bold text-on-surface font-headline"><%= "%.1f" % total_cpu %>%</span>
-        <div class="mt-3 h-1.5 bg-surface rounded-full overflow-hidden">
-          <div class="h-full bg-primary rounded-full" style="width: <%= [total_cpu, 100].min %>%"></div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div class="border-1.5 border-ink bg-paper px-5 py-5">
+        <p class="font-mono text-[10px] text-dim uppercase tracking-widest">cpu_usage</p>
+        <div class="font-mono text-3xl font-semibold text-ink tracking-tighter mt-2.5"><%= "%.1f" % total_cpu %> <span class="text-dim text-base">%</span></div>
+        <div class="mt-3 h-1.5 bg-bg border border-rule-soft relative">
+          <div class="absolute inset-0 bg-accent" style="width: <%= [total_cpu, 100].min %>%"></div>
         </div>
       </div>
-      <div class="bg-surface-container-low rounded-md p-5">
-        <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-2">Memory Usage</p>
-        <div class="flex items-end gap-2">
-          <span class="text-3xl font-bold text-on-surface font-headline"><%= "%.0f" % total_mem_mb %></span>
-          <span class="text-sm text-outline mb-1">MB<%= total_limit ? " / #{total_limit} MB" : "" %></span>
+      <div class="border-1.5 <%= mem_pct > 80 ? 'border-danger bg-danger-soft' : 'border-ink bg-paper' %> px-5 py-5">
+        <p class="font-mono text-[10px] <%= mem_pct > 80 ? 'text-danger' : 'text-dim' %> uppercase tracking-widest">memory_usage</p>
+        <div class="font-mono text-3xl font-semibold text-ink tracking-tighter mt-2.5">
+          <%= "%.0f" % total_mem_mb %> <span class="text-dim text-base">MB<%= total_limit ? " / #{total_limit}" : "" %></span>
         </div>
         <% if total_limit %>
-          <div class="mt-3 h-1.5 bg-surface rounded-full overflow-hidden">
-            <div class="h-full rounded-full <%= mem_pct > 80 ? 'bg-error' : mem_pct > 60 ? 'bg-tertiary' : 'bg-primary' %>" style="width: <%= [mem_pct, 100].min %>%"></div>
+          <div class="mt-3 h-1.5 bg-bg border border-rule-soft relative">
+            <div class="absolute inset-0 <%= mem_bar %>" style="width: <%= [mem_pct, 100].min %>%"></div>
           </div>
         <% end %>
       </div>
-      <div class="bg-surface-container-low rounded-md p-5">
-        <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-2">Containers</p>
-        <span class="text-3xl font-bold text-on-surface font-headline"><%= @container_stats.size %></span>
-        <p class="text-xs text-outline mt-1">
-          <% @container_stats.each_with_index do |s, i| %>
-            <span class="font-mono"><%= s[:name].sub("#{@app.name}.", "") %></span><%= i < @container_stats.size - 1 ? ", " : "" %>
-          <% end %>
+      <div class="border-1.5 border-ink bg-paper px-5 py-5">
+        <p class="font-mono text-[10px] text-dim uppercase tracking-widest">containers</p>
+        <div class="font-mono text-3xl font-semibold text-ink tracking-tighter mt-2.5"><%= @container_stats.size %></div>
+        <p class="font-mono text-[11px] text-dim mt-1">
+          <% @container_stats.each_with_index do |s, i| %><span><%= s[:name].sub("#{@app.name}.", "") %></span><%= i < @container_stats.size - 1 ? " · " : "" %><% end %>
         </p>
       </div>
     </div>
   <% else %>
-    <div class="bg-surface-container-low rounded-md p-6 text-center">
-      <p class="text-xs text-outline">No running containers.</p>
-    </div>
+    <div class="border-1.5 border-ink bg-paper px-5 py-6 text-center font-mono text-xs text-dim">// no running containers</div>
   <% end %>
 <% end %>

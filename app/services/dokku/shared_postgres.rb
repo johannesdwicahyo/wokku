@@ -1,169 +1,114 @@
-require "securerandom"
+# frozen_string_literal: true
+
 require "shellwords"
 
 module Dokku
-  # Shared Postgres cluster for free-tier databases. One Dokku postgres
-  # container per server (name: SHARED_CONTAINER_NAME) hosts many tenant
-  # databases + roles.
-  #
-  # Security posture:
-  #   - every tenant gets its own role + database
-  #   - REVOKE CONNECT from PUBLIC on each db; only the owning role can connect
-  #   - per-role CONNECTION LIMIT, statement_timeout, temp_file_limit
-  #   - tenants CANNOT create extensions (no CREATE on their own db)
-  #   - no role ever gets SUPERUSER/CREATEROLE/CREATEDB
-  #
-  # Every SQL path goes through this class — do not run ad-hoc SQL against the
-  # shared cluster from controllers/jobs. That's the whole point of centralizing.
+  # Thin wrapper around the `dokku-shared-postgres` Dokku plugin. Each
+  # method maps to one `dokku shared-postgres:<subcommand>` invocation;
+  # all SQL, role/DB lifecycle, password generation, and quota
+  # enforcement live in the plugin. Previously this file built and ran
+  # the SQL itself via `dokku postgres:enter` — that code moved to the
+  # plugin once it shipped (see docs/superpowers/specs/2026-05-11-...).
   class SharedPostgres
-    SHARED_CONTAINER_NAME = "wokku-shared-free".freeze
-    DEFAULT_CONNECTION_LIMIT = 5
+    # Free-tier quota for new tenants; passed to the plugin via
+    # `shared-postgres:set-quota` after creation. DatabaseProvisioner
+    # reads this constant when seeding the DatabaseService row.
     DEFAULT_STORAGE_MB = 150
-    DEFAULT_STATEMENT_TIMEOUT = "30s".freeze
-    DEFAULT_TEMP_FILE_LIMIT = "100MB".freeze
 
-    class Error < StandardError; end
+    class ParseError < StandardError; end
 
     def initialize(client)
       @client = client
     end
 
-    # Idempotently ensure the shared host container exists. Safe to call
-    # every time a free-tier DB is provisioned.
-    def ensure_host!
-      return SHARED_CONTAINER_NAME if host_exists?
-      @client.run("postgres:create #{Shellwords.escape(SHARED_CONTAINER_NAME)}")
-      SHARED_CONTAINER_NAME
+    # Provisions a new tenant via the plugin and returns the parsed
+    # connection details for DatabaseService persistence.
+    #   { connection_url:, role:, db:, password: }
+    def provision_tenant!(slug:)
+      output = @client.run("shared-postgres:create #{Shellwords.escape(slug)}", timeout: 60)
+      parse_connection_url(output)
     end
 
-    def host_exists?
-      output = @client.run("postgres:list") rescue ""
-      output.lines.map(&:strip).any? { |l| l == SHARED_CONTAINER_NAME || l.start_with?("#{SHARED_CONTAINER_NAME} ") }
+    # Tears down a tenant's role + DB on the host. Idempotent: a missing
+    # tenant returns silently (the plugin emits "tenant 'X' not found"
+    # on stderr; we swallow that case and re-raise anything else).
+    def destroy_tenant!(slug:)
+      @client.run("shared-postgres:destroy #{Shellwords.escape(slug)} -f", timeout: 60)
+    rescue Dokku::Client::CommandError => e
+      raise unless e.message.match?(/not found/i)
     end
 
-    # Provision a new tenant inside the shared cluster. Returns the
-    # attributes needed to save a DatabaseService row + build a connection
-    # string for the owning app.
-    def provision_tenant!(slug:, connection_limit: DEFAULT_CONNECTION_LIMIT)
-      ensure_host!
-      role_name = generate_role_name(slug)
-      db_name = generate_db_name(slug)
-      password = SecureRandom.urlsafe_base64(24)
-
-      sql = build_provision_sql(role_name: role_name, db_name: db_name, password: password, connection_limit: connection_limit)
-      exec_sql!(sql)
-
-      {
-        role_name: role_name,
-        db_name: db_name,
-        password: password,
-        connection_limit: connection_limit,
-        host_container: SHARED_CONTAINER_NAME
-      }
+    # Plugin info dump for a single tenant. Returns the key:value pairs
+    # as a Hash with snake_cased symbol keys.
+    def info(slug)
+      output = @client.run("shared-postgres:info #{Shellwords.escape(slug)}")
+      parse_info_block(output)
     end
 
-    # Tear down a tenant's DB + role. Called on DatabaseService#destroy.
-    def destroy_tenant!(role_name:, db_name:)
-      return unless valid_identifier?(role_name) && valid_identifier?(db_name)
-      sql = <<~SQL
-        REVOKE CONNECT ON DATABASE #{quote(db_name)} FROM PUBLIC;
-        SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '#{db_name}';
-        DROP DATABASE IF EXISTS #{quote(db_name)};
-        DROP ROLE IF EXISTS #{quote(role_name)};
-      SQL
-      exec_sql!(sql)
+    # Sets the per-tenant size cap in MB. `megabytes` is coerced via .to_i,
+    # so callers can safely pass user input.
+    def set_quota!(slug:, megabytes:)
+      @client.run("shared-postgres:set-quota #{Shellwords.escape(slug)} #{megabytes.to_i}")
     end
 
-    # Returns {db_name => bytes} for quota monitoring.
-    def database_sizes
-      output = exec_sql!(%q{SELECT datname || ':' || pg_database_size(datname) FROM pg_database WHERE datname NOT IN ('postgres', 'template0', 'template1');})
-      output.lines.filter_map do |line|
-        parts = line.strip.split(":", 2)
-        [ parts[0], parts[1].to_i ] if parts.size == 2 && parts[1].match?(/\A\d+\z/)
-      end.to_h
+    # Clears a per-tenant size cap; tenant reverts to the plugin's default.
+    def unset_quota!(slug:)
+      @client.run("shared-postgres:unset-quota #{Shellwords.escape(slug)}")
     end
 
-    # Revoke INSERT on all tables in a tenant DB (soft-suspend on quota overrun).
-    # Reads remain allowed so the user can still dump their data.
-    def revoke_writes!(role_name:, db_name:)
-      return unless valid_identifier?(role_name) && valid_identifier?(db_name)
-      sql = <<~SQL
-        \\c #{quote(db_name)}
-        REVOKE INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public FROM #{quote(role_name)};
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE INSERT, UPDATE, DELETE ON TABLES FROM #{quote(role_name)};
-      SQL
-      exec_sql!(sql)
+    # Runs the plugin's quota sweep across all tenants on the host and
+    # returns one Hash per tenant. SharedDatabaseQuotaJob consumes this
+    # to update billing/notification state in Rails.
+    #
+    # Expected per-line format (whitespace-delimited):
+    #   <name> <size_mb>MB <quota_mb>MB over=<bool> revoked=<bool>
+    def check_quotas!
+      output = @client.run("shared-postgres:check-quotas", timeout: 120)
+      parse_quota_report(output)
     end
 
-    def restore_writes!(role_name:, db_name:)
-      return unless valid_identifier?(role_name) && valid_identifier?(db_name)
-      sql = <<~SQL
-        \\c #{quote(db_name)}
-        GRANT INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO #{quote(role_name)};
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT INSERT, UPDATE, DELETE ON TABLES TO #{quote(role_name)};
-      SQL
-      exec_sql!(sql)
-    end
-
-    # Per-database logical dump — used by the backup job. Never pg_dumpall.
-    def dump_command(db_name)
-      raise Error, "invalid db name" unless valid_identifier?(db_name)
-      %(postgres:connect #{Shellwords.escape(SHARED_CONTAINER_NAME)} -- pg_dump -d #{Shellwords.escape(db_name)} --format=custom)
-    end
-
-    def connection_string(role_name:, db_name:, password:)
-      "postgres://#{role_name}:#{password}@dokku-postgres-#{SHARED_CONTAINER_NAME}:5432/#{db_name}"
+    # Streams a tenant's pg_dump output through the given block.
+    def export(slug:, &block)
+      @client.run_streaming("shared-postgres:export #{Shellwords.escape(slug)}", &block)
     end
 
     private
 
-    def build_provision_sql(role_name:, db_name:, password:, connection_limit:)
-      <<~SQL
-        CREATE ROLE #{quote(role_name)} WITH LOGIN PASSWORD '#{password.gsub("'", "''")}' CONNECTION LIMIT #{connection_limit.to_i} NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
-        ALTER ROLE #{quote(role_name)} SET statement_timeout = '#{DEFAULT_STATEMENT_TIMEOUT}';
-        ALTER ROLE #{quote(role_name)} SET idle_in_transaction_session_timeout = '60s';
-        ALTER ROLE #{quote(role_name)} SET temp_file_limit = '#{DEFAULT_TEMP_FILE_LIMIT}';
-        ALTER ROLE #{quote(role_name)} SET work_mem = '4MB';
-        CREATE DATABASE #{quote(db_name)} OWNER #{quote(role_name)};
-        REVOKE ALL ON DATABASE #{quote(db_name)} FROM PUBLIC;
-        GRANT CONNECT, TEMPORARY ON DATABASE #{quote(db_name)} TO #{quote(role_name)};
-        REVOKE CREATE ON DATABASE #{quote(db_name)} FROM #{quote(role_name)};
-      SQL
+    def parse_connection_url(text)
+      url = text.lines.map(&:strip).find { |l| l.start_with?("postgres://") }
+      raise ParseError, "no connection URL in plugin output: #{text.inspect}" unless url
+      uri = URI.parse(url)
+      {
+        connection_url: url,
+        role: uri.user,
+        db: uri.path.sub(%r{\A/}, ""),
+        password: uri.password
+      }
     end
 
-    # Execute SQL against the shared host container as the Postgres superuser,
-    # via Dokku's `postgres:connect`. The actual command runs inside the Dokku
-    # postgres container so it has superuser privileges there — that's expected
-    # and safe because we control every SQL string that goes through here.
-    def exec_sql!(sql)
-      raise Error, "empty sql" if sql.to_s.strip.empty?
-      # `postgres:connect <name> -- psql --command` would split on shell args,
-      # so we pipe via stdin instead to preserve multi-statement SQL intact.
-      cmd = %(postgres:connect #{Shellwords.escape(SHARED_CONTAINER_NAME)})
-      @client.run(cmd, stdin: sql)
+    def parse_info_block(text)
+      text.lines.each_with_object({}) do |line, hash|
+        key, value = line.split(":", 2).map(&:strip)
+        next unless key && value && !value.empty?
+        sym = key.downcase.gsub(/\s+/, "_").to_sym
+        hash[sym] = value
+      end
     end
 
-    def generate_role_name(slug)
-      "u_#{safe_slug(slug)}_#{SecureRandom.hex(4)}"
-    end
+    QUOTA_LINE = /\A(\S+)\s+(\d+)MB\s+(\d+)MB\s+over=(true|false)\s+revoked=(true|false)\z/
 
-    def generate_db_name(slug)
-      "db_#{safe_slug(slug)}_#{SecureRandom.hex(4)}"
-    end
-
-    def safe_slug(slug)
-      slug.to_s.downcase.gsub(/[^a-z0-9]/, "_").gsub(/_+/, "_")[0, 24].sub(/\A_+|_+\z/, "")
-    end
-
-    # Postgres identifiers we generate are [a-z0-9_] — stricter than SQL allows,
-    # which makes quoting trivially safe.
-    def valid_identifier?(str)
-      str.is_a?(String) && str.match?(/\A[a-z][a-z0-9_]{0,62}\z/)
-    end
-
-    def quote(ident)
-      raise Error, "invalid identifier #{ident.inspect}" unless valid_identifier?(ident)
-      %("#{ident}")
+    def parse_quota_report(text)
+      text.lines.filter_map do |line|
+        m = line.strip.match(QUOTA_LINE)
+        next unless m
+        {
+          name: m[1],
+          size_mb: m[2].to_i,
+          quota_mb: m[3].to_i,
+          over_quota: m[4] == "true",
+          revoked: m[5] == "true"
+        }
+      end
     end
   end
 end

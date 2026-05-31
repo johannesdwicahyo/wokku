@@ -55,6 +55,12 @@ class Rack::Attack
     req.ip if req.path.start_with?("/webhooks/")
   end
 
+  # Lead-capture endpoint for the freelance-VPS-pain landing test.
+  # 5/min/IP is generous for humans, kills script floods.
+  throttle("vps_pain_lead/ip", limit: 5, period: 1.minute) do |req|
+    req.ip if req.path == "/vps_pain_lead" && req.post?
+  end
+
   # Custom 429 response
   self.throttled_responder = ->(req) {
     match_data = req.env["rack.attack.match_data"] || {}

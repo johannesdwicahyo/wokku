@@ -8,10 +8,8 @@ module Webhooks
       case event
       when "repo:push"
         handle_push(JSON.parse(@payload))
-      when "pullrequest:created", "pullrequest:updated"
-        handle_pull_request_open(JSON.parse(@payload))
-      when "pullrequest:fulfilled"
-        handle_pull_request_fulfilled(JSON.parse(@payload))
+      when "pullrequest:created", "pullrequest:updated", "pullrequest:fulfilled", "pullrequest:rejected"
+        handle_pull_request(JSON.parse(@payload), event)
       else
         head :ok
       end
@@ -57,48 +55,9 @@ module Webhooks
       head :ok
     end
 
-    def handle_pull_request_open(payload)
-      pr_id = payload.dig("pullrequest", "id")
-      repo_full_name = payload.dig("repository", "full_name")
-      branch = payload.dig("pullrequest", "source", "branch", "name")
-      commit_sha = payload.dig("pullrequest", "source", "commit", "hash")
-      pr_title = payload.dig("pullrequest", "title")
-
-      return head :ok unless repo_full_name && pr_id
-
-      parent_apps = AppRecord.where(git_provider: "bitbucket", git_repo_full_name: repo_full_name)
-      return head :ok unless parent_apps.any?
-
-      parent_apps.each do |parent_app|
-        PrPreviewDeployJob.perform_later(
-          parent_app_id: parent_app.id,
-          pr_number: pr_id,
-          branch: branch,
-          commit_sha: commit_sha,
-          pr_title: pr_title,
-          repo_full_name: repo_full_name
-        )
-      end
-
-      head :ok
-    end
-
-    def handle_pull_request_fulfilled(payload)
-      pr_id = payload.dig("pullrequest", "id")
-      repo_full_name = payload.dig("repository", "full_name")
-
-      return head :ok unless repo_full_name && pr_id
-
-      parent_apps = AppRecord.where(git_provider: "bitbucket", git_repo_full_name: repo_full_name)
-      return head :ok unless parent_apps.any?
-
-      parent_apps.each do |parent_app|
-        PrPreviewCleanupJob.perform_later(
-          parent_app_id: parent_app.id,
-          pr_number: pr_id
-        )
-      end
-
+    def handle_pull_request(payload, event_key)
+      event = Preview::Provider::Bitbucket.parse(payload, event_key: event_key)
+      Preview::EventDispatcher.handle(event)
       head :ok
     end
 

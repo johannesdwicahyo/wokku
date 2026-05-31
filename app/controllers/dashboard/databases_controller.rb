@@ -1,6 +1,7 @@
 module Dashboard
   class DatabasesController < BaseController
     include PlanEnforceable
+    before_action :reject_creation_during_deletion_pending, only: [ :create ]
     before_action :enforce_free_database_limit!, only: [ :create ]
 
     def index
@@ -14,7 +15,12 @@ module Dashboard
       @database = DatabaseService.new
       @apps = policy_scope(AppRecord).includes(:server).order(:name)
       @group_by = params[:group] || "type"
-      @tiers_by_type = ServiceTier.available.where.not(name: "shared_free")
+      # shared_free is offered for postgres only — the underlying
+      # dokku-shared-postgres plugin (v0.2.1, smoke-passed 2026-05-13)
+      # provisions a logical tenant inside a per-server shared host
+      # container. Listed alongside paid tiers so users see "Free"
+      # as a first-class plan, not a hidden option.
+      @tiers_by_type = ServiceTier.available
                                   .order(:monthly_price_cents)
                                   .group_by(&:service_type)
     end

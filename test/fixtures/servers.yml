@@ -5,6 +5,7 @@ one:
   ssh_user: dokku
   team: one
   status: 0
+  ingest_token: server_one_ingest_token_fixture_value
 
 two:
   name: Server Two
@@ -13,3 +14,4 @@ two:
   ssh_user: dokku
   team: two
   status: 0
+  ingest_token: server_two_ingest_token_fixture_value

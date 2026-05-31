@@ -1,5 +1,5 @@
 class HealthCheckJob < ApplicationJob
-  queue_as :default
+  queue_as :health
 
   def perform(server_id)
     server = Server.find(server_id)

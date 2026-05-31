@@ -1,6 +1,21 @@
 module Dashboard
   class DashboardController < BaseController
+    include OnboardingTourable
+
     def show
+      maybe_activate_onboarding!
+
+      if (s = flash[:deploy_template].presence) && TemplateRegistry.new.find(s)
+        return redirect_to dashboard_template_path(s, prefill: 1)
+      end
+
+      if !session[:fds_sent] &&
+         AppRecord.where(team: current_team).joins(:deploys)
+                  .where(deploys: { status: :succeeded }).exists?
+        flash.now[:posthog_event] = "first_deploy_succeeded"
+        session[:fds_sent] = true
+      end
+
       @apps = policy_scope(AppRecord).includes(:server, :domains).order(updated_at: :desc)
       @recent_apps = @apps.limit(6)
       # Collapse consecutive same-action+same-target runs into a single row

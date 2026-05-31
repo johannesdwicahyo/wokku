@@ -6,8 +6,12 @@ class PromoRedemption < ApplicationRecord
   STATUSES = %w[pending applied void].freeze
 
   belongs_to :promo_code
-  belongs_to :redeemer_user,         class_name: "User"
-  belongs_to :triggered_by_deposit,  class_name: "DepositTransaction", optional: true
+  belongs_to :redeemer_user, class_name: "User"
+  # `triggered_by_deposit_id` column still exists on the table (legacy
+  # audit data) but the `triggered_by_deposit` association was dropped
+  # in 1.8 along with the DepositTransaction model. The promo activation
+  # trigger is now an invoice payment (see Webhooks::IpaymuController +
+  # Promo::ApplyBonus).
 
   validates :status, inclusion: { in: STATUSES }
 

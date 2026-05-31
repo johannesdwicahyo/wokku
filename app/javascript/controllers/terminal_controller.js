@@ -5,7 +5,7 @@ import { FitAddon } from "@xterm/addon-fit"
 
 export default class extends Controller {
   static values = {
-    serverId: Number,
+    serverId: String,
     appName: String
   }
   static targets = ["container", "status"]
@@ -56,7 +56,11 @@ export default class extends Controller {
 
     this.term.onData((data) => {
       if (this.subscription) {
-        this.subscription.send({ type: "input", data: data })
+        // Encode as base64 to safely transmit binary/control characters (UTF-8 safe)
+        const bytes = new TextEncoder().encode(data)
+        let binary = ""
+        for (const b of bytes) binary += String.fromCharCode(b)
+        this.subscription.send({ type: "stdin", data: btoa(binary) })
       }
     })
 
@@ -78,16 +82,22 @@ export default class extends Controller {
     this.consumer = createConsumer()
 
     const params = { channel: "TerminalChannel", server_id: this.serverIdValue }
-    if (this.appNameValue) {
-      params.app_name = this.appNameValue
-    }
 
     this.subscription = this.consumer.subscriptions.create(
       params,
       {
         connected: () => {
-          this.setStatus("connected")
-          this.term.focus()
+          // Send start message once the WebSocket connection is established
+          const mode = this.appNameValue ? "enter" : "shell"
+          const target = this.appNameValue || null
+          this.subscription.send({
+            type: "start",
+            mode,
+            target,
+            argv: [],
+            cols: this.term.cols,
+            rows: this.term.rows
+          })
         },
         disconnected: () => {
           this.setStatus("disconnected")
@@ -99,20 +109,24 @@ export default class extends Controller {
         },
         received: (data) => {
           switch (data.type) {
-            case "output":
-              if (!this._connected) {
-                this._connected = true
-                this.setStatus("connected")
-              }
-              this.term.write(data.data)
+            case "ready":
+              this.setStatus("connected")
+              this.term.focus()
+              break
+            case "stdout": {
+              // Decode base64 output, handling full UTF-8
+              const binary = atob(data.data)
+              const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0))
+              this.term.write(new TextDecoder().decode(bytes))
+              break
+            }
+            case "exit":
+              this.term.write(`\r\n\x1b[33mProcess exited with code ${data.code}.\x1b[0m\r\n`)
+              this.setStatus("disconnected")
               break
             case "error":
-              this.term.write(`\r\n\x1b[31m${data.data}\x1b[0m\r\n`)
+              this.term.write(`\r\n\x1b[31m${data.message}\x1b[0m\r\n`)
               this.setStatus("error")
-              break
-            case "disconnect":
-              this.term.write(`\r\n\x1b[33m${data.reason}\x1b[0m\r\n`)
-              this.setStatus("disconnected")
               break
           }
         }

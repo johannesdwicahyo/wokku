@@ -1,1 +1,19 @@
-# See https://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
+# See https://www.robotstxt.org/robotstxt.html for documentation.
+# Wokku Cloud robots policy:
+#   - All marketing pages indexable (declared in sitemap.xml)
+#   - Authenticated surfaces blocked (/dashboard, /admin, Devise routes)
+#   - Per-spike paid-ad landings (/lp/*) blocked — also noindex'd at the
+#     page level. Layered defense: robots disallow + noindex meta +
+#     omitted from sitemap.
+
+User-agent: *
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /users/sign_in
+Disallow: /users/sign_up
+Disallow: /users/password
+Disallow: /users/confirmation
+Disallow: /users/unlock
+Disallow: /lp/
+
+Sitemap: https://wokku.cloud/sitemap.xml

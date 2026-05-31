@@ -1,0 +1,26 @@
+<section id="why" class="relative px-5 sm:px-8 md:px-14 py-20 md:py-32 bg-bg-deep">
+  <div class="absolute inset-0 bg-dotted opacity-40 pointer-events-none"></div>
+  <div class="relative max-w-[1180px] mx-auto">
+    <div class="font-mono text-xs text-accent tracking-widest uppercase mb-3.5"><%= t('why.eyebrow') %></div>
+    <h2 class="font-sans text-4xl sm:text-5xl md:text-6xl font-extrabold leading-[0.95] tracking-tight text-ink m-0 max-w-[920px]">
+      <%= t('why.headline_a') %><br>
+      <span class="text-accent"><%= t('why.headline_b') %></span>
+    </h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 mt-10 md:mt-14 border-1.5 border-ink rounded-xl overflow-hidden bg-paper">
+      <% items.each_with_index do |it, i| %>
+        <%= render Molecules::WhyCardComponent.new(
+              num: sprintf("%02d", i + 1),
+              tag: it[:tag], title: it[:title], body: it[:body],
+              dot: dot_for(i),
+              position: position_for(i)
+            ) %>
+      <% end %>
+    </div>
+
+    <div class="mt-7 flex items-center gap-3.5 font-mono text-[11px] text-dim tracking-tight">
+      <%= render Atoms::FlagComponent.new(size: :md) %>
+      <span><%= t('why.flag_caption') %></span>
+    </div>
+  </div>
+</section>

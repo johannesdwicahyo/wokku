@@ -1,26 +1,17 @@
 # name: Laravel
-# documentation: https://github.com/laravel/laravel
+# documentation: https://github.com/johannesdwicahyo/wokku-laravel-starter
 # slogan: PHP framework with elegant syntax
 # category: frameworks
 # tags: php, laravel, fullstack
 # icon: php
-# post_deploy: php artisan migrate --force
+# icon_slug: laravel
+# icon_color: FF2D20
+# version: 11
 # port: 80
+# generate_secrets: APP_KEY
 
 services:
   laravel:
-    image: laravel:latest
-    depends_on:
-      - postgres
-      - redis
-
-  postgres:
-    image: postgres:16
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-
-  redis:
-    image: redis:7
-
-volumes:
-  postgres-data:
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false

@@ -4,11 +4,19 @@ class DatabaseService < ApplicationRecord
   belongs_to :parent_service, class_name: "DatabaseService", optional: true
   has_many :child_services, class_name: "DatabaseService", foreign_key: :parent_service_id, dependent: :restrict_with_exception
 
+  belongs_to :upgrade_source, class_name: "DatabaseService", foreign_key: :upgrade_source_id, optional: true
+  has_one    :upgrade_target, class_name: "DatabaseService", foreign_key: :upgrade_source_id, dependent: :nullify
+
   has_many :app_databases, dependent: :destroy
   has_many :backups, dependent: :destroy
   has_many :app_records, through: :app_databases
+  has_many :stats_snapshots, class_name: "DatabaseStatsSnapshot", dependent: :destroy
 
-  enum :status, { running: 0, stopped: 1, creating: 2, error: 3 }
+  enum :status, {
+    running: 0, stopped: 1, creating: 2, error: 3,
+    upgrading_provisioning: 4, upgrading_migrating: 5, upgrading_cutover: 6,
+    upgrading_failed: 7, pending_destroy: 8
+  }
 
   # Live-update the addon card via Turbo Stream when status flips, so
   # the optimistic UI on /dashboard/addons and the per-app Resources
@@ -45,34 +53,15 @@ class DatabaseService < ApplicationRecord
     over_quota_at.present?
   end
 
-  # Billing segments for dedicated paid addons. Free shared tenants and
-  # tier=mini cache services skip this — they bill at 0¢/hr by definition.
-  before_destroy :close_billing_segment
+  # shared_free tier: take one final synchronous snapshot before teardown
+  # so the user has a recovery file in R2 for the policy's retention
+  # window (currently 30 days) even after they delete the service.
+  # Paid tiers skip this — their scheduled BackupJob already covers them.
+  before_destroy :snapshot_before_destroy_if_shared_free
 
-  def open_billing_segment(user:, app_record: app_records.first, at: Time.current)
-    return if shared?
-    rate = service_tier&.hourly_price_cents.to_f
-    return if rate.zero?
-    ResourceUsage.create!(
-      user_id: user.id,
-      resource_type: "database",
-      resource_id_ref: "DatabaseService:#{id}",
-      tier_name: tier_name,
-      price_cents_per_hour: rate,
-      started_at: at,
-      metadata: { name: name, type: service_type, app: app_record&.name }
-    )
-  end
-
-  def close_billing_segment(at: Time.current)
-    ResourceUsage.where(resource_id_ref: "DatabaseService:#{id}", stopped_at: nil)
-      .find_each { |u| u.stop!(at: at) }
-  end
-
-  def rotate_billing_segment(user:, at: Time.current)
-    close_billing_segment(at: at)
-    open_billing_segment(user: user, at: at)
-  end
+  # Database cost is bundled into the user's plan invoice under Phase 4.
+  # The old ResourceUsage open/close/rotate helpers were removed in 1.8
+  # along with the daily-debit rail.
 
   private
 
@@ -103,6 +92,22 @@ class DatabaseService < ApplicationRecord
 
   private
 
+  def snapshot_before_destroy_if_shared_free
+    return unless backup_policy[:on_destroy_snapshot]
+    return unless BackupSchedulerJob::BACKUPABLE_TYPES.include?(service_type)
+    return unless server&.backup_destination&.enabled?
+
+    BackupService.new(self).perform!
+  rescue StandardError => e
+    Rails.logger.warn("DatabaseService#snapshot_before_destroy_if_shared_free failed for #{id}: #{e.class}: #{e.message}")
+    Sentry.capture_exception(e, extra: { database_service_id: id, name: name }) if defined?(Sentry)
+    # Don't block the destroy — the user explicitly asked for it.
+  end
+
+  public
+
+  private
+
   def addon_stream_name
     "user_#{creator_id}_addons"
   end
@@ -127,6 +132,16 @@ class DatabaseService < ApplicationRecord
       target: ActionView::RecordIdentifier.dom_id(self),
       partial: "dashboard/databases/addon_card",
       locals: { addon: self }
+
+    # Per-app settings tab — the SharedAddonCardComponent is rendered with
+    # dom_id(db, :upgrade_panel) so it has a separate target from the
+    # addons-index card and won't clobber it.
+    app_records.each do |linked_app|
+      broadcast_replace_to addon_stream_name,
+        target: ActionView::RecordIdentifier.dom_id(self, :upgrade_panel),
+        renderable: Organisms::App::SharedAddonCardComponent.new(app: linked_app, database_service: self)
+    end
+
     # The per-app Resources page has its own row layout (price, Remove
     # button) that we don't want clobbered by the partial. Send a
     # whole-page refresh stream alongside the replace; Turbo only fires

@@ -70,7 +70,11 @@ export default class extends Controller {
     head.className = "flex items-center justify-between mb-1"
     const nameEl = document.createElement("span")
     nameEl.className = "text-sm font-semibold text-on-surface capitalize"
-    nameEl.textContent = tier.name
+    // `shared_free` is the internal name for the postgres free tier
+    // (shared host container); display it as "Free" so users don't see
+    // the implementation detail. Other tiers keep their underscored
+    // names (basic, standard, performance) which capitalize nicely.
+    nameEl.textContent = tier.name === "shared_free" ? "Free" : tier.name
     const priceEl = document.createElement("span")
     priceEl.className = "text-xs font-mono text-on-surface-variant"
     priceEl.textContent = this.formatIdr(tier.monthly_price_cents) + "/bln"

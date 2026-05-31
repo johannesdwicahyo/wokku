@@ -1,0 +1,54 @@
+<aside class="fixed inset-y-0 left-0 z-30 w-56 bg-bg-deep border-r-1.5 border-ink flex flex-col -translate-x-full lg:translate-x-0 transition-transform duration-200"
+       id="dashboard-sidebar"
+       data-mobile-nav-target="sidebar">
+  <div class="px-4 py-5 border-b-1.5 border-ink">
+    <%= render Atoms::LogoComponent.new(size: :sm, href: "/") %>
+    <% if version_line.present? %>
+      <div class="mt-2 font-mono text-[10px] text-dim tracking-widest"><%= version_line %></div>
+    <% end %>
+  </div>
+
+  <div class="py-4 flex-1 overflow-y-auto">
+    <div class="px-4 pb-2 font-mono text-[10px] text-dim tracking-widest uppercase"><%= workspace_label %></div>
+    <% nav.each do |item| %>
+      <%= render Molecules::SidebarNavItemComponent.new(
+            label: item[:label],
+            key: item[:key],
+            active: item[:active],
+            href: item[:href],
+            external: item.fetch(:external, false)
+          ) %>
+    <% end %>
+  </div>
+
+  <%# Admin tools sit above the account block — admins use them more often
+      than billing/settings on a working day, so don't bury them at the
+      bottom. Non-admins never see this block. %>
+  <% if admin.any? %>
+    <div class="py-4 border-t-1.5 border-ink">
+      <div class="px-4 pb-2 font-mono text-[10px] text-accent tracking-widest uppercase"><%= admin_label %></div>
+      <% admin.each do |item| %>
+        <%= render Molecules::SidebarNavItemComponent.new(
+              label: item[:label],
+              key: item[:key],
+              active: item[:active],
+              href: item[:href],
+              external: item.fetch(:external, false)
+            ) %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="py-4 border-t-1.5 border-ink">
+    <div class="px-4 pb-2 font-mono text-[10px] text-dim tracking-widest uppercase"><%= account_label %></div>
+    <% account.each do |item| %>
+      <%= render Molecules::SidebarNavItemComponent.new(
+            label: item[:label],
+            key: item[:key],
+            active: item[:active],
+            href: item[:href],
+            external: item.fetch(:external, false)
+          ) %>
+    <% end %>
+  </div>
+</aside>

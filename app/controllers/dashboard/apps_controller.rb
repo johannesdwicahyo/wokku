@@ -2,13 +2,32 @@ module Dashboard
   class AppsController < BaseController
     include Notifiable
     include PlanEnforceable
+
+    rescue_from PlanEnforceable::PlanQuotaError do |e|
+      redirect_to new_dashboard_app_path,
+        alert: "Your #{current_user.plan.name} plan allows #{e.allowed} #{e.size} boxes; you already have #{e.requested - 1}. Upgrade or pick a smaller size."
+    end
+
+    before_action :reject_creation_during_deletion_pending, only: [ :create ]
     before_action :enforce_free_container_limit!, only: [ :create ]
-    before_action :set_app, only: [ :show, :destroy, :restart, :stop, :start, :toggle_https, :toggle_maintenance, :transfer, :runtime_metrics_frame, :live_logs_frame, :resource_limits_frame ]
+    before_action :set_app, only: [ :show, :destroy, :restart, :stop, :start, :toggle_https, :toggle_maintenance, :toggle_cdn, :transfer, :unlock, :runtime_metrics_frame, :live_logs_frame, :resource_limits_frame ]
 
     def index
-      @apps = policy_scope(AppRecord).main_apps.includes(:server, :team, :domains)
-      @app = AppRecord.new
+      # Pre-populate for the inline "+ NEW APP" modal so the modal can
+      # render without a round-trip. Standalone /dashboard/apps/new still
+      # works for direct links. Set FIRST so the rescue below can't leave
+      # them nil — the modal renders on every successful index hit.
+      @app     = AppRecord.new
       @servers = policy_scope(Server)
+      @apps = policy_scope(AppRecord).main_apps
+                .includes(:server, :team, :domains, dyno_allocations: :dyno_tier)
+                .order(created_at: :desc)
+      @plan = current_user.plan
+      @box_usage = compute_box_usage(@apps)
+      @recent_activity = Activity.where(target_type: "AppRecord", target_id: @apps.map(&:id))
+                                 .order(created_at: :desc).limit(10)
+    rescue StandardError
+      @recent_activity = []
     end
 
     def show
@@ -53,10 +72,30 @@ module Dashboard
     def new
       @app = AppRecord.new
       @servers = policy_scope(Server)
+      @plan = current_user.current_plan
     end
 
     # GET /dashboard/apps/check_name?name=foo
     # Returns { available, suggestions } for the New App modal's
+    # Session-authenticated app search for the topbar Stimulus controller.
+    # `/api/v1/apps?q=` exists too but needs a Bearer token — the dashboard
+    # uses cookies, so we expose a sibling JSON endpoint here.
+    def search
+      authorize AppRecord
+      q = params[:q].to_s.strip
+      apps = policy_scope(AppRecord).main_apps
+      apps = apps.where("app_records.name ILIKE ?", "%#{ActiveRecord::Base.sanitize_sql_like(q)}%") if q.present?
+      apps = apps.order(:name).limit(8)
+      render json: apps.map { |a|
+        {
+          id: a.id,
+          name: a.name,
+          status: a.status,
+          url: dashboard_app_path(a)
+        }
+      }
+    end
+
     # live-validation field. Suggestions only computed when taken.
     def check_name
       raw = params[:name].to_s.strip.downcase
@@ -84,21 +123,32 @@ module Dashboard
     def create
       team = current_team
       server = policy_scope(Server).find(params[:app_record][:server_id])
-      @app = AppRecord.new(app_params.merge(team: team, creator: current_user, server: server, status: :created))
+
+      # Bundle v2: box_size drives both the quota check and the DynoTier.
+      # Falls back to "sleeping" (free tier) so hand-rolled POSTs without
+      # the new form field land on the cheapest available tier.
+      box_size = params.dig(:app_record, :box_size).presence || "sleeping"
+      shared_engines = params.dig(:app_record, :enabled_shared_engines) || []
+
+      @app = AppRecord.new(
+        app_params.merge(
+          team: team,
+          creator: current_user,
+          server: server,
+          status: :created,
+          box_size: box_size,
+          enabled_shared_engines: shared_engines
+        )
+      )
       authorize @app
 
+      enforce_plan_quota!(current_user, size: box_size, additional: 1)
+
       if @app.save
-        # Honour the user's tier choice from the create form. Without
-        # this, every app silently lands on free until the first deploy
-        # creates an allocation in DeployJob — meaning the Resource
-        # Limits panel shows the wrong number until then, and the user
-        # has to "Change Plan" after deploying instead of picking up-front.
-        #
-        # Server-side cap check: tiers with max_per_user (free → 1) fall
-        # back to the cheapest non-capped tier. The form already disables
-        # capped cards, so this only fires on a hand-rolled POST.
-        chosen_tier_id = params.dig(:app_record, :dyno_tier_id).presence
-        chosen_tier = chosen_tier_id ? DynoTier.find_by(id: chosen_tier_id) : nil
+        # Derive the DynoTier from box_size (Bundle v2 mapping).
+        # Falls back to the cheapest non-capped tier if no mapping exists.
+        tier_name = Plan::BOX_SIZE_TO_DYNO_TIER[box_size]
+        chosen_tier = tier_name ? DynoTier.find_by(name: tier_name) : nil
         if chosen_tier&.at_cap_for?(current_user, exclude_app: @app)
           chosen_tier = DynoTier.order(:monthly_price_cents).find { |t| !t.at_cap_for?(current_user, exclude_app: @app) }
         end
@@ -115,16 +165,42 @@ module Dashboard
         # round-trip doesn't block the redirect.
         ProvisionDokkuAppJob.perform_later(@app.id)
 
-        # Create DNS record: app-name.wokku.cloud → server IP
-        Cloudflare::Dns.new.create_app_record(@app.name, server.host) rescue nil
+        # Create DNS records on every enabled Wokku zone.
+        Cloudflare::Dns.for_each_enabled { |dns| dns.create_app_record(@app.name, server.host) } rescue nil
 
         # Grant git push access to creator via Dokku ACL
         if current_user.ssh_public_keys.any?
           GrantAppAclJob.perform_later(@app.id, current_user.id)
         end
 
+        # Bundle v2: provision dedicated DB/Redis requested at creation time.
+        # These are non-fatal — the box is already saved, so any UpgradeError
+        # surfaces as a warning flash rather than rolling back the create.
+        dedicated_db_engine = params.dig(:app_record, :dedicated_db_engine).presence
+        if dedicated_db_engine.present?
+          begin
+            DatabaseServiceUpgrade.call(app: @app, user: current_user, engine: dedicated_db_engine)
+          rescue UpgradeError => e
+            flash[:warning] = "App created, but dedicated #{dedicated_db_engine} could not be provisioned: #{e.message}"
+          end
+        end
+
+        if params.dig(:app_record, :add_dedicated_redis).present?
+          begin
+            DatabaseServiceUpgrade.call(app: @app, user: current_user, engine: "redis")
+          rescue UpgradeError => e
+            flash[:warning] = "App created, but dedicated Redis could not be provisioned: #{e.message}"
+          end
+        end
+
         track("app.created", target: @app)
         fire_team_event(@app.team, "app_created", app_name: @app.name)
+        # TODO: extract this first-app analytics guard to a shared concern at a 3rd callsite.
+        # Activation-funnel "started" signal — fires on the user's first app (generic create has no deploy queued yet; the template path does).
+        if current_user.app_records.count == 1
+          flash[:posthog_event] = "first_deploy_started"
+          flash[:posthog_props] = { app: @app.name }
+        end
         redirect_to dashboard_app_path(@app), notice: "App created successfully."
       else
         @servers = policy_scope(Server)
@@ -135,21 +211,50 @@ module Dashboard
 
     def destroy
       authorize @app
+      client = Dokku::Client.new(@app.server) rescue nil
+
+      # Snapshot exclusively-linked databases BEFORE we destroy the join rows.
+      # An "exclusive" DB is one only this app uses — destroying the app
+      # without destroying these would leave orphan postgres/redis services
+      # racking up billing (Rp 500/day each).
+      exclusive_dbs = @app.database_services.select { |db| db.app_records.where.not(id: @app.id).empty? }
+
       begin
-        client = Dokku::Client.new(@app.server)
-        Dokku::Apps.new(client).destroy(@app.name)
+        Dokku::Apps.new(client).destroy(@app.name) if client
       rescue Dokku::Client::CommandError, Dokku::Client::ConnectionError => e
         Rails.logger.warn("Failed to destroy #{@app.name} on Dokku: #{e.message}")
       end
-      # Clean up DNS record
-      Cloudflare::Dns.new.delete_app_record(@app.name) rescue nil
+
+      # Clean up DNS records on every Wokku zone.
+      Cloudflare::Dns.for_each_enabled { |dns| dns.delete_app_record(@app.name) } rescue nil
 
       app_name = @app.name
       app_team = @app.team
       @app.destroy
+
+      # Tear down the orphaned database services: drop the Dokku service
+      # then destroy the DatabaseService record (its before_destroy closes
+      # the billing segment so debits stop the same day).
+      destroyed_db_names = []
+      exclusive_dbs.each do |db|
+        begin
+          Dokku::Databases.new(client).destroy(db.service_type, db.name) if client
+        rescue Dokku::Client::CommandError, Dokku::Client::ConnectionError => e
+          Rails.logger.warn("Failed to destroy database #{db.name} on Dokku: #{e.message}")
+        end
+        db.destroy
+        destroyed_db_names << db.name
+      end
+
       track("app.destroyed", target: @app)
       fire_team_event(app_team, "app_deleted", app_name: app_name)
-      redirect_to dashboard_apps_path, notice: "App deleted successfully."
+
+      notice = if destroyed_db_names.any?
+        "App deleted. Also removed #{destroyed_db_names.size} linked #{'database'.pluralize(destroyed_db_names.size)}: #{destroyed_db_names.join(', ')}."
+      else
+        "App deleted successfully."
+      end
+      redirect_to dashboard_apps_path, notice: notice
     end
 
     # restart/stop/start used to be synchronous SSH calls that took up
@@ -182,14 +287,65 @@ module Dashboard
       redirect_to dashboard_app_path(@app)
     end
 
+    # Release Dokku's deploy lock. Synchronous because apps:unlock is
+    # a fast file-removal op (rm /home/dokku/<app>/dokku-deploy-lock),
+    # well under the SSH timeout. Use when a previous git push got
+    # interrupted (network drop, Docker Hub TLS timeout mid-pull) and
+    # left the lock in place — every subsequent push then 503s with
+    # "deploy lock in place; Run apps:unlock to release".
+    def unlock
+      authorize @app, :update?
+      Dokku::Apps.new(Dokku::Client.new(@app.server)).unlock(@app.name)
+      track("app.deploy_unlocked", target: @app)
+      redirect_to dashboard_app_path(@app), notice: "Deploy lock released — git push should work again."
+    rescue Dokku::Client::CommandError, Dokku::Client::ConnectionError => e
+      redirect_to dashboard_app_path(@app), alert: "Couldn't release deploy lock: #{e.message.lines.first&.strip}"
+    end
+
+    # One-click backup of the app's primary database. Convenience route
+    # for the BackupsSummaryCardComponent on the app overview tab —
+    # users with multi-DB apps still drop into the addon-scoped flow.
+    def backup_now
+      authorize @app, :update?
+      db = @app.primary_database
+
+      if db.nil?
+        return redirect_to dashboard_app_path(@app),
+          alert: "Attach a database to this app before triggering a backup."
+      end
+
+      if db.backup_limit_reached?
+        return redirect_to dashboard_app_path(@app),
+          alert: "Free tier backup limit reached. Upgrade to Solo or Pro for daily backups with retention."
+      end
+
+      BackupJob.perform_later(db.id)
+      track("app.backup_triggered", target: @app, metadata: { database_id: db.id })
+      redirect_to dashboard_app_path(@app), notice: "Backup started — refresh in a moment to see it."
+    end
+
     def toggle_https
       authorize @app, :update?
       client = Dokku::Client.new(@app.server)
-      client.run("redirect:set #{@app.name} https://#{@app.domains.first&.hostname || @app.name + '.wokku.cloud'}")
+      fallback_host = "#{@app.name}.#{Cloudflare::Dns.canonical_domain}"
+      client.run("redirect:set #{@app.name} https://#{@app.domains.first&.hostname || fallback_host}")
       track("app.https_enabled", target: @app)
       redirect_to dashboard_app_path(@app), notice: "HTTPS redirect enabled."
     rescue => e
       redirect_to dashboard_app_path(@app), alert: "Failed: #{e.message}"
+    end
+
+    # Flip the Cloudflare proxy on the app's DNS record. Persists the
+    # intended state immediately so the UI reflects the user's choice;
+    # the actual CF API call happens in UpdateAppCdnJob which rolls
+    # back the DB flag if the call fails.
+    def toggle_cdn
+      authorize @app, :update?
+      new_state = !@app.cloudflare_proxied?
+      @app.update!(cloudflare_proxied: new_state)
+      UpdateAppCdnJob.perform_later(@app.id, new_state)
+      msg = new_state ? "Cloudflare CDN turning on (DNS propagation may take a minute)." : "Cloudflare CDN turning off."
+      redirect_to dashboard_app_path(@app), notice: msg
     end
 
     # Initiate a pending transfer. Nothing flips until the target accepts
@@ -198,6 +354,15 @@ module Dashboard
     # the actual ownership swap (delegates to AppOwnershipTransfer).
     def transfer
       authorize @app, :destroy?
+
+      # GET renders the per-app transfer form + any pending outgoing
+      # transfer (Phase 3 backlog #7 — Settings sub-nav 'transfer' section).
+      if request.get?
+        @pending_transfer = AppTransfer.pending.where(app_record: @app)
+                                       .where("expires_at > ?", Time.current).first
+        return render :transfer
+      end
+
       target_email = params[:email].to_s.strip.downcase
       target = User.find_by("LOWER(email) = ?", target_email)
 
@@ -250,12 +415,25 @@ module Dashboard
 
     private
 
+    def compute_box_usage(apps)
+      usage = Hash.new(0)
+      apps.each do |app|
+        app.dyno_allocations.each do |alloc|
+          size = alloc.dyno_tier&.size_key
+          usage[size] += alloc.count if size
+        end
+      end
+      usage
+    end
+
     def set_app
       @app = AppRecord.find(params[:id])
     end
 
     def app_params
-      params.require(:app_record).permit(:name, :deploy_branch)
+      # :dedicated_db_engine and :add_dedicated_redis are controller-only params —
+      # they're not AppRecord columns and are handled directly in #create.
+      params.require(:app_record).permit(:name, :deploy_branch, :box_size, enabled_shared_engines: [])
     end
 
     # Try a few stable variations before falling back to a random suffix.
@@ -324,6 +502,10 @@ module Dashboard
       output.to_s.each_line do |line|
         data = JSON.parse(line)
         next unless data["Name"].start_with?("#{@app.name}.")
+        # Skip ephemeral deploy/upcoming containers — they exist briefly during
+        # a release. Including them inflated both the displayed count and the
+        # memory limit (tier_limit × N containers), confusing users.
+        next if data["Name"].match?(/\.(upcoming|deploy)-/)
         stats << { name: data["Name"], cpu_percent: data["CPUPerc"].to_f, mem_usage: data["MemUsage"],
                    mem_percent: data["MemPerc"].to_f, net_io: data["NetIO"], block_io: data["BlockIO"], pids: data["PIDs"] }
       end

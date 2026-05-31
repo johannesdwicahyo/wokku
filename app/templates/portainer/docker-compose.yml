@@ -4,6 +4,8 @@
 # category: developer-tools
 # tags: docker, containers, management, devops
 # icon: developer-tools
+# icon_slug: portainer
+# icon_color: 13BEF9
 # port: 9000
 
 services:

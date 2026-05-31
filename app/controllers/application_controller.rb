@@ -4,6 +4,13 @@ class ApplicationController < ActionController::Base
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
 
+  # Predicate used by shared/_analytics.html.erb to gate PostHog/Umami
+  # snippets. Extracted here so request specs can stub it to exercise the
+  # bridge without needing a real POSTHOG_API_KEY in the test environment.
+  helper_method def analytics_enabled?
+    Rails.env.production? && ENV["POSTHOG_API_KEY"].present?
+  end
+
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
 

@@ -14,6 +14,13 @@ module DocsHelper
         item = i if i["path"] == @path
       end
     end
-    item ? "#{item['title']} - Wokku Docs" : "Documentation - Wokku"
+    title = (@doc_title.presence) || item&.dig("title")
+    title ? "#{title} · Wokku Docs" : "Documentation · Wokku"
+  end
+
+  # Strip the first <h1> from rendered Markdown HTML so the article body
+  # doesn't double the title that DocHeaderComponent already shows.
+  def strip_first_h1(html)
+    html.to_s.sub(/<h1[^>]*>.*?<\/h1>\s*/im, "")
   end
 end

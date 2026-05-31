@@ -16,6 +16,18 @@ gem "turbo-rails"
 gem "stimulus-rails"
 # Use Tailwind CSS [https://github.com/rails/tailwindcss-rails]
 gem "tailwindcss-rails"
+# ViewComponent — atomic-design component system. Adopted 2026-05-16
+# for the brutalist landing redesign (feat/redesign-c-full). Will
+# expand to dashboard pages in subsequent phases.
+gem "view_component", "~> 3.20"
+# sitemap_generator — emits public/sitemap.xml + per-page hreflang
+# alternates for Google Search Console. Re-run via:
+#   bundle exec rake sitemap:refresh:no_ping
+gem "sitemap_generator", "~> 6.3"
+# fugit — cron expression parser. Used by ScheduledTask model to
+# validate user-supplied cron strings before writing them into the
+# app's app.json on the Dokku host.
+gem "fugit", "~> 1.11"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
@@ -46,6 +58,8 @@ gem "devise-two-factor"
 gem "rqrcode" # For QR code generation
 gem "pundit"
 gem "omniauth-github", "~> 2.0"
+gem "omniauth-gitlab"
+gem "omniauth-atlassian-bitbucket"
 gem "omniauth-google-oauth2"
 gem "omniauth-apple"
 gem "omniauth-rails_csrf_protection"
@@ -124,4 +138,11 @@ group :test do
   gem "simplecov", require: false
   # Mocking/stubbing (minitest 6 dropped built-in Mock/stub)
   gem "mocha"
+  # RSpec strangler-fig migration (started 2026-05-07). New tests go in
+  # spec/ using RSpec + FactoryBot; existing test/ Minitest stays until
+  # touched. See project_rspec_factorybot_migration.md memory note.
+  gem "rspec-rails"
+  gem "factory_bot_rails"
+  gem "shoulda-matchers", "~> 6.0"
+  gem "webmock"
 end

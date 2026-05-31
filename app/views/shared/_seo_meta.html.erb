@@ -1,0 +1,15 @@
+<%# Per-page SEO meta. Pages set content_for(:title) and (optionally)
+    content_for(:meta_description); everything else cascades from app-wide
+    defaults in seo.default.* (en/id). Set content_for(:noindex, true) on
+    pages that must NOT appear in Google (per-spike /lp/* variants,
+    /dashboard/*, etc.). %>
+
+<% page_title       = content_for?(:title)            ? content_for(:title)            : t("seo.default.title") %>
+<% page_description = content_for?(:meta_description) ? content_for(:meta_description) : t("seo.default.description") %>
+<% canonical_url    = content_for?(:canonical_url)    ? content_for(:canonical_url)    : request.original_url.split("?").first %>
+<% noindex          = content_for?(:noindex) %>
+
+<title><%= page_title %> · Wokku</title>
+<meta name="description" content="<%= page_description %>">
+<link rel="canonical" href="<%= canonical_url %>">
+<% if noindex %><meta name="robots" content="noindex,nofollow"><% end %>

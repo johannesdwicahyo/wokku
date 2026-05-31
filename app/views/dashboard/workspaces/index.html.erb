@@ -1,0 +1,48 @@
+<% content_for(:title, "Workspaces") %>
+
+<div class="space-y-6" data-controller="slide-panel">
+  <div class="flex flex-wrap items-baseline justify-between gap-4">
+    <%= render Atoms::HashHeaderComponent.new(
+          title: "workspaces",
+          kicker: "// personal · orgs · billing parent",
+          size: :md) %>
+    <%# Opens slide-panel modal; href stays as the no-JS fallback. %>
+    <%= link_to "+ new workspace", new_dashboard_workspace_path,
+          data: { action: "click->slide-panel#open" },
+          class: "px-3 py-1.5 border-1.5 border-ink bg-ink text-paper font-mono text-[11px] uppercase tracking-widest cursor-pointer" %>
+  </div>
+
+  <div class="border-1.5 border-ink bg-paper divide-y divide-rule-soft overflow-hidden font-mono">
+    <% @workspaces.each do |ws| %>
+      <% current = ws.id == current_team.id %>
+      <div class="px-5 py-3 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-8 h-8 border-1.5 border-ink bg-bg flex items-center justify-center text-xs text-ink-soft font-semibold">
+            <%= ws.name[0].upcase %>
+          </div>
+          <div class="min-w-0">
+            <p class="text-sm text-ink truncate">
+              <span class="font-semibold"><%= ws.name %></span>
+              <span class="ml-2 text-[10px] uppercase tracking-widest text-dim"><%= ws.kind %></span>
+              <% if current %>
+                <span class="ml-1 text-[10px] uppercase tracking-widest text-accent">// current</span>
+              <% end %>
+            </p>
+            <p class="text-[11px] text-dim">
+              <%= ws.plan&.name || "Free" %> · slug <code class="text-ink-soft"><%= ws.slug %></code>
+            </p>
+          </div>
+        </div>
+        <% unless current %>
+          <%= button_to "switch", switch_dashboard_workspace_path(ws), method: :post,
+                class: "px-3 py-1.5 border border-rule-soft text-dim font-mono text-[10px] uppercase tracking-widest hover:border-ink hover:text-ink" %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <%= render layout: "dashboard/shared/slide_panel",
+             locals: { title: "new_workspace", subtitle: "org teams require a paid plan", size: "lg" } do %>
+    <%= render "form", workspace: @workspace || Team.new, paid_plans: @paid_plans || Plan.where.not(key: "free").order(:price_idr) %>
+  <% end %>
+</div>

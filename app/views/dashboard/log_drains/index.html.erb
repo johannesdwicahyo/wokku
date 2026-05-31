@@ -1,0 +1,57 @@
+<% content_for :title, "Log drains — #{@app.name}" %>
+
+<%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :settings) do %>
+  <%= render Organisms::AppSettingsComponent.new(app: @app, active: :log_drains) do %>
+
+    <div class="border-1.5 border-ink bg-paper" data-controller="slide-panel">
+      <div class="px-6 py-4 border-b border-rule-soft flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <h2 class="font-mono text-base font-semibold text-ink"># log_drains</h2>
+          <p class="font-mono text-xs text-dim mt-1">// forward application logs to an external service</p>
+        </div>
+        <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer">+ add_drain</button>
+      </div>
+
+      <% if @log_drains.any? %>
+        <div class="divide-y divide-rule-soft">
+          <% @log_drains.each do |drain| %>
+            <div class="px-6 py-3 flex items-center justify-between gap-3 flex-wrap hover:bg-bg-deep transition-colors">
+              <div class="min-w-0">
+                <span class="font-mono text-sm text-ink"><%= drain.url %></span>
+                <div class="font-mono text-xs text-dim mt-0.5">type: <%= drain.drain_type %></div>
+              </div>
+              <%= link_to "remove", dashboard_app_log_drain_path(@app, drain),
+                    data: { turbo_method: :delete, turbo_confirm: "Remove this log drain?" },
+                    class: "font-mono text-xs text-dim hover:text-danger transition" %>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="p-4">
+          <%= render Organisms::EmptyStateComponent.new(
+                headline: "No log drains configured.",
+                body: "Forward this app's logs to a syslog server or HTTPS endpoint. Useful for Datadog, Better Stack, Papertrail, or your own log pipeline."
+              ) %>
+        </div>
+      <% end %>
+
+      <%= render layout: "dashboard/shared/slide_panel", locals: { title: "Add Log Drain", subtitle: "Forward logs to a syslog or HTTP endpoint" } do %>
+        <%= form_with(model: LogDrain.new, url: dashboard_app_log_drains_path(@app), class: "space-y-4") do |f| %>
+          <div>
+            <%= f.label :url, "Drain URL", class: "block font-mono text-[10px] text-dim uppercase tracking-widest font-bold mb-1" %>
+            <%= f.text_field :url, class: "w-full bg-bg border-1.5 border-ink text-ink font-mono text-sm px-3 py-2 focus:outline-none focus:border-accent", placeholder: "syslog://logs.example.com:514", autofocus: true %>
+          </div>
+          <div>
+            <label class="block font-mono text-[10px] text-dim uppercase tracking-widest font-bold mb-1">Type</label>
+            <%= combobox_tag "log_drain[drain_type]", [["Syslog", "syslog"], ["HTTPS", "https"]], placeholder: "Select a type" %>
+          </div>
+          <div class="flex items-center gap-2">
+            <%= f.submit "Add Drain", class: "px-4 py-2.5 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer" %>
+            <button type="button" data-action="click->slide-panel#close" class="px-4 py-2.5 font-mono text-sm text-ink border-1.5 border-ink bg-paper hover:bg-bg-deep transition-colors cursor-pointer">Cancel</button>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+
+  <% end %>
+<% end %>

@@ -1,53 +1,41 @@
-<%= render "dashboard/apps/tabs", app: @app %>
-
+<%#
+  Brutalist metrics (P3c of redesign-c-full, 2026-05-17). All Ruby
+  computation blocks, line_chart calls and routes preserved 1:1 from
+  show.OLD_DESIGN.html.erb — only presentation repainted (chart
+  colours swapped to the brutalist accent palette).
+%>
+<%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :runtime) do %>
+<%= render Organisms::AppRuntimeComponent.new(app: @app, active: :metrics) do %>
 <%# Processes %>
-<div class="bg-surface-container-low rounded-xl overflow-hidden mb-6">
-  <div class="px-6 py-4 border-b border-outline-variant/15 flex items-center justify-between">
+<div class="border-1.5 border-ink bg-paper mb-6">
+  <div class="px-6 py-4 border-b border-rule-soft flex items-center justify-between gap-3 flex-wrap">
     <div>
-      <h2 class="text-base font-semibold text-on-surface font-headline">Processes</h2>
-      <p class="text-sm text-outline mt-1">Running containers for <span class="font-mono"><%= @app.name %></span></p>
+      <h2 class="font-mono text-base font-semibold text-ink"># processes</h2>
+      <p class="font-mono text-xs text-dim mt-1">// running containers for <span class="text-ink"><%= @app.name %></span></p>
     </div>
-    <a href="<%= dashboard_app_metrics_path(@app) %>" data-turbo-action="replace" class="inline-flex items-center px-2.5 py-1 text-xs text-on-surface-variant border border-outline-variant/15 rounded-md hover:border-primary/50 hover:text-primary transition cursor-pointer">
-      <span class="material-symbols-outlined text-[16px] mr-1">refresh</span>
-      Refresh
-    </a>
+    <a href="<%= dashboard_app_metrics_path(@app) %>" data-turbo-action="replace" class="inline-flex items-center px-2.5 py-1 font-mono text-xs text-dim border-1.5 border-ink bg-paper hover:text-accent transition-colors cursor-pointer">↻ refresh</a>
   </div>
 
   <% if @processes.any? %>
-    <div class="divide-y divide-outline-variant/15">
+    <div class="divide-y divide-rule-soft">
       <% @processes.each do |proc| %>
-        <div class="px-6 py-4 flex items-center justify-between hover:bg-surface-container-high/30 transition">
-          <div class="flex items-center space-x-4">
-            <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-surface border border-outline-variant/15">
-              <% if proc[:type] == "web" %>
-                <span class="material-symbols-outlined text-primary text-[18px]">language</span>
-              <% else %>
-                <span class="material-symbols-outlined text-secondary text-[18px]">settings</span>
-              <% end %>
-            </div>
-            <div>
-              <span class="text-sm font-semibold text-on-surface font-mono"><%= proc[:type] %>.<%= proc[:index] %></span>
-              <div class="flex items-center space-x-2 mt-0.5">
-                <span class="text-xs text-outline font-mono">CID: <%= proc[:container_id] %></span>
-              </div>
-            </div>
+        <div class="px-6 py-4 flex items-center justify-between gap-3 flex-wrap hover:bg-bg-deep transition-colors font-mono">
+          <div class="min-w-0">
+            <span class="text-sm font-semibold text-ink"><%= proc[:type] %>.<%= proc[:index] %></span>
+            <div class="text-xs text-dim mt-0.5">cid: <%= proc[:container_id] %></div>
           </div>
-          <div class="flex items-center space-x-2">
+          <div class="flex items-center gap-2">
             <% if proc[:status] == "running" %>
-              <span class="w-2 h-2 rounded-full bg-primary"></span>
-              <span class="text-xs text-primary">Running</span>
+              <span class="w-1.5 h-1.5 bg-success"></span><span class="text-xs text-success">running</span>
             <% else %>
-              <span class="w-2 h-2 rounded-full bg-error"></span>
-              <span class="text-xs text-error"><%= proc[:status].capitalize %></span>
+              <span class="w-1.5 h-1.5 bg-danger"></span><span class="text-xs text-danger"><%= proc[:status].capitalize %></span>
             <% end %>
           </div>
         </div>
       <% end %>
     </div>
   <% else %>
-    <div class="px-6 py-8 text-center">
-      <p class="text-sm text-outline">No running processes.</p>
-    </div>
+    <div class="px-6 py-8 text-center font-mono text-sm text-dim">// no running processes</div>
   <% end %>
 </div>
 
@@ -80,66 +68,61 @@
     total_limit_mb = per_container_limit ? per_container_limit * @container_stats.size : nil
     mem_percent = total_limit_mb ? (total_mem_mb / total_limit_mb * 100).round(1) : total_mem_percent = @container_stats.sum { |s| s[:mem_percent] }
   %>
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-    <div class="bg-surface-container-low rounded-xl p-5">
-      <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-2">Total CPU</p>
-      <div class="flex items-end space-x-2">
-        <span class="text-3xl font-bold text-on-surface font-mono"><%= "%.2f" % total_cpu %>%</span>
-      </div>
-      <div class="mt-3 h-2 bg-surface rounded-full overflow-hidden">
-        <div class="h-full bg-primary rounded-full transition-all" style="width: <%= [total_cpu, 100].min %>%"></div>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+    <div class="border-1.5 border-ink bg-paper p-5">
+      <p class="font-mono text-[10px] text-dim uppercase tracking-widest mb-2">total_cpu</p>
+      <div class="font-mono text-3xl font-semibold text-ink tracking-tighter"><%= "%.2f" % total_cpu %> <span class="text-dim text-base">%</span></div>
+      <div class="mt-3 h-2 bg-bg border border-rule-soft relative">
+        <div class="absolute inset-0 bg-accent" style="width: <%= [total_cpu, 100].min %>%"></div>
       </div>
     </div>
-    <div class="bg-surface-container-low rounded-xl p-5">
-      <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-2">Memory Usage</p>
-      <div class="flex items-end space-x-2">
-        <span class="text-3xl font-bold text-on-surface font-mono"><%= "%.0f" % total_mem_mb %> MB</span>
-        <% if total_limit_mb %>
-          <span class="text-sm text-outline mb-1">/ <%= total_limit_mb >= 1024 ? "#{(total_limit_mb / 1024.0).round(1)} GB" : "#{total_limit_mb} MB" %></span>
-        <% end %>
+    <div class="border-1.5 border-ink bg-paper p-5">
+      <p class="font-mono text-[10px] text-dim uppercase tracking-widest mb-2">memory_usage</p>
+      <div class="font-mono text-3xl font-semibold text-ink tracking-tighter">
+        <%= "%.0f" % total_mem_mb %> <span class="text-dim text-base">MB<% if total_limit_mb %> / <%= total_limit_mb >= 1024 ? "#{(total_limit_mb / 1024.0).round(1)} GB" : "#{total_limit_mb} MB" %><% end %></span>
       </div>
       <% if total_limit_mb %>
-        <div class="mt-3 h-2 bg-surface rounded-full overflow-hidden">
-          <div class="h-full rounded-full transition-all <%= mem_percent > 80 ? 'bg-error' : mem_percent > 60 ? 'bg-tertiary' : 'bg-primary' %>" style="width: <%= [mem_percent, 100].min %>%"></div>
+        <div class="mt-3 h-2 bg-bg border border-rule-soft relative">
+          <div class="absolute inset-0 <%= mem_percent > 80 ? 'bg-danger' : mem_percent > 60 ? 'bg-warn' : 'bg-accent' %>" style="width: <%= [mem_percent, 100].min %>%"></div>
         </div>
       <% end %>
     </div>
-    <div class="bg-surface-container-low rounded-xl p-5">
-      <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-2">Containers</p>
-      <span class="text-3xl font-bold text-on-surface font-mono"><%= @container_stats.size %></span>
-      <p class="text-xs text-outline mt-2"><%= @container_stats.size %> running<%= per_container_limit ? " · #{per_container_limit} MB each" : "" %></p>
+    <div class="border-1.5 border-ink bg-paper p-5">
+      <p class="font-mono text-[10px] text-dim uppercase tracking-widest mb-2">containers</p>
+      <span class="font-mono text-3xl font-semibold text-ink tracking-tighter"><%= @container_stats.size %></span>
+      <p class="font-mono text-xs text-dim mt-2"><%= @container_stats.size %> running<%= per_container_limit ? " · #{per_container_limit} MB each" : "" %></p>
     </div>
   </div>
 
   <%# Per-Container Detail %>
-  <div class="bg-surface-container-low rounded-xl overflow-hidden mb-6">
-    <div class="px-6 py-4 border-b border-outline-variant/15">
-      <h2 class="text-base font-semibold text-on-surface font-headline">Container Resources</h2>
-      <p class="text-sm text-outline mt-1">Live resource usage per container</p>
+  <div class="border-1.5 border-ink bg-paper mb-6 overflow-x-auto">
+    <div class="px-6 py-4 border-b border-rule-soft">
+      <h2 class="font-mono text-base font-semibold text-ink"># container_resources</h2>
+      <p class="font-mono text-xs text-dim mt-1">// live resource usage per container</p>
     </div>
-    <table class="min-w-full">
+    <table class="min-w-full font-mono">
       <thead>
-        <tr class="border-b border-outline-variant/15">
-          <th class="px-6 py-3 text-left text-[10px] text-outline uppercase tracking-wider font-bold">Container</th>
-          <th class="px-6 py-3 text-left text-[10px] text-outline uppercase tracking-wider font-bold">CPU</th>
-          <th class="px-6 py-3 text-left text-[10px] text-outline uppercase tracking-wider font-bold">Memory</th>
-          <th class="px-6 py-3 text-left text-[10px] text-outline uppercase tracking-wider font-bold">Net I/O</th>
-          <th class="px-6 py-3 text-left text-[10px] text-outline uppercase tracking-wider font-bold">Block I/O</th>
-          <th class="px-6 py-3 text-left text-[10px] text-outline uppercase tracking-wider font-bold">PIDs</th>
+        <tr class="border-b border-rule-soft text-[10px] text-dim uppercase tracking-widest">
+          <th class="px-6 py-3 text-left font-semibold">Container</th>
+          <th class="px-6 py-3 text-left font-semibold">CPU</th>
+          <th class="px-6 py-3 text-left font-semibold">Memory</th>
+          <th class="px-6 py-3 text-left font-semibold">Net I/O</th>
+          <th class="px-6 py-3 text-left font-semibold">Block I/O</th>
+          <th class="px-6 py-3 text-left font-semibold">PIDs</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-outline-variant/15">
+      <tbody class="divide-y divide-rule-soft">
         <% @container_stats.each do |stat| %>
-          <tr class="hover:bg-surface-container-high/30 transition">
+          <tr class="hover:bg-bg-deep transition-colors">
             <td class="px-6 py-3">
-              <span class="text-sm font-mono text-on-surface"><%= stat[:name] %></span>
+              <span class="text-sm text-ink"><%= stat[:name] %></span>
             </td>
             <td class="px-6 py-3">
-              <div class="flex items-center space-x-2">
-                <div class="w-16 h-1.5 bg-surface rounded-full overflow-hidden">
-                  <div class="h-full bg-primary rounded-full" style="width: <%= [stat[:cpu_percent], 100].min %>%"></div>
+              <div class="flex items-center gap-2">
+                <div class="w-16 h-1.5 bg-bg border border-rule-soft relative">
+                  <div class="absolute inset-0 bg-accent" style="width: <%= [stat[:cpu_percent], 100].min %>%"></div>
                 </div>
-                <span class="text-sm font-mono text-on-surface-variant"><%= "%.2f" % stat[:cpu_percent] %>%</span>
+                <span class="text-sm text-ink-soft"><%= "%.2f" % stat[:cpu_percent] %>%</span>
               </div>
             </td>
             <td class="px-6 py-3">
@@ -148,58 +131,58 @@
                 container_mem_mb = container_mem_str.include?("GiB") ? (container_mem_str.to_f * 1024).round(0) : container_mem_str.to_f.round(0)
                 container_mem_pct = per_container_limit ? (container_mem_mb.to_f / per_container_limit * 100).round(1) : stat[:mem_percent]
               %>
-              <div class="flex items-center space-x-2">
-                <div class="w-16 h-1.5 bg-surface rounded-full overflow-hidden">
-                  <div class="h-full rounded-full <%= container_mem_pct > 80 ? 'bg-error' : container_mem_pct > 60 ? 'bg-tertiary' : 'bg-primary' %>" style="width: <%= [container_mem_pct, 100].min %>%"></div>
+              <div class="flex items-center gap-2">
+                <div class="w-16 h-1.5 bg-bg border border-rule-soft relative">
+                  <div class="absolute inset-0 <%= container_mem_pct > 80 ? 'bg-danger' : container_mem_pct > 60 ? 'bg-warn' : 'bg-accent' %>" style="width: <%= [container_mem_pct, 100].min %>%"></div>
                 </div>
-                <span class="text-sm font-mono text-on-surface-variant"><%= container_mem_mb %> MB<%= per_container_limit ? " / #{per_container_limit} MB" : "" %></span>
+                <span class="text-sm text-ink-soft"><%= container_mem_mb %> MB<%= per_container_limit ? " / #{per_container_limit} MB" : "" %></span>
               </div>
             </td>
-            <td class="px-6 py-3 text-sm font-mono text-on-surface-variant"><%= stat[:net_io] %></td>
-            <td class="px-6 py-3 text-sm font-mono text-on-surface-variant"><%= stat[:block_io] %></td>
-            <td class="px-6 py-3 text-sm font-mono text-on-surface-variant"><%= stat[:pids] %></td>
+            <td class="px-6 py-3 text-sm text-ink-soft"><%= stat[:net_io] %></td>
+            <td class="px-6 py-3 text-sm text-ink-soft"><%= stat[:block_io] %></td>
+            <td class="px-6 py-3 text-sm text-ink-soft"><%= stat[:pids] %></td>
           </tr>
         <% end %>
       </tbody>
     </table>
   </div>
 <% else %>
-  <div class="bg-surface-container-low rounded-xl p-6 mb-6 text-center">
-    <span class="material-symbols-outlined text-outline-variant text-[40px] mb-3">bar_chart</span>
-    <p class="text-sm text-on-surface-variant">Unable to fetch container metrics.</p>
-    <p class="text-xs text-outline mt-1">Ensure root SSH access is available on the server.</p>
+  <div class="border-1.5 border-ink bg-paper p-6 mb-6 text-center">
+    <p class="font-mono text-sm text-ink-soft">// unable to fetch container metrics</p>
+    <p class="font-mono text-xs text-dim mt-1">Ensure root SSH access is available on the server.</p>
   </div>
 <% end %>
 
 <%# Historical Charts (24h) %>
 <% if @metrics.any? %>
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-    <div class="bg-surface-container-low rounded-xl p-6">
-      <h3 class="text-[10px] text-outline uppercase tracking-wider font-bold mb-4">CPU Usage (24h)</h3>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+    <div class="border-1.5 border-ink bg-paper p-6">
+      <h3 class="font-mono text-[10px] text-dim uppercase tracking-widest mb-4">cpu_usage · 24h</h3>
       <%= line_chart @metrics.map { |m| [m.recorded_at, m.cpu_percent] },
-                     colors: ["#c0c1ff"],
+                     colors: ["#6C4CFF"],
                      library: {
-                       scales: { y: { min: 0, max: 100, grid: { color: "rgba(74,68,83,0.15)" }, ticks: { color: "#958e9e" } },
-                                 x: { grid: { color: "rgba(74,68,83,0.15)" }, ticks: { color: "#958e9e" } } },
+                       scales: { y: { min: 0, max: 100, grid: { color: "rgba(11,11,14,0.10)" }, ticks: { color: "#8A8A90" } },
+                                 x: { grid: { color: "rgba(11,11,14,0.10)" }, ticks: { color: "#8A8A90" } } },
                        plugins: { legend: { display: false } },
                        elements: { point: { radius: 0 }, line: { tension: 0.3 } }
                      } %>
     </div>
-    <div class="bg-surface-container-low rounded-xl p-6">
-      <h3 class="text-[10px] text-outline uppercase tracking-wider font-bold mb-4">Memory Usage (24h)</h3>
+    <div class="border-1.5 border-ink bg-paper p-6">
+      <h3 class="font-mono text-[10px] text-dim uppercase tracking-widest mb-4">memory_usage · 24h</h3>
       <%= line_chart @metrics.map { |m| [m.recorded_at, (m.memory_usage.to_f / 1024 / 1024).round(1)] },
-                     colors: ["#d2bbff"],
+                     colors: ["#9A82FF"],
                      library: {
-                       scales: { y: { min: 0, grid: { color: "rgba(74,68,83,0.15)" }, ticks: { color: "#958e9e" } },
-                                 x: { grid: { color: "rgba(74,68,83,0.15)" }, ticks: { color: "#958e9e" } } },
+                       scales: { y: { min: 0, grid: { color: "rgba(11,11,14,0.10)" }, ticks: { color: "#8A8A90" } },
+                                 x: { grid: { color: "rgba(11,11,14,0.10)" }, ticks: { color: "#8A8A90" } } },
                        plugins: { legend: { display: false } },
                        elements: { point: { radius: 0 }, line: { tension: 0.3 } }
                      } %>
     </div>
   </div>
 <% else %>
-  <div class="mt-6 bg-surface-container-low rounded-xl p-6 text-center">
-    <span class="material-symbols-outlined text-outline-variant text-[32px] mb-2">timeline</span>
-    <p class="text-xs text-outline">No historical data yet. Metrics are collected every 5 minutes.</p>
+  <div class="mt-6 border-1.5 border-ink bg-paper p-6 text-center">
+    <p class="font-mono text-xs text-dim">// no historical data yet — metrics are collected every 5 minutes</p>
   </div>
+<% end %>
+<% end %>
 <% end %>

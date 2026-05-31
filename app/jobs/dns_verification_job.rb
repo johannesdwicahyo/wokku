@@ -1,5 +1,5 @@
 class DnsVerificationJob < ApplicationJob
-  queue_as :default
+  queue_as :health
 
   def perform(domain_id)
     domain = Domain.find_by(id: domain_id)

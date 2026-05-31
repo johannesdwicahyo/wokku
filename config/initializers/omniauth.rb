@@ -13,6 +13,20 @@ Rails.application.config.middleware.use OmniAuth::Builder do
       scope: "user:email"
   end
 
+  if ENV["GITLAB_OAUTH_CLIENT_ID"].present?
+    provider :gitlab,
+      ENV["GITLAB_OAUTH_CLIENT_ID"],
+      ENV["GITLAB_OAUTH_CLIENT_SECRET"],
+      scope: "api read_user"
+  end
+
+  if ENV["BITBUCKET_OAUTH_CLIENT_ID"].present?
+    provider :bitbucket,
+      ENV["BITBUCKET_OAUTH_CLIENT_ID"],
+      ENV["BITBUCKET_OAUTH_CLIENT_SECRET"],
+      scope: "account pullrequest:write"
+  end
+
   # Apple Sign In — uncomment when credentials are ready
   # if ENV["APPLE_CLIENT_ID"].present?
   #   provider :apple,

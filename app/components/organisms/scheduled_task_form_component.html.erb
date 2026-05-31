@@ -1,0 +1,44 @@
+<%= form_with(model: [ :dashboard, app, task ], local: true,
+              class: "border-1.5 border-ink bg-paper p-5 max-w-2xl") do |f| %>
+  <div class="font-mono text-[11px] uppercase tracking-widest text-dim mb-4"># new_scheduled_task</div>
+
+  <% if task.errors.any? %>
+    <div class="border-1.5 border-danger bg-danger-soft text-danger p-3 mb-4 text-sm">
+      <% task.errors.full_messages.each do |msg| %>
+        <div><%= msg %></div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="mb-4">
+    <%= f.label :command, class: "block font-mono text-[11px] uppercase tracking-widest mb-1" %>
+    <%= f.text_field :command,
+          class: "block w-full border-1.5 border-ink px-3 py-2 font-mono text-sm bg-paper",
+          placeholder: "bundle exec rails runner ./bin/nightly_cleanup.rb",
+          required: true %>
+  </div>
+
+  <div class="mb-4">
+    <%= f.label :schedule, class: "block font-mono text-[11px] uppercase tracking-widest mb-1" %>
+    <%= f.text_field :schedule,
+          class: "block w-full border-1.5 border-ink px-3 py-2 font-mono text-sm bg-paper",
+          placeholder: "0 3 * * *",
+          required: true %>
+    <div class="font-mono text-[11px] text-dim mt-1">// cron expression. examples: "0 3 * * *" (3am daily) · "*/15 * * * *" (every 15m)</div>
+  </div>
+
+  <div class="mb-4">
+    <%= f.label :description, class: "block font-mono text-[11px] uppercase tracking-widest mb-1" %>
+    <%= f.text_field :description,
+          class: "block w-full border-1.5 border-ink px-3 py-2 text-sm bg-paper",
+          placeholder: "Optional — what this task does" %>
+  </div>
+
+  <div class="mb-5 flex items-center gap-2">
+    <%= f.check_box :enabled %>
+    <%= f.label :enabled, class: "font-mono text-sm" %>
+  </div>
+
+  <%= f.submit "Save scheduled task",
+        class: "border-1.5 border-ink bg-ink text-bg font-mono text-[11px] uppercase tracking-widest px-4 py-2 shadow-brutal cursor-pointer" %>
+<% end %>

@@ -4,6 +4,8 @@
 # category: productivity
 # tags: surveys, forms, node
 # icon: form
+# icon_slug: formbricks
+# icon_color: FFFFFF
 # port: 3000
 
 services:

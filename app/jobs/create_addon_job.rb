@@ -32,10 +32,8 @@ class CreateAddonJob < ApplicationJob
     end
     db.update!(status: :running)
 
-    # Open the billing segment now that the addon is live and linked to
-    # an app (the app's creator owns the meter). Free shared tenants
-    # and zero-rate tiers skip this internally.
-    db.open_billing_segment(user: app.creator, app_record: app) if app.creator
+    # 1.8: no more per-addon billing segments. Addon cost is bundled into
+    # the user's plan invoice.
 
     ApplyDatabaseTierJob.perform_later(db.id) if db.tier_name.present? && !db.shared?
 

@@ -23,6 +23,10 @@ class ServerPolicy < ApplicationPolicy
     manage?
   end
 
+  def dokku?
+    manage?  # admin-only — server-scoped passthrough can affect other tenants' apps on the same host
+  end
+
   def sync?
     manage?
   end

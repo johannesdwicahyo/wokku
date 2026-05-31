@@ -1,5 +1,5 @@
 class SyncServerJob < ApplicationJob
-  queue_as :default
+  queue_as :sync
 
   def perform(server_id)
     server = Server.find(server_id)
@@ -111,7 +111,18 @@ class SyncServerJob < ApplicationJob
       local_names = server.database_services.dedicated.where(service_type: service_type).pluck(:name)
 
       (remote_names - local_names).each do |name|
-        server.database_services.create!(name: name, service_type: service_type, status: :running)
+        # Sync-imported services on a multi-tenant Dokku host arrive
+        # with no creator and no app links. On wokku.cloud (where every
+        # legitimate service is provisioned through the dashboard), that
+        # combination is the OrphanDatabaseSweepJob's signature for
+        # "tear this down" — auto-recreating it just restarts the
+        # sweep/sync cycle until the underlying Dokku container is
+        # actually gone. Skip importing; if a real out-of-band service
+        # exists, an admin can claim it manually.
+        Rails.logger.info(
+          "SyncServerJob: skipping orphan import of #{service_type}:#{name} on #{server.host} " \
+          "— no creator, no app link"
+        )
       end
 
       (local_names - remote_names).each do |name|

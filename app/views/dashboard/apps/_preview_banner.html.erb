@@ -1,0 +1,17 @@
+<% if app.is_preview? && app.parent_app %>
+  <div class="border-1.5 border-accent bg-accent-soft px-4 py-3 mb-4">
+    <p class="font-mono text-xs text-ink">
+      // preview for
+      <% if app.parent_app.github_repo_full_name %>
+        <a href="https://github.com/<%= app.parent_app.github_repo_full_name %>/pull/<%= app.pr_number %>"
+           class="text-accent font-semibold hover:underline" target="_blank">PR #<%= app.pr_number %></a>
+        on <span class="text-ink"><%= app.parent_app.github_repo_full_name %></span>.
+      <% else %>
+        PR #<%= app.pr_number %> of <%= app.parent_app.name %>.
+      <% end %>
+      <% if app.last_commit_sha %>
+        last commit <span class="text-accent"><%= app.last_commit_sha.first(7) %></span>.
+      <% end %>
+    </p>
+  </div>
+<% end %>

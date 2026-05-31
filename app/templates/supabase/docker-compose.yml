@@ -4,6 +4,8 @@
 # category: platform
 # tags: baas, firebase-alt, postgres
 # icon: platform
+# icon_slug: supabase
+# icon_color: 3FCF8E
 # port: 8000
 
 services:

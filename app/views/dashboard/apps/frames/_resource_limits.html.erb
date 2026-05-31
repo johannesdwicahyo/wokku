@@ -4,26 +4,24 @@
     cpu_limit = @resources["default_limit_cpu"]
     any_limit = mem_limit.present? || cpu_limit.present?
   %>
-  <div class="bg-surface-container-low rounded-md overflow-hidden">
-    <div class="px-5 py-3 border-b border-outline-variant/10 flex items-center justify-between">
-      <p class="text-[10px] text-outline uppercase tracking-widest font-bold">Resource Limits</p>
-      <%= link_to "Change Plan", dashboard_app_resources_path(@app), class: "text-[10px] text-primary hover:underline font-semibold", data: { turbo_frame: "_top" } %>
+  <div class="border-1.5 border-ink bg-paper">
+    <div class="px-5 py-2.5 border-b border-rule-soft flex items-center justify-between font-mono text-[11px] text-dim tracking-widest uppercase">
+      <span>resource_limits</span>
+      <%= link_to "change_plan →", dashboard_app_resources_path(@app), class: "text-accent hover:underline normal-case tracking-tight", data: { turbo_frame: "_top" } %>
     </div>
     <% if any_limit %>
-      <div class="grid grid-cols-2 divide-x divide-outline-variant/10">
-        <div class="p-4 text-center">
-          <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Memory</p>
-          <span class="text-lg font-bold text-on-surface font-mono"><%= mem_limit || "—" %> MB</span>
+      <div class="grid grid-cols-2 divide-x divide-rule-soft">
+        <div class="px-4 py-4 text-center">
+          <p class="font-mono text-[10px] text-dim uppercase tracking-widest mb-1">memory</p>
+          <span class="font-mono text-lg font-semibold text-ink"><%= mem_limit || "—" %> MB</span>
         </div>
-        <div class="p-4 text-center">
-          <p class="text-[10px] text-outline uppercase tracking-wider font-bold mb-1">CPU</p>
-          <span class="text-lg font-bold text-on-surface font-mono"><%= vcpu_display(cpu_limit) %> vCPU</span>
+        <div class="px-4 py-4 text-center">
+          <p class="font-mono text-[10px] text-dim uppercase tracking-widest mb-1">cpu</p>
+          <span class="font-mono text-lg font-semibold text-ink"><%= vcpu_display(cpu_limit) %> vCPU</span>
         </div>
       </div>
     <% else %>
-      <div class="px-5 py-4 text-center">
-        <p class="text-xs text-outline">No explicit limits set — using container tier defaults.</p>
-      </div>
+      <div class="px-5 py-4 text-center font-mono text-xs text-dim">// no explicit limits — using container tier defaults</div>
     <% end %>
   </div>
 <% end %>

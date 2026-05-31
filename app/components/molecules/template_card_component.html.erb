@@ -1,0 +1,8 @@
+<div class="p-4 bg-paper border-1.5 border-ink rounded-lg flex flex-col gap-3.5" style="aspect-ratio: 1;">
+  <img src="<%= asset_path("icons/#{icon}.svg") rescue "/assets/icons/#{icon}.svg" %>" class="w-8 h-8" alt=""/>
+  <div class="mt-auto">
+    <div class="font-sans text-base font-bold text-ink tracking-tight"><%= name %></div>
+    <div class="font-mono text-[10px] text-dim mt-1 tracking-tight uppercase"><%= category %></div>
+    <div class="font-mono text-[10px] text-accent mt-1.5"><%= cmd %></div>
+  </div>
+</div>

@@ -1,0 +1,22 @@
+<div class="mt-10 px-5 py-4 border border-rule-soft rounded-md flex items-center justify-between gap-4 flex-wrap"
+     data-controller="feedback">
+  <div class="font-mono text-xs text-dim"><%= t('docs.feedback.prompt') %></div>
+  <div class="flex gap-2 items-center">
+    <button type="button"
+            data-action="click->feedback#vote"
+            data-value="up"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-rule-soft rounded-md font-mono text-xs text-ink-soft hover:border-success hover:text-success transition-colors">
+      👍 <%= t('docs.feedback.yes') %>
+    </button>
+    <button type="button"
+            data-action="click->feedback#vote"
+            data-value="down"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-rule-soft rounded-md font-mono text-xs text-ink-soft hover:border-danger hover:text-danger transition-colors">
+      👎 <%= t('docs.feedback.no') %>
+    </button>
+    <span class="font-mono text-[10px] text-dim ml-2 hidden md:inline">
+      <%= t('docs.feedback.or_ping') %>
+      <%= link_to "#{t('docs.feedback.whatsapp')} ↗", "#", class: "text-accent" %>
+    </span>
+  </div>
+</div>

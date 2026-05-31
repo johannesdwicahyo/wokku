@@ -4,6 +4,8 @@
 # category: communication
 # tags: chat, team, messaging, collaboration
 # icon: communication
+# icon_slug: mattermost
+# icon_color: 0058CC
 # port: 8065
 
 services:

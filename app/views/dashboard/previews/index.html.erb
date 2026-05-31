@@ -1,0 +1,104 @@
+<% content_for :title, "PR previews — #{@app.name}" %>
+
+<%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :deploy) do %>
+  <%= render Organisms::AppDeployComponent.new(app: @app, active: :previews) do %>
+
+    <section class="space-y-4">
+      <div class="border-1.5 border-ink bg-paper p-6">
+        <h3 class="font-mono text-base font-semibold text-ink mb-1"># pr_previews</h3>
+        <p class="font-mono text-xs text-dim mb-5">Spin up a throwaway environment for every pull request — same buildpack, isolated database, auto-destroyed when the PR closes.</p>
+
+        <%= form_with model: @app, url: dashboard_app_preview_settings_path(@app), method: :patch, data: { turbo: false }, class: "space-y-5" do |f| %>
+          <label class="flex items-center gap-2.5 cursor-pointer">
+            <%= f.check_box :preview_enabled, class: "border-1.5 border-ink text-accent focus:ring-accent/30 focus:ring-2 focus:ring-offset-0" %>
+            <span class="font-mono text-sm text-ink">Enable PR previews</span>
+          </label>
+
+          <div>
+            <span class="block font-mono text-[10px] font-bold text-dim uppercase tracking-widest mb-2">database strategy</span>
+            <div class="space-y-1.5">
+              <% %w[empty snapshot shared].each do |strategy| %>
+                <label class="flex items-center gap-2.5 cursor-pointer">
+                  <%= f.radio_button :database_strategy, strategy, class: "border-1.5 border-ink text-accent focus:ring-accent/30 focus:ring-2 focus:ring-offset-0" %>
+                  <span class="font-mono text-sm text-ink capitalize"><%= strategy %></span>
+                  <% if strategy == "shared" %>
+                    <span class="font-mono text-[11px] text-warn inline-flex items-center gap-1">⚠ shares prod data — destructive migrations affect prod</span>
+                  <% end %>
+                </label>
+              <% end %>
+            </div>
+          </div>
+
+          <p class="font-mono text-xs text-dim">
+            Concurrent preview limit: <strong class="text-ink">3</strong> per team. Auto-cleanup: sleeps after 7 days idle, destroys after 30 days idle.
+          </p>
+
+          <%= f.submit "Save", class: "px-4 py-2 bg-ink text-bg font-mono text-sm border-1.5 border-ink rounded-lg shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer" %>
+        <% end %>
+      </div>
+
+      <div class="border-1.5 border-ink bg-paper overflow-hidden">
+        <div class="px-6 pt-6 pb-4">
+          <h3 class="font-mono text-base font-semibold text-ink">// active_previews</h3>
+        </div>
+        <% if @previews.any? %>
+          <table class="w-full font-mono text-sm">
+            <thead class="border-y border-rule-soft text-[10px] uppercase tracking-widest text-dim">
+              <tr>
+                <th class="text-left px-6 py-3 font-semibold">PR</th>
+                <th class="text-left px-6 py-3 font-semibold">Branch</th>
+                <th class="text-left px-6 py-3 font-semibold">Status</th>
+                <th class="text-left px-6 py-3 font-semibold">URL</th>
+                <th class="text-left px-6 py-3 font-semibold">Last commit</th>
+                <th class="px-6 py-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @previews.each do |preview| %>
+                <tr class="border-t border-rule-soft hover:bg-bg-deep transition-colors">
+                  <td class="px-6 py-3 text-xs text-ink">#<%= preview.pr_number %></td>
+                  <td class="px-6 py-3 text-xs text-dim"><%= preview.deploy_branch %></td>
+                  <td class="px-6 py-3">
+                    <% color = case preview.status.to_s
+                       when "running" then "border-success text-success"
+                       when "deploying", "creating", "pending" then "border-warn text-warn"
+                       when "failed", "error" then "border-danger text-danger"
+                       when "sleeping" then "border-accent text-accent"
+                       else "border-rule-soft text-dim"
+                       end %>
+                    <span class="px-2 py-0.5 border text-[10px] font-bold uppercase tracking-widest <%= color %>"><%= preview.status %></span>
+                  </td>
+                  <td class="px-6 py-3 text-xs">
+                    <% if preview.preview_hostname %>
+                      <a href="https://<%= preview.preview_hostname %>" target="_blank" rel="noopener" class="text-accent hover:underline"><%= preview.preview_hostname %></a>
+                    <% else %>
+                      <span class="text-dim">—</span>
+                    <% end %>
+                  </td>
+                  <td class="px-6 py-3 text-xs text-dim">
+                    <%= preview.last_commit_at ? "#{time_ago_in_words(preview.last_commit_at)} ago" : "—" %>
+                  </td>
+                  <td class="px-6 py-3 text-right">
+                    <%= button_to "Destroy",
+                          dashboard_app_preview_path(@app, preview),
+                          method: :delete,
+                          data: { turbo_confirm: "Destroy preview ##{preview.pr_number}? This stops the dyno and removes the database." },
+                          class: "text-xs text-dim hover:text-danger transition cursor-pointer bg-transparent border-0" %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% else %>
+          <div class="px-6 pb-6">
+            <%= render Organisms::EmptyStateComponent.new(
+                  headline: "No active previews.",
+                  body: "Open a PR on #{@app.github_repo_full_name || 'your connected repo'} to deploy your first preview."
+                ) %>
+          </div>
+        <% end %>
+      </div>
+    </section>
+
+  <% end %>
+<% end %>

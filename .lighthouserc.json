@@ -1,0 +1,50 @@
+{
+  "$schema": "https://raw.githubusercontent.com/GoogleChrome/lighthouse-ci/main/docs/configuration.md",
+  "_comment": "Phase 1 task 20. Hard targets per the VPS-but-simpler spec §6: LCP < 2.5s, INP < 200ms, CLS < 0.1, Lighthouse Perf >= 90, SEO >= 95, A11y >= 90, Best Practices >= 90. Runs on each PR that touches public-page surfaces (see .github/workflows/lighthouse.yml).",
+  "ci": {
+    "collect": {
+      "url": [
+        "http://localhost:3000/",
+        "http://localhost:3000/pricing",
+        "http://localhost:3000/templates",
+        "http://localhost:3000/feedback",
+        "http://localhost:3000/lp/zero-ops",
+        "http://localhost:3000/lp/ai-native",
+        "http://localhost:3000/lp/flat-price",
+        "http://localhost:3000/lp/one-click-apps",
+        "http://localhost:3000/dashboard/apps",
+        "http://localhost:3000/dashboard/templates",
+        "http://localhost:3000/dashboard/billing",
+        "http://localhost:3000/dashboard/profile"
+      ],
+      "numberOfRuns": 3,
+      "puppeteerScript": "./lighthouse/puppeteer-auth.js",
+      "_comment_puppeteer": "Signs in via /dev/login before auditing /dashboard/* URLs. Requires WOKKU_ENABLE_DEV_LOGIN=1 on the Rails server.",
+      "settings": {
+        "preset": "desktop",
+        "_comment_preset": "Override per-PR via env LHCI_PRESET=mobile when we want a mobile audit. Desktop is the dev-loop default — closer to what we can hit on a Rails dev/test server.",
+        "chromeFlags": "--no-sandbox --headless=new"
+      }
+    },
+    "assert": {
+      "preset": "lighthouse:no-pwa",
+      "assertions": {
+        "categories:performance":    ["error", { "minScore": 0.90 }],
+        "categories:seo":            ["error", { "minScore": 0.95 }],
+        "categories:accessibility":  ["error", { "minScore": 0.90 }],
+        "categories:best-practices": ["error", { "minScore": 0.90 }],
+        "largest-contentful-paint":  ["error", { "maxNumericValue": 2500 }],
+        "interaction-to-next-paint": ["error", { "maxNumericValue": 200 }],
+        "cumulative-layout-shift":   ["error", { "maxNumericValue": 0.1 }],
+
+        "_comment_uses_text_compression": "Brotli/gzip is handled by Kamal proxy in prod, not by Rails directly. Skip in CI so dev-server runs don't trip.",
+        "uses-text-compression":          "off",
+        "uses-http2":                     "off",
+        "csp-xss":                        "off"
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}

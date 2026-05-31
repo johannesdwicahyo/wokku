@@ -27,7 +27,10 @@ module Dokku
       if domain
         add(app_name, domain)
       end
-      @client.run("letsencrypt:enable #{Shellwords.escape(app_name)}")
+      # 120s: Let's Encrypt verification involves DNS lookups, HTTP-01
+      # challenges, and certificate fetching. Real-world cold-cache runs
+      # routinely take 30-90s. Matches template_deployer's existing timeout.
+      @client.run("letsencrypt:enable #{Shellwords.escape(app_name)}", timeout: 120)
     end
   end
 end

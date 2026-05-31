@@ -1,35 +1,35 @@
+// ── Docs right-rail TOC: highlights the heading currently in view as the
+// reader scrolls. Uses IntersectionObserver with a top margin sized to the
+// fixed nav (~100px) so headings light up the moment they cross the chrome.
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = ["link"]
 
   connect() {
-    this.observer = new IntersectionObserver(
-      entries => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            this.setActive(entry.target.id)
-          }
-        })
-      },
-      { rootMargin: "-80px 0px -70% 0px" }
-    )
+    this.headings = this.linkTargets
+      .map((a) => document.getElementById(a.dataset.id))
+      .filter(Boolean)
 
-    this.linkTargets.forEach(link => {
-      const heading = document.getElementById(link.dataset.headingId)
-      if (heading) this.observer.observe(heading)
-    })
+    if (!("IntersectionObserver" in window) || !this.headings.length) return
+
+    this.io = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.target.offsetTop - b.target.offsetTop)
+        if (visible[0]) this.setActive(visible[0].target.id)
+      },
+      { rootMargin: "-100px 0px -65% 0px", threshold: [0, 1] },
+    )
+    this.headings.forEach((h) => this.io.observe(h))
   }
 
   disconnect() {
-    this.observer?.disconnect()
+    this.io?.disconnect()
   }
 
   setActive(id) {
-    this.linkTargets.forEach(link => {
-      const active = link.dataset.headingId === id
-      link.classList.toggle("text-primary", active)
-      link.classList.toggle("text-on-surface-variant", active && link.classList.contains("text-on-surface-variant"))
-    })
+    this.linkTargets.forEach((a) => a.classList.toggle("is-active", a.dataset.id === id))
   }
 }

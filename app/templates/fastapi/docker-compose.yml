@@ -1,22 +1,15 @@
 # name: FastAPI
-# documentation: https://github.com/tiangolo/full-stack-fastapi-template
-# slogan: Modern Python API framework with automatic docs
+# documentation: https://github.com/johannesdwicahyo/wokku-fastapi-starter
+# slogan: Modern Python API framework with automatic OpenAPI docs
 # category: frameworks
 # tags: python, fastapi, api
 # icon: python
-# post_deploy: alembic upgrade head
+# icon_slug: fastapi
+# icon_color: 009688
+# version: 0.115
 # port: 8000
 
 services:
   fastapi:
-    image: fastapi:latest
-    depends_on:
-      - postgres
-
-  postgres:
-    image: postgres:16
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-
-volumes:
-  postgres-data:
+    environment:
+      - PYTHONUNBUFFERED=1

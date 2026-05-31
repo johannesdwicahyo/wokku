@@ -4,6 +4,8 @@
 # category: security
 # tags: passwords, vault, rust
 # icon: security
+# icon_slug: vaultwarden
+# icon_color: 175DDC
 # port: 80
 
 services:

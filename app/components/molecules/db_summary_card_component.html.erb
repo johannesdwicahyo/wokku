@@ -1,0 +1,12 @@
+<div class="border-1.5 border-ink bg-paper p-4">
+  <div class="font-mono text-[10.5px] uppercase tracking-widest text-ink-soft mb-2">// postgres</div>
+  <% if db.nil? %>
+    <div class="text-sm text-dim">No database attached.</div>
+  <% else %>
+    <div class="font-headline text-2xl font-extrabold"><%= usage_mb %> <span class="text-sm text-dim font-medium">MB / <%= max_mb >= 1024 ? "#{max_mb / 1024} GB" : "#{max_mb} MB" %></span></div>
+    <div class="h-1.5 bg-bg-deep mt-2 relative">
+      <div class="absolute left-0 top-0 bottom-0 bg-accent" style="width: <%= [pct, 100].min %>%"></div>
+    </div>
+    <div class="font-mono text-[10px] text-dim mt-2"><%= connections %> conn · <%= max_conn %> max</div>
+  <% end %>
+</div>

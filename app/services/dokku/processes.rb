@@ -18,7 +18,10 @@ module Dokku
         raise ArgumentError, "Invalid process type: #{type}" unless type.to_s.match?(/\A[a-z][a-z0-9_]*\z/)
         "#{type}=#{count.to_i}"
       end.join(" ")
-      @client.run("ps:scale #{Shellwords.escape(app_name)} #{pairs}")
+      # Same PS_TIMEOUT (120s) as restart/stop/start: scale spins up new
+      # containers and waits for health checks. Pulling a fresh image on
+      # the new container can extend the wait further on cold caches.
+      @client.run("ps:scale #{Shellwords.escape(app_name)} #{pairs}", timeout: PS_TIMEOUT)
     end
 
     # Restart / stop / start can run longer than the Dokku::Client

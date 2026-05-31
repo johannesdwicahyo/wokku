@@ -4,6 +4,8 @@
 # category: developer-tools
 # tags: proxy, load-balancer, ingress, networking
 # icon: developer-tools
+# icon_slug: traefikproxy
+# icon_color: 24A1C1
 # port: 8080
 
 services:

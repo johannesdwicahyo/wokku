@@ -1,0 +1,109 @@
+name: Visual regression (Playwright)
+
+# Pixel-diff regression for public pages (existing Phase 1 baselines)
+# and authenticated dashboard surfaces. Phase 3 backlog #15 + #16.
+#
+# Signs in via /dev/login (Rack endpoint enabled by WOKKU_ENABLE_DEV_LOGIN=1
+# on the test server). See config/initializers/omniauth_dev_login.rb.
+#
+# Skipped on commits that don't touch UI / template / asset files so
+# backend-only PRs don't pay the screenshot-CI cost.
+#
+# Security note: this workflow uses NO github.event.* untrusted inputs.
+# All env values are either hardcoded or come from bundler-cached setup.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "app/views/**"
+      - "app/components/**"
+      - "app/javascript/**"
+      - "app/assets/**"
+      - "app/controllers/dashboard/**"
+      - "app/controllers/pages_controller.rb"
+      - "app/controllers/pages/**"
+      - "config/locales/**"
+      - "config/routes.rb"
+      - "spec/playwright/**"
+      - "playwright.config.ts"
+      - "package.json"
+      - ".github/workflows/visual.yml"
+
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: --health-cmd="pg_isready" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      - name: Install OS packages
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libpq-dev
+
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Playwright + browsers
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
+
+      - name: Prepare DB
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432
+        run: |
+          bin/rails db:test:prepare
+          bin/rails db:seed
+
+      - name: Precompile assets
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432
+          SECRET_KEY_BASE: dummy_secret_for_ci_only
+        run: bin/rails assets:precompile
+
+      - name: Boot Rails server
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432
+          SECRET_KEY_BASE: dummy_secret_for_ci_only
+          WOKKU_ENABLE_DEV_LOGIN: "1"
+        run: |
+          bin/rails server -e test -p 3000 -d
+          for i in $(seq 1 20); do
+            if curl -fsS http://localhost:3000/ > /dev/null; then
+              echo "Rails up after ${i}s"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Run Playwright visual tests
+        run: npx playwright test
+
+      - name: Upload diff report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

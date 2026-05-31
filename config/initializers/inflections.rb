@@ -14,3 +14,10 @@
 # ActiveSupport::Inflector.inflections(:en) do |inflect|
 #   inflect.acronym "RESTful"
 # end
+
+# (No custom inflections required.) The Preview::Provider::GitHub class
+# lives in `app/services/preview/provider/git_hub.rb` so Zeitwerk's
+# default camelize (`git_hub` → `GitHub`) handles it without a global
+# inflection rule. A `github` rule would conflict with eager-loading
+# the existing `app/controllers/github/` namespace, which Zeitwerk
+# would then try to load as `GitHub::CallbacksController`.
