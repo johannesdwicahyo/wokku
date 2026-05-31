@@ -35,6 +35,17 @@ module Dokku
       end
     end
 
+    # Convenience method: apply all resource limits for a DatabaseService record.
+    # Reads memory_mb and max_connections from the associated ServiceTier if present.
+    # Safe no-op when no tier limits are configured.
+    def apply(database_service)
+      tier = database_service.service_tier
+      return unless tier
+
+      apply_memory(database_service.service_type, database_service.name, memory_mb: tier.try(:memory_mb).to_i)
+      apply_max_connections(database_service.service_type, database_service.name, connections: tier.try(:max_connections).to_i)
+    end
+
     def restart(service_type, name)
       return unless SUPPORTED_RESTART.include?(service_type)
       @client.run("dokku #{service_type}:restart #{Shellwords.escape(name)}")

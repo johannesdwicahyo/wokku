@@ -1,0 +1,306 @@
+/* Docs-specific styles — opt-in, loaded by app/views/layouts/docs.html.erb. */
+
+/* ─────── prose ─────── */
+.prose-doc {
+  color: var(--color-ink-soft);
+  font-size: 16px;
+  line-height: 1.7;
+}
+.prose-doc > * + * { margin-top: 1.1em; }
+
+.prose-doc h2 {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  font-size: 26px;
+  line-height: 1.1;
+  letter-spacing: -0.045em;
+  color: var(--color-ink);
+  margin-top: 56px;
+  margin-bottom: 8px;
+  scroll-margin-top: 100px;
+}
+.prose-doc h2::before { content: '# '; color: var(--color-dim); }
+
+.prose-doc h3 {
+  font-family: 'Inter Tight', sans-serif;
+  font-weight: 700;
+  font-size: 19px;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  color: var(--color-ink);
+  margin-top: 36px;
+  margin-bottom: 4px;
+  scroll-margin-top: 100px;
+}
+
+.prose-doc p { margin: 0; }
+.prose-doc strong { color: var(--color-ink); font-weight: 600; }
+.prose-doc a {
+  color: var(--color-accent);
+  text-decoration: none;
+  border-bottom: 1px solid var(--color-accent-soft);
+}
+.prose-doc a:hover { border-bottom-color: var(--color-accent); }
+
+.prose-doc code:not(pre code) {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.86em;
+  background: var(--color-bg-deep);
+  color: var(--color-ink);
+  padding: 1px 6px;
+  border: 1px solid var(--color-rule-soft);
+  border-radius: 4px;
+}
+
+.prose-doc ul,
+.prose-doc ol { padding-left: 1.25em; margin: 0; }
+.prose-doc li + li { margin-top: 0.35em; }
+.prose-doc ul li { list-style: '— '; padding-left: 0.25em; }
+.prose-doc ol li::marker {
+  color: var(--color-dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85em;
+}
+.prose-doc hr { border: none; border-top: 1px solid var(--color-rule-soft); margin: 48px 0; }
+
+/* ─────── code blocks ─────── */
+.code-block {
+  background: var(--color-bg-deep);
+  border: 1.5px solid var(--color-ink);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.code-block pre {
+  margin: 0;
+  padding: 16px 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-ink);
+  overflow-x: auto;
+}
+.code-block .tok-comment { color: var(--color-dim); }
+.code-block .tok-cmd     { color: var(--color-hot); }
+.code-block .tok-flag    { color: var(--color-accent); }
+.code-block .tok-str     { color: var(--color-success); }
+.code-block .tok-num     { color: var(--color-accent); }
+.code-block .tok-key     { color: var(--color-ink); font-weight: 600; }
+
+/* ─────── sidebar nav link ─────── */
+.doc-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--color-ink-soft);
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  user-select: none;
+  transition: color 120ms, background-color 120ms;
+  text-decoration: none;
+}
+.doc-link:hover { color: var(--color-ink); }
+.doc-link.is-active {
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+  border-left-color: var(--color-accent);
+}
+.doc-link .marker { width: 12px; color: var(--color-dim); }
+.doc-link.is-active .marker { color: var(--color-accent); }
+
+/* ─────── right-rail TOC ─────── */
+.toc-link {
+  display: block;
+  padding: 5px 0 5px 14px;
+  border-left: 1.5px solid var(--color-rule-soft);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--color-ink-soft);
+  text-decoration: none;
+  transition: color 120ms, border-color 120ms, padding-left 120ms;
+}
+.toc-link.is-h3 {
+  padding-left: 26px;
+  font-size: 11.5px;
+  color: var(--color-dim);
+}
+.toc-link:hover {
+  color: var(--color-ink);
+  border-left-color: var(--color-ink);
+}
+.toc-link.is-active {
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  font-weight: 600;
+}
+
+/* ─────── collapsible category ─────── */
+details.cat > summary { list-style: none; }
+details.cat > summary::-webkit-details-marker { display: none; }
+details.cat > summary .caret { display: inline-block; transition: transform 150ms; }
+details.cat[open] > summary .caret { transform: rotate(90deg); }
+
+/* ─────── tab buttons ─────── */
+.tab-btn {
+  padding: 10px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--color-dim);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 120ms, border-color 120ms;
+  white-space: nowrap;
+  background: transparent;
+}
+.tab-btn:hover { color: var(--color-ink); }
+.tab-btn.is-active {
+  color: var(--color-ink);
+  border-bottom-color: var(--color-accent);
+}
+
+/* ─────── kbd ─────── */
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--color-ink);
+  /* wokku-cloud's brutalist white surface is `--color-paper`.
+     `--color-surface` is the Material dark navy from the dashboard. */
+  background: var(--color-paper);
+  border: 1.5px solid var(--color-ink);
+  border-radius: 4px;
+  box-shadow: 1px 1px 0 0 var(--color-ink);
+}
+
+/* ─────── tables in prose ─────── */
+.prose-doc table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1.5px solid var(--color-ink);
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 1.4em 0;
+  font-size: 14px;
+  background: var(--color-paper);
+}
+.prose-doc thead {
+  background: var(--color-bg-deep);
+}
+.prose-doc th,
+.prose-doc td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-rule-soft);
+  color: var(--color-ink);
+  vertical-align: top;
+}
+.prose-doc th {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-ink-soft);
+  text-transform: none;
+}
+.prose-doc tbody tr:last-child td { border-bottom: 0; }
+.prose-doc td + td,
+.prose-doc th + th { border-left: 1px solid var(--color-rule-soft); }
+.prose-doc tbody tr:hover td { background: var(--color-bg); }
+
+/* ─────── fenced code blocks (Rouge / plain) ─────── */
+.prose-doc pre {
+  margin: 0;
+  padding: 16px 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-ink);
+  background: var(--color-paper);
+  border: 1.5px solid var(--color-ink);
+  border-radius: 6px;
+  overflow-x: auto;
+}
+.prose-doc pre code,
+.prose-doc pre code * {
+  color: var(--color-ink);
+}
+.prose-doc .highlight,
+.prose-doc div.highlight {
+  background: transparent;
+  border-radius: 6px;
+}
+/* tabbed code panel: pre already sits inside a bordered tab, drop the
+   double border so it reads as one panel */
+.prose-doc [data-code-tabs-target="panel"] pre {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+}
+
+/* ─────── docs search dropdown ─────── */
+.docs-search-empty {
+  padding: 12px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--color-ink);
+}
+.docs-search-result {
+  display: block;
+  padding: 10px 16px;
+  text-decoration: none;
+  color: var(--color-ink);
+  transition: background-color 100ms;
+}
+.docs-search-result.is-divided { border-top: 1px solid var(--color-ink); }
+.docs-search-result:hover,
+.docs-search-result.is-active {
+  background: var(--color-accent-soft);
+}
+.docs-search-result__title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-ink);
+  letter-spacing: -0.005em;
+}
+.docs-search-result__excerpt {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─────── docs search input ─────── */
+.docs-search-input {
+  background: var(--color-paper);
+  border: 1.5px solid var(--color-ink);
+  border-radius: 6px;
+  color: var(--color-ink);
+  font-family: 'JetBrains Mono', monospace;
+}
+.docs-search-input::placeholder { color: var(--color-ink-soft); }
+.docs-search-input:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+.docs-search-results-panel {
+  background: var(--color-paper);
+  border: 1.5px solid var(--color-ink);
+  border-radius: 6px;
+  box-shadow: 4px 4px 0 var(--color-ink);
+}

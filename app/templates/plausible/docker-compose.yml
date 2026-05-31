@@ -4,6 +4,8 @@
 # category: analytics
 # tags: analytics, privacy, elixir
 # icon: analytics
+# icon_slug: plausibleanalytics
+# icon_color: FFFFFF
 # port: 8000
 # set_url: BASE_URL
 # generate_secrets: SECRET_KEY_BASE,TOTP_VAULT_KEY

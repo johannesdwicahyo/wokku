@@ -18,6 +18,7 @@
       { name: t("dashboard.nav.dashboard"), path: dashboard_root_path, pattern: "/dashboard", icon: "dashboard", exact: true },
       { name: t("dashboard.nav.apps"), path: dashboard_apps_path, pattern: "/dashboard/apps", icon: "terminal" },
       { name: t("dashboard.nav.addons"), path: dashboard_addons_path, pattern: "/dashboard/addons", icon: "extension" },
+      { name: t("dashboard.nav.deploys"), path: dashboard_deploys_path, pattern: "/dashboard/deploys", icon: "rocket" },
       { name: t("dashboard.nav.one_click_deploy"), path: dashboard_templates_path, pattern: "/dashboard/templates", icon: "rocket_launch" },
     ]
   %>
@@ -35,28 +36,16 @@
     <% end %>
     <% if current_user&.admin? %>
       <%
-        server_active = request.path.start_with?("/dashboard/servers")
-        server_classes = server_active ? "text-primary bg-surface-container-high border-r-2 border-primary font-semibold" : "text-outline hover:text-on-surface-variant hover:bg-surface transition-all"
-      %>
-      <a href="<%= dashboard_servers_path %>" class="flex items-center px-6 py-3 text-sm font-label <%= server_classes %>">
-        <span class="material-symbols-outlined mr-3 text-[20px]">storage</span>
-        <span class="font-medium"><%= t("dashboard.nav.servers") %></span>
-      </a>
-      <%
-        admin_active   = request.path == "/dashboard/admin"
+        # Single admin-console entry. The admin layout has its own sidebar
+        # with all 5 admin sections; duplicating servers + promo codes
+        # here confused the IA. Wokku logo in admin layout returns to
+        # dashboard.
+        admin_active   = request.path.start_with?("/admin")
         admin_classes  = admin_active ? "text-primary bg-surface-container-high border-r-2 border-primary font-semibold" : "text-outline hover:text-on-surface-variant hover:bg-surface transition-all"
       %>
-      <a href="<%= dashboard_admin_path %>" class="flex items-center px-6 py-3 text-sm font-label <%= admin_classes %>">
+      <a href="<%= admin_root_path %>" class="flex items-center px-6 py-3 text-sm font-label <%= admin_classes %>">
         <span class="material-symbols-outlined mr-3 text-[20px]">admin_panel_settings</span>
-        <span class="font-medium">Admin</span>
-      </a>
-      <%
-        promo_active  = request.path.start_with?("/dashboard/promo_codes")
-        promo_classes = promo_active ? "text-primary bg-surface-container-high border-r-2 border-primary font-semibold" : "text-outline hover:text-on-surface-variant hover:bg-surface transition-all"
-      %>
-      <a href="<%= dashboard_promo_codes_path %>" class="flex items-center px-6 py-3 text-sm font-label <%= promo_classes %>">
-        <span class="material-symbols-outlined mr-3 text-[20px]">redeem</span>
-        <span class="font-medium">Promo codes</span>
+        <span class="font-medium">Admin console →</span>
       </a>
     <% end %>
   </nav>
@@ -77,6 +66,18 @@
         <span class="text-xs font-medium font-label"><%= t("dashboard.nav.billing") %></span>
       </a>
     <% end %>
+    <a href="<%= dashboard_usage_path %>" class="flex items-center py-2 text-outline hover:text-on-surface-variant transition-all">
+      <span class="material-symbols-outlined mr-3 text-[18px]">monitoring</span>
+      <span class="text-xs font-medium font-label">Usage</span>
+    </a>
+    <a href="<%= dashboard_plan_path %>" class="flex items-center py-2 text-outline hover:text-on-surface-variant transition-all">
+      <span class="material-symbols-outlined mr-3 text-[18px]">layers</span>
+      <span class="text-xs font-medium font-label">Plan</span>
+    </a>
+    <a href="<%= dashboard_referrals_path %>" class="flex items-center py-2 text-outline hover:text-on-surface-variant transition-all">
+      <span class="material-symbols-outlined mr-3 text-[18px]">share</span>
+      <span class="text-xs font-medium font-label">Referrals</span>
+    </a>
     <a href="<%= dashboard_profile_path %>" class="flex items-center py-2 text-outline hover:text-on-surface-variant transition-all">
       <span class="material-symbols-outlined mr-3 text-[18px]">settings</span>
       <span class="text-xs font-medium font-label"><%= t("dashboard.nav.settings") %></span>

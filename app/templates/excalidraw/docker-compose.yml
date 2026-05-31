@@ -4,6 +4,8 @@
 # category: productivity
 # tags: whiteboard, drawing, collaboration, diagrams
 # icon: productivity
+# icon_slug: excalidraw
+# icon_color: 6965DB
 # port: 80
 
 services:

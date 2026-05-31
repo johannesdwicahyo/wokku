@@ -1,39 +1,39 @@
 <%= turbo_frame_tag "live_logs" do %>
-  <div class="bg-surface-container-lowest rounded-md overflow-hidden">
-    <div class="px-6 py-3 border-b border-outline-variant/10 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <h2 class="font-headline text-sm font-bold text-on-surface"><%= t("dashboard.apps.logs") %></h2>
+  <div class="border-1.5 border-ink bg-paper">
+    <div class="px-5 py-2.5 border-b border-rule-soft flex items-center justify-between gap-3 flex-wrap">
+      <div class="flex items-center gap-3 font-mono text-[11px] text-dim tracking-widest uppercase">
+        <span><%= t("dashboard.apps.logs") %></span>
         <% if @processes.any? %>
-          <span class="text-[10px] text-outline font-mono">
-            STREAMS: <%= @processes.map { |p| "#{p[:type]}.#{p[:index]}" }.join(", ") %>
-          </span>
+          <span class="normal-case tracking-tight">streams: <%= @processes.map { |p| "#{p[:type]}.#{p[:index]}" }.join(", ") %></span>
         <% end %>
-        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span><span class="text-[10px] text-secondary uppercase font-bold">Live</span></span>
+        <span class="inline-flex items-center gap-1.5 normal-case tracking-tight text-success">
+          <span class="w-1.5 h-1.5 bg-success"></span>live · tail
+        </span>
       </div>
       <%# data-turbo-frame=_top so the navigation escapes the
           live_logs frame wrapping this header. Without it Turbo tries
           to render the destination inside this frame and shows
           "Content missing" because the logs index doesn't have a
           matching frame id. %>
-      <%= link_to dashboard_app_logs_path(@app), data: { turbo_frame: "_top" }, class: "text-xs text-outline hover:text-primary transition" do %>
-        Full Logs <span class="material-symbols-outlined text-[14px] align-middle">open_in_new</span>
+      <%= link_to dashboard_app_logs_path(@app), data: { turbo_frame: "_top" }, class: "font-mono text-[11px] text-dim hover:text-accent transition-colors" do %>
+        full_logs ↗
       <% end %>
     </div>
-    <div class="p-4 font-mono text-xs leading-relaxed max-h-80 overflow-y-auto">
+    <div class="px-5 py-4 font-mono text-xs leading-relaxed max-h-80 overflow-y-auto">
       <% if @logs.any? %>
         <% @logs.each do |line| %>
-          <div class="py-0.5 text-on-surface-variant hover:text-on-surface transition">
+          <div class="py-0.5">
             <% if line.include?("ERROR") || line.include?("error") %>
-              <span class="text-error"><%= line %></span>
+              <span class="text-danger"><%= line %></span>
             <% elsif line.include?("WARN") || line.include?("warn") %>
-              <span class="text-tertiary"><%= line %></span>
+              <span class="text-warn"><%= line %></span>
             <% else %>
-              <%= line %>
+              <span class="text-ink-soft"><%= line %></span>
             <% end %>
           </div>
         <% end %>
       <% else %>
-        <p class="text-outline py-4 text-center">No recent logs.</p>
+        <p class="text-dim py-4 text-center">// no recent logs</p>
       <% end %>
     </div>
   </div>

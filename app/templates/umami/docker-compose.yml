@@ -4,6 +4,8 @@
 # category: analytics
 # tags: analytics, node, lightweight
 # icon: analytics
+# icon_slug: umami
+# icon_color: FFFFFF
 # port: 3000
 # generate_secrets: HASH_SALT,APP_SECRET
 

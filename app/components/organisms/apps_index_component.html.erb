@@ -1,0 +1,57 @@
+<div class="container py-6">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="font-headline text-2xl font-extrabold">Apps</h1>
+    <%# Opens the slide-panel rendered in apps/index.html.erb. The href
+        is the standalone /dashboard/apps/new fallback for direct links
+        + browsers without JS. %>
+    <%= link_to "+ new app", new_dashboard_app_path,
+                data: { action: "click->slide-panel#open" },
+                class: "border-1.5 border-ink bg-ink text-bg font-mono text-[11px] uppercase tracking-widest px-3 py-2 shadow-brutal cursor-pointer" %>
+  </div>
+
+  <%= render Molecules::AppsStatusStripComponent.new(apps: apps, plan: plan, box_usage: box_usage) %>
+
+  <% if empty? %>
+    <div class="border-1.5 border-ink bg-bg-deep p-12 text-center">
+      <p class="text-ink-soft mb-4">No apps yet. Deploy your first one.</p>
+      <div class="flex justify-center gap-3">
+        <%= link_to "From a template", dashboard_templates_path,
+                    class: "border-1.5 border-ink bg-ink text-bg font-mono text-[11px] uppercase tracking-widest px-3 py-2 shadow-brutal" %>
+        <%= link_to "From git", new_dashboard_app_path,
+                    class: "border-1.5 border-ink bg-paper text-ink font-mono text-[11px] uppercase tracking-widest px-3 py-2 shadow-brutal" %>
+      </div>
+    </div>
+  <% else %>
+    <%# Apps table → primary surface, above the fold.
+        Recent activity → narrower sidecar on lg+ so users see what they
+        own first, with deploy history beside it for context. On mobile
+        the activity stacks below to keep the table full-width. %>
+    <div class="mt-6 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+      <table class="w-full border-1.5 border-ink bg-paper">
+        <thead class="bg-bg-deep border-b-1.5 border-ink font-mono text-[11px] uppercase tracking-widest">
+          <tr>
+            <th class="text-left p-3">app</th>
+            <th class="text-left p-3">status</th>
+            <th class="text-left p-3">size</th>
+            <th class="text-left p-3">domain</th>
+            <th class="text-left p-3">last deploy</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% apps.each do |app| %>
+            <% deployed_at = last_deployed_at(app) %>
+            <tr class="border-b border-rule-soft hover:bg-bg transition-colors">
+              <td class="p-3 font-semibold"><%= link_to app.name, dashboard_app_path(app), class: "hover:underline" %></td>
+              <td class="p-3"><%= render Atoms::StatusPillComponent.new(status: app.status.to_s) %></td>
+              <td class="p-3 font-mono text-xs"><%= app.dyno_allocations.find { |d| d.process_type == "web" }&.dyno_tier&.name || "—" %></td>
+              <td class="p-3 font-mono text-xs"><%= primary_domain(app) || "—" %></td>
+              <td class="p-3 font-mono text-xs text-dim"><%= deployed_at ? "#{time_ago_in_words(deployed_at)} ago" : "never" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+
+      <%= render Molecules::RecentActivityCardComponent.new(events: recent_activity) %>
+    </div>
+  <% end %>
+</div>

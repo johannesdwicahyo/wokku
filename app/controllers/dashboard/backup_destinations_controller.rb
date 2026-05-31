@@ -12,7 +12,7 @@ module Dashboard
       @destination = @server.backup_destination || @server.build_backup_destination
 
       if @destination.update(destination_params)
-        redirect_to dashboard_server_path(@server), notice: "Backup destination saved"
+        redirect_to admin_server_path(@server), notice: "Backup destination saved"
       else
         render :edit, status: :unprocessable_entity
       end

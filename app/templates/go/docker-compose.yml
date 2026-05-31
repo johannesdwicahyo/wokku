@@ -1,0 +1,15 @@
+# name: Go
+# documentation: https://github.com/johannesdwicahyo/wokku-go-starter
+# slogan: Standard library HTTP server in Go
+# category: frameworks
+# tags: go, api
+# icon: go
+# icon_slug: go
+# icon_color: 00ADD8
+# version: 1.23
+# port: 8080
+
+services:
+  go:
+    environment:
+      - GO_ENV=production

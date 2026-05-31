@@ -19,7 +19,7 @@ class PromoCode < ApplicationRecord
 
   validates :code, presence: true, uniqueness: { case_sensitive: false }
   validates :kind, inclusion: { in: KINDS }
-  validates :redeemer_bonus_idr, :inviter_bonus_idr, :min_deposit_idr, :redemptions_count,
+  validates :redeemer_bonus_idr, :inviter_bonus_idr, :redemptions_count,
             numericality: { greater_than_or_equal_to: 0 }
 
   before_validation :normalise_code
@@ -37,8 +37,10 @@ class PromoCode < ApplicationRecord
     kind == "referral"
   end
 
+  # Manual-credit codes always pay out on redemption (no min-spend gate).
+  # Previously gated by `min_deposit_idr` which was dropped in 1.8.
   def instant_grant?
-    kind == "manual_credit" && min_deposit_idr.zero?
+    kind == "manual_credit"
   end
 
   private

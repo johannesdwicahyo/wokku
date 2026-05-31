@@ -6,15 +6,18 @@ module Dokku
       @client = client
     end
 
+    # Limit/reserve changes can trigger a container restart so the new
+    # cgroup constraints take effect. 60s gives the container time to
+    # stop, recreate, and pass health checks under the new limits.
     def apply_limits(app_name, memory_mb:, cpu_shares:)
       memory = memory_mb.to_i
       cpu = cpu_shares.is_a?(Integer) ? cpu_shares : cpu_shares.to_f
-      @client.run("resource:limit --memory #{memory} --cpu #{cpu} #{Shellwords.escape(app_name)}")
+      @client.run("resource:limit --memory #{memory} --cpu #{cpu} #{Shellwords.escape(app_name)}", timeout: 60)
     end
 
     def apply_reservation(app_name, memory_mb:)
       reserve = (memory_mb.to_i / 2)
-      @client.run("resource:reserve --memory #{reserve} #{Shellwords.escape(app_name)}")
+      @client.run("resource:reserve --memory #{reserve} #{Shellwords.escape(app_name)}", timeout: 60)
     end
 
     def report(app_name)

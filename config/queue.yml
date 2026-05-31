@@ -3,7 +3,38 @@ default: &default
     - polling_interval: 1
       batch_size: 500
   workers:
-    - queues: "*"
+    # Billing must never starve behind SSH-heavy probes. One dedicated
+    # process so a clogged SSH worker can never delay daily debits.
+    - queues: billing
+      threads: 2
+      processes: 1
+      polling_interval: 0.5
+    # SSH-heavy: health checks, server sync, dns verification. Isolated
+    # from billing/default so MaxStartups drops on the Dokku host can't
+    # cascade.
+    - queues: [ health, sync ]
+      threads: 3
+      processes: 1
+      polling_interval: 0.5
+    # Metrics: high-frequency SSH polling. Its own pool.
+    - queues: metrics
+      threads: 3
+      processes: 1
+      polling_interval: 0.5
+    # Deploys: long-running (1-5 min). Own pool so a slow build doesn't
+    # block notifications or default work.
+    - queues: deploys
+      threads: 2
+      processes: 1
+      polling_interval: 0.5
+    # Notifications + per-app log forwarding. Cheap, high-frequency,
+    # network-bound — separate from default.
+    - queues: [ notifications, logs ]
+      threads: 3
+      processes: 1
+      polling_interval: 0.5
+    # Everything else (mailers, activity digest, backups, cleanup, etc.).
+    - queues: [ default, backups, solid_queue_recurring ]
       threads: 3
       processes: <%= ENV.fetch("JOB_CONCURRENCY", 1) %>
       polling_interval: 0.1

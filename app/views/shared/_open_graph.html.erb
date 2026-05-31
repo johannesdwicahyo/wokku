@@ -8,7 +8,11 @@
   page_desc  = content_for?(:og_description) ? content_for(:og_description) :
                 "Deploy aplikasi pertamamu dalam 5 menit. Bayar pakai QRIS, server di Jakarta, harga rupiah. Open-source, dibangun di atas Dokku."
   page_url   = request.original_url
-  page_image = content_for?(:og_image) ? content_for(:og_image) : "#{request.base_url}/icon.png"
+  # OG image: 1200×630 PNG captured from the live landing hero (Phase 1
+  # task 16). WebP + AVIF variants live in public/og/ for any consumer
+  # that negotiates — but most OG renderers (Facebook, Twitter, WhatsApp,
+  # LinkedIn) still expect PNG/JPG, so we point at the PNG default.
+  page_image = content_for?(:og_image) ? content_for(:og_image) : "#{request.base_url}/og/default.png"
 %>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Wokku">
@@ -16,8 +20,9 @@
 <meta property="og:description" content="<%= page_desc %>">
 <meta property="og:url" content="<%= page_url %>">
 <meta property="og:image" content="<%= page_image %>">
-<meta property="og:image:width" content="512">
-<meta property="og:image:height" content="512">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Wokku Cloud — Stop babysitting servers. Your AI can deploy this for you.">
 <meta property="og:locale" content="id_ID">
 <meta property="og:locale:alternate" content="en_US">
 

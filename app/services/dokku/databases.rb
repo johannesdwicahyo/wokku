@@ -24,14 +24,34 @@ module Dokku
     # where the extension binary ships in the image. Dokku's plugin
     # `<plugin>:create --image <name> --image-version <tag>` does the
     # right thing; nil values fall through to the plugin's default.
+    #
+    # Resilience:
+    # - Idempotent: if the service already exists (orphan from a partial
+    #   prior deploy, e.g. SSH-timeout mid-create), treat as success and
+    #   return. The link/setup steps that follow will then proceed.
+    # - 5 minute timeout: Dokku 0.38's postgres plugin pulls postgres:18.3
+    #   on first use which can run several minutes on cold-cache hosts.
+    #   The default 30s timeout was too short and caused exactly the
+    #   orphan-half-created state described above.
+    CREATE_TIMEOUT = 5 * 60
+
     def create(service_type, name, image: nil, image_version: nil)
       validate_type!(service_type)
+      return if exists?(service_type, name)
       flags = []
       flags << "--image #{Shellwords.escape(image)}"                 if image.present?
       flags << "--image-version #{Shellwords.escape(image_version)}" if image_version.present?
       cmd = "#{plugin_name(service_type)}:create #{Shellwords.escape(name)}"
       cmd = "#{cmd} #{flags.join(' ')}" if flags.any?
-      @client.run(cmd)
+      @client.run(cmd, timeout: CREATE_TIMEOUT)
+    end
+
+    def exists?(service_type, name)
+      validate_type!(service_type)
+      @client.run("#{plugin_name(service_type)}:exists #{Shellwords.escape(name)}", timeout: 30)
+      true
+    rescue Dokku::Client::CommandError
+      false
     end
 
     def destroy(service_type, name)

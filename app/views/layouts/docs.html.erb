@@ -1,60 +1,65 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= @docs_locale || 'en' %>"
+      data-controller="theme"
+      data-theme-default-value="<%= cookies[:theme] || 'light' %>">
 <head>
-  <title><%= docs_page_title %></title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Wokku documentation — deploy and manage applications on your own servers.">
+  <title><%= docs_page_title %></title>
+  <meta name="description" content="<%= @doc_summary || 'Wokku documentation — deploy and manage applications on your own servers.' %>">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
 
   <%= stylesheet_link_tag :app %>
+  <%= stylesheet_link_tag "docs", "data-turbo-track": "reload" %>
   <%= javascript_importmap_tags %>
   <%= render "shared/open_graph" %>
   <%= render "shared/analytics" %>
 </head>
-<body class="bg-surface text-on-surface font-body antialiased">
+<body class="bg-bg text-ink font-sans antialiased">
 
-  <%# Docs reuses the marketing nav so the public-facing chrome is
-      consistent with /, /pricing, /blog, etc. The docs-specific search
-      input lives below in its own row. %>
-  <%= render "shared/marketing_nav" %>
+  <%# Brutalist site nav — matches landing/pricing so the header stays
+      consistent across all public surfaces. Lang/theme toggles live
+      inside SiteNav. %>
+  <%= render Organisms::SiteNavComponent.new(active: :docs) %>
 
-  <%# Docs sub-bar: section breadcrumb + search input. %>
-  <div class="border-b border-outline-variant/20 bg-surface/95 backdrop-blur-sm">
-    <div class="max-w-[1400px] mx-auto flex items-center justify-between h-12 px-4">
-      <a href="/docs" class="text-sm font-medium text-on-surface-variant hover:text-primary transition">Documentation</a>
+  <%# Docs sub-bar: breadcrumb path + search. Language toggle lives in
+      SiteNavComponent (top right) — no duplicate here. %>
+  <div class="border-y border-rule-soft bg-bg/95 backdrop-blur-sm sticky top-0 z-20">
+    <div class="max-w-[1440px] mx-auto flex items-center justify-between h-12 px-8 gap-4">
+      <a href="/docs" class="font-mono text-xs text-dim hover:text-ink transition uppercase tracking-widest">~/docs</a>
+
       <div class="relative" data-controller="docs-search">
         <input type="text"
                placeholder="Search docs..."
-               class="w-64 bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-1.5 text-sm text-on-surface placeholder-outline focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
+               class="w-64 bg-paper border-1.5 border-ink rounded-md px-3 py-1.5 font-mono text-xs text-ink placeholder:text-dim focus:outline-none focus:shadow-brutal-sm"
                data-docs-search-target="input"
                data-action="input->docs-search#search keydown->docs-search#navigate">
-        <kbd class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-outline border border-outline-variant/30 rounded px-1.5 py-0.5 pointer-events-none">/</kbd>
-        <div class="absolute top-full left-0 right-0 mt-1 bg-surface-container-low border border-outline-variant/30 rounded-lg shadow-xl overflow-hidden hidden" data-docs-search-target="results"></div>
+        <kbd class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-dim border border-rule-soft rounded px-1.5 py-0.5 pointer-events-none font-mono bg-bg-deep">/</kbd>
+        <div class="absolute top-full right-0 mt-2 w-80 bg-paper border-1.5 border-ink rounded-md shadow-brutal-sm overflow-hidden hidden" data-docs-search-target="results"></div>
       </div>
     </div>
   </div>
 
   <%# Mobile sidebar toggle %>
-  <button class="lg:hidden fixed bottom-4 right-4 z-40 bg-primary text-surface rounded-full w-12 h-12 flex items-center justify-center shadow-lg"
-          data-action="click->docs-sidebar#toggleMobile">
-    <span class="material-symbols-outlined text-[20px]">menu</span>
-  </button>
+  <button class="lg:hidden fixed bottom-4 right-4 z-40 bg-ink text-bg rounded-full w-12 h-12 flex items-center justify-center shadow-brutal font-mono text-lg"
+          data-action="click->docs-sidebar#toggleMobile"
+          aria-label="Toggle sidebar">≡</button>
 
-  <div class="max-w-[1400px] mx-auto flex">
-    <%= render "docs/sidebar" %>
+  <div class="max-w-[1440px] mx-auto px-8 grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_220px] gap-12">
+    <%= render Organisms::DocsSidebarComponent.new(sidebar: @sidebar, active_path: @path) %>
 
-    <main class="flex-1 min-w-0 px-8 py-8 lg:px-12 lg:py-10">
+    <main class="py-10 max-w-[760px] mx-auto w-full lg:mx-0">
       <%= yield %>
     </main>
 
-    <%= render "docs/toc" %>
+    <% if @toc.present? %>
+      <%= render Organisms::DocsTocComponent.new(items: @toc) %>
+    <% end %>
   </div>
 
 </body>

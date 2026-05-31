@@ -4,6 +4,8 @@
 # category: storage
 # tags: s3, object-storage, go
 # icon: storage
+# icon_slug: minio
+# icon_color: FFFFFF
 # port: 9000
 
 services:

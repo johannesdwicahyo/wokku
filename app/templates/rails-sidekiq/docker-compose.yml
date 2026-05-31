@@ -1,0 +1,43 @@
+# name: Rails + Sidekiq (bundled)
+# documentation: https://github.com/johannesdwicahyo/wokku-rails-sidekiq-starter
+# slogan: Production Rails 8 + Sidekiq supervised by foreman in one container — 1 slot
+# category: frameworks
+# tags: ruby, rails, sidekiq, fullstack, bundled
+# icon: rails
+# icon_slug: rubyonrails
+# icon_color: CC0000
+# version: 8.1
+# port: 3000
+# post_deploy: bin/rails db:migrate
+
+# Demonstrates the bundled-process pattern (see /docs/scaling/bundled-processes).
+# One Procfile entry runs foreman, which supervises Rails web + Sidekiq inside
+# the same container. Dokku sees one process type → one slot consumed, instead
+# of two slots if web and sidekiq were separate Dokku process types.
+
+services:
+  rails_sidekiq:
+    image: rails-sidekiq:latest
+    environment:
+      - RAILS_ENV=production
+      - RAILS_LOG_TO_STDOUT=true
+      - RAILS_SERVE_STATIC_FILES=true
+      # foreman starts both rails + sidekiq inside this single container.
+      # See Procfile and Procfile.bundled in the starter repo.
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    volumes:
+      - redis-data:/data
+
+volumes:
+  postgres-data:
+  redis-data:

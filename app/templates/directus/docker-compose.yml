@@ -4,6 +4,8 @@
 # category: cms
 # tags: headless-cms, api, node
 # icon: cms
+# icon_slug: directus
+# icon_color: 6644FF
 # port: 8055
 
 services:

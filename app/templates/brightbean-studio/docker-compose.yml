@@ -1,0 +1,38 @@
+# name: BrightBean Studio
+# documentation: https://github.com/brightbeanxyz/brightbean-studio
+# slogan: Self-hosted social media management — schedule + publish to 10+ platforms
+# category: cms
+# tags: social, scheduling, marketing, django, python, content
+# icon: cms
+# port: 8000
+# postgres_components: false
+# generate_secrets: SECRET_KEY,ENCRYPTION_KEY_SALT
+# set_url: APP_URL
+# min_tier: basic
+# storage_mounts: /app/media
+
+# Per-platform OAuth credentials (Facebook, Instagram, LinkedIn, TikTok,
+# YouTube, Pinterest, Threads, Bluesky, Google Business Profile, Mastodon)
+# are intentionally NOT set here. Each platform has its own developer
+# console flow; users add credentials via the Wokku dashboard's env-var
+# panel after the initial deploy. Without them the app deploys, runs,
+# and lets the user sign in — they just can't post yet.
+
+services:
+  brightbean:
+    environment:
+      - DEBUG=False
+      - ALLOWED_HOSTS=.wokku.cloud
+      - STORAGE_BACKEND=local
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

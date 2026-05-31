@@ -11,6 +11,7 @@ module Dokku
     end
 
     class ConnectionError < StandardError; end
+    class TimeoutError < ConnectionError; end
 
     def initialize(server)
       @server = server
@@ -42,12 +43,20 @@ module Dokku
           end
         end
       rescue Timeout::Error
-        raise ConnectionError, "Dokku command timed out after #{timeout}s: #{command}"
+        raise TimeoutError, "Dokku command timed out after #{timeout}s: #{command}"
       rescue Net::SSH::AuthenticationFailed => e
         @server.update_column(:status, Server.statuses[:auth_failed])
         raise ConnectionError, "SSH authentication failed: #{e.message}"
-      rescue Errno::ECONNREFUSED, Errno::ETIMEDOUT, SocketError => e
+      rescue Errno::ECONNREFUSED, Errno::ETIMEDOUT, Errno::EHOSTUNREACH, Errno::ENETUNREACH, SocketError => e
         @server.update_column(:status, Server.statuses[:unreachable])
+        if defined?(Sentry)
+          Sentry.capture_exception(e, level: :warning, extra: {
+            server_id: @server.id,
+            host: @server.host,
+            port: @server.port,
+            errno: e.class.name
+          })
+        end
         raise ConnectionError, "Cannot connect to server: #{e.message}"
       end
 
@@ -62,17 +71,36 @@ module Dokku
       output.strip
     end
 
+    # Streams stdout + stderr line by line through &block. Captures the
+    # remote exit-status and raises CommandError if non-zero, mirroring
+    # run's contract — so callers can swap run -> run_streaming without
+    # losing error detection.
     def run_streaming(command, &block)
+      exit_code = nil
+      stderr_tail = +""
       Net::SSH.start(@server.host, @server.ssh_user || "dokku", ssh_options) do |ssh|
         channel = ssh.open_channel do |ch|
           ch.exec(shell_command(command)) do |_ch, success|
             raise ConnectionError, "Failed to execute command" unless success
 
             ch.on_data { |_, data| block.call(data) }
-            ch.on_extended_data { |_, _, data| block.call(data) }
+            ch.on_extended_data { |_, _, data|
+              stderr_tail << data
+              stderr_tail.slice!(0, stderr_tail.length - 4096) if stderr_tail.length > 4096
+              block.call(data)
+            }
+            ch.on_request("exit-status") { |_, buf| exit_code = buf.read_long }
           end
         end
         channel.wait
+      end
+
+      if exit_code && exit_code != 0
+        raise CommandError.new(
+          "Dokku command failed: #{command}\n#{stderr_tail}",
+          exit_code: exit_code,
+          stderr: stderr_tail
+        )
       end
     end
 
@@ -97,7 +125,11 @@ module Dokku
       opts = {
         port: @server.port || 22,
         non_interactive: true,
-        timeout: 10,
+        # Healthy SSH handshake completes in <1s on a same-region host;
+        # 5s is generous. Longer timeouts here turn a sshd MaxStartups
+        # drop into 10s of head-of-line blocking on the worker thread,
+        # which is how the queue clogged in May 2026.
+        timeout: 5,
         keepalive: true,
         keepalive_interval: 15
       }

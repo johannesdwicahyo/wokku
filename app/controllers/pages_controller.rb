@@ -1,39 +1,27 @@
+# OSS stub for PagesController.
+#
+# The full wokku-cloud PagesController is stripped via .oss-ignore
+# (marketing/landing/pricing/competitor pages don't make sense in OSS).
+# But devise/sessions/new.html.erb references terms_path + privacy_path
+# at sign-in, so the route helpers must exist. We ship a no-op
+# controller with the four routes the views call.
+
 class PagesController < ApplicationController
-  layout "application"
-
-  skip_before_action :verify_authenticity_token, only: []
-
-  def landing
-    if user_signed_in?
-      redirect_to dashboard_apps_path
-    else
-      render layout: "landing"
-    end
-  end
-
-  def pricing
-    @container_tiers = ServiceTier.available.for_type("container").order(:price_cents_per_hour)
-    @database_tiers = ServiceTier.available.for_type("database").order(:price_cents_per_hour)
-    render layout: "landing"
-  end
-
-  def deploy
-    render layout: "landing"
+  def terms
+    render plain: "Self-hosted Wokku install — no terms of service apply. " \
+                  "See https://wokku.cloud/terms for the managed-cloud terms."
   end
 
   def privacy
-    render layout: "landing"
-  end
-
-  def terms
-    render layout: "landing"
+    render plain: "Self-hosted Wokku install — no telemetry, no data leaves your server. " \
+                  "See https://wokku.cloud/privacy for the managed-cloud privacy policy."
   end
 
   def faq
-    render layout: "landing"
+    render plain: "See https://github.com/johannesdwicahyo/wokku for documentation."
   end
 
-  def refund
-    render layout: "landing"
+  def changelog
+    render plain: "See https://github.com/johannesdwicahyo/wokku/releases for the changelog."
   end
 end

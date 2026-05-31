@@ -22,7 +22,7 @@ module PromoCodes
       return failure("Code not found.")             unless promo
       return failure("This code has expired.")      unless promo.redeemable?
       return failure("Can't redeem your own referral code.") if promo.inviter_user_id == @user.id
-      return failure("You've already used a code on this account.") if PromoRedemption.exists?(redeemer_user: @user)
+      return failure("You've already used this code.") if PromoRedemption.exists?(redeemer_user: @user, promo_code: promo)
 
       redemption = PromoRedemption.new(
         promo_code: promo,

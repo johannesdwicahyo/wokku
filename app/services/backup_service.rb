@@ -1,10 +1,11 @@
 class BackupService
+  # Cache services (redis, memcached, valkey) intentionally omitted — see
+  # ServiceTier::BACKUP_POLICIES and BackupSchedulerJob::BACKUPABLE_TYPES.
   EXPORT_COMMANDS = {
     "postgres" => "postgres:export",
     "mysql" => "mysql:export",
     "mariadb" => "mariadb:export",
-    "mongodb" => "mongo:export",
-    "redis" => "redis:export"
+    "mongodb" => "mongo:export"
   }.freeze
 
   def initialize(database_service)

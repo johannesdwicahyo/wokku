@@ -24,8 +24,28 @@
 | **Activity Log** | Track all actions — deploys, config changes, team activity |
 | **OAuth Sign-in** | GitHub and Google login |
 | **Teams & RBAC** | Invite members with viewer/member/admin roles |
-| **REST API** | 16 resource endpoints with token authentication |
-| **CLI** | `wokku` command — 50+ commands mirroring the Heroku experience |
+| **Shared Add-on Engines** *(v0.2.0)* | One host container per engine (Postgres / Redis / Memcached / RabbitMQ / Meilisearch), per-tenant DB/role on attach. Saves ~250 MB RAM per addon vs one container each. |
+
+## What's New in v0.2.0 (May 2026)
+
+- **Shared add-on engines.** A new family of upstream Dokku plugins
+  ([dokku-shared-postgres](https://github.com/johannesdwicahyo/dokku-shared-postgres),
+  [-redis](https://github.com/johannesdwicahyo/dokku-shared-redis),
+  [-minio](https://github.com/johannesdwicahyo/dokku-shared-minio),
+  [-memcached](https://github.com/johannesdwicahyo/dokku-shared-memcached),
+  [-rabbitmq](https://github.com/johannesdwicahyo/dokku-shared-rabbitmq),
+  [-meilisearch](https://github.com/johannesdwicahyo/dokku-shared-meilisearch))
+  let one host container serve hundreds of small apps. Wokku auto-provisions
+  a per-tenant DB+user on app create and tears it down on destroy.
+- **UI polish.** Sidebar admin group collapsed to one entry, app overview log
+  glance is now Turbo-frame wrapped (no more "Content missing" flash), release
+  history dropped the misleading "config change" badge on plain git-push
+  releases, new-app form is denser, Material Symbols Outlined now loads
+  globally.
+- **Internal scaffolding for Bundle v2** ships behind `BUNDLE_V2_ENABLED=false`
+  — see the [Roadmap](#roadmap) section below.
+
+Full changelog: see the [v0.2.0 GitHub Release](https://github.com/johannesdwicahyo/wokku/releases/tag/v0.2.0).
 
 ## Quick Start
 
@@ -66,12 +86,6 @@ bin/dev
 2. Enter your Dokku server's hostname, SSH port, and private key
 3. Wokku connects over SSH and syncs all existing apps and databases
 
-Or via CLI:
-
-```bash
-wokku servers:add my-server --host dokku.example.com --ssh-key ~/.ssh/id_ed25519
-```
-
 ## Deploying with `git push`
 
 Register your SSH public key in **Profile → SSH Keys**, then push to the
@@ -100,8 +114,6 @@ Templates use standard Docker Compose YAML format. Community contributions welco
 ```
 wokku (Rails 8.1)
 ├── Dashboard UI        Tailwind + Hotwire (Turbo + Stimulus)
-├── REST API v1         Token-authenticated JSON API
-├── CLI                 Thor-based gem, mirrors Heroku CLI
 ├── Web Terminal        xterm.js + ActionCable + SSH
 ├── Background Jobs     Solid Queue (deploys, backups, health checks, metrics)
 ├── Dokku Integration   SSH-based command execution via net-ssh
@@ -113,29 +125,29 @@ wokku (Rails 8.1)
 
 ## CLI
 
+The `wokku` CLI is a separate gem — see [johannesdwicahyo/wokku-cli](https://github.com/johannesdwicahyo/wokku-cli).
+
 ```bash
 brew install johannesdwicahyo/tap/wokku
+# or: gem install wokku-cli
 
 wokku auth:login
-wokku apps:create my-app --server my-server
-wokku config:set my-app DATABASE_URL=postgres://...
-wokku domains:add my-app app.example.com
-wokku ps:scale my-app web=2 worker=1
-wokku logs my-app --tail
+wokku apps:create my-app
+wokku logs my-app -f
 ```
 
-## API
+The CLI talks to the REST API exposed by [wokku.cloud](https://wokku.cloud) (or your own self-hosted Wokku — point `WOKKU_API_URL` at it). The REST API itself is a managed-cloud feature, not bundled in this OSS web-UI repo.
 
-All endpoints are under `/api/v1/` with Bearer token authentication.
+## Claude Code Plugin
+
+The official [wokku-plugin](https://github.com/johannesdwicahyo/wokku-plugin) for Claude Code wraps the REST API in 57 MCP tools and 4 guided workflows. Install:
 
 ```bash
-curl -X POST localhost:3000/api/v1/auth/login \
-  -d '{"email":"admin@wokku.cloud","password":"password123456"}'
-
-curl -H "Authorization: Bearer <token>" localhost:3000/api/v1/apps
+/plugin marketplace add johannesdwicahyo/wokku-plugin
+/plugin install wokku@wokku
 ```
 
-**Resources:** apps, servers, databases, domains, releases, config, logs, ps, ssh_keys, teams, members, notifications
+Then ask Claude: *"Deploy this project to Wokku as my-app"* or *"Troubleshoot why my-app is crashing"*.
 
 ## Database Backups
 
@@ -163,6 +175,17 @@ Or with Docker on any VPS:
 docker compose -f docker-compose.yml up -d
 ```
 
+## Roadmap
+
+The `BUNDLE_V2_ENABLED` flag in this release ships dormant. When flipped on a
+self-hosted install, it switches the app sizing model from per-process dyno
+tiers to a "box" abstraction (sleeping / small / medium / large / xlarge) and
+unlocks the shared-engine add-ons as a one-click attach + a dedicated upgrade
+flow (`pg_dump` → cutover → 24h grace → drop). The managed cloud runs this
+mode in production; self-hosters who want to try it should read the migration
+notes on [wokku.cloud/docs/bundle-v2](https://wokku.cloud/docs/bundle-v2)
+before flipping.
+
 ## Contributing
 
 ### Adding Templates
@@ -186,33 +209,24 @@ services:
 ### Development
 
 ```bash
-bin/rails test
+bundle exec rspec
 ```
 
-## Claude Code Plugin
+(Legacy Minitest tests still pass under `bin/rails test`; new tests should be RSpec.)
 
-Install the official Wokku plugin for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — 57 tools + 4 guided workflows for deploying, managing, and troubleshooting your apps through natural language.
+## Wokku Cloud
 
-```bash
-claude plugin marketplace add johannesdwicahyo/wokku-plugin
-claude plugin install wokku@wokku
-```
+[wokku.cloud](https://wokku.cloud) is the commercial managed service. It adds, on top of this open-source web UI:
 
-Then ask Claude: *"Deploy this project to Wokku as my-app"* or *"Troubleshoot why my-app is crashing"*.
+- **REST API + CLI + Claude Code plugin** — managed-cloud-only surface, billed and rate-limited per account
+- **Per-box billing** with IDR + USD support (Bundle v2 plans: Solo / Pro / Team)
+- **Eco / sleeping boxes** with auto-wake on request
+- **Auto-placement** across our managed Dokku fleet
+- **Per-app Cloudflare CDN** toggle
+- **PR previews** for GitHub-connected apps
+- **Mobile companion app** (in development)
 
-See [mcp/README.md](mcp/README.md) for the underlying MCP server (55 tools, 100% API coverage) and full setup instructions.
-
-## Enterprise Edition
-
-Wokku follows an open-core model. The community edition (this repo) is fully functional under AGPL-3.0. The Enterprise Edition adds:
-
-- Usage-based hourly billing (Stripe)
-- Dyno tiers with resource management
-- Eco dynos (auto-sleep idle apps)
-- Auto-placement (bin-packing server selection)
-- Mobile companion app
-
-See [wokku.cloud](https://wokku.cloud) for the managed cloud and enterprise features.
+The OSS web UI in this repo is fully functional for a single Dokku server + Devise sign-in. The managed service exists for teams who want multi-server, billing, observability, and the API surface on tap.
 
 ## License
 

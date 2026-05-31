@@ -1,0 +1,16 @@
+<%#
+  Locale switch for the marketing/landing surface. Uses the app's
+  existing LocalesController (POST /locale → cookie-persisted, 1yr,
+  + redirect_back) — NOT a ?locale= URL param. Same mechanism as the
+  console topbar's locale toggle, so the choice persists and the URL
+  stays clean.
+%>
+<div class="inline-flex p-0.5 bg-paper border-1.5 border-ink rounded-full overflow-hidden">
+  <% %i[en id].each do |loc| %>
+    <%= button_to public_locale_path(locale: loc),
+          method: :post,
+          form_class: "contents",
+          title: loc == :en ? "Switch to English" : "Ganti ke Bahasa Indonesia",
+          class: "#{cell_classes(loc)} rounded-full border-0" do %><%= loc.to_s.upcase %><% end %>
+  <% end %>
+</div>

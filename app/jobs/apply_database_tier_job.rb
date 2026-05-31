@@ -30,12 +30,9 @@ class ApplyDatabaseTierJob < ApplicationJob
     # always restart, but it's noisy — keep it conditional on a connections cap.
     resources.restart(db.service_type, db.name) if connections
 
-    # Rotate the billing segment so the new hourly rate applies going
-    # forward. Old segment closes at "now"; new segment opens at "now"
-    # with the current tier's price.
-    if (owner = db.app_records.first&.creator)
-      db.rotate_billing_segment(user: owner)
-    end
+    # 1.8: no more per-resource billing segments — tier cost is bundled
+    # into the user's plan invoice. The rotate_billing_segment call was
+    # removed along with the legacy daily-debit rail.
 
     track_apply(db, tier)
   rescue Dokku::Client::ConnectionError, Dokku::Client::CommandError => e

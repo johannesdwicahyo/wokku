@@ -2,6 +2,11 @@ module Dashboard
   class LogDrainsController < BaseController
     before_action :set_app
 
+    def index
+      authorize @app, :show?
+      @log_drains = @app.log_drains.order(:created_at)
+    end
+
     def create
       authorize @app, :update?
       @log_drain = @app.log_drains.build(log_drain_params)
@@ -9,12 +14,12 @@ module Dashboard
       if @log_drain.save
         client = Dokku::Client.new(@app.server)
         Dokku::LogDrains.new(client).add(@app.name, @log_drain.url)
-        redirect_to dashboard_app_logs_path(@app), notice: "Log drain added successfully."
+        redirect_to dashboard_app_log_drains_path(@app), notice: "Log drain added successfully."
       else
-        redirect_to dashboard_app_logs_path(@app), alert: @log_drain.errors.full_messages.to_sentence
+        redirect_to dashboard_app_log_drains_path(@app), alert: @log_drain.errors.full_messages.to_sentence
       end
     rescue StandardError => e
-      redirect_to dashboard_app_logs_path(@app), alert: "Failed to add log drain: #{e.message}"
+      redirect_to dashboard_app_log_drains_path(@app), alert: "Failed to add log drain: #{e.message}"
     end
 
     def destroy
@@ -25,9 +30,9 @@ module Dashboard
       Dokku::LogDrains.new(client).remove(@app.name)
 
       log_drain.destroy
-      redirect_to dashboard_app_logs_path(@app), notice: "Log drain removed successfully."
+      redirect_to dashboard_app_log_drains_path(@app), notice: "Log drain removed successfully."
     rescue StandardError => e
-      redirect_to dashboard_app_logs_path(@app), alert: "Failed to remove log drain: #{e.message}"
+      redirect_to dashboard_app_log_drains_path(@app), alert: "Failed to remove log drain: #{e.message}"
     end
 
     private

@@ -1,0 +1,29 @@
+<div class="bg-paper border-1.5 border-ink rounded-lg shadow-brutal-lg overflow-hidden relative"
+     style="<%= container_style %>"
+     data-controller="hero-terminal"
+     data-hero-terminal-script-value="<%= script_json %>">
+  <%# Chrome bar %>
+  <div class="flex items-center gap-2 px-4 py-2.5 border-b-1.5 border-ink bg-bg-deep font-mono text-[11px] text-ink-soft">
+    <span class="w-2.5 h-2.5 rounded-full bg-hot border border-ink"></span>
+    <span class="w-2.5 h-2.5 rounded-full bg-warn border border-ink"></span>
+    <span class="w-2.5 h-2.5 rounded-full bg-success border border-ink"></span>
+    <span class="ml-2.5"><%= title %></span>
+    <% if with_elapsed %>
+      <span class="ml-auto px-2 py-0.5 border border-accent text-accent text-[10px]" data-hero-terminal-target="elapsed">0.0s</span>
+    <% end %>
+  </div>
+  <%# Stream — ghost layer reserves final height; animated overlay sits on top.
+      The ghost renders all script lines with color:transparent so the <pre>
+      always has its natural full height from frame 0 (no reflow as content
+      types in). The stream target is position:absolute so it never affects
+      layout height. %>
+  <div class="relative">
+    <%# Ghost: invisible final-state content — fixes layout height up-front %>
+    <pre class="m-0 px-4 py-3.5 font-mono text-xs leading-relaxed whitespace-pre-wrap"
+         aria-hidden="true"
+         style="color:transparent;user-select:none;pointer-events:none"><%= ghost_lines_html %></pre>
+    <%# Animated overlay: absolute so it doesn't contribute to layout height %>
+    <pre class="m-0 px-4 py-3.5 font-mono text-xs leading-relaxed whitespace-pre-wrap absolute inset-0"
+         data-hero-terminal-target="stream"></pre>
+  </div>
+</div>

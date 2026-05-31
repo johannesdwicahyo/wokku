@@ -1,11 +1,14 @@
 require "simplecov"
 SimpleCov.start "rails" do
+  command_name "Minitest"
   add_filter "/test/"
+  add_filter "/spec/"
   add_filter "/config/"
   add_filter "/vendor/"
   enable_coverage :branch
   # SimpleCov undercounts due to Zeitwerk autoloading files before
   # Coverage.start — actual coverage is higher than reported.
+  # Coverage is merged with RSpec runs (see spec/rails_helper.rb).
   minimum_coverage line: 88
 end
 

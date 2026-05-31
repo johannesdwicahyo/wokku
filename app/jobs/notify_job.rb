@@ -39,6 +39,8 @@ class NotifyJob < ApplicationJob
     version = deploy&.release&.version
 
     case event
+    when "deploy_started"
+      "#{app_name} deploy started#{commit ? " (#{commit})" : ""}"
     when "deploy_succeeded"
       "#{app_name} deployed successfully#{commit ? " (#{commit})" : ""}#{version ? " v#{version}" : ""}"
     when "deploy_failed"
@@ -67,31 +69,102 @@ class NotifyJob < ApplicationJob
     end
   end
 
+  # Slack messages use the legacy `attachments` API for the color sidebar
+  # — modern Block Kit is richer but requires the bot OAuth flow; we use
+  # incoming webhooks which still respect attachments and field rows.
   def send_slack(notification, deploy, event, context = nil)
     url = notification.config["url"]
     return unless url.present?
 
-    payload = {
-      text: build_message(deploy, event, context),
-      username: "Wokku",
-      icon_emoji: ":rocket:"
-    }
+    color = slack_color_for(event)
+    message = build_message(deploy, event, context)
+    fields = deploy_fields(deploy)
+    dashboard_url = dashboard_link_for(deploy)
+
+    if color || fields.any? || dashboard_url
+      payload = {
+        username: "Wokku",
+        icon_emoji: ":rocket:",
+        attachments: [ {
+          color: color,
+          fallback: message,
+          title: message,
+          title_link: dashboard_url,
+          fields: fields,
+          footer: "Wokku Cloud",
+          ts: Time.current.to_i
+        }.compact ]
+      }
+    else
+      payload = { text: message, username: "Wokku", icon_emoji: ":rocket:" }
+    end
     post_json(url, payload)
   rescue StandardError => e
     Rails.logger.warn("Slack notification failed: #{e.message}")
   end
 
+  # Discord webhooks accept an `embeds` array. Color is a base-10 int.
   def send_discord(notification, deploy, event, context = nil)
     url = notification.config["url"]
     return unless url.present?
 
+    message = build_message(deploy, event, context)
+    color_hex = discord_color_for(event)
+    fields = deploy_fields(deploy).map { |f| { name: f[:title], value: f[:value].to_s, inline: true } }
+    dashboard_url = dashboard_link_for(deploy)
+
     payload = {
-      content: build_message(deploy, event, context),
-      username: "Wokku"
+      username: "Wokku",
+      embeds: [ {
+        title: message,
+        url: dashboard_url,
+        color: color_hex,
+        fields: fields,
+        timestamp: Time.current.iso8601
+      }.compact ]
     }
     post_json(url, payload)
   rescue StandardError => e
     Rails.logger.warn("Discord notification failed: #{e.message}")
+  end
+
+  def slack_color_for(event)
+    case event
+    when "deploy_succeeded", "app_created"        then "good"     # green
+    when "deploy_failed", "app_crashed", "backup_failed", "resource_high_cpu", "resource_high_memory" then "danger"   # red
+    when "deploy_started"                          then "#3b82f6"  # blue
+    when "app_deleted", "daily_debit_summary"      then "warning"  # yellow
+    end
+  end
+
+  def discord_color_for(event)
+    case event
+    when "deploy_succeeded", "app_created"        then 0x22c55e # green
+    when "deploy_failed", "app_crashed", "backup_failed", "resource_high_cpu", "resource_high_memory" then 0xef4444 # red
+    when "deploy_started"                          then 0x3b82f6 # blue
+    when "app_deleted", "daily_debit_summary"      then 0xeab308 # yellow
+    end
+  end
+
+  def deploy_fields(deploy)
+    return [] unless deploy
+    out = []
+    if deploy.commit_sha.present?
+      out << { title: "Commit", value: deploy.commit_sha.first(7), short: true }
+    end
+    if deploy.release&.version
+      out << { title: "Release", value: "v#{deploy.release.version}", short: true }
+    end
+    if deploy.duration
+      out << { title: "Duration", value: "#{deploy.duration.round}s", short: true }
+    end
+    out
+  end
+
+  def dashboard_link_for(deploy)
+    return nil unless deploy&.app_record
+    base = ENV["APP_URL"].presence || "https://wokku.cloud"
+    "#{base}/dashboard/apps/#{deploy.app_record.id}/releases"
   end
 
   def send_telegram(notification, deploy, event, context = nil)

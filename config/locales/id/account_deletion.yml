@@ -1,0 +1,57 @@
+id:
+  account_mailer:
+    deletion_scheduled:
+      subject: "Akun Wokku kamu akan dihapus dalam 3 hari"
+      heading: "Akun Wokku kamu dijadwalkan untuk dihapus"
+      line_grace: "Akun kamu dan semua resource-nya akan dihapus secara permanen pada %{date}. Kamu punya waktu sampai tanggal itu untuk membatalkan dengan menghubungi support."
+      apps_header: "Aplikasi yang akan dihapus:"
+      databases_header: "Database yang akan dihapus:"
+      line_balance: "Saldo kamu sebesar %{balance} akan hangus."
+      line_mistake: "Kalau ini bukan kehendakmu, hubungi support@wokku.cloud sebelum tenggat waktu dan kami akan membatalkan penghapusan."
+      cta: "Hubungi Support untuk Membatalkan"
+
+  dashboard:
+    account_deletions:
+      danger_zone_title: "Zona Berbahaya"
+      danger_zone_description: "Setelah kamu hapus akun, tidak bisa dikembalikan. Semua aplikasi kamu akan dihentikan segera dan dihapus permanen setelah 3 hari."
+      delete_account_button: "Hapus Akun"
+      show_title: "Hapus Akun Kamu"
+      warning_heading: "Tindakan ini tidak bisa dibatalkan setelah 3 hari."
+      warning_body: "Semua aplikasi akan dihentikan segera. Aplikasi, database, dan semua data kamu akan dihapus permanen dalam 3 hari. Saldo yang tersisa akan hangus. Ini tidak bisa dibatalkan setelah masa tenggang berakhir."
+      apps_header: "Aplikasi yang akan dihapus (%{count}):"
+      databases_header: "Database yang akan dihapus (%{count}):"
+      backup_callout: "Backup data penting kamu terlebih dahulu."
+      backup_link: "Buka backup"
+      balance_label: "Saldo yang akan hangus:"
+      no_apps: "Tidak ada aplikasi."
+      no_databases: "Tidak ada database."
+      confirm_label: "Ketik email kamu untuk konfirmasi:"
+      confirm_placeholder: "email@kamu.com"
+      submit_button: "Hapus akun saya secara permanen"
+      cancel_link: "Batal"
+      email_mismatch: "Email tidak cocok. Ketik alamat email kamu yang benar untuk konfirmasi."
+      scheduled_notice: "Akun kamu dijadwalkan untuk dihapus. Kamu punya 3 hari untuk membatalkan dengan menghubungi support@wokku.cloud."
+
+  admin:
+    users:
+      index_title: "Pengguna"
+      search_placeholder: "Cari berdasarkan email…"
+      columns:
+        email: "Email"
+        role: "Role"
+        created_at: "Bergabung"
+        balance: "Saldo"
+        status: "Status"
+        apps: "Aplikasi"
+      status:
+        active: "Aktif"
+        pending_deletion: "Menunggu hapus"
+        deleted: "Dihapus"
+      actions:
+        show: "Lihat"
+        soft_delete: "Jadwalkan hapus (3 hari tenggang)"
+        hard_delete: "Hapus sekarang (permanen)"
+      soft_delete_confirm: "Jadwalkan pengguna ini untuk penghapusan 3 hari?"
+      hard_delete_confirm: "Hapus PERMANEN pengguna ini dan semua data mereka sekarang? Ini tidak bisa dibatalkan."
+      deletion_scheduled: "Pengguna dijadwalkan untuk dihapus."
+      deletion_enqueued: "Hard delete sudah dijadwalkan."

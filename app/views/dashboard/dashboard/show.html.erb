@@ -1,352 +1,168 @@
-<div data-controller="slide-panel">
-  <% running_count = @stats[:active] %>
-  <% crashed_count = @stats[:errors] %>
-  <% recent_apps = @recent_apps %>
-  <% recent_activities = @activities %>
+<%#
+  Brutalist dashboard (P2 of redesign-c-full, 2026-05-17). Real Rails
+  data wired into the brutalist console layout. Old Material view kept
+  at show.OLD_DESIGN.html.erb until P7 cleanup.
+%>
+<%
+  status_dot_state = ->(app) do
+    case app.status
+    when "running"   then :live
+    when "crashed"   then :crashed
+    when "sleeping", "stopped" then :sleeping
+    else :building # deploying / created
+    end
+  end
 
-  <%# Page Header %>
-  <div class="flex items-center justify-between mb-8">
-    <div>
-      <h1 class="text-2xl font-bold text-on-surface font-headline"><%= t("dashboard.home.title") %></h1>
-      <p class="mt-1 text-[10px] text-outline uppercase tracking-wider font-bold"><%= t("dashboard.home.subtitle") %></p>
-    </div>
-    <div class="flex items-center gap-3">
-      <button data-action="click->slide-panel#open" class="inline-flex items-center gap-2 px-5 py-2 bg-primary text-on-primary text-sm font-bold rounded-md hover:opacity-90 active:scale-95 transition-all cursor-pointer">
-        <span class="material-symbols-outlined text-base">add</span>
-        <%= t("dashboard.apps.new_app") %>
-      </button>
-    </div>
+  # estimated_daily_cost returns an already-currency-converted integer;
+  # the brutalist tile renders via format_usd_for_user which expects USD
+  # dollars, so derive the USD-dollar daily rate from the monthly cents.
+  daily_cost_usd = current_user.estimated_monthly_cost_cents / 100.0 / 30.0
+  runway_days = current_user.days_of_balance_remaining
+  runway_str  = runway_days == Float::INFINITY ? "∞" : "#{runway_days}d"
+  low_runway  = runway_days != Float::INFINITY && runway_days <= 3
+%>
+
+<div data-controller="slide-panel" class="flex flex-col gap-6">
+  <div class="flex flex-wrap items-baseline justify-between gap-4">
+    <%= render Atoms::HashHeaderComponent.new(
+          title: t("console.dashboard.title"),
+          kicker: t("console.dashboard.kicker"),
+          size: :md) %>
+    <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, mono: true,
+          data: { action: "click->slide-panel#open" }) do %>> new_app()<% end %>
   </div>
 
-  <%# Stats Bar — 4 cards %>
-  <div class="grid grid-cols-4 gap-4 mb-8">
-    <div class="bg-surface-container-low p-5 rounded-md flex items-center justify-between group hover:bg-surface-container transition-colors">
-      <div>
-        <p class="text-outline uppercase tracking-wider text-[10px] font-bold mb-1"><%= t("dashboard.home.total_apps") %></p>
-        <h3 class="font-headline text-2xl font-bold text-on-surface"><%= @apps.size %></h3>
+  <%# ── Stat tiles ───────────────────────────────────────────── %>
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <%= render Molecules::StatTileComponent.new(
+          label: t("console.dashboard.stat.apps"), value: @stats[:total_apps],
+          sub: "// #{@stats[:active]} running · #{@apps.size - @stats[:active]} idle", glyph: ">_") %>
+    <%= render Molecules::StatTileComponent.new(
+          label: t("console.dashboard.stat.resources"), value: @stats[:active],
+          sub: "// across #{@servers.size} server#{'s' unless @servers.size == 1}", glyph: "▮▮") %>
+    <%= render Molecules::StatTileComponent.new(
+          label: t("console.dashboard.stat.errors"), value: @stats[:errors],
+          sub: @stats[:errors].zero? ? "// all healthy" : "// needs attention",
+          tone: @stats[:errors].zero? ? :success : :danger,
+          glyph: @stats[:errors].zero? ? "✓" : "!") %>
+    <%= render Molecules::StatTileComponent.new(
+          label: t("console.dashboard.stat.cost"), value: format_usd_for_user(@stats[:cost_mtd]),
+          sub: "// month to date", glyph: "Rp") %>
+  </div>
+
+  <%# ── Deposit + PR previews ────────────────────────────────── %>
+  <div class="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-3">
+    <%= render Molecules::PanelComponent.new(
+          label: t("console.dashboard.deposit"),
+          kicker: "#{t('console.dashboard.runway')}: #{runway_str}") do %>
+      <div class="px-5 py-5 flex flex-wrap items-baseline justify-between gap-6">
+        <div>
+          <div class="font-mono text-xs text-dim">// saldo deposit</div>
+          <div class="font-mono text-3xl md:text-4xl text-ink font-semibold tracking-tighter mt-1.5"><%= current_user.balance_formatted %></div>
+          <% if low_runway %>
+            <div class="font-mono text-[11px] text-danger mt-1.5"><%= t("console.dashboard.low_runway") %></div>
+          <% end %>
+        </div>
+        <% if respond_to?(:dashboard_billing_path) %>
+          <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, mono: true, href: dashboard_billing_path) do %>> top_up()<% end %>
+        <% end %>
       </div>
-      <div class="w-10 h-10 rounded bg-primary-container/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-        <span class="material-symbols-outlined">terminal</span>
+      <div class="px-5 py-3 border-t border-rule-soft font-mono text-[11px] text-dim flex flex-wrap gap-x-4 gap-y-1 justify-between">
+        <span>// daily rate: <%= format_usd_for_user(daily_cost_usd) %> · next debit: 01:00 WIB</span>
+        <span>qris · gopay · ovo · dana</span>
       </div>
-    </div>
-    <div class="bg-surface-container-low p-5 rounded-md flex items-center justify-between group hover:bg-surface-container transition-colors">
-      <div>
-        <p class="text-outline uppercase tracking-wider text-[10px] font-bold mb-1"><%= t("dashboard.home.active_resources") %></p>
-        <h3 class="font-headline text-2xl font-bold text-on-surface"><%= running_count %></h3>
-      </div>
-      <div class="w-10 h-10 rounded bg-secondary-container/20 flex items-center justify-center text-secondary group-hover:scale-110 transition-transform">
-        <span class="material-symbols-outlined">dns</span>
-      </div>
-    </div>
-    <div class="bg-surface-container-low p-5 rounded-md flex items-center justify-between group hover:bg-surface-container transition-colors">
-      <div>
-        <p class="text-outline uppercase tracking-wider text-[10px] font-bold mb-1"><%= t("dashboard.home.errors") %></p>
-        <h3 class="font-headline text-2xl font-bold <%= crashed_count > 0 ? 'text-error' : 'text-on-surface' %>"><%= crashed_count %></h3>
-      </div>
-      <div class="w-10 h-10 rounded bg-error-container/20 flex items-center justify-center text-error group-hover:scale-110 transition-transform">
-        <span class="material-symbols-outlined">error</span>
-      </div>
-    </div>
-    <div class="bg-surface-container-low p-5 rounded-md flex items-center justify-between group hover:bg-surface-container transition-colors">
-      <div>
-        <p class="text-outline uppercase tracking-wider text-[10px] font-bold mb-1"><%= t("dashboard.home.cost_mtd") %></p>
-        <h3 class="font-headline text-2xl font-bold text-on-surface"><%= format_usd_for_user(@stats[:cost_mtd]) %></h3>
-      </div>
-      <div class="w-10 h-10 rounded bg-tertiary-container/20 flex items-center justify-center text-tertiary group-hover:scale-110 transition-transform">
-        <span class="material-symbols-outlined">payments</span>
-      </div>
-    </div>
+    <% end %>
+
+    <% if (team = current_user.teams.first) %>
+      <% slots = AppRecord.previews.where(team: team).count %>
+      <% cap = Preview::CapEnforcer.cap %>
+      <%= render Molecules::PanelComponent.new(
+            label: t("console.dashboard.pr_previews"), kicker: "slots: #{slots} / #{cap}") do %>
+        <div class="px-5 py-5">
+          <div class="font-mono text-3xl md:text-4xl text-ink font-semibold tracking-tighter"><%= slots %> / <%= cap %></div>
+          <div class="font-mono text-[11px] text-dim mt-2">
+            <%= slots.zero? ? t("console.dashboard.pr_idle") : "// #{slots} preview environment#{'s' unless slots == 1} running" %>
+          </div>
+          <div class="mt-4 flex gap-1">
+            <% cap.times do |i| %>
+              <div class="flex-1 h-2 border border-rule-soft <%= i < slots ? 'bg-accent' : 'bg-bg' %>"></div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
   </div>
 
   <% if @apps.any? %>
-    <div class="grid grid-cols-12 gap-8">
-      <%# Main Content — Recent Apps %>
-      <div class="col-span-8">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="font-headline text-xl font-bold text-on-surface"><%= t("dashboard.home.recent_apps") %></h2>
-          <%= link_to dashboard_apps_path, class: "text-xs text-primary hover:text-on-surface-variant font-medium transition-colors" do %>
-            <%= t("dashboard.home.view_all") %>
+    <%# ── Recent apps + activity ────────────────────────────── %>
+    <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-3 items-start">
+      <%= render Molecules::PanelComponent.new(
+            label: t("console.dashboard.apps_recent"), kicker: t("console.dashboard.view_all")) do %>
+        <% @recent_apps.each_with_index do |app, i| %>
+          <% primary_domain = app.domains.find { |d| d.hostname.end_with?(".wokku.cloud") } || app.domains.first %>
+          <%= link_to dashboard_app_path(app),
+                class: "grid grid-cols-[1.2fr_auto] md:grid-cols-[1.2fr_1.4fr_0.8fr_auto] items-center gap-3 md:gap-4 px-5 py-4 hover:bg-bg-deep transition-colors #{'border-b border-rule-soft' if i < @recent_apps.size - 1}" do %>
+            <div class="min-w-0">
+              <div class="font-mono text-sm text-ink font-semibold truncate"><%= app.name %></div>
+              <div class="font-mono text-[11px] text-dim mt-1"><%= app.server&.name || "—" %></div>
+            </div>
+            <div class="hidden md:flex font-mono text-xs text-accent items-center gap-1.5 min-w-0">
+              <span class="text-dim">↗</span>
+              <span class="truncate"><%= primary_domain&.hostname || "no domain" %></span>
+            </div>
+            <div class="hidden md:block font-mono text-[11px] text-dim"><%= time_ago_in_words(app.updated_at) %> ago</div>
+            <%= render Atoms::StatusDotComponent.new(state: status_dot_state.call(app)) %>
           <% end %>
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-          <% recent_apps.each do |app| %>
-            <%= link_to dashboard_app_path(app), class: "block bg-surface-container-low rounded-md overflow-hidden relative group hover:bg-surface-container transition-colors" do %>
-              <%# Gradient progress bar at top %>
-              <% if app.deploying? %>
-                <div class="h-0.5 w-full bg-outline-variant/20 absolute top-0 left-0 overflow-hidden">
-                  <div class="h-full bg-primary w-1/3 animate-pulse"></div>
-                </div>
-              <% elsif app.running? %>
-                <div class="h-0.5 w-full bg-outline-variant/20 absolute top-0 left-0">
-                  <div class="h-full bg-primary w-full"></div>
-                </div>
-              <% end %>
+        <% end %>
+      <% end %>
 
-              <div class="p-5">
-                <%# Header: name + status badge %>
-                <div class="flex justify-between items-start mb-4">
-                  <div class="flex items-start gap-3">
-                    <div class="w-8 h-8 rounded bg-primary-container/20 flex items-center justify-center text-primary mt-0.5">
-                      <span class="material-symbols-outlined text-[18px]">terminal</span>
-                    </div>
-                    <div>
-                      <h4 class="font-headline text-lg leading-none mb-1.5 text-on-surface group-hover:text-primary transition-colors"><%= app.name %></h4>
-                      <div class="flex items-center gap-1.5">
-                        <span class="material-symbols-outlined text-outline text-xs">dns</span>
-                        <span class="font-mono text-[10px] text-outline"><%= app.server.name %></span>
-                      </div>
-                    </div>
-                  </div>
-                  <% case app.status %>
-                  <% when "running" %>
-                    <span class="bg-secondary-container text-on-secondary-container text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-tighter glow-running"><%= t("common.running") %></span>
-                  <% when "crashed" %>
-                    <span class="bg-error-container text-on-error-container text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-tighter"><%= t("common.crashed") %></span>
-                  <% when "deploying" %>
-                    <span class="bg-surface-variant text-on-surface-variant text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-tighter"><%= t("common.deploying") %></span>
-                  <% when "stopped" %>
-                    <span class="bg-surface-variant text-on-surface-variant text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-tighter"><%= t("common.stopped") %></span>
-                  <% when "sleeping" %>
-                    <span class="bg-surface-variant text-on-surface-variant text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-tighter"><%= t("common.sleeping") %></span>
-                  <% when "created" %>
-                    <span class="bg-surface-variant text-outline text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-tighter">AWAITING DEPLOY</span>
-                  <% end %>
+      <%= render Molecules::PanelComponent.new(
+            label: t("console.dashboard.activity"), kicker: t("console.dashboard.activity_window")) do %>
+        <% if @activities.any? %>
+          <% @activities.each_with_index do |a, i| %>
+            <% count = a.respond_to?(:grouped_count) ? a.grouped_count : nil %>
+            <div class="px-5 py-3 <%= 'border-b border-rule-soft' if i < @activities.size - 1 %> flex items-start gap-3">
+              <span class="w-1.5 h-1.5 mt-1.5 flex-shrink-0 bg-accent"></span>
+              <div class="flex-1 min-w-0">
+                <div class="font-mono text-[10px] tracking-widest text-dim uppercase"><%= a.action.split(".").first %></div>
+                <div class="font-mono text-xs text-ink mt-0.5 truncate">
+                  <%= a.description %> <span class="text-accent"><%= a.target_name %></span><%= " ×#{count}" if count && count > 1 %>
                 </div>
-
-                <%# Domain %>
-                <% if (primary_domain = app.domains.find { |d| d.hostname.end_with?(".wokku.cloud") } || app.domains.first) %>
-                  <div class="flex items-center gap-1.5 mb-3">
-                    <span class="material-symbols-outlined text-outline text-xs">language</span>
-                    <span class="font-mono text-xs text-primary truncate"><%= primary_domain.hostname %></span>
-                  </div>
-                <% end %>
-
-                <%# Footer info %>
-                <div class="flex items-center justify-between pt-3 border-t border-outline-variant/10">
-                  <div class="flex items-center gap-1.5">
-                    <span class="material-symbols-outlined text-outline text-xs">schedule</span>
-                    <span class="text-[10px] text-outline"><%= time_ago_in_words(app.updated_at) %> ago</span>
-                  </div>
-                  <% if app.deploying? %>
-                    <div class="flex items-center gap-1.5 text-primary">
-                      <span class="material-symbols-outlined animate-spin text-sm">sync</span>
-                      <span class="text-[10px] font-medium">Deploying...</span>
-                    </div>
-                  <% end %>
-                </div>
-              </div>
-            <% end %>
-          <% end %>
-        </div>
-      </div>
-
-      <%# Right Sidebar %>
-      <div class="col-span-4 space-y-8">
-        <%# Activity Log %>
-        <section class="bg-surface-container-lowest rounded-md p-6">
-          <h3 class="font-headline text-lg font-bold text-on-surface mb-4">Recent Activity</h3>
-          <% if recent_activities.any? %>
-            <div class="relative">
-              <%# Vertical timeline line %>
-              <div class="absolute left-[7px] top-2 bottom-2 w-px bg-outline-variant/20"></div>
-              <div class="space-y-4">
-                <% recent_activities.each do |activity| %>
-                  <div class="flex items-start gap-3 relative">
-                    <div class="w-[15px] h-[15px] rounded-full bg-surface-container-high border-2 border-primary/40 flex-shrink-0 mt-0.5 z-10"></div>
-                    <div class="flex-1 min-w-0">
-                      <div class="flex items-center gap-2 mb-0.5">
-                        <span class="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant"><%= activity.action.split('.').first %></span>
-                      </div>
-                      <p class="text-xs text-on-surface-variant truncate">
-                        <%= activity.description %> <span class="text-primary font-medium"><%= activity.target_name %></span>
-                      </p>
-                      <p class="text-[10px] text-outline font-mono mt-0.5"><%= time_ago_in_words(activity.created_at) %> ago</p>
-                    </div>
-                  </div>
-                <% end %>
+                <div class="font-mono text-[10px] text-dim mt-0.5"><%= time_ago_in_words(a.created_at) %> ago</div>
               </div>
             </div>
-          <% else %>
-            <p class="text-sm text-outline">No recent activity.</p>
           <% end %>
-        </section>
-
-        <%# News & Insights %>
-        <section class="bg-surface-container-low rounded-md p-6">
-          <h3 class="font-headline text-lg font-bold text-on-surface mb-4">Platform Updates</h3>
-          <div class="space-y-3">
-            <div class="flex items-start gap-3">
-              <span class="material-symbols-outlined text-primary text-[18px] mt-0.5">new_releases</span>
-              <p class="text-xs text-on-surface-variant">Wokku CE v1.0 — Now with 11 add-on services</p>
-            </div>
-            <div class="flex items-start gap-3">
-              <span class="material-symbols-outlined text-secondary text-[18px] mt-0.5">upgrade</span>
-              <p class="text-xs text-on-surface-variant">Dokku v0.37.2 — Latest stable release</p>
-            </div>
-            <div class="flex items-start gap-3">
-              <span class="material-symbols-outlined text-tertiary text-[18px] mt-0.5">add_circle</span>
-              <p class="text-xs text-on-surface-variant">New: Meilisearch and ClickHouse add-ons available</p>
-            </div>
-          </div>
-        </section>
-      </div>
+        <% else %>
+          <div class="px-5 py-6 font-mono text-xs text-dim">// no recent activity</div>
+        <% end %>
+      <% end %>
     </div>
   <% else %>
-    <%# Onboarding — platform-server model.
-       Servers are platform infrastructure: only system admins can add them,
-       but any signed-in user can deploy to any server that exists. %>
+    <%# ── One-job first-deploy chooser ────────────────────────── %>
     <%
-      any_server_exists = Server.exists?
-      is_system_admin   = current_user.admin?
-
-      # System admins see "Add Server" only when no server has been added yet
-      # (bootstrap step). Regular users never see it.
-      show_server_step = is_system_admin && !any_server_exists
-
-      step_server_done = any_server_exists
-      step_deploy_done = false # always false in this branch (no apps)
-      step_token_done  = current_user.api_tokens.active.exists?
-
-      onboarding_steps = []
-      onboarding_steps << :server if show_server_step
-      onboarding_steps << :deploy
-      onboarding_steps << :token
-
-      done_steps = [
-        (show_server_step && step_server_done),
-        step_deploy_done,
-        step_token_done
-      ].count(true)
-      completed_count = done_steps
-      total_steps = onboarding_steps.length
+      registry = TemplateRegistry.new
+      curated  = %w[astro ghost n8n nextjs].select { |s| registry.find(s) }
     %>
-
-    <% if !any_server_exists && !is_system_admin %>
-      <%# Non-admin user arrived before a platform server has been provisioned.
-          There's nothing productive they can do until an admin acts. %>
-      <div class="max-w-2xl mx-auto text-center py-12">
-        <div class="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center mx-auto mb-4">
-          <span class="material-symbols-outlined text-3xl text-primary">hourglass_empty</span>
-        </div>
-        <h2 class="font-headline text-2xl font-bold text-on-surface mb-2"><%= t("dashboard.onboarding.waiting_title", default: "Hang tight — the platform isn't quite ready") %></h2>
-        <p class="text-sm text-outline max-w-md mx-auto mb-6">
-          <%= t("dashboard.onboarding.waiting_desc", default: "An administrator needs to connect the first server before deploys can start. Check back shortly.") %>
-        </p>
-        <%= link_to dashboard_templates_path, class: "inline-flex items-center gap-2 px-5 py-2 border border-outline-variant/20 text-on-surface-variant rounded-md text-sm hover:bg-surface-container transition" do %>
-          <span class="material-symbols-outlined text-[18px]">rocket_launch</span>
-          <%= t("dashboard.onboarding.browse_while_waiting", default: "Browse app templates in the meantime") %>
+    <%= render Molecules::PanelComponent.new(label: t("onboarding2.title"), kicker: t("onboarding2.sub")) do %>
+      <div class="p-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <% curated.each do |slug| %>
+          <% tpl = registry.find(slug) %>
+          <%= link_to dashboard_template_path(slug, prefill: 1),
+                class: "border-1.5 border-ink bg-paper p-4 hover:bg-bg-deep transition font-mono block",
+                data: (slug == "astro" ? { tour_target: "pick" } : {}) do %>
+            <div class="text-sm font-semibold text-ink"><%= tpl[:name] %></div>
+            <div class="text-[11px] text-dim mt-1 line-clamp-2"><%= tpl[:description] %></div>
+            <div class="text-xs text-accent mt-3">&gt; deploy()</div>
+          <% end %>
         <% end %>
       </div>
-    <% else %>
-
-    <div class="max-w-3xl mx-auto">
-      <div class="text-center mb-8">
-        <div class="w-16 h-16 rounded-full bg-primary flex items-center justify-center mx-auto mb-4">
-          <span class="material-symbols-outlined text-3xl text-on-primary">waving_hand</span>
-        </div>
-        <h2 class="font-headline text-2xl font-bold text-on-surface mb-2"><%= t("dashboard.onboarding.welcome") %></h2>
-        <p class="text-sm text-outline"><%= t("dashboard.onboarding.tagline") %></p>
+      <div class="px-6 pb-5">
+        <button data-action="click->slide-panel#open" class="font-mono text-xs text-dim hover:text-ink underline">
+          <%= t("onboarding2.push_own") %>
+        </button>
+        <p class="font-mono text-[11px] text-dim mt-2">// <%= t("onboarding2.building") %></p>
       </div>
-
-      <div class="bg-surface-container-low rounded-md overflow-hidden">
-        <div class="px-6 py-4 border-b border-outline-variant/10 flex items-center justify-between">
-          <div>
-            <h3 class="font-headline text-base font-bold text-on-surface"><%= t("dashboard.onboarding.welcome_desc") %></h3>
-            <p class="text-xs text-outline mt-0.5"><%= completed_count %>/<%= total_steps %> <%= t("dashboard.onboarding.completed") %></p>
-          </div>
-          <div class="w-32 bg-surface-container rounded-full h-1.5 overflow-hidden">
-            <div class="h-full bg-primary transition-all" style="width: <%= (completed_count.to_f / total_steps * 100).round %>%"></div>
-          </div>
-        </div>
-
-        <%# Step 1: Connect a server — only for users who can provision infra %>
-        <% if show_server_step %>
-        <div class="px-6 py-4 border-b border-outline-variant/10 flex items-start gap-4">
-          <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 <%= step_server_done ? 'bg-secondary/20' : 'bg-surface-container' %>">
-            <% if step_server_done %>
-              <span class="material-symbols-outlined text-secondary text-[18px]">check</span>
-            <% else %>
-              <span class="text-sm font-bold text-on-surface-variant">1</span>
-            <% end %>
-          </div>
-          <div class="flex-1">
-            <h4 class="text-sm font-bold text-on-surface mb-1"><%= t("dashboard.onboarding.add_server") %></h4>
-            <p class="text-xs text-outline mb-3"><%= t("dashboard.onboarding.add_server_desc") %></p>
-            <% unless step_server_done %>
-              <%= link_to dashboard_servers_path + "/new", class: "inline-flex items-center gap-1 px-3 py-1.5 bg-primary text-on-primary text-xs font-bold rounded-md hover:opacity-90 transition" do %>
-                <span class="material-symbols-outlined text-[14px]">add</span>
-                <%= t("dashboard.onboarding.add_server_btn") %>
-              <% end %>
-              <a href="/docs/getting-started/connect-server" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-on-surface-variant hover:text-on-surface transition ml-2">
-                <span class="material-symbols-outlined text-[14px]">menu_book</span>
-                <%= t("dashboard.onboarding.read_guide") %>
-              </a>
-            <% end %>
-          </div>
-        </div>
-
-        <% end %><%# /show_server_step %>
-
-        <%# Step (2 when server step visible, else 1): Deploy an app %>
-        <div class="px-6 py-4 border-b border-outline-variant/10 flex items-start gap-4">
-          <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 <%= step_deploy_done ? 'bg-secondary/20' : step_server_done ? 'bg-surface-container' : 'bg-surface-container/50' %>">
-            <% if step_deploy_done %>
-              <span class="material-symbols-outlined text-secondary text-[18px]">check</span>
-            <% else %>
-              <span class="text-sm font-bold <%= step_server_done ? 'text-on-surface-variant' : 'text-outline-variant' %>"><%= show_server_step ? 2 : 1 %></span>
-            <% end %>
-          </div>
-          <div class="flex-1">
-            <h4 class="text-sm font-bold <%= step_server_done ? 'text-on-surface' : 'text-outline-variant' %> mb-1"><%= t("dashboard.onboarding.deploy_app") %></h4>
-            <p class="text-xs text-outline mb-3"><%= t("dashboard.onboarding.deploy_app_desc") %></p>
-            <% if step_server_done %>
-              <%= link_to dashboard_templates_path, class: "inline-flex items-center gap-1 px-3 py-1.5 bg-primary text-on-primary text-xs font-bold rounded-md hover:opacity-90 transition" do %>
-                <span class="material-symbols-outlined text-[14px]">rocket_launch</span>
-                <%= t("dashboard.onboarding.browse_templates") %>
-              <% end %>
-              <button data-action="click->slide-panel#open" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-on-surface-variant hover:text-on-surface transition ml-2 cursor-pointer">
-                <span class="material-symbols-outlined text-[14px]">add</span>
-                <%= t("dashboard.onboarding.create_custom_app") %>
-              </button>
-            <% else %>
-              <span class="text-[11px] text-outline italic"><%= t("dashboard.onboarding.complete_step_first") %></span>
-            <% end %>
-          </div>
-        </div>
-
-        <%# Step (3/2): API token for CLI / MCP %>
-        <div class="px-6 py-4 flex items-start gap-4">
-          <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 <%= step_token_done ? 'bg-secondary/20' : 'bg-surface-container' %>">
-            <% if step_token_done %>
-              <span class="material-symbols-outlined text-secondary text-[18px]">check</span>
-            <% else %>
-              <span class="text-sm font-bold text-on-surface-variant"><%= show_server_step ? 3 : 2 %></span>
-            <% end %>
-          </div>
-          <div class="flex-1">
-            <h4 class="text-sm font-bold text-on-surface mb-1"><%= t("dashboard.onboarding.generate_token") %></h4>
-            <p class="text-xs text-outline mb-3"><%= t("dashboard.onboarding.generate_token_desc") %></p>
-            <% unless step_token_done %>
-              <%= link_to dashboard_profile_path, class: "inline-flex items-center gap-1 px-3 py-1.5 text-xs text-on-surface-variant hover:text-on-surface border border-outline-variant/20 rounded-md transition" do %>
-                <span class="material-symbols-outlined text-[14px]">key</span>
-                <%= t("dashboard.onboarding.create_token") %>
-              <% end %>
-              <a href="/docs/mcp/setup" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-on-surface-variant hover:text-on-surface transition ml-2">
-                <span class="material-symbols-outlined text-[14px]">smart_toy</span>
-                <%= t("dashboard.onboarding.setup_claude_code") %>
-              </a>
-            <% end %>
-          </div>
-        </div>
-      </div>
-
-      <div class="text-center mt-6">
-        <a href="/docs" target="_blank" class="text-xs text-outline hover:text-primary transition">
-          <%= t("dashboard.home.browse_docs") %>
-        </a>
-      </div>
-    </div>
-    <% end %><%# /!has_server_access && !user_can_add_server branch %>
+    <% end %>
   <% end %>
 
   <%= render layout: "dashboard/shared/slide_panel", locals: { title: "New App", subtitle: "Deploy a new application" } do %>

@@ -1,27 +1,34 @@
-<div class="mb-4">
-  <%= link_to "← Add-ons", dashboard_addons_path, class: "text-sm text-outline hover:text-on-surface transition" %>
+<%#
+  Brutalist add-on (database) show (P4 of redesign-c-full, 2026-05-17).
+  All Ruby computation, forms, slide-panel/confirm-delete wiring,
+  combobox, format_price and routes preserved 1:1 from
+  show.OLD_DESIGN.html.erb — only presentation repainted.
+%>
+<%
+  panel_head = "px-5 py-2.5 border-b border-rule-soft flex items-center justify-between font-mono text-[11px] text-dim tracking-widest uppercase"
+%>
+<div class="font-mono text-xs text-dim mb-3">
+  <%= link_to dashboard_addons_path, class: "hover:text-accent transition-colors" do %>← cd ~/add-ons/<% end %><span class="text-accent"><%= @database.name %></span>
 </div>
 
-<div class="flex items-start justify-between mb-8">
+<div class="flex flex-wrap items-start justify-between gap-4 pb-6 border-b border-rule-soft mb-6">
   <div>
-    <div class="flex items-center gap-3 mb-1">
-      <h1 class="text-2xl font-headline text-on-surface"><%= @database.name %></h1>
-      <span class="text-xs text-outline capitalize"><%= @database.service_type %></span>
-      <%# Status only when non-running %>
-      <% case @database.status %>
-      <% when "stopped" %>
-        <span class="text-xs text-outline">Stopped</span>
-      <% when "error" %>
-        <span class="text-xs text-error">Error</span>
+    <div class="flex items-center gap-3 flex-wrap">
+      <h1 class="font-mono text-3xl md:text-4xl font-semibold tracking-tighter text-ink m-0"><span class="text-dim"># </span><%= @database.name %></h1>
+      <%= render Atoms::TagComponent.new(tone: :dim) do %><%= @database.service_type %><% end %>
+      <% if @database.status == "stopped" %>
+        <%= render Atoms::TagComponent.new(tone: :dim) do %>stopped<% end %>
+      <% elsif @database.status == "error" %>
+        <%= render Atoms::TagComponent.new(tone: :danger) do %>error<% end %>
       <% end %>
     </div>
-    <p class="text-sm text-outline">On <%= @database.server.name %> · <%= @linked_apps.size %> linked app<%= @linked_apps.size == 1 ? '' : 's' %></p>
+    <p class="mt-3 font-mono text-sm text-dim">on <%= @database.server.name %> · <%= @linked_apps.size %> linked app<%= @linked_apps.size == 1 ? '' : 's' %></p>
   </div>
   <div class="flex items-center gap-2">
-    <%= link_to dashboard_addon_backups_path(@database), class: "inline-flex items-center px-3 py-1.5 text-on-surface-variant text-sm font-medium border border-outline-variant/30 rounded-md hover:bg-surface-container-high transition" do %>
+    <%= link_to dashboard_addon_backups_path(@database), class: "px-3 py-1.5 font-mono text-sm text-ink border-1.5 border-ink bg-paper hover:bg-bg-deep transition-colors" do %>
       <%= t("dashboard.databases.backups") %>
     <% end %>
-    <%= button_to "Delete", dashboard_addon_path(@database),
+    <%= button_to "delete", dashboard_addon_path(@database),
           method: :delete,
           form: {
             data: {
@@ -31,7 +38,7 @@
               confirm_delete_resource_value: "database"
             }
           },
-          class: "text-sm font-medium text-error border border-error/30 hover:bg-error-container/10 px-3 py-1.5 rounded-md transition bg-transparent cursor-pointer" %>
+          class: "font-mono text-sm text-danger border-1.5 border-danger bg-danger-soft hover:opacity-90 px-3 py-1.5 transition cursor-pointer" %>
   </div>
 </div>
 
@@ -41,11 +48,11 @@
     used_mb = @database.live_db_bytes ? (@database.live_db_bytes.to_f / 1.megabyte).round(1) : nil
     grace_left = ((@database.over_quota_at + 24.hours) - Time.current) / 1.hour
   %>
-  <div class="mb-6 rounded-lg bg-error-container/15 border border-error/30 px-5 py-4">
-    <div class="flex items-start justify-between gap-4">
+  <div class="mb-6 border-1.5 border-danger bg-danger-soft px-5 py-4">
+    <div class="flex items-start justify-between gap-4 flex-wrap">
       <div>
-        <p class="text-sm font-semibold text-error mb-1">Storage quota reached</p>
-        <p class="text-xs text-on-surface-variant">
+        <p class="font-mono text-sm font-semibold text-danger mb-1">// storage quota reached</p>
+        <p class="font-mono text-xs text-ink-soft">
           Using <%= used_mb %> MB of <%= cap_gb %> GB allowed on the <%= @database.tier_name %> plan.
           <% if grace_left > 0 %>
             Database stays writable for ~<%= grace_left.round %>h before it's flagged stopped.
@@ -54,7 +61,7 @@
           <% end %>
         </p>
       </div>
-      <%= link_to "Upgrade plan", "#change-plan", class: "px-3 py-1.5 text-xs font-semibold bg-primary text-on-primary rounded-md hover:opacity-90 transition flex-shrink-0" %>
+      <%= link_to "upgrade_plan →", "#change-plan", class: "px-3 py-1.5 font-mono text-xs font-semibold bg-ink text-bg border-1.5 border-ink hover:bg-ink-soft transition flex-shrink-0" %>
     </div>
   </div>
 <% end %>
@@ -62,28 +69,19 @@
 <%# Current Plan + Usage %>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
   <%# Current tier card %>
-  <div class="bg-surface-container-low rounded-lg p-5">
-    <div class="flex items-baseline justify-between mb-3">
-      <p class="text-xs text-outline uppercase tracking-wider font-medium">Current Plan</p>
+  <div class="border-1.5 border-ink bg-paper p-5">
+    <div class="flex items-baseline justify-between mb-3 font-mono">
+      <p class="text-[11px] text-dim uppercase tracking-widest">current_plan</p>
       <% if @current_tier %>
-        <span class="text-xs text-on-surface-variant"><%= format_price(@current_tier.monthly_price_dollars) %>/bln</span>
+        <span class="text-xs text-dim"><%= format_price(@current_tier.monthly_price_dollars) %>/bln</span>
       <% end %>
     </div>
-    <p class="text-2xl font-semibold text-on-surface font-headline mb-3"><%= @current_tier&.name&.capitalize || "—" %></p>
+    <p class="font-mono text-2xl font-semibold text-ink mb-3 capitalize"><%= @current_tier&.name&.capitalize || "—" %></p>
     <% if (spec = @current_tier&.spec) %>
-      <div class="grid grid-cols-3 gap-2 text-xs">
-        <div>
-          <p class="text-outline">RAM</p>
-          <p class="text-on-surface-variant"><%= spec["memory_mb"] || "—" %> MB</p>
-        </div>
-        <div>
-          <p class="text-outline">Storage</p>
-          <p class="text-on-surface-variant"><%= spec["storage_gb"] || "—" %> GB</p>
-        </div>
-        <div>
-          <p class="text-outline">Connections</p>
-          <p class="text-on-surface-variant"><%= spec["connections"] || "—" %></p>
-        </div>
+      <div class="grid grid-cols-3 gap-2 font-mono text-xs">
+        <div><p class="text-dim">RAM</p><p class="text-ink-soft"><%= spec["memory_mb"] || "—" %> MB</p></div>
+        <div><p class="text-dim">Storage</p><p class="text-ink-soft"><%= spec["storage_gb"] || "—" %> GB</p></div>
+        <div><p class="text-dim">Connections</p><p class="text-ink-soft"><%= spec["connections"] || "—" %></p></div>
       </div>
     <% end %>
   </div>
@@ -100,30 +98,28 @@
     ram_used_mb = ram_bytes ? (ram_bytes.to_f / 1.megabyte).round(1) : nil
     ram_pct = (ram_used_mb && ram_cap_mb.positive?) ? [(ram_used_mb / ram_cap_mb * 100).round(1), 100].min : nil
   %>
-  <div class="bg-surface-container-low rounded-lg p-5">
-    <p class="text-xs text-outline uppercase tracking-wider font-medium mb-3">Usage</p>
-
-    <div class="space-y-3">
+  <div class="border-1.5 border-ink bg-paper p-5">
+    <p class="font-mono text-[11px] text-dim uppercase tracking-widest mb-3">usage</p>
+    <div class="space-y-3 font-mono">
       <div>
         <div class="flex items-baseline justify-between mb-1">
-          <span class="text-xs text-outline">Storage</span>
-          <span class="text-xs text-on-surface-variant"><%= used_mb ? "#{used_mb} MB" : "—" %><% if storage_pct %> · <%= storage_pct %>% of <%= storage_gb %> GB<% end %></span>
+          <span class="text-xs text-dim">storage</span>
+          <span class="text-xs text-ink-soft"><%= used_mb ? "#{used_mb} MB" : "—" %><% if storage_pct %> · <%= storage_pct %>% of <%= storage_gb %> GB<% end %></span>
         </div>
         <% if storage_pct %>
-          <div class="w-full h-1 bg-surface-container rounded-full overflow-hidden">
-            <div class="h-full <%= storage_pct >= 90 ? "bg-error" : storage_pct >= 75 ? "bg-tertiary" : "bg-primary" %>" style="width: <%= storage_pct %>%"></div>
+          <div class="w-full h-1.5 bg-bg border border-rule-soft relative">
+            <div class="absolute inset-0 <%= storage_pct >= 90 ? "bg-danger" : storage_pct >= 75 ? "bg-warn" : "bg-accent" %>" style="width: <%= storage_pct %>%"></div>
           </div>
         <% end %>
       </div>
-
       <div>
         <div class="flex items-baseline justify-between mb-1">
-          <span class="text-xs text-outline">RAM</span>
-          <span class="text-xs text-on-surface-variant"><%= ram_used_mb ? "#{ram_used_mb} MB" : "—" %><% if ram_pct %> · <%= ram_pct %>% of <%= ram_cap_mb %> MB<% end %></span>
+          <span class="text-xs text-dim">ram</span>
+          <span class="text-xs text-ink-soft"><%= ram_used_mb ? "#{ram_used_mb} MB" : "—" %><% if ram_pct %> · <%= ram_pct %>% of <%= ram_cap_mb %> MB<% end %></span>
         </div>
         <% if ram_pct %>
-          <div class="w-full h-1 bg-surface-container rounded-full overflow-hidden">
-            <div class="h-full <%= ram_pct >= 90 ? "bg-error" : ram_pct >= 75 ? "bg-tertiary" : "bg-primary" %>" style="width: <%= ram_pct %>%"></div>
+          <div class="w-full h-1.5 bg-bg border border-rule-soft relative">
+            <div class="absolute inset-0 <%= ram_pct >= 90 ? "bg-danger" : ram_pct >= 75 ? "bg-warn" : "bg-accent" %>" style="width: <%= ram_pct %>%"></div>
           </div>
         <% end %>
       </div>
@@ -133,31 +129,31 @@
 
 <%# Tier Picker (dedicated only) %>
 <% unless @database.shared? %>
-  <div class="mb-8">
-    <div class="flex items-baseline justify-between mb-3">
-      <h2 class="text-base font-semibold text-on-surface">Change Plan</h2>
-      <p class="text-xs text-outline">RAM updates live · connection-cap changes restart the database (~5s)</p>
+  <div class="mb-8" id="change-plan">
+    <div class="flex items-baseline justify-between mb-3 font-mono">
+      <h2 class="text-base font-semibold text-ink"># change_plan</h2>
+      <p class="text-xs text-dim">// RAM updates live · connection-cap changes restart the database (~5s)</p>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
       <% @available_tiers.each do |tier| %>
         <% spec = tier.spec || {} %>
         <% is_current = tier.name == @current_tier&.name %>
-        <div class="bg-surface-container-low rounded-lg p-5 <%= "ring-1 ring-primary/40" if is_current %>">
+        <div class="border-1.5 <%= is_current ? 'border-accent bg-accent-soft' : 'border-ink bg-paper' %> p-5 font-mono">
           <div class="flex items-center justify-between mb-1">
-            <h3 class="text-base font-semibold text-on-surface capitalize"><%= tier.name %></h3>
+            <h3 class="text-base font-semibold text-ink capitalize"><%= tier.name %></h3>
             <% if is_current %>
-              <span class="text-[10px] font-bold uppercase tracking-wider text-primary">Current</span>
+              <span class="text-[10px] font-bold uppercase tracking-widest text-accent">current</span>
             <% end %>
           </div>
-          <p class="text-sm text-on-surface-variant mb-4"><%= format_price(tier.monthly_price_dollars) %>/bln</p>
-          <ul class="text-xs text-outline space-y-1 mb-4">
-            <li><span class="text-on-surface-variant"><%= spec["memory_mb"] %> MB</span> RAM</li>
-            <li><span class="text-on-surface-variant"><%= spec["storage_gb"] %> GB</span> storage</li>
-            <li><span class="text-on-surface-variant"><%= spec["connections"] %></span> max connections</li>
+          <p class="text-sm text-ink-soft mb-4"><%= format_price(tier.monthly_price_dollars) %>/bln</p>
+          <ul class="text-xs text-dim space-y-1 mb-4">
+            <li><span class="text-ink-soft"><%= spec["memory_mb"] %> MB</span> RAM</li>
+            <li><span class="text-ink-soft"><%= spec["storage_gb"] %> GB</span> storage</li>
+            <li><span class="text-ink-soft"><%= spec["connections"] %></span> max connections</li>
             <li><%= spec["backups"] %><% if spec["backup_retention"] %> · <%= spec["backup_retention"] %> retained<% end %></li>
           </ul>
           <% unless is_current %>
-            <%= button_to change_tier_dashboard_addon_path(@database, tier_name: tier.name), method: :post, data: { turbo_confirm: "Change #{@database.name} to #{tier.name}? This will briefly restart the database." }, class: "w-full px-3 py-1.5 bg-primary text-on-primary text-xs font-semibold rounded-md hover:opacity-90 transition cursor-pointer" do %>
+            <%= button_to change_tier_dashboard_addon_path(@database, tier_name: tier.name), method: :post, data: { turbo_confirm: "Change #{@database.name} to #{tier.name}? This will briefly restart the database." }, class: "w-full px-3 py-1.5 bg-ink text-bg text-xs font-semibold border-1.5 border-ink hover:bg-ink-soft transition cursor-pointer" do %>
               <%= tier.monthly_price_cents > (@current_tier&.monthly_price_cents || 0) ? "Upgrade" : "Downgrade" %>
             <% end %>
           <% end %>
@@ -169,27 +165,25 @@
 
 <%# Linked Apps %>
 <div class="mb-8" data-controller="slide-panel">
-  <div class="flex items-center justify-between mb-3">
-    <h2 class="text-base font-semibold text-on-surface"><%= t("dashboard.databases.linked_apps") %></h2>
+  <div class="flex items-center justify-between mb-3 font-mono">
+    <h2 class="text-base font-semibold text-ink"># <%= t("dashboard.databases.linked_apps") %></h2>
     <% if @available_apps.any? %>
-      <button data-action="click->slide-panel#open" class="text-sm text-primary hover:underline cursor-pointer">+ Link app</button>
+      <button data-action="click->slide-panel#open" class="text-sm text-accent hover:underline cursor-pointer">+ link_app</button>
     <% end %>
   </div>
 
-  <div class="bg-surface-container-low rounded-lg overflow-hidden">
+  <div class="border-1.5 border-ink bg-paper overflow-hidden">
     <% if @linked_apps.any? %>
-      <div class="divide-y divide-outline-variant/10">
+      <div class="divide-y divide-rule-soft">
         <% @linked_apps.each do |app| %>
-          <div class="flex items-center justify-between px-5 py-3">
-            <%= link_to app.name, dashboard_app_path(app), class: "text-sm text-on-surface hover:text-primary transition" %>
-            <%= button_to "Unlink", unlink_dashboard_addon_path(@database, app_id: app.id), method: :post, data: { turbo_confirm: "Unlink #{app.name} from #{@database.name}?" }, class: "text-xs text-outline hover:text-error transition cursor-pointer bg-transparent border-0" %>
+          <div class="flex items-center justify-between px-5 py-3 font-mono">
+            <%= link_to app.name, dashboard_app_path(app), class: "text-sm text-ink hover:text-accent transition" %>
+            <%= button_to "unlink", unlink_dashboard_addon_path(@database, app_id: app.id), method: :post, data: { turbo_confirm: "Unlink #{app.name} from #{@database.name}?" }, class: "text-xs text-dim hover:text-danger transition cursor-pointer bg-transparent border-0" %>
           </div>
         <% end %>
       </div>
     <% else %>
-      <div class="px-5 py-8 text-center">
-        <p class="text-sm text-outline">No apps linked yet.</p>
-      </div>
+      <div class="px-5 py-8 text-center font-mono text-sm text-dim">// no apps linked yet</div>
     <% end %>
   </div>
 
@@ -197,12 +191,12 @@
     <%= render layout: "dashboard/shared/slide_panel", locals: { title: "Link App", subtitle: "Connect an app to #{@database.name}" } do %>
       <%= form_with(url: link_dashboard_addon_path(@database), method: :post, class: "space-y-4") do %>
         <div>
-          <label class="block text-xs font-semibold text-on-surface-variant mb-1.5 uppercase tracking-wider">Application</label>
+          <label class="block font-mono text-[10px] font-bold text-dim mb-1.5 uppercase tracking-widest">Application</label>
           <%= combobox_tag "app_id", @available_apps.map { |a| { value: a.id, label: a.name, description: a.server.name } }, placeholder: "Search apps…", required: true %>
         </div>
         <div class="flex items-center gap-2">
-          <%= submit_tag "Link App", class: "px-4 py-2.5 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
-          <button type="button" data-action="click->slide-panel#close" class="px-4 py-2.5 text-sm font-medium text-on-surface-variant border border-outline-variant/30 rounded-md hover:bg-surface-container-high transition cursor-pointer">Cancel</button>
+          <%= submit_tag "Link App", class: "px-4 py-2.5 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer" %>
+          <button type="button" data-action="click->slide-panel#close" class="px-4 py-2.5 font-mono text-sm text-ink border-1.5 border-ink bg-paper hover:bg-bg-deep transition-colors cursor-pointer">Cancel</button>
         </div>
       <% end %>
     <% end %>
@@ -211,17 +205,34 @@
 
 <%# Connection Info — collapsed-feel, less prominent %>
 <% if @info.any? %>
-  <details class="bg-surface-container-low rounded-lg overflow-hidden">
-    <summary class="px-5 py-3 cursor-pointer text-sm font-medium text-on-surface-variant hover:text-on-surface flex items-center justify-between">
+  <details class="border-1.5 border-ink bg-paper overflow-hidden">
+    <summary class="px-5 py-3 cursor-pointer font-mono text-sm text-ink-soft hover:text-ink flex items-center justify-between">
       <span><%= t("dashboard.databases.connection_info") %></span>
-      <span class="text-xs text-outline">Show</span>
+      <span class="text-xs text-dim">show</span>
     </summary>
-    <div class="divide-y divide-outline-variant/10 border-t border-outline-variant/10">
+    <div class="divide-y divide-rule-soft border-t border-rule-soft">
       <% @info.each do |key, value| %>
         <% next if value.blank? %>
-        <div class="px-5 py-2.5 flex items-center justify-between">
-          <span class="text-xs text-outline"><%= key.humanize %></span>
-          <span class="text-xs text-on-surface-variant font-mono truncate ml-4 max-w-md text-right"><%= value %></span>
+        <%
+          # Mask anything that looks like a URL with credentials or a raw
+          # secret token. Plain port numbers and host names render as-is.
+          sensitive = value.to_s.match?(/:\/\/[^@]+@/) || key.to_s.match?(/url|password|secret|token/i)
+        %>
+        <div class="px-5 py-2.5 flex items-center justify-between gap-3 font-mono">
+          <span class="text-xs text-dim shrink-0"><%= key.humanize %></span>
+          <% if sensitive %>
+            <div class="flex items-center gap-2 ml-4 min-w-0 max-w-md"
+                 data-controller="reveal"
+                 data-reveal-value-value="<%= value %>">
+              <span data-reveal-target="display" class="text-xs text-ink-soft truncate select-all">••••••••••••</span>
+              <button type="button"
+                      data-reveal-target="toggle"
+                      data-action="click->reveal#toggle"
+                      class="text-[10px] uppercase tracking-widest text-accent hover:underline shrink-0">reveal</button>
+            </div>
+          <% else %>
+            <span class="text-xs text-ink-soft truncate ml-4 max-w-md text-right"><%= value %></span>
+          <% end %>
         </div>
       <% end %>
     </div>

@@ -56,6 +56,176 @@
   --radius-md: 0.25rem;
   --radius-lg: 0.5rem;
   --radius-xl: 0.75rem;
+
+  /* --- Brutalist landing tokens (P1 of redesign-c-full, 2026-05-17) ---
+     Live alongside the Material You tokens above. Used ONLY by the
+     marketing layout + landing page for now; dashboard pages keep using
+     the Material tokens. Brutalist `surface` was renamed to `paper`
+     to avoid colliding with Material's `--color-surface`.
+     Default values are the LIGHT theme; dark overrides at the bottom of
+     this file flip them under `[data-theme="dark"]`. */
+  --color-bg:           #FAFAF7;
+  --color-bg-deep:      #F0EFEA;
+  --color-paper:        #FFFFFF;
+  --color-ink:          #0B0B0E;
+  --color-ink-soft:     #3A3A40;
+  --color-dim:          #8A8A90;
+  --color-rule:         #0B0B0E;
+  --color-rule-soft:    rgba(11, 11, 14, 0.12);
+  --color-accent:       #6C4CFF;
+  --color-accent-soft:  #EFE9FF;
+  --color-hot:          #FF6B3D;
+  --color-hot-soft:     #FFE5D8;
+  --color-warn:         #F2C94C;
+  --color-warn-soft:    rgba(242, 201, 76, 0.18);
+  --color-danger:       #E5484D;
+  --color-danger-soft:  rgba(229, 72, 77, 0.12);
+  --color-success:      #2F9E44;
+  --color-success-soft: rgba(47, 158, 68, 0.14);
+
+  /* Type families for the brutalist surface. Inter Tight + JetBrains
+     Mono are loaded from Google Fonts in the marketing layout. */
+  --font-sans-brutal: "Inter Tight", "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono-brutal: "JetBrains Mono", "IBM Plex Mono", "SF Mono", ui-monospace, monospace;
+
+  /* Brutalist hard shadows — ink-coloured in light, accent in dark. */
+  --shadow-brutal-sm: 3px 3px 0 0 var(--color-ink);
+  --shadow-brutal:    4px 4px 0 0 var(--color-ink);
+  --shadow-brutal-lg: 5px 5px 0 0 var(--color-ink);
+
+  --grid-dot:           rgba(0, 0, 0, 0.06);
+
+  /* Motion tokens — see D6 of 2026-05-21-vps-but-simpler-design.md */
+  --t-tap:        80ms;
+  --t-default:    160ms;
+  --t-enter:      240ms;
+  --t-drawer:     320ms;
+  --ease:         cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-pulse:   ease-out;
+}
+
+@keyframes wk-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.55; transform: scale(0.85); }
+}
+@keyframes wk-spin     { to { transform: rotate(360deg); } }
+@keyframes wk-tab-in   { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes wk-toast-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes wk-tick     { 0% { transform: scale(1); color: var(--color-ink); } 50% { transform: scale(1.15); color: var(--color-accent); } 100% { transform: scale(1); color: var(--color-ink); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0ms !important;
+  }
+}
+
+/* Pending button state used by motion--optimistic-button. */
+.wk-pending {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  cursor: progress;
+}
+.wk-pending .wk-spinner {
+  width: 10px; height: 10px;
+  border: 1.5px solid var(--color-accent);
+  border-right-color: transparent;
+  border-radius: 50%;
+  display: inline-block; vertical-align: -2px; margin-right: 6px;
+  animation: wk-spin 700ms linear infinite;
+}
+
+/* Status pulse dot used by motion--status-pulse. */
+.wk-dot {
+  width: 8px; height: 8px;
+  background: var(--color-success);
+  border-radius: 50%;
+  display: inline-block; margin-right: 6px;
+}
+
+/* Self-hosted webfonts. Replaces the Google Fonts import in the marketing
+   layout. font-display: swap prevents invisible text during the brief load.
+   Files live in public/fonts/ (NOT app/assets/) because Tailwind v4 doesn't
+   pass CSS url() through propshaft's rewriter, and propshaft only serves
+   fingerprinted URLs. public/ files are served verbatim with long cache. */
+@font-face {
+  font-family: "Inter Tight";
+  font-style: normal; font-weight: 400; font-display: swap;
+  src: url("/fonts/inter-tight-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter Tight";
+  font-style: normal; font-weight: 700; font-display: swap;
+  src: url("/fonts/inter-tight-700.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter Tight";
+  font-style: normal; font-weight: 800; font-display: swap;
+  src: url("/fonts/inter-tight-800.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal; font-weight: 400; font-display: swap;
+  src: url("/fonts/jetbrains-mono-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal; font-weight: 600; font-display: swap;
+  src: url("/fonts/jetbrains-mono-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal; font-weight: 700; font-display: swap;
+  src: url("/fonts/jetbrains-mono-700.woff2") format("woff2");
+}
+
+/* Dark-theme override for brutalist tokens. Triggered by the theme
+   Stimulus controller toggling `data-theme="dark"` on <html>. */
+[data-theme="dark"] {
+  --color-bg:           #0B0B0E;
+  --color-bg-deep:      #141417;
+  --color-paper:        #1A1A1D;
+  --color-ink:          #FAFAF7;
+  --color-ink-soft:     #C4C4CA;
+  --color-dim:          #6E6E76;
+  --color-rule:         #FAFAF7;
+  --color-rule-soft:    rgba(250, 250, 247, 0.15);
+  --color-accent:       #9A82FF;
+  --color-accent-soft:  rgba(154, 130, 255, 0.16);
+  --color-hot:          #FF8456;
+  --color-hot-soft:     rgba(255, 132, 86, 0.18);
+  --color-danger:       #FF6E73;
+  --color-danger-soft:  rgba(255, 110, 115, 0.16);
+  --color-success:      #51CF66;
+  --color-success-soft: rgba(81, 207, 102, 0.18);
+
+  --shadow-brutal-sm: 3px 3px 0 0 var(--color-accent);
+  --shadow-brutal:    4px 4px 0 0 var(--color-accent);
+  --shadow-brutal-lg: 5px 5px 0 0 var(--color-accent);
+
+  --grid-dot:           rgba(255, 255, 255, 0.07);
+}
+
+/* Smooth theme transition for the landing — keep it short so the dark
+   toggle doesn't feel laggy. */
+html { transition: background-color 200ms ease, color 200ms ease; }
+
+/* Brutalist hairline borders. Tailwind v4 has no built-in 1.5px width;
+   the brutalist component library leans on these for crisp panel/sidebar
+   chrome. Defined as utilities so `border-1.5`, `border-r-1.5`, etc.
+   resolve everywhere (landing + console). */
+@utility border-1.5 { border-width: 1.5px; }
+@utility border-t-1.5 { border-top-width: 1.5px; }
+@utility border-r-1.5 { border-right-width: 1.5px; }
+@utility border-b-1.5 { border-bottom-width: 1.5px; }
+@utility border-l-1.5 { border-left-width: 1.5px; }
+
+/* Dotted grid helper used by hero + sections. */
+.bg-dotted {
+  background-image: radial-gradient(var(--grid-dot) 1.2px, transparent 1.2px);
+  background-size: 16px 16px;
 }
 
 .material-symbols-outlined {
@@ -203,4 +373,25 @@
 @keyframes toast-in {
   from { opacity: 0; transform: translateX(20px); }
   to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Drawer slide-in from the right + backdrop. Used by motion--drawer
+   controller for confirmation flows (Phase 3 D4). */
+@keyframes wk-drawer-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+.wk-drawer {
+  position: fixed; right: 0; top: 0; bottom: 0; width: min(420px, 100vw);
+  background: var(--color-paper);
+  border-left: 1.5px solid var(--color-ink);
+  z-index: 60;
+  box-shadow: -4px 0 0 0 var(--color-ink);
+  animation: wk-drawer-in var(--t-drawer) var(--ease) both;
+  overflow-y: auto;
+}
+.wk-drawer-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(11, 11, 14, 0.55);
+  z-index: 55;
 }

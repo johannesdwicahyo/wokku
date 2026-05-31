@@ -7,6 +7,17 @@ class Activity < ApplicationRecord
   scope :recent, -> { order(created_at: :desc).limit(50) }
   scope :for_team, ->(team) { where(team: team) }
 
+  # Audit-log filters. All scopes accept nil/blank and no-op so the
+  # controller can chain them unconditionally without branching.
+  scope :with_action,  ->(action)    { where(action: action) if action.present? }
+  scope :with_user,    ->(user_id)   { where(user_id: user_id) if user_id.present? }
+  scope :with_channel, ->(channel)   { where("metadata->>'channel' = ?", channel) if channel.present? }
+  scope :since,        ->(t)         { where("created_at >= ?", t) if t.present? }
+  scope :until_,       ->(t)         { where("created_at <= ?", t) if t.present? }
+  scope :ordered,      -> { order(created_at: :desc) }
+
+  CHANNELS = %w[app api cli mcp git_push webhook].freeze
+
   # Predefined actions
   ACTIONS = {
     "app.created" => "created app",
@@ -37,7 +48,8 @@ class Activity < ApplicationRecord
     "template.deployed" => "deployed template",
     "notification.created" => "created notification rule",
     "team.member_added" => "added team member",
-    "team.member_removed" => "removed team member"
+    "team.member_removed" => "removed team member",
+    "terminal.start" => "opened a terminal"
   }.freeze
 
   def description

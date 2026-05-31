@@ -52,39 +52,8 @@ module Webhooks
     end
 
     def handle_merge_request(payload)
-      action = payload.dig("object_attributes", "action") # open, reopen, update, merge, close
-      mr_iid = payload.dig("object_attributes", "iid")
-      repo_full_name = payload.dig("project", "path_with_namespace")
-      branch = payload.dig("object_attributes", "source_branch")
-      commit_sha = payload.dig("object_attributes", "last_commit", "id")
-      mr_title = payload.dig("object_attributes", "title")
-
-      return head :ok unless repo_full_name && mr_iid
-
-      parent_apps = AppRecord.where(git_provider: "gitlab", git_repo_full_name: repo_full_name)
-      return head :ok unless parent_apps.any?
-
-      case action
-      when "open", "reopen", "update"
-        parent_apps.each do |parent_app|
-          PrPreviewDeployJob.perform_later(
-            parent_app_id: parent_app.id,
-            pr_number: mr_iid,
-            branch: branch,
-            commit_sha: commit_sha,
-            pr_title: mr_title,
-            repo_full_name: repo_full_name
-          )
-        end
-      when "close", "merge"
-        parent_apps.each do |parent_app|
-          PrPreviewCleanupJob.perform_later(
-            parent_app_id: parent_app.id,
-            pr_number: mr_iid
-          )
-        end
-      end
-
+      event = Preview::Provider::Gitlab.parse(payload)
+      Preview::EventDispatcher.handle(event)
       head :ok
     end
 

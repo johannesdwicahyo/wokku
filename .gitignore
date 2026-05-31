@@ -52,3 +52,17 @@ coverage/
 /resources-after.png
 /after-cleanup.png
 /stuck.png
+omniauth-bitbucket2-*.gem
+
+# Superpowers visual-brainstorm scratch (local only)
+.superpowers/
+
+# Playwright dependencies + ephemeral output
+node_modules/
+/playwright-report/
+/test-results/
+/playwright/.auth/
+
+# Playwright smoke screenshots from interactive testing
+/pricing-*.png
+/landing-*.png

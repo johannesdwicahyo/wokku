@@ -1,0 +1,14 @@
+<header class="relative z-20 flex md:grid md:grid-cols-[1fr_auto_1fr] items-center justify-between gap-3 px-5 sm:px-8 md:px-14 py-4 md:py-5">
+  <%= render Atoms::LogoComponent.new(href: "/") %>
+  <nav class="hidden md:flex gap-9 font-sans text-[15px] text-ink font-medium">
+    <% links.each do |key, label, href| %>
+      <a href="<%= href %>" class="text-ink no-underline hover:text-accent transition-colors"><%= label %></a>
+    <% end %>
+  </nav>
+  <div class="flex gap-2 sm:gap-3 items-center justify-end">
+    <span class="hidden sm:contents"><%= render Molecules::LangSwitchComponent.new %></span>
+    <span class="hidden sm:contents"><%= render Molecules::ThemeToggleComponent.new %></span>
+    <a href="/users/sign_in" class="hidden sm:inline font-sans text-sm text-ink font-medium no-underline hover:text-accent"><%= t('nav.sign_in') %></a>
+    <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, href: "/users/sign_in") do %><%= t('nav.get_started') %><% end %>
+  </div>
+</header>

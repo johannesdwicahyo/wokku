@@ -1,54 +1,48 @@
 <% content_for :title, "Authorize CLI" %>
 
 <div class="max-w-xl mx-auto py-12 px-4">
-  <h1 class="text-2xl font-bold text-on-surface mb-2">Authorize CLI</h1>
-  <p class="text-sm text-outline mb-6">
-    Confirm the code shown by your <code class="font-mono text-primary">wokku</code> CLI to grant it API access to your account.
+  <h1 class="font-mono text-2xl font-semibold tracking-tighter text-ink mb-2"># authorize_cli</h1>
+  <p class="font-mono text-sm text-dim mb-6">
+    Confirm the code shown by your <code class="text-accent">wokku</code> CLI to grant it API access to your account.
   </p>
 
   <% if @approved %>
-    <div class="bg-secondary-container/20 border border-secondary/30 rounded-md p-4 mb-4">
-      <div class="flex items-center gap-2">
-        <span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span>
-        <p class="text-sm text-secondary font-bold">CLI authorized — return to your terminal</p>
-      </div>
+    <div class="border-1.5 border-success bg-success-soft p-4 mb-4">
+      <p class="font-mono text-sm text-ink font-bold">✓ CLI authorized — return to your terminal</p>
     </div>
   <% elsif @denied %>
-    <div class="bg-error-container/20 border border-error/30 rounded-md p-4 mb-4">
-      <div class="flex items-center gap-2">
-        <span class="material-symbols-outlined text-error text-[20px]">block</span>
-        <p class="text-sm text-error font-bold">Authorization denied</p>
-      </div>
+    <div class="border-1.5 border-danger bg-danger-soft p-4 mb-4">
+      <p class="font-mono text-sm text-ink font-bold">✕ Authorization denied</p>
     </div>
   <% else %>
     <% if flash[:alert] %>
-      <div class="bg-error-container/20 border border-error/30 rounded-md p-4 mb-4">
-        <p class="text-sm text-error"><%= flash[:alert] %></p>
+      <div class="border-1.5 border-danger bg-danger-soft p-4 mb-4">
+        <p class="font-mono text-sm text-danger"><%= flash[:alert] %></p>
       </div>
     <% end %>
 
     <%= form_with url: authorize_dashboard_device_path, method: :post, data: { turbo: false }, class: "space-y-4" do |f| %>
       <div>
-        <label class="block text-xs font-bold text-on-surface mb-1">User code</label>
+        <label class="block font-mono text-xs font-bold text-ink mb-1">User code</label>
         <input type="text" name="user_code" value="<%= @user_code %>" required autocomplete="off"
                placeholder="XXXX-XXXX"
-               class="w-full bg-surface border border-outline-variant/30 rounded-md px-3 py-2 text-base font-mono uppercase tracking-widest text-on-surface focus:outline-none focus:border-primary/50">
+               class="w-full bg-bg border-1.5 border-ink px-3 py-2 font-mono text-base uppercase tracking-widest text-ink focus:outline-none focus:border-accent">
       </div>
 
       <% if @device_authorization && @device_authorization.pending? %>
-        <div class="bg-surface-container/40 border border-outline-variant/30 rounded-md p-3 text-xs text-outline">
+        <div class="border-1.5 border-ink bg-bg p-3 font-mono text-xs text-dim">
           A new API token will be created and granted to your CLI. You can revoke it anytime from
-          <%= link_to "API Tokens", edit_dashboard_profile_path, class: "text-primary hover:underline" %>.
+          <%= link_to "API Tokens", edit_dashboard_profile_path, class: "text-accent hover:underline" %>.
         </div>
       <% end %>
 
       <div class="flex gap-2">
         <button type="submit" name="decision" value="approve"
-                class="flex-1 px-4 py-2 text-sm font-bold text-surface bg-primary rounded-md hover:bg-primary/80 transition">
+                class="flex-1 px-4 py-2 font-mono text-sm font-bold text-bg bg-ink border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer">
           Authorize
         </button>
         <button type="submit" name="decision" value="deny"
-                class="px-4 py-2 text-sm font-bold text-on-surface bg-surface-container border border-outline-variant/30 rounded-md hover:bg-surface-container/80 transition">
+                class="px-4 py-2 font-mono text-sm font-bold text-ink border-1.5 border-ink bg-paper hover:bg-bg-deep transition cursor-pointer">
           Deny
         </button>
       </div>

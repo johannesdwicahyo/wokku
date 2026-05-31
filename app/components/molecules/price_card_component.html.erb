@@ -1,0 +1,15 @@
+<div class="relative <%= highlight ? 'bg-ink text-bg' : 'bg-paper text-ink' %> border-1.5 border-ink rounded-xl p-6 <%= highlight ? 'shadow-brutal-lg' : '' %>">
+  <% if highlight && you_label.present? %>
+    <div class="absolute -top-3.5 -right-2.5 rotate-[6deg] bg-hot text-ink px-3 py-1 rounded-md font-sans text-xs font-bold border-1.5 border-ink">
+      <%= you_label %>
+    </div>
+  <% end %>
+  <div class="font-sans text-2xl font-bold tracking-tight"><%= name %></div>
+  <div class="font-sans text-sm mt-1.5 <%= highlight ? 'opacity-65' : 'text-dim' %>"><%= desc %></div>
+  <div class="font-sans text-4xl font-extrabold tracking-tighter mt-4 <%= highlight ? 'text-bg' : 'text-ink' %>">
+    <%= price %><span class="text-sm font-medium ml-1 <%= highlight ? 'opacity-55' : 'text-dim' %>">/<%= month_suffix %></span>
+  </div>
+  <div class="mt-4 pt-3.5 border-t border-dashed <%= highlight ? 'border-bg/25 text-hot' : 'border-rule-soft text-dim' %> font-mono text-[11px] tracking-tight">
+    <%= pays_in %>
+  </div>
+</div>

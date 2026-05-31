@@ -19,6 +19,12 @@ class DeployJob < ApplicationJob
     deploy.update!(status: :building, started_at: Time.current, commit_sha: sha)
     app.update!(status: :deploying)
 
+    # Fire deploy_started so subscribed channels (Slack/Discord/email)
+    # confirm the push was received and a build is in progress. Useful
+    # because Wokku builds can take 1-5 minutes and customers otherwise
+    # get no signal until completion.
+    fire_notifications(app.team, "deploy_started", deploy)
+
     client = Dokku::Client.new(server)
     log = ""
 

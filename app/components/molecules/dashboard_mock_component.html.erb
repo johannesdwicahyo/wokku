@@ -1,0 +1,59 @@
+<div class="bg-paper border-1.5 border-ink rounded-lg overflow-hidden shadow-brutal-lg font-sans text-ink">
+  <%# topbar %>
+  <div class="flex items-center gap-2.5 px-4 py-3 border-b border-rule-soft text-xs">
+    <span class="w-2.5 h-2.5 rounded-full bg-hot"></span>
+    <span class="w-2.5 h-2.5 rounded-full bg-warn"></span>
+    <span class="w-2.5 h-2.5 rounded-full bg-success"></span>
+    <span class="ml-3 text-dim font-mono text-[11px]"><%= t('brand.domain') %>/dashboard/apps</span>
+  </div>
+  <div class="grid grid-cols-[200px_1fr]">
+    <%# sidebar %>
+    <aside class="px-4 py-5 border-r border-rule-soft text-xs">
+      <div class="font-mono text-[10px] text-dim tracking-widest uppercase mb-3">Workspace</div>
+      <% side_items.each_with_index do |item, i| %>
+        <div class="px-2.5 py-1.5 rounded-md mb-0.5 <%= i == 0 ? 'bg-bg-deep text-ink' : 'text-ink-soft' %>"><%= item %></div>
+      <% end %>
+      <div class="font-mono text-[10px] text-dim tracking-widest uppercase mt-5 mb-3">Favorites</div>
+      <% favorites.each do |f| %>
+        <div class="px-2.5 py-1.5 text-ink-soft mb-0.5"><%= f %></div>
+      <% end %>
+    </aside>
+    <%# main %>
+    <main class="px-5 py-5">
+      <div class="flex items-center justify-between mb-4">
+        <div class="font-semibold text-base">◆ Apps <span class="text-dim font-normal ml-1.5">· <%= apps.size %></span></div>
+        <div class="flex gap-1.5 font-mono text-[11px] text-dim">
+          <span class="px-2 py-1 border border-rule-soft rounded-md">+ Filter</span>
+          <span class="px-2 py-1 border border-rule-soft rounded-md text-accent">+ New app</span>
+        </div>
+      </div>
+      <table class="w-full border-collapse text-xs">
+        <thead>
+          <tr class="font-mono text-[10px] text-dim uppercase tracking-tight">
+            <th class="text-left px-1.5 py-2 border-b border-rule-soft">App</th>
+            <th class="text-left px-1.5 py-2 border-b border-rule-soft">Status</th>
+            <th class="text-left px-1.5 py-2 border-b border-rule-soft">Stack</th>
+            <th class="text-left px-1.5 py-2 border-b border-rule-soft">Size</th>
+            <th class="text-left px-1.5 py-2 border-b border-rule-soft">Domain</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% apps.each do |app| %>
+            <tr>
+              <td class="px-1.5 py-2.5 border-b border-rule-soft flex items-center gap-2">
+                <img src="<%= asset_path("icons/#{app[:icon]}.svg") rescue "/assets/icons/#{app[:icon]}.svg" %>" class="w-4.5 h-4.5" alt="" style="width:18px;height:18px;"/>
+                <%= app[:name] %>
+              </td>
+              <td class="px-1.5 py-2.5 border-b border-rule-soft">
+                <span class="inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-success"></span> Running</span>
+              </td>
+              <td class="px-1.5 py-2.5 border-b border-rule-soft text-ink-soft"><%= app[:size] %></td>
+              <td class="px-1.5 py-2.5 border-b border-rule-soft text-ink-soft">512 MB</td>
+              <td class="px-1.5 py-2.5 border-b border-rule-soft text-accent"><%= app[:domain] %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </main>
+  </div>
+</div>

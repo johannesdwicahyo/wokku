@@ -5,6 +5,9 @@ module Dashboard
     def index
       authorize @app, :show?
       @releases = @app.releases.includes(:deploy).order(version: :desc)
+      # Currently-deployed release = newest release whose deploy succeeded.
+      # Surfaced as a "Current" badge so the rollback target is obvious.
+      @current_release_id = @releases.find { |r| r.deploy&.status == "succeeded" }&.id
     end
 
     def deploy

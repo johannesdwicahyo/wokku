@@ -1,3 +1,18 @@
+# OSS-trimmed Solid Queue cron schedule.
+#
+# bin/sync-oss (release mode) overwrites the staged config/recurring.yml
+# with this version on release. Differences from wokku-cloud:
+#   - Drops billing_sanity_check, billing_issue_upcoming_invoices,
+#     billing_suspend_overdue (classes live in stripped EE billing layer)
+#   - Drops shared_database_quota, dedicated_database_quota (plan-aware;
+#     OSS self-hosters use Free which has no caps)
+#   - Drops hard_delete_pending_accounts (deletion grace is OSS-irrelevant
+#     for single-user installs)
+#   - Drops preview_idle_sweep (Preview::IdleSweepJob, plan-tier aware)
+#
+# Keep this in sync with wokku-cloud/config/recurring.yml for any OSS-safe
+# additions (health, sync, metrics, backups, dns, ssl, log retention).
+
 production:
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
@@ -6,17 +21,22 @@ production:
   health_checks:
     class: HealthCheckSchedulerJob
     schedule: every 5 minutes
-    queue: default
+    queue: health
+
+  docker_health_checks:
+    class: DockerHealthCheckSchedulerJob
+    schedule: every 5 minutes
+    queue: health
+
+  reconcile_app_statuses:
+    class: ReconcileAppStatusesSchedulerJob
+    schedule: every 10 minutes
+    queue: health
 
   sync_servers:
     class: SyncServerSchedulerJob
-    # Every 3 hours — out-of-band Dokku changes (someone SSH'd in and
-    # ran a command directly) are rare, and HealthCheckSchedulerJob at
-    # every 5 minutes catches the common "an app stopped running" case.
-    # Users who know they made an out-of-band change can hit the manual
-    # Sync button on /dashboard/servers/:id.
     schedule: every 3 hours
-    queue: default
+    queue: sync
 
   metrics_poll:
     class: MetricsPollSchedulerJob
@@ -26,7 +46,7 @@ production:
   dns_verification:
     class: DnsVerificationSchedulerJob
     schedule: every 5 minutes
-    queue: default
+    queue: health
 
   ssl_auto_renew:
     class: SslAutoRenewJob
@@ -43,11 +63,6 @@ production:
     schedule: every day at 4am
     queue: backups
 
-  daily_debit:
-    class: DailyDebitSchedulerJob
-    schedule: every day at 1am
-    queue: default
-
   control_plane_backup:
     class: ControlPlaneBackupJob
     schedule: every day at 2:30am
@@ -58,25 +73,42 @@ production:
     schedule: every day at 3:30am
     queue: default
 
-  shared_database_quota:
-    class: SharedDatabaseQuotaJob
-    schedule: every 30 minutes
-    queue: default
-
-  dedicated_database_quota:
-    class: DedicatedDatabaseQuotaJob
-    schedule: every 30 minutes
-    queue: default
-
   expire_app_transfers:
     class: ExpireAppTransfersJob
     schedule: every day at 0:15am
     queue: default
 
-  billing_sanity_check:
-    class: BillingSanityCheckJob
-    # Audit-only — surfaces invariant violations to Sentry. Hourly so
-    # we catch divergence within an hour without spamming on each
-    # transient state during high-throughput billing flips.
-    schedule: every hour at minute 23
+  request_aggregate_rollup:
+    class: RequestAggregateRollupJob
+    schedule: every 5 minutes
+    queue: metrics
+
+  database_stats_collector:
+    class: DatabaseStatsSchedulerJob
+    schedule: every 5 minutes
+    queue: metrics
+
+  log_retention_prune:
+    class: LogRetentionPruneJob
+    schedule: every day at 3:45am
+    queue: default
+
+  request_aggregate_retention_prune:
+    class: RequestAggregateRetentionPruneJob
+    schedule: every day at 4:00am
+    queue: default
+
+  metric_rollup:
+    class: MetricRollupJob
+    schedule: every day at 4:15am
+    queue: metrics
+
+  clean_ghost_containers:
+    class: CleanGhostContainersJob
+    schedule: every day at 3am
+    queue: default
+
+  orphan_database_sweep:
+    class: OrphanDatabaseSweepJob
+    schedule: every day at 3:15am
     queue: default

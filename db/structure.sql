@@ -154,7 +154,17 @@ CREATE TABLE public.app_records (
     live_mem_limit_mb integer,
     live_container_count integer,
     live_metrics_at timestamp(6) without time zone,
-    pending_action character varying
+    pending_action character varying,
+    preview_enabled boolean DEFAULT false NOT NULL,
+    database_strategy character varying DEFAULT 'empty'::character varying NOT NULL,
+    billing_exempt boolean DEFAULT false NOT NULL,
+    last_commit_sha character varying,
+    last_commit_at timestamp(6) without time zone,
+    preview_comment_id bigint,
+    preview_comment_mr_iid integer,
+    cloudflare_proxied boolean DEFAULT false NOT NULL,
+    box_size character varying,
+    enabled_shared_engines character varying[] DEFAULT '{}'::character varying[] NOT NULL
 );
 
 
@@ -283,7 +293,29 @@ CREATE TABLE public.database_services (
     live_mem_used_mb integer,
     live_metrics_at timestamp(6) without time zone,
     creator_id uuid,
-    last_error text
+    last_error text,
+    pending_destroy_at timestamp(6) without time zone,
+    upgrade_source_id uuid
+);
+
+
+--
+-- Name: database_stats_snapshots; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.database_stats_snapshots (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    database_service_id uuid NOT NULL,
+    recorded_at timestamp(6) without time zone NOT NULL,
+    active_connections integer,
+    max_connections integer,
+    db_size_bytes bigint,
+    cache_hit_ratio double precision,
+    top_queries jsonb DEFAULT '[]'::jsonb,
+    raw_info jsonb DEFAULT '{}'::jsonb,
+    collected_via character varying,
+    collection_error character varying,
+    created_at timestamp(6) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 
@@ -302,24 +334,6 @@ CREATE TABLE public.deploys (
     id uuid DEFAULT public.uuidv7() NOT NULL,
     app_record_id uuid NOT NULL,
     release_id uuid
-);
-
-
---
--- Name: deposit_transactions; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.deposit_transactions (
-    amount integer NOT NULL,
-    currency character varying NOT NULL,
-    payment_gateway character varying NOT NULL,
-    gateway_ref character varying,
-    status character varying DEFAULT 'pending'::character varying,
-    notes text,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL,
-    id uuid DEFAULT public.uuidv7() NOT NULL,
-    user_id uuid NOT NULL
 );
 
 
@@ -404,7 +418,8 @@ CREATE TABLE public.dyno_tiers (
     max_per_user integer,
     scalable boolean DEFAULT false NOT NULL,
     id uuid DEFAULT public.uuidv7() NOT NULL,
-    monthly_price_cents integer DEFAULT 0 NOT NULL
+    monthly_price_cents integer DEFAULT 0 NOT NULL,
+    size_key character varying
 );
 
 
@@ -418,7 +433,8 @@ CREATE TABLE public.env_vars (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     id uuid DEFAULT public.uuidv7() NOT NULL,
-    app_record_id uuid NOT NULL
+    app_record_id uuid NOT NULL,
+    scope character varying DEFAULT 'both'::character varying NOT NULL
 );
 
 
@@ -434,6 +450,23 @@ CREATE TABLE public.feedback_entries (
     page character varying,
     user_agent character varying,
     user_id uuid,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: invoice_credits; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.invoice_credits (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    amount_idr integer NOT NULL,
+    source character varying NOT NULL,
+    source_ref character varying,
+    applied_to_invoice_id uuid,
+    applied_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -458,7 +491,12 @@ CREATE TABLE public.invoices (
     amount_idr integer DEFAULT 0,
     period_label character varying,
     id uuid DEFAULT public.uuidv7() NOT NULL,
-    user_id uuid NOT NULL
+    user_id uuid NOT NULL,
+    plan_id uuid,
+    period_start date,
+    period_end date,
+    kind integer DEFAULT 0 NOT NULL,
+    team_id uuid
 );
 
 
@@ -480,6 +518,47 @@ CREATE TABLE public.known_devices (
 
 
 --
+-- Name: leads; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.leads (
+    id bigint NOT NULL,
+    email character varying,
+    pain_text text NOT NULL,
+    ip character varying,
+    user_agent character varying(512),
+    utm_source character varying,
+    utm_medium character varying,
+    utm_campaign character varying,
+    utm_content character varying,
+    utm_term character varying,
+    channel character varying,
+    user_id uuid,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: leads_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.leads_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: leads_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.leads_id_seq OWNED BY public.leads.id;
+
+
+--
 -- Name: log_drains; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -490,6 +569,40 @@ CREATE TABLE public.log_drains (
     updated_at timestamp(6) without time zone NOT NULL,
     id uuid DEFAULT public.uuidv7() NOT NULL,
     app_record_id uuid NOT NULL
+);
+
+
+--
+-- Name: logs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.logs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    server_id uuid NOT NULL,
+    app_record_id uuid,
+    container character varying NOT NULL,
+    ts timestamp(6) without time zone NOT NULL,
+    level character varying,
+    line text NOT NULL,
+    ingested_at timestamp(6) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+--
+-- Name: metric_hourly; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.metric_hourly (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    app_record_id uuid NOT NULL,
+    hour_start timestamp(6) without time zone NOT NULL,
+    avg_cpu_percent double precision,
+    max_cpu_percent double precision,
+    avg_memory_usage bigint,
+    max_memory_usage bigint,
+    memory_limit bigint,
+    sample_count integer DEFAULT 0 NOT NULL,
+    created_at timestamp(6) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 
@@ -546,15 +659,76 @@ CREATE TABLE public.oss_revenue_shares (
 
 CREATE TABLE public.plans (
     name character varying NOT NULL,
-    max_apps integer NOT NULL,
-    max_dynos integer,
-    max_databases integer,
-    price_cents_per_month integer,
+    max_apps integer DEFAULT 0 NOT NULL,
+    max_dynos integer DEFAULT 0,
+    max_databases integer DEFAULT 0,
+    price_cents_per_month integer DEFAULT 0,
     stripe_price_id character varying,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    id uuid DEFAULT public.uuidv7() NOT NULL
+    id uuid DEFAULT public.uuidv7() NOT NULL,
+    key character varying DEFAULT ''::character varying NOT NULL,
+    price_usd_cents integer DEFAULT 0 NOT NULL,
+    price_idr integer DEFAULT 0 NOT NULL,
+    seats_included integer DEFAULT 1 NOT NULL,
+    extra_seat_usd_cents integer DEFAULT 0 NOT NULL,
+    box_quotas jsonb DEFAULT '{}'::jsonb NOT NULL,
+    addons_available jsonb DEFAULT '{}'::jsonb NOT NULL,
+    backup_policy character varying DEFAULT 'manual'::character varying NOT NULL,
+    backup_retention_days integer DEFAULT 0 NOT NULL,
+    support_level character varying DEFAULT 'chatbot'::character varying NOT NULL,
+    pro_features jsonb DEFAULT '[]'::jsonb NOT NULL,
+    log_retention_days integer DEFAULT 1 NOT NULL,
+    sample_retention_hours integer DEFAULT 24 NOT NULL,
+    metric_high_res_days integer DEFAULT 1 NOT NULL,
+    metric_aggregate_retention_days integer DEFAULT 7 NOT NULL,
+    db_bundle_mb integer DEFAULT 100 NOT NULL,
+    redis_bundle_mb integer DEFAULT 25 NOT NULL,
+    minio_bundle_gb integer DEFAULT 1 NOT NULL,
+    extra_seat_idr integer DEFAULT 0 NOT NULL,
+    shared_pg_mb_per_tenant integer DEFAULT 50 NOT NULL,
+    shared_redis_mb_per_tenant integer DEFAULT 10 NOT NULL,
+    shared_memcached_mb_per_tenant integer DEFAULT 16 NOT NULL,
+    shared_rabbitmq_msg_per_tenant integer DEFAULT 10000 NOT NULL,
+    shared_meilisearch_mb_per_tenant integer DEFAULT 50 NOT NULL,
+    dedicated_pg_slots integer DEFAULT 0 NOT NULL,
+    dedicated_pg_size_mb integer DEFAULT 0 NOT NULL,
+    dedicated_redis_slots integer DEFAULT 0 NOT NULL,
+    dedicated_redis_size_mb integer DEFAULT 0 NOT NULL
 );
+
+
+--
+-- Name: preview_dns_records; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.preview_dns_records (
+    id bigint NOT NULL,
+    app_record_id uuid NOT NULL,
+    hostname character varying NOT NULL,
+    cloudflare_record_id character varying,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: preview_dns_records_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.preview_dns_records_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: preview_dns_records_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.preview_dns_records_id_seq OWNED BY public.preview_dns_records.id;
 
 
 --
@@ -582,7 +756,6 @@ CREATE TABLE public.promo_codes (
     redeemer_bonus_idr integer DEFAULT 0 NOT NULL,
     inviter_bonus_idr integer DEFAULT 0 NOT NULL,
     inviter_user_id uuid,
-    min_deposit_idr integer DEFAULT 0 NOT NULL,
     max_redemptions integer,
     redemptions_count integer DEFAULT 0 NOT NULL,
     expires_at timestamp(6) without time zone,
@@ -590,7 +763,9 @@ CREATE TABLE public.promo_codes (
     description text,
     active boolean DEFAULT true NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    batch_id uuid,
+    batch_label character varying
 );
 
 
@@ -604,7 +779,6 @@ CREATE TABLE public.promo_redemptions (
     redeemer_user_id uuid NOT NULL,
     status character varying DEFAULT 'pending'::character varying NOT NULL,
     applied_at timestamp(6) without time zone,
-    triggered_by_deposit_id uuid,
     redeemer_bonus_idr_snapshot integer DEFAULT 0 NOT NULL,
     inviter_bonus_idr_snapshot integer DEFAULT 0 NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
@@ -643,21 +817,55 @@ CREATE TABLE public.releases (
 
 
 --
--- Name: resource_usages; Type: TABLE; Schema: public; Owner: -
+-- Name: request_aggregates; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.resource_usages (
-    resource_type character varying NOT NULL,
-    resource_id_ref character varying NOT NULL,
-    tier_name character varying NOT NULL,
-    price_cents_per_hour numeric(10,4) DEFAULT 0.0 NOT NULL,
-    started_at timestamp(6) without time zone NOT NULL,
-    stopped_at timestamp(6) without time zone,
-    metadata jsonb DEFAULT '{}'::jsonb,
+CREATE TABLE public.request_aggregates (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    app_record_id uuid NOT NULL,
+    bucket_start timestamp(6) without time zone NOT NULL,
+    req_count integer DEFAULT 0 NOT NULL,
+    p50_ms integer,
+    p95_ms integer,
+    error_4xx integer DEFAULT 0 NOT NULL,
+    error_5xx integer DEFAULT 0 NOT NULL,
+    bytes_sent_total bigint DEFAULT 0 NOT NULL,
+    created_at timestamp(6) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+--
+-- Name: request_samples; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.request_samples (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    server_id uuid NOT NULL,
+    app_record_id uuid,
+    ts timestamp(6) without time zone NOT NULL,
+    method character varying(8),
+    path character varying(2048),
+    status integer,
+    response_time_ms integer,
+    bytes_sent bigint,
+    remote_addr character varying(64),
+    ingested_at timestamp(6) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+--
+-- Name: scheduled_tasks; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.scheduled_tasks (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    app_record_id uuid NOT NULL,
+    command text NOT NULL,
+    schedule character varying NOT NULL,
+    description character varying,
+    enabled boolean DEFAULT true NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL,
-    id uuid DEFAULT public.uuidv7() NOT NULL,
-    user_id uuid NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL
 );
 
 
@@ -695,7 +903,10 @@ CREATE TABLE public.servers (
     live_mem_used_mb integer,
     live_mem_total_mb integer,
     live_container_count integer,
-    live_metrics_at timestamp(6) without time zone
+    live_metrics_at timestamp(6) without time zone,
+    docker_status character varying,
+    docker_status_checked_at timestamp(6) without time zone,
+    ingest_token character varying
 );
 
 
@@ -1112,7 +1323,8 @@ CREATE TABLE public.subscriptions (
     updated_at timestamp(6) without time zone NOT NULL,
     id uuid DEFAULT public.uuidv7() NOT NULL,
     plan_id uuid NOT NULL,
-    user_id uuid NOT NULL
+    user_id uuid NOT NULL,
+    team_id uuid
 );
 
 
@@ -1139,7 +1351,13 @@ CREATE TABLE public.teams (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     id uuid DEFAULT public.uuidv7() NOT NULL,
-    owner_id uuid NOT NULL
+    owner_id uuid NOT NULL,
+    plan_id uuid,
+    trial_ends_at timestamp(6) without time zone,
+    kind integer,
+    slug character varying,
+    billing_anchor_date date,
+    payment_method_type character varying DEFAULT 'none'::character varying NOT NULL
 );
 
 
@@ -1189,11 +1407,38 @@ CREATE TABLE public.users (
     failed_attempts integer DEFAULT 0 NOT NULL,
     unlock_token character varying,
     locked_at timestamp(6) without time zone,
-    balance_idr integer DEFAULT 0 NOT NULL,
-    balance_usd_cents integer DEFAULT 0 NOT NULL,
     payment_method_type character varying DEFAULT 'none'::character varying,
-    id uuid DEFAULT public.uuidv7() NOT NULL
+    id uuid DEFAULT public.uuidv7() NOT NULL,
+    deleted_at timestamp(6) without time zone,
+    deletion_scheduled_at timestamp(6) without time zone,
+    gitlab_access_token character varying,
+    gitlab_refresh_token character varying,
+    gitlab_token_expires_at timestamp(6) without time zone,
+    bitbucket_access_token character varying,
+    bitbucket_refresh_token character varying,
+    bitbucket_token_expires_at timestamp(6) without time zone,
+    onboarding_status integer DEFAULT 0 NOT NULL,
+    onboarding_step integer DEFAULT 0 NOT NULL,
+    plan_id uuid NOT NULL,
+    pending_plan_id uuid,
+    plan_changes_at timestamp(6) without time zone,
+    trial_ends_at timestamp(6) without time zone,
+    billing_anchor_date date
 );
+
+
+--
+-- Name: leads id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.leads ALTER COLUMN id SET DEFAULT nextval('public.leads_id_seq'::regclass);
+
+
+--
+-- Name: preview_dns_records id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.preview_dns_records ALTER COLUMN id SET DEFAULT nextval('public.preview_dns_records_id_seq'::regclass);
 
 
 --
@@ -1370,19 +1615,19 @@ ALTER TABLE ONLY public.database_services
 
 
 --
+-- Name: database_stats_snapshots database_stats_snapshots_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.database_stats_snapshots
+    ADD CONSTRAINT database_stats_snapshots_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: deploys deploys_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.deploys
     ADD CONSTRAINT deploys_pkey PRIMARY KEY (id);
-
-
---
--- Name: deposit_transactions deposit_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.deposit_transactions
-    ADD CONSTRAINT deposit_transactions_pkey PRIMARY KEY (id);
 
 
 --
@@ -1442,6 +1687,14 @@ ALTER TABLE ONLY public.feedback_entries
 
 
 --
+-- Name: invoice_credits invoice_credits_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.invoice_credits
+    ADD CONSTRAINT invoice_credits_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: invoices invoices_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1458,11 +1711,35 @@ ALTER TABLE ONLY public.known_devices
 
 
 --
+-- Name: leads leads_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.leads
+    ADD CONSTRAINT leads_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: log_drains log_drains_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.log_drains
     ADD CONSTRAINT log_drains_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: logs logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.logs
+    ADD CONSTRAINT logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: metric_hourly metric_hourly_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.metric_hourly
+    ADD CONSTRAINT metric_hourly_pkey PRIMARY KEY (id);
 
 
 --
@@ -1495,6 +1772,14 @@ ALTER TABLE ONLY public.oss_revenue_shares
 
 ALTER TABLE ONLY public.plans
     ADD CONSTRAINT plans_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: preview_dns_records preview_dns_records_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.preview_dns_records
+    ADD CONSTRAINT preview_dns_records_pkey PRIMARY KEY (id);
 
 
 --
@@ -1538,11 +1823,27 @@ ALTER TABLE ONLY public.releases
 
 
 --
--- Name: resource_usages resource_usages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: request_aggregates request_aggregates_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.resource_usages
-    ADD CONSTRAINT resource_usages_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.request_aggregates
+    ADD CONSTRAINT request_aggregates_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: request_samples request_samples_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.request_samples
+    ADD CONSTRAINT request_samples_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: scheduled_tasks scheduled_tasks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.scheduled_tasks
+    ADD CONSTRAINT scheduled_tasks_pkey PRIMARY KEY (id);
 
 
 --
@@ -1706,10 +2007,94 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: idx_db_stats_recorded; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_db_stats_recorded ON public.database_stats_snapshots USING btree (recorded_at DESC);
+
+
+--
+-- Name: idx_db_stats_svc_recorded; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_db_stats_svc_recorded ON public.database_stats_snapshots USING btree (database_service_id, recorded_at DESC);
+
+
+--
+-- Name: idx_invoice_credits_user_pending; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_invoice_credits_user_pending ON public.invoice_credits USING btree (user_id, applied_at);
+
+
+--
+-- Name: idx_logs_app_ts; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_logs_app_ts ON public.logs USING btree (app_record_id, ts DESC);
+
+
+--
+-- Name: idx_logs_server_ts; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_logs_server_ts ON public.logs USING btree (server_id, ts DESC);
+
+
+--
+-- Name: idx_logs_ts; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_logs_ts ON public.logs USING btree (ts DESC);
+
+
+--
+-- Name: idx_metric_hourly_app_hour; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_metric_hourly_app_hour ON public.metric_hourly USING btree (app_record_id, hour_start);
+
+
+--
+-- Name: idx_metric_hourly_hour; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_metric_hourly_hour ON public.metric_hourly USING btree (hour_start DESC);
+
+
+--
 -- Name: idx_promo_redemptions_unique_per_user_code; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX idx_promo_redemptions_unique_per_user_code ON public.promo_redemptions USING btree (redeemer_user_id, promo_code_id);
+
+
+--
+-- Name: idx_req_agg_app_bucket; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_req_agg_app_bucket ON public.request_aggregates USING btree (app_record_id, bucket_start);
+
+
+--
+-- Name: idx_req_agg_bucket; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_req_agg_bucket ON public.request_aggregates USING btree (bucket_start DESC);
+
+
+--
+-- Name: idx_req_samples_app_ts; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_req_samples_app_ts ON public.request_samples USING btree (app_record_id, ts DESC);
+
+
+--
+-- Name: idx_req_samples_ts; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_req_samples_ts ON public.request_samples USING btree (ts DESC);
 
 
 --
@@ -1769,6 +2154,13 @@ CREATE INDEX index_app_databases_on_database_service_id ON public.app_databases 
 
 
 --
+-- Name: index_app_records_on_box_size; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_app_records_on_box_size ON public.app_records USING btree (box_size);
+
+
+--
 -- Name: index_app_records_on_created_by_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1783,10 +2175,38 @@ CREATE INDEX index_app_records_on_github_repo_full_name ON public.app_records US
 
 
 --
+-- Name: index_app_records_on_is_preview_and_last_commit_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_app_records_on_is_preview_and_last_commit_at ON public.app_records USING btree (is_preview, last_commit_at);
+
+
+--
+-- Name: index_app_records_on_is_preview_and_team_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_app_records_on_is_preview_and_team_id ON public.app_records USING btree (is_preview, team_id);
+
+
+--
 -- Name: index_app_records_on_parent_app_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_app_records_on_parent_app_id ON public.app_records USING btree (parent_app_id);
+
+
+--
+-- Name: index_app_records_on_parent_pr_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_app_records_on_parent_pr_unique ON public.app_records USING btree (parent_app_id, pr_number) WHERE (is_preview = true);
+
+
+--
+-- Name: index_app_records_on_provider_and_repo; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_app_records_on_provider_and_repo ON public.app_records USING btree (git_provider, git_repo_full_name);
 
 
 --
@@ -1888,6 +2308,13 @@ CREATE INDEX index_database_services_on_parent_service_id ON public.database_ser
 
 
 --
+-- Name: index_database_services_on_pending_destroy_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_database_services_on_pending_destroy_at ON public.database_services USING btree (pending_destroy_at) WHERE (pending_destroy_at IS NOT NULL);
+
+
+--
 -- Name: index_database_services_on_server_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1909,6 +2336,20 @@ CREATE INDEX index_database_services_on_tier_name ON public.database_services US
 
 
 --
+-- Name: index_database_services_on_upgrade_source_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_database_services_on_upgrade_source_id ON public.database_services USING btree (upgrade_source_id);
+
+
+--
+-- Name: index_database_stats_snapshots_on_database_service_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_database_stats_snapshots_on_database_service_id ON public.database_stats_snapshots USING btree (database_service_id);
+
+
+--
 -- Name: index_deploys_on_app_record_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1920,27 +2361,6 @@ CREATE INDEX index_deploys_on_app_record_id ON public.deploys USING btree (app_r
 --
 
 CREATE INDEX index_deploys_on_release_id ON public.deploys USING btree (release_id);
-
-
---
--- Name: index_deposit_transactions_on_gateway_ref; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_deposit_transactions_on_gateway_ref ON public.deposit_transactions USING btree (gateway_ref);
-
-
---
--- Name: index_deposit_transactions_on_status; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_deposit_transactions_on_status ON public.deposit_transactions USING btree (status);
-
-
---
--- Name: index_deposit_transactions_on_user_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_deposit_transactions_on_user_id ON public.deposit_transactions USING btree (user_id);
 
 
 --
@@ -2035,6 +2455,20 @@ CREATE INDEX index_env_vars_on_app_record_id ON public.env_vars USING btree (app
 
 
 --
+-- Name: index_env_vars_on_app_record_id_and_key_and_scope; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_env_vars_on_app_record_id_and_key_and_scope ON public.env_vars USING btree (app_record_id, key, scope);
+
+
+--
+-- Name: index_env_vars_on_app_record_id_and_scope; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_env_vars_on_app_record_id_and_scope ON public.env_vars USING btree (app_record_id, scope);
+
+
+--
 -- Name: index_feedback_entries_on_created_at; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2049,10 +2483,38 @@ CREATE INDEX index_feedback_entries_on_user_id ON public.feedback_entries USING 
 
 
 --
+-- Name: index_invoice_credits_on_applied_to_invoice_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_invoice_credits_on_applied_to_invoice_id ON public.invoice_credits USING btree (applied_to_invoice_id);
+
+
+--
+-- Name: index_invoice_credits_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_invoice_credits_on_user_id ON public.invoice_credits USING btree (user_id);
+
+
+--
+-- Name: index_invoices_on_plan_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_invoices_on_plan_id ON public.invoices USING btree (plan_id);
+
+
+--
 -- Name: index_invoices_on_reference_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX index_invoices_on_reference_id ON public.invoices USING btree (reference_id);
+
+
+--
+-- Name: index_invoices_on_team_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_invoices_on_team_id ON public.invoices USING btree (team_id);
 
 
 --
@@ -2063,6 +2525,13 @@ CREATE INDEX index_invoices_on_user_id ON public.invoices USING btree (user_id);
 
 
 --
+-- Name: index_invoices_on_user_id_and_period_start; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_invoices_on_user_id_and_period_start ON public.invoices USING btree (user_id, period_start);
+
+
+--
 -- Name: index_known_devices_on_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2070,10 +2539,45 @@ CREATE INDEX index_known_devices_on_user_id ON public.known_devices USING btree 
 
 
 --
+-- Name: index_leads_on_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_leads_on_created_at ON public.leads USING btree (created_at);
+
+
+--
+-- Name: index_leads_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_leads_on_user_id ON public.leads USING btree (user_id);
+
+
+--
 -- Name: index_log_drains_on_app_record_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_log_drains_on_app_record_id ON public.log_drains USING btree (app_record_id);
+
+
+--
+-- Name: index_logs_on_app_record_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_logs_on_app_record_id ON public.logs USING btree (app_record_id);
+
+
+--
+-- Name: index_logs_on_server_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_logs_on_server_id ON public.logs USING btree (server_id);
+
+
+--
+-- Name: index_metric_hourly_on_app_record_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_metric_hourly_on_app_record_id ON public.metric_hourly USING btree (app_record_id);
 
 
 --
@@ -2105,6 +2609,13 @@ CREATE UNIQUE INDEX index_oss_revenue_shares_on_template_slug ON public.oss_reve
 
 
 --
+-- Name: index_plans_on_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_plans_on_key ON public.plans USING btree (key);
+
+
+--
 -- Name: index_plans_on_name; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2119,10 +2630,31 @@ CREATE UNIQUE INDEX index_plans_on_stripe_price_id ON public.plans USING btree (
 
 
 --
+-- Name: index_preview_dns_records_on_app_record_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_preview_dns_records_on_app_record_id ON public.preview_dns_records USING btree (app_record_id);
+
+
+--
+-- Name: index_preview_dns_records_on_hostname; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_preview_dns_records_on_hostname ON public.preview_dns_records USING btree (hostname);
+
+
+--
 -- Name: index_process_scales_on_app_record_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_process_scales_on_app_record_id ON public.process_scales USING btree (app_record_id);
+
+
+--
+-- Name: index_promo_codes_on_batch_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_promo_codes_on_batch_id ON public.promo_codes USING btree (batch_id);
 
 
 --
@@ -2175,13 +2707,6 @@ CREATE INDEX index_promo_redemptions_on_status ON public.promo_redemptions USING
 
 
 --
--- Name: index_promo_redemptions_on_triggered_by_deposit_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_promo_redemptions_on_triggered_by_deposit_id ON public.promo_redemptions USING btree (triggered_by_deposit_id);
-
-
---
 -- Name: index_push_tickets_on_checked_at; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2217,17 +2742,38 @@ CREATE INDEX index_releases_on_deploy_id ON public.releases USING btree (deploy_
 
 
 --
--- Name: index_resource_usages_on_resource_type_and_resource_id_ref; Type: INDEX; Schema: public; Owner: -
+-- Name: index_request_aggregates_on_app_record_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_resource_usages_on_resource_type_and_resource_id_ref ON public.resource_usages USING btree (resource_type, resource_id_ref);
+CREATE INDEX index_request_aggregates_on_app_record_id ON public.request_aggregates USING btree (app_record_id);
 
 
 --
--- Name: index_resource_usages_on_user_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_request_samples_on_app_record_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_resource_usages_on_user_id ON public.resource_usages USING btree (user_id);
+CREATE INDEX index_request_samples_on_app_record_id ON public.request_samples USING btree (app_record_id);
+
+
+--
+-- Name: index_request_samples_on_server_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_request_samples_on_server_id ON public.request_samples USING btree (server_id);
+
+
+--
+-- Name: index_scheduled_tasks_on_app_record_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_scheduled_tasks_on_app_record_id ON public.scheduled_tasks USING btree (app_record_id);
+
+
+--
+-- Name: index_scheduled_tasks_on_app_record_id_and_schedule; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_scheduled_tasks_on_app_record_id_and_schedule ON public.scheduled_tasks USING btree (app_record_id, schedule);
 
 
 --
@@ -2455,6 +3001,13 @@ CREATE INDEX index_subscriptions_on_plan_id ON public.subscriptions USING btree 
 
 
 --
+-- Name: index_subscriptions_on_team_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_subscriptions_on_team_id ON public.subscriptions USING btree (team_id);
+
+
+--
 -- Name: index_subscriptions_on_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2490,6 +3043,20 @@ CREATE INDEX index_teams_on_owner_id ON public.teams USING btree (owner_id);
 
 
 --
+-- Name: index_teams_on_plan_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_teams_on_plan_id ON public.teams USING btree (plan_id);
+
+
+--
+-- Name: index_teams_on_slug; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_teams_on_slug ON public.teams USING btree (slug);
+
+
+--
 -- Name: index_usage_events_on_app_record_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2501,6 +3068,20 @@ CREATE INDEX index_usage_events_on_app_record_id ON public.usage_events USING bt
 --
 
 CREATE INDEX index_usage_events_on_user_id ON public.usage_events USING btree (user_id);
+
+
+--
+-- Name: index_users_on_deleted_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_users_on_deleted_at ON public.users USING btree (deleted_at);
+
+
+--
+-- Name: index_users_on_deletion_scheduled_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_users_on_deletion_scheduled_at ON public.users USING btree (deletion_scheduled_at);
 
 
 --
@@ -2522,6 +3103,13 @@ CREATE INDEX index_users_on_github_installation_id ON public.users USING btree (
 --
 
 CREATE UNIQUE INDEX index_users_on_otp_secret ON public.users USING btree (otp_secret);
+
+
+--
+-- Name: index_users_on_plan_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_users_on_plan_id ON public.users USING btree (plan_id);
 
 
 --
@@ -2623,6 +3211,22 @@ ALTER TABLE ONLY public.feedback_entries
 
 
 --
+-- Name: logs fk_rails_18f7c307b9; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.logs
+    ADD CONSTRAINT fk_rails_18f7c307b9 FOREIGN KEY (app_record_id) REFERENCES public.app_records(id);
+
+
+--
+-- Name: leads fk_rails_1d08b36969; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.leads
+    ADD CONSTRAINT fk_rails_1d08b36969 FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
 -- Name: app_transfers fk_rails_207c5c7c21; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2655,19 +3259,27 @@ ALTER TABLE ONLY public.push_tickets
 
 
 --
--- Name: resource_usages fk_rails_3157a74e5e; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.resource_usages
-    ADD CONSTRAINT fk_rails_3157a74e5e FOREIGN KEY (user_id) REFERENCES public.users(id);
-
-
---
 -- Name: solid_queue_recurring_executions fk_rails_318a5533ed; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.solid_queue_recurring_executions
     ADD CONSTRAINT fk_rails_318a5533ed FOREIGN KEY (job_id) REFERENCES public.solid_queue_jobs(id) ON DELETE CASCADE;
+
+
+--
+-- Name: invoice_credits fk_rails_3617d5ba2d; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.invoice_credits
+    ADD CONSTRAINT fk_rails_3617d5ba2d FOREIGN KEY (applied_to_invoice_id) REFERENCES public.invoices(id);
+
+
+--
+-- Name: invoices fk_rails_3784a47887; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.invoices
+    ADD CONSTRAINT fk_rails_3784a47887 FOREIGN KEY (plan_id) REFERENCES public.plans(id);
 
 
 --
@@ -2684,6 +3296,14 @@ ALTER TABLE ONLY public.notifications
 
 ALTER TABLE ONLY public.solid_queue_failed_executions
     ADD CONSTRAINT fk_rails_39bbc7a631 FOREIGN KEY (job_id) REFERENCES public.solid_queue_jobs(id) ON DELETE CASCADE;
+
+
+--
+-- Name: invoice_credits fk_rails_3a1d2b8176; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.invoice_credits
+    ADD CONSTRAINT fk_rails_3a1d2b8176 FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
 --
@@ -2791,14 +3411,6 @@ ALTER TABLE ONLY public.subscriptions
 
 
 --
--- Name: deposit_transactions fk_rails_70554f2c12; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.deposit_transactions
-    ADD CONSTRAINT fk_rails_70554f2c12 FOREIGN KEY (user_id) REFERENCES public.users(id);
-
-
---
 -- Name: metrics fk_rails_792cf6e72c; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2820,6 +3432,14 @@ ALTER TABLE ONLY public.database_services
 
 ALTER TABLE ONLY public.activities
     ADD CONSTRAINT fk_rails_7e11bb717f FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: invoices fk_rails_807e09985d; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.invoices
+    ADD CONSTRAINT fk_rails_807e09985d FOREIGN KEY (team_id) REFERENCES public.teams(id);
 
 
 --
@@ -2852,14 +3472,6 @@ ALTER TABLE ONLY public.releases
 
 ALTER TABLE ONLY public.device_authorizations
     ADD CONSTRAINT fk_rails_8f880d595f FOREIGN KEY (user_id) REFERENCES public.users(id);
-
-
---
--- Name: promo_redemptions fk_rails_90ca3d30b5; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.promo_redemptions
-    ADD CONSTRAINT fk_rails_90ca3d30b5 FOREIGN KEY (triggered_by_deposit_id) REFERENCES public.deposit_transactions(id);
 
 
 --
@@ -2903,6 +3515,14 @@ ALTER TABLE ONLY public.promo_codes
 
 
 --
+-- Name: subscriptions fk_rails_9c6c113221; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.subscriptions
+    ADD CONSTRAINT fk_rails_9c6c113221 FOREIGN KEY (team_id) REFERENCES public.teams(id);
+
+
+--
 -- Name: solid_queue_claimed_executions fk_rails_9cfe4d4944; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2916,6 +3536,14 @@ ALTER TABLE ONLY public.solid_queue_claimed_executions
 
 ALTER TABLE ONLY public.servers
     ADD CONSTRAINT fk_rails_a376138104 FOREIGN KEY (team_id) REFERENCES public.teams(id);
+
+
+--
+-- Name: preview_dns_records fk_rails_a39c2fe5ec; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.preview_dns_records
+    ADD CONSTRAINT fk_rails_a39c2fe5ec FOREIGN KEY (app_record_id) REFERENCES public.app_records(id);
 
 
 --
@@ -2935,6 +3563,14 @@ ALTER TABLE ONLY public.backup_destinations
 
 
 --
+-- Name: scheduled_tasks fk_rails_af964cd264; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.scheduled_tasks
+    ADD CONSTRAINT fk_rails_af964cd264 FOREIGN KEY (app_record_id) REFERENCES public.app_records(id);
+
+
+--
 -- Name: promo_redemptions fk_rails_b0426505c4; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2943,11 +3579,27 @@ ALTER TABLE ONLY public.promo_redemptions
 
 
 --
+-- Name: request_samples fk_rails_bbc071f07a; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.request_samples
+    ADD CONSTRAINT fk_rails_bbc071f07a FOREIGN KEY (server_id) REFERENCES public.servers(id);
+
+
+--
 -- Name: solid_queue_scheduled_executions fk_rails_c4316f352d; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.solid_queue_scheduled_executions
     ADD CONSTRAINT fk_rails_c4316f352d FOREIGN KEY (job_id) REFERENCES public.solid_queue_jobs(id) ON DELETE CASCADE;
+
+
+--
+-- Name: users fk_rails_c7d01481e8; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT fk_rails_c7d01481e8 FOREIGN KEY (plan_id) REFERENCES public.plans(id);
 
 
 --
@@ -2964,6 +3616,14 @@ ALTER TABLE ONLY public.database_services
 
 ALTER TABLE ONLY public.activities
     ADD CONSTRAINT fk_rails_d67d554927 FOREIGN KEY (team_id) REFERENCES public.teams(id);
+
+
+--
+-- Name: logs fk_rails_d782a21ec2; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.logs
+    ADD CONSTRAINT fk_rails_d782a21ec2 FOREIGN KEY (server_id) REFERENCES public.servers(id);
 
 
 --
@@ -2999,6 +3659,14 @@ ALTER TABLE ONLY public.app_records
 
 
 --
+-- Name: request_samples fk_rails_e32645cc06; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.request_samples
+    ADD CONSTRAINT fk_rails_e32645cc06 FOREIGN KEY (app_record_id) REFERENCES public.app_records(id);
+
+
+--
 -- Name: teams fk_rails_e62f95aa33; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3012,6 +3680,14 @@ ALTER TABLE ONLY public.teams
 
 ALTER TABLE ONLY public.device_tokens
     ADD CONSTRAINT fk_rails_e99e290457 FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: metric_hourly fk_rails_ebf9ba3e7a; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.metric_hourly
+    ADD CONSTRAINT fk_rails_ebf9ba3e7a FOREIGN KEY (app_record_id) REFERENCES public.app_records(id);
 
 
 --
@@ -3039,6 +3715,22 @@ ALTER TABLE ONLY public.api_tokens
 
 
 --
+-- Name: request_aggregates fk_rails_f77dffa89c; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.request_aggregates
+    ADD CONSTRAINT fk_rails_f77dffa89c FOREIGN KEY (app_record_id) REFERENCES public.app_records(id);
+
+
+--
+-- Name: database_stats_snapshots fk_rails_fa34cb695a; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.database_stats_snapshots
+    ADD CONSTRAINT fk_rails_fa34cb695a FOREIGN KEY (database_service_id) REFERENCES public.database_services(id);
+
+
+--
 -- Name: app_transfers fk_rails_fa46e01b1c; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3052,6 +3744,14 @@ ALTER TABLE ONLY public.app_transfers
 
 ALTER TABLE ONLY public.log_drains
     ADD CONSTRAINT fk_rails_fe69ac4a13 FOREIGN KEY (app_record_id) REFERENCES public.app_records(id);
+
+
+--
+-- Name: teams fk_rails_fe85bf605a; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.teams
+    ADD CONSTRAINT fk_rails_fe85bf605a FOREIGN KEY (plan_id) REFERENCES public.plans(id);
 
 
 --
@@ -3069,6 +3769,53 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260530182311'),
+('20260530121610'),
+('20260529300001'),
+('20260529200001'),
+('20260529100001'),
+('20260528100001'),
+('20260528000002'),
+('20260528000001'),
+('20260527100004'),
+('20260527100003'),
+('20260527100002'),
+('20260527100001'),
+('20260527000030'),
+('20260527000020'),
+('20260527000011'),
+('20260527000010'),
+('20260527000002'),
+('20260527000001'),
+('20260526000001'),
+('20260525000002'),
+('20260525000001'),
+('20260524000010'),
+('20260524000001'),
+('20260522161334'),
+('20260522161309'),
+('20260522074222'),
+('20260522024424'),
+('20260521125518'),
+('20260521070001'),
+('20260521070000'),
+('20260521060528'),
+('20260521060351'),
+('20260521060333'),
+('20260520030000'),
+('20260519030000'),
+('20260518030000'),
+('20260516020000'),
+('20260513015042'),
+('20260510025835'),
+('20260509162743'),
+('20260508090000'),
+('20260508085228'),
+('20260506235156'),
+('20260506232540'),
+('20260506160000'),
+('20260506085536'),
+('20260502210200'),
 ('20260430151708'),
 ('20260430145538'),
 ('20260430120000'),

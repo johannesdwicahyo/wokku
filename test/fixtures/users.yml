@@ -4,18 +4,19 @@ one:
   email: user-one@example.com
   encrypted_password: <%= Devise::Encryptor.digest(User, 'password123456') %>
   role: 0
+  plan: free
 
 two:
   email: user-two@example.com
   encrypted_password: <%= Devise::Encryptor.digest(User, 'password123456') %>
   role: 0
+  plan: free
 
 admin:
   email: admin@wokku.cloud
   encrypted_password: <%= Devise::Encryptor.digest(User, 'password123456') %>
   role: 1
   currency: idr
-  balance_idr: 0
-  balance_usd_cents: 0
   payment_method_type: none
   otp_required_for_login: true
+  plan: free

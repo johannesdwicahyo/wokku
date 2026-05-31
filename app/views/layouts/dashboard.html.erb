@@ -1,5 +1,52 @@
+<%#
+  Brutalist console shell (P2 of redesign-c-full, 2026-05-17).
+  Replaces the Material You dashboard chrome. The previous layout is
+  preserved at dashboard.OLD_DESIGN.html.erb until P7 cleanup.
+
+  Functional bits carried over verbatim from the old layout so nothing
+  regresses: csrf/csp, Turbo morph refresh meta, xterm.js CSS (terminal
+  pages use this layout), the analytics partial, the suspended /
+  account-deletion / low-balance banners, the toast container, and the
+  confirm-dialog + mobile-nav Stimulus controllers.
+
+  NOTE: until P3-P6 repaint the remaining dashboard pages, those pages
+  still render their Material markup inside this brutalist shell. They
+  stay functional; only their palette looks transitional.
+%>
+<%
+  path = request.path
+
+  nav_items = [
+    { label: t("console.sidebar.items.apps"),       key: :apps,       href: dashboard_apps_path,       active: path.start_with?("/dashboard/apps") },
+    { label: t("console.sidebar.items.templates"),  key: :templates,  href: dashboard_templates_path,  active: path.start_with?("/dashboard/templates") },
+    { label: t("console.sidebar.items.audit_log"),  key: :audit_log,  href: dashboard_activities_path, active: path.start_with?("/dashboard/activities") }
+  ]
+
+  account_items = [
+    { label: t("console.sidebar.account_items.billing"),  key: :billing,  href: dashboard_billing_path,          active: current_page?(dashboard_billing_path) },
+    { label: t("console.sidebar.account_items.settings"), key: :settings, href: dashboard_profile_path,          active: current_page?(dashboard_profile_path) },
+    { label: t("console.sidebar.account_items.docs"),     key: :docs,     href: "/docs",                         external: true, active: false },
+    { label: t("console.sidebar.account_items.support"),  key: :support,  href: "mailto:support@wokku.cloud",    active: false }
+  ]
+
+  admin_items = []
+  if current_user&.admin?
+    # Single switch-to-admin entry. The admin layout has its own sidebar
+    # with all 5 admin sections (overview, servers, cloud credentials,
+    # promo codes, users); duplicating any of them here just confuses
+    # the IA (was 3 stray items, "admin" pointed at "/admin" which is
+    # already shown by clicking any of them). Wokku logo in the admin
+    # layout returns to dashboard.
+    admin_items = [
+      { label: t("console.sidebar.admin_items.admin_console", default: "admin console →"),
+        key: :admin, href: admin_root_path, active: path.start_with?("/admin") }
+    ]
+  end
+%>
 <!DOCTYPE html>
-<html class="dark h-full" lang="en">
+<html lang="<%= I18n.locale %>"
+      data-controller="theme"
+      data-theme-default-value="<%= cookies[:theme] || 'light' %>">
   <head>
     <title><%= content_for(:title) || "Wokku" %></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,17 +55,20 @@
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-    <%# Smooth in-place updates for Turbo Stream refreshes (e.g. addon
-        status changes from CreateAddonJob). Without these meta tags
-        a refresh would re-paint the whole page; with morph it
-        diffs the DOM and only updates what changed. %>
+    <%# Turbo morph refresh — diffs the DOM on Turbo Stream refreshes
+        (e.g. addon status from CreateAddonJob) instead of repainting. %>
     <meta name="turbo-refresh-method" content="morph">
     <meta name="turbo-refresh-scroll" content="preserve">
     <%= yield :head %>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <%# Brutalist redesign uses Inter Tight + JetBrains Mono.
+        Material Symbols Outlined feeds the ~30 icon ligatures across
+        the dashboard (navbar menu/notifications/terminal, sidebar
+        section icons, combobox expand_more, low-balance banner). The
+        font was never loaded before, so all those spans showed their
+        ligature names as literal text. %>
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
@@ -27,54 +77,90 @@
     <%= javascript_importmap_tags %>
     <%= render "shared/analytics" %>
   </head>
-  <body class="h-full bg-surface text-on-surface font-body selection:bg-primary-container selection:text-primary" data-controller="confirm-dialog">
-    <%# Beta Banner %>
-    <div class="fixed top-0 left-0 right-0 z-[60] bg-gradient-to-r from-tertiary/15 via-primary/15 to-tertiary/15 border-b border-tertiary/20">
-      <div class="px-4 py-1.5">
-        <div class="flex items-center justify-center gap-2 text-xs">
-          <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-tertiary/20 text-tertiary rounded font-bold uppercase tracking-wider text-[10px]">
-            <span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
-            Public Beta
-          </span>
-          <span class="text-on-surface-variant hidden md:inline">
-            Wokku Cloud is in public beta — not recommended for production workloads yet. See the <%= link_to "beta notice", "/docs/beta", class: "text-primary hover:underline" %>.
-          </span>
-          <span class="text-on-surface-variant md:hidden">Beta — not for production yet</span>
-        </div>
-      </div>
-    </div>
 
+  <body class="bg-bg text-ink antialiased" style="font-family: var(--font-sans-brutal);"
+        data-controller="confirm-dialog mobile-nav">
     <% if user_signed_in? && current_user.billing_status == "suspended" %>
-      <div class="bg-error/10 border-b border-error/30 px-4 py-3">
-        <div class="flex items-center justify-center gap-2 text-sm text-error">
-          <span class="material-symbols-outlined text-[18px]">warning</span>
-          <span>Your apps are suspended due to insufficient funds.</span>
-          <%= link_to "Top Up Now", dashboard_billing_path, class: "font-bold underline ml-1" %>
+      <div class="border-b-1.5 border-ink bg-danger-soft px-4 py-2.5">
+        <div class="flex items-center justify-center gap-2 font-mono text-xs text-ink">
+          <span>// apps suspended — insufficient funds.</span>
+          <% if respond_to?(:dashboard_billing_path) %>
+            <%= link_to "top_up()", dashboard_billing_path, class: "font-bold underline" %>
+          <% end %>
         </div>
       </div>
     <% end %>
 
-    <div class="pt-7" data-controller="mobile-nav">
-      <%= render "dashboard/shared/sidebar" %>
-      <%= render "dashboard/shared/navbar" %>
+    <%= render "shared/account_deletion_banner" %>
+    <%= render "shared/low_balance_banner" %>
 
-      <%# Mobile overlay — appears when sidebar is open %>
-      <div class="lg:hidden fixed inset-0 bg-black/50 z-20 hidden"
+    <%# Public-beta strip — single source of truth (the topbar no longer
+        carries its own). %>
+    <div class="border-b-1.5 border-ink bg-warn-soft px-4 py-2">
+      <div class="flex items-center justify-center gap-2 font-mono text-[11px] text-ink">
+        <%= render Atoms::TagComponent.new(tone: :warn) do %>● public_beta<% end %>
+        <span class="hidden sm:inline"><%= t("console.topbar.beta") %></span>
+        <%= link_to t("console.topbar.beta_read"), "/docs/beta", class: "underline" %>
+      </div>
+    </div>
+
+    <%# overflow-x-clip (not hidden) stops the off-canvas slide-panel /
+        sidebar — translated off-screen — from creating horizontal
+        scroll on mobile, without breaking the sticky topbar the way
+        an overflow scroll-container would. %>
+    <div class="flex min-h-screen overflow-x-clip">
+      <%= render Organisms::ConsoleSidebarComponent.new(
+            nav: nav_items,
+            account: account_items,
+            workspace_label: t("console.sidebar.workspace"),
+            account_label: t("console.sidebar.account"),
+            admin: admin_items,
+            admin_label: t("console.sidebar.admin"),
+            version_line: "dokku v0.37.2 · ce v1.0"
+          ) %>
+
+      <%# Off-canvas backdrop (mobile only). %>
+      <div class="lg:hidden fixed inset-0 bg-ink/40 z-20 hidden"
            data-mobile-nav-target="overlay"
            data-action="click->mobile-nav#close"></div>
 
-      <main class="lg:ml-64 pt-16 min-h-screen">
-        <div class="px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-          <%= yield %>
-        </div>
-      </main>
+      <div class="flex-1 flex flex-col min-w-0 lg:pl-56">
+        <%= render Organisms::ConsoleTopbarComponent.new(
+              user_email: current_user.email,
+              user_role: current_user.role,
+              user_avatar_url: current_user.try(:avatar_url),
+              locale: I18n.locale,
+              search_url: search_dashboard_apps_path,
+              search_placeholder: t("console.topbar.search"),
+              notifications_path: dashboard_notifications_path,
+              profile_path: dashboard_profile_path,
+              sign_out_path: destroy_user_session_path,
+              deploy_path: dashboard_templates_path,
+              deploy_label: "> deploy()",
+              locale_toggle_path: dashboard_locale_path(locale: I18n.locale == :en ? :id : :en),
+              locale_toggle_title: I18n.locale == :en ? "Ganti ke Bahasa Indonesia" : "Switch to English",
+              sign_out_label: t("common.sign_out"),
+              profile_label: t("dashboard.nav.profile"),
+              workspaces: current_user.teams.includes(:plan).order(:created_at),
+              current_workspace: current_team,
+              workspaces_index_path: dashboard_workspaces_path,
+              workspace_new_path: new_dashboard_workspace_path
+            ) %>
 
-      <%# Toast container — stacks notifications top-right. Both HTTP
-          flashes (rendered via _flash on each request) and Turbo Stream
-          broadcasts from background jobs append here. %>
-      <div id="toasts" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
-        <%= render "dashboard/shared/flash" %>
+        <main class="flex-1">
+          <div class="px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+            <%= yield %>
+          </div>
+        </main>
       </div>
+
+      <%= render "dashboard/shared/onboarding_tour" %>
+
+      <%# Toast container — Turbo Stream broadcast target only.
+          HTTP flash display is handled by FlashToastComponent below.
+          Keep this div empty so background-job broadcasts still work. %>
+      <div id="toasts" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
     </div>
+    <%= render Molecules::FlashToastComponent.new(flash: flash) %>
   </body>
 </html>

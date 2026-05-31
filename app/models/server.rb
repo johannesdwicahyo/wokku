@@ -10,7 +10,13 @@ class Server < ApplicationRecord
 
   has_many :app_records, dependent: :destroy
   has_many :database_services, dependent: :destroy
+  has_many :logs, dependent: :destroy
+  has_many :request_samples, dependent: :destroy
   has_one :backup_destination, dependent: :destroy
+
+  # Vector → wokku log ingest auth. Generated on first save if missing;
+  # rotated by setting `ingest_token: nil; save!`.
+  before_validation :ensure_ingest_token
 
   validates :name, presence: true, uniqueness: true
   validates :host, presence: true
@@ -112,5 +118,9 @@ class Server < ApplicationRecord
     # We can't use perform_later here — the record is already destroyed
     # by the time the job runs. Snapshot the identity into the job args.
     Git::KnownHostsWriter.remove(self) rescue nil
+  end
+
+  def ensure_ingest_token
+    self.ingest_token ||= SecureRandom.hex(32)
   end
 end

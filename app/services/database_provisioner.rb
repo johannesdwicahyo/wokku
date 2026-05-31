@@ -67,10 +67,8 @@ class DatabaseProvisioner
     end
 
     drop_tenant = ->(c) do
-      Dokku::SharedPostgres.new(c).destroy_tenant!(
-        role_name: db.shared_role_name,
-        db_name: db.shared_db_name
-      )
+      slug = db.shared_role_name.to_s.sub(/_role\z/, "")
+      Dokku::SharedPostgres.new(c).destroy_tenant!(slug: slug)
     rescue => e
       Rails.logger.warn "destroy_tenant! failed: #{e.message}"
     end
@@ -128,10 +126,14 @@ class DatabaseProvisioner
     raise Error, "Shared tier requires a postgres service_type" unless @service_type == "postgres"
 
     shared = Dokku::SharedPostgres.new(client)
-    shared.ensure_host!
 
     slug = @app ? @app.name : "shared-#{SecureRandom.hex(3)}"
     tenant = shared.provision_tenant!(slug: slug)
+    # Plan bundle: each plan ships with 1 shared DB up to plan.db_bundle_mb.
+    # Fall back to the plugin default if the creator has no plan resolution
+    # (e.g. seeded fixtures or system-owned tenants).
+    quota_mb = @creator&.current_plan&.db_bundle_mb || Dokku::SharedPostgres::DEFAULT_STORAGE_MB
+    shared.set_quota!(slug: slug, megabytes: quota_mb)
 
     parent = find_or_create_parent_record!
 
@@ -143,19 +145,14 @@ class DatabaseProvisioner
       tier_name: SHARED_TIER,
       shared: true,
       parent_service: parent,
-      shared_role_name: tenant[:role_name],
-      shared_db_name: tenant[:db_name],
-      connection_limit: tenant[:connection_limit],
-      storage_mb_quota: Dokku::SharedPostgres::DEFAULT_STORAGE_MB,
+      shared_role_name: tenant[:role],
+      shared_db_name: tenant[:db],
+      storage_mb_quota: quota_mb,
       creator: @creator
     )
 
     if @app
-      url = shared.connection_string(
-        role_name: tenant[:role_name],
-        db_name: tenant[:db_name],
-        password: tenant[:password]
-      )
+      url = tenant[:connection_url]
       Dokku::Config.new(client).set(@app.name, { "DATABASE_URL" => url })
       @app.app_databases.create!(database_service: db, alias_name: "DATABASE")
     end
@@ -169,7 +166,7 @@ class DatabaseProvisioner
   def find_or_create_parent_record!
     DatabaseService.find_or_create_by!(
       server: @server,
-      name: Dokku::SharedPostgres::SHARED_CONTAINER_NAME,
+      name: "dokku-shared-postgres",
       service_type: "postgres"
     ) do |r|
       r.status = :running

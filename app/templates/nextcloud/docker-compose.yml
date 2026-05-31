@@ -4,6 +4,8 @@
 # category: file-storage
 # tags: cloud, files, sync, calendar, contacts
 # icon: file-storage
+# icon_slug: nextcloud
+# icon_color: 0082C9
 # port: 80
 
 services:

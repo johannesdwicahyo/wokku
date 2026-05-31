@@ -1,25 +1,30 @@
-<div data-controller="slide-panel">
+<%#
+  Brutalist add-ons index (P4 of redesign-c-full, 2026-05-17). Real
+  data + turbo_stream_from + slide-panel preserved 1:1 from
+  index.OLD_DESIGN.html.erb — only presentation repainted.
+%>
+<div data-controller="slide-panel" class="flex flex-col gap-6">
   <%# Live-update addon status as CreateAddonJob progresses. Each addon
       card is wrapped in `dom_id(addon)` and the model broadcasts a
       replace to this stream when status flips (creating → running /
       error). No refresh needed. %>
   <%= turbo_stream_from "user_#{current_user.id}_addons" %>
 
-  <div class="flex items-center justify-between mb-8">
-    <h1 class="text-2xl font-bold text-on-surface font-headline"><%= t("dashboard.nav.addons") %></h1>
-    <button data-action="click->slide-panel#open" class="inline-flex items-center px-4 py-2 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">
-      New Add-on
-    </button>
+  <div class="flex flex-wrap items-baseline justify-between gap-4">
+    <h2 class="font-mono text-3xl md:text-4xl font-semibold tracking-tighter text-ink m-0">
+      <span class="text-dim"># </span><%= t("dashboard.nav.addons") %>
+    </h2>
+    <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, mono: true, data: { action: "click->slide-panel#open" }) do %>> new_addon()<% end %>
   </div>
 
   <% if @orphan_addons.any? %>
-    <div class="mb-6">
-      <div class="flex items-baseline gap-2 mb-2 px-1">
-        <h3 class="text-sm font-semibold text-on-surface">Unlinked add-ons</h3>
-        <span class="text-xs text-outline"><%= @orphan_addons.size %></span>
-        <span class="text-xs text-outline">— not attached to any app. Link or destroy.</span>
+    <div>
+      <div class="flex items-baseline gap-2 mb-2 px-1 font-mono">
+        <h3 class="text-sm font-semibold text-ink">// unlinked add-ons</h3>
+        <span class="text-xs text-dim"><%= @orphan_addons.size %></span>
+        <span class="text-xs text-dim">— not attached to any app. Link or destroy.</span>
       </div>
-      <div class="bg-surface-container-low rounded-lg divide-y divide-outline-variant/10 overflow-hidden">
+      <div class="border-1.5 border-ink bg-paper divide-y divide-rule-soft overflow-hidden">
         <% @orphan_addons.each do |db| %>
           <%= render "addon_card", addon: db %>
         <% end %>
@@ -29,20 +34,20 @@
 
   <% if @databases.any? %>
     <%# Group toggle %>
-    <div class="flex items-center gap-1 mb-6">
-      <%= link_to "By type", dashboard_addons_path(group: "type"), class: "px-3 py-1.5 text-xs font-medium rounded-md transition #{@group_by == 'type' ? 'bg-surface-container-high text-on-surface' : 'text-outline hover:text-on-surface-variant'}" %>
-      <%= link_to "By app", dashboard_addons_path(group: "app"), class: "px-3 py-1.5 text-xs font-medium rounded-md transition #{@group_by == 'app' ? 'bg-surface-container-high text-on-surface' : 'text-outline hover:text-on-surface-variant'}" %>
+    <div class="flex items-center gap-1 font-mono">
+      <%= link_to "by_type", dashboard_addons_path(group: "type"), class: "px-3 py-1.5 text-xs border-1.5 transition #{@group_by == 'type' ? 'border-accent text-accent bg-accent-soft' : 'border-rule-soft text-dim hover:text-ink'}" %>
+      <%= link_to "by_app", dashboard_addons_path(group: "app"), class: "px-3 py-1.5 text-xs border-1.5 transition #{@group_by == 'app' ? 'border-accent text-accent bg-accent-soft' : 'border-rule-soft text-dim hover:text-ink'}" %>
     </div>
 
     <% if @group_by == "type" %>
       <div class="space-y-6">
         <% @by_type.each do |type, resources| %>
           <div>
-            <div class="flex items-baseline gap-2 mb-2 px-1">
-              <h3 class="text-sm font-semibold text-on-surface capitalize"><%= type %></h3>
-              <span class="text-xs text-outline"><%= resources.size %></span>
+            <div class="flex items-baseline gap-2 mb-2 px-1 font-mono">
+              <h3 class="text-sm font-semibold text-ink capitalize"><%= type %></h3>
+              <span class="text-xs text-dim"><%= resources.size %></span>
             </div>
-            <div class="bg-surface-container-low rounded-lg divide-y divide-outline-variant/10 overflow-hidden">
+            <div class="border-1.5 border-ink bg-paper divide-y divide-rule-soft overflow-hidden">
               <% resources.each do |db| %>
                 <%= render "addon_card", addon: db %>
               <% end %>
@@ -54,11 +59,11 @@
       <div class="space-y-6">
         <% @by_app.each do |app_name, resources| %>
           <div>
-            <div class="flex items-baseline gap-2 mb-2 px-1">
-              <h3 class="text-sm font-semibold text-on-surface"><%= app_name %></h3>
-              <span class="text-xs text-outline"><%= resources.size %> add-on<%= resources.size == 1 ? '' : 's' %></span>
+            <div class="flex items-baseline gap-2 mb-2 px-1 font-mono">
+              <h3 class="text-sm font-semibold text-ink"><%= app_name %></h3>
+              <span class="text-xs text-dim"><%= resources.size %> add-on<%= resources.size == 1 ? '' : 's' %></span>
             </div>
-            <div class="bg-surface-container-low rounded-lg divide-y divide-outline-variant/10 overflow-hidden">
+            <div class="border-1.5 border-ink bg-paper divide-y divide-rule-soft overflow-hidden">
               <% resources.each do |db| %>
                 <%= render "addon_card", addon: db %>
               <% end %>
@@ -69,13 +74,12 @@
     <% end %>
 
   <% else %>
-    <div class="bg-surface-container-low rounded-lg p-16 text-center">
-      <h3 class="text-lg font-semibold text-on-surface font-headline"><%= t("dashboard.databases.no_databases") %></h3>
-      <p class="text-sm text-outline mt-2">Add databases, caches, and services for your apps.</p>
-      <div class="mt-6">
-        <button data-action="click->slide-panel#open" class="inline-flex items-center px-4 py-2 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">New Add-on</button>
+    <%= render Molecules::PanelComponent.new(label: t("dashboard.databases.no_databases"), kicker: "new_addon") do %>
+      <div class="px-6 py-12 text-center flex flex-col items-center gap-4">
+        <p class="font-mono text-xs text-dim">// add databases, caches, and services for your apps</p>
+        <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, mono: true, data: { action: "click->slide-panel#open" }) do %>> new_addon()<% end %>
       </div>
-    </div>
+    <% end %>
   <% end %>
 
   <%= render layout: "dashboard/shared/slide_panel", locals: { title: "New Add-on", subtitle: "Provision a database or service" } do %>

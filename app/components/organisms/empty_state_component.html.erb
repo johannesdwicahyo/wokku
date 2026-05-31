@@ -1,0 +1,14 @@
+<div class="border-1.5 border-ink bg-bg-deep bg-dotted p-12 text-center">
+  <h3 class="font-headline text-xl font-extrabold mb-2"><%= headline %></h3>
+  <p class="text-ink-soft mb-6 max-w-md mx-auto"><%= body %></p>
+  <% if cta_label && cta_href %>
+    <div class="flex justify-center gap-3">
+      <%= link_to cta_label, cta_href,
+                  class: "border-1.5 border-ink bg-ink text-bg font-mono text-[11px] uppercase tracking-widest px-4 py-2 shadow-brutal" %>
+      <% if secondary_label && secondary_href %>
+        <%= link_to secondary_label, secondary_href,
+                    class: "border-1.5 border-ink bg-paper text-ink font-mono text-[11px] uppercase tracking-widest px-4 py-2 shadow-brutal" %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

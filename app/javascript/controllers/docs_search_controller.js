@@ -57,25 +57,37 @@ export default class extends Controller {
   }
 
   renderResults(results, query) {
+    this.resultsTarget.replaceChildren()
+
     if (!results.length) {
-      this.resultsTarget.innerHTML = `<div class="px-4 py-3 text-sm text-outline">No results for "${query}"</div>`
+      const empty = document.createElement("div")
+      empty.className = "docs-search-empty"
+      empty.textContent = `No results for "${query}"`
+      this.resultsTarget.appendChild(empty)
       this.resultsTarget.classList.remove("hidden")
       return
     }
 
-    this.resultsTarget.innerHTML = results.map((r, i) => `
-      <a href="/docs/${r.path}" class="block px-4 py-2.5 hover:bg-surface-container-high/50 transition ${i > 0 ? 'border-t border-outline-variant/10' : ''}">
-        <div class="text-sm font-medium text-on-surface">${r.title}</div>
-        <div class="text-xs text-outline mt-0.5 truncate">${r.excerpt.substring(0, 80)}...</div>
-      </a>
-    `).join("")
+    results.forEach((r, i) => {
+      const a = document.createElement("a")
+      a.href = `/docs/${r.path}`
+      a.className = "docs-search-result" + (i > 0 ? " is-divided" : "")
+      const title = document.createElement("div")
+      title.className = "docs-search-result__title"
+      title.textContent = r.title
+      const excerpt = document.createElement("div")
+      excerpt.className = "docs-search-result__excerpt"
+      excerpt.textContent = `${r.excerpt.substring(0, 80)}...`
+      a.append(title, excerpt)
+      this.resultsTarget.appendChild(a)
+    })
 
     this.resultsTarget.classList.remove("hidden")
   }
 
   highlightResult(items) {
     items.forEach((item, i) => {
-      item.classList.toggle("bg-surface-container-high/50", i === this.selectedIndex)
+      item.classList.toggle("is-active", i === this.selectedIndex)
     })
   }
 

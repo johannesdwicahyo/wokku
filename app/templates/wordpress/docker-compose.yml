@@ -4,6 +4,8 @@
 # category: cms
 # tags: cms, blog, php, mysql
 # icon: cms
+# icon_slug: wordpress
+# icon_color: FFFFFF
 # port: 80
 
 services:

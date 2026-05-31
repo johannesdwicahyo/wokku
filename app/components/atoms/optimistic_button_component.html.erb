@@ -1,0 +1,7 @@
+<%= button_to label, url, method: http_method,
+              class: classes,
+              data: {
+                controller: "motion--optimistic-button",
+                "motion--optimistic-button-pending-label-value": pending_label,
+                turbo_confirm: confirm
+              }.compact %>

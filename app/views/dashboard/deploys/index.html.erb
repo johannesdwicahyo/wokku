@@ -1,0 +1,57 @@
+<% content_for(:title, "Deploys - Wokku") %>
+
+<div class="max-w-5xl mx-auto space-y-6">
+  <div>
+    <h1 class="font-mono text-2xl font-semibold tracking-tighter text-ink"># deploys</h1>
+    <p class="font-mono text-sm text-dim mt-1">// recent build + deploy activity across all your apps</p>
+  </div>
+
+  <% if @deploys.empty? %>
+    <div class="border-1.5 border-ink bg-paper p-10 text-center font-mono text-sm text-dim">// no deploys yet — push to an app or click Deploy on a template</div>
+  <% else %>
+    <div class="border-1.5 border-ink bg-paper overflow-x-auto">
+      <table class="w-full font-mono text-sm">
+        <thead class="text-[10px] uppercase tracking-widest text-dim border-b border-rule-soft">
+          <tr>
+            <th class="text-left px-5 py-3 font-bold">App</th>
+            <th class="text-left px-5 py-3 font-bold">Commit</th>
+            <th class="text-left px-5 py-3 font-bold">Status</th>
+            <th class="text-left px-5 py-3 font-bold">Duration</th>
+            <th class="text-left px-5 py-3 font-bold">When</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-rule-soft">
+          <% @deploys.each do |deploy| %>
+            <tr class="hover:bg-bg-deep transition-colors">
+              <td class="px-5 py-3">
+                <%= link_to deploy.app_record.name, dashboard_app_path(deploy.app_record), class: "text-xs text-ink hover:text-accent" %>
+              </td>
+              <td class="px-5 py-3 text-xs text-dim">
+                <%= deploy.commit_sha.present? ? deploy.commit_sha[0, 7] : "—" %>
+              </td>
+              <td class="px-5 py-3">
+                <% color = case deploy.status
+                   when "succeeded" then "border-success text-success"
+                   when "failed", "timed_out" then "border-danger text-danger"
+                   when "building", "pending" then "border-warn text-warn"
+                   else "border-rule-soft text-dim"
+                   end %>
+                <span class="px-2 py-0.5 border text-[10px] font-bold uppercase tracking-widest <%= color %>"><%= deploy.status %></span>
+              </td>
+              <td class="px-5 py-3 text-xs text-ink-soft">
+                <%= deploy.duration ? "#{deploy.duration.to_i}s" : "—" %>
+              </td>
+              <td class="px-5 py-3 text-xs text-dim">
+                <%= time_ago_in_words(deploy.created_at) %> ago
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <% if @deploys.size >= 50 %>
+      <p class="font-mono text-xs text-dim text-center">Showing the 50 most recent deploys.</p>
+    <% end %>
+  <% end %>
+</div>

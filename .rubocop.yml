@@ -1,6 +1,13 @@
 # Omakase Ruby styling for Rails
 inherit_gem: { rubocop-rails-omakase: rubocop.yml }
 
+AllCops:
+  Exclude:
+    # legacy_cli/ is a frozen snapshot of wokku CLI v2.x served by
+    # PublicCliController. Active CLI development moved to the
+    # wokku-cli gem; this tree is no longer linted.
+    - 'legacy_cli/**/*'
+
 # Overwrite or add rules to create your own house style
 #
 # # Use `[a, [b, c]]` not `[ a, [ b, c ] ]`

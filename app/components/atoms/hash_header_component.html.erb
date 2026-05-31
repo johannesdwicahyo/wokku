@@ -1,0 +1,8 @@
+<div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 mb-6">
+  <h2 class="font-mono font-semibold tracking-tighter text-ink m-0 break-words min-w-0 <%= size %>">
+    <span class="text-dim"># </span><%= title %>
+  </h2>
+  <% if kicker.present? %>
+    <span class="font-mono text-[11px] text-dim tracking-widest uppercase break-words"><%= kicker %></span>
+  <% end %>
+</div>

@@ -1,13 +1,20 @@
 <!DOCTYPE html>
 <html class="h-full">
   <head>
-    <title><%= content_for(:title) || "Wokku" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="application-name" content="Wokku">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
+
+    <%# SEO partials — same set as landing layout. application.html.erb is
+        used for non-marketing public pages and (legacy) dashboard pages;
+        for dashboard the canonical/hreflang are harmless (dashboard is
+        disallowed in robots.txt anyway). %>
+    <%= render "shared/seo_meta" %>
+    <%= render "shared/seo_json_ld" %>
+    <%= render "shared/hreflang" %>
 
     <%= yield :head %>
 

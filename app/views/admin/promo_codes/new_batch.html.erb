@@ -1,0 +1,61 @@
+<% content_for(:title, "Generate Voucher Batch") %>
+
+<%
+  label = "font-mono text-[10px] uppercase tracking-widest text-dim font-bold"
+  input = "mt-1 w-full bg-bg border-1.5 border-ink px-3 py-2 font-mono text-sm text-ink focus:outline-none focus:border-accent"
+%>
+<div class="space-y-6 max-w-3xl">
+  <div>
+    <h1 class="font-mono text-xl font-semibold tracking-tighter text-ink"># generate_voucher_batch</h1>
+    <p class="mt-0.5 font-mono text-sm text-dim">
+      // create up to 100 one-shot vouchers sharing the same settings. Each voucher is single-use; redemption is unique per (user, code).
+    </p>
+    <%= link_to "← Back to all codes", admin_promo_codes_path, class: "font-mono text-xs text-accent hover:underline mt-2 inline-block" %>
+  </div>
+
+  <div class="border-1.5 border-ink bg-paper p-5">
+    <%= form_with url: create_batch_admin_promo_codes_path, method: :post, local: true, class: "space-y-3" do %>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label class="block">
+          <span class="<%= label %>">Kind</span>
+          <select name="kind" class="<%= input %>">
+            <option value="manual_credit">Manual credit (instant grant on redeem)</option>
+            <option value="channel_match">Channel match (bonus on first deposit)</option>
+          </select>
+        </label>
+        <label class="block">
+          <span class="<%= label %>">Count (1–100)</span>
+          <input type="number" name="count" required min="1" max="100" placeholder="15" class="<%= input %>">
+        </label>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label class="block">
+          <span class="<%= label %>">Prefix (A–Z, 0–9, dash)</span>
+          <input type="text" name="prefix" required maxlength="16" placeholder="LARAVEL"
+                 pattern="[A-Za-z0-9\-]{1,16}" class="<%= input %> uppercase">
+        </label>
+        <label class="block">
+          <span class="<%= label %>">Batch label</span>
+          <input type="text" name="batch_label" required maxlength="80" placeholder="Laravel ID — May 2026" class="<%= input %>">
+        </label>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label class="block">
+          <span class="<%= label %>">Bonus (IDR)</span>
+          <input type="number" name="redeemer_bonus_idr" required min="0" placeholder="50000" class="<%= input %>">
+        </label>
+      </div>
+
+      <label class="block">
+        <span class="<%= label %>">Description (internal note)</span>
+        <input type="text" name="description" placeholder="e.g. Telegram Laravel ID — May 2" class="<%= input %>">
+      </label>
+
+      <button type="submit" class="px-4 py-2 bg-ink text-bg font-mono text-sm font-bold border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer">
+        Generate batch
+      </button>
+    <% end %>
+  </div>
+</div>

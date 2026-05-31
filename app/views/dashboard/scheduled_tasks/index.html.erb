@@ -1,0 +1,68 @@
+<% content_for :title, "Scheduled tasks · #{@app.name}" %>
+<%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :settings) do %>
+  <%= render Organisms::AppSettingsComponent.new(app: @app, active: :scheduled_tasks) do %>
+
+<div data-controller="slide-panel">
+<div class="flex items-center justify-between mb-6">
+  <h2 class="font-headline text-xl font-bold">Scheduled tasks</h2>
+  <% if current_user.plan&.has_feature?(:scheduled_tasks) %>
+    <%# Opens the slide-panel modal; href is the no-JS fallback. %>
+    <%= link_to "+ new", new_dashboard_app_scheduled_task_path(@app),
+          data: { action: "click->slide-panel#open" },
+          class: "border-1.5 border-ink bg-ink text-bg font-mono text-[11px] uppercase tracking-widest px-3 py-2 shadow-brutal cursor-pointer" %>
+  <% else %>
+    <%= link_to "upgrade to Pro →", dashboard_billing_path,
+          class: "border-1.5 border-accent bg-accent-soft text-accent font-mono text-[11px] uppercase tracking-widest px-3 py-2" %>
+  <% end %>
+</div>
+
+<% unless current_user.plan&.has_feature?(:scheduled_tasks) %>
+  <div class="border-1.5 border-accent bg-accent-soft p-4 mb-6 text-sm text-ink">
+    <strong>Scheduled tasks is a Pro feature.</strong>
+    Upgrade your plan to define cron jobs that run inside your app — patches, nightly cleanups, scheduled reports, etc.
+  </div>
+<% end %>
+
+<% if @tasks.empty? %>
+  <div class="border-1.5 border-ink bg-bg-deep p-12 text-center">
+    <p class="text-ink-soft">No scheduled tasks yet.</p>
+    <p class="text-dim text-sm mt-2">// cron jobs run inside your app's container on the schedule you define</p>
+  </div>
+<% else %>
+  <table class="w-full border-1.5 border-ink bg-paper">
+    <thead class="bg-bg-deep border-b-1.5 border-ink">
+      <tr class="font-mono text-[11px] uppercase tracking-widest">
+        <th class="text-left p-3">schedule</th>
+        <th class="text-left p-3">command</th>
+        <th class="text-left p-3">enabled</th>
+        <th class="text-left p-3"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @tasks.each do |t| %>
+        <tr class="border-b border-rule-soft">
+          <td class="p-3 font-mono text-sm"><%= t.schedule %></td>
+          <td class="p-3 font-mono text-xs"><%= truncate(t.command, length: 80) %></td>
+          <td class="p-3"><%= t.enabled ? "✓" : "—" %></td>
+          <td class="p-3">
+            <%= button_to "delete", dashboard_app_scheduled_task_path(@app, t),
+                  method: :delete,
+                  class: "font-mono text-[11px] text-danger underline cursor-pointer bg-transparent border-0",
+                  data: { turbo_confirm: "Delete this scheduled task?" } %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>
+
+  <% if current_user.plan&.has_feature?(:scheduled_tasks) %>
+    <%= render layout: "dashboard/shared/slide_panel",
+               locals: { title: "new_scheduled_task", subtitle: "cron jobs run inside your app's container", size: "lg" } do %>
+      <%= render Organisms::ScheduledTaskFormComponent.new(task: @new_task || @app.scheduled_tasks.new, app: @app) %>
+    <% end %>
+  <% end %>
+</div>
+
+  <% end %>
+<% end %>

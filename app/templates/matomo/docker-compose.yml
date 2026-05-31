@@ -4,6 +4,8 @@
 # category: analytics
 # tags: analytics, privacy, tracking, gdpr
 # icon: analytics
+# icon_slug: matomo
+# icon_color: FFFFFF
 # port: 80
 
 services:

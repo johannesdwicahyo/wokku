@@ -17,6 +17,11 @@ class PostDeploySetupJob < ApplicationJob
     setup_ports(app, client)
     setup_ssl(app, client)
     auto_scale_workers(app, client)
+    restore_scheduled_tasks(app)
+    # Bundle v2: auto-attach the full shared backend stack to the box.
+    # No-op until BUNDLE_V2_ENABLED is on (the SharedProvisioner checks
+    # the flag internally), idempotent on re-deploy of an existing app.
+    AutoProvisionSharedAddonsJob.perform_later(app.id)
   rescue Dokku::Client::ConnectionError => e
     Rails.logger.warn("PostDeploySetupJob: connection failed for #{app.name}: #{e.message}")
   end
@@ -111,17 +116,26 @@ class PostDeploySetupJob < ApplicationJob
     end
   end
 
-  # Create Cloudflare DNS record: app-name.wokku.cloud → server IP
+  # Create Cloudflare DNS records for every Wokku-owned zone the app
+  # should answer on. Today: wokku.cloud always + wokku.app when the
+  # cutover flag is on. Each zone independent — a wokku.cloud success
+  # paired with a wokku.app failure logs the failure but still leaves
+  # the app reachable.
   def setup_dns(app, server)
-    Cloudflare::Dns.new.create_app_record(app.name, server.host)
-  rescue => e
-    Rails.logger.warn("PostDeploySetupJob: DNS setup skipped for #{app.name}: #{e.message}")
+    Cloudflare::Dns.for_each_enabled do |dns|
+      dns.create_app_record(app.name, server.host)
+    rescue => e
+      Rails.logger.warn("PostDeploySetupJob: DNS setup skipped for #{app.name} on #{dns.domain}: #{e.message}")
+    end
   end
 
-  # Ensure a Domain record exists in the database for the app's wokku.cloud subdomain
+  # Ensure Domain records exist in the DB for each Wokku-owned subdomain.
   def setup_domain_record(app)
-    hostname = "#{app.name}.wokku.cloud"
-    app.domains.find_or_create_by!(hostname: hostname)
+    Cloudflare::Dns.owned_domains.each do |zone|
+      next unless ENV[Cloudflare::Dns::ZONE_ID_ENV[zone]].present?
+      hostname = "#{app.name}.#{zone}"
+      app.domains.find_or_create_by!(hostname: hostname)
+    end
   rescue => e
     Rails.logger.warn("PostDeploySetupJob: domain record creation skipped for #{app.name}: #{e.message}")
   end
@@ -186,6 +200,25 @@ class PostDeploySetupJob < ApplicationJob
     Dokku::Domains.new(client).enable_ssl(app.name)
   rescue => e
     Rails.logger.warn("PostDeploySetupJob: SSL setup skipped for #{app.name}: #{e.message}")
+  end
+
+  # Re-sync dashboard-defined scheduled tasks into the on-host app.json.
+  # A git push overwrites app.json with whatever's in the user's repo,
+  # so cron entries created via the dashboard disappear on every deploy.
+  # We treat the DB as the source of truth and re-apply after every push.
+  # Dokku::ScheduledTasks#sync! is idempotent + no-ops cleanly if the
+  # user has no tasks defined. (Phase 3 backlog #18.)
+  def restore_scheduled_tasks(app)
+    return unless app.scheduled_tasks.enabled.any?
+
+    result = Dokku::ScheduledTasks.new(app).sync!
+    if result.success?
+      Rails.logger.info("PostDeploySetupJob: re-synced #{result.task_count} cron entries for #{app.name}")
+    else
+      Rails.logger.warn("PostDeploySetupJob: scheduled-task re-sync failed for #{app.name}: #{result.error}")
+    end
+  rescue => e
+    Rails.logger.warn("PostDeploySetupJob: scheduled-task re-sync skipped for #{app.name}: #{e.message}")
   end
 
   # Detect non-web process types from Dokku and scale them to 1 if at 0

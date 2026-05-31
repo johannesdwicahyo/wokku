@@ -1,0 +1,115 @@
+name: Lighthouse CI
+
+# Runs Lighthouse against the new public marketing surfaces on every PR
+# that touches view / asset / locale / lazy-frame code. Hard thresholds
+# defined in .lighthouserc.json — fails the PR if any metric misses the
+# spec §6 perf/SEO/a11y budget.
+#
+# Skipped on commits that don't touch the public surfaces so the bulk
+# of backend / dashboard PRs don't pay the 2-3 minute Lighthouse cost.
+#
+# Security note: this workflow uses NO github.event.* untrusted inputs.
+# All env values are either hardcoded test stubs or come from
+# bundler-cached setup — safe from workflow-injection attacks.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "app/views/pages/**"
+      - "app/views/layouts/landing.html.erb"
+      - "app/views/layouts/marketing.html.erb"
+      - "app/views/shared/_seo_meta.html.erb"
+      - "app/views/shared/_seo_json_ld.html.erb"
+      - "app/views/shared/_hreflang.html.erb"
+      - "app/views/shared/_open_graph.html.erb"
+      - "app/views/shared/_analytics.html.erb"
+      - "app/components/organisms/**"
+      - "app/components/molecules/**"
+      - "app/components/atoms/**"
+      - "app/controllers/lazy_controller.rb"
+      - "app/controllers/pages/**"
+      - "app/controllers/pages_controller.rb"
+      - "app/controllers/dashboard/**"
+      - "app/views/dashboard/**"
+      - "app/views/layouts/dashboard.html.erb"
+      - "app/assets/**"
+      - "config/locales/**"
+      - "config/routes.rb"
+      - "public/fonts/**"
+      - "public/og/**"
+      - ".lighthouserc.json"
+      - "lighthouse/**"
+      - ".github/workflows/lighthouse.yml"
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: --health-cmd="pg_isready" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      - name: Install OS packages
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libpq-dev
+
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Prepare DB (seed 4 plans for /pricing render)
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432
+        run: |
+          bin/rails db:test:prepare
+          bin/rails db:seed
+
+      - name: Precompile assets
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432
+          SECRET_KEY_BASE: dummy_secret_for_ci_only
+        run: bin/rails assets:precompile
+
+      - name: Boot Rails server
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432
+          SECRET_KEY_BASE: dummy_secret_for_ci_only
+          # Enable /dev/login so the Lighthouse puppeteer-auth script can
+          # sign in before auditing /dashboard/* URLs. Gated by the env
+          # var — never enabled in real production deploys.
+          WOKKU_ENABLE_DEV_LOGIN: "1"
+        run: |
+          bin/rails server -e test -p 3000 -d
+          for i in $(seq 1 20); do
+            if curl -fsS http://localhost:3000/ > /dev/null; then
+              echo "Rails up after ${i}s"
+              break
+            fi
+            sleep 1
+          done
+          curl -fsS http://localhost:3000/ > /dev/null
+
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli@latest puppeteer
+
+      - name: Run Lighthouse CI
+        run: lhci autorun

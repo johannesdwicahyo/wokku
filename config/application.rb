@@ -23,6 +23,11 @@ module Wokku
     # custom indexes) survive db:schema:load.
     config.active_record.schema_format = :sql
 
+    # IDR/USD FX rate used by Billing::Money for all currency conversion.
+    # Override at deploy time via ENV var when the rate moves materially;
+    # otherwise this default mirrors the long-time hardcoded value.
+    config.x.billing.idr_per_usd = ENV.fetch("IDR_PER_USD", 15_000).to_i
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files

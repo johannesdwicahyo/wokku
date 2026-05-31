@@ -2,28 +2,29 @@
     target so DokkuAppActionJob can replace it with a disabled
     "Restarting…" / "Stopping…" / "Starting…" state while the job
     runs, and replace it back to ready buttons when it completes. %>
-<div id="<%= dom_id(app, :actions) %>" class="flex items-center gap-2">
+<% btn = "px-3.5 py-2 font-mono text-xs border-1.5 border-ink rounded-lg transition-all active:translate-y-px cursor-pointer" %>
+<div id="<%= dom_id(app, :actions) %>" class="flex flex-wrap items-center gap-2">
   <% if app.server && !app.created? %>
-    <%= link_to "Console", dashboard_app_terminal_path(app), class: "px-3 py-1.5 text-sm font-medium text-on-surface-variant border border-outline-variant/30 rounded-md hover:bg-surface-container-high transition" %>
+    <%= link_to "> console()", dashboard_app_terminal_path(app), class: "#{btn} bg-paper text-ink hover:bg-bg-deep" %>
   <% end %>
 
   <% if app.pending_action.present? %>
     <% label_map = { "restart" => "Restarting", "stop" => "Stopping", "start" => "Starting", "resize" => "Resizing" } %>
     <%= render "dashboard/shared/spinning_button",
         label: (label_map[app.pending_action] || app.pending_action.titleize),
-        classes: "px-3 py-1.5 text-sm font-medium text-on-surface-variant border border-outline-variant/30 rounded-md bg-surface-container-low" %>
+        classes: "#{btn} bg-bg-deep text-dim" %>
   <% elsif app.created? %>
     <%# No actions for apps that haven't been deployed yet %>
   <% elsif app.stopped? %>
-    <%= button_to "Start", start_dashboard_app_path(app), method: :post,
+    <%= button_to "> start()", start_dashboard_app_path(app), method: :post,
         data: { turbo_submits_with: "Starting…" },
-        class: "px-3 py-1.5 text-sm font-semibold bg-primary text-on-primary rounded-md hover:opacity-90 transition cursor-pointer border-0" %>
+        class: "#{btn} bg-ink text-bg shadow-brutal-sm hover:shadow-brutal" %>
   <% else %>
-    <%= button_to "Restart", restart_dashboard_app_path(app), method: :post,
+    <%= button_to "> restart()", restart_dashboard_app_path(app), method: :post,
         data: { turbo_submits_with: "Restarting…" },
-        class: "px-3 py-1.5 text-sm font-medium text-on-surface-variant border border-outline-variant/30 rounded-md hover:bg-surface-container-high transition cursor-pointer bg-transparent" %>
-    <%= button_to "Stop", stop_dashboard_app_path(app), method: :post,
+        class: "#{btn} bg-paper text-ink hover:bg-bg-deep" %>
+    <%= button_to "> stop()", stop_dashboard_app_path(app), method: :post,
         data: { turbo_confirm: "Stop #{app.name}?", turbo_submits_with: "Stopping…" },
-        class: "px-3 py-1.5 text-sm font-medium text-on-surface-variant border border-outline-variant/30 rounded-md hover:border-error/50 hover:text-error transition cursor-pointer bg-transparent" %>
+        class: "#{btn} bg-paper text-danger border-danger hover:bg-danger-soft" %>
   <% end %>
 </div>

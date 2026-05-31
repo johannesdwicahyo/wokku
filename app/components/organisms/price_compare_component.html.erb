@@ -1,0 +1,26 @@
+<section id="pricing" class="relative px-5 sm:px-8 md:px-14 py-20 md:py-32 bg-bg overflow-hidden">
+  <div class="absolute inset-0 bg-dotted opacity-50 pointer-events-none"></div>
+  <div class="relative max-w-[1180px] mx-auto">
+    <div class="font-mono text-xs text-accent tracking-widest uppercase mb-3.5 text-center"><%= t('compare.eyebrow') %></div>
+    <h2 class="font-sans text-4xl sm:text-5xl md:text-7xl font-extrabold leading-[0.95] md:leading-[0.92] tracking-tighter text-ink m-0 text-center" style="text-wrap: balance;">
+      <%= t('compare.headline') %>
+    </h2>
+    <p class="font-sans text-lg text-ink-soft text-center max-w-[720px] mx-auto mt-5 mb-14">
+      <%= t('compare.body') %>
+    </p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <% rows.each do |key| %>
+        <% data = t("compare.rows.#{key}") %>
+        <% highlight = (key == :wokku) %>
+        <% pays_in = highlight ? t('compare.pays_idr') : t('compare.pays_usd') %>
+        <%= render Molecules::PriceCardComponent.new(
+              name: data[:name], price: data[:price], desc: data[:desc],
+              pays_in: pays_in, highlight: highlight,
+              you_label: highlight ? t('compare.you') : nil,
+              month_suffix: t('compare.suffix_month')
+            ) %>
+      <% end %>
+    </div>
+    <div class="text-center mt-7 font-mono text-[11px] text-dim tracking-tight"><%= t('compare.note') %></div>
+  </div>
+</section>

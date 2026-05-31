@@ -1,0 +1,15 @@
+<%# Lazy-loaded by app_overview_component.html.erb via
+    turbo_frame_tag "app_logs_glance_<app.id>" src: ... loading: lazy.
+    Turbo Frames requires the response to contain a <turbo-frame> with
+    a matching id, otherwise it renders "Content missing". Wrap the
+    rendered content so the frame matches. %>
+<%= turbo_frame_tag "app_logs_glance_#{app.id}" do %>
+  <div class="border-1.5 border-ink bg-ink text-[#9DEE9D] p-3 font-mono text-xs">
+    <% if lines.any? %>
+      <% lines.each do |l| %><div><%= l %></div><% end %>
+    <% else %>
+      <div class="text-dim">// no recent log output</div>
+    <% end %>
+    <div class="mt-2 text-bg/60">// <%= link_to "open full logs →", dashboard_app_logs_path(app), class: "text-accent" %></div>
+  </div>
+<% end %>

@@ -1,8 +1,12 @@
 <%# Renders any flash hash entries as toasts inside the layout's
     #toasts stack. Real-time notifications from background jobs append
     additional toasts via Turbo Stream broadcast — both share the same
-    toast partial so the visual is consistent. %>
+    toast partial so the visual is consistent.
+    Analytics-only keys (posthog_event / posthog_props) are consumed
+    exclusively by shared/_analytics.html.erb and must NEVER become
+    visible toasts — skip them here. %>
 <% flash.each do |type, message| %>
+  <% next if analytics_flash_key?(type) %>
   <% next if message.blank? %>
   <%= render "dashboard/shared/toast", level: type.to_s, message: message %>
 <% end %>

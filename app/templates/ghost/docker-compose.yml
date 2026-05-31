@@ -4,6 +4,8 @@
 # category: cms
 # tags: blog, cms, node
 # icon: cms
+# icon_slug: ghost
+# icon_color: FFFFFF
 # port: 2368
 # mysql_components: database__connection__
 # set_url: url

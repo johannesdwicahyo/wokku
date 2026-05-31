@@ -1,0 +1,107 @@
+<% content_for(:title, "Promo Codes") %>
+
+<div class="space-y-6 max-w-4xl">
+  <div class="flex items-start justify-between gap-3 flex-wrap">
+    <div>
+      <h1 class="font-mono text-xl font-semibold tracking-tighter text-ink"># promo_codes</h1>
+      <p class="mt-0.5 font-mono text-sm text-dim">// manual credits (Phase 1) + channel codes (Phase 2). Referral codes (Phase 3) are auto-generated per user.</p>
+    </div>
+    <%= link_to "generate_batch", new_batch_admin_promo_codes_path,
+                class: "px-3 py-2 bg-ink text-bg font-mono text-xs font-bold border-1.5 border-ink hover:bg-ink-soft transition" %>
+  </div>
+
+  <% if @batch_id.present? %>
+    <div class="border-1.5 border-ink bg-paper px-5 py-3 flex items-center justify-between gap-3 font-mono">
+      <div>
+        <div class="text-[10px] uppercase tracking-widest text-dim font-bold">Filtered by batch</div>
+        <div class="text-sm text-ink"><%= @batch_label.presence || @batch_id %></div>
+      </div>
+      <%= link_to "clear filter", admin_promo_codes_path, class: "text-xs text-accent hover:underline" %>
+    </div>
+  <% end %>
+
+  <% unless @batch_id.present? %>
+    <div class="border-1.5 border-ink bg-paper p-5">
+      <h2 class="font-mono text-sm font-semibold text-ink mb-3"># create_code</h2>
+      <%= form_with url: admin_promo_codes_path, method: :post, local: true, class: "space-y-3" do %>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label class="block">
+            <span class="font-mono text-[10px] uppercase tracking-widest text-dim font-bold">Kind</span>
+            <select name="kind" class="mt-1 w-full bg-bg border-1.5 border-ink px-3 py-2 font-mono text-sm text-ink focus:outline-none focus:border-accent">
+              <option value="manual_credit">Manual credit (instant grant on redeem)</option>
+              <option value="channel_match">Channel match (bonus on first paid invoice)</option>
+            </select>
+          </label>
+          <label class="block">
+            <span class="font-mono text-[10px] uppercase tracking-widest text-dim font-bold">Code</span>
+            <input type="text" name="code" required placeholder="WOKKU2026" class="mt-1 w-full bg-bg border-1.5 border-ink px-3 py-2 font-mono text-sm text-ink uppercase focus:outline-none focus:border-accent">
+          </label>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label class="block">
+            <span class="font-mono text-[10px] uppercase tracking-widest text-dim font-bold">Bonus (IDR)</span>
+            <input type="number" name="redeemer_bonus_idr" required min="0" placeholder="50000" class="mt-1 w-full bg-bg border-1.5 border-ink px-3 py-2 font-mono text-sm text-ink focus:outline-none focus:border-accent">
+          </label>
+          <label class="block">
+            <span class="font-mono text-[10px] uppercase tracking-widest text-dim font-bold">Max redemptions</span>
+            <input type="number" name="max_redemptions" min="1" placeholder="(optional)" class="mt-1 w-full bg-bg border-1.5 border-ink px-3 py-2 font-mono text-sm text-ink focus:outline-none focus:border-accent">
+          </label>
+        </div>
+        <label class="block">
+          <span class="font-mono text-[10px] uppercase tracking-widest text-dim font-bold">Description (internal note)</span>
+          <input type="text" name="description" placeholder="e.g. Telegram Laravel ID — Apr 28" class="mt-1 w-full bg-bg border-1.5 border-ink px-3 py-2 font-mono text-sm text-ink focus:outline-none focus:border-accent">
+        </label>
+        <button type="submit" class="px-4 py-2 bg-ink text-bg font-mono text-sm font-bold border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer">Create</button>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="border-1.5 border-ink bg-paper overflow-x-auto">
+    <table class="w-full font-mono text-sm">
+      <thead class="text-[10px] uppercase tracking-widest text-dim border-b border-rule-soft">
+        <tr>
+          <th class="text-left px-5 py-3">Code</th>
+          <th class="text-left">Kind</th>
+          <th class="text-right">Bonus</th>
+          <th class="text-right">Used</th>
+          <th class="text-right">Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-rule-soft">
+        <% @codes.each do |c| %>
+          <tr>
+            <td class="px-5 py-3 text-accent">
+              <div class="flex items-center gap-2">
+                <span><%= c.code %></span>
+                <button type="button"
+                        data-controller="clipboard"
+                        data-clipboard-text-value="<%= c.code %>"
+                        data-action="click->clipboard#copy"
+                        class="text-[10px] uppercase tracking-widest text-dim hover:text-accent border border-rule-soft px-1.5 py-0.5 cursor-pointer">
+                  <span data-clipboard-target="label">Copy</span>
+                </button>
+                <% if c.batch_id.present? %>
+                  <%= link_to "batch", admin_promo_codes_path(batch_id: c.batch_id),
+                              class: "text-[10px] uppercase tracking-widest text-dim hover:text-accent border border-rule-soft px-1.5 py-0.5" %>
+                <% end %>
+              </div>
+            </td>
+            <td><%= c.kind.titleize %></td>
+            <td class="text-right">Rp <%= ActiveSupport::NumberHelper.number_to_delimited(c.redeemer_bonus_idr, delimiter: '.') %></td>
+            <td class="text-right"><%= c.redemptions_count %><%= c.max_redemptions ? "/#{c.max_redemptions}" : "" %></td>
+            <td class="text-right text-xs <%= c.active? ? 'text-success' : 'text-dim' %>"><%= c.active? ? "active" : "disabled" %></td>
+            <td class="px-5 py-3 text-right">
+              <% if c.active? %>
+                <%= button_to "disable", admin_promo_code_path(c), method: :delete, data: { turbo_confirm: "Disable #{c.code}?" }, class: "text-xs text-danger hover:underline bg-transparent border-0 cursor-pointer" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <% if @codes.empty? %>
+      <p class="px-5 py-6 font-mono text-sm text-dim text-center">// no codes yet</p>
+    <% end %>
+  </div>
+</div>

@@ -21,29 +21,83 @@ class AppRecord < ApplicationRecord
   belongs_to :server
   belongs_to :team
   belongs_to :creator, class_name: "User", foreign_key: :created_by_id
+
+  # Resolves the plan whose retention/quota rules apply to this app.
+  # Falls back to Plan(free) if the app has no owner or its owner has no
+  # current subscription. Cached per instance — the per-plan retention
+  # jobs call this once per app per pass and don't tolerate N+1 hits.
+  def owner_plan
+    @owner_plan ||= creator&.current_plan || Plan.find_by(key: "free")
+  end
   belongs_to :parent_app, class_name: "AppRecord", optional: true
   has_many :preview_apps, class_name: "AppRecord", foreign_key: :parent_app_id, dependent: :destroy
 
   has_many :releases, dependent: :destroy
   has_many :deploys, dependent: :destroy
   has_many :domains, dependent: :destroy
+  has_many :logs, dependent: :destroy
+  has_many :request_samples, dependent: :destroy
+  has_many :request_aggregates, dependent: :destroy
+  has_many :metric_hourly, dependent: :destroy
   has_many :env_vars, dependent: :destroy
   has_many :process_scales, dependent: :destroy
   has_many :app_databases, dependent: :destroy
   has_many :database_services, through: :app_databases
+
+  # The "primary" database for app-scoped flows (backup-now, overview
+  # card, etc). In steady state every app has at most one DB attached
+  # (enforced post-Phase-3 #17); for legacy multi-DB apps we pick the
+  # oldest attachment so behavior is deterministic.
+  def primary_database
+    database_services.order(:created_at).first
+  end
+
+  # Most recent backup across attached databases. Returns nil if no
+  # database is attached or if no backups exist yet.
+  def last_backup
+    db = primary_database
+    return nil if db.nil?
+    db.backups.order(created_at: :desc).first
+  end
   has_many :metrics, dependent: :destroy
   has_many :notifications, dependent: :destroy
   has_many :log_drains, dependent: :destroy
   has_many :dyno_allocations, dependent: :destroy
+  has_many :scheduled_tasks, dependent: :destroy
+  has_one :preview_dns_record, dependent: :destroy
 
   # DynoAllocation's `after_destroy :close_usage_segment` only closes
-  # the modern `AppRecord:<id>:<process_type>` segments. Apps that
-  # pre-date DynoAllocation (or that never had ps:scale run) only have
-  # the legacy `AppRecord:<id>` shape, with nothing tied to it. Catch
-  # both shapes here so a delete always leaves a clean ledger.
-  before_destroy :close_all_resource_segments
+  # The ResourceUsage segment cleanup on destroy was dropped in 1.8
+  # along with the segment model itself.
 
   enum :status, { running: 0, stopped: 1, crashed: 2, deploying: 3, sleeping: 4, created: 5 }
+
+  # Bundle v2 — user-facing box size, picked at creation from the plan's
+  # box_quotas. Backfilled from dyno_allocations.web.dyno_tier.name via
+  # AddBoxSizeAndEnabledSharedEnginesToAppRecords. Stays in sync with
+  # dyno_tier going forward via PlanEnforceable (TBD in Phase 7 sweep).
+  BOX_SIZES = %w[sleeping small medium large xlarge].freeze
+  validates :box_size, inclusion: { in: BOX_SIZES }, allow_nil: true
+
+  # Bundle v2 — which of the 5 shared engines the box has attached.
+  # User-pick per box at creation; editable from box settings; cascade-
+  # destroyed with the box (handled by Addons::SharedProvisioner cleanup
+  # in Phase 7 sweep). Default empty array.
+  SHARED_ENGINES = %w[postgres redis memcached rabbitmq meilisearch].freeze
+  validate :enabled_shared_engines_subset_of_known
+
+  def shared_engine_enabled?(engine)
+    enabled_shared_engines.include?(engine.to_s)
+  end
+
+  private
+
+  def enabled_shared_engines_subset_of_known
+    extras = Array(enabled_shared_engines).map(&:to_s) - SHARED_ENGINES
+    errors.add(:enabled_shared_engines, "unknown engine(s): #{extras.join(', ')}") if extras.any?
+  end
+
+  public
 
   # Live-update the action button area on the show page when an
   # async action (restart/stop/start) starts or finishes. The button
@@ -74,14 +128,29 @@ class AppRecord < ApplicationRecord
     "app_#{id}_actions"
   end
 
+  SUPPORTED_GIT_PROVIDERS = %w[github gitlab bitbucket].freeze
+
   validates :name, presence: true,
     uniqueness: { scope: :server_id },
     format: { with: /\A[a-z][a-z0-9-]*\z/, message: "must be lowercase alphanumeric with hyphens" }
+  validates :git_provider, inclusion: { in: SUPPORTED_GIT_PROVIDERS }, allow_nil: true
+  validates :git_repo_full_name, presence: true, if: -> { git_provider.present? }
   validates :pr_number, uniqueness: { scope: :parent_app_id }, if: :is_preview?
 
   scope :stale, -> { where("synced_at < ? OR synced_at IS NULL", 5.minutes.ago) }
   scope :main_apps, -> { where(is_preview: false) }
   scope :previews, -> { where(is_preview: true) }
+  scope :preview_idle_for, ->(duration) { previews.where("last_commit_at < ?", duration.ago) }
+
+  def preview_subdomain
+    return nil unless is_preview? && parent_app && pr_number
+    "#{parent_app.name}-pr-#{pr_number}"
+  end
+
+  def preview_hostname
+    sub = preview_subdomain
+    sub && "#{sub}.#{Cloudflare::Dns.canonical_domain}"
+  end
 
   # Canonical git remote URL shown to users everywhere (dashboard, API,
   # CLI). Goes through the wokku SSH gateway rather than exposing the
@@ -96,14 +165,5 @@ class AppRecord < ApplicationRecord
   # views if needed.
   def direct_git_remote_url
     "dokku@#{server.host}:#{name}"
-  end
-
-  private
-
-  def close_all_resource_segments
-    ResourceUsage.where(stopped_at: nil)
-                 .where("resource_id_ref = :exact OR resource_id_ref LIKE :prefix",
-                        exact: "AppRecord:#{id}", prefix: "AppRecord:#{id}:%")
-                 .find_each(&:stop!)
   end
 end

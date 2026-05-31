@@ -1,0 +1,505 @@
+id:
+  meta:
+    description: "PaaS open-source buat developer Indonesia. Deploy lewat git push, Postgres + Redis terkelola, bayar QRIS, server di Jakarta."
+  brand:
+    name: "wokku"
+    domain: "wokku.cloud"
+    company: "PT Wokku Teknologi Nusantara"
+    location: "Dibuat di Bali"
+  nav:
+    pricing: "Harga"
+    templates: "Template"
+    docs: "Docs"
+    github: "GitHub"
+    sign_in: "Masuk"
+    get_started: "Coba Gratis"
+  hero:
+    eyebrow: "// VPS yang nggak gigit balik"
+    headline_pre: "Berhenti"
+    headline_strike: "ngurusin"
+    headline_post: "server."
+    headline_b: "AI kamu bisa deploy ini."
+    body: "PaaS managed untuk vibecoder, freelancer, dan agensi. Satu harga flat per bulan — nggak ada metering, nggak ada overage. Patching, SSL, backup, uptime: beres. Install Ghost, WordPress, n8n satu klik. Bayar pakai QRIS."
+    pill_qris: "QRIS · GoPay · OVO · DANA"
+    pill_price: "Mulai Rp 75K / $5"
+    pill_region: "Server Jakarta · <20ms"
+    pill_support: "Support via WhatsApp"
+    pill_ai_native: "AI-native"
+    cta_primary: "> coba_gratis()"
+    cta_secondary: "> lihat_harga()"
+    cta_note: "// gratis · tanpa kartu · live ~60 detik"
+    callout_dashboard: "↘ Satu dashboard. App, db, domain, log — semua di sini."
+    sticker_region_label: "Region"
+    sticker_region_value: "jkt-1 · ~20ms"
+    anchor_pre: "nggak lagi"
+    anchor_word: "ngurusin"
+    anchor_post: "— karena kamu berhenti"
+    anchor_words: ["patching server", "renew SSL", "ping downtime weekend", "UI cPanel jadul 2008", "SSH cuma buat benerin nginx"]
+    anchor_tail: " — git push aja."
+  compare:
+    eyebrow: "// harga yang lain"
+    headline: "Stack sama. Rp 75K flat."
+    body: "Nggak ada metering. Nggak ada overage. Harga beneran dalam Rp atau $."
+    you: "← kamu di sini"
+    pays_usd: "Kartu USD"
+    pays_idr: "QRIS · IDR"
+    note: "// harga publik, plan dasar setara + Postgres terkelola, Mei 2026"
+    suffix_month: "bln"
+    rows:
+      heroku:  { name: "Heroku Eco + addons", price: "~$15",     desc: "Eco dyno + Essential-1 Postgres" }
+      vercel:  { name: "Vercel Pro",           price: "$20/user", desc: "Per-seat + overage metering" }
+      railway: { name: "Railway Hobby",        price: "$5+",      desc: "Base $5 + metering per-detik" }
+      wokku:   { name: "Wokku Solo",           price: "Rp 75K",   desc: "Flat. Postgres + Redis gratis · QRIS" }
+  features:
+    eyebrow: "// hal kecil, dikerjain bener"
+    headline: "Production-grade, sudah include."
+    items:
+      - { title: "Deploy lewat git push",  body: "git push wokku main — app kamu di-build, di-deploy, langsung live dengan SSL." }
+      - { title: "Template 1-klik",         body: "60+ aplikasi open-source siap pakai: WordPress, Ghost, n8n, NocoDB." }
+      - { title: "PR Previews",             body: "Setiap pull request dapat URL live sendiri. Auto-cleanup pas merge." }
+      - { title: "Scheduled tasks",         body: "Cron jobs jadi warga kelas satu. Atur di app.json, edit di dashboard." }
+      - { title: "Transfer app",            body: "Pindahin kepemilikan app ke akun klien. Mereka bayar langsung. Cocok untuk agensi." }
+      - { title: "AI-native",               body: "Claude / Codex / Cursor bisa deploy, scale, dan debug via MCP + CLI. Kamu tetap di editor." }
+  templates:
+    headline: "Aplikasi yang biasanya kamu install di cPanel — deploy dalam 60 detik."
+    count: "%{n}+ template"
+  why:
+    eyebrow: "// yang wokku beresin"
+    headline_a: "Kerjaan VPS yang bikin males"
+    headline_b: "— selesai."
+    items:
+      - { tag: "nggak ada lagi ssh jam 3 pagi",      title: "Patching server.",        body: "Kita yang patch hostnya. Kamu bisa tidur Sabtu." }
+      - { tag: "git push · tanpa downtime",          title: "Deploy manual.",          body: "git push. Selesai. Nggak ada scp, nggak ada pm2 restart-restart." }
+      - { tag: "let's encrypt · auto-renew",         title: "Renew SSL.",              body: "Let's Encrypt, auto-renew selamanya. Nggak perlu nginget-nginget lagi." }
+      - { tag: "health check · auto-restart",        title: "Ditelpon klien downtime.", body: "Health check + auto-restart. Klien kamu nggak bakal ping kamu lagi jam 11 malem." }
+    flag_caption: "// dibuat di Bali · PT Wokku Teknologi Nusantara"
+  cta:
+    eyebrow: "// siap kapan kamu siap"
+    headline_a: "Weekend kamu balik. Tagihan jelas."
+    headline_b: "AI kamu di kursi sopir."
+    body: "Gratis selamanya untuk project hobi. Rp 75K/bulan kalau kamu siap. Bayar pakai QRIS, GoPay, atau kartu."
+    deploy: "> coba_gratis()"
+    docs: "> baca_docs()"
+    chat: "> chat_wa()"
+  freelance_vps_pain:
+    intent_capture:
+      kicker: "belum siap?"
+      title: "Cerita dong, apa yang nyita waktu kamu di VPS klien."
+      body: "Satu kalimat aja. Kita baca semuanya — buat bikin Wokku makin enak buat orang kayak kamu."
+      email_placeholder: "email@kamu.dev (opsional)"
+      pain_placeholder: "contoh: SSL klien-klienku expired terus, gw yang ditelpon"
+      submit: "kirim()"
+      wa_cta: "atau chat di WhatsApp"
+      wa_prefilled: "Hi — abis liat landing Wokku. Yang lagi nyita waktu gw di VPS:"
+      thanks_kicker: "thanks"
+      thanks_title: "Diterima. Kita kabarin balik ya."
+      thanks_body: "Kalo kamu ninggalin email, kita bales dalam 48 jam. Kalo nggak — kita tetap baca. Gas deploy app test: wokku.cloud/dashboard."
+  signin:
+    title: "Satu langkah lagi — masuk buat deploy"
+    sub: "// gratis · tanpa kartu · live ~60 detik"
+    reassure: "Cuma baca email kamu — nggak ada akses ke repo atau kode."
+    continue_with: "Lanjut pakai %{provider}"
+  footer:
+    tagline: "PaaS open-source di atas Dokku. Dibuat di Bali buat developer Indonesia."
+    status_ok: "Semua sistem normal"
+    cols:
+      product:
+        head: "Produk"
+        links: ["Template", "Harga", "Changelog", "Status"]
+      solutions:
+        head: "Solusi"
+        links: ["PaaS tanpa ops", "Deploy AI-native", "Harga flat", "Aplikasi 1-klik"]
+      getting_started:
+        head: "Mulai cepat"
+        links: ["Masuk", "Deploy dari template", "Pilih plan", "FAQ"]
+      learn:
+        head: "Belajar"
+        links: ["Docs", "Panduan CLI", "FAQ", "GitHub"]
+      company:
+        head: "Perusahaan"
+        links: ["Kontak", "Privasi", "Syarat", "Kebijakan refund"]
+    legal: "© 2026 Wokku · wokku.cloud"
+    license: "// dokku (mit) + wokku (agpl-3.0)"
+  console:
+    sidebar:
+      workspace: "// workspace"
+      account: "// akun"
+      admin: "// admin"
+      items:
+        apps: "apps"
+        templates: "templates"
+        audit_log: "audit log"
+      account_items:
+        billing: "billing"
+        settings: "settings"
+        docs: "docs ↗"
+        support: "support ↗"
+      admin_items:
+        admin_console: "konsol admin →"
+        servers: "servers"
+        overview: "admin"
+        promo_codes: "promo codes"
+    topbar:
+      search: "cari app..."
+      beta: "wokku.cloud lagi public beta — belum buat workload production."
+      beta_read: "baca catatannya ↗"
+    dashboard:
+      title: "dashboard"
+      kicker: "// ringkasan platform · hari ini · WIB"
+      stat:
+        apps: "total_apps"
+        resources: "active_resources"
+        errors: "errors_24h"
+        cost: "cost_this_month"
+      deposit: "deposit · billing"
+      runway: "runway"
+      low_runway: "// runway menipis · top up sebelum 01:00 WIB"
+      pr_previews: "pr_previews"
+      pr_idle: "// belum ada preview environment"
+      apps_recent: "recent_apps"
+      view_all: "lihat semua →"
+      activity: "recent_activity"
+      activity_window: "24 jam terakhir"
+    app_tabs:
+      overview: "overview"
+      deploy:   "deploy"
+      runtime:  "runtime"
+      settings: "settings"
+    settings_tabs:
+      profile:       "profile"
+      security:      "security"
+      notifications: "notifications"
+      billing:       "billing"
+    apps:
+      title: "apps"
+      kicker: "// 5 app · 5 jalan · region: jkt-1"
+      new: "> new_app()"
+      open_templates: "> templates/"
+      filter: "// filter:"
+      filter_all: "all"
+      filter_live: "live"
+      filter_sleeping: "sleeping"
+      filter_crashed: "crashed"
+      sort_label: "sort:"
+      sort_updated: "updated_desc"
+      quick_start: "// quick start"
+      quick_start_title: "deploy template 1-klik"
+    app:
+      breadcrumb: "cd ~/apps/"
+      actions:
+        console: "> console()"
+        restart: "> restart()"
+        stop: "> stop()"
+        deploy: "> deploy()"
+      metrics:
+        cpu: "cpu_usage"
+        mem: "memory_usage · warn"
+        containers: "containers"
+        mem_suggest: "// saran: wokku scale web=2 atau upgrade tier"
+      logs:
+        title: "log · stream: web.1"
+        status: "● live · tail"
+      env: "environment_variables"
+      env_kicker: "9 keys · edit →"
+      reveal: "lihat"
+      domain: "domain"
+      domain_kicker: "ssl: let's_encrypt · auto-renew"
+      domain_add: "+ tambah custom domain"
+      info:
+        title: "app_info"
+        server: "server"
+        branch: "branch"
+        git: "git_remote"
+        team: "team"
+        container: "container"
+        created: "created"
+      toggles: "toggles"
+      billing_estimate: "billing · estimasi"
+      billing_total: "estimasi / bulan"
+      pipeline: "pipeline"
+      pipeline_all: "semua release →"
+    billing:
+      title: "billing"
+      kicker: "// berbasis deposit · ditarik harian dari pemakaian per jam kemarin"
+      balance: "saldo_deposit"
+      last_settled: "// last_settled: 6 jam lalu · qris"
+      buffer: "/ Rp 75.000 target buffer"
+      auto_topup: "> set_auto_topup()"
+      low_warn: "runway menipis · warn"
+      next_debit: "// Rp 7.500/hari · debit berikutnya: 01:00 WIB"
+      top_up_now: "> top_up_now()"
+      pending: "payment_in_progress"
+      pending_body: "// 5 top-up nunggu konfirmasi gateway · terbaru: Rp 50.000 via IPAYMU"
+      pending_link: "> view_pending(5) →"
+      topup: "$ wokku billing:topup"
+      topup_note: "// bayar via qris · gopay · ovo · dana · transfer bank · kartu kredit · minimal Rp 25.000"
+      quick: "// nominal_cepat"
+      custom: "// nominal_lain"
+      runway_at: "// ~%{days} hari runway dengan rate sekarang"
+      methods: "// metode:"
+      promo: "kode_promo"
+      promo_action: "> redeem()"
+      promo_note: "// 0 kode dipakai · berlaku sampai 2026-12-31"
+      ref: "kode_referral · REF-D5C0JC"
+      ref_kicker: "+Rp 10.000 / signup"
+      ref_note: "// bagikan ke teman · kalian masing-masing dapat Rp 10.000 pas dia top-up pertama (min Rp 25.000)"
+      today: "hari_ini"
+      today_sub: "// 22 jam · ditagih per jam"
+      daily: "rate_harian"
+      daily_sub: "// kalau semua resource jalan 24 jam"
+      next: "debit_berikutnya"
+      next_sub: "// kam, 14 mei"
+      resources: "resource_jalan"
+      resources_kicker: "yang dibayarin deposit kamu"
+      cols: { resource: "resource", tier: "tier", count: "jumlah", hourly: "per jam", daily: "harian", monthly: "bulanan" }
+      total: "// estimasi total / bulan"
+  onboarding2:
+    title: "Deploy app pertama kamu"
+    sub: "// pilih satu — langsung live di server gratis Jakarta ~60 detik"
+    push_own: "atau push code sendiri"
+    building: "build ~30–90 detik tergantung stack"
+  onboarding_tour:
+    skip: "lewati"
+    next: "oke"
+    s0_title: "Deploy app pertama kamu — gratis, ~60 detik"
+    s0_body: "Kita pandu deploy app beneran di free tier. Tanpa kartu kredit."
+    s0_start: "gas"
+    s1: "Mulai dari Astro — static site yang enteng, pas buat free tier. Klik aja."
+    s2_server: "Server gratis di Jakarta — udah dipilihin."
+    s2_dyno: "Dyno free tier. Tanpa kartu kredit."
+    s2_deploy: "Tinggal deploy — ini build beneran."
+    s3: "Lagi build & kirim ke jkt-1 — sekitar 60 detik. Deploy beneran nih."
+    s4_title: "🎉 Udah live!"
+    s4_body: "App kamu jalan. Buka di sini:"
+    s4_open: "buka app-ku ↗"
+    s5_title: "Deploy-nya nyangkut"
+    s5_body: "Log di atas nunjukin masalahnya. Coba template lain yuk."
+    s5_retry: "balik ke template"
+  pricing_tiers:
+    section_label: "// harga"
+    headline: "Satu harga. Tanpa metering. Tanpa kejutan."
+    sub: "Plan bulanan flat. Pilih yang pas — Free buat hobi, Solo buat kerja serius, Pro buat production, Team buat agensi."
+    compare_link: "Lihat perbandingan lengkap →"
+    most_popular: "Paling laris"
+    cards:
+      free:
+        for_who: "Coba dulu. Hobi & static site."
+        cta: "Mulai gratis"
+        highlights:
+          - "3 app sleeping · wake saat ada request"
+          - "Postgres + Redis bersama gratis per app"
+          - "Support chatbot"
+      solo:
+        for_who: "Solo developer dengan app beneran."
+        cta: "Pilih Solo"
+        highlights:
+          - "3 sleeping + 3 Small always-on"
+          - "5 add-on bersama gratis per app"
+          - "Hingga 3 DB dedicated + 3 Redis dedicated"
+          - "Custom domain + SSL · backup mingguan"
+      pro:
+        for_who: "Production Rails / Django / Laravel."
+        cta: "Pilih Pro"
+        highlights:
+          - "3 sleeping + 3 Medium always-on"
+          - "5 add-on bersama gratis per app"
+          - "Hingga 3 DB dedicated + 3 Redis dedicated (Medium)"
+          - "PR Previews · Scheduled Tasks · backup 2-mingguan"
+      team:
+        for_who: "Agensi & tim. 3 seat sudah termasuk."
+        cta: "Pilih Team"
+        highlights:
+          - "3 sleeping + 3 Large always-on"
+          - "5 add-on bersama gratis per app"
+          - "Beli box Large atau X-Large ekstra · tagih bulanan"
+          - "Backup harian · 30 hari · support manusia dedikasi"
+  pricing_page:
+    footnote: "App sudah include web, worker, scheduler, dan clock di container yang sama. Butuh kapasitas lebih? Resize app (Small → Medium → Large) atau tambah replika dengan harga per-ukuran yang sama. Tanpa metering, tanpa overage."
+    bundling_note_html: "Box dihitung per-Dokku-container. Multi-process app (mis. Rails + Sidekiq) bisa di-bundle jadi satu container pakai foreman/supervisor — box sama, harga sama. Lihat <a href=\"/docs/scaling/bundled-processes\" class=\"text-accent hover:underline\">panduan bundling</a>."
+    team_addon_note_html: "Plan Team: tambah box Large ekstra <strong>%{large}</strong> per box atau X-Large <strong>%{xlarge}</strong> per box. Tanpa metering, ditagih bulanan bareng plan."
+    compare_heading: "Perbandingan fitur lengkap"
+    compare_table:
+      feature_header: "Fitur"
+    compare_sections:
+      compute: "Compute"
+      networking: "Networking & Domain"
+      shared_addons: "Add-on bersama gratis (per app)"
+      dedicated: "Upgrade ke dedicated"
+      databases: "Storage & Backup"
+      deploys: "Deploy & CI/CD"
+      observability: "Observability"
+      notifications: "Notifikasi"
+      team: "Team & Workspace"
+      security: "Security"
+      dx: "Developer Experience"
+      support: "Support"
+    compare_rows:
+      # compute
+      small_boxes: "Box app Small"
+      medium_boxes: "Box app Medium"
+      large_boxes: "Box app Large"
+      sleeping_boxes: "Box sleeping (app idle)"
+      large_addon: "Box Large ekstra"
+      xlarge_addon: "Box X-Large ekstra"
+      zero_downtime: "Zero-downtime deploy"
+      rollback: "Rollback 1-klik"
+      process_scaling: "Horizontal process scaling"
+      # networking
+      wildcard_subdomain: "Subdomain *.%{domain}"
+      custom_domain: "Custom domain"
+      ssl: "SSL gratis (Let's Encrypt, auto-renew)"
+      edge_cdn: "Edge CDN (Cloudflare)"
+      multi_server: "Multi-server / multi-region"
+      # add-on bersama (cap per-app, gratis, dipasang saat box dibuat)
+      shared_pg_per_box: "Tenant Postgres bersama per app"
+      shared_redis_per_box: "Tenant Redis bersama per app"
+      shared_memcached_per_box: "Memcached bersama per app"
+      shared_rabbitmq_per_box: "Pesan RabbitMQ bersama per app"
+      shared_meilisearch_per_box: "Index Meilisearch bersama per app"
+      # upgrade ke dedicated (hanya plan berbayar, menggantikan tenant bersama)
+      dedicated_db_slots: "Slot database dedicated (workspace)"
+      dedicated_db_engines: "Engine database dedicated"
+      dedicated_redis_slots: "Slot Redis dedicated (workspace)"
+      dedicated_size_note: "Ukuran dedicated (ikut ukuran box)"
+      # storage & backup
+      minio_bundle: "Object storage (MinIO, S3-compatible)"
+      backups: "Backup (frekuensi · retensi)"
+      monthly_archive: "Snapshot arsip bulanan"
+      db_stats: "Stats DB (koneksi / disk / query lambat)"
+      # deploys
+      git_push_deploy: "Deploy via git push"
+      github_autodeploy: "Auto-deploy GitHub"
+      gitlab_bitbucket: "Integrasi GitLab + Bitbucket"
+      templates: "100+ template 1-klik"
+      buildpacks: "Buildpack ala Heroku + Dockerfile"
+      pr_previews: "PR Previews"
+      scheduled_tasks: "Scheduled Tasks (cron)"
+      env_vars: "Environment variables ter-enkripsi"
+      # observability
+      live_logs: "Live log tail"
+      log_retention: "Retensi log"
+      metrics: "Metrics CPU / RAM / network"
+      metric_history: "History metric"
+      request_samples: "Request sampling (p50 / p95 / p99)"
+      health_checks: "Health check"
+      browser_console: "Console SSH di browser"
+      audit_log: "Audit log (semua aktivitas)"
+      log_drains: "Log drain (Datadog / Logtail / syslog)"
+      # notifications
+      email_alerts: "Alert email"
+      slack_discord: "Slack + Discord"
+      telegram: "Telegram"
+      webhook_alerts: "Webhook alert"
+      mobile_push: "Push notification mobile"
+      # team
+      workspaces: "Personal + org workspace"
+      team_seats: "Team seat termasuk"
+      extra_seat: "Seat ekstra"
+      rbac: "Role-based access control"
+      transfer_app: "Transfer App (cocok agensi)"
+      # security
+      two_factor: "Two-factor authentication (2FA)"
+      ssh_keys: "Manajemen SSH key"
+      api_tokens: "API token (rotation + scoping)"
+      encrypted_secrets: "Secret ter-enkripsi at rest"
+      device_tracking: "Known-device tracking"
+      server_hardening: "Server hardening (UFW + fail2ban + auto-update)"
+      # dx
+      dashboard: "Dashboard web"
+      rest_api: "REST API"
+      cli: "CLI"
+      mcp_server: "MCP server (Claude Code / Cursor)"
+      mobile_app: "Mobile app (iOS + Android)"
+      # support
+      support: "Tier support"
+    sizes_heading: "// isi tiap ukuran app?"
+    sizes:
+      small:
+        title: "Small"
+        cpu: "shared"
+        ram: "512 MB"
+        storage: "5 GB"
+      medium:
+        title: "Medium"
+        cpu: "1 vCPU"
+        ram: "2 GB"
+        storage: "20 GB"
+      large:
+        title: "Large · khusus Team"
+        cpu: "2 vCPU"
+        ram: "4 GB"
+        storage: "40 GB"
+      xlarge:
+        title: "X-Large · khusus Team"
+        cpu: "4 vCPU"
+        ram: "8 GB"
+        storage: "80 GB"
+    size_label:
+      cpu: "cpu"
+      ram: "ram"
+      storage: "storage"
+  seo:
+    default:
+      title: "Managed PaaS untuk vibecoder, freelancer, agensi"
+      description: "Deploy dengan satu git push. Nggak ada metering. Nggak ada overage. Bayar pakai QRIS, GoPay, atau kartu. AI-native (MCP + CLI buat Claude, Codex, Cursor)."
+  lp:
+    zero_ops:
+      eyebrow: "// VPS yang nggak gigit balik"
+      headline_pre: "Berhenti"
+      headline_strike: "ngurusin"
+      headline_post: "server."
+      headline_mark: "Wokku yang patch, SSL, backup, uptime."
+      sub: "Kalau kamu sewa droplet $5, Hetzner, atau VPS cPanel buat klien — kamu tau ribetnya. Wokku yang ngerjain, kamu nggak."
+      cta_primary: "> berhenti_jaga()"
+    ai_native:
+      eyebrow: "// buat tim Claude / Codex / Cursor"
+      headline_pre: "AI kamu"
+      headline_strike: ""
+      headline_post: ""
+      headline_mark: "bisa deploy ini."
+      sub: "Wokku punya MCP server + CLI khusus buat Claude, Codex, Cursor. Bilang 'deploy ini' — agent kamu yang ngerjain. Kamu tetap di editor."
+      cta_primary: "> biar_ai_deploy()"
+    flat_price:
+      eyebrow: "// nggak ada metering. nggak ada overage. titik."
+      headline_pre: "Satu harga."
+      headline_strike: "Tanpa metering."
+      headline_post: ""
+      headline_mark: "Tanpa kejutan."
+      sub: "Mulai Rp 75K/bulan flat. Postgres gratis. Redis gratis. Bayar pakai QRIS, GoPay, OVO, DANA, atau kartu. Tagihan jelas tiap bulan."
+      cta_primary: "> lihat_harga_flat()"
+    one_click_apps:
+      eyebrow: "// app cPanel, di-deploy via wokku"
+      headline_pre: "Install"
+      headline_strike: ""
+      headline_post: "dalam 60 detik."
+      headline_mark: "Ghost, n8n, WordPress"
+      sub: "60+ aplikasi open-source siap pakai. Sudah include SSL, backup, dan custom domain. Install satu klik."
+      cta_primary: "> install_app_pertama()"
+
+  docs:
+    sidebar:
+      label: "// docs"
+    toc:
+      label: "// di halaman ini"
+      shortcuts: "// shortcut"
+      search: "Cari docs"
+      cmdbar: "Command bar"
+    pager:
+      previous: "Sebelumnya"
+      next: "Berikutnya"
+    header:
+      edited_at: "Diupdate %{when}"
+      edit_on_github: "Edit di GitHub"
+    feedback:
+      prompt: "Halaman ini membantu?"
+      "yes": "Ya"
+      "no": "Tidak"
+      or_ping: "atau hubungi via"
+      whatsapp: "WhatsApp"
+    copy:
+      copy: "Salin"
+    beta_banner:
+      tag: "Public Beta"
+      body: "lagi ship aktif — nemu yang nggak smooth? kabari"
+      body_short: "Beta"
+      cta: "Kabari"

@@ -1,0 +1,49 @@
+<%# Schema.org JSON-LD structured data. Organization is rendered on every
+    public page so Google's Knowledge Graph picks up Wokku as an entity.
+    Product schema renders only on /pricing — its Offer array maps 1:1
+    to the seeded Plan rows so rich-results stays in sync with the
+    actual pricing tiers.
+
+    Output is JSON via `raw(...to_json)` because Rails' html_safe
+    handling of <script> bodies is otherwise unforgiving. The hash
+    keys are strings (not symbols) so the JSON serializer emits them
+    exactly as Schema.org expects. %>
+<script type="application/ld+json"><%= raw({
+  "@context" => "https://schema.org",
+  "@type"    => "Organization",
+  "name"     => "Wokku Cloud",
+  "url"      => request.base_url,
+  "logo"     => "#{request.base_url}/icon.png",
+  "sameAs"   => [
+    "https://github.com/johannesdwicahyo/wokku",
+    "https://wokku.cloud"
+  ]
+}.to_json) %></script>
+
+<% if controller_path == "pages" && action_name == "pricing" %>
+  <script type="application/ld+json"><%= raw({
+    "@context"  => "https://schema.org",
+    "@type"     => "Product",
+    "name"      => "Wokku Cloud",
+    "description" => t("pricing_tiers.sub"),
+    "brand"     => { "@type" => "Brand", "name" => "Wokku Cloud" },
+    "offers"    => Plan.order(:price_usd_cents).map { |plan|
+      {
+        "@type"        => "Offer",
+        "name"         => plan.name,
+        "price"        => format("%.2f", plan.price_usd_cents.to_f / 100),
+        "priceCurrency" => "USD",
+        "url"          => "#{request.base_url}/pricing##{plan.key}"
+      }
+    }
+  }.to_json) %></script>
+<% end %>
+
+<% if controller_path == "pages" && action_name == "faq" %>
+  <script type="application/ld+json"><%= raw({
+    "@context" => "https://schema.org",
+    "@type"    => "FAQPage",
+    "name"     => "Wokku Cloud — Frequently Asked Questions",
+    "url"      => "#{request.base_url}/faq"
+  }.to_json) %></script>
+<% end %>

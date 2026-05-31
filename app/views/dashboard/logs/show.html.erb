@@ -1,93 +1,130 @@
-<%= render "dashboard/apps/tabs", app: @app %>
-
-<div class="bg-surface-container-low rounded-xl overflow-hidden" data-controller="log-viewer">
-  <div class="px-6 py-4 border-b border-outline-variant/15 flex items-center justify-between">
+<%#
+  Brutalist logs (P3c of redesign-c-full, 2026-05-17). log-viewer +
+  slide-panel + clipboard wiring, combobox, helpers (log_line_class /
+  log_line_level) and routes preserved 1:1 from show.OLD_DESIGN.
+%>
+<%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :runtime) do %>
+<%= render Organisms::AppRuntimeComponent.new(app: @app, active: :logs) do %>
+<div class="border-1.5 border-ink bg-paper" data-controller="log-viewer" data-log-viewer-level-value="all">
+  <div class="px-6 py-4 border-b border-rule-soft flex items-center justify-between gap-3 flex-wrap">
     <div>
-      <h2 class="text-base font-semibold text-on-surface font-headline">Application Logs</h2>
-      <p class="text-sm text-outline mt-1">Recent logs for <span class="font-mono"><%= @app.name %></span></p>
+      <h2 class="font-mono text-base font-semibold text-ink"># application_logs</h2>
+      <p class="font-mono text-xs text-dim mt-1">// recent logs for <span class="text-ink"><%= @app.name %></span></p>
     </div>
-    <div class="flex items-center space-x-3">
-      <a href="<%= dashboard_app_logs_path(@app) %>" data-turbo-action="replace" class="inline-flex items-center px-2.5 py-1 text-xs text-on-surface-variant border border-outline-variant/15 rounded-md hover:border-primary/50 hover:text-primary transition cursor-pointer">
-        <span class="material-symbols-outlined text-[16px] mr-1">refresh</span>
-        Refresh
-      </a>
+    <div class="flex items-center gap-2">
+      <button type="button"
+              data-log-viewer-target="followButton"
+              data-action="click->log-viewer#toggleFollow"
+              class="inline-flex items-center px-2.5 py-1 font-mono text-xs text-dim border-1.5 border-ink bg-paper hover:text-accent transition-colors cursor-pointer data-[active=true]:bg-ink data-[active=true]:text-success data-[active=true]:border-ink"
+              title="Auto-refresh every 5s">○ follow</button>
+      <a href="<%= dashboard_app_logs_path(@app) %>" data-turbo-action="replace" class="inline-flex items-center px-2.5 py-1 font-mono text-xs text-dim border-1.5 border-ink bg-paper hover:text-accent transition-colors cursor-pointer">↻ refresh</a>
     </div>
   </div>
 
-  <div class="px-6 py-3 flex items-center gap-3 border-b border-outline-variant/15">
-    <div class="relative flex-1">
-      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[16px]">search</span>
-      <input type="text" placeholder="Filter logs..." data-log-viewer-target="search" data-action="input->log-viewer#filter" class="w-full pl-9 pr-4 py-1.5 rounded-md bg-surface border-none text-xs text-on-surface placeholder-outline focus:ring-1 focus:ring-primary font-mono">
+  <% if @has_persisted %>
+    <%# Server-side search bar (Vector-ingested persisted logs). The
+        client-side log-viewer filter still works on top for live narrowing,
+        but full history search goes through the server with this form. %>
+    <%= form_with url: dashboard_app_logs_path(@app), method: :get, local: true,
+                  class: "px-6 py-3 flex flex-wrap items-center gap-3 border-b border-rule-soft" do |f| %>
+      <div class="relative flex-1 min-w-[200px]">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-dim font-mono text-xs">/</span>
+        <%= f.text_field :q, value: @search_query,
+              placeholder: "search 24h of history...",
+              class: "w-full pl-8 pr-9 py-1.5 bg-bg border-1.5 border-ink font-mono text-xs text-ink placeholder-dim focus:outline-none focus:border-accent" %>
+      </div>
+      <%= f.select :level, [ [ "all levels", "" ], [ "error", "error" ], [ "warn", "warn" ], [ "info", "info" ], [ "debug", "debug" ] ],
+            { selected: @level_filter || "" },
+            class: "py-1.5 px-2 bg-bg border-1.5 border-ink font-mono text-xs text-ink" %>
+      <%= f.submit "→ search", class: "py-1.5 px-3 bg-ink text-paper font-mono text-xs cursor-pointer hover:bg-ink-soft" %>
+      <%= link_to "live tail", dashboard_app_logs_path(@app, source: "live"),
+            class: "py-1.5 px-3 border-1.5 border-rule-soft text-dim font-mono text-xs hover:text-ink" %>
+    <% end %>
+  <% end %>
+
+  <div class="px-6 py-3 flex flex-wrap items-center gap-3 border-b border-rule-soft">
+    <div class="relative flex-1 min-w-[200px]">
+      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-dim font-mono text-xs">$</span>
+      <input type="text" placeholder="filter visible logs (client-side)..."
+             data-log-viewer-target="search"
+             data-action="input->log-viewer#filter"
+             class="w-full pl-8 pr-9 py-1.5 bg-bg border-1.5 border-ink font-mono text-xs text-ink placeholder-dim focus:outline-none focus:border-accent">
+      <button type="button"
+              data-log-viewer-target="clearSearch"
+              data-action="click->log-viewer#clearSearch"
+              style="visibility: hidden"
+              class="absolute right-2 top-1/2 -translate-y-1/2 text-dim hover:text-ink transition cursor-pointer font-mono text-xs"
+              title="Clear filter">✕</button>
     </div>
-    <%= link_to dashboard_app_logs_path(@app, lines: 50), class: "text-[10px] px-2 py-1 rounded #{(params[:lines] || '200') == '50' ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-outline'}" do %>50<% end %>
-    <%= link_to dashboard_app_logs_path(@app, lines: 100), class: "text-[10px] px-2 py-1 rounded #{(params[:lines] || '200') == '100' ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-outline'}" do %>100<% end %>
-    <%= link_to dashboard_app_logs_path(@app, lines: 200), class: "text-[10px] px-2 py-1 rounded #{(params[:lines] || '200') == '200' ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-outline'}" do %>200<% end %>
-    <%= link_to dashboard_app_logs_path(@app, lines: 500), class: "text-[10px] px-2 py-1 rounded #{params[:lines] == '500' ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-outline'}" do %>500<% end %>
+
+    <%# Level filter pills %>
+    <div class="flex items-center gap-1 font-mono text-[10px] font-medium">
+      <% [
+        ["all", "all", "text-ink"],
+        ["error", "errors", "text-danger"],
+        ["warn", "warnings", "text-warn"],
+        ["info", "other", "text-dim"]
+      ].each do |level, label, color| %>
+        <button type="button"
+                data-log-viewer-target="levelButton"
+                data-level="<%= level %>"
+                data-action="click->log-viewer#setLevel"
+                data-active="<%= level == "all" %>"
+                class="px-2 py-1 transition cursor-pointer border border-rule-soft hover:bg-bg-deep data-[active=true]:bg-ink data-[active=true]:text-bg data-[active=true]:border-ink <%= color %>">
+          <%= label %>
+        </button>
+      <% end %>
+    </div>
+
+    <%# Match counter %>
+    <span data-log-viewer-target="counter" class="font-mono text-[10px] text-dim tabular-nums"></span>
+
+    <%# Line-buckets %>
+    <div class="flex items-center gap-1 font-mono">
+      <%= link_to dashboard_app_logs_path(@app, lines: 50), class: "text-[10px] px-2 py-1 border border-rule-soft #{(params[:lines] || '200') == '50' ? 'bg-ink text-bg' : 'text-dim'}" do %>50<% end %>
+      <%= link_to dashboard_app_logs_path(@app, lines: 100), class: "text-[10px] px-2 py-1 border border-rule-soft #{(params[:lines] || '200') == '100' ? 'bg-ink text-bg' : 'text-dim'}" do %>100<% end %>
+      <%= link_to dashboard_app_logs_path(@app, lines: 200), class: "text-[10px] px-2 py-1 border border-rule-soft #{(params[:lines] || '200') == '200' ? 'bg-ink text-bg' : 'text-dim'}" do %>200<% end %>
+      <%= link_to dashboard_app_logs_path(@app, lines: 500), class: "text-[10px] px-2 py-1 border border-rule-soft #{params[:lines] == '500' ? 'bg-ink text-bg' : 'text-dim'}" do %>500<% end %>
+    </div>
   </div>
 
-  <div class="bg-surface p-4 font-mono text-xs leading-5 h-[600px] overflow-y-auto" data-log-viewer-target="output">
-    <% if @logs.present? %>
+  <div class="bg-bg px-4 py-4 font-mono text-xs leading-5 h-[600px] overflow-y-auto" data-log-viewer-target="output">
+    <% if @has_persisted && params[:source] != "live" %>
+      <%# Persisted logs from the Log table (Vector-ingested). %>
+      <% reversed = @persisted_logs.reverse %>
+      <% if reversed.any? %>
+        <div class="text-[10px] text-dim mb-2">
+          // showing <%= reversed.size %> rows from
+          <%= @since.strftime("%b %-d %H:%M") %> to <%= @until.strftime("%b %-d %H:%M") %><%= " · matching #{@search_query.inspect}" if @search_query.present? %>
+        </div>
+        <% reversed.each do |log_row| %>
+          <div class="log-line whitespace-pre-wrap break-all"
+               data-log-viewer-target="line"
+               data-log-level="<%= log_row.level %>">
+            <span class="text-dim"><%= log_row.ts.strftime("%H:%M:%S") %></span>
+            <span class="<%= { "error" => "text-danger", "warn" => "text-warn", "debug" => "text-dim" }[log_row.level] || "text-ink" %>"><%= log_row.line.rstrip %></span>
+          </div>
+        <% end %>
+      <% else %>
+        <p class="text-dim">// no matches in this window — try widening the time range or clearing the search</p>
+      <% end %>
+    <% elsif @logs.present? %>
       <% @logs.each_line do |line| %>
-        <div class="log-line <%= log_line_class(line) %> whitespace-pre-wrap break-all" data-log-viewer-target="line"><%= line.rstrip %></div>
+        <div class="log-line <%= log_line_class(line) %> whitespace-pre-wrap break-all"
+             data-log-viewer-target="line"
+             data-log-level="<%= log_line_level(line) %>"><%= line.rstrip %></div>
       <% end %>
     <% else %>
-      <p class="text-outline-variant">No logs available. The app may not have been deployed yet.</p>
+      <p class="text-dim">// no logs available — the app may not have been deployed yet, or Vector hasn't shipped logs yet</p>
     <% end %>
   </div>
 </div>
 
-<%# Log Drains Section %>
-<div class="bg-surface-container-low rounded-xl overflow-hidden mt-6" data-controller="slide-panel">
-  <div class="px-6 py-4 border-b border-outline-variant/15 flex items-center justify-between">
-    <div>
-      <h2 class="text-base font-semibold text-on-surface font-headline">Log Drains</h2>
-      <p class="text-sm text-outline mt-1">Forward application logs to an external service</p>
-    </div>
-    <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer">
-      <span class="material-symbols-outlined text-[16px] mr-1">add</span> Add Drain
-    </button>
-  </div>
-
-  <% if @log_drains.any? %>
-    <div class="divide-y divide-outline-variant/15">
-      <% @log_drains.each do |drain| %>
-        <div class="px-6 py-3 flex items-center justify-between hover:bg-surface-container-high/30">
-          <div class="flex items-center space-x-3">
-            <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary-container/20 border border-primary/20">
-              <span class="material-symbols-outlined text-primary text-[18px]">output</span>
-            </div>
-            <div>
-              <span class="text-sm font-medium text-on-surface font-mono"><%= drain.url %></span>
-              <div class="text-xs text-outline mt-0.5">Type: <%= drain.drain_type %></div>
-            </div>
-          </div>
-          <%= link_to "Remove", dashboard_app_log_drain_path(@app, drain),
-                data: { turbo_method: :delete, turbo_confirm: "Remove this log drain?" },
-                class: "text-xs text-error/70 hover:text-error transition" %>
-        </div>
-      <% end %>
-    </div>
-  <% else %>
-    <div class="px-6 py-8 text-center">
-      <p class="text-sm text-outline">No log drains configured.</p>
-    </div>
-  <% end %>
-
-  <%= render layout: "dashboard/shared/slide_panel", locals: { title: "Add Log Drain", subtitle: "Forward logs to a syslog or HTTP endpoint" } do %>
-    <%= form_with(model: LogDrain.new, url: dashboard_app_log_drains_path(@app), class: "space-y-4") do |f| %>
-      <div>
-        <%= f.label :url, "Drain URL", class: "block text-[10px] text-outline uppercase tracking-wider font-bold mb-1" %>
-        <%= f.text_field :url, class: "w-full rounded-md bg-surface border-outline-variant/15 text-on-surface font-mono text-sm focus:ring-primary focus:border-primary", placeholder: "syslog://logs.example.com:514", autofocus: true %>
-      </div>
-      <div>
-        <label class="block text-[10px] text-outline uppercase tracking-wider font-bold mb-1">Type</label>
-        <%= combobox_tag "log_drain[drain_type]", [["Syslog", "syslog"], ["HTTPS", "https"]], placeholder: "Select a type" %>
-      </div>
-      <div class="flex items-center gap-2">
-        <%= f.submit "Add Drain", class: "px-4 py-2.5 bg-primary text-on-primary text-sm font-semibold rounded-md hover:opacity-90 transition cursor-pointer" %>
-        <button type="button" data-action="click->slide-panel#close" class="px-4 py-2.5 text-sm font-medium text-on-surface-variant border border-outline-variant/30 rounded-md hover:bg-surface-container-high transition cursor-pointer">Cancel</button>
-      </div>
-    <% end %>
-  <% end %>
+<%# Log drains moved to /dashboard/apps/:id/log_drains (Phase 3 backlog #6)
+    so it surfaces under the Settings sub-nav. Link inline for discovery. %>
+<div class="mt-6 text-center">
+  <%= link_to "→ manage log drains", dashboard_app_log_drains_path(@app),
+              class: "inline-block font-mono text-xs text-accent hover:underline" %>
 </div>
-
+<% end %>
+<% end %>

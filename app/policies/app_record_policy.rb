@@ -3,6 +3,10 @@ class AppRecordPolicy < ApplicationPolicy
     true
   end
 
+  def search?
+    index?
+  end
+
   def show?
     user_in_team?
   end
@@ -28,6 +32,10 @@ class AppRecordPolicy < ApplicationPolicy
   end
 
   def start?
+    team_member_or_above?
+  end
+
+  def upgrade_to_dedicated_addon?
     team_member_or_above?
   end
 

@@ -26,6 +26,13 @@ class DokkuAppActionJob < ApplicationJob
     rescue Dokku::Client::CommandError, Dokku::Client::ConnectionError => e
       error_message = e.message.to_s.lines.first&.strip || e.class.name
       Rails.logger.warn("DokkuAppActionJob #{action} failed for #{app.name}: #{error_message}")
+    rescue StandardError => e
+      # Safety net: any unexpected error (Timeout::Error, Net::SSH::*,
+      # IOError, etc.) must still fall through so pending_action gets
+      # cleared below. Without this the UI stays stuck on "Restarting…"
+      # even though the container restarted fine (ichat-llm-bot 2026-05-12).
+      error_message = e.message.to_s.lines.first&.strip || e.class.name
+      Rails.logger.error("DokkuAppActionJob #{action} unexpected error for #{app.name}: #{e.class}: #{error_message}")
     end
 
     new_status =

@@ -4,6 +4,8 @@
 # category: media
 # tags: media, streaming, video, music, photos
 # icon: media
+# icon_slug: jellyfin
+# icon_color: 00A4DC
 # port: 8096
 
 services:

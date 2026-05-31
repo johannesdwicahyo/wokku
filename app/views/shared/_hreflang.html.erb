@@ -1,0 +1,8 @@
+<%# hreflang alternates so Google indexes both EN and ID versions of the
+    same page and serves the right one per user locale. The locale switch
+    on Wokku rides ?locale=id; both forms must be indexable for the same
+    canonical path. %>
+<% base = request.original_url.split("?").first %>
+<link rel="alternate" hreflang="en"        href="<%= base %>?locale=en">
+<link rel="alternate" hreflang="id"        href="<%= base %>?locale=id">
+<link rel="alternate" hreflang="x-default" href="<%= base %>">

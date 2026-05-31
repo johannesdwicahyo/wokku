@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+#
+# bin/kamal-write — safe wrapper for `kamal app exec` when the command
+# WRITES state (DB mutations, balance changes, file writes on the host,
+# anything destructive).
+#
+# Why this exists: `bundle exec kamal app exec` runs the given command
+# on EVERY role (web + worker by default). For read-only queries that's
+# wasteful but harmless. For writes it's a footgun — on 2026-05-14 a
+# credit-add script ran twice (once per role) and double-applied a
+# 1,000,000 IDR credit. This wrapper defaults `--roles web` so writes
+# only execute in one container.
+#
+# Usage:
+#   bin/kamal-write 'bin/rails runner "..."'
+#   bin/kamal-write --roles worker 'bin/rails runner "..."'  # explicit override
+#
+# For READ-only queries, prefer plain `bundle exec kamal app exec` —
+# running on both roles is fine and gives a quick fail-tolerance check.
+#
+# Convention: any inline ruby that decrements a balance, creates an
+# Activity, mutates AppRecord/User/Server state, writes to /etc, or
+# pushes a job MUST go through bin/kamal-write.
+
+set -euo pipefail
+
+if [ $# -eq 0 ]; then
+  echo "usage: bin/kamal-write [--roles <role>] '<command>'" >&2
+  echo "       defaults to --roles web (one container, no duplication)" >&2
+  exit 1
+fi
+
+# Allow caller to override --roles explicitly; otherwise pin to web.
+has_roles_flag=false
+for arg in "$@"; do
+  case "$arg" in
+    --roles|--roles=*) has_roles_flag=true ;;
+  esac
+done
+
+extra_flags=()
+if [ "$has_roles_flag" = false ]; then
+  extra_flags+=(--roles web)
+fi
+
+# Print what we're running so accidental writes show up clearly in logs.
+echo "[kamal-write] bundle exec kamal app exec --reuse --quiet ${extra_flags[*]} $*" >&2
+
+exec bundle exec kamal app exec --reuse --quiet "${extra_flags[@]}" "$@"

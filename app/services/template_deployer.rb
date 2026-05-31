@@ -11,7 +11,7 @@ class TemplateDeployer
   end
 
   def deploy!
-    client = Dokku::Client.new(server)
+    @client = client = Dokku::Client.new(server)
 
     step("Creating app #{app_name}...") do
       Dokku::Apps.new(client).create(app_name)
@@ -72,11 +72,8 @@ class TemplateDeployer
           database_service: db,
           alias_name: db_name
         )
-        # Open the billing segment so the addon shows up in the user's
-        # billing table and gets debited daily. Without this, template-
-        # provisioned addons were "free" — caught when 3 postgres
-        # databases were missing from the customer's billing page.
-        db.open_billing_segment(user: user, app_record: app) if user
+        # 1.8: addon cost is bundled into the user's plan invoice.
+        # No per-addon billing segment anymore.
       end
     end
 
@@ -142,26 +139,19 @@ class TemplateDeployer
         client.run("ports:set #{app_name} http:80:#{container_port}")
       end
 
+      # Stream the Docker image pull/build so the user sees live progress
+      # instead of staring at a "Pending" badge for 3 minutes while a 1.4GB
+      # image downloads. Each line of output goes straight to DeployChannel.
       step("Deploying Docker image #{template[:docker_image]}...") do
-        client.run("git:from-image #{app_name} #{template[:docker_image]}", timeout: 300)
-      end
-
-      # Enable Let's Encrypt SSL
-      step("Enabling SSL...") do
-        client.run("letsencrypt:enable #{app_name}", timeout: 120)
-      rescue Dokku::Client::CommandError => e
-        @log << { step: "SSL setup skipped: #{e.message}", at: Time.current }
+        stream_dokku("git:from-image #{app_name} #{template[:docker_image]}")
       end
     else
       step("Cloning #{template[:repo]} and deploying...") do
         begin
-          client.run(
-            "git:sync --build #{app_name} #{template[:repo]} #{template[:branch] || 'main'}",
-            timeout: 300
-          )
+          stream_dokku("git:sync --build #{app_name} #{template[:repo]} #{template[:branch] || 'main'}")
         rescue Dokku::Client::CommandError => e
           raise unless e.message.include?("is not a dokku command")
-          client.run("git:from-url #{app_name} #{template[:repo]}", timeout: 300)
+          stream_dokku("git:from-url #{app_name} #{template[:repo]}")
         end
       end
     end
@@ -172,11 +162,27 @@ class TemplateDeployer
       end
     end
 
-    # Create DNS record: app-name.wokku.cloud → server IP
+    # DNS record FIRST. Let's Encrypt verifies via DNS lookup, so the
+    # record needs to exist before we ask LE to issue. Previous order
+    # (SSL → DNS) reliably failed with NXDOMAIN on first deploy.
     step("Configuring DNS...") do
       Cloudflare::Dns.new.create_app_record(app_name, server.host)
     rescue => e
       @log << { step: "DNS setup skipped: #{e.message}", at: Time.current }
+    end
+
+    # Poll for DNS propagation, then enable SSL. Cloudflare typically
+    # propagates in ~10-30 seconds via 1.1.1.1; allow up to 60s before
+    # falling back. SSL failure here is non-fatal — the app is reachable
+    # over HTTP and EnableSslJob retries from PostDeploySetupJob.
+    if dns_propagated?(app_name)
+      step("Enabling SSL...") do
+        client.run("letsencrypt:enable #{app_name}", timeout: 120)
+      rescue Dokku::Client::CommandError => e
+        @log << { step: "SSL setup skipped: #{e.message}. Will retry via PostDeploySetupJob.", at: Time.current }
+      end
+    else
+      @log << { step: "SSL deferred: DNS not propagated yet. EnableSslJob will retry once DNS is ready.", at: Time.current }
     end
 
     app.update!(status: :running)
@@ -262,6 +268,48 @@ class TemplateDeployer
     @log << { step: "Failed: #{message}", error: e.message, at: Time.current }
     @on_progress&.call("FAILED: #{message} — #{e.message}")
     raise
+  end
+
+  # Run a long Dokku command with live output streamed to DeployChannel.
+  # Each newline-terminated chunk goes through @on_progress so the user
+  # sees pull/build progress instead of a hung-looking "Pending" badge.
+  # Buffers partial lines to avoid mid-line splits.
+  def stream_dokku(command)
+    buffer = +""
+    @client.run_streaming(command) do |data|
+      buffer << data
+      while (idx = buffer.index("\n"))
+        line = buffer.slice!(0..idx).chomp
+        next if line.empty?
+        @on_progress&.call(line)
+      end
+    end
+    @on_progress&.call(buffer.chomp) if buffer.length.positive?
+  end
+
+  # Has DNS for app-name.wokku.cloud propagated to the public resolver
+  # Let's Encrypt will hit? Polls 1.1.1.1 every 5s for up to 60s. Returns
+  # true on resolve, false on timeout. Cloudflare DNS typically propagates
+  # in 10-30s; 60s is generous headroom.
+  def dns_propagated?(app_name, max_wait: 60, interval: 5)
+    require "resolv"
+    hostname = "#{app_name}.wokku.cloud"
+    deadline = Time.current + max_wait
+    resolver = Resolv::DNS.new(nameserver: [ "1.1.1.1", "1.0.0.1" ])
+    begin
+      while Time.current < deadline
+        begin
+          resolver.getaddress(hostname)
+          return true
+        rescue Resolv::ResolvError
+          @on_progress&.call("Waiting for DNS propagation (#{(deadline - Time.current).round}s remaining)...")
+          sleep(interval)
+        end
+      end
+      false
+    ensure
+      resolver.close
+    end
   end
 
   # Some apps (n8n, strapi, keycloak) don't accept DATABASE_URL — they

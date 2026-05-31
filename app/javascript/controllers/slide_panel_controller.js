@@ -11,7 +11,13 @@ export default class extends Controller {
     }
   }
 
-  open() {
+  open(event) {
+    // Stop the click from navigating away when the trigger is a <a> tag
+    // (e.g. apps "+ NEW APP" links to /dashboard/apps/new as a no-JS
+    // fallback). Buttons still work unchanged — preventDefault is a
+    // no-op on submit-less buttons.
+    event?.preventDefault?.()
+
     document.addEventListener("keydown", this.escHandler)
     document.body.style.overflow = "hidden"
 

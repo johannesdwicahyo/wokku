@@ -4,6 +4,8 @@
 # category: developer-tools
 # tags: design, prototyping, ui, figma-alternative
 # icon: developer-tools
+# icon_slug: penpot
+# icon_color: FFFFFF
 # port: 9001
 
 services:

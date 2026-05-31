@@ -4,6 +4,8 @@
 # category: ai
 # tags: ai, llm, workflow, chatbot, rag
 # icon: ai
+# icon_slug: dify
+# icon_color: FFFFFF
 # deploy_method: docker_image
 # port: 3000
 

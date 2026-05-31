@@ -1,0 +1,23 @@
+<% if user_signed_in? &&
+      current_user.deposit_user? &&
+      current_user.estimated_daily_cost > 0 &&
+      current_user.days_of_balance_remaining < 7 %>
+  <%
+    days = current_user.days_of_balance_remaining
+    banner_color = days <= 1 ? "bg-error/10 border-error/30 text-error" : "bg-warning/10 border-warning/30 text-warning"
+    icon = days <= 1 ? "warning" : "schedule"
+  %>
+  <div class="<%= banner_color %> border-b px-4 py-2.5">
+    <div class="flex items-center justify-center gap-2 text-sm">
+      <span class="material-symbols-outlined text-[16px]"><%= icon %></span>
+      <% if current_user.locale.to_s == "id" %>
+        <span>Saldo kamu tinggal <strong><%= days %> hari</strong>.</span>
+      <% else %>
+        <span>Your balance covers approximately <strong><%= pluralize(days, "day") %></strong> of usage.</span>
+      <% end %>
+      <%= link_to(current_user.locale.to_s == "id" ? "Top up sekarang" : "Top up now",
+                  dashboard_billing_path,
+                  class: "font-bold underline ml-1") %>
+    </div>
+  </div>
+<% end %>
