@@ -136,11 +136,11 @@ wokku apps:create my-app
 wokku logs my-app -f
 ```
 
-The CLI talks to the REST API exposed by [wokku.cloud](https://wokku.cloud) (or your own self-hosted Wokku — point `WOKKU_API_URL` at it). The REST API itself is a managed-cloud feature, not bundled in this OSS web-UI repo.
+The CLI talks to the REST API, which is a managed-cloud feature and is **not** bundled in this OSS web-UI repo. The CLI only works against Wokku Cloud. Self-host users should use the web UI directly, or `ssh dokku@your-host` for shell ops.
 
 ## Claude Code Plugin
 
-The official [wokku-plugin](https://github.com/johannesdwicahyo/wokku-plugin) for Claude Code wraps the REST API in 57 MCP tools and 4 guided workflows. Install:
+The official [wokku-plugin](https://github.com/johannesdwicahyo/wokku-plugin) for Claude Code wraps the REST API in 57 MCP tools and 4 guided workflows. Like the CLI, it's Wokku-Cloud-only — the API isn't shipped in this OSS repo. Install:
 
 ```bash
 /plugin marketplace add johannesdwicahyo/wokku-plugin
