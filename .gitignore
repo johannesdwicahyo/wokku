@@ -43,3 +43,8 @@
 .claude/worktrees/
 .kamal/secrets
 coverage/
+
+# internal notes stay local
+/CLAUDE.md
+/.claude/
+/docs/superpowers/
