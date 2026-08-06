@@ -1,0 +1,57 @@
+<%#
+  Brutalist metrics (P3c of redesign-c-full, 2026-05-17). All Ruby
+  computation blocks, line_chart calls and routes preserved 1:1 from
+  show.OLD_DESIGN.html.erb — only presentation repainted (chart
+  colours swapped to the brutalist accent palette).
+%>
+<%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :performance) do %>
+<%= render Organisms::PerformanceTabsComponent.new(app: @app, active: :metrics) do %>
+<%# Live stats (processes + container stats) — deferred via lazy turbo-frame %>
+<%= deferred_section "metrics_live", src: dashboard_app_metrics_path(@app, deferred: 1), skeleton: :tiles, target: "_top" %>
+
+<%# Historical Charts (24h) %>
+<% if @metrics.any? %>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+    <%# Charts render via the lazy metrics-chart controller (Chart.js loads
+        on connect, only here — not on every page). Options are passed
+        through to chartkick exactly as the old line_chart helper did. %>
+    <% cpu_opts = {
+         colors: [ "#6C4CFF" ],
+         library: {
+           scales: { y: { min: 0, max: 100, grid: { color: "rgba(11,11,14,0.10)" }, ticks: { color: "#8A8A90" } },
+                     x: { grid: { color: "rgba(11,11,14,0.10)" }, ticks: { color: "#8A8A90" } } },
+           plugins: { legend: { display: false } },
+           elements: { point: { radius: 0 }, line: { tension: 0.3 } }
+         }
+       } %>
+    <div class="border-1.5 border-ink bg-paper p-6">
+      <h3 class="font-mono text-[10px] text-dim uppercase tracking-widest mb-4">cpu_usage · 24h</h3>
+      <div data-controller="metrics-chart"
+           data-metrics-chart-points-value="<%= @metrics.map { |m| [ m.recorded_at, m.cpu_percent ] }.to_json %>"
+           data-metrics-chart-options-value="<%= cpu_opts.to_json %>"
+           style="height: 300px;"></div>
+    </div>
+    <% mem_opts = {
+         colors: [ "#9A82FF" ],
+         library: {
+           scales: { y: { min: 0, grid: { color: "rgba(11,11,14,0.10)" }, ticks: { color: "#8A8A90" } },
+                     x: { grid: { color: "rgba(11,11,14,0.10)" }, ticks: { color: "#8A8A90" } } },
+           plugins: { legend: { display: false } },
+           elements: { point: { radius: 0 }, line: { tension: 0.3 } }
+         }
+       } %>
+    <div class="border-1.5 border-ink bg-paper p-6">
+      <h3 class="font-mono text-[10px] text-dim uppercase tracking-widest mb-4">memory_usage · 24h</h3>
+      <div data-controller="metrics-chart"
+           data-metrics-chart-points-value="<%= @metrics.map { |m| [ m.recorded_at, (m.memory_usage.to_f / 1024 / 1024).round(1) ] }.to_json %>"
+           data-metrics-chart-options-value="<%= mem_opts.to_json %>"
+           style="height: 300px;"></div>
+    </div>
+  </div>
+<% else %>
+  <div class="mt-6 border-1.5 border-ink bg-paper p-6 text-center">
+    <p class="font-mono text-xs text-dim">// no historical data yet — metrics are collected every 5 minutes</p>
+  </div>
+<% end %>
+<% end %>
+<% end %>

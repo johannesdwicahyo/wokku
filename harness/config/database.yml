@@ -1,0 +1,18 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  host: <%= ENV.fetch("PGHOST", "localhost") %>
+  username: <%= ENV.fetch("PGUSER", ENV.fetch("USER", "postgres")) %>
+  password: <%= ENV["PGPASSWORD"] %>
+
+development:
+  <<: *default
+  database: wokku_oss_harness
+
+test:
+  <<: *default
+  database: wokku_oss_harness_test
+
+production:
+  <<: *default
+  database: wokku_oss_harness_production

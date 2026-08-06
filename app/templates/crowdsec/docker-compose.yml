@@ -1,0 +1,23 @@
+# name: CrowdSec
+# documentation: https://github.com/crowdsecurity/crowdsec
+# slogan: Open-source security engine that detects and blocks malicious behavior
+# category: security
+# tags: security, firewall, intrusion-detection, threat-intelligence
+# icon: security
+# port: 8080
+
+services:
+  crowdsec:
+    image: crowdsecurity/crowdsec:latest
+    environment:
+      - GID=1000
+      - COLLECTIONS=crowdsecurity/linux crowdsecurity/traefik
+    ports:
+      - "8080:8080"
+    volumes:
+      - crowdsec-config:/etc/crowdsec
+      - crowdsec-data:/var/lib/crowdsec/data
+
+volumes:
+  crowdsec-config:
+  crowdsec-data:

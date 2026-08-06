@@ -1,0 +1,15 @@
+# name: Express
+# documentation: https://github.com/johannesdwicahyo/wokku-express-starter
+# slogan: Minimalist Node.js web framework
+# category: frameworks
+# tags: node, express, api
+# icon: node
+# icon_slug: express
+# icon_color: FFFFFF
+# version: 4
+# port: 3000
+
+services:
+  express:
+    environment:
+      - NODE_ENV=production

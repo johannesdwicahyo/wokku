@@ -1,0 +1,16 @@
+# name: Flask
+# documentation: https://github.com/johannesdwicahyo/wokku-flask-starter
+# slogan: Lightweight Python microframework for web apps and APIs
+# category: frameworks
+# tags: python, flask, api
+# icon: python
+# icon_slug: flask
+# icon_color: FFFFFF
+# version: 3.0
+# port: 5000
+# generate_secrets: SECRET_KEY
+
+services:
+  flask:
+    environment:
+      - FLASK_ENV=production

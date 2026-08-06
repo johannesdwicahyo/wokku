@@ -1,0 +1,12 @@
+<div class="wk-container">
+  <div class="wk-header">
+    <h1>// app_transfer_accepted()</h1>
+    <h2><%= @transfer.to_user.email %> accepted the transfer of <%= @app.name %>.</h2>
+  </div>
+  <div class="wk-body">
+    <p>Ownership of <strong><%= @app.name %></strong> moved on <%= @transfer.accepted_at.strftime("%b %-d, %Y at %H:%M") %>. The app's plan box now counts against their plan, not yours.</p>
+  </div>
+  <div class="wk-footer">
+    Wokku · Invoice-based billing · jakarta, id
+  </div>
+</div>

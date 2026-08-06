@@ -1,0 +1,69 @@
+<%
+  apps ||= []
+  default_type = (database.service_type.presence || "postgres")
+  text_input_classes = "w-full bg-bg border-1.5 border-ink px-3 py-2.5 font-mono text-sm text-ink placeholder-dim focus:outline-none focus:border-accent transition-colors"
+  label_classes      = "block font-mono text-[10px] font-bold text-dim mb-1.5 uppercase tracking-widest"
+
+  app_options = apps.map do |a|
+    { value: a.id, label: a.name, description: "Server: #{a.server.name}" }
+  end
+  # Bundle v2 (backlog 2.8) — engine + mode picker replaces the legacy
+  # ServiceTier list. Same payload shape on both /addons/new and the
+  # in-app /resources slide-panel so the JS controller is reused 1:1.
+  engine_payload = Addons::PickerOptions.for_user(current_user)
+  service_type_options = engine_payload.map { |k, v| [v[:label], k] }
+%>
+<%= form_with(model: database, url: dashboard_addons_path, class: "space-y-5",
+              data: { controller: "addon-tier-picker",
+                      "addon-tier-picker-engines-value": engine_payload.to_json,
+                      "addon-tier-picker-plan-upgrade-url-value": (respond_to?(:dashboard_plan_path) ? dashboard_plan_path : "#") }) do |f| %>
+  <% if database.errors.any? %>
+    <div class="border-1.5 border-danger bg-danger-soft p-3">
+      <ul class="font-mono text-xs text-danger space-y-1">
+        <% database.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <label class="<%= label_classes %>">Attach to App</label>
+    <% if apps.any? %>
+      <%= combobox_tag "database_service[app_id]", app_options, value: database.app_records.first&.id, placeholder: "Select an app", required: true %>
+      <p class="font-mono text-[11px] text-dim mt-1">The add-on will run on the same server as the app and be linked automatically.</p>
+    <% else %>
+      <div class="border-1.5 border-ink bg-bg px-4 py-3 font-mono text-xs text-dim">
+        Create an app first — add-ons attach to apps.
+      </div>
+    <% end %>
+  </div>
+
+  <div>
+    <%= f.label :name, class: label_classes %>
+    <%= f.text_field :name, class: "#{text_input_classes} font-mono", placeholder: "my-database" %>
+  </div>
+
+  <div>
+    <label class="<%= label_classes %>">Service Type</label>
+    <%= combobox_tag "database_service[service_type]", service_type_options, value: default_type, placeholder: "Select a service type",
+        data: { "addon-tier-picker-target": "serviceType", action: "change->addon-tier-picker#refresh" } %>
+  </div>
+
+  <%# Bundle v2 mode picker — populated by addon-tier-picker Stimulus
+      controller. Hidden input posts as `mode=shared|dedicated` so
+      DatabasesController#create routes through Addons::SharedProvisioner
+      or the dedicated DatabaseProvisioner path. %>
+  <div>
+    <label class="<%= label_classes %>">Mode</label>
+    <%= hidden_field_tag "mode", "shared", data: { "addon-tier-picker-target": "tierInput" } %>
+    <div class="grid grid-cols-1 gap-2" data-addon-tier-picker-target="cards">
+      <div class="font-mono text-xs text-dim px-3 py-2">Loading options…</div>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-2 pt-2">
+    <%= f.submit "Create Add-on", class: "flex-1 py-2.5 px-4 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer text-center disabled:opacity-50", disabled: apps.empty? %>
+    <button type="button" data-action="click->slide-panel#close" class="py-2.5 px-4 font-mono text-sm text-ink border-1.5 border-ink bg-paper hover:bg-bg-deep transition-colors cursor-pointer">Cancel</button>
+  </div>
+<% end %>

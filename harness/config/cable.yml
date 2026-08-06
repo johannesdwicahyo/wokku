@@ -1,0 +1,5 @@
+# Single-process self-host: the async adapter serves Turbo Streams
+# in-process; no redis needed.
+development: { adapter: async }
+test: { adapter: test }
+production: { adapter: async }

@@ -1,0 +1,43 @@
+<div class="wk-container">
+  <% if @is_test %>
+    <div class="wk-header">
+      <h1>// channel_test()</h1>
+      <h2>Channel test ✓</h2>
+    </div>
+    <div class="wk-body">
+      <p>This is a test notification from Wokku — your <strong><%= @notification.channel.capitalize %></strong> channel is configured correctly.</p>
+      <p>You'll receive notifications for the events you subscribed to (deploy succeeded, deploy failed, app crashed, etc.).</p>
+
+      <hr class="wk-divider">
+
+      <a href="<%= dashboard_notifications_url %>" class="wk-cta">Manage notification rules →</a>
+    </div>
+  <% else %>
+    <div class="wk-header">
+      <h1>// <%= @event %>()</h1>
+      <h2><%= @app_name %> · <%= @event.humanize %></h2>
+    </div>
+    <div class="wk-body">
+      <% if @context["reason_message"].present? %>
+        <p><%= @context["reason_message"] %></p>
+      <% end %>
+      <% if @deploy&.commit_sha.present? %>
+        <div class="wk-label">Commit</div>
+        <div class="wk-value"><code><%= @deploy.commit_sha[0, 7] %></code></div>
+      <% end %>
+      <% if @deploy&.release&.version %>
+        <div class="wk-label">Release</div>
+        <div class="wk-value">v<%= @deploy.release.version %></div>
+      <% end %>
+
+      <hr class="wk-divider">
+
+      <% if @app %>
+        <a href="<%= dashboard_app_url(@app) %>" class="wk-cta">Open <%= @app_name %> →</a>
+      <% end %>
+    </div>
+  <% end %>
+  <div class="wk-footer">
+    Wokku · Invoice-based billing · jakarta, id
+  </div>
+</div>

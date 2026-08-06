@@ -1,0 +1,79 @@
+<% content_for(:title, "Cloud credentials") %>
+
+<div class="mb-8">
+  <h1 class="font-mono text-3xl md:text-4xl font-semibold tracking-tighter text-ink mb-2"><span class="text-dim"># </span>cloud_credentials</h1>
+  <p class="font-mono text-sm text-dim">// API keys used to provision servers across cloud providers (Hetzner, DigitalOcean, Linode)</p>
+</div>
+
+<div class="border-1.5 border-ink bg-paper">
+  <div class="px-6 py-4 border-b border-rule-soft flex items-center justify-between gap-3 flex-wrap font-mono">
+    <h2 class="text-base font-semibold text-ink"># providers</h2>
+    <%= link_to "+ add provider", new_admin_server_path,
+                class: "inline-flex items-center px-3 py-1.5 bg-ink text-bg text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all" %>
+  </div>
+
+  <% if @credentials.any? %>
+    <div class="divide-y divide-rule-soft">
+      <% @credentials.each do |cred| %>
+        <div class="px-6 py-4 flex items-center justify-between gap-3 flex-wrap font-mono">
+          <div class="min-w-0">
+            <div class="flex items-center gap-3 flex-wrap">
+              <span class="text-sm font-semibold text-ink capitalize"><%= cred.provider %></span>
+              <% if cred.name.present? %>
+                <span class="text-xs text-dim border border-rule-soft px-1.5 py-0.5"><%= cred.name %></span>
+              <% end %>
+            </div>
+            <div class="text-[10px] text-dim mt-0.5">
+              owned by <%= cred.team&.name || "—" %> · added <%= time_ago_in_words(cred.created_at) %> ago
+            </div>
+          </div>
+
+          <%# Danger-zone drawer for delete — destructive action so it
+              gets the same confirm pattern as backup restore. %>
+          <div data-controller="motion--drawer" class="inline-block">
+            <button data-action="motion--drawer#open"
+                    type="button"
+                    class="text-xs text-warn hover:underline transition cursor-pointer bg-transparent border-0">
+              remove
+            </button>
+            <template data-motion--drawer-target="content">
+              <div class="p-6 space-y-4">
+                <div class="font-mono text-[11px] uppercase tracking-widest text-warn">// destructive · cloud credential</div>
+                <h2 class="font-headline text-xl font-extrabold">Remove <%= cred.provider.capitalize %> credential?</h2>
+                <p class="text-ink-soft text-sm leading-relaxed">
+                  Servers already provisioned with this credential
+                  <strong class="text-ink">keep running</strong> — Dokku doesn't lose
+                  access. But you won't be able to provision any new servers under
+                  <span class="font-mono text-ink"><%= cred.provider %></span> until you
+                  add the credential back.
+                </p>
+                <%= button_to "Yes, remove credential",
+                      admin_cloud_credential_path(cred),
+                      method: :delete,
+                      class: "w-full border-1.5 border-ink bg-danger text-bg font-mono text-[11px] uppercase tracking-widest px-4 py-3 shadow-brutal hover:bg-warn hover:text-ink transition cursor-pointer",
+                      data: {
+                        controller: "motion--optimistic-button",
+                        "motion--optimistic-button-pending-label-value": "removing…"
+                      } %>
+                <button data-action="motion--drawer#close"
+                        type="button"
+                        class="w-full border-1.5 border-ink bg-paper text-ink font-mono text-[11px] uppercase tracking-widest px-4 py-3 hover:bg-bg-deep transition cursor-pointer">
+                  Cancel
+                </button>
+              </div>
+            </template>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="p-4">
+      <%= render Organisms::EmptyStateComponent.new(
+            headline: "No cloud credentials yet.",
+            body: "Connect a Hetzner / DigitalOcean / Linode API key to provision servers from the dashboard.",
+            cta_label: "Add provider",
+            cta_href: new_admin_server_path
+          ) %>
+    </div>
+  <% end %>
+</div>

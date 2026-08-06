@@ -1,0 +1,47 @@
+<div class="min-h-screen flex items-center justify-center px-5 bg-bg text-ink" style="font-family: var(--font-sans-brutal);">
+  <div class="w-full max-w-sm">
+    <div class="text-center mb-8">
+      <h1 class="font-mono text-2xl font-semibold tracking-tighter text-ink"># <%= t('setup.title') %></h1>
+      <p class="font-mono text-xs text-dim mt-2"><%= t('setup.sub') %></p>
+    </div>
+    <div class="border-1.5 border-ink bg-paper p-6">
+      <% if @user.errors.any? %>
+        <div class="border-1.5 border-danger bg-danger-soft p-2.5 font-mono text-xs text-danger mb-3">
+          <%= @user.errors.full_messages.first %>
+        </div>
+      <% end %>
+      <%= form_with model: @user, url: setup_path, method: :post do |f| %>
+        <div class="space-y-3">
+          <div>
+            <label class="font-mono text-[11px] text-dim block mb-1"><%= t('signin.email_label') %></label>
+            <%= f.email_field :email, autofocus: true, autocomplete: "email",
+                  class: "w-full px-3 py-2.5 border-1.5 border-ink bg-bg font-mono text-sm focus:outline-none" %>
+          </div>
+          <div>
+            <label class="font-mono text-[11px] text-dim block mb-1"><%= t('signin.password_label') %></label>
+            <%= f.password_field :password, autocomplete: "new-password",
+                  class: "w-full px-3 py-2.5 border-1.5 border-ink bg-bg font-mono text-sm focus:outline-none" %>
+          </div>
+          <div>
+            <label class="font-mono text-[11px] text-dim block mb-1"><%= t('setup.password_confirmation_label') %></label>
+            <%= f.password_field :password_confirmation, autocomplete: "new-password",
+                  class: "w-full px-3 py-2.5 border-1.5 border-ink bg-bg font-mono text-sm focus:outline-none" %>
+          </div>
+          <%# install.sh already registered + connected this box — the
+              checkbox only matters for bare `docker compose up` installs. %>
+          <% unless Server.exists? %>
+          <label class="flex items-start gap-2 pt-1 cursor-pointer">
+            <%= check_box_tag :connect_this_server, "1", true, class: "mt-0.5 accent-current" %>
+            <span class="font-mono text-[11px] text-dim">
+              <%= t('setup.connect_label') %><br>
+              <span class="text-[10px]"><%= t('setup.connect_hint') %></span>
+            </span>
+          </label>
+          <% end %>
+          <%= f.submit t('setup.submit'),
+                class: "w-full px-4 py-3 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

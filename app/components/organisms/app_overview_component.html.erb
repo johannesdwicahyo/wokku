@@ -1,0 +1,56 @@
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <div class="md:col-span-2 space-y-4">
+    <div class="border-1.5 border-ink bg-paper p-5">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <div class="font-mono text-[10.5px] uppercase tracking-widest text-ink-soft mb-2">// status</div>
+          <div class="flex items-center gap-3 mb-3">
+            <%= render Atoms::StatusPillComponent.new(status: app.status.to_s) %>
+            <a href="<%= display_url %>" target="_blank" class="font-mono text-sm text-accent hover:underline"><%= display_url.sub(%r{https?://}, "") %></a>
+          </div>
+          <div class="flex gap-2 flex-wrap">
+            <%= render Atoms::OptimisticButtonComponent.new(label: "restart", url: helpers.restart_dashboard_app_path(app), method: :post, pending_label: "restarting…", kind: :primary) %>
+            <%= render Atoms::OptimisticButtonComponent.new(label: "stop",    url: helpers.stop_dashboard_app_path(app),    method: :post, pending_label: "stopping…",   kind: :secondary) %>
+            <%= link_to "scale ↗", helpers.dashboard_app_scaling_path(app),
+                        class: "border-1.5 border-ink bg-paper text-ink font-mono text-[11px] uppercase tracking-widest px-3 py-2 shadow-brutal" %>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="font-mono text-[10.5px] uppercase tracking-widest text-dim">// memory</div>
+          <div class="font-headline text-2xl font-extrabold"
+               data-controller="motion--counter-tick"
+               data-motion--counter-tick-value-value="<%= memory_used_mb %>"><%= memory_used_mb %> <span class="text-sm text-dim font-medium">/ <%= memory_max_mb %> MB</span></div>
+          <div class="font-mono text-[10px] text-dim mt-1"><%= memory_pct %>% used</div>
+        </div>
+      </div>
+    </div>
+
+    <%= render Molecules::RecentActivityCardComponent.new(events: recent_events) %>
+
+    <div class="border-1.5 border-ink bg-paper p-5">
+      <div class="font-mono text-[10.5px] uppercase tracking-widest text-ink-soft mb-3">// recent logs</div>
+      <%= helpers.deferred_section "app_logs_glance_#{app.id}",
+            src: helpers.dashboard_app_logs_path(app, glance: true),
+            skeleton: :text %>
+    </div>
+
+    <%= render Molecules::RecentCrashesComponent.new(app: app) %>
+  </div>
+
+  <div class="space-y-4">
+    <% addons = app.database_services.order(:service_type, :created_at) %>
+    <% if addons.any? %>
+      <% addons.each do |addon| %>
+        <%= render Molecules::AddonSummaryCardComponent.new(database_service: addon) %>
+      <% end %>
+    <% else %>
+      <div class="border-1.5 border-ink border-dashed bg-paper p-4 font-mono text-xs text-dim">
+        <div class="text-[10.5px] uppercase tracking-widest text-ink-soft mb-2">// add-ons</div>
+        No add-ons attached. <%= link_to "browse →", helpers.dashboard_addons_path, class: "text-accent hover:underline", data: { turbo_frame: "_top" } %>
+      </div>
+    <% end %>
+    <% if addons.any? %>
+      <%= render Molecules::BackupsSummaryCardComponent.new(app: app, current_user: helpers.current_user) %>
+    <% end %>
+  </div>
+</div>

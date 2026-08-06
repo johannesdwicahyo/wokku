@@ -1,0 +1,32 @@
+# name: Hermes Agent
+# documentation: https://github.com/johannesdwicahyo/wokku-hermes-agent
+# slogan: Self-hosted AI agent with persistent memory — Telegram bot + web dashboard
+# category: ai
+# tags: ai, agent, llm, telegram, assistant, self-hosted
+# icon: ai
+# version: 2026.6.19
+# port: 9119
+# builder: dockerfile
+# min_tier: standard
+# storage_mounts: /opt/data
+# disable_init_process: true
+# disable_zero_downtime_checks: true
+# generate_secrets: HERMES_DASHBOARD_BASIC_AUTH_PASSWORD, HERMES_DASHBOARD_BASIC_AUTH_SECRET
+
+# Built from github.com/johannesdwicahyo/wokku-hermes-agent (adapted Hermes
+# Agent image). The dashboard's basic-auth credentials are GENERATED at
+# deploy time (generate_secrets, above) before the first boot — without them
+# the dashboard refuses to bind and the container crash-loops. The login is
+# username `admin` + the generated HERMES_DASHBOARD_BASIC_AUTH_PASSWORD:
+# open the app's Environment Variables page to copy it.
+#
+# After deploy, set in the app's Config:
+#   OPENROUTER_API_KEY  — required (or another LLM provider key)
+#   HERMES_MODEL        — recommended (an OpenRouter model id)
+#   TELEGRAM_BOT_TOKEN  — to connect the Telegram bot (default connector)
+# The web dashboard is auth-protected and served on the app's domain;
+# memory/state persists on the mounted /opt/data volume.
+services:
+  hermes-agent:
+    environment:
+      - HERMES_GATEWAY=1

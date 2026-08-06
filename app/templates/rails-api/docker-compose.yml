@@ -1,0 +1,19 @@
+# name: Rails API
+# documentation: https://github.com/johannesdwicahyo/wokku-rails-api-starter
+# slogan: Rails 8 API-only with PostgreSQL
+# category: frameworks
+# tags: ruby, rails, api
+# icon: rails
+# icon_slug: rubyonrails
+# icon_color: CC0000
+# version: 8.1
+# port: 3000
+# post_deploy: bin/rails db:migrate
+# generate_secrets: SECRET_KEY_BASE
+# shared_engines: postgres
+
+services:
+  rails_api:
+    environment:
+      - RAILS_ENV=production
+      - RAILS_LOG_TO_STDOUT=true

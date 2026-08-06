@@ -1,0 +1,48 @@
+<% content_for :title, "Delete #{@app.name}" %>
+
+<%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :settings) do %>
+  <%= render Organisms::AppSettingsComponent.new(app: @app, active: :danger) do %>
+
+    <div class="border-1.5 border-danger bg-paper">
+      <div class="px-6 py-4 border-b border-rule-soft bg-danger-soft">
+        <h2 class="font-mono text-base font-semibold text-danger"># danger zone</h2>
+        <p class="font-mono text-xs text-ink-soft mt-1">// irreversible — destroys the app and tears down its exclusive databases, DNS records, and billing</p>
+      </div>
+
+      <div class="px-6 py-5">
+        <p class="font-mono text-sm text-ink mb-2">
+          Deleting <span class="font-bold"><%= @app.name %></span> removes the running app from its server and stops all billing.
+          Any database used <em>only</em> by this app is also destroyed.
+        </p>
+        <ul class="font-mono text-[11px] text-dim list-disc list-inside space-y-0.5 mb-5">
+          <li>The Dokku app and all its containers are removed</li>
+          <li>Exclusively-linked databases are dropped (shared ones are kept)</li>
+          <li>Cloudflare DNS records for this app are deleted</li>
+          <li>This cannot be undone</li>
+        </ul>
+
+        <%= button_to dashboard_app_path(@app),
+              method: :delete,
+              form: {
+                # turbo_frame: _top — this button lives inside the
+                # app_tab_content turbo-frame. Without breaking out, the
+                # destroy's redirect to the apps list (a page with no such
+                # frame) is silently dropped: the modal closes and nothing
+                # visibly happens. _top makes it a full-page visit that lands
+                # on the apps list with its "App deleted" flash toast.
+                data: {
+                  turbo_frame: "_top",
+                  controller: "confirm-delete",
+                  confirm_delete_name_value: @app.name,
+                  confirm_delete_resource_value: "app",
+                  confirm_delete_impact_value: "This permanently deletes #{@app.name}, its containers, exclusively-linked databases, and DNS records. This cannot be undone."
+                }
+              },
+              class: "inline-block border-1.5 border-danger bg-danger-soft text-danger font-mono text-[11px] uppercase tracking-widest px-5 py-3 shadow-brutal hover:bg-danger hover:text-bg transition cursor-pointer" do %>
+          delete this app
+        <% end %>
+      </div>
+    </div>
+
+  <% end %>
+<% end %>

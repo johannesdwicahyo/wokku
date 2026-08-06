@@ -1,0 +1,22 @@
+<div id="<%= helpers.dom_id(db, :upgrade_panel) %>" class="addon-card addon-card--shared" data-status="<%= db.status %>">
+  <header class="addon-card__header">
+    <h3><%= engine_label %> <small class="addon-card__tag">SHARED</small></h3>
+    <p class="addon-card__status"><%= status_label %></p>
+  </header>
+
+  <% if in_progress? %>
+    <div class="addon-card__progress" role="status" aria-live="polite">
+      <%= status_label %>
+    </div>
+  <% end %>
+
+  <% if db.status == "upgrading_failed" %>
+    <%= button_to "Try again", upgrade_path, method: :post,
+                  class: "btn btn--primary",
+                  data: { turbo_confirm: "Retry the upgrade?" } %>
+  <% elsif upgradeable? %>
+    <%= button_to "Upgrade to dedicated", upgrade_path, method: :post,
+                  class: "btn btn--primary",
+                  data: { turbo_confirm: "This takes 1–2 minutes. Continue?" } %>
+  <% end %>
+</div>

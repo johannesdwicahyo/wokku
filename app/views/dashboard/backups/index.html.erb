@@ -1,0 +1,137 @@
+<%#
+  Brutalist backups index (P4 of redesign-c-full, 2026-05-17). Policy
+  logic, turbo_stream_from, confirm-delete + download wiring and
+  routes preserved 1:1 from index.OLD_DESIGN.html.erb.
+%>
+<% content_for(:title, "Backups — #{@database.name}") %>
+
+<%= render "dashboard/databases/header", database: @database, active: :backups %>
+
+<%= turbo_stream_from "database_#{@database.id}_backups" %>
+<div class="flex flex-wrap items-center justify-end gap-4 mb-6">
+  <%= render "actions", database: @database %>
+</div>
+
+<%# Backup policy summary — reflects the tier's BACKUP_POLICIES entry.
+    Closes the "what backup behaviour does this DB get?" question for
+    customers without making them dig into pricing pages. %>
+<% policy = @database.backup_policy %>
+<% tier = @database.service_tier %>
+<% last_completed = @database.backups.completed.order(created_at: :desc).first %>
+<div class="border-1.5 border-ink bg-paper px-5 py-3 mb-6 flex flex-wrap items-center justify-between gap-3 font-mono">
+  <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+    <span class="px-2 py-0.5 border border-rule-soft text-ink-soft font-semibold capitalize tracking-wide">
+      <%= tier&.name&.tr("_", " ") || "—" %>
+    </span>
+    <% if policy[:auto_backup] %>
+      <span class="text-ink-soft">Daily auto-backup</span>
+      <span class="text-dim">·</span>
+      <span class="text-ink-soft">Keeps <%= gfs_retention_summary(policy[:gfs]) %></span>
+    <% elsif policy[:on_destroy_snapshot] %>
+      <span class="text-ink-soft">No scheduled backup</span>
+      <span class="text-dim">·</span>
+      <span class="text-ink-soft">Snapshot saved on destroy</span>
+    <% else %>
+      <span class="text-ink-soft">Manual-only backups</span>
+      <% if policy[:free_cap] && policy[:free_cap].positive? %>
+        <span class="text-dim">·</span>
+        <span class="text-ink-soft"><%= @database.backups.completed.count %> / <%= policy[:free_cap] %> stored</span>
+      <% end %>
+    <% end %>
+  </div>
+  <% if last_completed %>
+    <span class="text-xs text-dim">Last backup <%= time_ago_in_words(last_completed.created_at) %> ago</span>
+  <% end %>
+</div>
+
+<% if @backups.any? %>
+  <div class="border-1.5 border-ink bg-paper overflow-x-auto">
+    <table class="w-full font-mono text-sm">
+      <thead>
+        <tr class="text-xs text-dim border-b border-rule-soft uppercase tracking-widest">
+          <th class="px-5 py-3 text-left font-medium">Date</th>
+          <th class="px-5 py-3 text-left font-medium">Status</th>
+          <th class="px-5 py-3 text-right font-medium">Size</th>
+          <th class="px-5 py-3 text-right font-medium">Duration</th>
+          <th class="px-5 py-3 text-right font-medium">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-rule-soft">
+        <% @backups.each do |backup| %>
+          <tr class="hover:bg-bg-deep transition-colors">
+            <td class="px-5 py-3 text-ink-soft"><%= backup.created_at.strftime("%b %d, %Y %H:%M") %></td>
+            <td class="px-5 py-3">
+              <% bs = backup.status %>
+              <% if bs == "completed" %><span class="text-xs text-success">completed</span>
+              <% elsif bs == "running" %><span class="text-xs text-warn">running…</span>
+              <% elsif bs == "failed" %><span class="text-xs text-danger" title="<%= backup.error_message %>">failed</span>
+              <% elsif bs == "pending" %><span class="text-xs text-dim">pending</span>
+              <% end %>
+            </td>
+            <td class="px-5 py-3 text-right text-ink-soft"><%= backup.size_human %></td>
+            <td class="px-5 py-3 text-right text-dim"><%= backup.duration ? "#{backup.duration.round(1)}s" : "—" %></td>
+            <td class="px-5 py-3 text-right">
+              <% if backup.status == "completed" %>
+                <div class="flex items-center justify-end gap-3">
+                  <%= link_to "download", download_dashboard_addon_backup_path(@database, backup), class: "text-xs text-ink-soft hover:text-accent transition" %>
+
+                  <%# Restore drawer — replaces the old confirm-delete modal so
+                      destructive confirmations match the rest of the dashboard
+                      (Phase 3 motion--drawer controller). %>
+                  <div data-controller="motion--drawer" class="inline-block">
+                    <button data-action="motion--drawer#open"
+                            type="button"
+                            class="text-xs text-warn hover:underline transition cursor-pointer bg-transparent border-0">
+                      restore
+                    </button>
+                    <template data-motion--drawer-target="content">
+                      <div class="p-6 space-y-4">
+                        <div class="font-mono text-[11px] uppercase tracking-widest text-warn">// destructive · restore from backup</div>
+                        <h2 class="font-headline text-xl font-extrabold">Restore <%= @database.name %>?</h2>
+                        <p class="text-ink-soft text-sm leading-relaxed">
+                          This <strong class="text-ink">overwrites</strong> the current contents of
+                          <span class="font-mono text-ink"><%= @database.name %></span> with the backup taken on
+                          <strong class="text-ink"><%= backup.created_at.strftime('%b %d, %Y %H:%M') %></strong>.
+                          The current state is lost and cannot be recovered.
+                        </p>
+                        <%= button_to "Yes, restore now", restore_dashboard_addon_backup_path(@database, backup),
+                              method: :post,
+                              class: "w-full border-1.5 border-ink bg-danger text-bg font-mono text-[11px] uppercase tracking-widest px-4 py-3 shadow-brutal hover:bg-warn hover:text-ink transition cursor-pointer",
+                              data: {
+                                controller: "motion--optimistic-button",
+                                "motion--optimistic-button-pending-label-value": "restoring…"
+                              } %>
+                        <button data-action="motion--drawer#close"
+                                type="button"
+                                class="w-full border-1.5 border-ink bg-paper text-ink font-mono text-[11px] uppercase tracking-widest px-4 py-3 hover:bg-bg-deep transition cursor-pointer">
+                          Cancel
+                        </button>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <%
+    empty_body = if @destination&.enabled? && policy[:auto_backup]
+      "Automatic backups run daily at 02:00 UTC. We keep #{gfs_retention_summary(policy[:gfs])}. Or trigger one now with 'Backup Now' above."
+    elsif @destination&.enabled? && policy[:on_destroy_snapshot]
+      "This tier doesn't take scheduled backups. A snapshot will be saved when the database is destroyed. Use 'Backup Now' for manual snapshots."
+    elsif @destination&.enabled?
+      cap = policy[:free_cap] && policy[:free_cap].positive? ? " (up to #{policy[:free_cap]} stored)" : ""
+      "This tier supports manual backups only#{cap}. Use 'Backup Now' to create one."
+    else
+      "No backup destination is configured for this server. Ask an admin to set one up under /admin/servers."
+    end
+  %>
+  <%= render Organisms::EmptyStateComponent.new(
+        headline: "No backups yet.",
+        body: empty_body
+      ) %>
+<% end %>

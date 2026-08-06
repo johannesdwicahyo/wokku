@@ -1,0 +1,257 @@
+class DocsController < ApplicationController
+  layout "docs"
+
+  SUPPORTED_LOCALES = %w[en id].freeze
+  DEFAULT_LOCALE    = "en".freeze
+
+  def show
+    @docs_locale = resolve_locale
+    @path = params[:path] || "getting-started/sign-up"
+    @sidebar = load_sidebar(@docs_locale)
+
+    rendered = render_doc(@path, @docs_locale)
+    @content      = rendered[:html]
+    @frontmatter  = rendered[:frontmatter]
+    @doc_title    = @frontmatter["title"] || extract_h1(@content) || @path.split("/").last.titleize
+    @doc_summary  = @frontmatter["summary"]
+    @doc_eyebrow  = @frontmatter["eyebrow"] || default_eyebrow(@path)
+    @doc_badges   = Array(@frontmatter["badges"])
+    @doc_edited   = @frontmatter["last_updated"]
+    @doc_edit_url = @frontmatter["edit_url"] || default_edit_url(@path, @docs_locale)
+
+    @toc = extract_toc(@content)
+    @prev_item, @next_item = find_prev_next(@path, @docs_locale)
+    @breadcrumb = build_breadcrumb(@path)
+  end
+
+  def search_index
+    locale = resolve_locale
+    base = DOCS_BASE.join(locale)
+    base = DOCS_BASE.join(DEFAULT_LOCALE) unless base.directory?
+
+    entries = []
+    Dir.glob(base.join("**/*.md")).each do |file|
+      path = file.sub(base.to_s + "/", "").sub(".md", "")
+      raw = File.read(file)
+      frontmatter, content = split_frontmatter(raw)
+      title = frontmatter["title"].presence ||
+              content.match(/^# (.+)/)&.captures&.first ||
+              path.split("/").last.titleize
+      headings = content.scan(/^## (.+)/).flatten
+      excerpt_source = frontmatter["summary"].presence || content
+      body = excerpt_source.gsub(/^#+ /, "").gsub(/```.*?```/m, "").gsub(/:::.*?:::/m, "").gsub(/::\S+/, "").strip[0..300]
+      entries << { title: title, path: path, headings: headings, excerpt: body }
+    end
+    render json: entries
+  end
+
+  private
+
+  # Locale source order: explicit ?lang= param → I18n.locale → default.
+  def resolve_locale
+    candidate = params[:lang].presence || I18n.locale.to_s
+    SUPPORTED_LOCALES.include?(candidate) ? candidate : DEFAULT_LOCALE
+  end
+
+  def load_sidebar(locale)
+    @_sidebar ||= {}
+    @_sidebar[locale] ||= begin
+      file = Wokku::Engine.root.join("docs/sidebar.#{locale}.yml")
+      file = Wokku::Engine.root.join("docs/sidebar.#{DEFAULT_LOCALE}.yml") unless file.file?
+      YAML.load_file(file)
+    end
+  end
+
+  DOCS_BASE = Wokku::Engine.root.join("docs/content").freeze
+  SAFE_PATH = /\A[a-z0-9\-_\/]+\z/i.freeze
+
+  # Returns { html:, frontmatter: }. Frontmatter is the parsed YAML
+  # block at the top of the markdown file (or {} if absent).
+  def render_doc(path, locale)
+    raise ActiveRecord::RecordNotFound unless path.is_a?(String) && path.match?(SAFE_PATH)
+
+    file = doc_file_for(path, locale)
+    raise ActiveRecord::RecordNotFound unless file&.file?
+    @doc_locale_actual = file.to_s.include?("/#{locale}/") ? locale : DEFAULT_LOCALE
+
+    raw = file.read
+    frontmatter, body = split_frontmatter(raw)
+    body = preprocess_callouts(body)
+    body = preprocess_tabs(body)
+    html = render_markdown(body)
+    html = add_heading_anchors(html)
+    { html: html, frontmatter: frontmatter }
+  end
+
+  def doc_file_for(path, locale)
+    [ locale, DEFAULT_LOCALE ].uniq.each do |loc|
+      candidate = DOCS_BASE.join(loc, "#{path}.md").expand_path
+      next unless candidate.to_s.start_with?(DOCS_BASE.to_s + "/")
+      return candidate if candidate.file?
+    end
+    nil
+  end
+
+  # Parses an optional YAML frontmatter block delimited by --- at the
+  # very top of the file. Returns [frontmatter_hash, body_string].
+  def split_frontmatter(raw)
+    if raw.start_with?("---\n")
+      end_idx = raw.index("\n---\n", 4)
+      if end_idx
+        fm_yaml = raw[4...end_idx]
+        body    = raw[(end_idx + 5)..]
+        fm = YAML.safe_load(fm_yaml, permitted_classes: [ Date, Time ]) || {}
+        return [ fm, body.to_s ]
+      end
+    end
+    [ {}, raw ]
+  end
+
+  def render_markdown(text)
+    html = Commonmarker.to_html(text, options: {
+      parse: { smart: true },
+      render: { unsafe: true }
+    })
+    highlight_code_blocks(html)
+  end
+
+  def highlight_code_blocks(html)
+    formatter = Rouge::Formatters::HTML.new
+    html.gsub(%r{<pre lang="(\w+)"[^>]*><code>(.*?)</code></pre>}m) do
+      lang = $1
+      code = $2.gsub(/<span[^>]*>/, "").gsub("</span>", "")
+      code = CGI.unescapeHTML(code)
+      lexer = Rouge::Lexer.find(lang) || Rouge::Lexers::PlainText.new
+      highlighted = formatter.format(lexer.lex(code))
+      %(<div class="docs-code-block code-block"><div class="docs-code-lang">#{lang}</div><pre><code>#{highlighted}</code></pre></div>)
+    end
+  end
+
+  # Pre-processor: `:::callout note\n...\n:::` → CalloutComponent.
+  # Tones: note | warn | success | danger.
+  def preprocess_callouts(content)
+    content.gsub(/:::callout(?:\s+(\w+))?\n(.*?):::/m) do
+      tone = ($1 || "note").to_sym
+      tone = :note unless %i[note warn success danger].include?(tone)
+      body = render_markdown($2.strip)
+      ApplicationController.render(
+        Molecules::CalloutComponent.new(tone: tone),
+        layout: false
+      ) { body.html_safe }
+    rescue StandardError
+      # Fallback: emit a plain div so a malformed block doesn't blank
+      # the page. Keeps the docs survivable during authoring.
+      %(<div class="docs-callout docs-callout-#{tone}">#{$2}</div>)
+    end
+  end
+
+  # Pre-processor: `:::tabs\n::<id>\n...\n::<id>\n...\n:::` → CodeTabsComponent.
+  def preprocess_tabs(content)
+    content.gsub(/:::tabs\n(.*?):::/m) do
+      tabs_content = $1
+      channels = tabs_content.scan(/::(\S+)\n(.*?)(?=::\S|\z)/m)
+      tabs = channels.map do |key, body|
+        { id: key, label: tab_label(key), html: render_markdown(body.strip) }
+      end
+      tabs_to_html(tabs)
+    end
+  end
+
+  def tabs_to_html(tabs)
+    return "" if tabs.empty?
+    first_id = tabs.first[:id]
+    buttons = tabs.map do |t|
+      %(<button type="button" class="tab-btn #{t[:id] == first_id ? 'is-active' : ''}" data-action="click->code-tabs#select" data-id="#{t[:id]}" data-code-tabs-target="tab">#{t[:label]}</button>)
+    end.join("\n")
+    panels = tabs.map do |t|
+      hidden = t[:id] == first_id ? "" : "hidden"
+      %(<div class="px-5 py-5" data-code-tabs-target="panel" data-id="#{t[:id]}" #{hidden}>#{t[:html]}</div>)
+    end.join("\n")
+    <<~HTML
+      <div class="mt-4 border-1.5 border-ink rounded-md overflow-hidden bg-paper shadow-brutal-sm" data-controller="code-tabs" data-code-tabs-default-value="#{first_id}">
+        <div class="flex border-b-1.5 border-ink bg-bg-deep" style="overflow-x: auto;">
+          #{buttons}
+        </div>
+        #{panels}
+      </div>
+    HTML
+  end
+
+  def tab_label(key)
+    {
+      "web-ui" => "// web_ui",
+      "cli"    => "// cli",
+      "api"    => "// api",
+      "mcp"    => "// claude_code",
+      "mobile" => "// mobile",
+      "github" => "// github"
+    }.fetch(key, "// #{key}")
+  end
+
+  def add_heading_anchors(html)
+    # docs.css renders the `# ` prefix on h2 via ::before, so we only
+    # need the anchor id for deep links here — no inline `#` link.
+    # Without this guard the heading reads "# # Foo".
+    html.gsub(/<(h[23])><a href="#([^"]+)"[^>]*><\/a>(.*?)<\/\1>/i) do
+      tag = $1
+      id = $2
+      text = $3
+      %(<#{tag} id="#{id}">#{text}</#{tag}>)
+    end
+  end
+
+  def extract_toc(html)
+    # After PR-3's add_heading_anchors simplification the inline <a>
+    # anchor inside the heading is gone; match the heading id directly.
+    html.scan(/<(h[23]) id="([^"]+)"[^>]*>(.*?)<\/\1>/im).map do |tag, id, text|
+      { level: tag == "h2" ? 2 : 3, id: id, text: text.strip }
+    end
+  end
+
+  def extract_h1(html)
+    # Strip Commonmarker's auto-anchor (empty `<a aria-hidden>`) + any
+    # other inline tags so the title we feed to DocHeader is plain
+    # text. Without this, ERB HTML-escapes the inner `<a>` and we'd
+    # render the literal anchor attributes inside the H1.
+    #
+    # Then decode HTML entities (`&amp;` → `&`, `&lt;` → `<`, etc.)
+    # so titles like "Create & Link" don't render as "Create &amp; Link"
+    # after ERB re-escapes the already-entity-encoded source.
+    match = html.match(/<h1[^>]*>(.*?)<\/h1>/im)
+    return nil unless match
+    plain = match[1].gsub(/<[^>]+>/, "").strip
+    CGI.unescapeHTML(plain)
+  end
+
+  def find_prev_next(path, locale)
+    sidebar = load_sidebar(locale)
+    flat = sidebar.flat_map do |section|
+      section["items"].map { |item| { "title" => item["title"], "path" => item["path"] } }
+    end
+    idx = flat.index { |item| item["path"] == path }
+    return [ nil, nil ] unless idx
+
+    prev_item = idx > 0 ? flat[idx - 1] : nil
+    next_item = idx < flat.length - 1 ? flat[idx + 1] : nil
+    [ prev_item, next_item ]
+  end
+
+  def build_breadcrumb(path)
+    crumbs = [ [ "~/docs", "/docs" ] ]
+    parts = path.split("/")
+    if parts.length > 1
+      crumbs << [ parts[0..-2].join("/").tr("-", " "), nil ]
+    end
+    crumbs << [ parts.last.tr("-", " "), nil ]
+    crumbs
+  end
+
+  def default_eyebrow(path)
+    parts = path.split("/")
+    parts.length > 1 ? parts.first.tr("-", "_") : nil
+  end
+
+  def default_edit_url(path, locale)
+    "https://github.com/johannesdwicahyo/wokku-cloud/edit/main/docs/content/#{locale}/#{path}.md"
+  end
+end

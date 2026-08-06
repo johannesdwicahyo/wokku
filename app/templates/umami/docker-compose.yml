@@ -1,0 +1,28 @@
+# name: Umami
+# documentation: https://github.com/umami-software/umami
+# slogan: Simple and fast website analytics
+# category: analytics
+# tags: analytics, node, lightweight
+# icon: analytics
+# icon_slug: umami
+# icon_color: FFFFFF
+# port: 3000
+# healthcheck: curl -fsS http://127.0.0.1:$PORT/api/heartbeat || exit 1
+# generate_secrets: HASH_SALT,APP_SECRET
+# shared_engines: postgres
+
+services:
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

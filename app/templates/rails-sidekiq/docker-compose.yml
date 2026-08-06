@@ -1,0 +1,20 @@
+# name: Rails + Sidekiq
+# documentation: https://github.com/johannesdwicahyo/wokku-rails-sidekiq-starter
+# slogan: Rails 8 with a Sidekiq background worker
+# category: frameworks
+# tags: ruby, rails, sidekiq, jobs
+# icon: rails
+# icon_slug: rubyonrails
+# icon_color: CC0000
+# version: 8.1
+# port: 3000
+# post_deploy: bin/rails db:migrate
+# generate_secrets: SECRET_KEY_BASE
+# shared_engines: postgres
+# dedicated_db_engine: redis
+
+services:
+  rails_sidekiq:
+    environment:
+      - RAILS_ENV=production
+      - RAILS_LOG_TO_STDOUT=true

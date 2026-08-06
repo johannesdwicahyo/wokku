@@ -1,0 +1,90 @@
+# Solid Queue recurring schedule for self-host — the engine subset of the
+# cloud's config/recurring.yml. Omitted on purpose: billing_* (no billing
+# host), quota jobs (null plan_enforcer), wildcard-cert issuance (per-host
+# on-demand ACME instead), and the legacy SSH-probe family (health_checks,
+# docker_health_checks, crash_loop, stale_deploy_lock, reconcile,
+# sync_servers, database_stats) — those need the optional root SSH key.
+production:
+  clear_solid_queue_finished_jobs:
+    command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
+    schedule: every hour at minute 12
+
+  host_heartbeat_monitor:
+    class: HostHeartbeatMonitorJob
+    schedule: every 1 minute
+    queue: health
+
+  uptime_checks:
+    class: UptimeCheckSchedulerJob
+    schedule: every 1 minute
+    queue: uptime
+
+  dns_verification:
+    class: DnsVerificationSchedulerJob
+    schedule: every 5 minutes
+    queue: health
+
+  datastore_reconcile:
+    class: DatastoreReconcileSchedulerJob
+    schedule: every 3 minutes
+    queue: health
+
+  service_op_janitor:
+    class: ServiceOpJanitorJob
+    schedule: every 10 minutes
+    queue: default
+
+  metrics_poll:
+    class: MetricsPollSchedulerJob
+    schedule: every 1 minute
+    queue: metrics
+
+  request_aggregate_rollup:
+    class: RequestAggregateRollupJob
+    schedule: every 5 minutes
+    queue: metrics
+
+  vitals_rollup:
+    class: VitalsRollupJob
+    schedule: every 5 minutes
+    queue: metrics
+
+  metric_rollup:
+    class: MetricRollupJob
+    schedule: every day at 4:15am
+    queue: metrics
+
+  request_aggregate_retention_prune:
+    class: RequestAggregateRetentionPruneJob
+    schedule: every day at 4:00am
+    queue: default
+
+  backup_scheduler:
+    class: BackupSchedulerJob
+    schedule: every day at 2am
+    queue: backups
+
+  backup_retention:
+    class: BackupRetentionJob
+    schedule: every day at 4am
+    queue: backups
+
+  deploy_archive_retention:
+    class: DeployArchiveRetentionJob
+    schedule: every day at 4:45am
+    queue: default
+
+  scheduled_task_run_prune:
+    class: ScheduledTaskRunPruneJob
+    schedule: every day at 4:30am
+    queue: default
+
+  dev_session_expiry_sweep:
+    class: DevSession::ExpirySweepJob
+    schedule: every 5 minutes
+    queue: default
+
+  expire_app_transfers:
+    class: ExpireAppTransfersJob
+    schedule: every day at 0:15am
+    queue: default

@@ -1,0 +1,51 @@
+<% content_for :title, "Authorize CLI" %>
+
+<div class="max-w-xl mx-auto py-12 px-4">
+  <h1 class="font-mono text-2xl font-semibold tracking-tighter text-ink mb-2"># authorize_cli</h1>
+  <p class="font-mono text-sm text-dim mb-6">
+    Confirm the code shown by your <code class="text-accent">wokku</code> CLI to grant it API access to your account.
+  </p>
+
+  <% if @approved %>
+    <div class="border-1.5 border-success bg-success-soft p-4 mb-4">
+      <p class="font-mono text-sm text-ink font-bold">✓ CLI authorized — return to your terminal</p>
+    </div>
+  <% elsif @denied %>
+    <div class="border-1.5 border-danger bg-danger-soft p-4 mb-4">
+      <p class="font-mono text-sm text-ink font-bold">✕ Authorization denied</p>
+    </div>
+  <% else %>
+    <% if flash[:alert] %>
+      <div class="border-1.5 border-danger bg-danger-soft p-4 mb-4">
+        <p class="font-mono text-sm text-danger"><%= flash[:alert] %></p>
+      </div>
+    <% end %>
+
+    <%= form_with url: authorize_dashboard_device_path, method: :post, data: { turbo: false }, class: "space-y-4" do |f| %>
+      <div>
+        <label class="block font-mono text-xs font-bold text-ink mb-1">User code</label>
+        <input type="text" name="user_code" value="<%= @user_code %>" required autocomplete="off"
+               placeholder="XXXX-XXXX"
+               class="w-full bg-bg border-1.5 border-ink px-3 py-2 font-mono text-base uppercase tracking-widest text-ink focus:outline-none focus:border-accent">
+      </div>
+
+      <% if @device_authorization && @device_authorization.pending? %>
+        <div class="border-1.5 border-ink bg-bg p-3 font-mono text-xs text-dim">
+          A new API token will be created and granted to your CLI. You can revoke it anytime from
+          <%= link_to "API Tokens", edit_dashboard_profile_path, class: "text-accent hover:underline" %>.
+        </div>
+      <% end %>
+
+      <div class="flex gap-2">
+        <button type="submit" name="decision" value="approve"
+                class="flex-1 px-4 py-2 font-mono text-sm font-bold text-bg bg-ink border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer">
+          Authorize
+        </button>
+        <button type="submit" name="decision" value="deny"
+                class="px-4 py-2 font-mono text-sm font-bold text-ink border-1.5 border-ink bg-paper hover:bg-bg-deep transition cursor-pointer">
+          Deny
+        </button>
+      </div>
+    <% end %>
+  <% end %>
+</div>

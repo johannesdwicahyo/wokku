@@ -1,0 +1,7 @@
+Host <%= @server.name %> (<%= @server.host %>) stopped heartbeating.
+
+Last beat: <%= @server.heartbeat_at&.utc&.strftime("%Y-%m-%d %H:%M UTC") || "never" %>
+Last vitals: <%= @server.vitals.to_json %>
+
+Apps on this host may be down. Check:
+  https://wokku.cloud/dashboard/servers

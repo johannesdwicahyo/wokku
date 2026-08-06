@@ -1,0 +1,32 @@
+# name: Ghost
+# documentation: https://github.com/TryGhost/Ghost
+# slogan: Professional publishing and blogging platform
+# category: cms
+# tags: blog, cms, node
+# icon: cms
+# icon_slug: ghost
+# icon_color: FFFFFF
+# port: 2368
+# healthcheck: node -e "require('http').get('http://127.0.0.1:'+process.env.PORT+'/',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"
+# mysql_components: database__connection__
+# set_url: url
+# dedicated_db_engine: mysql
+
+services:
+  ghost:
+    image: ghost:5
+    environment:
+      - NODE_ENV=production
+      - database__client=mysql2
+    ports:
+      - "2368:2368"
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8
+    volumes:
+      - mysql-data:/var/lib/mysql/data
+
+volumes:
+  mysql-data:

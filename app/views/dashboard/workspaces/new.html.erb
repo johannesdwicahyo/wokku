@@ -1,0 +1,14 @@
+<% content_for(:title, "New Workspace") %>
+
+<%# Standalone no-JS fallback. The default flow opens the form inside a
+    slide-panel modal from /dashboard/workspaces. %>
+<div class="max-w-xl mx-auto space-y-6">
+  <%= render Atoms::HashHeaderComponent.new(
+        title: "new_workspace",
+        kicker: "// org teams require a paid plan",
+        size: :md) %>
+
+  <div class="border-1.5 border-ink bg-paper px-6 py-6">
+    <%= render "form", workspace: @workspace, paid_plans: @paid_plans %>
+  </div>
+</div>

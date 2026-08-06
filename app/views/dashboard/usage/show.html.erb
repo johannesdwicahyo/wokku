@@ -1,0 +1,164 @@
+<% fmt_idr = ->(n) { "Rp #{ActiveSupport::NumberHelper.number_to_delimited(n.to_i, delimiter: '.')}" } %>
+
+<div class="flex flex-col gap-6">
+  <div class="flex flex-wrap items-baseline justify-between gap-4">
+    <%= render Atoms::HashHeaderComponent.new(
+          title: "Usage",
+          kicker: "// plan_includes() · next_invoice()",
+          size: :md) %>
+  </div>
+
+  <%# ── Top tiles ───────────────────────────────────────────── %>
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <% if @on_trial %>
+      <%= render Molecules::StatTileComponent.new(
+            label: "Trial days left", value: @trial_days_left,
+            sub: "// ends #{@trial_ends_at.strftime('%b %-d')}",
+            tone: :accent, glyph: "⚡") %>
+    <% else %>
+      <%= render Molecules::StatTileComponent.new(
+            label: "Current plan", value: @plan.name,
+            sub: @plan.free? ? "// free tier" : "// active",
+            glyph: ">_") %>
+    <% end %>
+
+    <%= render Molecules::StatTileComponent.new(
+          label: "Next invoice", value: fmt_idr.call(@next_invoice_after_credits),
+          sub: "// gross #{fmt_idr.call(@next_invoice_amount_idr)}",
+          tone: :ink,
+          glyph: "Rp") %>
+
+    <%= render Molecules::StatTileComponent.new(
+          label: "Next billing", value: @next_billing_date&.strftime("%b %-d") || "—",
+          sub: @next_billing_date ? "// #{@next_billing_date.strftime('%Y')}" : "// trial",
+          glyph: "▮▮") %>
+
+    <%= render Molecules::StatTileComponent.new(
+          label: "Paid invoices", value: @paid_invoices_count,
+          sub: "// lifetime",
+          glyph: "✓") %>
+  </div>
+
+  <%# ── Trial / unpaid invoice banner ───────────────────────── %>
+  <% if @upcoming_unpaid %>
+    <div class="border-1.5 border-warn bg-warn-soft px-5 py-4 flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <div class="font-mono text-[10px] text-warn tracking-widest uppercase mb-1">// unpaid_invoice()</div>
+        <p class="font-mono text-sm text-ink">
+          <strong><%= fmt_idr.call(@upcoming_unpaid.amount_idr) %></strong> due <%= @upcoming_unpaid.due_date&.strftime("%B %-d, %Y") %>
+        </p>
+      </div>
+      <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, mono: true,
+            href: pay_dashboard_invoice_path(@upcoming_unpaid), method: :post) do %>> pay_now()<% end %>
+    </div>
+  <% end %>
+
+  <%# ── Plan-included resources ─────────────────────────────── %>
+  <div class="border-1.5 border-ink bg-paper px-6 py-6">
+    <div class="font-mono text-[10px] text-dim tracking-widest uppercase mb-3">// plan_includes()</div>
+    <h2 class="font-mono text-xl text-ink font-semibold tracking-tighter mb-4"><%= @plan.name %> · what you get</h2>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <% [
+        [ "small", "Small boxes" ],
+        [ "medium", "Medium boxes" ],
+        [ "large", "Large boxes" ],
+        [ "sleeping", "Sleeping boxes" ]
+      ].each do |size_key, label|
+        included = @box_quotas.fetch(size_key, 0).to_i
+        used = @box_usage[size_key].to_i
+        next if included.zero? && used.zero?
+      %>
+        <div class="border-1.5 border-ink bg-bg px-4 py-3">
+          <div class="font-mono text-[10px] text-dim tracking-widest uppercase mb-1.5"><%= label %></div>
+          <div class="font-mono text-2xl text-ink font-semibold tracking-tighter">
+            <%= used %><span class="text-sm text-dim">/<%= included %></span>
+          </div>
+          <% if included > 0 && used > included %>
+            <div class="font-mono text-[11px] text-danger mt-1.5">over quota</div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <% features = @plan.pro_features.is_a?(String) ? (JSON.parse(@plan.pro_features) rescue []) : Array(@plan.pro_features) %>
+    <% if features.any? %>
+      <div class="mt-5 pt-5 border-t border-rule-soft">
+        <div class="font-mono text-[10px] text-dim tracking-widest uppercase mb-3">// pro_features()</div>
+        <div class="flex flex-wrap gap-2">
+          <% features.each do |f| %>
+            <span class="font-mono text-[10px] uppercase tracking-widest px-2 py-1 border border-accent text-accent">→ <%= f.tr('_', ' ') %></span>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <%# ── Addon bundle ─────────────────────────────────────── %>
+    <% fmt_mb = ->(mb) { mb >= 1024 ? "#{(mb / 1024.0).round(mb % 1024 == 0 ? 0 : 1)} GB" : "#{mb} MB" } %>
+    <div class="mt-5 pt-5 border-t border-rule-soft">
+      <div class="font-mono text-[10px] text-dim tracking-widest uppercase mb-3">// addon_bundle()</div>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div class="border-1.5 border-ink bg-bg px-4 py-3">
+          <div class="font-mono text-[10px] text-dim tracking-widest uppercase mb-1.5">Postgres</div>
+          <div class="font-mono text-2xl text-ink font-semibold tracking-tighter">
+            <%= @bundle_usage[:db_count] %><span class="text-sm text-dim">/1</span>
+          </div>
+          <div class="font-mono text-[10px] text-dim mt-1">// shared · up to <%= fmt_mb.call(@plan.db_bundle_mb) %></div>
+        </div>
+        <div class="border-1.5 border-ink bg-bg px-4 py-3">
+          <div class="font-mono text-[10px] text-dim tracking-widest uppercase mb-1.5">Redis</div>
+          <div class="font-mono text-2xl text-ink font-semibold tracking-tighter">
+            <%= @bundle_usage[:redis_count] %><span class="text-sm text-dim">/1</span>
+          </div>
+          <div class="font-mono text-[10px] text-dim mt-1">// dedicated · up to <%= fmt_mb.call(@plan.redis_bundle_mb) %></div>
+        </div>
+        <div class="border-1.5 border-ink bg-bg px-4 py-3">
+          <div class="font-mono text-[10px] text-dim tracking-widest uppercase mb-1.5">Object Storage</div>
+          <div class="font-mono text-2xl text-ink font-semibold tracking-tighter">
+            <%= @bundle_usage[:minio_count] %><span class="text-sm text-dim">/1</span>
+          </div>
+          <div class="font-mono text-[10px] text-dim mt-1">// minio · up to <%= @plan.minio_bundle_gb %> GB · launching soon</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# ── Per-app usage table ─────────────────────────────────── %>
+  <% if @apps.any? %>
+    <div class="border-1.5 border-ink bg-paper px-6 py-6">
+      <div class="font-mono text-[10px] text-dim tracking-widest uppercase mb-3">// usage_by_app()</div>
+      <h2 class="font-mono text-xl text-ink font-semibold tracking-tighter mb-4">Apps</h2>
+
+      <div class="overflow-x-auto">
+        <table class="w-full font-mono text-sm">
+          <thead>
+            <tr class="text-left text-[10px] text-dim tracking-widest uppercase border-b border-rule-soft">
+              <th class="pb-2">Name</th>
+              <th class="pb-2">Status</th>
+              <th class="pb-2">Tier</th>
+              <th class="pb-2 text-right">Count</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @apps.each do |app| %>
+              <% alloc = app.dyno_allocations.includes(:dyno_tier).find_by(process_type: "web") %>
+              <tr class="border-b border-rule-soft">
+                <td class="py-3 text-ink"><%= link_to app.name, dashboard_app_path(app), class: "hover:underline" %></td>
+                <td class="py-3 text-dim text-xs"><%= app.status %></td>
+                <td class="py-3 text-ink-soft text-xs"><%= alloc&.dyno_tier&.name || "—" %></td>
+                <td class="py-3 text-right text-ink"><%= alloc&.count || 0 %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% else %>
+    <div class="border-1.5 border-rule-soft bg-paper px-6 py-8 text-center">
+      <div class="font-mono text-[10px] text-dim tracking-widest uppercase mb-2">// no_apps_yet()</div>
+      <p class="font-mono text-sm text-ink-soft mb-4">You haven't deployed any apps yet. Once you do, they'll appear here with their resource usage.</p>
+      <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, mono: true,
+            href: new_dashboard_app_path) do %>> new_app()<% end %>
+    </div>
+  <% end %>
+</div>

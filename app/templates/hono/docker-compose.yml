@@ -1,0 +1,15 @@
+# name: Hono
+# documentation: https://github.com/honojs/hono
+# slogan: Ultra-fast lightweight web framework for edge and serverless runtimes
+# category: frameworks
+# tags: node, hono, edge, api, bun
+# icon: node
+# deploy_method: git
+# repo: https://github.com/honojs/hono
+# port: 3000
+
+services:
+  hono:
+    image: hono:latest
+    environment:
+      - NODE_ENV=production

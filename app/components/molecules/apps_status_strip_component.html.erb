@@ -1,0 +1,23 @@
+<div class="border-1.5 border-ink bg-paper grid grid-cols-1 md:grid-cols-4 mb-6">
+  <div class="p-4 border-b md:border-b-0 md:border-r-1.5 border-ink">
+    <div class="font-mono text-[10px] text-dim uppercase tracking-widest">running</div>
+    <div class="font-headline text-3xl font-extrabold mt-1"
+         data-controller="motion--counter-tick"
+         data-motion--counter-tick-value-value="<%= state_counts['running'].to_i %>"><%= state_counts['running'].to_i %></div>
+  </div>
+  <div class="p-4 border-b md:border-b-0 md:border-r-1.5 border-ink">
+    <div class="font-mono text-[10px] text-dim uppercase tracking-widest">building</div>
+    <div class="font-headline text-3xl font-extrabold mt-1"><%= in_progress_count %></div>
+  </div>
+  <div class="p-4 border-b md:border-b-0 md:border-r-1.5 border-ink">
+    <div class="font-mono text-[10px] text-dim uppercase tracking-widest">crashed</div>
+    <div class="font-headline text-3xl font-extrabold mt-1 <%= state_counts['crashed'].to_i.positive? ? 'text-danger' : '' %>"><%= state_counts['crashed'].to_i %></div>
+  </div>
+  <div class="p-4">
+    <div class="font-mono text-[10px] text-dim uppercase tracking-widest"><%= plan.name.downcase %> · boxes</div>
+    <div class="font-headline text-3xl font-extrabold mt-1"><%= total_boxes_used %><span class="text-sm text-dim font-medium"> / <%= total_boxes_allowed %></span></div>
+    <% if box_breakdown.any? %>
+      <div class="font-mono text-[10px] text-dim mt-1.5 tracking-wide"><%= box_breakdown.map { |size, used, allowed| "#{size} #{used}/#{allowed}" }.join(" · ") %></div>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,15 @@
+# name: Next.js
+# documentation: https://github.com/johannesdwicahyo/wokku-nextjs-starter
+# slogan: React framework with SSR and static generation
+# category: frameworks
+# tags: node, react, nextjs, frontend
+# icon: node
+# icon_slug: nextdotjs
+# icon_color: FFFFFF
+# version: 15
+# port: 3000
+
+services:
+  nextjs:
+    environment:
+      - NODE_ENV=production

@@ -1,0 +1,8 @@
+<%# target: "_top" — links in the table break out to a full-page visit
+    instead of navigating within this frame. Must match the placeholder. %>
+<%= turbo_frame_tag "apps_list", target: "_top" do %>
+  <%= render Molecules::AppsStatusStripComponent.new(apps: @apps, plan: @plan, box_usage: @box_usage) %>
+  <div class="mt-6">
+    <%= render Organisms::AppsTableComponent.new(apps: @apps) %>
+  </div>
+<% end %>

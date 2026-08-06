@@ -1,0 +1,16 @@
+# name: Astro
+# documentation: https://github.com/johannesdwicahyo/wokku-astro-starter
+# slogan: Modern static site builder — built static, served fast
+# category: frameworks
+# tags: astro, static, frontend
+# icon: node
+# icon_slug: astro
+# icon_color: BC52EE
+# version: 6.3
+# port: 80
+# min_tier: free
+
+services:
+  astro:
+    environment:
+      - NODE_ENV=production

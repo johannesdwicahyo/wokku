@@ -1,0 +1,21 @@
+<%# locals: (metric:, latest:, history:) %>
+<div class="bg-paper border-1.5 border-ink p-4">
+  <div class="font-mono text-[10px] uppercase tracking-wide text-dim mb-1"><%= metric %></div>
+  <% if latest %>
+    <div class="font-mono text-2xl text-ink"><%= latest.p75.round %><span class="text-xs text-dim ml-1">p75</span></div>
+    <div class="font-mono text-[10px] text-dim mt-1">
+      p50 <%= latest.p50.round %> · p95 <%= latest.p95.round %> · n=<%= latest.sample_count %>
+    </div>
+    <% if history.size >= 2 %>
+      <div class="mt-3 flex items-end gap-0.5 h-8">
+        <% max = history.map(&:p75).max %>
+        <% history.last(24).each do |r| %>
+          <div class="bg-ink w-1.5" style="height: <%= ((r.p75 / max.to_f) * 100).round %>%"></div>
+        <% end %>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="font-mono text-2xl text-dim">—</div>
+    <div class="font-mono text-[10px] text-dim mt-1">no samples</div>
+  <% end %>
+</div>

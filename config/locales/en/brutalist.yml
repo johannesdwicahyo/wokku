@@ -1,0 +1,534 @@
+en:
+  meta:
+    description: "Open-source PaaS built for Indonesian developers. Push to deploy, managed Postgres + Redis, native QRIS billing, servers in Jakarta."
+  brand:
+    name: "wokku"
+    domain: "wokku.cloud"
+    company: "PT Wokku Teknologi Nusantara"
+    location: "Made with care in Bali"
+  nav:
+    pricing: "Pricing"
+    templates: "Templates"
+    docs: "Docs"
+    github: "GitHub"
+    sign_in: "Sign in"
+    get_started: "Get Started"
+  hero:
+    eyebrow: "// the VPS that doesn't bite back"
+    headline_pre: "Stop"
+    headline_strike: "babysitting"
+    headline_post: "servers."
+    headline_b: "Your AI can deploy this for you."
+    body: "A managed PaaS for vibecoders, freelancers, and agencies. One flat price per month — no metering, no overage bills. Patching, SSL, backups, uptime: handled. Install Ghost, WordPress, n8n in one click. Pay with QRIS."
+    pill_qris: "QRIS · GoPay · OVO · DANA"
+    pill_price: "From Rp 75K / $5"
+    pill_region: "Jakarta region · <20ms"
+    pill_support: "WhatsApp support"
+    pill_ai_native: "AI-native"
+    cta_primary: "> start_free()"
+    cta_secondary: "> see_pricing()"
+    cta_note: "// free tier · no card · live in ~60s"
+    callout_dashboard: "↘ One dashboard. Apps, dbs, domains, logs — all here."
+    sticker_region_label: "Region"
+    sticker_region_value: "jkt-1 · ~20ms"
+    anchor_pre: "done"
+    anchor_word: "babysitting"
+    anchor_post: "— you stopped"
+    anchor_words: ["patching servers", "renewing SSL", "weekend downtime pings", "a cPanel UI from 2008", "SSH-ing to fix one nginx config"]
+    anchor_tail: " — git push instead."
+  compare:
+    eyebrow: "// what the rest cost"
+    headline: "Same stack. $5 flat."
+    body: "No metering. No overage. Real prices in Rp or $."
+    you: "← that's you"
+    pays_usd: "USD card only"
+    pays_idr: "QRIS · IDR"
+    note: "// public list prices, comparable basic plan + managed postgres, may 2026"
+    suffix_month: "mo"
+    rows:
+      heroku:  { name: "Heroku Eco + addons", price: "~$15",     desc: "Eco dyno + Essential-1 Postgres" }
+      vercel:  { name: "Vercel Pro",           price: "$20/user", desc: "Per-seat + metered overage" }
+      railway: { name: "Railway Hobby",        price: "$5+",      desc: "$5 base + per-second metering" }
+      wokku:   { name: "Wokku Solo",           price: "$5",       desc: "Flat. Free Postgres + Redis · QRIS" }
+  features:
+    eyebrow: "// the boring stuff, done right"
+    headline: "Production-grade, built in."
+    items:
+      - { title: "Push to deploy",     body: "git push wokku main — your app builds, deploys, and goes live with SSL." }
+      - { title: "1-click templates",  body: "60+ open-source apps, pre-configured: WordPress, Ghost, n8n, NocoDB." }
+      - { title: "PR Previews",        body: "Every pull request gets its own live URL. Auto-cleaned on merge." }
+      - { title: "Scheduled tasks",    body: "Cron jobs as first-class citizens. Define in app.json, edit in the dashboard." }
+      - { title: "Transfer app",       body: "Move app ownership to a client account. Bill them directly. Agency-ready." }
+      - { title: "AI-native",          body: "Claude / Codex / Cursor can deploy, scale, and debug via MCP + CLI. You stay in the editor." }
+  templates:
+    headline: "The apps you'd install on cPanel — deployed in 60 seconds."
+    count: "%{n}+ templates"
+  why:
+    eyebrow: "// what wokku kills"
+    headline_a: "The chores your VPS"
+    headline_b: "makes you do — gone."
+    items:
+      - { tag: "no more 3am ssh sessions",          title: "Server patching.",     body: "We patch the host. You sleep on Saturday." }
+      - { tag: "git push · zero downtime",          title: "Manual deploys.",      body: "git push. Done. No scp, no pm2 restart cycles." }
+      - { tag: "let's encrypt · auto-renewed",      title: "SSL renewals.",        body: "Let's Encrypt, auto-renewed forever. Stop forgetting." }
+      - { tag: "health checks · auto-restart",      title: "Downtime calls.",      body: "Health checks + auto-restart. Your client stops pinging you at 11pm." }
+    flag_caption: "// made in Bali · PT Wokku Teknologi Nusantara"
+  cta:
+    eyebrow: "// ready when you are"
+    headline_a: "Your weekend back. Your bill predictable."
+    headline_b: "Your AI in the driver's seat."
+    body: "Free forever for hobby projects. $5/mo when you're ready. Pay with QRIS, GoPay, or card."
+    deploy: "> start_free()"
+    docs: "> read_docs()"
+    chat: "> chat_wa()"
+  freelance_vps_pain:
+    intent_capture:
+      kicker: "not ready yet?"
+      title: "Tell us what's eating your VPS time."
+      body: "One sentence. We read every one. (We use it to make Wokku less annoying for people exactly like you.)"
+      email_placeholder: "your@email.dev (optional)"
+      pain_placeholder: "e.g. SSL keeps expiring on 3 client servers and I'm the one who gets the call"
+      submit: "send_it()"
+      wa_cta: "or chat on WhatsApp"
+      wa_prefilled: "Hi — saw the Wokku landing. The thing eating my VPS time is:"
+      thanks_kicker: "thanks"
+      thanks_title: "Got it. We'll be in touch."
+      thanks_body: "If you left an email, we'll reply within 48 hours. If not — well, we still read it. Now go deploy a test app: wokku.cloud/dashboard."
+  setup:
+    title: "Welcome to Wokku"
+    sub: "// create your admin account to get started"
+    password_confirmation_label: "Confirm password"
+    submit: "create_admin()"
+    created: "Admin account created — welcome!"
+    connect_label: "Also register this server so I can deploy to it"
+    connect_hint: "You'll get a one-command installer on the next screen."
+  signin:
+    email_label: Email
+    password_label: Password
+    submit: sign_in()
+    title: "One step from deploying"
+    sub: "// free · no card · live in ~60s"
+    reassure: "We only read your email — no access to your repos or code."
+    continue_with: "Continue with %{provider}"
+  footer:
+    tagline: "Open-source PaaS on Dokku. Built in Bali for Indonesian developers."
+    status_ok: "All systems operational"
+    cols:
+      product:
+        head: "Product"
+        links: ["Templates", "Pricing", "Changelog", "Status"]
+      solutions:
+        head: "Solutions"
+        links: ["Zero-ops PaaS", "AI-native deploys", "Flat pricing", "One-click apps"]
+      getting_started:
+        head: "Getting started"
+        links: ["Sign in", "Deploy a template", "Pick a plan", "FAQ"]
+      learn:
+        head: "Learn"
+        links: ["Docs", "CLI guide", "FAQ", "GitHub"]
+      company:
+        head: "Company"
+        links: ["Contact", "Privacy", "Terms", "Refund policy"]
+    legal: "© 2026 Wokku · wokku.cloud"
+    license: "// dokku (mit) + wokku (agpl-3.0)"
+  console:
+    sidebar:
+      workspace: "// workspace"
+      account: "// account"
+      admin: "// admin"
+      items:
+        apps: "apps"
+        templates: "templates"
+        audit_log: "audit log"
+      account_items:
+        billing: "billing"
+        settings: "settings"
+        docs: "docs ↗"
+        support: "support ↗"
+      admin_items:
+        admin_console: "admin console →"
+        # Legacy entries kept for older non-brutalist sidebar; brutalist
+        # collapsed to a single admin_console link.
+        servers: "servers"
+        overview: "admin"
+    topbar:
+      search: "search apps..."
+      beta: "wokku.cloud is in public beta — not for production workloads yet."
+      beta_read: "read the notice ↗"
+    dashboard:
+      title: "dashboard"
+      kicker: "// platform overview · today · WIB"
+      stat:
+        apps: "total_apps"
+        resources: "active_resources"
+        errors: "errors_24h"
+        cost: "cost_this_month"
+      deposit: "deposit · billing"
+      runway: "runway"
+      low_runway: "// low_runway · top up before 01:00 WIB"
+      pr_previews: "pr_previews"
+      pr_idle: "// no preview environments running"
+      apps_recent: "recent_apps"
+      view_all: "view all →"
+      activity: "recent_activity"
+      activity_window: "last 24h"
+    app_tabs:
+      overview:    "overview"
+      deploy:      "deploy"
+      runtime:     "runtime"
+      performance: "performance"
+      settings:    "settings"
+    performance_tabs:
+      metrics:  "metrics"
+      requests: "requests"
+      vitals:   "vitals"
+    settings_tabs:
+      profile:       "profile"
+      security:      "security"
+      notifications: "notifications"
+      billing:       "billing"
+    apps:
+      title: "apps"
+      kicker: "// 5 apps · 5 running · region: jkt-1"
+      new: "> new_app()"
+      open_templates: "> templates/"
+      filter: "// filter:"
+      filter_all: "all"
+      filter_live: "live"
+      filter_sleeping: "sleeping"
+      filter_crashed: "crashed"
+      sort_label: "sort:"
+      sort_updated: "updated_desc"
+      quick_start: "// quick start"
+      quick_start_title: "deploy 1-click template"
+    app:
+      breadcrumb: "cd ~/apps/"
+      actions:
+        console: "> console()"
+        restart: "> restart()"
+        stop: "> stop()"
+        deploy: "> deploy()"
+      metrics:
+        cpu: "cpu_usage"
+        mem: "memory_usage · warn"
+        containers: "containers"
+        mem_suggest: "// suggest: wokku scale web=2 or upgrade tier"
+      logs:
+        title: "log · streams: web.1"
+        status: "● live · tail"
+      env: "environment_variables"
+      env_kicker: "9 keys · edit →"
+      reveal: "reveal"
+      domain: "domain"
+      domain_kicker: "ssl: let's_encrypt · auto-renew"
+      domain_add: "+ add custom domain"
+      info:
+        title: "app_info"
+        server: "server"
+        branch: "branch"
+        git: "git_remote"
+        team: "team"
+        container: "container"
+        created: "created"
+      toggles: "toggles"
+      billing_estimate: "billing · estimate"
+      billing_total: "estimate / month"
+      pipeline: "pipeline"
+      pipeline_all: "all releases →"
+    billing:
+      title: "billing"
+      kicker: "// deposit-based · debited daily for the prior day's hourly usage"
+      balance: "deposit_balance"
+      last_settled: "// last_settled: 6h ago · qris"
+      buffer: "/ Rp 75.000 target buffer"
+      auto_topup: "> set_auto_topup()"
+      low_warn: "low_runway · warn"
+      next_debit: "// at Rp 7.500/day · next_debit: 01:00 WIB"
+      top_up_now: "> top_up_now()"
+      pending: "payment_in_progress"
+      pending_body: "// 5 top-ups awaiting gateway confirmation · latest: Rp 50.000 via IPAYMU"
+      pending_link: "> view_pending(5) →"
+      topup: "$ wokku billing:topup"
+      topup_note: "// pay via qris · gopay · ovo · dana · bank transfer · credit card · minimum Rp 25.000"
+      quick: "// quick_amounts"
+      custom: "// custom_amount"
+      runway_at: "// ~%{days}d runway @ current rate"
+      methods: "// methods:"
+      today: "today_so_far"
+      today_sub: "// 22h · billed hour-granular"
+      daily: "daily_rate"
+      daily_sub: "// if resources keep running for 24h"
+      next: "next_debit"
+      next_sub: "// thu, may 14"
+      resources: "running_resources"
+      resources_kicker: "what your deposit is paying for"
+      cols: { resource: "resource", tier: "tier", count: "count", hourly: "hourly", daily: "daily", monthly: "monthly" }
+      total: "// monthly total estimate"
+  onboarding2:
+    title: "Deploy your first app"
+    sub: "// pick one — it's live on the free Jakarta server in ~60s"
+    push_own: "or push your own code"
+    building: "build ~30–90s depending on stack"
+  onboarding_tour:
+    skip: "skip tour"
+    next: "got it"
+    s0_title: "Ship your first app — free, ~60s"
+    s0_body: "We'll walk you through deploying a real app on the free tier. No credit card."
+    s0_start: "let's go"
+    s1: "Start with Astro — a static site that runs great on the free tier. Click it."
+    s2_server: "Free shared server in Jakarta — picked for you."
+    s2_dyno: "Free dyno tier. No credit card."
+    s2_deploy: "Hit deploy — this kicks off a real build."
+    s3: "Building & shipping to jkt-1 — about 60 seconds. This is the real deploy."
+    s4_title: "🎉 It's live!"
+    s4_body: "Your app is running. Open it:"
+    s4_open: "open my app ↗"
+    s5_title: "Deploy hit a snag"
+    s5_body: "The log above shows what happened. Let's try a different template."
+    s5_retry: "back to templates"
+  pricing_tiers:
+    section_label: "// pricing"
+    headline: "One price. No metering. No surprises."
+    sub: "Flat monthly plans. Pick what fits — Free for hobby, Solo for serious work, Pro for production, Team for agencies."
+    compare_link: "See full comparison →"
+    most_popular: "Most popular"
+    cards:
+      free:
+        for_who: "Try it. Hobby & static sites."
+        cta: "Start free"
+        highlights:
+          - "3 sleeping apps · wake on request"
+          - "Free shared Postgres + Redis per app"
+          - "Chatbot support"
+      solo:
+        for_who: "Solo dev with a real app."
+        cta: "Choose Solo"
+        highlights:
+          - "3 sleeping + 3 Small always-on"
+          - "All 5 shared add-ons per app · free"
+          - "Up to 3 dedicated DB + 3 dedicated Redis"
+          - "Custom domain + SSL · weekly backups"
+      pro:
+        for_who: "Production Rails / Django / Laravel."
+        cta: "Choose Pro"
+        highlights:
+          - "3 sleeping + 3 Small + 2 Medium always-on"
+          - "All 5 shared add-ons per app · free"
+          - "Up to 3 dedicated DB + 3 dedicated Redis (Medium)"
+          - "PR Previews · Scheduled Tasks · biweekly backups"
+      team:
+        for_who: "Agencies & teams. 3 seats included."
+        cta: "Choose Team"
+        highlights:
+          - "3 sleeping + 3 Small + 2 Medium + 1 Large always-on"
+          - "All 5 shared add-ons per app · free"
+          - "Buy extra Large or X-Large boxes · billed monthly"
+          - "Daily backups · 30-day · dedicated human support"
+  pricing_page:
+    footnote: "Apps include their web, workers, schedulers, and clock processes in the same container. Need more capacity? Resize the app (Small → Medium → Large) or add replicas at the same per-size price. No metering, no overage bills."
+    bundling_note_html: "A box is one Dokku container. Multi-process apps (e.g. Rails + Sidekiq) can bundle their processes into one container with foreman/supervisor — same box, same price. See <a href=\"/docs/scaling/bundled-processes\" class=\"text-accent hover:underline\">the bundling guide</a>."
+    team_addon_note_html: "Team plan: add extra Large boxes for <strong>%{large}</strong> each or X-Large boxes for <strong>%{xlarge}</strong> each. No metering, billed monthly with the plan."
+    compare_heading: "Full feature comparison"
+    compare_table:
+      feature_header: "Feature"
+    compare_sections:
+      compute: "Compute"
+      networking: "Networking & Domains"
+      shared_addons: "Free shared add-ons (per app)"
+      dedicated: "Dedicated upgrades"
+      databases: "Storage & Backups"
+      deploys: "Deploys & CI/CD"
+      observability: "Observability"
+      notifications: "Notifications"
+      team: "Team & Workspaces"
+      security: "Security"
+      dx: "Developer Experience"
+      support: "Support"
+    compare_rows:
+      # compute
+      small_boxes: "Small app boxes"
+      medium_boxes: "Medium app boxes"
+      large_boxes: "Large app boxes"
+      sleeping_boxes: "Sleeping boxes (idle apps)"
+      large_addon: "Extra Large box"
+      xlarge_addon: "Extra X-Large box"
+      zero_downtime: "Zero-downtime deploys"
+      rollback: "1-click rollback"
+      process_scaling: "Horizontal process scaling"
+      # networking
+      wildcard_subdomain: "*.%{domain} subdomain"
+      custom_domain: "Custom domain"
+      ssl: "Free SSL (Let's Encrypt, auto-renew)"
+      edge_cdn: "Edge CDN (Cloudflare)"
+      multi_server: "Multi-server / multi-region"
+      # shared add-ons (per-app caps, free, attached at box creation)
+      shared_pg_per_box: "Shared Postgres tenant per app"
+      shared_redis_per_box: "Shared Redis tenant per app"
+      shared_memcached_per_box: "Shared Memcached per app"
+      shared_rabbitmq_per_box: "Shared RabbitMQ messages per app"
+      shared_meilisearch_per_box: "Shared Meilisearch index per app"
+      # dedicated upgrades (paid-plan only, replaces the shared tenant)
+      dedicated_db_slots: "Dedicated database slots (workspace)"
+      dedicated_db_engines: "Dedicated database engines"
+      dedicated_redis_slots: "Dedicated Redis slots (workspace)"
+      dedicated_size_note: "Dedicated size (follows box size)"
+      # storage & backups
+      minio_bundle: "Object storage (MinIO, S3-compatible)"
+      backups: "Backups (frequency · retention)"
+      monthly_archive: "Monthly archive snapshots"
+      db_stats: "DB stats (connections / disk / slow queries)"
+      # deploys
+      git_push_deploy: "git push deploy"
+      github_autodeploy: "GitHub auto-deploy"
+      gitlab_bitbucket: "GitLab + Bitbucket integration"
+      templates: "100+ one-click templates"
+      buildpacks: "Heroku-compatible buildpacks + Dockerfile"
+      pr_previews: "PR Previews"
+      scheduled_tasks: "Scheduled Tasks (cron)"
+      env_vars: "Encrypted environment variables"
+      # observability
+      live_logs: "Live log tail"
+      log_retention: "Log retention"
+      metrics: "CPU / RAM / network metrics"
+      metric_history: "Metric history"
+      request_samples: "Request sampling (p50 / p95 / p99)"
+      health_checks: "Health checks"
+      browser_console: "Browser SSH console"
+      audit_log: "Audit log (all activity)"
+      # notifications
+      email_alerts: "Email alerts"
+      slack_discord: "Slack + Discord"
+      telegram: "Telegram"
+      webhook_alerts: "Webhook alerts"
+      mobile_push: "Mobile push notifications"
+      # team
+      workspaces: "Personal + org workspaces"
+      team_seats: "Team seats included"
+      extra_seat: "Extra seat"
+      rbac: "Role-based access control"
+      transfer_app: "Transfer App (agency-friendly)"
+      # security
+      two_factor: "Two-factor authentication (2FA)"
+      ssh_keys: "SSH key management"
+      api_tokens: "API tokens (rotation + scoping)"
+      encrypted_secrets: "Secrets encrypted at rest"
+      device_tracking: "Known-device tracking"
+      server_hardening: "Server hardening (UFW + fail2ban + auto-updates)"
+      # dx
+      dashboard: "Web dashboard"
+      rest_api: "REST API"
+      cli: "CLI"
+      mcp_server: "MCP server (Claude Code / Cursor)"
+      mobile_app: "Mobile app (iOS + Android)"
+      # support
+      support: "Support tier"
+    sizes_heading: "// what's in each app size?"
+    sizes:
+      small:
+        title: "Small"
+        cpu: "shared"
+        ram: "512 MB"
+        storage: "5 GB"
+      medium:
+        title: "Medium"
+        cpu: "1 vCPU"
+        ram: "2 GB"
+        storage: "20 GB"
+      large:
+        title: "Large · Team only"
+        cpu: "2 vCPU"
+        ram: "4 GB"
+        storage: "40 GB"
+      xlarge:
+        title: "X-Large · Team only"
+        cpu: "4 vCPU"
+        ram: "8 GB"
+        storage: "80 GB"
+    size_label:
+      cpu: "cpu"
+      ram: "ram"
+      storage: "storage"
+  seo:
+    default:
+      title: "Managed PaaS for vibecoders, freelancers, agencies"
+      description: "Deploy with one git push. No metering. No overage bills. Pay with QRIS, GoPay, or card. AI-native (MCP + CLI for Claude, Codex, Cursor)."
+  lp:
+    zero_ops:
+      eyebrow: "// the VPS that doesn't bite back"
+      headline_pre: "Stop"
+      headline_strike: "babysitting"
+      headline_post: "servers."
+      headline_mark: "Wokku handles patching, SSL, backups, uptime."
+      sub: "If you rent a $5 droplet, a Hetzner box, or a cPanel VPS for clients — you know the chores. Wokku does them so you don't."
+      cta_primary: "> stop_babysitting()"
+    ai_native:
+      eyebrow: "// for the Claude / Codex / Cursor crowd"
+      headline_pre: "Your AI"
+      headline_strike: ""
+      headline_post: ""
+      headline_mark: "can deploy this for you."
+      sub: "Wokku ships an MCP server and a CLI designed for Claude, Codex, and Cursor. Ask 'deploy this' — your agent does it. You stay in the editor."
+      cta_primary: "> let_ai_deploy()"
+    flat_price:
+      eyebrow: "// no metering. no overage. ever."
+      headline_pre: "One price."
+      headline_strike: "No metering."
+      headline_post: ""
+      headline_mark: "No surprises."
+      sub: "From $5/month flat. Free Postgres. Free Redis. Pay with QRIS, GoPay, OVO, DANA, or card. Predictable bills, every month."
+      cta_primary: "> see_flat_pricing()"
+    one_click_apps:
+      eyebrow: "// cPanel apps, deployed via wokku"
+      headline_pre: "Install"
+      headline_strike: ""
+      headline_post: "in 60 seconds."
+      headline_mark: "Ghost, n8n, WordPress"
+      sub: "60+ pre-configured open-source apps. Pre-wired with SSL, backups, and a custom domain. Install in one click."
+      cta_primary: "> install_first_app()"
+
+  docs:
+    sidebar:
+      label: "// docs"
+    toc:
+      label: "// on this page"
+      shortcuts: "// shortcuts"
+      search: "Search docs"
+      cmdbar: "Command bar"
+    pager:
+      previous: "Previous"
+      next: "Next"
+    header:
+      edited_at: "Updated %{when}"
+      edit_on_github: "Edit on GitHub"
+    feedback:
+      prompt: "Was this page helpful?"
+      "yes": "Yes"
+      "no": "No"
+      or_ping: "or ping us on"
+      whatsapp: "WhatsApp"
+    copy:
+      copy: "Copy"
+    beta_banner:
+      tag: "Public Beta"
+      body: "actively shipping — found a rough edge? tell us"
+      body_short: "Beta"
+      cta: "Tell us"
+  pricing_recommender:
+    kicker: "still not sure"
+    headline: "Which plan fits you?"
+    sub: "Three questions, no signup. Recommends the cheapest plan that covers what you're building."
+    q1:
+      label: "Always-on apps"
+      help: "Apps that need to respond instantly (no sleep). Sleeping apps don't count."
+    q2:
+      label: "Need a dedicated database or Redis?"
+      yes: "Yes"
+      no: "No, shared is fine"
+      help: "Dedicated upgrades give a private container with more RAM + storage. Pro unlocks 3 slots each."
+    q3:
+      label: "Team size"
+      help: "Just you? Pick 1. Team plan includes 3 seats, then $3 / Rp 45.000 each extra."
+    result:
+      label: "We'd pick"
+      default_rationale: "1 always-on app fits in Solo's 3 Small boxes (plus 3 sleeping)."
+      cta: "See full comparison →"

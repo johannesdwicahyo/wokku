@@ -1,0 +1,28 @@
+<%# Tabbed code/explainer panel. Each tab is { id:, label: } plus
+    EITHER `partial:` (Rails partial path) OR `html:` (pre-rendered
+    HTML, used by the docs markdown preprocessor for `:::tabs` blocks). %>
+<div class="mt-4 border-1.5 border-ink rounded-md overflow-hidden bg-paper shadow-brutal-sm"
+     data-controller="code-tabs"
+     data-code-tabs-default-value="<%= tabs.first[:id] %>">
+  <div class="flex border-b-1.5 border-ink bg-bg-deep" style="overflow-x: auto;">
+    <% tabs.each do |tab| %>
+      <button type="button"
+              class="tab-btn <%= 'is-active' if tab[:id] == tabs.first[:id] %>"
+              data-action="click->code-tabs#select"
+              data-id="<%= tab[:id] %>"
+              data-code-tabs-target="tab"><%= tab[:label] %></button>
+    <% end %>
+  </div>
+  <% tabs.each do |tab| %>
+    <div class="px-5 py-5"
+         data-code-tabs-target="panel"
+         data-id="<%= tab[:id] %>"
+         <%= 'hidden' unless tab[:id] == tabs.first[:id] %>>
+      <% if tab[:partial] %>
+        <%= render partial: tab[:partial] %>
+      <% elsif tab[:html] %>
+        <%== tab[:html] %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

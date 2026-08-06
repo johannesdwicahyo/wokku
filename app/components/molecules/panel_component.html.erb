@@ -1,0 +1,9 @@
+<div class="border-1.5 border-ink bg-paper">
+  <% if label.present? %>
+    <div class="flex items-center justify-between px-4 py-2.5 border-b border-rule-soft font-mono text-[11px] text-dim tracking-widest uppercase">
+      <span><%= label %></span>
+      <% if kicker.present? %><span class="text-dim normal-case tracking-tight"><%= kicker %></span><% end %>
+    </div>
+  <% end %>
+  <%= content %>
+</div>

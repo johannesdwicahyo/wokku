@@ -1,0 +1,5 @@
+<% content_for :title, @app.name %>
+<%= render Molecules::CrashLoopBannerComponent.new(app: @app) %>
+<%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :overview) do %>
+  <%= render Organisms::AppOverviewComponent.new(app: @app) %>
+<% end %>

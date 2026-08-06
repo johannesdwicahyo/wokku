@@ -1,0 +1,72 @@
+class Activity < ApplicationRecord
+  belongs_to :user
+  belongs_to :team
+
+  validates :action, presence: true
+
+  scope :recent, -> { order(created_at: :desc).limit(50) }
+  scope :for_team, ->(team) { where(team: team) }
+
+  # Audit-log filters. All scopes accept nil/blank and no-op so the
+  # controller can chain them unconditionally without branching.
+  scope :with_action,  ->(action)    { where(action: action) if action.present? }
+  scope :with_user,    ->(user_id)   { where(user_id: user_id) if user_id.present? }
+  scope :with_channel, ->(channel)   { where("metadata->>'channel' = ?", channel) if channel.present? }
+  scope :since,        ->(t)         { where("created_at >= ?", t) if t.present? }
+  scope :until_,       ->(t)         { where("created_at <= ?", t) if t.present? }
+  scope :ordered,      -> { order(created_at: :desc) }
+
+  CHANNELS = %w[app api cli mcp git_push webhook].freeze
+
+  # Predefined actions
+  ACTIONS = {
+    "app.created" => "created app",
+    "app.destroyed" => "destroyed app",
+    "app.deployed" => "deployed",
+    "app.restarted" => "restarted app",
+    "app.stopped" => "stopped app",
+    "app.started" => "started app",
+    "config.updated" => "updated config for",
+    "domain.added" => "added domain to",
+    "domain.removed" => "removed domain from",
+    "domain.ssl_enabled" => "enabled SSL on",
+    "ssh_key.added" => "added SSH key",
+    "ssh_key.removed" => "removed SSH key",
+    "billing.deposit" => "deposited to wallet",
+    "billing.daily_debit" => "billed daily usage",
+    "billing.app_suspended" => "suspended apps (low balance)",
+    "billing.app_resumed" => "resumed apps",
+    "database.created" => "created database",
+    "database.destroyed" => "destroyed database",
+    "database.linked" => "linked database to",
+    "server.created" => "added server",
+    "server.destroyed" => "removed server",
+    "backup.created" => "backed up",
+    "backup.restored" => "restored",
+    "github.connected" => "connected GitHub repo to",
+    "github.disconnected" => "disconnected GitHub from",
+    "template.deployed" => "deployed template",
+    "notification.created" => "created notification rule",
+    "team.member_added" => "added team member",
+    "team.member_removed" => "removed team member",
+    "terminal.start" => "opened a terminal"
+  }.freeze
+
+  def description
+    ACTIONS[action] || action
+  end
+
+  def self.log(user:, team:, action:, target: nil, metadata: {})
+    create!(
+      user: user,
+      team: team,
+      action: action,
+      target_type: target&.class&.name,
+      target_id: target&.id,
+      target_name: target.try(:name) || target.try(:hostname) || metadata[:name],
+      metadata: metadata
+    )
+  rescue => e
+    Rails.logger.warn("Activity.log failed: #{e.message}")
+  end
+end

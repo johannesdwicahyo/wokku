@@ -1,0 +1,46 @@
+<% content_for(:title, "App Transfers") %>
+
+<div class="space-y-6">
+  <div>
+    <h1 class="font-mono text-xl font-semibold tracking-tighter text-ink"># app_transfers</h1>
+    <p class="mt-0.5 font-mono text-sm text-dim">// pending ownership transfers — review incoming requests and manage outgoing ones</p>
+  </div>
+
+  <section class="space-y-3">
+    <h2 class="font-mono text-sm font-semibold text-ink">incoming</h2>
+    <% if @incoming.any? %>
+      <div class="border-1.5 border-ink bg-paper divide-y divide-rule-soft overflow-hidden">
+        <% @incoming.each do |t| %>
+          <div class="px-5 py-3 flex items-center justify-between gap-3 font-mono">
+            <div class="min-w-0">
+              <p class="text-sm text-ink font-semibold truncate"><%= t.app_record.name %></p>
+              <p class="text-xs text-dim truncate">From <%= t.from_user.email %> · expires <%= time_ago_in_words(t.expires_at) %> from now</p>
+            </div>
+            <%= link_to "review →", dashboard_app_transfer_path(t), class: "text-xs text-accent hover:underline font-semibold" %>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="font-mono text-sm text-dim">// no incoming transfers</p>
+    <% end %>
+  </section>
+
+  <section class="space-y-3">
+    <h2 class="font-mono text-sm font-semibold text-ink">outgoing</h2>
+    <% if @outgoing.any? %>
+      <div class="border-1.5 border-ink bg-paper divide-y divide-rule-soft overflow-hidden">
+        <% @outgoing.each do |t| %>
+          <div class="px-5 py-3 flex items-center justify-between gap-3 font-mono">
+            <div class="min-w-0">
+              <p class="text-sm text-ink font-semibold truncate"><%= t.app_record.name %></p>
+              <p class="text-xs text-dim truncate">To <%= t.to_user.email %> · expires <%= time_ago_in_words(t.expires_at) %> from now</p>
+            </div>
+            <%= button_to "cancel", dashboard_app_transfer_path(t), method: :delete, data: { turbo_confirm: "Cancel transfer of #{t.app_record.name}?" }, class: "text-xs text-danger hover:underline font-semibold bg-transparent border-0 cursor-pointer" %>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="font-mono text-sm text-dim">// no pending outgoing transfers</p>
+    <% end %>
+  </section>
+</div>

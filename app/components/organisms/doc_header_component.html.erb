@@ -1,0 +1,19 @@
+<%# Doc article header: eyebrow → big mono `# Title` → summary → badge row. %>
+<div class="mb-1 font-mono text-[11px] text-accent tracking-widest uppercase"><%= eyebrow %></div>
+<h1 class="font-mono font-semibold tracking-tighter text-ink m-0" style="font-size: 48px; line-height: 1.05;">
+  <span class="text-dim"># </span><%= title %>
+</h1>
+
+<% if summary.present? %>
+  <p class="mt-5 font-sans text-lg leading-relaxed text-ink-soft"><%= summary.html_safe %></p>
+<% end %>
+
+<div class="mt-7 flex items-center gap-3 flex-wrap pb-7 border-b border-rule-soft">
+  <% badges.each do |b| %>
+    <%= render Atoms::TagComponent.new(tone: b[:tone]) do %><%= b[:label] %><% end %>
+  <% end %>
+  <div class="ml-auto font-mono text-[11px] text-dim">
+    <%= t('docs.header.edited_at', when: edited) %> ·
+    <%= link_to "#{t('docs.header.edit_on_github')} ↗", source, class: "hover:text-ink", style: "color:var(--color-dim);" %>
+  </div>
+</div>

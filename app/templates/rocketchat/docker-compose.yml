@@ -1,0 +1,29 @@
+# name: Rocket.Chat
+# documentation: https://github.com/RocketChat/Rocket.Chat
+# slogan: Open-source team communication platform with video conferencing and file sharing
+# category: communication
+# tags: chat, team, messaging, video, slack-alternative
+# icon: communication
+# port: 3000
+
+services:
+  rocketchat:
+    image: rocket.chat:latest
+    environment:
+      - MONGO_URL=mongodb://mongo:27017/rocketchat
+      - MONGO_OPLOG_URL=mongodb://mongo:27017/local
+      - ROOT_URL=http://localhost:3000
+      - PORT=3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:5
+    command: mongod --oplogSize 128 --replSet rs0
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:

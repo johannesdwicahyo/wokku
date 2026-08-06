@@ -1,0 +1,20 @@
+<div class="wk-container">
+  <div class="wk-header">
+    <h1>// app_transfer_request()</h1>
+    <h2><%= @from.email %> wants to transfer <strong><%= @app.name %></strong> to you.</h2>
+  </div>
+  <div class="wk-body">
+    <p>If you accept, the app and all its linked add-ons (databases, domains, env vars) move under your account. Future invoices for this app's plan box land on your billing. Historical usage stays billed to <%= @from.email %>.</p>
+
+    <p>You'll see the full details — server, container tier, linked add-ons, and domains — on the review page before deciding.</p>
+
+    <hr class="wk-divider">
+
+    <a href="<%= @url %>" class="wk-cta">Review and respond →</a>
+
+    <p style="font-size:11px; color:#888; margin-top:24px;">This request expires <%= time_ago_in_words(@transfer.expires_at) %> from now. If you didn't expect this, ignore the email — nothing changes until you click Accept.</p>
+  </div>
+  <div class="wk-footer">
+    Wokku · Invoice-based billing · jakarta, id
+  </div>
+</div>

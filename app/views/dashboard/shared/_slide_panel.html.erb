@@ -1,0 +1,25 @@
+<%# Backdrop — brutalist (P7). slide-panel targets/actions preserved 1:1. %>
+<div data-slide-panel-target="backdrop"
+     data-action="click->slide-panel#backdropClick"
+     class="hidden fixed inset-0 z-40 bg-ink/40 opacity-0 transition-opacity duration-300">
+</div>
+<%# Panel %>
+<%
+  size = local_assigns[:size] || "md"
+  width_class = { "md" => "max-w-md", "lg" => "max-w-xl", "xl" => "max-w-2xl" }[size.to_s] || "max-w-md"
+%>
+<div data-slide-panel-target="panel"
+     class="fixed inset-y-0 right-0 z-50 w-full <%= width_class %> bg-paper border-l-1.5 border-ink shadow-brutal-lg transform translate-x-full transition-transform duration-300 ease-out overflow-y-auto">
+  <div class="flex items-center justify-between px-6 py-4 border-b-1.5 border-ink">
+    <div>
+      <h2 class="font-mono text-base font-semibold text-ink"># <%= title %></h2>
+      <% if local_assigns[:subtitle] %>
+        <p class="mt-0.5 font-mono text-xs text-dim">// <%= subtitle %></p>
+      <% end %>
+    </div>
+    <button data-action="click->slide-panel#close" class="text-dim hover:text-ink transition cursor-pointer p-1 font-mono text-lg" aria-label="Close panel">✕</button>
+  </div>
+  <div class="px-6 py-5">
+    <%= yield %>
+  </div>
+</div>

@@ -1,0 +1,36 @@
+<div class="wk-container">
+  <div class="wk-header">
+    <h1>// new_device_sign_in()</h1>
+    <h2>New sign-in to your Wokku account.</h2>
+  </div>
+  <div class="wk-body">
+    <p>Hi <%= @user.name.presence || @user.email %>,</p>
+    <p>We noticed a new sign-in from a device we haven't seen on this account before:</p>
+
+    <ul class="wk-list">
+      <li><strong>When:</strong> <%= @first_seen_at.strftime("%B %-d, %Y at %H:%M %Z") %></li>
+      <li><strong>Device:</strong> <%= @browser_label %></li>
+      <li><strong>IP address:</strong> <%= @ip %></li>
+    </ul>
+
+    <p><strong>Was this you?</strong> If yes, nothing to do — we'll remember this device and stop alerting for it.</p>
+
+    <div class="wk-alert wk-alert-danger">
+      <strong>Wasn't you?</strong> Your account may be compromised. Act quickly:
+      <ol style="margin: 8px 0 0; padding-left: 20px;">
+        <li>Change your Google / GitHub password.</li>
+        <li>Open Wokku Settings, sign out every session, review recent activity.</li>
+        <li>Rotate any API tokens you've issued.</li>
+      </ol>
+    </div>
+
+    <hr class="wk-divider">
+
+    <a href="<%= dashboard_profile_url %>" class="wk-cta">Open Wokku Settings →</a>
+
+    <p style="font-size:11px; color:#888; margin-top:24px;">You're receiving this because a sign-in happened from an unfamiliar device — part of account safety, not opt-out-able.</p>
+  </div>
+  <div class="wk-footer">
+    Wokku · Invoice-based billing · jakarta, id
+  </div>
+</div>

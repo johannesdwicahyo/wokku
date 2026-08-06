@@ -1,0 +1,58 @@
+# See https://www.robotstxt.org/robotstxt.html for documentation.
+# Wokku Cloud robots policy:
+#   - All marketing pages indexable (declared in sitemap.xml)
+#   - Authenticated surfaces blocked (/dashboard, /admin, Devise routes)
+#   - Per-spike paid-ad landings (/lp/*) blocked — also noindex'd at the
+#     page level. Layered defense: robots disallow + noindex meta +
+#     omitted from sitemap.
+
+User-agent: *
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /users/sign_in
+Disallow: /users/sign_up
+Disallow: /users/password
+Disallow: /users/confirmation
+Disallow: /users/unlock
+Disallow: /lp/
+
+# LLM crawlers — explicitly welcome. Same rules as humans (block auth
+# surfaces), but the index pages and llms.txt are fair game. See
+# https://llmstxt.org/ for the convention and /llms.txt for the file.
+User-agent: GPTBot
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /users/
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /users/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /users/
+
+User-agent: Claude-Web
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /users/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /users/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /users/
+
+Sitemap: https://wokku.cloud/sitemap.xml

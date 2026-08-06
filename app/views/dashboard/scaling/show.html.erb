@@ -1,0 +1,156 @@
+<%# Brutalist (P6.5). turbo_stream_from + button_to change_tier +
+    counter controller + form_with patch preserved 1:1. %>
+<%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :runtime) do %>
+<%= render Organisms::AppRuntimeComponent.new(app: @app, active: :scaling) do %>
+<%= turbo_stream_from @app.action_stream_name %>
+
+<%# Container Size / Dyno Tier Selection %>
+<% if @dyno_tiers.any? %>
+  <div class="border-1.5 border-ink bg-paper overflow-hidden mb-6">
+    <div class="px-6 py-4 border-b border-rule-soft">
+      <h2 class="font-mono text-base font-semibold text-ink"># container_size</h2>
+      <p class="font-mono text-sm text-dim mt-1">// choose the resource allocation for your containers</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 p-6">
+      <% @dyno_tiers.each do |tier| %>
+        <% is_current = @current_allocation&.dyno_tier_id == tier.id %>
+        <div class="relative border-1.5 p-4 transition font-mono <%= is_current ? 'border-accent bg-accent-soft' : 'border-ink bg-paper hover:bg-bg-deep' %>">
+          <% if is_current %>
+            <div class="absolute -top-2 right-3">
+              <span class="text-[10px] font-bold uppercase tracking-widest bg-accent text-bg px-2 py-0.5">current</span>
+            </div>
+          <% end %>
+
+          <h3 class="text-sm font-bold text-ink capitalize"><%= tier.name %></h3>
+          <div class="mt-3 space-y-1.5 text-xs text-ink-soft">
+            <div><span class="font-bold text-ink"><%= tier.memory_mb >= 1024 ? "#{tier.memory_mb / 1024} GB" : "#{tier.memory_mb} MB" %></span> RAM</div>
+            <div>
+              <% if tier.shared_vcpu? %><span class="font-bold text-ink">Shared</span> vCPU<% else %><span class="font-bold text-ink"><%= tier.cpu_shares %></span> vCPU<% end %>
+            </div>
+            <% if tier.respond_to?(:storage_mb) && tier.storage_mb > 0 %>
+              <div><span class="font-bold text-ink"><%= tier.storage_mb >= 1024 ? "#{tier.storage_mb / 1024} GB" : "#{tier.storage_mb} MB" %></span> storage</div>
+            <% end %>
+            <% if tier.respond_to?(:max_per_user) && tier.max_per_user.present? %>
+              <div class="text-dim">Max <%= tier.max_per_user %> per user</div>
+            <% end %>
+          </div>
+
+          <%# Bundle v2: no per-tier pricing. Tier is just a size label;
+              cost is bundled in the user's flat plan. %>
+          <% unless is_current %>
+            <%= button_to((@current_allocation && tier.memory_mb > @current_allocation.dyno_tier.memory_mb) ? "Upgrade" : "Select",
+                  change_tier_dashboard_app_scaling_path(@app),
+                  params: { dyno_tier_id: tier.id, process_type: "web" },
+                  method: :post,
+                  data: { turbo_confirm: "Change to #{tier.name} (#{tier.memory_mb >= 1024 ? "#{tier.memory_mb / 1024}GB" : "#{tier.memory_mb}MB"}, #{tier.vcpu_label})?" },
+                  class: "mt-3 w-full text-center px-3 py-1.5 text-xs font-semibold border-1.5 border-ink #{@current_allocation && tier.memory_mb > @current_allocation.dyno_tier.memory_mb ? 'bg-ink text-bg hover:bg-ink-soft' : 'bg-paper text-ink hover:bg-bg-deep'} transition cursor-pointer") %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <%# Bundle v2: no per-container or per-dyno pricing preview — flat plan.
+        Footer summarises shape (container size × dyno counts) without Rp. %>
+    <% if @current_allocation %>
+      <%
+        tier = @current_allocation.dyno_tier
+        total_dynos = @process_scales.any? ? @process_scales.sum(&:count) : 1
+      %>
+      <div class="px-6 py-4 bg-bg-deep border-t border-rule-soft font-mono">
+        <div class="flex items-center justify-between gap-4 flex-wrap">
+          <div class="flex items-center gap-6 flex-wrap">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-dim">Container:</span>
+              <span class="text-sm font-bold text-ink capitalize"><%= tier.name %></span>
+              <span class="text-xs text-dim">(<%= tier.memory_mb >= 1024 ? "#{tier.memory_mb / 1024}GB" : "#{tier.memory_mb}MB" %>, <%= tier.vcpu_label %>)</span>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs text-dim">Dynos:</span>
+              <% @process_scales.each do |ps| %>
+                <span class="text-xs border border-rule-soft px-2 py-0.5"><%= ps.process_type %> × <%= ps.count %></span>
+              <% end %>
+              <span class="text-xs text-dim">= <%= total_dynos %> total</span>
+            </div>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] uppercase tracking-widest text-dim">included with your plan</span>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+<%# Process Scaling %>
+<%
+  can_scale = @current_allocation&.dyno_tier&.scalable
+  current_tier_name = @current_allocation&.dyno_tier&.name&.capitalize || "Unknown"
+%>
+<div class="border-1.5 border-ink bg-paper overflow-hidden">
+  <div class="px-6 py-4 border-b border-rule-soft">
+    <div class="flex items-center justify-between gap-3 flex-wrap">
+      <div>
+        <h2 class="font-mono text-base font-semibold text-ink"># process_scaling</h2>
+        <p class="font-mono text-sm text-dim mt-1">// scale the number of dynos for each process type</p>
+      </div>
+      <% unless can_scale %>
+        <div class="flex items-center gap-2 border-1.5 border-ink px-3 py-1.5 font-mono" title="Upgrade to Standard or higher to enable horizontal scaling">
+          <span class="text-warn">🔒</span>
+          <span class="text-[10px] text-dim font-bold uppercase tracking-widest">Upgrade to scale</span>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="px-6 py-3 bg-bg-deep border-b border-rule-soft font-mono">
+    <span class="text-[10px] text-dim">Process types are defined in your app's <span class="text-ink-soft">Procfile</span>. Deploy to add or change process types.</span>
+  </div>
+
+  <% if @process_scales.any? %>
+    <%= form_with(url: dashboard_app_scaling_path(@app), method: :patch, class: "divide-y divide-rule-soft") do |f| %>
+      <% @process_scales.each do |ps| %>
+        <div class="px-6 py-5 flex items-center justify-between gap-3 flex-wrap font-mono">
+          <div class="flex items-center gap-4">
+            <div>
+              <span class="text-sm font-semibold text-ink"><%= ps.process_type %></span>
+              <p class="text-xs text-dim mt-0.5">
+                <% if ps.process_type == "web" %>Handles HTTP requests<% elsif ps.process_type == "worker" %>Processes background jobs<% else %>Custom process type<% end %>
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <% if can_scale %>
+              <div class="flex items-center border-1.5 border-ink overflow-hidden" data-controller="counter">
+                <button type="button" data-action="click->counter#decrement" class="px-3 py-2 text-ink hover:bg-bg-deep transition cursor-pointer">−</button>
+                <input type="number" name="scaling[<%= ps.process_type %>]" value="<%= ps.count %>"
+                       min="0" max="10" data-counter-target="input"
+                       class="w-12 text-center bg-bg border-x-1.5 border-ink text-ink text-sm py-2 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                <button type="button" data-action="click->counter#increment" class="px-3 py-2 text-ink hover:bg-bg-deep transition cursor-pointer">+</button>
+              </div>
+              <span class="text-xs text-dim w-12"><%= ps.count == 1 ? "1 dyno" : "#{ps.count} dynos" %></span>
+            <% else %>
+              <div class="flex items-center border-1.5 border-ink overflow-hidden opacity-40 cursor-not-allowed" title="Upgrade to Standard or higher to scale horizontally">
+                <div class="px-3 py-2 text-dim">−</div>
+                <input type="number" name="scaling[<%= ps.process_type %>]" value="<%= ps.count %>" readonly
+                       class="w-12 text-center bg-bg border-x-1.5 border-ink text-dim text-sm py-2 cursor-not-allowed">
+                <div class="px-3 py-2 text-dim">+</div>
+              </div>
+              <span class="text-xs text-dim w-12"><%= ps.count == 1 ? "1 dyno" : "#{ps.count} dynos" %></span>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <% if can_scale %>
+        <div class="px-6 py-4 bg-bg-deep">
+          <%= f.submit "Apply Changes", class: "px-4 py-2 bg-ink text-bg font-mono text-sm font-semibold border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer" %>
+        </div>
+      <% end %>
+    <% end %>
+  <% else %>
+    <div class="px-6 py-8 text-center font-mono text-sm text-dim">// no process types found — deploy the app first to see available processes</div>
+  <% end %>
+</div>
+<% end %>
+<% end %>

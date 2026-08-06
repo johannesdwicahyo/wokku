@@ -1,0 +1,7 @@
+harness/log/
+harness/tmp/
+harness/storage/
+*.gem
+.DS_Store
+wokkud/wokkud
+harness/.bundle/

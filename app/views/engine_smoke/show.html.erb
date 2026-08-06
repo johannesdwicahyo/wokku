@@ -1,0 +1,10 @@
+<%# engines/wokku/app/views/engine_smoke/show.html.erb %>
+<!DOCTYPE html>
+<html>
+  <body>
+    <%= render(EngineSmokeComponent.new) %>
+    <%= image_tag "wokku-engine-smoke.svg", alt: "smoke", id: "wokku-smoke-img" %>
+    <div data-controller="wokku-engine-smoke" id="wokku-smoke-stim">stimulus target</div>
+    <%= javascript_importmap_tags %>
+  </body>
+</html>

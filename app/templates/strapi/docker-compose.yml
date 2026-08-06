@@ -1,0 +1,25 @@
+# name: Strapi
+# documentation: https://github.com/strapi/strapi
+# slogan: Leading open-source headless CMS
+# category: cms
+# tags: headless-cms, api, node
+# icon: cms
+# icon_slug: strapi
+# icon_color: 4945FF
+# port: 1337
+# set_url: PUBLIC_URL
+# generate_secrets: APP_KEYS,API_TOKEN_SALT,ADMIN_JWT_SECRET,JWT_SECRET,TRANSFER_TOKEN_SALT
+
+services:
+  strapi:
+    image: strapi/strapi:latest
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

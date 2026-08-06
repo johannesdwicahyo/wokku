@@ -1,0 +1,39 @@
+# name: WordPress
+# documentation: https://github.com/docker-library/wordpress
+# slogan: World's most popular open-source content management system
+# category: cms
+# tags: cms, blog, php, mysql
+# icon: cms
+# icon_slug: wordpress
+# icon_color: FFFFFF
+# port: 80
+# dedicated_db_engine: mariadb
+# mysql_components: WORDPRESS_DB_
+# alias_env: WORDPRESS_DB_NAME=WORDPRESS_DB_DATABASE
+# storage_mounts: /var/www/html
+
+services:
+  wordpress:
+    image: wordpress:latest
+    environment:
+      - WORDPRESS_DB_HOST=mysql
+      - WORDPRESS_DB_USER=wordpress
+      - WORDPRESS_DB_PASSWORD=wordpress
+      - WORDPRESS_DB_NAME=wordpress
+    ports:
+      - "80:80"
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mariadb:11
+    environment:
+      - MYSQL_DATABASE=wordpress
+      - MYSQL_USER=wordpress
+      - MYSQL_PASSWORD=wordpress
+      - MYSQL_ROOT_PASSWORD=rootpassword
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+volumes:
+  mysql-data:

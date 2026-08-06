@@ -1,0 +1,18 @@
+# name: Phoenix
+# documentation: https://github.com/johannesdwicahyo/wokku-phoenix-starter
+# slogan: Elixir web framework for productive and reliable apps
+# category: frameworks
+# tags: elixir, phoenix, fullstack
+# icon: elixir
+# icon_slug: phoenixframework
+# icon_color: FD4F00
+# version: 1.7
+# port: 4000
+# generate_secrets: SECRET_KEY_BASE
+
+services:
+  phoenix:
+    environment:
+      - PHX_SERVER=true
+      - PHX_HOST=wokku.app
+      - PORT=4000

@@ -1,0 +1,26 @@
+<%# Shown when wokkud marks a host degraded/down. Message is honest and
+    blames the host, not the user's code — that confusion is the exact
+    pain this banner exists to kill. Wrapper classes match
+    shared/_low_balance_banner so both read as one banner system. %>
+<% unhealthy_team_servers.each do |server| %>
+  <%# id is per-server: a team can have apps on two sick hosts at once,
+      and duplicate DOM ids are invalid exactly in that worst case. %>
+  <div id="host-down-banner-<%= server.id %>" class="host-down-banner bg-error/10 border-error/30 text-error border-b px-4 py-2.5">
+    <div class="flex items-center justify-center gap-2 text-sm">
+      <span class="material-symbols-outlined text-[16px]">warning</span>
+      <% if server.heartbeat_status == "down" %>
+        <span>
+          Apps on <strong><%= server.name %></strong> may be unavailable — the host stopped responding
+          <%= server.heartbeat_at ? "#{time_ago_in_words(server.heartbeat_at)} ago" : "" %>.
+          This is on our side, not your code. We're on it.
+        </span>
+      <% else %>
+        <span>
+          The host <strong><%= server.name %></strong> is degraded
+          (<%= server.vitals["docker"] == "ok" ? "disk #{server.vitals['disk_used_pct'].to_i}% full" : "Docker daemon trouble" %>) —
+          deploys may fail until it recovers.
+        </span>
+      <% end %>
+    </div>
+  </div>
+<% end %>

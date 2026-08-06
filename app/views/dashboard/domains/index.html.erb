@@ -1,0 +1,100 @@
+<%#
+  Brutalist domains (P5 of redesign-c-full). slide-panel, render tabs,
+  the two turbo_stream_from subscriptions, render row + form_with all
+  preserved 1:1 from index.OLD_DESIGN.html.erb.
+%>
+<%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :settings) do %>
+<%= render Organisms::AppSettingsComponent.new(app: @app, active: :domains) do %>
+<div data-controller="slide-panel">
+
+<%
+  owned_suffixes = Wokku.config.owned_domains.map { |d| ".#{d}" }
+  owned_domains  = @domains.select { |d| owned_suffixes.any? { |s| d.hostname.end_with?(s) } }
+  # Prefer the canonical Wokku TLD (post-cutover that's wokku.app) for
+  # the displayed/auto-assigned URL; fall back to any other owned domain
+  # (e.g. legacy wokku.cloud) so apps backfilled long ago still show one.
+  canonical_suffix = ".#{Wokku.config.canonical_domain}"
+  wokku_domain   = owned_domains.find { |d| d.hostname.end_with?(canonical_suffix) } || owned_domains.first
+  custom_domains = @domains - owned_domains
+  fallback_hostname = "#{@app.name}.#{Wokku.config.canonical_domain}"
+%>
+
+<%# Wokku Domain (auto-assigned) %>
+<div class="border-1.5 border-ink bg-paper mb-6">
+  <div class="px-6 py-4 border-b border-rule-soft">
+    <h2 class="font-mono text-base font-semibold text-ink"># wokku_domain</h2>
+    <p class="font-mono text-xs text-dim mt-1">// your app is available at this auto-assigned URL</p>
+  </div>
+
+  <% if wokku_domain %>
+    <div class="px-6 py-4 flex items-center justify-between gap-3 flex-wrap font-mono">
+      <div>
+        <%= link_to "↗ #{wokku_domain.hostname}", "https://#{wokku_domain.hostname}", target: "_blank", rel: "noopener", class: "text-sm font-medium text-accent hover:underline transition" %>
+        <div class="flex items-center gap-2 mt-0.5">
+          <% if wokku_domain.ssl_enabled? %>
+            <span class="inline-flex items-center gap-1.5 text-xs text-success"><span class="w-1.5 h-1.5 bg-success"></span>ssl</span>
+          <% end %>
+          <span class="text-xs text-dim">auto-managed</span>
+        </div>
+      </div>
+      <%= link_to "open_app ↗", "https://#{wokku_domain.hostname}", target: "_blank", rel: "noopener", class: "inline-flex items-center px-3 py-1.5 border-1.5 border-ink bg-paper text-sm text-ink hover:bg-bg-deep transition" %>
+    </div>
+  <% else %>
+    <div class="px-6 py-4 font-mono text-sm text-dim">// no Wokku domain assigned — sync the server to detect domains</div>
+  <% end %>
+</div>
+
+<%# Custom Domains %>
+<div class="border-1.5 border-ink bg-paper mb-6">
+  <div class="px-6 py-4 border-b border-rule-soft flex items-center justify-between gap-3 flex-wrap">
+    <div>
+      <h2 class="font-mono text-base font-semibold text-ink"># custom_domains</h2>
+      <p class="font-mono text-xs text-dim mt-1">// domains pointing to <span class="text-ink"><%= @app.name %></span></p>
+    </div>
+    <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer">+ add_domain</button>
+  </div>
+
+  <%# Two streams: per-row replacement (frame swaps) + the app-level
+      actions stream so toasts from EnableSslJob also surface here. %>
+  <%= turbo_stream_from "app_#{@app.id}_domains" %>
+  <%= turbo_stream_from @app.action_stream_name %>
+
+  <% if custom_domains.any? %>
+    <div class="divide-y divide-rule-soft">
+      <% custom_domains.each do |domain| %>
+        <%= render "row", domain: domain, app: @app %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="px-6 py-8 text-center font-mono text-sm text-dim">// no custom domains configured</div>
+  <% end %>
+</div>
+
+<%= render layout: "dashboard/shared/slide_panel", locals: { title: "Add Domain", subtitle: "Configure DNS at your registrar, then add the hostname below" } do %>
+  <%# DNS spec forbids CNAME on apex/root domains — show both paths. %>
+  <div class="space-y-3 mb-5 font-mono text-xs">
+    <div class="border-1.5 border-ink bg-bg p-3">
+      <p class="text-[10px] text-dim uppercase tracking-widest font-bold mb-1">Subdomain (e.g. <code>app.example.com</code>)</p>
+      <p class="text-ink-soft">Add a <span class="text-ink">CNAME</span> → <span class="text-accent break-all"><%= wokku_domain&.hostname || fallback_hostname %></span></p>
+    </div>
+    <div class="border-1.5 border-ink bg-bg p-3">
+      <p class="text-[10px] text-dim uppercase tracking-widest font-bold mb-1">Root domain (e.g. <code>example.com</code>)</p>
+      <p class="text-ink-soft">Add an <span class="text-ink">A record</span> → <span class="text-accent"><%= @app.server&.host %></span></p>
+      <p class="text-[10px] text-dim mt-1">Or <span>ALIAS</span>/<span>ANAME</span> to <span class="break-all"><%= wokku_domain&.hostname || fallback_hostname %></span> if your DNS provider supports CNAME flattening.</p>
+    </div>
+  </div>
+
+  <%= form_with(model: Domain.new, url: dashboard_app_domains_path(@app), class: "space-y-4") do |f| %>
+    <div>
+      <%= f.label :hostname, class: "block font-mono text-[10px] text-dim uppercase tracking-widest font-bold mb-1" %>
+      <%= f.text_field :hostname, class: "w-full bg-bg border-1.5 border-ink text-ink font-mono text-sm px-3 py-2 focus:outline-none focus:border-accent", placeholder: "app.example.com", autofocus: true %>
+    </div>
+    <div class="flex items-center gap-3">
+      <%= f.submit "Add Domain", class: "px-4 py-2 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer" %>
+      <button type="button" data-action="click->slide-panel#close" class="font-mono text-sm text-dim hover:text-ink transition cursor-pointer">Cancel</button>
+    </div>
+  <% end %>
+<% end %>
+</div>
+<% end %>
+<% end %>

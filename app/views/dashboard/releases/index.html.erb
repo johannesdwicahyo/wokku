@@ -1,0 +1,172 @@
+<%#
+  Brutalist releases (P3c of redesign-c-full, 2026-05-17). Controllers,
+  forms, clipboard/confirm-delete wiring and route helpers preserved
+  1:1 from index.OLD_DESIGN.html.erb — only presentation repainted.
+%>
+<%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :deploy) do %>
+  <%= render Organisms::AppDeployComponent.new(app: @app, active: :releases) do %>
+
+<%# Deployment Method %>
+<div class="border-1.5 border-ink bg-paper mb-6">
+  <div class="px-6 py-4 border-b border-rule-soft">
+    <h2 class="font-mono text-base font-semibold text-ink"># deploy</h2>
+    <p class="font-mono text-xs text-dim mt-1">// push code to your Dokku server</p>
+  </div>
+
+  <div class="p-6 space-y-6">
+    <%# Git Remote %>
+    <div>
+      <h3 class="font-mono text-sm font-semibold text-ink mb-2">> git_remote</h3>
+      <p class="font-mono text-xs text-dim mb-3">Add the Dokku remote to your repository and push to deploy.</p>
+      <% git_remote = "dokku@#{@app.server.host}:#{@app.name}" %>
+      <div class="space-y-2">
+        <div class="flex items-center gap-2">
+          <code class="flex-1 bg-bg border-1.5 border-ink px-3 py-2 font-mono text-sm text-ink-soft">git remote add dokku <%= git_remote %></code>
+          <button type="button" data-controller="clipboard" data-clipboard-text-value="git remote add dokku <%= git_remote %>" data-action="click->clipboard#copy" class="px-3 py-2 border-1.5 border-ink bg-paper text-dim hover:text-accent transition-colors cursor-pointer" title="Copy">
+            <span data-clipboard-target="label" class="font-mono text-xs">copy</span>
+          </button>
+        </div>
+        <div class="flex items-center gap-2">
+          <code class="flex-1 bg-bg border-1.5 border-ink px-3 py-2 font-mono text-sm text-ink-soft">git push dokku <%= @app.deploy_branch || "main" %></code>
+          <button type="button" data-clipboard-text-value="git push dokku <%= @app.deploy_branch || "main" %>" data-action="click->clipboard#copy" class="px-3 py-2 border-1.5 border-ink bg-paper text-dim hover:text-accent transition-colors cursor-pointer" title="Copy">
+            <span data-clipboard-target="label" class="font-mono text-xs">copy</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="border-t border-rule-soft"></div>
+
+    <%# GitHub Integration %>
+    <div class="border-1.5 border-ink bg-bg-deep p-4">
+      <h3 class="font-mono text-[10px] font-bold text-dim uppercase tracking-widest mb-2">github</h3>
+      <% if @app.github_repo_full_name.present? %>
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <span class="font-mono text-sm text-ink"><%= @app.github_repo_full_name %></span>
+            <span class="font-mono text-xs text-dim ml-1">(<%= @app.deploy_branch %>)</span>
+          </div>
+          <%= button_to "Disconnect", dashboard_app_github_disconnect_path(@app), method: :delete, class: "font-mono text-xs text-danger hover:underline cursor-pointer bg-transparent border-0", data: { turbo_confirm: "Disconnect GitHub?" } %>
+        </div>
+        <p class="font-mono text-xs text-dim mt-1">Auto-deploys on push to <span class="text-ink"><%= @app.deploy_branch %></span></p>
+      <% else %>
+        <p class="font-mono text-xs text-dim mb-3">Connect a GitHub repository for automatic deploys on push.</p>
+        <% if GithubApp.configured? %>
+          <% if current_user.github_installation_id %>
+            <%= link_to "Connect Repository", dashboard_app_github_repos_path(@app), class: "inline-flex items-center px-3 py-1.5 border-1.5 border-ink bg-paper font-mono text-xs text-ink hover:bg-bg-deep transition-colors" %>
+          <% else %>
+            <a href="<%= GithubApp.installation_url %>" class="inline-flex items-center px-3 py-1.5 border-1.5 border-ink bg-paper font-mono text-xs text-ink hover:bg-bg-deep transition-colors">Install GitHub App</a>
+          <% end %>
+        <% else %>
+          <span class="font-mono text-xs text-dim">GitHub App not configured. Set GITHUB_APP_ID and GITHUB_APP_PRIVATE_KEY env vars.</span>
+        <% end %>
+      <% end %>
+    </div>
+
+    <div class="border-t border-rule-soft"></div>
+
+    <%# Manual Deploy %>
+    <div>
+      <h3 class="font-mono text-sm font-semibold text-ink mb-2">> manual_deploy</h3>
+      <p class="font-mono text-xs text-dim mb-3">Trigger a rebuild of the current codebase on the server.</p>
+      <%= button_to "> deploy_now()", deploy_dashboard_app_releases_path(@app), method: :post, data: { turbo_confirm: "Rebuild and deploy #{@app.name}?" }, class: "inline-flex items-center px-3.5 py-2 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer" %>
+    </div>
+  </div>
+</div>
+
+<%# Release History %>
+<div class="border-1.5 border-ink bg-paper">
+  <div class="px-6 py-4 border-b border-rule-soft">
+    <h2 class="font-mono text-base font-semibold text-ink"># release_history</h2>
+    <p class="font-mono text-xs text-dim mt-1">// deploy history for <span class="text-ink"><%= @app.name %></span></p>
+  </div>
+
+  <% if @releases.any? %>
+    <div class="divide-y divide-rule-soft">
+      <% @releases.each do |release| %>
+        <div class="px-6 py-4 flex items-center justify-between gap-4 flex-wrap hover:bg-bg-deep transition-colors">
+          <div class="flex items-center gap-4 min-w-0">
+            <%
+              if release.deploy
+                dot = case release.deploy.status
+                  when "succeeded" then "bg-success"
+                  when "failed", "timed_out" then "bg-danger"
+                  when "building" then "bg-warn"
+                  else "bg-dim"
+                end
+              else
+                dot = "bg-accent"
+              end
+            %>
+            <span class="w-2 h-2 <%= dot %> flex-shrink-0"></span>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap font-mono">
+                <span class="text-sm font-semibold text-ink">v<%= release.version %></span>
+                <% if release.deploy&.commit_sha.present? %>
+                  <span class="text-xs text-dim border border-rule-soft px-1.5 py-0.5"><%= release.deploy.commit_sha.first(7) %></span>
+                <% end %>
+                <% if release.deploy %>
+                  <% st = release.deploy.status %>
+                  <% if st == "succeeded" %><span class="text-xs text-success">succeeded</span>
+                  <% elsif st == "failed" %><span class="text-xs text-danger">failed</span>
+                  <% elsif st == "timed_out" %><span class="text-xs text-danger">timed out</span>
+                  <% elsif st == "building" %><span class="text-xs text-warn">building...</span>
+                  <% elsif st == "pending" %><span class="text-xs text-dim">pending</span>
+                  <% end %>
+                <% else %>
+                  <%# Releases created by PostDeploySetupJob (git push) and
+                      webhook controllers don't attach a Deploy row — the
+                      description line below already conveys the kind
+                      ("Deploy via git push" / "Rollback to v..." etc.).
+                      Skip the badge in that case; previous "config change"
+                      label was wrong for git-push releases (which are most
+                      of them). %>
+                <% end %>
+                <% if release.id == @current_release_id %>
+                  <span class="text-[10px] font-bold uppercase tracking-widest text-accent border border-accent bg-accent-soft px-1.5 py-0.5">current</span>
+                <% end %>
+              </div>
+              <div class="flex items-center gap-3 mt-0.5 font-mono">
+                <span class="text-xs text-dim"><%= release.description || "Deploy" %></span>
+                <% if release.deploy&.duration %>
+                  <span class="text-xs text-dim">(<%= release.deploy.duration.round %>s)</span>
+                <% end %>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-4 font-mono">
+            <span class="text-xs text-dim"><%= time_ago_in_words(release.created_at) %> ago</span>
+            <%# Rollback button: only on succeeded releases that aren't already
+                the current one and whose deploy has a recorded commit SHA. %>
+            <% if release.deploy&.status == "succeeded" &&
+                 release.id != @current_release_id &&
+                 release.deploy.commit_sha.present? %>
+              <%= button_to rollback_dashboard_app_release_path(@app, release),
+                    method: :post,
+                    form: {
+                      data: {
+                        controller: "confirm-delete",
+                        confirm_delete_name_value: @app.name,
+                        confirm_delete_impact_value: "This will redeploy #{@app.name} at v#{release.version} (#{release.deploy.commit_sha.first(7)}). The current version will be replaced. You can roll forward again from this page.",
+                        confirm_delete_resource_value: "app"
+                      }
+                    },
+                    class: "text-xs text-warn hover:underline transition cursor-pointer bg-transparent border-0" do %>
+                ↩ rollback
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="px-6 py-12 text-center">
+      <p class="font-mono text-sm text-ink-soft">// no releases yet</p>
+      <p class="font-mono text-xs text-dim mt-1">Push code via git or trigger a manual deploy to create your first release.</p>
+    </div>
+  <% end %>
+</div>
+
+  <% end %>
+<% end %>

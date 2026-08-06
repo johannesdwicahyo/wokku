@@ -1,0 +1,33 @@
+<%# A single toast. Stacks in the #toasts container (top-right of the
+    dashboard layout). Auto-dismisses on a timer driven by the toast
+    Stimulus controller; user can also click the × to dismiss early.
+    Used both by the layout's flash partial (HTTP-cycle notices) and
+    by Turbo Stream broadcasts from background jobs. Brutalist (P7) —
+    toast controller + targets + duration preserved 1:1. %>
+<%
+  level ||= "notice"
+  id ||= "toast_#{SecureRandom.hex(6)}"
+  classes = case level.to_s
+  when "notice", "success"
+    "bg-success-soft border-success text-ink"
+  when "alert", "error"
+    "bg-danger-soft border-danger text-ink"
+  else
+    "bg-paper border-ink text-ink"
+  end
+  glyph = level.to_s.in?([ "alert", "error" ]) ? "!" : "✓"
+  glyph_color = level.to_s.in?([ "alert", "error" ]) ? "text-danger" : "text-success"
+%>
+<div id="<%= id %>"
+     data-controller="toast"
+     data-toast-duration-value="5000"
+     class="pointer-events-auto w-80 max-w-[90vw] border-1.5 shadow-brutal-sm <%= classes %> overflow-hidden"
+     style="animation: toast-in 200ms ease-out;">
+  <div class="px-4 py-3 flex items-start gap-3 font-mono">
+    <span class="<%= glyph_color %> text-sm font-bold mt-0.5"><%= glyph %></span>
+    <p class="text-sm flex-1 leading-snug"><%= message %></p>
+    <button data-action="click->toast#dismiss" class="text-dim hover:text-ink transition cursor-pointer mt-0.5 text-xs">✕</button>
+  </div>
+  <%# Progress bar that drains as the auto-dismiss timer runs out. %>
+  <div class="h-0.5 bg-current opacity-30" data-toast-target="progress" style="width: 100%; transition: width linear;"></div>
+</div>

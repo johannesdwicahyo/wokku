@@ -1,0 +1,9 @@
+<% content_for :title, "New scheduled task · #{@app.name}" %>
+<%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :settings) do %>
+  <%= render Organisms::AppSettingsComponent.new(app: @app, active: :scheduled_tasks) do %>
+
+<h2 class="font-headline text-xl font-bold mb-4">New scheduled task</h2>
+<%= render Organisms::ScheduledTaskFormComponent.new(task: @task, app: @app) %>
+
+  <% end %>
+<% end %>

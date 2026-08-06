@@ -1,0 +1,32 @@
+<%= turbo_frame_tag "logs_stream", target: "_top" do %>
+<div class="bg-bg px-4 py-4 font-mono text-xs leading-5 h-[600px] overflow-y-auto" data-log-viewer-target="output">
+  <% if @has_persisted && params[:source] != "live" %>
+    <%# Persisted logs from the Log table (Vector-ingested). %>
+    <% reversed = @persisted_logs.reverse %>
+    <% if reversed.any? %>
+      <div class="text-[10px] text-dim mb-2">
+        // showing <%= reversed.size %> rows from
+        <%= @since.strftime("%b %-d %H:%M") %> to <%= @until.strftime("%b %-d %H:%M") %><%= " · matching #{@search_query.inspect}" if @search_query.present? %>
+      </div>
+      <% reversed.each do |log_row| %>
+        <div class="log-line whitespace-pre-wrap break-all"
+             data-log-viewer-target="line"
+             data-log-level="<%= log_row.level %>">
+          <span class="text-dim"><%= log_row.ts.strftime("%H:%M:%S") %></span>
+          <span class="<%= { "error" => "text-danger", "warn" => "text-warn", "debug" => "text-dim" }[log_row.level] || "text-ink" %>"><%= log_row.line.rstrip %></span>
+        </div>
+      <% end %>
+    <% else %>
+      <p class="text-dim">// no matches in this window — try widening the time range or clearing the search</p>
+    <% end %>
+  <% elsif @logs.present? %>
+    <% @logs.each_line do |line| %>
+      <div class="log-line <%= log_line_class(line) %> whitespace-pre-wrap break-all"
+           data-log-viewer-target="line"
+           data-log-level="<%= log_line_level(line) %>"><%= line.rstrip %></div>
+    <% end %>
+  <% else %>
+    <p class="text-dim">// no logs available — the app may not have been deployed yet, or Vector hasn't shipped logs yet</p>
+  <% end %>
+</div>
+<% end %>

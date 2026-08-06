@@ -1,0 +1,5 @@
+Host <%= @server.name %> (<%= @server.host %>) is heartbeating again as of <%= Time.current.utc.strftime("%Y-%m-%d %H:%M UTC") %>.
+<% unless @server.heartbeat_status == "ok" %>
+Status: degraded — check vitals below.
+<% end %>
+Current vitals: <%= @server.vitals.to_json %>

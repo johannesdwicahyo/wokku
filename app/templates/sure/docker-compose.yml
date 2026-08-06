@@ -1,0 +1,30 @@
+# name: Sure
+# documentation: https://github.com/we-promise/sure
+# slogan: Self-hosted personal finance and budgeting (Maybe Finance fork)
+# category: productivity
+# tags: finance, budgeting, rails, ruby
+# icon: data
+# port: 3000
+# min_tier: basic
+# generate_secrets: SECRET_KEY_BASE
+
+services:
+  sure:
+    image: ghcr.io/we-promise/sure:latest
+    environment:
+      - SELF_HOSTED=true
+      - RAILS_FORCE_SSL=false
+      - RAILS_ASSUME_SSL=false
+      - GOOD_JOB_EXECUTION_MODE=async
+      - DB_HOST=postgres
+      - REDIS_URL=redis://redis:6379/0
+      - ONBOARDING_STATE=open
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:16
+
+  redis:
+    image: redis:7

@@ -1,0 +1,21 @@
+# name: Uptime Kuma
+# documentation: https://github.com/louislam/uptime-kuma
+# slogan: Self-hosted uptime monitoring tool
+# category: devtools
+# tags: monitoring, uptime, node
+# icon: monitor
+# icon_slug: uptimekuma
+# icon_color: 5CDD8B
+# port: 3001
+# storage_mounts: /app/data
+
+services:
+  uptime_kuma:
+    image: louislam/uptime-kuma:latest
+    ports:
+      - "3001:3001"
+    volumes:
+      - uptime-kuma-data:/app/data
+
+volumes:
+  uptime-kuma-data:

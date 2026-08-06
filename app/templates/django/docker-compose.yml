@@ -1,0 +1,15 @@
+# name: Django
+# documentation: https://github.com/johannesdwicahyo/wokku-django-starter
+# slogan: Python web framework for perfectionists with deadlines
+# category: frameworks
+# tags: python, django, fullstack
+# icon: python
+# icon_slug: django
+# icon_color: 44B78B
+# version: 5.1
+# port: 8000
+
+services:
+  django:
+    environment:
+      - DJANGO_SETTINGS_MODULE=app.settings

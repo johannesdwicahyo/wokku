@@ -1,0 +1,15 @@
+# name: Excalidraw
+# documentation: https://github.com/excalidraw/excalidraw
+# slogan: Virtual whiteboard for sketching hand-drawn diagrams
+# category: productivity
+# tags: whiteboard, drawing, collaboration, diagrams
+# icon: productivity
+# icon_slug: excalidraw
+# icon_color: 6965DB
+# port: 80
+
+services:
+  excalidraw:
+    image: excalidraw/excalidraw:latest
+    ports:
+      - "80:80"

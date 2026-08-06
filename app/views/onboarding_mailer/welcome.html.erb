@@ -1,0 +1,29 @@
+<div class="wk-container">
+  <div class="wk-header">
+    <h1>// welcome()</h1>
+    <h2>Welcome to Wokku<%= ", #{@user.name.split.first}" if @user.name.present? %>.</h2>
+  </div>
+  <div class="wk-body">
+    <p>Thanks for signing up. You're on a <strong>7-day free trial</strong> — full plan features, no payment method needed yet.</p>
+
+    <div class="wk-label">// three_things_to_try()</div>
+    <ul class="wk-list">
+      <li>
+        <strong>Deploy a template.</strong> One-click deploys for n8n, Ghost, NextCloud, WordPress, and 50+ more.<br>
+        <a href="<%= dashboard_templates_url %>">Browse templates →</a>
+      </li>
+      <li>
+        <strong>Or push your own code.</strong> Create an app, add it as a git remote, <code>git push wokku main</code>.<br>
+        <a href="<%= dashboard_apps_url %>">Create your first app →</a>
+      </li>
+    </ul>
+
+    <hr class="wk-divider">
+
+    <p>Need help? Reply to this email or check the <a href="<%= docs_url %>">docs</a>.</p>
+    <p>— Johannes, building Wokku</p>
+  </div>
+  <div class="wk-footer">
+    Wokku · Invoice-based billing · jakarta, id
+  </div>
+</div>

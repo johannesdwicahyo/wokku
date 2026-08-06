@@ -1,0 +1,19 @@
+<div class="mt-16 grid grid-cols-2 gap-3 pt-8 border-t border-rule-soft">
+  <% if prev_item %>
+    <%= link_to "/docs/#{prev_item['path']}",
+                class: "block border-1.5 border-ink rounded-md p-4 bg-paper no-underline hover:bg-bg-deep transition-colors" do %>
+      <div class="font-mono text-[10px] text-dim tracking-widest uppercase">← <%= t("docs.pager.previous", default: "Previous") %></div>
+      <div class="font-mono text-sm text-ink mt-1.5"><%= prev_item["title"] %></div>
+    <% end %>
+  <% else %>
+    <span></span>
+  <% end %>
+
+  <% if next_item %>
+    <%= link_to "/docs/#{next_item['path']}",
+                class: "block border-1.5 border-ink rounded-md p-4 bg-paper no-underline hover:bg-bg-deep transition-colors text-right" do %>
+      <div class="font-mono text-[10px] text-dim tracking-widest uppercase"><%= t("docs.pager.next", default: "Next") %> →</div>
+      <div class="font-mono text-sm text-accent mt-1.5"><%= next_item["title"] %></div>
+    <% end %>
+  <% end %>
+</div>

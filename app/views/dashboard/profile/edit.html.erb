@@ -1,0 +1,74 @@
+<div class="max-w-lg space-y-8">
+  <div class="mb-6">
+    <h1 class="font-mono text-3xl font-semibold tracking-tighter text-ink m-0"><span class="text-dim"># </span>edit_profile</h1>
+  </div>
+
+  <%= form_with(model: current_user, url: dashboard_profile_path, method: :patch, class: "border-1.5 border-ink bg-paper p-6 space-y-5") do |f| %>
+    <% if current_user.errors.any? %>
+      <div class="border-1.5 border-danger bg-danger-soft p-4">
+        <ul class="list-disc list-inside font-mono text-sm text-danger space-y-1">
+          <% current_user.errors.full_messages.each do |msg| %>
+            <li><%= msg %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div>
+      <%= f.label :email, class: "block font-mono text-[10px] text-dim uppercase tracking-widest mb-1" %>
+      <%= f.email_field :email, class: "w-full bg-bg border-1.5 border-ink text-ink font-mono text-sm px-3 py-2 focus:outline-none focus:border-accent" %>
+    </div>
+
+    <div>
+      <%= f.label :currency, "Billing Currency", class: "block font-mono text-[10px] text-dim uppercase tracking-widest mb-1" %>
+      <% if Wokku::LaunchMode.idr_only? %>
+        <div class="flex items-center gap-2 font-mono">
+          <span class="text-sm text-ink font-bold">IDR</span>
+          <span class="text-[10px] text-dim">(USD billing available after international expansion)</span>
+        </div>
+      <% elsif current_user.resource_usages.active.billable.any? %>
+        <div class="flex items-center gap-2 font-mono">
+          <span class="text-sm text-ink font-bold"><%= current_user.currency.upcase %></span>
+          <span class="text-[10px] text-dim">(locked — active paid resources)</span>
+        </div>
+      <% else %>
+        <%= combobox_tag "user[currency]", [["US Dollar (USD)", "usd"], ["Indonesian Rupiah (IDR)", "idr"]], value: current_user.currency, placeholder: "Select currency" %>
+      <% end %>
+    </div>
+
+    <%# Notifications %>
+    <div class="border-t border-rule-soft pt-4">
+      <p class="font-mono text-xs text-dim uppercase tracking-widest font-bold mb-3">Notifications</p>
+      <label class="flex items-start gap-3 cursor-pointer">
+        <%= f.check_box :daily_debit_email_subscribed,
+              class: "mt-0.5 border-1.5 border-ink text-accent focus:ring-accent" %>
+        <span class="font-mono">
+          <span class="block text-sm text-ink font-medium">Daily usage email</span>
+          <span class="block text-xs text-dim mt-0.5">
+            Get a daily summary of your Wokku usage and balance.
+            New accounts receive these for the first 7 days automatically.
+          </span>
+        </span>
+      </label>
+    </div>
+
+    <div class="flex items-center gap-3 pt-2">
+      <%= f.submit "Save Changes", class: "px-4 py-2 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer" %>
+      <%= link_to "Cancel", dashboard_profile_path, class: "font-mono text-sm text-dim hover:text-ink transition" %>
+    </div>
+  <% end %>
+
+  <%# Danger Zone — separated by a border, visually distinct %>
+  <div class="border-1.5 border-danger bg-danger-soft p-6">
+    <h2 class="font-mono text-base font-semibold text-danger mb-2">
+      # <%= t("dashboard.account_deletions.danger_zone_title", default: "Danger Zone") %>
+    </h2>
+    <p class="font-mono text-sm text-ink-soft mb-4">
+      <%= t("dashboard.account_deletions.danger_zone_description",
+            default: "Once you delete your account, there is no going back. All your apps will be stopped immediately and permanently deleted after 3 days.") %>
+    </p>
+    <%= link_to t("dashboard.account_deletions.delete_account_button", default: "Delete Account"),
+                dashboard_account_deletion_path,
+                class: "inline-flex items-center gap-2 px-4 py-2 border-1.5 border-danger text-danger font-mono text-sm font-semibold hover:bg-danger hover:text-bg transition" %>
+  </div>
+</div>

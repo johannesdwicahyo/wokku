@@ -1,0 +1,57 @@
+en:
+  account_mailer:
+    deletion_scheduled:
+      subject: "Your Wokku account will be deleted in 3 days"
+      heading: "Your Wokku account is scheduled for deletion"
+      line_grace: "Your account and all its resources will be permanently deleted on %{date}. You have until then to cancel by contacting support."
+      apps_header: "Apps that will be deleted:"
+      databases_header: "Databases that will be deleted:"
+      line_balance: "Your current balance of %{balance} will be forfeit."
+      line_mistake: "If this was a mistake, contact support@wokku.cloud before the deadline and we'll cancel the deletion."
+      cta: "Contact Support to Cancel"
+
+  dashboard:
+    account_deletions:
+      danger_zone_title: "Danger Zone"
+      danger_zone_description: "Once you delete your account, there is no going back. All your apps will be stopped immediately and permanently deleted after 3 days."
+      delete_account_button: "Delete Account"
+      show_title: "Delete Your Account"
+      warning_heading: "This action is irreversible after 3 days."
+      warning_body: "All apps will be stopped immediately. Apps, databases, and all your data will be permanently deleted within 3 days. Your unused balance will be forfeit. This cannot be reversed after the grace period."
+      apps_header: "Apps that will be deleted (%{count}):"
+      databases_header: "Databases that will be deleted (%{count}):"
+      backup_callout: "Back up any important data first."
+      backup_link: "Open backups"
+      balance_label: "Balance that will be forfeit:"
+      no_apps: "No apps."
+      no_databases: "No databases."
+      confirm_label: "Type your email to confirm:"
+      confirm_placeholder: "your@email.com"
+      submit_button: "Permanently delete my account"
+      cancel_link: "Cancel"
+      email_mismatch: "Email does not match. Please type your exact email address to confirm."
+      scheduled_notice: "Your account has been scheduled for deletion. You have 3 days to recover by contacting support@wokku.cloud."
+
+  admin:
+    users:
+      index_title: "Users"
+      search_placeholder: "Search by email…"
+      columns:
+        email: "Email"
+        role: "Role"
+        created_at: "Joined"
+        balance: "Balance"
+        status: "Status"
+        apps: "Apps"
+      status:
+        active: "Active"
+        pending_deletion: "Deletion pending"
+        deleted: "Deleted"
+      actions:
+        show: "View"
+        soft_delete: "Schedule deletion (3-day grace)"
+        hard_delete: "Hard delete now"
+      soft_delete_confirm: "Schedule this user for 3-day grace period deletion?"
+      hard_delete_confirm: "PERMANENTLY delete this user and all their data now? This cannot be undone."
+      deletion_scheduled: "User has been scheduled for deletion."
+      deletion_enqueued: "Hard delete has been enqueued."

@@ -1,0 +1,27 @@
+# name: Bookstack
+# documentation: https://github.com/BookStackApp/BookStack
+# slogan: Simple wiki and documentation platform
+# category: cms
+# tags: wiki, docs, php
+# icon: wiki
+# port: 80
+# dedicated_db_engine: mariadb
+# mysql_components: DB_
+# alias_env: DB_USERNAME=DB_USER
+# set_url: APP_URL
+# generate_secrets: APP_KEY
+# storage_mounts: /config
+
+services:
+  bookstack:
+    image: bookstack:latest
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mariadb:11
+    volumes:
+      - mysql-data:/var/lib/mysql/data
+
+volumes:
+  mysql-data:

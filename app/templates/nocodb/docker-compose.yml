@@ -1,0 +1,27 @@
+# name: NocoDB
+# documentation: https://github.com/nocodb/nocodb
+# slogan: Airtable alternative — spreadsheet to smart database
+# category: databases
+# tags: no-code, spreadsheet, node
+# icon: db
+# port: 8080
+# shared_engines: postgres
+# set_url: NC_PUBLIC_URL
+# generate_secrets: NC_AUTH_JWT_SECRET
+# alias_env: NC_DB=DATABASE_URL
+
+services:
+  nocodb:
+    image: nocodb/nocodb:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

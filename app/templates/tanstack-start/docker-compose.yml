@@ -1,0 +1,15 @@
+# name: TanStack Start
+# documentation: https://github.com/johannesdwicahyo/wokku-tanstack-start-starter
+# slogan: Type-safe SSR React framework from the TanStack team
+# category: frameworks
+# tags: node, react, tanstack, ssr, frontend
+# icon: node
+# icon_slug: react
+# icon_color: 61DAFB
+# version: 1
+# port: 3000
+
+services:
+  tanstack-start:
+    environment:
+      - NODE_ENV=production

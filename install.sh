@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# One-command Wokku self-host install (Ubuntu/Debian, x86_64):
+#
+#   curl -fsSL https://raw.githubusercontent.com/johannesdwicahyo/wokku/main/install.sh | sudo bash
+#
+# Installs the control plane (docker compose) AND the app runtime on this
+# box (Docker Swarm, local registry, Caddy, nixpacks, wokkud agent), then
+# points you at the dashboard to create your admin account. Idempotent —
+# safe to re-run. To connect ADDITIONAL servers later, use the one-line
+# command the dashboard shows under admin → servers.
+set -euo pipefail
+
+REPO_URL="${WOKKU_REPO_URL:-https://github.com/johannesdwicahyo/wokku}"
+INSTALL_DIR="${WOKKU_INSTALL_DIR:-/opt/wokku}"
+
+[ "$(id -u)" = "0" ] || { echo "run with sudo"; exit 1; }
+export DEBIAN_FRONTEND=noninteractive
+log() { printf "\n→ %s\n" "$*"; }
+
+log "docker + git"
+command -v docker >/dev/null 2>&1 || { apt-get update -qq; apt-get install -y -qq docker.io docker-compose-v2 >/dev/null; }
+systemctl enable --now docker >/dev/null 2>&1 || true
+command -v git >/dev/null 2>&1 || apt-get install -y -qq git >/dev/null
+
+if [ -d "$INSTALL_DIR/.git" ]; then
+  log "updating ${INSTALL_DIR}"
+  git -C "$INSTALL_DIR" pull -q
+elif [ -d "$INSTALL_DIR" ]; then
+  log "using existing ${INSTALL_DIR} (not a git checkout — left as-is)"
+else
+  log "fetching wokku into ${INSTALL_DIR}"
+  git clone -q --depth 1 "$REPO_URL" "$INSTALL_DIR"
+fi
+cd "$INSTALL_DIR"
+[ -f docker-compose.yml ] || {
+  echo "${INSTALL_DIR} exists but is not a wokku checkout (no docker-compose.yml)."
+  echo "Remove it or set WOKKU_INSTALL_DIR to a different path, then re-run."
+  exit 1
+}
+
+PUBLIC_IP=$(curl -fsS -4 -m 5 https://ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')
+# Interpolated into .env and a rails runner string — accept only IP shapes.
+[[ "$PUBLIC_IP" =~ ^[0-9a-fA-F:.]+$ ]] || { echo "could not determine this host's public IP"; exit 1; }
+if [ ! -f .env ]; then
+  log "generating .env (secret key, canonical domain)"
+  # <ip>.sslip.io resolves to the ip with zero DNS setup, so Caddy can get
+  # a real certificate immediately; point a domain later by editing .env.
+  umask 077
+  cat > .env <<EOF
+SECRET_KEY_BASE=$(openssl rand -hex 64)
+WOKKU_CANONICAL_DOMAIN=${WOKKU_CANONICAL_DOMAIN:-${PUBLIC_IP}.sslip.io}
+EOF
+fi
+
+log "building + starting the control plane (first build takes a few minutes)"
+docker compose up -d --build
+
+log "waiting for the control plane to come up"
+until curl -fsS -o /dev/null -m 2 http://127.0.0.1:3000/up; do sleep 3; done
+
+log "registering this box as the first server"
+TOKEN=$(docker compose exec -T web bin/rails runner \
+  "s = Server.find_or_create_by!(name: \"main\") { |x| x.host = \"${PUBLIC_IP}\" }; puts s.ingest_token" \
+  2>/dev/null | tail -1)
+[ -n "$TOKEN" ] || { echo "could not mint an ingest token"; exit 1; }
+
+log "installing the wokku runtime on this box (swarm, registry, caddy, nixpacks, wokkud)"
+curl -fsSL http://127.0.0.1:3000/install/wokkud.sh | bash -s -- "$TOKEN"
+
+DOMAIN=$(grep '^WOKKU_CANONICAL_DOMAIN=' .env | cut -d= -f2)
+log "done — open https://${DOMAIN} to create your admin account and deploy."

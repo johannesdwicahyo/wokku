@@ -1,0 +1,11 @@
+<div class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none">
+  <% messages.each do |m| %>
+    <% shadow_color = m[:kind] == 'success' ? 'success' : m[:kind] == 'error' ? 'danger' : 'warn' %>
+    <div data-controller="motion--flash-toast"
+         data-motion--flash-toast-kind-value="<%= m[:kind] %>"
+         class="pointer-events-auto border-1.5 border-ink bg-ink text-bg px-4 py-3 font-mono text-sm"
+         style="box-shadow: 4px 4px 0 0 var(--color-<%= shadow_color %>);">
+      <%= m[:text] %>
+    </div>
+  <% end %>
+</div>

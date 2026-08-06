@@ -1,0 +1,23 @@
+<% content_for(:title, docs_page_title) %>
+
+<%= render Molecules::BreadcrumbComponent.new(crumbs: @breadcrumb) %>
+
+<%= render Organisms::DocHeaderComponent.new(
+      eyebrow: @doc_eyebrow,
+      title:   @doc_title,
+      summary: @doc_summary,
+      badges:  @doc_badges,
+      edited:  @doc_edited,
+      source:  @doc_edit_url
+    ) %>
+
+<article class="prose-doc mt-10">
+  <%# `@content` is the rendered HTML body; the doc's first H1 is
+      already surfaced by DocHeaderComponent so strip it from the
+      article body to avoid the double title. %>
+  <%= raw strip_first_h1(@content) %>
+</article>
+
+<%= render Organisms::DocPagerComponent.new(prev_item: @prev_item, next_item: @next_item) %>
+<%# Cloud-only feedback strip — skipped in a standalone engine. %>
+<%= render Molecules::FeedbackStripComponent.new if defined?(Molecules::FeedbackStripComponent) %>

@@ -1,0 +1,19 @@
+<div class="border-b-1.5 border-ink bg-paper">
+  <div class="container">
+    <div class="flex items-center gap-0 font-mono text-[12px] uppercase tracking-widest">
+      <div class="py-4 pr-6 text-dim">
+        settings
+      </div>
+      <% tabs.each do |t| %>
+        <%= link_to tab_label(t), tab_href(t),
+                    class: "block py-4 px-5 border-l-1.5 border-ink #{t == active_tab ? 'bg-ink text-bg' : 'bg-paper text-ink hover:bg-bg-deep'}" %>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div class="container py-6">
+  <div style="animation: wk-tab-in var(--t-default) var(--ease);">
+    <%= content %>
+  </div>
+</div>

@@ -1,0 +1,187 @@
+<%#
+  Brutalist resources/scaling (P5 of redesign-c-full, 2026-05-17). All
+  Ruby (tier math, addon_monthly_share/price_period), content_for head
+  turbo-cache-control, turbo_stream_from refresh, addon-tier-picker +
+  slide-panel wiring, and routes preserved 1:1 from show.OLD_DESIGN.
+%>
+<%# Adding/removing an add-on involves SSH work and invalidates most of
+    the panel state; Turbo's preview cache can show a pre-submit snapshot
+    after the redirect completes. Disable the preview for this page. %>
+<% content_for(:head) do %>
+  <meta name="turbo-cache-control" content="no-preview">
+<% end %>
+
+<%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :runtime) do %>
+<%= render Organisms::AppRuntimeComponent.new(app: @app, active: :metrics) do %>
+<div data-controller="slide-panel">
+
+  <%= deferred_section "resources_processes", src: dashboard_app_resources_path(@app, deferred: 1), skeleton: :table, target: "_top" %>
+
+  <%# Attached Add-ons %>
+  <div class="border-1.5 border-ink bg-paper mb-6">
+    <div class="px-6 py-4 border-b border-rule-soft flex items-center justify-between gap-3 flex-wrap">
+      <div>
+        <h2 class="font-mono text-base font-semibold text-ink"># add-ons</h2>
+        <p class="font-mono text-xs text-dim mt-1">// databases, caches, and services attached to this app</p>
+      </div>
+      <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer">+ add</button>
+    </div>
+
+    <%# Subscribe to the page-refresh channel so this view auto-refreshes
+        whenever an addon's status changes (CreateAddonJob progress,
+        retry, destroy). Resources page has its own row layout we don't
+        want clobbered, so we use the refresh stream instead of the
+        replace stream that /dashboard/addons subscribes to. %>
+    <%= turbo_stream_from "user_#{current_user.id}_addons_refresh" %>
+
+    <% if @addons.any? %>
+      <div class="divide-y divide-rule-soft">
+        <% @addons.each do |addon| %>
+          <% addon_tier = addon.service_tier %>
+          <% addon_monthly = addon_tier&.monthly_price_dollars.to_f %>
+          <div class="px-6 py-4 flex items-center justify-between gap-3 flex-wrap hover:bg-bg-deep transition-colors font-mono">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-sm font-semibold text-ink"><%= addon.name %></span>
+                <span class="text-xs text-dim capitalize"><%= addon.service_type %></span>
+                <% if addon.tier_name.present? %>
+                  <span class="text-xs text-dim">·</span>
+                  <span class="text-xs text-dim capitalize"><%= addon.tier_name.tr("_", " ") %></span>
+                <% end %>
+                <% if addon.status == "creating" %>
+                  <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-warn uppercase tracking-widest">
+                    <span class="w-1.5 h-1.5 bg-warn animate-pulse"></span>provisioning
+                  </span>
+                <% elsif addon.status == "error" %>
+                  <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-danger uppercase tracking-widest">
+                    <span class="w-1.5 h-1.5 bg-danger"></span>failed
+                  </span>
+                <% end %>
+              </div>
+              <% if addon.status == "error" && addon.last_error.present? %>
+                <p class="mt-1 text-xs text-danger break-all line-clamp-2"><%= addon.last_error %></p>
+              <% end %>
+            </div>
+            <div class="flex items-center gap-4">
+              <% if addon.status == "error" %>
+                <%= button_to "retry", retry_dashboard_addon_path(addon), method: :post, class: "text-xs px-3 py-1.5 bg-ink text-bg border-1.5 border-ink font-semibold hover:bg-ink-soft transition cursor-pointer" %>
+              <% end %>
+              <%# Bundle v2: addons are bundled with the plan, not
+                  individually priced. Show shape (shared vs dedicated)
+                  instead of a per-addon Rp figure. %>
+              <div class="text-right">
+                <% if addon.shared? %>
+                  <span class="text-[10px] font-bold uppercase tracking-widest text-success border-1.5 border-success bg-success-soft px-2 py-0.5">Shared</span>
+                <% else %>
+                  <span class="text-[10px] font-bold uppercase tracking-widest text-accent border-1.5 border-accent bg-accent-soft px-2 py-0.5">Dedicated</span>
+                <% end %>
+              </div>
+              <%= link_to "info", dashboard_addon_path(addon), class: "text-xs text-ink-soft hover:text-accent border-1.5 border-ink px-2 py-1 transition", data: { turbo_frame: "_top" } %>
+              <%= button_to "remove",
+                    dashboard_app_resources_path(@app, addon_id: addon.id),
+                    method: :delete,
+                    data: { turbo_confirm: "Remove #{addon.name}? This will delete all data in this service." },
+                    class: "text-xs text-dim hover:text-danger transition cursor-pointer bg-transparent border-0" %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="px-6 py-12 text-center">
+        <h3 class="font-mono text-sm font-medium text-ink-soft">// no add-ons yet</h3>
+        <p class="font-mono text-xs text-dim mt-1">Add a database, cache, or other service to get started.</p>
+        <div class="mt-4">
+          <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer">+ add an add-on</button>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <%# Bundle v2: plans are flat-priced — no per-addon or per-container
+      line items. Show the plan + its monthly Rp/USD, no breakdown.
+      Container resize doesn't change the bill; add-on shape doesn't
+      change the bill. The plan IS the bill. %>
+  <%
+    user_plan = current_user.current_plan
+    plan_label = user_plan&.name || "Free"
+    plan_price_idr = user_plan&.price_idr.to_i
+  %>
+  <div class="border-1.5 border-ink bg-paper mb-6">
+    <div class="px-6 py-4">
+      <p class="font-mono text-xs text-dim uppercase tracking-widest mb-3">plan_cost</p>
+      <div class="flex items-baseline justify-between font-mono">
+        <div>
+          <span class="text-sm font-semibold text-ink"><%= plan_label %></span>
+          <span class="text-xs text-dim ml-1">// flat · no metering</span>
+        </div>
+        <span class="text-lg font-bold text-accent">
+          <% if user_plan&.free? %>
+            Free
+          <% else %>
+            Rp <%= ActiveSupport::NumberHelper.number_to_delimited(plan_price_idr, delimiter: '.') %><span class="text-sm text-dim font-normal">/bln</span>
+          <% end %>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <%# Add-on Slide Panel %>
+  <%= render layout: "dashboard/shared/slide_panel", locals: { title: "New Add-on", subtitle: "Provision a database or service for #{@app.name}" } do %>
+    <%
+      # Bundle v2 (backlog 2.8) — engine + mode picker. Replaces the
+      # old ServiceTier-based tier list which no longer matches the
+      # product (basic/standard/performance are gone). Shared = free
+      # included; dedicated = paid, sized by box.
+      engine_payload = Addons::PickerOptions.for_user(current_user)
+      service_type_options = engine_payload.map { |k, v| [v[:label], k] }
+      label_classes = "block font-mono text-[10px] font-bold text-dim mb-1.5 uppercase tracking-widest"
+      input_classes = "w-full bg-bg border-1.5 border-ink px-3 py-2.5 font-mono text-sm text-ink placeholder-dim focus:outline-none focus:border-accent transition-colors"
+    %>
+    <%= form_with url: dashboard_addons_path, method: :post, class: "space-y-5",
+                  data: { controller: "addon-tier-picker",
+                          "addon-tier-picker-engines-value": engine_payload.to_json,
+                          "addon-tier-picker-plan-upgrade-url-value": (respond_to?(:dashboard_plan_path) ? dashboard_plan_path : "#") } do |f| %>
+      <%# App is fixed on this page — submit it as hidden so the form
+          posts to the canonical DatabasesController#create path. %>
+      <%= hidden_field_tag "database_service[app_id]", @app.id %>
+
+      <div>
+        <label class="<%= label_classes %>">Attached to</label>
+        <div class="border-1.5 border-ink bg-bg px-4 py-2.5 font-mono text-sm text-ink">
+          <%= @app.name %> <span class="text-dim">· <%= @app.server.name %></span>
+        </div>
+        <p class="font-mono text-[11px] text-dim mt-1">Linked automatically; runs on the same server.</p>
+      </div>
+
+      <div>
+        <label for="database_service_name" class="<%= label_classes %>">Name</label>
+        <%= text_field_tag "database_service[name]", nil, class: input_classes, placeholder: "my-database" %>
+      </div>
+
+      <div>
+        <label class="<%= label_classes %>">Service Type</label>
+        <%= combobox_tag "database_service[service_type]", service_type_options, value: "postgres", placeholder: "Select a service type",
+            data: { "addon-tier-picker-target": "serviceType", action: "change->addon-tier-picker#refresh" } %>
+      </div>
+
+      <div>
+        <label class="<%= label_classes %>">Mode</label>
+        <%# Bundle v2: hidden input now carries the picker mode (shared|dedicated),
+            posted as `mode` so the controller routes through SharedProvisioner or
+            the dedicated DatabaseProvisioner path. %>
+        <%= hidden_field_tag "mode", "shared", data: { "addon-tier-picker-target": "tierInput" } %>
+        <div class="grid grid-cols-1 gap-2" data-addon-tier-picker-target="cards">
+          <div class="font-mono text-xs text-dim px-3 py-2">Loading options…</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 pt-2">
+        <button type="submit" class="flex-1 py-2.5 px-4 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer">Create Add-on</button>
+        <button type="button" data-action="click->slide-panel#close" class="py-2.5 px-4 font-mono text-sm text-ink border-1.5 border-ink bg-paper hover:bg-bg-deep transition-colors cursor-pointer">Cancel</button>
+      </div>
+    <% end %>
+  <% end %>
+
+</div>
+<% end %>
+<% end %>

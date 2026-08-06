@@ -1,0 +1,28 @@
+# name: Listmonk
+# documentation: https://github.com/knadh/listmonk
+# slogan: Self-hosted newsletter and mailing list manager
+# category: email
+# tags: newsletter, email, go
+# icon: mail
+# icon_slug: listmonk
+# icon_color: FFFFFF
+# port: 9000
+# shared_engines: postgres
+# set_url: LISTMONK_app__root_url
+# generate_secrets: LISTMONK_app__admin_password
+
+services:
+  listmonk:
+    image: listmonk/listmonk:latest
+    ports:
+      - "9000:9000"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

@@ -1,0 +1,18 @@
+# name: Vaultwarden
+# documentation: https://github.com/dani-garcia/vaultwarden
+# slogan: Lightweight Bitwarden-compatible password manager
+# category: security
+# tags: passwords, vault, rust
+# icon: security
+# icon_slug: vaultwarden
+# icon_color: 175DDC
+# port: 80
+# set_url: DOMAIN
+# generate_secrets: ADMIN_TOKEN
+# storage_mounts: /data
+
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    ports:
+      - "80:80"

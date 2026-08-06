@@ -1,0 +1,29 @@
+# name: Immich
+# documentation: https://github.com/immich-app/immich
+# slogan: Self-hosted photo and video backup solution
+# category: media
+# tags: photos, backup, node
+# icon: media
+# port: 2283
+# shared_engines: postgres, redis
+# set_url: IMMICH_SERVER_URL
+# generate_secrets: JWT_SECRET, TYPESENSE_API_KEY
+# storage_mounts: /usr/src/app/upload
+
+services:
+  immich:
+    image: immich:latest
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+
+volumes:
+  postgres-data:

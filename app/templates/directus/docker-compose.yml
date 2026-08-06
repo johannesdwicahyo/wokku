@@ -1,0 +1,28 @@
+# name: Directus
+# documentation: https://github.com/directus/directus
+# slogan: Instant REST and GraphQL API for any SQL database
+# category: cms
+# tags: headless-cms, api, node
+# icon: cms
+# icon_slug: directus
+# icon_color: 6644FF
+# port: 8055
+# shared_engines: postgres
+# set_url: PUBLIC_URL
+# generate_secrets: KEY, SECRET
+
+services:
+  directus:
+    image: directus/directus:latest
+    ports:
+      - "8055:8055"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

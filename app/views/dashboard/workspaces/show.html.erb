@@ -1,0 +1,140 @@
+<% content_for(:title, @workspace.name) %>
+
+<div class="space-y-6">
+  <div class="flex flex-wrap items-baseline justify-between gap-4">
+    <%= render Atoms::HashHeaderComponent.new(
+          title: @workspace.name,
+          kicker: "// #{@workspace.kind} · #{@plan.name} plan",
+          size: :md) %>
+    <%= link_to "← all workspaces", dashboard_workspaces_path,
+          class: "font-mono text-xs text-dim hover:text-ink" %>
+  </div>
+
+  <%# ── Seat usage banner ────────────────────────────────────── %>
+  <div class="border-1.5 border-ink bg-paper px-5 py-4 font-mono text-xs">
+    <div class="flex items-baseline justify-between gap-3">
+      <div>
+        <span class="text-[10px] text-dim uppercase tracking-widest">// seats</span>
+        <span class="ml-2 text-ink font-semibold text-base"><%= @seats_used %></span>
+        <span class="text-dim">/ <%= @seats_included %> included</span>
+        <% if @overage_seats.positive? %>
+          <span class="ml-2 px-2 py-0.5 bg-warn-soft text-warn border border-warn text-[10px] uppercase tracking-widest">
+            +<%= @overage_seats %> extra
+          </span>
+        <% end %>
+      </div>
+      <% if @plan.extra_seat_idr.to_i > 0 %>
+        <div class="text-[11px] text-dim">
+          // extra: Rp <%= ActiveSupport::NumberHelper.number_to_delimited(@plan.extra_seat_idr.to_i, delimiter: ".") %>/seat/mo
+        </div>
+      <% end %>
+    </div>
+    <% if @overage_seats.positive? %>
+      <p class="mt-2 text-[11px] text-dim">
+        // <%= @overage_seats %> extra seat<%= "s" unless @overage_seats == 1 %>
+        × Rp <%= ActiveSupport::NumberHelper.number_to_delimited(@plan.extra_seat_idr.to_i, delimiter: ".") %>
+        = Rp <%= ActiveSupport::NumberHelper.number_to_delimited(@plan.extra_seat_idr.to_i * @overage_seats, delimiter: ".") %>
+        added to next invoice
+      </p>
+    <% end %>
+  </div>
+
+  <%# ── Extra boxes ──────────────────────────────────────────── %>
+  <% if @box_addons.present? && @box_addons.any? %>
+    <div class="border-1.5 border-ink bg-paper px-5 py-4 font-mono text-xs space-y-2">
+      <p class="text-[10px] text-dim uppercase tracking-widest">// extra boxes</p>
+      <% @box_addons.each do |addon| %>
+        <div class="flex items-center justify-between gap-3 border-b border-rule-soft pb-2 last:border-b-0 last:pb-0">
+          <span class="text-ink">
+            <%= addon.size.capitalize %> box — Rp <%= ActiveSupport::NumberHelper.number_to_delimited(addon.price_idr, delimiter: ".") %>/mo<%= " (cancels #{addon.ends_at.to_date})" if addon.canceled? %>
+          </span>
+          <% if !addon.canceled? && respond_to?(:dashboard_box_addon_path) %>
+            <%= button_to "Cancel", dashboard_box_addon_path(addon), method: :delete,
+                  data: { turbo_confirm: "Cancel this #{addon.size} box at the end of the cycle?" },
+                  class: "text-[10px] uppercase tracking-widest px-2 py-1 border border-danger text-danger hover:bg-danger hover:text-paper" %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%# ── Add member form (admin only) ────────────────────────── %>
+  <% if @is_admin %>
+    <%= form_with url: dashboard_workspace_team_members_path(@workspace), method: :post, local: true,
+                  class: "border-1.5 border-ink bg-paper px-5 py-4 grid grid-cols-1 md:grid-cols-12 gap-3 font-mono text-xs items-end" do %>
+      <label class="md:col-span-7">
+        <span class="text-[10px] text-dim uppercase tracking-widest">add by email</span>
+        <%= email_field_tag "team_membership[email]", "", required: true,
+              placeholder: "teammate@example.com",
+              class: "mt-1 w-full border border-rule-soft bg-bg px-3 py-2 text-ink placeholder:text-dim" %>
+      </label>
+      <label class="md:col-span-3">
+        <span class="text-[10px] text-dim uppercase tracking-widest">role</span>
+        <%= select_tag "team_membership[role]",
+              options_for_select([ %w[member member], %w[admin admin], %w[viewer viewer] ], "member"),
+              class: "mt-1 w-full border border-rule-soft bg-bg px-3 py-2 text-ink" %>
+      </label>
+      <div class="md:col-span-2">
+        <button type="submit" class="w-full px-3 py-2 border-1.5 border-ink bg-ink text-paper text-[10px] uppercase tracking-widest">
+          add member
+        </button>
+      </div>
+    <% end %>
+  <% end %>
+
+  <%# ── Members table ──────────────────────────────────────── %>
+  <div class="border-1.5 border-ink bg-paper">
+    <div class="px-6 py-4 border-b border-rule-soft">
+      <h2 class="font-mono text-base font-semibold text-ink"># members</h2>
+      <p class="font-mono text-xs text-dim mt-1">// <%= @members.size %> total</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full font-mono text-xs">
+        <thead>
+          <tr class="text-left text-[10px] text-dim tracking-widest uppercase border-b border-rule-soft">
+            <th class="px-6 py-3">Email</th>
+            <th class="px-3 py-3">Role</th>
+            <th class="px-3 py-3">Joined</th>
+            <% if @is_admin %><th class="px-6 py-3 text-right">Actions</th><% end %>
+          </tr>
+        </thead>
+        <tbody>
+          <% @members.each do |m| %>
+            <tr class="border-b border-rule-soft hover:bg-bg">
+              <td class="px-6 py-3 text-ink">
+                <%= m.user.email %>
+                <% if m.user_id == @workspace.owner_id %>
+                  <span class="ml-1 text-[10px] uppercase tracking-widest text-accent">owner</span>
+                <% end %>
+              </td>
+              <td class="px-3 py-3 text-ink-soft">
+                <% if @is_admin && m.user_id != @workspace.owner_id %>
+                  <%= form_with url: dashboard_workspace_team_member_path(@workspace, m), method: :patch, local: true, class: "flex gap-2" do %>
+                    <%= select_tag "team_membership[role]",
+                          options_for_select([ %w[viewer viewer], %w[member member], %w[admin admin] ], m.role),
+                          onchange: "this.form.submit()",
+                          class: "border border-rule-soft bg-bg px-2 py-1 text-ink text-[11px]" %>
+                  <% end %>
+                <% else %>
+                  <%= m.role %>
+                <% end %>
+              </td>
+              <td class="px-3 py-3 text-dim"><%= m.created_at.strftime("%Y-%m-%d") %></td>
+              <% if @is_admin %>
+                <td class="px-6 py-3 text-right">
+                  <% if m.user_id == @workspace.owner_id %>
+                    <span class="text-[10px] text-dim">—</span>
+                  <% else %>
+                    <%= button_to "remove", dashboard_workspace_team_member_path(@workspace, m), method: :delete,
+                          data: { turbo_confirm: "Remove #{m.user.email}?" },
+                          class: "text-[10px] uppercase tracking-widest px-2 py-1 border border-danger text-danger hover:bg-danger hover:text-paper" %>
+                  <% end %>
+                </td>
+              <% end %>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

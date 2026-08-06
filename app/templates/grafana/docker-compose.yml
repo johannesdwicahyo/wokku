@@ -1,0 +1,18 @@
+# name: Grafana
+# documentation: https://github.com/grafana/grafana
+# slogan: Metrics visualization and monitoring
+# category: monitoring
+# tags: metrics, dashboards, go
+# icon: monitor
+# icon_slug: grafana
+# icon_color: F46800
+# port: 3000
+# set_url: GF_SERVER_ROOT_URL
+# generate_secrets: GF_SECURITY_ADMIN_PASSWORD,GF_SECURITY_SECRET_KEY
+# storage_mounts: /var/lib/grafana
+
+services:
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"

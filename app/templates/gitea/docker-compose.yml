@@ -1,0 +1,23 @@
+# name: Gitea
+# documentation: https://github.com/go-gitea/gitea
+# slogan: Lightweight self-hosted Git service
+# category: devtools
+# tags: git, code-hosting, go
+# icon: git
+# icon_slug: gitea
+# icon_color: 609926
+# port: 3000
+
+services:
+  gitea:
+    image: gitea:latest
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

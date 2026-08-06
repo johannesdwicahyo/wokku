@@ -1,0 +1,29 @@
+<%# First-deploy chooser — shown on the apps landing (/dashboard/apps) when
+    the user has zero apps. Migrated 2026-06-07 from the retired dashboard
+    home (dashboard/dashboard/show.html.erb) so first-app onboarding lives
+    where users actually land. The slide-panel target is provided by the
+    apps/index.html.erb wrapper. %>
+<%
+  registry = TemplateRegistry.new
+  curated  = %w[astro ghost n8n nextjs].select { |s| registry.find(s) }
+%>
+<%= render Molecules::PanelComponent.new(label: t("onboarding2.title"), kicker: t("onboarding2.sub")) do %>
+  <div class="p-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+    <% curated.each do |slug| %>
+      <% tpl = registry.find(slug) %>
+      <%= link_to dashboard_template_path(slug, prefill: 1),
+            class: "border-1.5 border-ink bg-paper p-4 hover:bg-bg-deep transition font-mono block",
+            data: (slug == "astro" ? { tour_target: "pick" } : {}) do %>
+        <div class="text-sm font-semibold text-ink"><%= tpl[:name] %></div>
+        <div class="text-[11px] text-dim mt-1 line-clamp-2"><%= tpl[:description] %></div>
+        <div class="text-xs text-accent mt-3">&gt; deploy()</div>
+      <% end %>
+    <% end %>
+  </div>
+  <div class="px-6 pb-5">
+    <button data-action="click->slide-panel#open" class="font-mono text-xs text-dim hover:text-ink underline">
+      <%= t("onboarding2.push_own") %>
+    </button>
+    <p class="font-mono text-[11px] text-dim mt-2">// <%= t("onboarding2.building") %></p>
+  </div>
+<% end %>

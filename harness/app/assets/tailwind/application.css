@@ -1,0 +1,7 @@
+/* Engine theme import — in the exported repo the engine is the repo root. */
+@import "../../../../app/assets/tailwind/wokku.css";
+
+/* The harness builds from its own subdir, so Tailwind's automatic content
+   detection never scans the engine one level up — point it there
+   explicitly or no utility classes get compiled (bit us in the e2e). */
+@source "../../../../app";

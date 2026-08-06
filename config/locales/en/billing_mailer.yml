@@ -1,0 +1,32 @@
+en:
+  billing_mailer:
+    daily_debit:
+      subject: "Wokku — daily usage debited (%{amount})"
+      heading: "Your daily Wokku usage"
+      line_amount: "We debited %{amount} from your balance for %{date}'s usage."
+      line_balance: "Current balance: %{balance}"
+      line_runway: "Runway at current rate: %{days} days"
+      cta: "View billing"
+      unsubscribe_hint: "Don't want these daily emails? You can turn them off below."
+      unsubscribe_link: "Mute daily emails"
+    low_balance:
+      subject_7d: "Wokku — balance running low (~7 days remaining)"
+      subject_3d: "Wokku — balance critical (~3 days remaining)"
+      subject_1d: "Wokku — apps will suspend in 24 hours"
+      heading: "Your Wokku balance is running low"
+      line_amount: "Your Wokku balance is %{balance}, projected to last %{days} more days at your current usage rate."
+      line_action: "Top up now to avoid app suspension."
+      cta: "Top Up Now"
+    apps_suspended:
+      subject: "Wokku — your apps have been suspended"
+      heading: "Your Wokku apps have been suspended"
+      line_what: "Your Wokku balance reached zero, so we paused your apps to stop charges. Your data is safe."
+      line_apps: "Suspended apps: %{apps}"
+      line_action: "Top up your balance to restore them."
+      cta: "Top Up and Restore"
+    apps_restored:
+      subject: "Wokku — your apps are back online"
+      heading: "Your Wokku apps are back online"
+      line_what: "Top-up confirmed. Your apps are running again."
+      line_balance: "Current balance: %{balance}"
+      cta: "Open dashboard"

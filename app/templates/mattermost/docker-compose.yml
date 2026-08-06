@@ -1,0 +1,40 @@
+# name: Mattermost
+# documentation: https://github.com/mattermost/mattermost
+# slogan: Open-source, self-hosted team messaging and collaboration platform
+# category: communication
+# tags: chat, team, messaging, collaboration
+# icon: communication
+# icon_slug: mattermost
+# icon_color: 0058CC
+# port: 8065
+# shared_engines: postgres
+# set_url: MM_SERVICESETTINGS_SITEURL
+# generate_secrets: MM_FILESETTINGS_PUBLICLINKSALT
+# alias_env: MM_SQLSETTINGS_DATASOURCE=DATABASE_URL
+
+services:
+  mattermost:
+    image: mattermost/mattermost-team-edition:latest
+    environment:
+      - MM_SQLSETTINGS_DRIVERNAME=postgres
+      - MM_SQLSETTINGS_DATASOURCE=postgres://mattermost:mattermost@postgres:5432/mattermost?sslmode=disable
+      - MM_SERVICESETTINGS_SITEURL=http://localhost:8065
+    ports:
+      - "8065:8065"
+    depends_on:
+      - postgres
+    volumes:
+      - mattermost-data:/mattermost/data
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=mattermost
+      - POSTGRES_USER=mattermost
+      - POSTGRES_PASSWORD=mattermost
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  mattermost-data:
+  postgres-data:

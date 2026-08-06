@@ -1,0 +1,15 @@
+# wokkud/deploy/wokku-caddy.service
+[Unit]
+Description=wokku-caddy — Wokku host router (Track B B1)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/caddy run --config /etc/wokku/caddy/config.json
+Restart=always
+RestartSec=5
+User=root
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,188 @@
+<%# Brutalist (P6.5). confirm-delete + sync/backup/terminal forms +
+    live-metrics math preserved 1:1. %>
+<div class="mb-4 font-mono">
+  <div class="flex items-center gap-2 text-sm">
+    <%= link_to t("dashboard.servers.title"), admin_servers_path, class: "text-dim hover:text-accent transition cursor-pointer" %>
+    <span class="text-dim">/</span>
+    <span class="text-ink-soft"><%= @server.name %></span>
+  </div>
+</div>
+
+<%# Connect-a-server: shown until the agent's first heartbeat lands.
+    The script is public; the token in the command is the secret. Only
+    rendered when this deployment actually bundles the wokkud binary —
+    the cloud image doesn't (its one-liner would die at the binary
+    download after already hardening the host). %>
+<% if @server.heartbeat_at.blank? && File.file?(ENV["WOKKUD_BINARY_PATH"].to_s) %>
+  <div class="border-1.5 border-ink bg-warn-soft p-4 mb-6 font-mono">
+    <p class="text-xs font-semibold text-ink mb-2"># connect this server</p>
+    <p class="text-[11px] text-dim mb-2">Run on the server as a sudo-capable user — it hardens the host (security updates, firewall, fail2ban) and installs the Wokku agent. Add <code>--no-harden</code> to skip hardening.</p>
+    <pre class="bg-bg border-1.5 border-ink p-2.5 text-[11px] overflow-x-auto select-all">curl -sSL <%= request.base_url %>/install/wokkud.sh | sudo bash -s -- <%= @server.ingest_token %></pre>
+    <p class="text-[11px] text-dim mt-2">This page flips to connected on the first heartbeat (~30s after install).</p>
+  </div>
+<% end %>
+
+<div class="flex items-center justify-between gap-3 flex-wrap mb-6">
+  <div class="flex items-center gap-3 flex-wrap font-mono">
+    <h1 class="text-xl font-semibold tracking-tighter text-ink"># <%= @server.name %></h1>
+    <% case @server.status %>
+    <% when "connected" %>
+      <span class="inline-flex items-center gap-1 text-xs text-success border border-success px-2 py-0.5"><span class="w-1.5 h-1.5 bg-success"></span><%= t("dashboard.servers.connected") %></span>
+    <% when "unreachable" %>
+      <span class="inline-flex items-center gap-1 text-xs text-danger border border-danger px-2 py-0.5"><span class="w-1.5 h-1.5 bg-danger"></span><%= t("dashboard.servers.unreachable") %></span>
+    <% when "auth_failed" %>
+      <span class="inline-flex items-center gap-1 text-xs text-warn border border-warn px-2 py-0.5"><span class="w-1.5 h-1.5 bg-warn"></span><%= t("dashboard.servers.auth_failed") %></span>
+    <% when "syncing" %>
+      <span class="inline-flex items-center gap-1 text-xs text-warn border border-warn px-2 py-0.5"><span class="w-1.5 h-1.5 bg-warn animate-pulse"></span><%= t("dashboard.servers.syncing") %></span>
+    <% end %>
+  </div>
+  <div class="flex items-center gap-2 flex-wrap font-mono">
+    <%= link_to "> terminal()", admin_server_terminal_path(@server), class: "inline-flex items-center px-3 py-1.5 border-1.5 border-ink bg-paper text-ink text-sm hover:bg-bg-deep transition" %>
+    <%= link_to "backups", edit_admin_server_backup_destination_path(@server), class: "inline-flex items-center px-3 py-1.5 border-1.5 border-ink bg-paper text-ink text-sm hover:bg-bg-deep transition" %>
+    <%= button_to "sync_now", sync_admin_server_path(@server), method: :post, class: "inline-flex items-center px-3 py-1.5 text-sm text-ink border-1.5 border-ink bg-paper hover:bg-bg-deep transition cursor-pointer" %>
+    <%= button_to "delete", admin_server_path(@server),
+          method: :delete,
+          form: {
+            data: {
+              controller: "confirm-delete",
+              confirm_delete_name_value: @server.name,
+              confirm_delete_impact_value: "This will remove #{@server.name} from Wokku and all its apps, databases, and backups will lose their connection. The server itself will NOT be deleted — you must remove it manually if you want to.",
+              confirm_delete_resource_value: "server"
+            }
+          },
+          class: "text-sm text-danger hover:underline font-medium transition cursor-pointer bg-transparent border-0" %>
+  </div>
+</div>
+
+<%# Recovery card — shown when server can't connect %>
+<% if @server.auth_failed? || @server.unreachable? %>
+  <div class="mb-6 border-1.5 border-danger bg-danger-soft p-5">
+    <h3 class="font-mono text-sm font-bold text-ink mb-1">
+      <% if @server.auth_failed? %>// SSH authentication failed<% else %>// server unreachable<% end %>
+    </h3>
+    <p class="font-mono text-xs text-ink-soft mb-3">
+      <% if @server.auth_failed? %>
+        Wokku couldn't authenticate to <code class="text-accent"><%= @server.host %></code> with the SSH key on file.
+        This usually means the public key isn't in the server's <code>~/.ssh/authorized_keys</code>, or the SSH user is wrong.
+      <% else %>
+        Wokku couldn't connect to <code class="text-accent"><%= @server.host %>:<%= @server.port %></code>.
+        Check that the server is online, the hostname is correct, and port <%= @server.port %> accepts SSH connections from Wokku's server.
+      <% end %>
+    </p>
+    <div class="border-1.5 border-ink bg-bg p-3 mb-3 font-mono">
+      <p class="text-[10px] text-dim uppercase tracking-widest font-bold mb-2">Troubleshooting checklist</p>
+      <ul class="text-xs text-ink-soft space-y-1.5">
+        <% if @server.auth_failed? %>
+          <li>1. Check that Wokku's root public key is in <code>/root/.ssh/authorized_keys</code> on the server</li>
+          <li>2. Try SSH-ing manually: <code class="text-accent">ssh root@<%= @server.host %></code></li>
+          <li>3. If you updated authorized_keys, click Retry Sync below</li>
+          
+        <% else %>
+          <li>1. Ping the server: <code class="text-accent">ping <%= @server.host %></code></li>
+          <li>2. Check SSH port is open: <code class="text-accent">nc -zv <%= @server.host %> <%= @server.port %></code></li>
+          <li>3. Verify firewall allows SSH from Wokku's IP</li>
+          <li>4. Confirm the server is powered on and responsive</li>
+        <% end %>
+      </ul>
+    </div>
+    <div class="flex flex-wrap items-center gap-2 font-mono">
+      <%= button_to "↻ retry_sync", sync_admin_server_path(@server), method: :post, class: "inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-bg bg-ink border-1.5 border-ink hover:bg-ink-soft transition cursor-pointer" %>
+      <%= link_to "edit_server", edit_admin_server_path(@server), class: "inline-flex items-center gap-1 px-3 py-1.5 text-xs text-ink border-1.5 border-ink hover:bg-bg-deep transition" %>
+      <a href="/docs/getting-started/connect-server" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-dim hover:text-accent transition">view docs ↗</a>
+    </div>
+  </div>
+<% end %>
+
+<%# Host info row %>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3 font-mono">
+  <div class="border-1.5 border-ink bg-paper p-4">
+    <p class="text-xs text-dim uppercase tracking-widest mb-1">Host</p>
+    <p class="text-sm font-semibold text-ink"><%= @server.host %>:<%= @server.port %></p>
+  </div>
+  <div class="border-1.5 border-ink bg-paper p-4">
+    <p class="text-xs text-dim uppercase tracking-widest mb-1">SSH User</p>
+    <p class="text-sm font-semibold text-ink"><%= @server.ssh_user %></p>
+  </div>
+  <div class="border-1.5 border-ink bg-paper p-4">
+    <p class="text-xs text-dim uppercase tracking-widest mb-1">Apps</p>
+    <p class="text-sm font-semibold text-ink"><%= @apps.size %></p>
+  </div>
+</div>
+
+<%# Live host metrics %>
+<%
+  fresh = @server.live_metrics_fresh?
+  cpu_pct = @server.live_cpu_pct
+  mem_used = @server.live_mem_used_mb
+  mem_total = @server.live_mem_total_mb
+  mem_pct = @server.live_mem_pct
+  containers = @server.live_container_count
+  collected = @server.live_metrics_at
+%>
+<div class="border-1.5 border-ink bg-paper p-5 mb-8 font-mono <%= 'opacity-60' unless fresh %>">
+  <div class="flex items-baseline justify-between mb-4">
+    <p class="text-xs text-dim uppercase tracking-widest">Live Host Metrics</p>
+    <p class="text-[11px] text-dim">
+      <% if collected %>Updated <%= time_ago_in_words(collected) %> ago<%= " · stale" unless fresh %><% else %>Awaiting first poll<% end %>
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div>
+      <div class="flex items-baseline justify-between mb-1.5">
+        <span class="text-xs text-dim">CPU</span>
+        <span class="text-base font-semibold text-ink"><%= cpu_pct ? "#{cpu_pct.to_f.round(1)}%" : "—" %></span>
+      </div>
+      <% if cpu_pct %>
+        <% display_pct = [cpu_pct.to_f, 100].min %>
+        <div class="w-full h-1.5 bg-bg border border-rule-soft relative">
+          <div class="absolute inset-0 <%= display_pct >= 90 ? "bg-danger" : display_pct >= 70 ? "bg-warn" : "bg-accent" %>" style="width: <%= display_pct %>%"></div>
+        </div>
+      <% end %>
+    </div>
+
+    <div>
+      <div class="flex items-baseline justify-between mb-1.5">
+        <span class="text-xs text-dim">RAM</span>
+        <span class="text-base font-semibold text-ink">
+          <%= mem_used ? "#{mem_used} MB" : "—" %><% if mem_total && mem_total.positive? %> / <%= mem_total %> MB<% end %>
+        </span>
+      </div>
+      <% if mem_pct %>
+        <div class="w-full h-1.5 bg-bg border border-rule-soft relative">
+          <div class="absolute inset-0 <%= mem_pct >= 90 ? "bg-danger" : mem_pct >= 75 ? "bg-warn" : "bg-accent" %>" style="width: <%= mem_pct %>%"></div>
+        </div>
+      <% end %>
+    </div>
+
+    <div>
+      <div class="flex items-baseline justify-between mb-1.5">
+        <span class="text-xs text-dim">Containers</span>
+        <span class="text-base font-semibold text-ink"><%= containers || "—" %></span>
+      </div>
+      <p class="text-[11px] text-dim">Running on this host</p>
+    </div>
+  </div>
+</div>
+
+<h2 class="font-mono text-sm font-semibold text-dim uppercase tracking-widest mb-3"># apps on this server</h2>
+<% if @apps.any? %>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+    <% @apps.each do |app| %>
+      <%= link_to dashboard_app_path(app), class: "block border-1.5 border-ink bg-paper p-4 hover:bg-bg-deep transition cursor-pointer group font-mono" do %>
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-ink group-hover:text-accent transition"><%= app.name %></span>
+          <% st = app.status %>
+          <% if st == "running" %><span class="w-2 h-2 bg-success"></span>
+          <% elsif st == "crashed" %><span class="w-2 h-2 bg-danger"></span>
+          <% elsif st == "stopped" %><span class="w-2 h-2 bg-dim"></span>
+          <% elsif st == "deploying" %><span class="w-2 h-2 bg-warn animate-pulse"></span>
+          <% elsif st == "created" %><span class="w-2 h-2 bg-dim"></span>
+          <% end %>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+<% else %>
+  <p class="font-mono text-sm text-dim border-1.5 border-ink bg-paper p-6 text-center">// no apps deployed to this server yet</p>
+<% end %>

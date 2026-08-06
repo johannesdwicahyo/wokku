@@ -1,0 +1,24 @@
+<%# app/components/organisms/apps_table_component.html.erb %>
+<table class="w-full border-1.5 border-ink bg-paper">
+  <thead class="bg-bg-deep border-b-1.5 border-ink font-mono text-[11px] uppercase tracking-widest">
+    <tr>
+      <th class="text-left p-3">app</th>
+      <th class="text-left p-3">status</th>
+      <th class="text-left p-3">size</th>
+      <th class="text-left p-3">domain</th>
+      <th class="text-left p-3">last deploy</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% apps.each do |app| %>
+      <% deployed_at = last_deployed_at(app) %>
+      <tr class="border-b border-rule-soft hover:bg-bg transition-colors">
+        <td class="p-3 font-semibold"><%= link_to app.name, dashboard_app_path(app), class: "hover:underline" %></td>
+        <td class="p-3"><%= render Atoms::StatusPillComponent.new(status: app.status.to_s) %></td>
+        <td class="p-3 font-mono text-xs"><%= box_label(app) %></td>
+        <td class="p-3 font-mono text-xs"><%= primary_domain(app) || "—" %></td>
+        <td class="p-3 font-mono text-xs text-dim"><%= deployed_at ? "#{time_ago_in_words(deployed_at)} ago" : "never" %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

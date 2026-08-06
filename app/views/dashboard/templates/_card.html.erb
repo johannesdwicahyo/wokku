@@ -1,0 +1,24 @@
+<%= link_to dashboard_template_path(template[:slug]), class: "block border-1.5 border-ink bg-paper p-5 hover:bg-bg-deep transition-all group h-full flex flex-col" do %>
+  <div class="flex items-start justify-between mb-3">
+    <div class="w-11 h-11 border-1.5 border-ink bg-bg flex items-center justify-center flex-shrink-0">
+      <%= template_brand_icon(template, size: 24) %>
+    </div>
+    <% if (template[:tags] || []).first %>
+      <span class="border border-accent text-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"><%= template[:tags].first %></span>
+    <% end %>
+  </div>
+  <div class="flex items-baseline gap-2 mb-1">
+    <h3 class="font-mono text-base font-semibold text-ink group-hover:text-accent transition"><%= template[:name] %></h3>
+    <% if template[:version].present? %>
+      <span class="text-[10px] font-mono text-dim tracking-wider">v<%= template[:version] %></span>
+    <% end %>
+  </div>
+  <p class="font-mono text-xs text-dim leading-relaxed mb-4 line-clamp-2 min-h-[2.5rem]"><%= template[:description] %></p>
+  <div class="mt-auto flex items-center justify-between pt-3 border-t border-rule-soft font-mono">
+    <div>
+      <p class="text-[9px] text-dim uppercase tracking-widest font-bold">From</p>
+      <p class="text-xs font-bold text-ink"><%= template_total_label(template) %></p>
+    </div>
+    <span class="border-1.5 border-ink bg-bg text-ink px-3 py-1.5 text-[11px] font-bold group-hover:bg-ink group-hover:text-bg transition-all">Deploy</span>
+  </div>
+<% end %>

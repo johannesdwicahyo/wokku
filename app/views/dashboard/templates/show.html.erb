@@ -1,0 +1,141 @@
+<%#
+  Brutalist template detail (P6). template_cost/format_price/
+  price_period/vcpu_display, deploy-button + app-name-check Stimulus
+  controllers, combobox_tag server, hidden_field preserved 1:1.
+%>
+<% content_for(:title, "#{@template[:name]} - Wokku") %>
+
+<div class="max-w-2xl mx-auto space-y-6">
+  <%= link_to dashboard_templates_path, class: "inline-flex items-center font-mono text-sm text-dim hover:text-accent transition" do %>
+    ← Back to Marketplace
+  <% end %>
+
+  <div class="border-1.5 border-ink bg-paper p-6">
+    <div class="flex items-start gap-4">
+      <div class="w-14 h-14 border-1.5 border-ink bg-bg flex items-center justify-center flex-shrink-0">
+        <%= template_brand_icon(@template, size: 32) %>
+      </div>
+      <div>
+        <div class="flex items-baseline gap-2">
+          <h1 class="font-mono text-xl font-semibold text-ink"><%= @template[:name] %></h1>
+          <% if @template[:version].present? %>
+            <span class="text-xs font-mono text-dim tracking-wider">v<%= @template[:version] %></span>
+          <% end %>
+        </div>
+        <p class="font-mono text-sm text-dim mt-1"><%= @template[:description] %></p>
+        <div class="mt-3 flex flex-wrap gap-1.5">
+          <% (@template[:tags] || []).each do |tag| %>
+            <span class="px-2 py-0.5 font-mono text-xs border border-accent text-accent"><%= tag %></span>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <%
+      # Bundle v2 REVISED 2026-05-31: templates consume from plan quota,
+      # not per-resource pricing. Match Dashboard::TemplatesController's
+      # box_size_for_template logic so the card preview agrees with the
+      # actual deploy. Addons from template metadata become shared engines
+      # (post-Bundle-v2 cleanup at backlog 4.7).
+      tier_name_for_box = @template[:min_tier].presence ||
+                          ((@template[:addons] || []).any? ? "basic" : "free")
+      box_size = { "free" => "sleeping", "basic" => "small", "standard" => "medium",
+                   "performance" => "large", "performance-2x" => "xlarge" }[tier_name_for_box] || "small"
+      addon_engines = (@template[:addons] || []).map { |a| (a["type"] || a[:type]).to_s }.uniq
+    %>
+    <%# Plan-quota narration is cloud pricing copy — self-host owns the
+        hardware, so the whole section is billing-host-only. %>
+    <% if respond_to?(:dashboard_billing_path) %>
+    <div class="mt-4 pt-4 border-t border-rule-soft">
+      <h3 class="font-mono text-[10px] font-bold text-dim uppercase tracking-widest mb-3">what_this_uses_from_your_plan</h3>
+      <div class="space-y-2">
+        <div class="flex items-start justify-between border-1.5 border-ink bg-bg px-3 py-2.5 font-mono" data-tour-target="confirm-dyno">
+          <div>
+            <span class="text-sm font-bold text-ink">1 <%= box_size.capitalize %> box</span>
+            <p class="mt-0.5 text-[11px] text-dim">
+              Container size · counts against your plan's <%= box_size %> box quota
+            </p>
+          </div>
+          <span class="text-sm font-bold text-ink whitespace-nowrap">included</span>
+        </div>
+
+        <% addon_engines.each do |engine| %>
+          <div class="flex items-start justify-between border-1.5 border-ink bg-bg px-3 py-2.5 font-mono">
+            <div>
+              <span class="text-sm font-bold text-ink">Shared <%= engine.capitalize %></span>
+              <p class="mt-0.5 text-[11px] text-dim">
+                Auto-attached on first deploy · per-tenant cap follows your plan
+              </p>
+            </div>
+            <span class="text-sm font-bold text-ink whitespace-nowrap">free</span>
+          </div>
+        <% end %>
+
+        <p class="font-mono text-[10px] text-dim mt-2">
+          No extra charge — your monthly plan covers everything above. Upgrade to a dedicated DB or Redis later from box settings if you outgrow the shared tenant.
+        </p>
+      </div>
+    </div>
+    <% end %>
+
+    <div class="mt-4 pt-4 border-t border-rule-soft">
+      <a href="<%= @template[:repo] %>" target="_blank" rel="noopener" class="inline-flex items-center font-mono text-xs text-dim hover:text-accent transition">
+        ↗ <%= @template[:repo].sub("https://github.com/", "") %>
+      </a>
+    </div>
+  </div>
+
+  <div class="border-1.5 border-ink bg-paper p-6">
+    <h2 class="font-mono text-[10px] font-bold text-dim uppercase tracking-widest mb-4">deploy_this_template</h2>
+
+    <% if flash[:box_addon_size].present? %>
+      <div class="mb-4 border-1.5 border-warn bg-warn-soft p-3">
+        <p class="font-mono text-[11px] text-ink mb-2">
+          You're at your <%= flash[:box_addon_size] %> box limit. Buy an extra box to deploy this template.
+        </p>
+        <% if respond_to?(:dashboard_box_addons_path) %>
+        <%= button_to "Buy a #{flash[:box_addon_size]} box — Rp #{ActiveSupport::NumberHelper.number_to_delimited(flash[:box_addon_price], delimiter: '.')}/mo",
+              dashboard_box_addons_path(size: flash[:box_addon_size]),
+              method: :post,
+              class: "w-full py-2.5 px-4 bg-ink text-bg font-mono text-sm font-bold border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer text-center" %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%= form_with url: dashboard_templates_path, method: :post, class: "space-y-4",
+                  data: { controller: "deploy-button app-name-check" } do |f| %>
+      <%= f.hidden_field :template_slug, value: @template[:slug] %>
+
+      <div>
+        <label class="block font-mono text-xs font-medium text-dim mb-1.5 uppercase tracking-widest">App Name</label>
+        <input type="text" name="app_name" required placeholder="my-app" value="<%= @suggested_app_name %>"
+               class="w-full bg-bg border-1.5 border-ink px-3 py-2 font-mono text-sm text-ink placeholder-dim focus:outline-none focus:border-accent"
+               pattern="[a-z][a-z0-9\-]*"
+               title="Lowercase letters, numbers, and hyphens"
+               autocomplete="off"
+               data-app-name-check-target="input"
+               data-action="input->app-name-check#check">
+        <p class="mt-1 font-mono text-[11px] text-dim" data-app-name-check-target="status"></p>
+        <div class="mt-1.5 hidden flex flex-wrap gap-1.5" data-app-name-check-target="suggestions"></div>
+      </div>
+
+      <div data-tour-target="confirm-server">
+        <label class="block font-mono text-xs font-medium text-dim mb-1.5 uppercase tracking-widest">Server</label>
+        <%
+          server_options = @servers.map { |s| { value: s.id, label: s.name, description: s.host } }
+        %>
+        <%= combobox_tag "server_id", server_options, value: @suggested_server_id, placeholder: "Search servers…", required: true %>
+        <p class="mt-1 font-mono text-[11px] text-dim">
+          <%= @servers.size %> <%= "server".pluralize(@servers.size) %> available
+        </p>
+      </div>
+
+      <div class="pt-2">
+        <button type="submit" data-deploy-button-target="button" data-app-name-check-target="submit" data-tour-target="confirm-deploy" class="w-full py-2.5 px-4 bg-ink text-bg font-mono text-sm font-bold border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer text-center disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2">
+          <span data-deploy-button-target="spinner" class="hidden w-4 h-4 border-2 border-bg/30 border-t-bg rounded-full animate-spin"></span>
+          <span data-deploy-button-target="label">Deploy <%= @template[:name] %></span>
+        </button>
+      </div>
+    <% end %>
+  </div>
+</div>
