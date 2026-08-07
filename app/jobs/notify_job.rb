@@ -1,3 +1,5 @@
+require "ssrf_filter"
+
 class NotifyJob < ApplicationJob
   queue_as :notifications
 
@@ -221,14 +223,18 @@ class NotifyJob < ApplicationJob
     Rails.logger.warn("Webhook notification failed: #{e.message}")
   end
 
+  # SSRF guard: notification destination URLs (slack/discord/generic
+  # webhook) are set by team admins and delivered server-side, incl. an
+  # on-demand  action. SsrfFilter resolves + validates a public IP,
+  # pins the socket (anti-rebinding), and revalidates redirects, so a
+  # crafted URL can't make the control plane POST to internal services.
   def post_json(url, payload)
-    uri = URI(url)
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = uri.scheme == "https"
-    http.open_timeout = 5
-    http.read_timeout = 10
-    request = Net::HTTP::Post.new(uri, "Content-Type" => "application/json")
-    request.body = payload.to_json
-    http.request(request)
+    SsrfFilter.post(url,
+      headers: { "Content-Type" => "application/json" },
+      body: payload.to_json,
+      http_options: { open_timeout: 5, read_timeout: 10 })
+  rescue SsrfFilter::Error => e
+    Rails.logger.warn("notification webhook blocked by SSRF guard: #{e.class}")
+    nil
   end
 end
