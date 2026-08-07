@@ -32,6 +32,17 @@ module WokkuHarness
     config.active_record.encryption.deterministic_key   = ENV.fetch("AR_ENC_DETERMINISTIC") { derive.call("wokku_ar_deterministic") }
     config.active_record.encryption.key_derivation_salt = ENV.fetch("AR_ENC_SALT")          { derive.call("wokku_ar_salt") }
 
+    # The standard install serves the dashboard behind Caddy's TLS on
+    # 80/443, so in production force HTTPS: this sets Strict-Transport-
+    # Security (HSTS), the Secure flag on cookies, and an http->https
+    # redirect. assume_ssl trusts Caddy's X-Forwarded-Proto so there's no
+    # redirect loop. Opt out with WOKKU_FORCE_SSL=0 for a plain-http or
+    # localhost-only deployment.
+    if Rails.env.production? && ENV["WOKKU_FORCE_SSL"] != "0"
+      config.assume_ssl = true
+      config.force_ssl  = true
+    end
+
     # Jobs run in-process via the Solid Queue puma plugin (config/puma.rb).
     config.active_job.queue_adapter = :solid_queue
     config.solid_queue.connects_to = nil if config.respond_to?(:solid_queue)
