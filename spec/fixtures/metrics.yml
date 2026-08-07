@@ -1,0 +1,13 @@
+one:
+  app_record: one
+  cpu_percent: 12.5
+  memory_usage: 104857600
+  memory_limit: 536870912
+  recorded_at: 2026-03-13 07:00:00
+
+two:
+  app_record: two
+  cpu_percent: 45.2
+  memory_usage: 268435456
+  memory_limit: 536870912
+  recorded_at: 2026-03-13 07:00:00

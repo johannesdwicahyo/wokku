@@ -31,6 +31,9 @@ module WokkuHarness
     config.active_record.encryption.primary_key         = ENV.fetch("AR_ENC_PRIMARY")       { derive.call("wokku_ar_primary") }
     config.active_record.encryption.deterministic_key   = ENV.fetch("AR_ENC_DETERMINISTIC") { derive.call("wokku_ar_deterministic") }
     config.active_record.encryption.key_derivation_salt = ENV.fetch("AR_ENC_SALT")          { derive.call("wokku_ar_salt") }
+    # Read pre-encryption / plaintext rows (self-host installs predating a
+    # column becoming encrypted; also lets test fixtures store plaintext).
+    config.active_record.encryption.support_unencrypted_data = true
 
     # The standard install serves the dashboard behind Caddy's TLS on
     # 80/443, so in production force HTTPS: this sets Strict-Transport-
@@ -41,6 +44,16 @@ module WokkuHarness
     if Rails.env.production? && ENV["WOKKU_FORCE_SSL"] != "0"
       config.assume_ssl = true
       config.force_ssl  = true
+    end
+
+    # Test env: capture mail instead of hitting SMTP, and give mailer URLs
+    # a host (self-host production sets these from the deployment domain).
+    if Rails.env.test?
+      config.action_mailer.delivery_method = :test
+      config.action_mailer.default_url_options = { host: "wokku.cloud" }
+      # Encrypt fixture values on load so deterministic-encrypted columns
+      # (e.g. DeviceToken#token) honour uniqueness in specs.
+      config.active_record.encryption.encrypt_fixtures = true
     end
 
     # Jobs run in-process via the Solid Queue puma plugin (config/puma.rb).

@@ -1,0 +1,49 @@
+free:
+  name: free
+  memory_mb: 256
+  cpu_shares: 0.15
+  price_cents_per_hour: 0.0
+  price_cents_per_month: 0
+  monthly_price_cents: 0
+  sleeps: true
+  scalable: false
+
+basic:
+  name: basic
+  memory_mb: 512
+  cpu_shares: 0.3
+  price_cents_per_hour: 0.2083
+  price_cents_per_month: 150
+  monthly_price_cents: 500
+  sleeps: false
+  scalable: true
+
+eco:
+  name: eco
+  memory_mb: 256
+  cpu_shares: 0.2
+  price_cents_per_hour: 0.0694
+  price_cents_per_month: 50
+  monthly_price_cents: 50
+  sleeps: false
+  scalable: true
+
+standard:
+  name: standard
+  memory_mb: 1024
+  cpu_shares: 0.5
+  price_cents_per_hour: 0.5556
+  price_cents_per_month: 400
+  monthly_price_cents: 400
+  sleeps: false
+  scalable: true
+
+performance:
+  name: performance
+  memory_mb: 2048
+  cpu_shares: 1.0
+  price_cents_per_hour: 1.1111
+  price_cents_per_month: 800
+  monthly_price_cents: 800
+  sleeps: false
+  scalable: true

@@ -1,0 +1,9 @@
+one:
+  app_record: one
+  database_service: one
+  alias_name: DATABASE
+
+two:
+  app_record: two
+  database_service: two
+  alias_name: REDIS

@@ -1,0 +1,161 @@
+# Mirrors db/seeds/plans.rb (Bundle v2, locked 2026-05-29).
+# See memory/project_bundle_v2_locked_spec.md.
+
+free:
+  key: free
+  name: Free
+  max_apps: 999
+  max_dynos: 999
+  max_databases: 999
+  price_cents_per_month: 0
+  price_usd_cents: 0
+  price_idr: 0
+  seats_included: 1
+  box_quotas: { small: 0, medium: 0, large: 0, xlarge: 0, sleeping: 3 }
+  addons_available: {}
+  backup_policy: on_demand
+  backup_retention_days: 0
+  support_level: chatbot
+  pro_features: "[]"
+  log_retention_days: 1
+  sample_retention_hours: 24
+  metric_high_res_days: 1
+  metric_aggregate_retention_days: 7
+  db_bundle_mb: 100
+  redis_bundle_mb: 25
+  minio_bundle_gb: 0
+  shared_pg_mb_per_tenant: 50
+  shared_redis_mb_per_tenant: 10
+  shared_memcached_mb_per_tenant: 16
+  shared_rabbitmq_msg_per_tenant: 10000
+  shared_meilisearch_mb_per_tenant: 50
+  dedicated_pg_slots: 0
+  dedicated_pg_size_mb: 0
+  dedicated_redis_slots: 0
+  dedicated_redis_size_mb: 0
+
+solo:
+  key: solo
+  name: Solo
+  max_apps: 10
+  max_dynos: 20
+  max_databases: 5
+  price_cents_per_month: 500
+  price_usd_cents: 500
+  price_idr: 75000
+  seats_included: 1
+  box_quotas: { small: 3, medium: 0, large: 0, xlarge: 0, sleeping: 3 }
+  addons_available: {}
+  backup_policy: weekly
+  backup_retention_days: 21
+  support_level: chatbot_plus_human
+  pro_features: "[]"
+  log_retention_days: 3
+  sample_retention_hours: 48
+  metric_high_res_days: 7
+  metric_aggregate_retention_days: 30
+  db_bundle_mb: 1024
+  redis_bundle_mb: 100
+  minio_bundle_gb: 2
+  shared_pg_mb_per_tenant: 50
+  shared_redis_mb_per_tenant: 10
+  shared_memcached_mb_per_tenant: 16
+  shared_rabbitmq_msg_per_tenant: 10000
+  shared_meilisearch_mb_per_tenant: 50
+  dedicated_pg_slots: 3
+  dedicated_pg_size_mb: 512
+  dedicated_redis_slots: 3
+  dedicated_redis_size_mb: 128
+
+# Legacy hobby fixture kept for any tests that still reference it. The
+# real plan rows are free/solo/pro/team after the Phase 4 rename — this
+# row stays so back-compat fixtures don't blow up at load time.
+hobby:
+  key: hobby
+  name: Hobby
+  max_apps: 10
+  max_dynos: 20
+  max_databases: 5
+  price_cents_per_month: 500
+  price_usd_cents: 500
+  price_idr: 0
+  seats_included: 1
+  box_quotas: {}
+  addons_available: {}
+  backup_policy: on_demand
+  backup_retention_days: 0
+  support_level: chatbot
+  pro_features: "[]"
+  stripe_price_id: "price_test_hobby"
+  log_retention_days: 3
+  sample_retention_hours: 48
+  metric_high_res_days: 7
+  metric_aggregate_retention_days: 30
+
+pro:
+  key: pro
+  name: Pro
+  max_apps: 100
+  max_dynos: 200
+  max_databases: 50
+  price_cents_per_month: 2500
+  price_usd_cents: 2000
+  price_idr: 300000
+  seats_included: 1
+  box_quotas: { small: 3, medium: 2, large: 0, xlarge: 0, sleeping: 3 }
+  addons_available: {}
+  backup_policy: biweekly
+  backup_retention_days: 98
+  support_level: chatbot_plus_human
+  pro_features: '["pr_previews","transfer_app","scheduled_tasks"]'
+  log_retention_days: 7
+  sample_retention_hours: 168
+  metric_high_res_days: 30
+  metric_aggregate_retention_days: 90
+  db_bundle_mb: 5120
+  redis_bundle_mb: 500
+  minio_bundle_gb: 10
+  shared_pg_mb_per_tenant: 50
+  shared_redis_mb_per_tenant: 10
+  shared_memcached_mb_per_tenant: 16
+  shared_rabbitmq_msg_per_tenant: 50000
+  shared_meilisearch_mb_per_tenant: 250
+  dedicated_pg_slots: 3
+  dedicated_pg_size_mb: 2048
+  dedicated_redis_slots: 3
+  dedicated_redis_size_mb: 512
+
+team:
+  key: team
+  name: Team
+  max_apps: 100
+  max_dynos: 200
+  max_databases: 50
+  price_cents_per_month: 5000
+  price_usd_cents: 5000
+  price_idr: 750000
+  seats_included: 3
+  extra_seat_usd_cents: 300
+  extra_seat_idr: 45000
+  box_quotas: { small: 3, medium: 2, large: 1, xlarge: 0, sleeping: 3 }
+  addons_available: { large: 1000, xlarge: 2000 }
+  backup_policy: daily_plus_monthly
+  backup_retention_days: 30
+  support_level: dedicated_human
+  pro_features: '["pr_previews","transfer_app","scheduled_tasks"]'
+  log_retention_days: 30
+  sample_retention_hours: 336
+  metric_high_res_days: 90
+  metric_aggregate_retention_days: 365
+  db_bundle_mb: 10240
+  redis_bundle_mb: 1024
+  minio_bundle_gb: 20
+  shared_pg_mb_per_tenant: 50
+  shared_redis_mb_per_tenant: 10
+  shared_memcached_mb_per_tenant: 16
+  shared_rabbitmq_msg_per_tenant: 200000
+  shared_meilisearch_mb_per_tenant: 1024
+  dedicated_pg_slots: 3
+  dedicated_pg_size_mb: 5120
+  dedicated_redis_slots: 3
+  dedicated_redis_size_mb: 1024

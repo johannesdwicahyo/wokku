@@ -1,0 +1,13 @@
+one:
+  name: Team One
+  owner_id: <%= ActiveRecord::FixtureSet.identify(:one, :uuid) %>
+  kind: 0
+  slug: team-one
+  plan: free
+
+two:
+  name: Team Two
+  owner_id: <%= ActiveRecord::FixtureSet.identify(:two, :uuid) %>
+  kind: 0
+  slug: team-two
+  plan: free
