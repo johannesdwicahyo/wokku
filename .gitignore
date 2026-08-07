@@ -5,3 +5,9 @@ harness/storage/
 .DS_Store
 wokkud/wokkud
 harness/.bundle/
+
+# Test suite
+/coverage
+/tmp
+harness/tmp
+harness/log

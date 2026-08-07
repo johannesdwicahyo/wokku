@@ -1,0 +1,29 @@
+# frozen_string_literal: true
+
+# SimpleCov FIRST — before any engine code loads. Measures ONLY the engine
+# (app/ + lib/ at the repo root); the harness test host and specs are
+# filtered out. The 95% line gate lives in CI (rake or the workflow) once
+# the suite is fully migrated; here we just collect coverage.
+require "simplecov"
+SimpleCov.start do
+  enable_coverage :branch
+  SimpleCov.skip "/spec/"
+  SimpleCov.skip "/harness/"
+  SimpleCov.skip "/vendor/"
+  SimpleCov.skip "/db/"
+  cover "{app,lib}/**/*.rb"
+end
+
+RSpec.configure do |config|
+  config.expect_with :rspec do |expectations|
+    expectations.include_chain_clauses_in_custom_matcher_descriptions = true
+  end
+  config.mock_with :rspec do |mocks|
+    mocks.verify_partial_doubles = true
+  end
+  config.shared_context_metadata_behavior = :apply_to_host_groups
+  config.filter_run_when_matching :focus
+  config.disable_monkey_patching!
+  config.order = :random
+  Kernel.srand config.seed
+end

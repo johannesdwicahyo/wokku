@@ -32,6 +32,38 @@ jobs:
         working-directory: harness
         run: HARNESS_EAGER_LOAD=1 bin/rails runner 'puts "eager load OK — #{AppRecord.name}, providers: #{Wokku.config.dns_provider.class}"'
 
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready" --health-interval 10s
+          --health-timeout 5s --health-retries 5
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      RAILS_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - name: Load engine schema into the test DB
+        run: |
+          createdb -h localhost -U postgres wokku_oss_harness_test
+          psql -h localhost -U postgres -d wokku_oss_harness_test -f db/structure.sql
+        env:
+          PGPASSWORD: postgres
+      - name: RSpec (engine suite + SimpleCov)
+        run: bundle exec rspec
+
   wokkud:
     runs-on: ubuntu-latest
     steps:
