@@ -66,6 +66,8 @@ jobs:
           bundle exec rake parallel:create parallel:load_structure 2>/dev/null || \
             for i in $(seq 1 $(nproc)); do createdb -h localhost -U postgres "wokku_oss_harness_test$([ $i -eq 1 ] && echo '' || echo $i)" 2>/dev/null; psql -h localhost -U postgres -d "wokku_oss_harness_test$([ $i -eq 1 ] && echo '' || echo $i)" -f db/structure.sql >/dev/null 2>&1; done
           bundle exec parallel_rspec spec/
+      - name: Coverage gate (merged, 95% line)
+        run: bundle exec rake coverage:check
 
   wokkud:
     runs-on: ubuntu-latest
