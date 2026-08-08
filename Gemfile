@@ -30,6 +30,7 @@ gem "ed25519"
 gem "bcrypt_pbkdf"
 gem "sentry-ruby"
 gem "sentry-rails"
+gem "rack-attack"
 gem "bootsnap", require: false
 gem "ostruct"
 

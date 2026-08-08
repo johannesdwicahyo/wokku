@@ -11,3 +11,7 @@ harness/.bundle/
 /tmp
 harness/tmp
 harness/log
+
+# Test-only: engine symlinked into the harness so Rails.root.join("engines/wokku/...") specs resolve
+harness/engines
+harness/spec/fixtures

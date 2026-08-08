@@ -54,6 +54,9 @@ module WokkuHarness
       # Encrypt fixture values on load so deterministic-encrypted columns
       # (e.g. DeviceToken#token) honour uniqueness in specs.
       config.active_record.encryption.encrypt_fixtures = true
+      # Request specs POST without a CSRF token; disable forgery protection
+      # so they exercise the controller, not the token check.
+      config.action_controller.allow_forgery_protection = false
     end
 
     # Jobs run in-process via the Solid Queue puma plugin (config/puma.rb).
