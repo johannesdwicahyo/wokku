@@ -42,4 +42,5 @@ group :test, :development do
   gem "shoulda-matchers", "~> 6.0"
   gem "mocha"
   gem "capybara"
+  gem "parallel_tests"
 end
