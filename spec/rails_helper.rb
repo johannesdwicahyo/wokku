@@ -14,6 +14,7 @@ require "rspec/rails"
 require "factory_bot_rails"
 require "webmock/rspec"
 require "shoulda/matchers"
+require "capybara/rspec"
 
 # ActiveJob matchers (have_enqueued_job/mail) need the :test adapter; the
 # harness runs :solid_queue in production.
@@ -55,6 +56,8 @@ RSpec.configure do |config|
   config.include ActiveJob::TestHelper, type: :request
   config.include ActiveSupport::Testing::TimeHelpers
   config.include ViewComponent::TestHelpers, type: :component
+  config.include ViewComponent::SystemTestHelpers, type: :component  # provides `page`
+  config.include Capybara::RSpecMatchers, type: :component
 end
 
 # The engine ships factories under spec/factories. factory_bot_rails defaults

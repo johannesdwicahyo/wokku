@@ -41,4 +41,5 @@ group :test, :development do
   gem "webmock"
   gem "shoulda-matchers", "~> 6.0"
   gem "mocha"
+  gem "capybara"
 end
