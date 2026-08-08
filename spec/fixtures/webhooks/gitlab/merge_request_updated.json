@@ -1,0 +1,12 @@
+{
+  "object_kind": "merge_request",
+  "project": { "path_with_namespace": "octo/repo" },
+  "object_attributes": {
+    "iid": 7,
+    "title": "Add feature",
+    "action": "update",
+    "source_branch": "feat/x",
+    "last_commit": { "id": "abc123def" }
+  },
+  "user": { "username": "octocat" }
+}

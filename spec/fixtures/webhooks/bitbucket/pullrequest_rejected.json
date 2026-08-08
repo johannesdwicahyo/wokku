@@ -1,0 +1,12 @@
+{
+  "pullrequest": {
+    "id": 7,
+    "title": "Add feature",
+    "source": {
+      "branch": { "name": "feat/x" },
+      "commit": { "hash": "abc123def" }
+    }
+  },
+  "repository": { "full_name": "octo/repo" },
+  "actor": { "username": "octocat" }
+}

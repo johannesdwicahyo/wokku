@@ -1,0 +1,12 @@
+{
+  "action": "opened",
+  "number": 7,
+  "pull_request": {
+    "number": 7,
+    "title": "Add feature",
+    "head": { "ref": "feat/x", "sha": "abc123def" },
+    "user": { "login": "octocat" }
+  },
+  "repository": { "full_name": "octo/repo" },
+  "installation": { "id": 42 }
+}
