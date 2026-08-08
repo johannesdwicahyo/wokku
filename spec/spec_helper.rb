@@ -4,6 +4,7 @@
 # (app/ + lib/ at the repo root); the harness test host and specs are
 # filtered out. The 95% line gate lives in CI (rake or the workflow) once
 # the suite is fully migrated; here we just collect coverage.
+require "ostruct" # Ruby 3.4 dropped it from autoload; specs use it
 require "simplecov"
 SimpleCov.start do
   enable_coverage :branch

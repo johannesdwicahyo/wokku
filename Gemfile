@@ -31,6 +31,7 @@ gem "bcrypt_pbkdf"
 gem "sentry-ruby"
 gem "sentry-rails"
 gem "bootsnap", require: false
+gem "ostruct"
 
 group :test, :development do
   gem "rspec-rails"
