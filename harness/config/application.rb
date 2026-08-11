@@ -57,6 +57,9 @@ module WokkuHarness
       # Request specs POST without a CSRF token; disable forgery protection
       # so they exercise the controller, not the token check.
       config.action_controller.allow_forgery_protection = false
+      # Surface controller exceptions in request specs (so a spec that
+      # expects a rescued redirect but gets a 500 shows the real backtrace).
+      config.action_dispatch.show_exceptions = :none
     end
 
     # Jobs run in-process via the Solid Queue puma plugin (config/puma.rb).
