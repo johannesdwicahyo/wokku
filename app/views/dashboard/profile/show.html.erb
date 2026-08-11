@@ -121,7 +121,8 @@
             dyno_count        = user_apps.flat_map(&:dyno_allocations).sum { |a| a.count.to_i }
           %>
           <div class="text-right font-mono">
-            <span class="text-lg font-semibold text-accent"><%= format_usd_for_user(estimated_monthly_usd) %></span>
+            <%# Cloud pricing display; a self-host has no billing/currency helper. %>
+            <% if respond_to?(:format_usd_for_user) %><span class="text-lg font-semibold text-accent"><%= format_usd_for_user(estimated_monthly_usd) %></span><% end %>
             <p class="text-[10px] text-dim uppercase tracking-widest"><%= plan&.name || t("dashboard.profile.estimated_monthly") %> · flat plan price</p>
           </div>
         </div>

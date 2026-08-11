@@ -34,7 +34,7 @@
           <% if tier.free? %>
             <p class="text-sm font-bold text-ink">Free</p>
           <% else %>
-            <p class="text-sm font-bold text-ink"><%= format_usd_for_user(tier.monthly_price_dollars) %><span class="text-xs text-dim font-normal"><%= price_period(Wokku::LaunchMode.idr_only? ? "idr" : nil) %></span></p>
+            <p class="text-sm font-bold text-ink"><% if respond_to?(:format_usd_for_user) %><%= format_usd_for_user(tier.monthly_price_dollars) %><span class="text-xs text-dim font-normal"><%= price_period(Wokku::LaunchMode.idr_only? ? "idr" : nil) %></span><% else %>—<% end %></p>
           <% end %>
         </div>
 
