@@ -62,7 +62,7 @@
               # Available means: plan has at least 1 quota for this size OR
               # (only Team plan) it's listed in addons_available.
               # Headroom-aware: includes purchased box-addons (Part 2), not just plan base quota.
-              quota_avail = is_current || (@box_size_headroom && @box_size_headroom[box_size].to_i > 0)
+              quota_avail = is_current || (@box_size_headroom && @box_size_headroom[box_size].to_f > 0) # to_f: NullPlanEnforcer returns Float::INFINITY (unlimited self-host); Infinity.to_i raises
               addon_avail = user_plan&.buyable_box_sizes&.include?(box_size)
               on_plan = quota_avail || addon_avail
               upgrade_msg = case box_size
