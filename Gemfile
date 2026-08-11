@@ -33,6 +33,7 @@ gem "sentry-rails"
 gem "rack-attack"
 gem "bootsnap", require: false
 gem "ostruct"
+gem "csv"
 
 group :test, :development do
   gem "rspec-rails"

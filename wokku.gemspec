@@ -14,4 +14,5 @@ Gem::Specification.new do |spec|
   # notifications) is SSRF-guarded: resolves + validates public IPs, pins
   # the connection (anti-rebinding), revalidates redirects.
   spec.add_dependency "ssrf_filter", "~> 1.5"
+  spec.add_dependency "csv"
 end

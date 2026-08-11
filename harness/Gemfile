@@ -30,4 +30,5 @@ gem "bcrypt_pbkdf"
 gem "sentry-ruby"
 gem "sentry-rails"
 gem "rack-attack"
+gem "csv"
 gem "bootsnap", require: false
