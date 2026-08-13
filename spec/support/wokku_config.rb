@@ -8,6 +8,10 @@ RSpec.configure do |config|
     Wokku.configure do |c|
       c.canonical_domain = "wokku.cloud"
       c.owned_domains    = [ "wokku.app", "wokku.cloud" ]
+      # Ported specs assume the cloud's OPEN registration (OAuth signup
+      # creates users). Self-host default is closed; the closed-reg test in
+      # spec/lib/wokku/providers_spec.rb flips it false locally + restores.
+      c.open_registration = true
     end
     # Mailers generate absolute URLs (unlock/heartbeat/etc.); give them a host.
     Rails.application.config.action_mailer.default_url_options = { host: "wokku.cloud" }
