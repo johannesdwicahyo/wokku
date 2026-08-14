@@ -46,10 +46,14 @@ RSpec.describe "POST /vitals/ingest", type: :request do
     after { Rack::Attack.enabled = false }
 
     it "returns 429 after the per-token limit is exceeded" do
-      601.times do
-        post "/vitals/ingest", params: { t: app_record.vitals_ingest_token, metric: "LCP", value: 1 }
+      # Freeze the clock so all 601 requests land in one throttle period —
+      # a period boundary rolling mid-loop resets the counter (flaky).
+      freeze_time do
+        601.times do
+          post "/vitals/ingest", params: { t: app_record.vitals_ingest_token, metric: "LCP", value: 1 }
+        end
+        expect(response).to have_http_status(:too_many_requests)
       end
-      expect(response).to have_http_status(:too_many_requests)
     end
   end
 end

@@ -290,7 +290,7 @@ RSpec.describe "API::V1::AppsController", type: :request do
   end
 
   it "never references Dokku:: in the destroy action" do
-    source = File.read(Rails.root.join("engines/wokku/app/controllers/api/v1/apps_controller.rb"))
+    source = File.read(Wokku::Engine.root.join("app/controllers/api/v1/apps_controller.rb"))
     destroy_body = source[/def destroy\n(.*?)\n      end/m, 1]
     expect(destroy_body).not_to match(/Dokku::/)
   end

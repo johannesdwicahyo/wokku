@@ -18,6 +18,12 @@ RSpec.describe "Dashboard::Apps box-size auto-upgrade", type: :request do
 
   before do
     create(:team_membership, team: team, user: user, role: :admin)
+    # Quotas come from the injected enforcer (OSS default is unlimited, so
+    # nothing would ever auto-upgrade). Stub a Team-shaped grant — large-only —
+    # so resolve_box_size's upgrade walk is what this spec exercises.
+    allow(Wokku.config.plan_enforcer).to receive(:quota) do |_user, _kind, size|
+      team_plan.box_quotas.fetch(size.to_s, 0)
+    end
     sign_in user
     stub_request(:any, %r{\Ahttps://api\.cloudflare\.com/})
       .to_return(status: 200, body: { success: true, result: [] }.to_json,

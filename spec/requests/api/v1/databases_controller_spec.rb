@@ -126,7 +126,7 @@ RSpec.describe "API::V1::DatabasesController", type: :request do
   end
 
   it "never references Dokku:: anywhere in the controller (W7 Phase 2 — dokku-free)" do
-    source = File.read(Rails.root.join("engines/wokku/app/controllers/api/v1/databases_controller.rb"))
+    source = File.read(Wokku::Engine.root.join("app/controllers/api/v1/databases_controller.rb"))
     expect(source).not_to match(/Dokku::/)
   end
 
