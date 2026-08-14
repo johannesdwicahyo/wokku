@@ -30,5 +30,11 @@ gem "bcrypt_pbkdf"
 gem "sentry-ruby"
 gem "sentry-rails"
 gem "rack-attack"
+# GithubApp (repo connect/deploys) drives Octokit; faraday-retry because
+# Faraday 2 split retry middleware into its own gem and octokit expects it.
+gem "octokit"
+gem "faraday-retry"
+# PushNotificationService (mobile app push) — Expo server SDK.
+gem "expo-server-sdk"
 gem "csv"
 gem "bootsnap", require: false

@@ -57,9 +57,10 @@ module WokkuHarness
       # Request specs POST without a CSRF token; disable forgery protection
       # so they exercise the controller, not the token check.
       config.action_controller.allow_forgery_protection = false
-      # Surface controller exceptions in request specs (so a spec that
-      # expects a rescued redirect but gets a 500 shows the real backtrace).
-      config.action_dispatch.show_exceptions = :none
+      # :rescuable matches wokku-cloud's test env: RoutingError/RecordNotFound
+      # render their mapped status (the Devise admin-constraint 404 specs
+      # assert responses, not raises); unmapped exceptions still raise.
+      config.action_dispatch.show_exceptions = :rescuable
     end
 
     # Jobs run in-process via the Solid Queue puma plugin (config/puma.rb).
