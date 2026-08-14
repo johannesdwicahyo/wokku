@@ -29,6 +29,19 @@ RSpec.describe "API login rate limit", type: :request do
     expect(JSON.parse(response.body)["error"]).to eq("Rate limit exceeded. Retry later.")
   end
 
+  it "cannot be bypassed with a .json format suffix (path-normalized throttle)" do
+    5.times do |i|
+      post "/api/v1/auth/login.json",
+        params: { email: "sneaky#{i}@example.com", password: "wrong" },
+        env: { "REMOTE_ADDR" => "10.9.9.9" }
+    end
+
+    post "/api/v1/auth/login.json",
+      params: { email: "sneaky6@example.com", password: "wrong" },
+      env: { "REMOTE_ADDR" => "10.9.9.9" }
+    expect(response).to have_http_status(:too_many_requests)
+  end
+
   it "blocks after 5 failed login attempts on the same email" do
     5.times do
       post api_v1_auth_login_path,

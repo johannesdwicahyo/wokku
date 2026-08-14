@@ -11,24 +11,31 @@ class Rack::Attack
     ActiveSupport::Cache::MemoryStore.new
   end
 
+  # Devise + the API routes accept an optional (.:format) suffix, so an
+  # exact-path throttle can be evaded with e.g. /users/sign_in.json. Compare
+  # against the path with any trailing .<format> stripped.
+  def self.wokku_path(req)
+    req.path.sub(/\.[a-zA-Z0-9]+\z/, "")
+  end
+
   # Web sign-in (Devise /users/sign_in) — any POST is a password attempt.
   throttle("logins/ip", limit: 5, period: 20.seconds) do |req|
-    req.ip if req.path == "/users/sign_in" && req.post?
+    req.ip if wokku_path(req) == "/users/sign_in" && req.post?
   end
 
   throttle("logins/email", limit: 5, period: 20.seconds) do |req|
-    if req.path == "/users/sign_in" && req.post?
+    if wokku_path(req) == "/users/sign_in" && req.post?
       req.params.dig("user", "email")&.downcase&.strip
     end
   end
 
   # API login (CLI/MCP) — accepts email+password, the #1 stuffing target.
   throttle("api_login/ip", limit: 5, period: 1.minute) do |req|
-    req.ip if req.path == "/api/v1/auth/login" && req.post?
+    req.ip if wokku_path(req) == "/api/v1/auth/login" && req.post?
   end
 
   throttle("api_login/email", limit: 5, period: 1.minute) do |req|
-    if req.path == "/api/v1/auth/login" && req.post?
+    if wokku_path(req) == "/api/v1/auth/login" && req.post?
       req.params["email"]&.to_s&.downcase&.strip.presence
     end
   end
@@ -48,17 +55,17 @@ class Rack::Attack
 
   # Device flow (RFC 8628) code minting — each call creates a DB row.
   throttle("device_code_mint/ip", limit: 10, period: 1.hour) do |req|
-    req.ip if req.path == "/api/v1/auth/device/code" && req.post?
+    req.ip if wokku_path(req) == "/api/v1/auth/device/code" && req.post?
   end
 
   # Device flow polling — RFC interval 5s; 30/min leaves headroom.
   throttle("device_token_poll/ip", limit: 30, period: 1.minute) do |req|
-    req.ip if req.path == "/api/v1/auth/device/token" && req.post?
+    req.ip if wokku_path(req) == "/api/v1/auth/device/token" && req.post?
   end
 
   # Generic API catch-all for non-login endpoints.
   throttle("api/ip", limit: 60, period: 1.minute) do |req|
-    req.ip if req.path.start_with?("/api/") && req.path != "/api/v1/auth/login"
+    req.ip if req.path.start_with?("/api/") && wokku_path(req) != "/api/v1/auth/login"
   end
 
   # Webhook endpoints.
@@ -68,7 +75,7 @@ class Rack::Attack
 
   # Web vitals ingest — per-token; 600/min is far above real page traffic.
   throttle("vitals_ingest/token", limit: 600, period: 1.minute) do |req|
-    req.params["t"] if req.path == "/vitals/ingest" && req.post? && req.params["t"].present?
+    req.params["t"] if wokku_path(req) == "/vitals/ingest" && req.post? && req.params["t"].present?
   end
 
   self.throttled_responder = ->(req) {
