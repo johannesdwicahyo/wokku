@@ -63,6 +63,81 @@ RSpec.describe CrashLoopDetectorJob do
       expect_any_instance_of(described_class).not_to receive(:fetch_crash_details)
       expect { described_class.perform_now(server.id) }.not_to change { CrashEvent.count }
     end
+
+    it "shrugs off a RecordNotUnique race with another poll" do
+      app.crash_events.create!(container_id: "loopy.web.1.aaa", exit_code: 1, exited_at: Time.current)
+      # simulate the race: the dedupe check misses the row the other poll just wrote
+      allow(CrashEvent).to receive(:where).and_return(instance_double(ActiveRecord::Relation, exists?: false))
+      rows = [ { app: "loopy", crashed: true, age_seconds: 60, name: "loopy.web.1.aaa" } ]
+      docker_output(rows)
+      allow_any_instance_of(described_class).to receive(:fetch_crash_details)
+        .and_return({ exit_code: 1, oom_killed: false, logs: "boom" })
+      expect { described_class.perform_now(server.id) }.not_to change { CrashEvent.count }
+    end
+  end
+
+  it "logs and reports to Sentry when the poll blows up" do
+    allow_any_instance_of(described_class).to receive(:fetch_container_rows).and_raise(RuntimeError, "boom")
+    allow(Rails.logger).to receive(:warn)
+    expect(Sentry).to receive(:capture_exception).with(instance_of(RuntimeError), hash_including(level: :warning))
+    expect { described_class.perform_now(server.id) }.not_to raise_error
+    expect(Rails.logger).to have_received(:warn).with(/CrashLoopDetectorJob: .*boom/)
+  end
+
+  describe "#fetch_crash_details" do
+    let(:job) { described_class.new }
+
+    it "reads exit code, OOM flag, and logs over SSH" do
+      ssh = double("ssh")
+      allow(ssh).to receive(:exec!).with(/docker inspect/).and_return("137|true\n")
+      allow(ssh).to receive(:exec!).with(/docker logs/).and_return("out of memory")
+      allow(Net::SSH).to receive(:start).and_yield(ssh)
+      details = job.send(:fetch_crash_details, server, "loopy.web.1.aaa")
+      expect(details).to eq(exit_code: 137, oom_killed: true, logs: "out of memory")
+    end
+
+    it "returns nil when the host is unreachable" do
+      allow(Net::SSH).to receive(:start).and_raise(Errno::ECONNREFUSED)
+      expect(job.send(:fetch_crash_details, server, "loopy.web.1.aaa")).to be_nil
+    end
+  end
+
+  describe "#fetch_container_rows" do
+    let(:job) { described_class.new }
+    let(:two_min_ago) { (Time.now - 120).strftime("%Y-%m-%d %H:%M:%S %z") }
+
+    def stub_docker_ps(raw)
+      allow(Net::SSH).to receive(:start).and_return(raw)
+    end
+
+    it "parses exited web containers and skips infra, workers, and junk lines" do
+      raw = <<~OUT
+        loopy.web.1.aaa|Exited (1) 2 minutes ago|#{two_min_ago}
+        loopy.web.1.bbb|Exited (0) 2 minutes ago|#{two_min_ago}
+        loopy.web.1.ccc|Up 2 minutes|#{two_min_ago}
+        loopy.web.1.ddd|Exited (1) 2 minutes ago|not-a-timestamp
+        loopy.worker.1.eee|Exited (1) 2 minutes ago|#{two_min_ago}
+        dokku.web.1.fff|Exited (1) 2 minutes ago|#{two_min_ago}
+        garbage-line
+      OUT
+      stub_docker_ps(raw)
+      rows = job.send(:fetch_container_rows, server)
+      expect(rows.map { |r| r[:name] }).to contain_exactly("loopy.web.1.aaa", "loopy.web.1.bbb")
+      aaa = rows.find { |r| r[:name] == "loopy.web.1.aaa" }
+      expect(aaa[:crashed]).to be(true)
+      expect(aaa[:age_seconds]).to be_within(5).of(120)
+      expect(rows.find { |r| r[:name] == "loopy.web.1.bbb" }[:crashed]).to be(false)
+    end
+
+    it "returns nil when docker is down on the host" do
+      stub_docker_ps("Cannot connect to the Docker daemon at unix:///var/run/docker.sock")
+      expect(job.send(:fetch_container_rows, server)).to be_nil
+    end
+
+    it "returns nil when SSH fails" do
+      allow(Net::SSH).to receive(:start).and_raise(SocketError)
+      expect(job.send(:fetch_container_rows, server)).to be_nil
+    end
   end
 
   describe "tier 2 (auto-stop)" do

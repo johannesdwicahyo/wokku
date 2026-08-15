@@ -365,4 +365,330 @@ RSpec.describe RestoreDrillJob do
       expect(job.send(:decrypt_backup, backup, legacy.path)).to eq("/tmp/dec.gz")
     end
   end
+
+  it "survives a secondary failure in the volume rescue path (RestoreDrill.create! raising)" do
+    app = create(:app_record)
+    create(:backup, :volume, app_record: app,
+           mount_path: "/var/lib/dokku/data/storage/#{app.name}/uploads", status: "completed")
+    job = described_class.new
+    allow(job).to receive(:representative_db).and_return(nil)
+    allow(job).to receive(:run_volume_drill).and_raise("untar blew up")
+    allow(job).to receive(:destroy_volume_throwaway)
+    allow(RestoreDrill).to receive(:create!).and_raise("db down too")
+    expect(Rails.logger).to receive(:error).with(/RestoreDrillJob.*volume: secondary failure/)
+
+    expect { job.perform }.not_to raise_error
+    # throwaway teardown still ran via the inner ensure
+    expect(job).to have_received(:destroy_volume_throwaway)
+  end
+
+  describe "#run_drill_restore (stubbed transports)" do
+    let(:job) { described_class.new }
+
+    # ssh.run_raw stub answering the count queries: the tables query embeds a
+    # literal TBL=, the rows query a literal MARK=.
+    def counting_ssh
+      ssh = instance_double(Hosts::Ssh)
+      allow(ssh).to receive(:run_raw) do |cmd, **|
+        # the wire command is Shellwords-escaped, so the literal is TBL\=
+        cmd.include?("TBL") ? "TBL=5" : "MARK=100"
+      end
+      ssh
+    end
+
+    def stub_s3_download(backup, bytes)
+      dest = backup.backup_destination
+      s3 = double("s3")
+      allow(dest).to receive(:s3_client).and_return(s3)
+      allow(s3).to receive(:get_object) do |bucket:, key:, response_target:|
+        expect(bucket).to eq(dest.bucket)
+        expect(key).to eq(backup.s3_key)
+        File.binwrite(response_target, bytes)
+      end
+    end
+
+    it "counts live, boots + waits on the throwaway, downloads + decrypts + imports, counts restored, unlinks the decrypted temp" do
+      db = create(:database_service, service_type: "postgres", status: :running,
+                                     dsn: "postgres://wokku:s3cret@10.0.0.9:5432/mydb")
+      backup = create(:backup, database_service: db, status: "completed")
+      allow(Hosts::Ssh).to receive(:new).with(db.server).and_return(counting_ssh)
+      allow(job).to receive(:latest_completed_backup).and_return(backup)
+      stub_s3_download(backup, "gz-bytes")
+
+      dec = Tempfile.create("dec"); dec.write("plain"); dec.close
+      allow(job).to receive(:decrypt_backup).and_return(dec.path)
+      allow(job).to receive(:create_throwaway)
+      allow(job).to receive(:wait_for_engine)
+      expect(job).to receive(:import_dump)
+        .with(db.server, "postgres", "dr-verify-x", dec.path).and_return(1234)
+
+      r = job.send(:run_drill_restore, db, "dr-verify-x")
+
+      expect(r).to eq(live_tables: 5, live_rows: 100,
+                      restored_tables: 5, restored_rows: 100, rto_ms: 1234)
+      expect(job).to have_received(:create_throwaway)
+      expect(job).to have_received(:wait_for_engine).with(anything, "postgres", "dr-verify-x")
+      # decrypted plaintext dump removed on the way out
+      expect(File.exist?(dec.path)).to be(false)
+    end
+
+    it "routes redis through import_rdb instead of import_dump" do
+      db = create(:database_service, service_type: "redis", status: :running)
+      backup = create(:backup, database_service: db, status: "completed")
+      allow(Hosts::Ssh).to receive(:new).with(db.server).and_return(counting_ssh)
+      allow(job).to receive(:latest_completed_backup).and_return(backup)
+      stub_s3_download(backup, "rdb-gz")
+      allow(job).to receive(:create_throwaway)
+      allow(job).to receive(:wait_for_engine)
+      expect(job).not_to receive(:import_dump)
+      expect(job).to receive(:import_rdb).and_return(900)
+
+      r = job.send(:run_drill_restore, db, "dr-verify-r")
+
+      expect(r[:rto_ms]).to eq(900)
+    end
+  end
+
+  describe "#wait_for_engine" do
+    let(:job) { described_class.new }
+
+    it "returns once the readiness probe exits 0" do
+      ssh = instance_double(Hosts::Ssh)
+      expect(ssh).to receive(:run_raw)
+        .with("docker exec tw sh -c #{Shellwords.escape(described_class::READY_PROBES.fetch('postgres'))}", timeout: 30)
+        .and_return("accepting connections")
+
+      expect { job.send(:wait_for_engine, ssh, "postgres", "tw") }.not_to raise_error
+    end
+
+    it "sleeps and retries while the probe fails within the deadline" do
+      ssh = instance_double(Hosts::Ssh)
+      calls = 0
+      allow(ssh).to receive(:run_raw) do
+        calls += 1
+        raise Hosts::Ssh::CommandError, "not ready" if calls == 1
+        "ok"
+      end
+      expect(job).to receive(:sleep).with(2)
+
+      job.send(:wait_for_engine, ssh, "redis", "tw")
+      expect(calls).to eq(2)
+    end
+
+    it "raises once the boot deadline passes" do
+      ssh = instance_double(Hosts::Ssh)
+      allow(ssh).to receive(:run_raw).and_raise(Hosts::Ssh::CommandError, "still down")
+      t0 = Time.current
+      allow(Time).to receive(:current).and_return(t0, t0 + described_class::ENGINE_BOOT_TIMEOUT + 60)
+      allow(job).to receive(:sleep)
+
+      expect { job.send(:wait_for_engine, ssh, "mysql", "tw") }
+        .to raise_error(/tw \(mysql\) not ready after #{described_class::ENGINE_BOOT_TIMEOUT}s/)
+    end
+  end
+
+  describe "#import_dump" do
+    it "streams the dump into the engine client and returns wall-clock ms" do
+      job = described_class.new
+      server = create(:server)
+      expect(job).to receive(:stream_gunzip)
+        .with(server, "docker exec -i tw psql -U postgres -d postgres", "/tmp/d.gz")
+
+      expect(job.send(:import_dump, server, "postgres", "tw", "/tmp/d.gz")).to be_a(Integer)
+    end
+  end
+
+  describe "#import_rdb" do
+    let(:job) { described_class.new }
+    let(:server) { create(:server) }
+
+    it "lands the RDB, stop/cp/start cycles the throwaway, waits for redis, and removes the host temp" do
+      ssh = instance_double(Hosts::Ssh)
+      allow(job).to receive(:stream_gunzip)
+        .with(server, "cat > /tmp/tw.rdb", "/tmp/r.gz")
+      allow(job).to receive(:wait_for_engine).with(ssh, "redis", "tw")
+      expect(ssh).to receive(:run_raw).with("docker stop tw", timeout: 60).ordered
+      expect(ssh).to receive(:run_raw).with("docker cp /tmp/tw.rdb tw:/data/dump.rdb", timeout: 120).ordered
+      expect(ssh).to receive(:run_raw).with("docker start tw", timeout: 60).ordered
+      expect(ssh).to receive(:run_raw).with("rm -f /tmp/tw.rdb", timeout: 30).ordered
+
+      expect(job.send(:import_rdb, server, ssh, "tw", "/tmp/r.gz")).to be_a(Integer)
+    end
+
+    it "only warns when the host temp cannot be removed" do
+      ssh = instance_double(Hosts::Ssh)
+      allow(job).to receive(:stream_gunzip)
+      allow(job).to receive(:wait_for_engine)
+      allow(ssh).to receive(:run_raw) do |cmd, **|
+        raise Hosts::Ssh::CommandError, "rm denied" if cmd.start_with?("rm -f")
+        ""
+      end
+      expect(Rails.logger).to receive(:warn).with(%r{could not remove /tmp/tw\.rdb})
+
+      expect(job.send(:import_rdb, server, ssh, "tw", "/tmp/r.gz")).to be_a(Integer)
+    end
+  end
+
+  describe "raw Net::SSH streaming channels" do
+    let(:job) { described_class.new }
+
+    # Fake Net::SSH session/channel: captures the wire + the bytes sent, drives
+    # the exec/on_extended_data callbacks the way a real channel would.
+    def fake_ssh_channel(sent:, execed:, success: true)
+      ch = double("ch")
+      allow(ch).to receive(:exec) { |wire, &blk| execed << wire; blk.call(ch, success) }
+      allow(ch).to receive(:send_data) { |d| sent << d }
+      allow(ch).to receive(:eof!)
+      allow(ch).to receive(:on_extended_data) { |&blk| blk.call(nil, nil, "stderr noise\n") }
+      outer = double("channel", wait: nil)
+      session = double("session")
+      allow(session).to receive(:open_channel) { |&blk| blk.call(ch); outer }
+      allow(Net::SSH).to receive(:start).and_yield(session)
+    end
+
+    describe "#stream_gunzip" do
+      it "gunzips locally and streams the plain bytes into the wire's stdin, passing the server key" do
+        server = create(:server, ssh_private_key: "PRIVKEY")
+        gz = Tempfile.create([ "s", ".gz" ])
+        Zlib::GzipWriter.open(gz.path) { |w| w.write("hello dump") }
+        sent = +""; execed = []
+        fake_ssh_channel(sent: sent, execed: execed)
+        allow(Rails.logger).to receive(:warn)
+
+        job.send(:stream_gunzip, server, "wire-cmd", gz.path)
+
+        expect(execed).to eq([ "wire-cmd" ])
+        expect(sent).to eq("hello dump")
+        expect(Net::SSH).to have_received(:start)
+          .with(server.host, "root", hash_including(port: 22, key_data: [ "PRIVKEY" ]))
+        expect(Rails.logger).to have_received(:warn).with(/import stderr: stderr noise/)
+      ensure
+        File.unlink(gz.path) if gz && File.exist?(gz.path)
+      end
+
+      it "raises when the remote exec fails to start" do
+        server = create(:server)
+        gz = Tempfile.create([ "s", ".gz" ])
+        Zlib::GzipWriter.open(gz.path) { |w| w.write("x") }
+        fake_ssh_channel(sent: +"", execed: [], success: false)
+
+        expect { job.send(:stream_gunzip, server, "wire-cmd", gz.path) }
+          .to raise_error(/Failed to execute wire-cmd/)
+      ensure
+        File.unlink(gz.path) if gz && File.exist?(gz.path)
+      end
+    end
+
+    describe "#upload_and_untar" do
+      it "streams the raw tarball bytes into a root tar -xzf into the throwaway dir" do
+        server = create(:server) # no ssh_private_key -> no key_data
+        tar = Tempfile.create([ "t", ".tar.gz" ])
+        File.binwrite(tar.path, "TARBYTES")
+        sent = +""; execed = []
+        fake_ssh_channel(sent: sent, execed: execed)
+        allow(Rails.logger).to receive(:warn)
+
+        job.send(:upload_and_untar, server, tar.path, "/tmp/dr-volume-abc")
+
+        expect(execed).to eq([ "mkdir -p /tmp/dr-volume-abc && tar -xzf - -C /tmp/dr-volume-abc" ])
+        expect(sent).to eq("TARBYTES")
+        expect(Net::SSH).to have_received(:start)
+          .with(server.host, "root", hash_not_including(:key_data))
+        expect(Rails.logger).to have_received(:warn).with(/untar stderr: stderr noise/)
+      ensure
+        File.unlink(tar.path) if tar && File.exist?(tar.path)
+      end
+    end
+  end
+
+  describe "#counts and #dsn_password" do
+    let(:job) { described_class.new }
+
+    it "regexes TBL=/MARK= out of noisy client output" do
+      ssh = instance_double(Hosts::Ssh)
+      allow(ssh).to receive(:run_raw).and_return("banner\nTBL=7\n", "warning: blah\nMARK=4200\n")
+
+      expect(job.send(:counts, ssh, "postgres", "c", db: "d", password: nil)).to eq([ 7, 4200 ])
+    end
+
+    it "count_exec raises on an unknown engine" do
+      expect { job.send(:count_exec, "sqlite", "c", "d", nil, "q") }
+        .to raise_error(ArgumentError, /no count client for sqlite/)
+    end
+
+    it "dsn_password extracts the password from the dsn, nil when there is no dsn" do
+      with = build(:database_service, dsn: "postgres://wokku:s3cret@10.0.0.9:5432/mydb")
+      expect(job.send(:dsn_password, with)).to eq("s3cret")
+
+      without = build(:database_service, dsn: nil)
+      expect(job.send(:dsn_password, without)).to be_nil
+    end
+  end
+
+  describe "#run_volume_drill (stubbed transports)" do
+    let(:job) { described_class.new }
+    let(:app) { create(:app_record) }
+    let(:backup) do
+      create(:backup, :volume, app_record: app,
+             mount_path: "/var/lib/dokku/data/storage/#{app.name}/uploads", status: "completed")
+    end
+
+    def stub_volume_transports(find: "118", du: "51800000")
+      ssh = instance_double(Hosts::Ssh)
+      allow(Hosts::Ssh).to receive(:new).with(app.server).and_return(ssh)
+      allow(ssh).to receive(:run_raw) do |cmd, **|
+        cmd.start_with?("find ") ? find : du
+      end
+      dest = backup.backup_destination
+      s3 = double("s3")
+      allow(dest).to receive(:s3_client).and_return(s3)
+      allow(s3).to receive(:get_object) do |bucket:, key:, response_target:|
+        File.binwrite(response_target, "tar-gz-bytes")
+      end
+      allow(job).to receive(:upload_and_untar)
+      ssh
+    end
+
+    it "downloads + decrypts + untars, counts restored and live, and unlinks the decrypted temp" do
+      stub_volume_transports
+      dec = Tempfile.create("dec-tar"); dec.write("plain-tar"); dec.close
+      allow(job).to receive(:decrypt_backup).and_return(dec.path)
+
+      r = job.send(:run_volume_drill, backup, "/tmp/dr-volume-abc")
+
+      expect(job).to have_received(:upload_and_untar).with(app.server, dec.path, "/tmp/dr-volume-abc")
+      expect(r[:restored_tables]).to eq(118)
+      expect(r[:live_tables]).to eq(118)
+      expect(r[:restored_rows]).to eq(51_800_000)
+      expect(r[:live_rows]).to eq(51_800_000)
+      expect(r[:rto_ms]).to be_a(Integer)
+      expect(File.exist?(dec.path)).to be(false)
+    end
+
+    it "skips the live count (0/0) when the live mount fails the STORAGE_ROOT anchor" do
+      stub_volume_transports
+      allow(job).to receive(:decrypt_backup) { |_b, path| path }
+      allow(VolumeBackupService).to receive(:safe_mount?).and_return(false)
+      expect(Rails.logger).to receive(:warn).with(/failed anchor; comparing on restored counts only/)
+
+      r = job.send(:run_volume_drill, backup, "/tmp/dr-volume-abc")
+
+      expect(r[:live_tables]).to eq(0)
+      expect(r[:live_rows]).to eq(0)
+      expect(r[:restored_tables]).to eq(118)
+    end
+  end
+
+  it "destroy_volume_throwaway logs the orphan loudly instead of raising when rm fails" do
+    app = create(:app_record)
+    backup = create(:backup, :volume, app_record: app,
+                    mount_path: "/var/lib/dokku/data/storage/#{app.name}/uploads", status: "completed")
+    ssh = instance_double(Hosts::Ssh)
+    allow(Hosts::Ssh).to receive(:new).and_return(ssh)
+    allow(ssh).to receive(:run_raw).and_raise(Hosts::Ssh::CommandError, "rm denied")
+    expect(Rails.logger).to receive(:error).with(%r{ORPHAN volume throwaway /tmp/dr-volume-abc123})
+
+    expect { described_class.new.send(:destroy_volume_throwaway, "/tmp/dr-volume-abc123", backup) }
+      .not_to raise_error
+  end
 end

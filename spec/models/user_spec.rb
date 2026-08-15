@@ -119,4 +119,165 @@ RSpec.describe User do
       expect(user.card_user?).to be true
     end
   end
+
+  describe "guided tour lifecycle" do
+    let(:user) { users(:one) }
+
+    it "advances the step only forward while the tour is active" do
+      user.update!(onboarding_status: :active, onboarding_step: 1)
+      user.advance_tour_to(3)
+      expect(user.reload.onboarding_step).to eq(3)
+      user.advance_tour_to(2)
+      expect(user.reload.onboarding_step).to eq(3)
+    end
+
+    it "does not advance when the tour is not active" do
+      user.update!(onboarding_status: :pending, onboarding_step: 0)
+      user.advance_tour_to(4)
+      expect(user.reload.onboarding_step).to eq(0)
+    end
+
+    it "skip_tour! marks the tour skipped" do
+      user.update!(onboarding_status: :active)
+      user.skip_tour!
+      expect(user.reload).to be_onboarding_skipped
+    end
+  end
+
+  describe "#schedule_deletion!" do
+    it "still schedules deletion when an app stop fails to enqueue" do
+      user = users(:one)
+      allow(DokkuAppActionJob).to receive(:perform_later).and_raise(RuntimeError, "queue down")
+      expect { user.schedule_deletion! }.not_to raise_error
+      expect(user.reload.deletion_scheduled_at).to be_present
+    end
+  end
+
+  describe "IDR-only launch mode defaults" do
+    before { allow(Wokku::LaunchMode).to receive(:idr_only?).and_return(true) }
+
+    it "defaults new signups to the deposit payment method" do
+      user = create(:user, payment_method_type: "none")
+      expect(user.payment_method_type).to eq("deposit")
+    end
+
+    it "renders idr as the effective currency regardless of the row" do
+      user = build(:user, currency: "usd")
+      expect(user.effective_currency).to eq("idr")
+    end
+  end
+
+  describe "#effective_currency outside launch mode" do
+    it "returns the user's own currency" do
+      allow(Wokku::LaunchMode).to receive(:idr_only?).and_return(false)
+      expect(build(:user, currency: "usd").effective_currency).to eq("usd")
+    end
+  end
+
+  describe "admin email reservation" do
+    it "rejects a member account using the admin email" do
+      user = User.new(email: User::ADMIN_EMAIL, password: "password123456", role: :member)
+      expect(user).not_to be_valid
+      expect(user.errors[:email]).to include("is reserved")
+    end
+  end
+
+  describe "#ensure_personal_team!" do
+    it "retries with the next candidate name after losing a unique-index race" do
+      user = create(:user)
+      calls = 0
+      allow_any_instance_of(Team).to receive(:save).and_wrap_original do |m, *args|
+        calls += 1
+        raise ActiveRecord::RecordNotUnique if calls == 1
+        m.call(*args)
+      end
+      team, created = user.ensure_personal_team!
+      expect(created).to be(true)
+      expect(team).to be_persisted
+      expect(team.name).to end_with(" 2")
+      expect(user.teams).to include(team)
+    end
+  end
+
+  describe ".from_omniauth" do
+    def auth_hash(provider: "github", uid: "uid-1", email:, name: "Octo", raw_info: {})
+      OmniAuth::AuthHash.new(
+        provider: provider, uid: uid,
+        info: { email: email, name: name, image: "http://img", nickname: "octo" },
+        extra: { raw_info: raw_info }
+      )
+    end
+
+    context "with the admin email" do
+      it "returns an unpersisted user when no seed admin exists" do
+        allow(User).to receive(:find_by).and_call_original
+        allow(User).to receive(:find_by).with(email: User::ADMIN_EMAIL, role: :admin).and_return(nil)
+        result = User.from_omniauth(auth_hash(email: User::ADMIN_EMAIL))
+        expect(result).not_to be_persisted
+      end
+
+      it "refuses to link an unverified email to the admin account" do
+        result = User.from_omniauth(
+          auth_hash(provider: "google_oauth2", email: User::ADMIN_EMAIL,
+                    raw_info: { "email_verified" => false })
+        )
+        expect(result).not_to be_persisted
+        expect(users(:admin).reload.provider).to be_blank
+      end
+
+      it "links a verified OAuth identity to the seed admin on first sign-in" do
+        result = User.from_omniauth(
+          auth_hash(provider: "google_oauth2", uid: "g-9",
+                    email: User::ADMIN_EMAIL, raw_info: { "email_verified" => true })
+        )
+        expect(result).to eq(users(:admin))
+        expect(result.reload.provider).to eq("google_oauth2")
+        expect(result.uid).to eq("g-9")
+      end
+    end
+
+    context "with closed registration" do
+      before { allow(Wokku.config).to receive(:open_registration).and_return(false) }
+
+      it "signs in an account already linked by provider+uid" do
+        user = create(:user)
+        user.update_columns(provider: "github", uid: "gh-1")
+        expect(User.from_omniauth(auth_hash(uid: "gh-1", email: "other@example.com"))).to eq(user)
+      end
+
+      it "links an unlinked account by verified email" do
+        user = create(:user)
+        result = User.from_omniauth(auth_hash(uid: "gh-2", email: user.email))
+        expect(result).to eq(user)
+        expect(result.reload.provider).to eq("github")
+        expect(result.uid).to eq("gh-2")
+      end
+
+      it "returns an unpersisted user for an unknown account" do
+        result = User.from_omniauth(auth_hash(uid: "gh-3", email: "stranger@example.com"))
+        expect(result).not_to be_persisted
+      end
+    end
+  end
+
+  describe ".oauth_email_verified?" do
+    def auth(provider:, raw_info:)
+      OmniAuth::AuthHash.new(provider: provider, extra: { raw_info: raw_info })
+    end
+
+    it "honors an explicit email_verified claim" do
+      expect(User.oauth_email_verified?(auth(provider: "google_oauth2", raw_info: { "email_verified" => true }))).to be(true)
+      expect(User.oauth_email_verified?(auth(provider: "google_oauth2", raw_info: { email_verified: false }))).to be(false)
+    end
+
+    it "trusts primary emails from github/gitlab/bitbucket when no claim exists" do
+      expect(User.oauth_email_verified?(auth(provider: "github", raw_info: {}))).to be(true)
+      expect(User.oauth_email_verified?(auth(provider: "google_oauth2", raw_info: {}))).to be(false)
+    end
+
+    it "treats a missing raw_info as unverified for OIDC providers" do
+      auth = OmniAuth::AuthHash.new(provider: "google_oauth2", extra: nil)
+      expect(User.oauth_email_verified?(auth)).to be(false)
+    end
+  end
 end
