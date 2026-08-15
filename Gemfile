@@ -31,6 +31,12 @@ gem "bcrypt_pbkdf"
 gem "sentry-ruby"
 gem "sentry-rails"
 gem "rack-attack"
+# GithubApp (repo connect/deploys) drives Octokit; faraday-retry because
+# Faraday 2 split retry middleware into its own gem and octokit expects it.
+gem "octokit"
+gem "faraday-retry"
+# PushNotificationService (mobile app push) — Expo server SDK.
+gem "expo-server-sdk"
 gem "bootsnap", require: false
 gem "ostruct"
 gem "csv"
@@ -44,4 +50,7 @@ group :test, :development do
   gem "mocha"
   gem "capybara"
   gem "parallel_tests"
+  # BackupDestination lazy-requires aws-sdk-s3 for S3 destinations; specs
+  # instance_double the client, which needs the real class loaded.
+  gem "aws-sdk-s3", require: false
 end

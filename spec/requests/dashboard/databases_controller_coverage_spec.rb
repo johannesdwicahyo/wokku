@@ -216,7 +216,7 @@ RSpec.describe "Dashboard::Databases coverage", type: :request do
   end
 
   it "never references Dokku:: in the destroy action" do
-    source = File.read(Rails.root.join("engines/wokku/app/controllers/dashboard/databases_controller.rb"))
+    source = File.read(Wokku::Engine.root.join("app/controllers/dashboard/databases_controller.rb"))
     destroy_body = source[/def destroy\n(.*?)\n    end/m, 1]
     expect(destroy_body).not_to match(/Dokku::/)
   end
@@ -385,7 +385,7 @@ RSpec.describe "Dashboard::Databases coverage", type: :request do
   end
 
   it "never references Dokku:: anywhere in the controller (W7 Phase 2 — dokku-free)" do
-    source = File.read(Rails.root.join("engines/wokku/app/controllers/dashboard/databases_controller.rb"))
+    source = File.read(Wokku::Engine.root.join("app/controllers/dashboard/databases_controller.rb"))
     expect(source).not_to match(/Dokku::/)
   end
 

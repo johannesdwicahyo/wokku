@@ -31,6 +31,12 @@ RSpec.describe "Dashboard::Templates auto-upgrade", type: :request do
     # The global `performance` dyno_tier fixture (size→large) already exists
     # (config.global_fixtures = :all); do NOT create one — name is unique.
     allow(Addons::SharedProvisioner).to receive(:feature_enabled?).and_return(true)
+    # Quotas come from the injected enforcer (OSS default is unlimited, so
+    # nothing would ever auto-upgrade). Stub a Team-shaped grant — large-only —
+    # so resolve_box_size's upgrade walk is what this spec exercises.
+    allow(Wokku.config.plan_enforcer).to receive(:quota) do |_user, _kind, size|
+      team_plan.box_quotas.fetch(size.to_s, 0)
+    end
     sign_in user
   end
 

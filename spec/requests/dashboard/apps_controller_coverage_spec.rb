@@ -211,14 +211,13 @@ RSpec.describe "Dashboard::Apps (extra coverage)", type: :request do
   describe "backup_now" do
     before { sign_in user }
 
-    # NOTE: backup_now is NOT in the set_app before_action `only:` list, so
-    # @app is nil and `authorize @app` raises Pundit::NotDefinedError. This
-    # is a latent app bug (the action is effectively unreachable). We assert
-    # the current behaviour to exercise the action and flag the bug.
-    it "raises because set_app does not cover this action (latent app bug)" do
-      expect {
-        post backup_now_dashboard_app_path(app_record)
-      }.to raise_error(Pundit::NotDefinedError)
+    # backup_now was missing from the set_app `only:` list (@app stayed nil
+    # and authorize raised) — fixed; the full behaviour is covered in
+    # apps_backup_https_spec.rb. This guards the routing+set_app wiring.
+    it "resolves the app and redirects instead of raising" do
+      allow_any_instance_of(AppRecord).to receive(:primary_database).and_return(nil)
+      post backup_now_dashboard_app_path(app_record)
+      expect(response).to redirect_to(dashboard_app_path(app_record))
     end
   end
 end

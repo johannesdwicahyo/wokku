@@ -11,7 +11,8 @@ development:
 
 test:
   <<: *default
-  database: wokku_oss_harness_test
+  # parallel_tests: worker 1 gets "", workers 2+ get "2".."N" — matches the DBs CI creates
+  database: wokku_oss_harness_test<%= ENV["TEST_ENV_NUMBER"] %>
 
 production:
   <<: *default

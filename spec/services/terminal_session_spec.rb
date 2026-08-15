@@ -545,4 +545,74 @@ RSpec.describe TerminalSession do
     s = described_class.new(server: server, mode: :enter, target: "myapp")
     expect(s.exit_code).to be_nil
   end
+
+  describe "session plumbing (coverage)" do
+    let(:server) { servers(:one) }
+
+    it "rejects app_name: combined with an explicit mode" do
+      expect {
+        described_class.new(server: server, mode: :enter, target: "x", app_name: "x")
+      }.to raise_error(ArgumentError, /deprecated/)
+    end
+
+    it "connected? is false when the ssh handle raises" do
+      session = described_class.new(server: server)
+      broken = Object.new
+      broken.define_singleton_method(:closed?) { raise IOError, "gone" }
+      session.instance_variable_set(:@ssh, broken)
+      expect(session.connected?).to be(false)
+    end
+
+    it "send_data touches activity and forwards to the channel" do
+      session = described_class.new(server: server)
+      ssh = Object.new
+      ssh.define_singleton_method(:closed?) { false }
+      sent = []
+      channel = Object.new
+      channel.define_singleton_method(:active?) { true }
+      channel.define_singleton_method(:send_data) { |d| sent << d }
+      session.instance_variable_set(:@ssh, ssh)
+      session.instance_variable_set(:@channel, channel)
+      before = session.last_activity_at
+      session.send_data("ls\n")
+      expect(sent).to eq([ "ls\n" ])
+      expect(session.last_activity_at).to be >= before if before
+    end
+
+    it "on_output wires stdout and stderr callbacks" do
+      session = described_class.new(server: server)
+      handlers = {}
+      channel = Object.new
+      channel.define_singleton_method(:on_data) { |&b| handlers[:out] = b }
+      channel.define_singleton_method(:on_extended_data) { |&b| handlers[:err] = b }
+      session.instance_variable_set(:@channel, channel)
+      seen = []
+      session.on_output { |d| seen << d }
+      handlers[:out].call(nil, "o")
+      handlers[:err].call(nil, 1, "e")
+      expect(seen).to eq(%w[o e])
+    end
+
+    it "resize sends a window-change request and swallows errors" do
+      session = described_class.new(server: server)
+      reqs = []
+      channel = Object.new
+      channel.define_singleton_method(:send_channel_request) { |*a| reqs << a }
+      session.instance_variable_set(:@channel, channel)
+      session.resize(80, 24)
+      expect(reqs.first.first).to eq("window-change")
+
+      raising = Object.new
+      raising.define_singleton_method(:send_channel_request) { |*| raise IOError, "closed" }
+      session.instance_variable_set(:@channel, raising)
+      expect { session.resize(80, 24) }.not_to raise_error
+    end
+
+    it "build_command raises for an unimplemented mode" do
+      session = described_class.new(server: server)
+      session.instance_variable_set(:@mode, :bogus)
+      expect { session.send(:build_command) }
+        .to raise_error(ArgumentError, /not implemented/)
+    end
+  end
 end

@@ -1,5 +1,9 @@
 name: CI
-on: [push, pull_request]
+# workflow_dispatch: push/PR events are captured by a phantom "BuildFailed"
+# workflow registration (id 325106722, state=deleted) that startup-fails every
+# run — same GitHub-side bug as wokku-cloud's id 257882770. Manual dispatch
+# targets this workflow directly and bypasses the broken event routing.
+on: [push, pull_request, workflow_dispatch]
 
 jobs:
   boot:

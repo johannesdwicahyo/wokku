@@ -96,6 +96,34 @@ RSpec.describe NotifyJob, type: :job do
       expect(msg).to include("1")
     end
 
+    it "sends a plain test message when there is no deploy and no context" do
+      msg = job.send(:build_message, nil, "test")
+      expect(msg).to include("test notification")
+    end
+
+    it "formats resource_high_cpu" do
+      expect(job.send(:build_message, fake_deploy, "resource_high_cpu")).to include("CPU usage is above 80%")
+    end
+
+    it "formats resource_high_memory" do
+      expect(job.send(:build_message, fake_deploy, "resource_high_memory")).to include("memory usage is above 90%")
+    end
+
+    it "formats app_created and app_deleted" do
+      expect(job.send(:build_message, fake_deploy, "app_created")).to eq("my-app created")
+      expect(job.send(:build_message, fake_deploy, "app_deleted")).to eq("my-app deleted")
+    end
+
+    it "formats daily_debit_summary in rupiah" do
+      msg = job.send(:build_message, nil, "daily_debit_summary", { "amount" => 15000, "currency" => "idr" })
+      expect(msg).to include("Rp 15.000")
+    end
+
+    it "formats daily_debit_summary in dollars" do
+      msg = job.send(:build_message, nil, "daily_debit_summary", { "amount" => 500, "currency" => "usd" })
+      expect(msg).to include("$5.00")
+    end
+
     it "announces recovery on scheduled_task_recovered" do
       msg = job.send(:build_message, nil, "scheduled_task_recovered",
         { "app_name" => "chatat-rails", "task_command" => "rake cleanup" })
@@ -192,6 +220,21 @@ RSpec.describe NotifyJob, type: :job do
         job.define_singleton_method(:post_json) { |*| raise StandardError, "network error" }
         expect { job.perform(notification.id, "deploy_succeeded", deploy.id) }.not_to raise_error
       end
+
+      it "falls back to a plain text payload when there is no color, fields, or link" do
+        notification.update!(channel: :slack, config: { "url" => "https://hooks.slack.com/test" }, events: [ "backup_completed" ])
+        posted = []
+        job = described_class.new
+        job.define_singleton_method(:post_json) { |url, payload| posted << payload }
+        job.perform(notification.id, "backup_completed", nil)
+        expect(posted.length).to eq(1)
+        expect(posted[0][:attachments]).to be_nil
+        expect(posted[0][:text]).to include("test notification")
+      end
+
+      it "uses the warning color for app_deleted" do
+        expect(described_class.new.send(:slack_color_for, "app_deleted")).to eq("warning")
+      end
     end
 
     context "discord channel" do
@@ -203,6 +246,17 @@ RSpec.describe NotifyJob, type: :job do
         job.perform(notification.id, "deploy_succeeded", deploy.id)
         expect(posted.length).to eq(1)
         expect(posted[0][:payload][:username]).to eq("Wokku")
+      end
+
+      it "rescues StandardError" do
+        notification.update!(channel: :discord, config: { "url" => "https://discord.com/api/webhooks/test" }, events: [ "deploy_succeeded" ])
+        job = described_class.new
+        job.define_singleton_method(:post_json) { |*| raise StandardError, "network error" }
+        expect { job.perform(notification.id, "deploy_succeeded", deploy.id) }.not_to raise_error
+      end
+
+      it "uses the yellow color for daily_debit_summary" do
+        expect(described_class.new.send(:discord_color_for, "daily_debit_summary")).to eq(0xeab308)
       end
     end
 
@@ -225,6 +279,13 @@ RSpec.describe NotifyJob, type: :job do
         job.define_singleton_method(:post_json) { |*| called = true }
         job.perform(notification.id, "deploy_succeeded", deploy.id)
         expect(called).to be_falsey
+      end
+
+      it "rescues StandardError" do
+        notification.update!(channel: :telegram, config: { "bot_token" => "TOKEN123", "chat_id" => "CHAT456" }, events: [ "deploy_succeeded" ])
+        job = described_class.new
+        job.define_singleton_method(:post_json) { |*| raise StandardError, "network error" }
+        expect { job.perform(notification.id, "deploy_succeeded", deploy.id) }.not_to raise_error
       end
     end
 
@@ -256,6 +317,14 @@ RSpec.describe NotifyJob, type: :job do
         expect {
           described_class.perform_now(notification.id, "deploy_succeeded", deploy.id)
         }.not_to raise_error
+      end
+
+      it "swallows SSRF-blocked destinations and returns nil" do
+        allow(SsrfFilter).to receive(:post).and_raise(SsrfFilter::Error.new("blocked"))
+        allow(Rails.logger).to receive(:warn)
+        result = described_class.new.send(:post_json, "http://169.254.169.254/latest", { a: 1 })
+        expect(result).to be_nil
+        expect(Rails.logger).to have_received(:warn).with(/blocked by SSRF guard/)
       end
     end
   end

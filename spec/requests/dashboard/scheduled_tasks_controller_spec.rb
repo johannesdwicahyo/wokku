@@ -69,4 +69,63 @@ RSpec.describe "Dashboard::ScheduledTasks", type: :request do
       expect(bad.to_s.scrub.valid_encoding?).to be(true)
     end
   end
+
+  describe "pro-feature gate, create and destroy" do
+    before { sign_in user }
+
+    it "GET new renders the form" do
+      get new_dashboard_app_scheduled_task_path(app_record)
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "redirects with an upgrade hint when the plan lacks the feature" do
+      allow(Wokku.config.plan_enforcer).to receive(:allowed?)
+        .with(anything, :feature, slug: :scheduled_tasks).and_return(false)
+      post dashboard_app_scheduled_tasks_path(app_record),
+           params: { scheduled_task: { command: "ls", schedule: "* * * * *" } }
+      expect(response).to redirect_to(dashboard_app_path(app_record))
+      expect(flash[:alert]).to match(/Upgrade to Pro/)
+    end
+
+    it "POST create adds a task and redirects" do
+      creator = instance_double(Apps::Cron::TaskCreator)
+      allow(Apps::Cron::TaskCreator).to receive(:new).with(app_record).and_return(creator)
+      expect(creator).to receive(:call!)
+        .with(command: "ls -la", schedule: "*/5 * * * *", description: "list")
+      post dashboard_app_scheduled_tasks_path(app_record),
+           params: { scheduled_task: { command: "ls -la", schedule: "*/5 * * * *", description: "list" } }
+      expect(response).to redirect_to(dashboard_app_scheduled_tasks_path(app_record))
+      expect(flash[:notice]).to eq("Scheduled task added.")
+    end
+
+    it "POST create re-renders index with 422 on a cron error" do
+      creator = instance_double(Apps::Cron::TaskCreator)
+      allow(Apps::Cron::TaskCreator).to receive(:new).and_return(creator)
+      allow(creator).to receive(:call!).and_raise(Apps::Cron::Error.new("bad schedule", code: :invalid))
+      post dashboard_app_scheduled_tasks_path(app_record),
+           params: { scheduled_task: { command: "ls", schedule: "nope" } }
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include("bad schedule")
+    end
+
+    it "DELETE destroy removes the task and redirects" do
+      task = create(:scheduled_task, app_record: app_record)
+      destroyer = instance_double(Apps::Cron::TaskDestroyer)
+      allow(Apps::Cron::TaskDestroyer).to receive(:new).with(app_record).and_return(destroyer)
+      expect(destroyer).to receive(:call!).with(task)
+      delete dashboard_app_scheduled_task_path(app_record, task)
+      expect(response).to redirect_to(dashboard_app_scheduled_tasks_path(app_record))
+      expect(flash[:notice]).to eq("Scheduled task removed.")
+    end
+
+    it "DELETE destroy surfaces a cron error as an alert" do
+      task = create(:scheduled_task, app_record: app_record)
+      destroyer = instance_double(Apps::Cron::TaskDestroyer)
+      allow(Apps::Cron::TaskDestroyer).to receive(:new).and_return(destroyer)
+      allow(destroyer).to receive(:call!).and_raise(Apps::Cron::Error.new("host down", code: :host))
+      delete dashboard_app_scheduled_task_path(app_record, task)
+      expect(response).to redirect_to(dashboard_app_scheduled_tasks_path(app_record))
+      expect(flash[:alert]).to eq("Couldn't remove: host down")
+    end
+  end
 end

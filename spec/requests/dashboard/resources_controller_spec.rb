@@ -33,11 +33,15 @@ RSpec.describe "Dashboard::Resources", type: :request do
     expect(response).to have_http_status(:redirect)
   end
 
-  it "create rescues SSH error and redirects" do
+  it "create rescues a provisioner error and redirects" do
     sign_in user
+    # Raise directly: letting the real provisioner run makes this example
+    # poll the typed-ops loop to its multi-minute timeout before rescuing.
+    allow(DatabaseProvisioner).to receive(:new).and_raise(StandardError, "host down")
     post "/dashboard/apps/#{app_record.id}/resources",
          params: { service_type: "postgres", addon_name: "test-pg" }
     expect(response).to have_http_status(:redirect)
+    expect(flash[:alert]).to match(/Failed to add postgres/)
   end
 
   it "destroy redirects when not authenticated" do
@@ -46,10 +50,41 @@ RSpec.describe "Dashboard::Resources", type: :request do
     expect(response).to have_http_status(:redirect)
   end
 
-  it "destroy rescues SSH error and redirects" do
+  it "destroy rescues a destroy error and redirects" do
     sign_in user
     db = database_services(:two)
+    allow(DatabaseProvisioner).to receive(:destroy!).and_raise(StandardError, "op failed")
     delete "/dashboard/apps/#{app_record.id}/resources", params: { addon_id: db.id }
     expect(response).to have_http_status(:redirect)
+    expect(flash[:alert]).to match(/Failed to remove add-on/)
+  end
+
+  describe "success paths and scale sync" do
+    before { sign_in user }
+
+    it "create succeeds, tracks and redirects with the dedicated label" do
+      provisioner = double(call: database_services(:two))
+      allow(DatabaseProvisioner).to receive(:new).and_return(provisioner)
+      post "/dashboard/apps/#{app_record.id}/resources",
+           params: { service_type: "postgres", addon_name: "ok-pg" }
+      expect(response).to redirect_to("/dashboard/apps/#{app_record.id}/resources")
+      expect(flash[:notice]).to match(/added and linked/)
+    end
+
+    it "show syncs process scales from live heartbeat containers" do
+      app_record.update!(live_containers: [
+        { "process" => "cron" }, { "process" => "cron" }, { "bogus" => true }
+      ])
+      get "/dashboard/apps/#{app_record.id}/resources", params: { deferred: 1 }
+      expect(response).to have_http_status(:success)
+      # "cron" has no fixture ProcessScale, so the sync creates it fresh.
+      expect(app_record.process_scales.find_by(process_type: "cron")&.count).to eq(2)
+    end
+
+    it "show survives a scale-sync failure" do
+      allow_any_instance_of(AppRecord).to receive(:live_containers).and_raise(StandardError, "bad json")
+      get "/dashboard/apps/#{app_record.id}/resources", params: { deferred: 1 }
+      expect(response).to have_http_status(:success)
+    end
   end
 end
