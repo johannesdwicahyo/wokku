@@ -15,7 +15,7 @@ module Dashboard
     before_action :run_onboarding_waypoints, only: [ :index ]
     before_action :reject_creation_during_deletion_pending, only: [ :create ]
     before_action :enforce_free_container_limit!, only: [ :create ]
-    before_action :set_app, only: [ :show, :destroy, :restart, :stop, :start, :toggle_https, :toggle_maintenance, :toggle_cdn, :transfer, :danger, :unlock, :lock ]
+    before_action :set_app, only: [ :show, :destroy, :restart, :stop, :start, :toggle_https, :toggle_maintenance, :toggle_cdn, :transfer, :danger, :backup_now, :unlock, :lock ]
 
     def index
       # Instant shell: only the cheap existence check + the inline
