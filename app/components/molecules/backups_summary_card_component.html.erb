@@ -1,5 +1,5 @@
-<div class="border-1.5 border-ink bg-paper p-4">
-  <div class="font-mono text-[10.5px] uppercase tracking-widest text-ink-soft mb-2">// backups</div>
+<div class="border border-line bg-paper rounded-lg p-4">
+  <div class="text-[11px] font-medium text-dim normal-case tracking-normal mb-2">Backups</div>
   <div class="text-sm">
     <% if last_backup %>
       <b>Last: <%= time_ago_in_words(last_backup.created_at) %> ago</b>
@@ -9,7 +9,7 @@
       <b class="text-dim">No database attached</b>
     <% end %>
   </div>
-  <div class="font-mono text-[10px] text-dim mt-2"><%= policy_label %></div>
+  <div class="text-[11px] text-dim mt-2"><%= policy_label %></div>
 
   <% if has_database %>
     <div class="mt-3">

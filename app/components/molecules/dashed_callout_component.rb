@@ -1,6 +1,6 @@
 module Molecules
   class DashedCalloutComponent < ApplicationComponent
-    TONES = { ink: "border-ink text-ink", accent: "border-accent text-accent" }.freeze
+    TONES = { ink: "text-ink", accent: "text-accent" }.freeze
 
     def initialize(tone: :ink, position: {}, width: nil)
       @tone = tone
@@ -9,7 +9,7 @@ module Molecules
     end
 
     def classes
-      cx("absolute border-1.5 border-dashed rounded-lg p-3 font-mono text-[11px] tracking-tight pointer-events-none", TONES[@tone])
+      cx("absolute border border-line bg-bg rounded-lg p-3 text-[11px] tracking-tight pointer-events-none", TONES[@tone])
     end
 
     def style

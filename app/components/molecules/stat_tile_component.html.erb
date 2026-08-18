@@ -1,8 +1,8 @@
-<div class="flex justify-between items-start gap-3 px-5 py-5 border-1.5 border-ink bg-paper">
+<div class="flex justify-between items-start gap-3 px-5 py-5 border border-line bg-paper rounded-lg">
   <div>
-    <div class="font-mono text-[10px] text-dim tracking-widest uppercase"><%= label %></div>
-    <div class="font-mono font-semibold text-3xl tracking-tighter mt-2.5 <%= value_class %>"><%= value %></div>
-    <% if sub.present? %><div class="font-mono text-[11px] text-dim mt-1.5"><%= sub %></div><% end %>
+    <div class="text-[11px] font-medium text-dim normal-case tracking-normal"><%= label %></div>
+    <div class="font-headline font-semibold text-3xl tracking-tighter mt-2.5 <%= value_class %>"><%= value %></div>
+    <% if sub.present? %><div class="text-[11px] text-dim mt-1.5"><%= sub %></div><% end %>
   </div>
-  <% if glyph.present? %><div class="font-mono text-sm text-dim border border-rule-soft px-2 py-1"><%= glyph %></div><% end %>
+  <% if glyph.present? %><div class="text-sm text-dim border border-rule-soft rounded-md px-2 py-1"><%= glyph %></div><% end %>
 </div>

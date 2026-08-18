@@ -1,16 +1,16 @@
-<%= link_to helpers.dashboard_addon_path(db), class: "block border-1.5 border-ink bg-paper p-4 hover:shadow-brutal-sm transition-shadow", data: { turbo_frame: "_top" } do %>
+<%= link_to helpers.dashboard_addon_path(db), class: "block border border-line bg-paper rounded-lg p-4 transition-colors hover:bg-bg", data: { turbo_frame: "_top" } do %>
   <div class="flex items-center justify-between mb-2">
-    <div class="font-mono text-[10.5px] uppercase tracking-widest text-ink-soft">// <%= label.downcase %></div>
-    <span class="font-mono text-[9.5px] uppercase tracking-widest text-dim border border-rule-soft px-1.5 py-0.5"><%= mode_label %></span>
+    <div class="text-[11px] font-medium text-dim normal-case tracking-normal"><%= label %></div>
+    <span class="text-[11px] font-medium text-dim normal-case tracking-normal border border-rule-soft rounded-md px-1.5 py-0.5"><%= mode_label %></span>
   </div>
-  <div class="font-mono text-sm text-ink truncate"><%= db.name %></div>
+  <div class="text-sm text-ink truncate"><%= db.name %></div>
   <div class="font-headline text-xl font-extrabold mt-2"><%= storage_used_mb %> <span class="text-xs text-dim font-medium">MB<% if storage_max_mb.positive? %> / <%= storage_max_mb >= 1024 ? "#{storage_max_mb / 1024} GB" : "#{storage_max_mb} MB" %><% end %></span></div>
   <% if storage_max_mb.positive? %>
-    <div class="h-1.5 bg-bg-deep mt-2 relative">
+    <div class="h-1.5 bg-bg-deep mt-2 relative rounded-full overflow-hidden">
       <div class="absolute left-0 top-0 bottom-0 <%= storage_pct >= 90 ? "bg-danger" : storage_pct >= 75 ? "bg-warn" : "bg-accent" %>" style="width: <%= storage_pct %>%"></div>
     </div>
   <% end %>
   <% if max_connections.positive? %>
-    <div class="font-mono text-[10px] text-dim mt-2"><%= connections %> conn · <%= max_connections %> max</div>
+    <div class="text-[11px] text-dim mt-2"><%= connections %> conn · <%= max_connections %> max</div>
   <% end %>
 <% end %>

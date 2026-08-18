@@ -10,11 +10,11 @@ module Molecules
     attr_reader :label, :key, :active, :href, :external
 
     def classes
-      base = "flex items-center gap-2 px-3.5 py-2 font-mono text-sm border-l-2 transition-colors"
+      base = "flex items-center gap-2 px-3.5 py-2 text-sm rounded-md transition-colors"
       if @active
-        "#{base} bg-accent-soft border-accent text-accent"
+        "#{base} bg-rule-soft text-ink font-medium"
       else
-        "#{base} border-transparent text-ink-soft hover:text-ink"
+        "#{base} text-ink-soft hover:bg-rule-soft/60"
       end
     end
   end

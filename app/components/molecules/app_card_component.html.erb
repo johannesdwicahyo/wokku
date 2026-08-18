@@ -1,8 +1,8 @@
-<div class="border-1.5 border-ink bg-paper px-5 py-4 flex flex-col gap-3 rounded-lg">
+<div class="border border-line bg-paper px-5 py-4 flex flex-col gap-3 rounded-lg">
   <div class="flex items-start justify-between gap-3">
     <div>
-      <div class="font-mono text-base text-ink font-semibold"><%= name %></div>
-      <div class="flex gap-3 mt-1.5 font-mono text-[11px] text-dim">
+      <div class="text-base text-ink font-semibold"><%= name %></div>
+      <div class="flex gap-3 mt-1.5 text-[11px] text-dim">
         <span>region: <%= region %></span>
         <span class="text-dim opacity-50">·</span>
         <span>tier: <%= container %></span>
@@ -10,14 +10,14 @@
     </div>
     <%= render Atoms::StatusDotComponent.new(state: status) %>
   </div>
-  <div class="px-2.5 py-2 border border-rule-soft bg-bg font-mono text-xs text-accent flex items-center gap-2">
+  <div class="px-2.5 py-2 border border-rule-soft bg-bg rounded-md text-xs text-accent flex items-center gap-2">
     <span class="text-dim">↗</span><%= domain %>
   </div>
   <div class="flex items-center justify-between">
-    <div class="font-mono text-[11px] text-dim">updated <%= updated %></div>
+    <div class="text-[11px] text-dim">updated <%= updated %></div>
     <div class="flex gap-1.5">
-      <span class="font-mono text-[11px] text-dim border border-rule-soft px-2 py-1">logs</span>
-      <span class="font-mono text-[11px] text-dim border border-rule-soft px-2 py-1">console</span>
+      <span class="text-[11px] text-dim border border-rule-soft rounded-md px-2 py-1">Logs</span>
+      <span class="text-[11px] text-dim border border-rule-soft rounded-md px-2 py-1">Console</span>
     </div>
   </div>
 </div>

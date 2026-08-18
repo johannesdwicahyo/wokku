@@ -39,9 +39,9 @@ RSpec.describe Organisms::AppOverviewComponent, type: :component do
     create(:app_database, app_record: app, database_service: db)
 
     render_inline(described_class.new(app: app))
-    expect(page).to have_text("// postgres")
+    expect(page).to have_text("Postgres")
     expect(page).to have_text("pg-test")
-    expect(page).to have_text("// backups")
+    expect(page).to have_text("Backups")
   end
 
   it "renders the recent-logs glance as a lazy deferred section with a skeleton" do

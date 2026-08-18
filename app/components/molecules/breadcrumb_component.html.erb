@@ -1,4 +1,4 @@
-<nav class="font-mono text-xs text-dim mb-6 flex items-center gap-2 flex-wrap" aria-label="Breadcrumb">
+<nav class="text-xs text-dim mb-6 flex items-center gap-2 flex-wrap" aria-label="Breadcrumb">
   <% crumbs.each_with_index do |(label, href), i| %>
     <% if i.positive? %><span style="color: var(--color-rule-soft)">/</span><% end %>
     <% last = i == crumbs.size - 1 %>

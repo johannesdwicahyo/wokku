@@ -5,7 +5,7 @@
   console topbar's locale toggle, so the choice persists and the URL
   stays clean.
 %>
-<div class="inline-flex p-0.5 bg-paper border-1.5 border-ink rounded-full overflow-hidden">
+<div class="inline-flex p-0.5 bg-paper border border-line rounded-full overflow-hidden">
   <% %i[en id].each do |loc| %>
     <%= button_to public_locale_path(locale: loc),
           method: :post,

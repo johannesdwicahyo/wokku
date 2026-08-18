@@ -9,7 +9,7 @@ module Molecules
     end
 
     def cell_classes(locale)
-      base = "px-2.5 py-1 font-mono text-[11px] font-semibold tracking-tight cursor-pointer transition-colors"
+      base = "px-2.5 py-1 text-[11px] font-semibold tracking-tight cursor-pointer transition-colors"
       if active?(locale)
         "#{base} bg-ink text-bg"
       else

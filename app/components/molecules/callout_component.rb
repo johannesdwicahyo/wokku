@@ -1,11 +1,11 @@
 module Molecules
   class CalloutComponent < ApplicationComponent
     TONES = {
-      note:    { border: "border-accent",  text: "text-accent",  bg: "bg-accent-soft",  default_eyebrow: "// note" },
-      warn:    { border: "",               text: "",             bg: "bg-warn-soft",    default_eyebrow: "// careful",
+      note:    { border: "border-accent",  text: "text-accent",  bg: "bg-accent-soft",  default_eyebrow: "Note" },
+      warn:    { border: "",               text: "",             bg: "bg-warn-soft",    default_eyebrow: "Careful",
                  var_border: "var(--color-warn)",   var_text: "var(--color-warn)" },
-      success: { border: "border-success", text: "text-success", bg: "bg-success-soft", default_eyebrow: "// tip" },
-      danger:  { border: "border-danger",  text: "text-danger",  bg: "bg-danger-soft",  default_eyebrow: "// danger" }
+      success: { border: "border-success", text: "text-success", bg: "bg-success-soft", default_eyebrow: "Tip" },
+      danger:  { border: "border-danger",  text: "text-danger",  bg: "bg-danger-soft",  default_eyebrow: "Danger" }
     }.freeze
 
     def initialize(tone: :note, eyebrow: nil)

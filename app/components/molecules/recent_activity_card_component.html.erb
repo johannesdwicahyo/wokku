@@ -1,11 +1,11 @@
-<div class="border-1.5 border-ink bg-paper p-5">
-  <div class="font-mono text-[11px] uppercase tracking-widest text-ink-soft mb-3">// recent activity</div>
+<div class="border border-line bg-paper rounded-lg p-5">
+  <div class="text-[11px] font-medium text-dim normal-case tracking-normal mb-3">Recent activity</div>
   <% if empty? %>
     <div class="text-sm text-dim">Nothing here yet. Deploy an app to see activity.</div>
   <% else %>
     <ul class="space-y-1.5">
       <% events.each do |e| %>
-        <li class="font-mono text-[12.5px] leading-relaxed">
+        <li class="text-[13px] leading-relaxed">
           <span class="text-dim"><%= time_ago_in_words(e.created_at) %> ago</span>
           ·
           <%= e.respond_to?(:description) ? e.description : e.to_s %>
