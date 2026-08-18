@@ -14,7 +14,7 @@ module Atoms
     end
 
     def dot_classes;  "inline-block w-1.5 h-1.5 #{@state[:dot]}"; end
-    def text_classes; "font-mono text-[11px] #{@state[:color]} tracking-tight"; end
+    def text_classes; "text-[11px] font-medium #{@state[:color]}"; end
     def label;        @label_override || @state[:label]; end
   end
 end

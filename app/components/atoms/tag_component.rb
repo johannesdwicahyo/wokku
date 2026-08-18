@@ -1,8 +1,8 @@
 module Atoms
   class TagComponent < ApplicationComponent
     TONES = {
-      ink:     "border-ink text-ink",
-      dim:     "border-rule-soft text-dim",
+      ink:     "border-line text-ink",
+      dim:     "border-line text-dim",
       accent:  "border-accent text-accent",
       hot:     "border-hot text-hot",
       success: "border-success text-success",
@@ -17,7 +17,7 @@ module Atoms
 
     def classes
       cx(
-        "inline-flex items-center gap-1.5 px-2 py-0.5 border font-mono text-[10px] font-semibold uppercase tracking-widest whitespace-nowrap",
+        "inline-flex items-center gap-1.5 px-2 py-0.5 border rounded-md text-[11px] font-medium normal-case tracking-normal whitespace-nowrap",
         TONES[@tone],
         @opts[:class]
       )

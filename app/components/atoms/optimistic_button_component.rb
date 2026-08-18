@@ -9,8 +9,8 @@ module Atoms
     attr_reader :label, :url, :http_method, :pending_label, :kind, :confirm
 
     def classes
-      base = "border-1.5 border-ink font-mono text-[11px] uppercase tracking-widest px-3 py-2 shadow-brutal"
-      base + (kind == :primary ? " bg-ink text-bg" : " bg-paper text-ink")
+      base = "font-medium text-xs px-3 py-2 rounded-md transition-colors"
+      base + (kind == :primary ? " bg-ink text-bg border border-ink hover:opacity-90" : " bg-paper text-ink border border-line hover:bg-bg")
     end
   end
 end

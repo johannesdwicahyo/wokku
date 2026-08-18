@@ -9,6 +9,15 @@ module Atoms
       ink:     "bg-ink"
     }.freeze
 
+    TINTS = {
+      accent:  "bg-accent-soft text-accent",
+      hot:     "bg-hot-soft text-hot",
+      success: "bg-success-soft text-success",
+      warn:    "bg-warn-soft text-warn",
+      danger:  "bg-danger-soft text-danger",
+      ink:     "bg-bg-deep text-ink-soft"
+    }.freeze
+
     def initialize(dot: :accent, **opts)
       @dot = dot
       @opts = opts
@@ -16,7 +25,8 @@ module Atoms
 
     def container_classes
       cx(
-        "inline-flex items-center gap-2 px-3.5 py-1.5 bg-paper border-1.5 border-ink rounded-full font-sans text-sm text-ink font-medium tracking-tight",
+        "inline-flex items-center gap-2 px-2 py-0.5 rounded text-[11px] font-medium",
+        TINTS[@dot],
         @opts[:class]
       )
     end
