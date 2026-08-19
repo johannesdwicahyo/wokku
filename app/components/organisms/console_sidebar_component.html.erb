@@ -1,76 +1,13 @@
 <aside class="fixed inset-y-0 left-0 z-30 w-56 bg-bg-deep border-r border-line flex flex-col -translate-x-full lg:translate-x-0 transition-transform duration-200"
        id="dashboard-sidebar"
        data-mobile-nav-target="sidebar">
-  <%# (a) Workspace switcher — moved from the topbar verbatim (same dropdown
-      Stimulus wiring + route helpers). Falls back to the plain logo when
-      there's no multi-workspace context (admin layout). %>
-  <div class="px-3 py-3 border-b border-line-soft">
-    <% if show_workspace_switcher? %>
-      <div class="relative" data-controller="dropdown">
-        <button type="button" data-action="click->dropdown#toggle"
-                class="w-full flex items-center gap-2 px-1.5 py-1.5 rounded-md hover:bg-rule-soft/60 transition-colors cursor-pointer"
-                aria-haspopup="true">
-          <span class="inline-flex items-center justify-center flex-shrink-0 font-sans font-extrabold tracking-tightest text-bg bg-ink rounded-md w-6 h-6 text-xs">w</span>
-          <span class="font-semibold text-[13px] text-ink truncate flex-1 text-left"><%= workspace_option_label(current_workspace) %></span>
-          <span class="text-dim text-[10px] flex-shrink-0">▾</span>
-        </button>
-        <div data-dropdown-target="menu"
-             class="hidden absolute left-0 top-full mt-1 w-64 bg-paper border border-line z-50">
-          <div class="px-3 py-2 border-b border-rule-soft">
-            <p class="text-[11px] font-medium text-dim">Workspaces</p>
-          </div>
-          <% workspaces.each do |ws| %>
-            <% if ws.id == current_workspace.id %>
-              <div class="flex items-center justify-between px-3 py-2 bg-bg-deep text-xs">
-                <span class="text-ink font-semibold truncate"><%= workspace_option_label(ws) %></span>
-                <span class="text-[11px] font-medium text-accent">Current</span>
-              </div>
-            <% else %>
-              <%= button_to switch_dashboard_workspace_path(ws), method: :post,
-                    class: "w-full flex items-center justify-between px-3 py-2 text-xs text-ink-soft hover:bg-bg-deep hover:text-ink transition-colors" do %>
-                <span class="truncate"><%= workspace_option_label(ws) %></span>
-                <span class="text-[11px] font-medium text-dim"><%= ws.kind %></span>
-              <% end %>
-            <% end %>
-          <% end %>
-          <% if workspace_new_path %>
-            <%= link_to workspace_new_path,
-                  class: "block px-3 py-2 text-xs text-accent border-t border-rule-soft hover:bg-bg-deep transition-colors" do %>
-              + New workspace
-            <% end %>
-          <% end %>
-          <% if workspaces_index_path %>
-            <%= link_to workspaces_index_path,
-                  class: "block px-3 py-2 text-[11px] text-dim hover:bg-bg-deep hover:text-ink transition-colors" do %>
-              Manage →
-            <% end %>
-          <% end %>
-        </div>
-      </div>
-    <% else %>
-      <%= render Atoms::LogoComponent.new(size: :sm, href: "/") %>
+  <div class="px-3 py-4 border-b border-line-soft">
+    <%= render Atoms::LogoComponent.new(size: :sm, href: "/") %>
+    <% if version_line.present? %>
+      <div class="mt-2 text-[10px] text-dim"><%= version_line %></div>
     <% end %>
   </div>
 
-  <%# (b) App search — moved from the topbar verbatim (same app-search
-      Stimulus wiring). %>
-  <% if search_url.present? %>
-    <div class="px-3 py-3 border-b border-line-soft">
-      <div class="flex items-center gap-2.5 w-full px-2.5 py-1.5 border border-line rounded-md bg-paper text-sm relative"
-           data-controller="app-search" data-app-search-url-value="<%= search_url %>">
-        <span class="text-accent text-xs">$</span>
-        <input type="text"
-               placeholder="<%= search_placeholder %>"
-               data-app-search-target="input"
-               data-action="input->app-search#filter keydown->app-search#navigate focus->app-search#filter"
-               class="flex-1 bg-transparent border-0 outline-none text-dim text-xs placeholder:text-dim focus:text-ink p-0">
-        <div data-app-search-target="results"
-             class="app-search-results-panel hidden absolute top-full left-0 right-0 mt-2 z-50"></div>
-      </div>
-    </div>
-  <% end %>
-
-  <%# (c) nav sections — unchanged. %>
   <div class="py-4 flex-1 overflow-y-auto">
     <div class="px-3 pb-1 text-[11px] font-medium text-dim"><%= workspace_label %></div>
     <% nav.each do |item| %>
@@ -112,60 +49,6 @@
             href: item[:href],
             external: item.fetch(:external, false)
           ) %>
-    <% end %>
-  </div>
-
-  <%# (d) Rail footer — theme toggle + notifications/locale/deploy actions
-      moved from the topbar, then the user block (avatar/email + Profile /
-      Sign out dropdown), then the version line. %>
-  <div class="border-t border-line-soft px-3 py-3">
-    <div class="flex items-center gap-2 mb-2">
-      <% if notifications_path.present? %>
-        <%= link_to notifications_path, title: "Notifications",
-              class: "w-8 h-8 flex items-center justify-center border border-line rounded-md bg-paper text-ink text-xs hover:bg-bg-deep transition-colors" do %>▮<% end %>
-      <% end %>
-
-      <%= render Molecules::ThemeToggleComponent.new %>
-
-      <% if locale_toggle_path.present? %>
-        <%= button_to locale_toggle_path, method: :post, title: locale_toggle_title,
-              class: "w-8 h-8 flex items-center justify-center border border-line rounded-md bg-paper text-ink text-[11px] font-bold cursor-pointer hover:bg-bg-deep transition-colors" do %><%= locale.to_s.upcase %><% end %>
-      <% end %>
-
-      <% if deploy_path.present? %>
-        <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, mono: true, href: deploy_path, class: "flex-1 whitespace-nowrap") do %><%= deploy_label %><% end %>
-      <% end %>
-    </div>
-
-    <% if show_user_block? %>
-      <div class="relative" data-controller="dropdown">
-        <button type="button" data-action="click->dropdown#toggle"
-                class="w-full flex items-center gap-2 px-1.5 py-1.5 rounded-md hover:bg-rule-soft/60 transition-colors cursor-pointer"
-                aria-haspopup="true">
-          <span class="w-7 h-7 border border-line rounded-md bg-accent flex items-center justify-center text-bg text-xs font-bold overflow-hidden flex-shrink-0">
-            <% if user_avatar_url.present? %>
-              <img src="<%= user_avatar_url %>" alt="avatar" class="w-full h-full object-cover">
-            <% else %>
-              <%= user_initial %>
-            <% end %>
-          </span>
-          <span class="flex-1 min-w-0 text-left">
-            <span class="block text-xs text-ink truncate"><%= user_email %></span>
-            <span class="block text-[10px] text-dim truncate"><%= user_role %></span>
-          </span>
-        </button>
-        <div data-dropdown-target="menu"
-             class="hidden absolute left-0 right-0 bottom-full mb-1 bg-paper border border-line z-50">
-          <%= link_to profile_label, profile_path,
-                class: "block px-3 py-2 text-xs text-ink-soft hover:bg-bg-deep hover:text-ink transition-colors" %>
-          <%= link_to sign_out_label, sign_out_path, data: { turbo_method: :delete },
-                class: "block px-3 py-2 text-xs text-ink-soft hover:bg-bg-deep hover:text-ink transition-colors" %>
-        </div>
-      </div>
-    <% end %>
-
-    <% if version_line.present? %>
-      <div class="mt-2 text-[10px] text-dim"><%= version_line %></div>
     <% end %>
   </div>
 </aside>
