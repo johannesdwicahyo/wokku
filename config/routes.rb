@@ -28,7 +28,6 @@ Rails.application.routes.draw do
   namespace :dashboard do
     get "/", to: redirect("/dashboard/apps"), as: :root
     get "/deploy",       to: redirect("/dashboard/apps/new")
-    get "/addons",       to: redirect("/dashboard/apps")
     resources :templates, only: [ :index, :show, :create ]
     patch "onboarding/skip", to: "onboarding#skip", as: :onboarding_skip
     resources :deploys, only: [ :index ]
