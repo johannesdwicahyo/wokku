@@ -48,10 +48,10 @@
 
     <div class="flex min-h-screen overflow-x-clip">
       <%= render Organisms::ConsoleSidebarComponent.new(
-            nav: admin_nav,
-            account: admin_account,
-            workspace_label: "admin",
-            account_label: ""
+            groups: [
+              { label: "admin", items: admin_nav },
+              { label: nil, items: admin_account }
+            ]
           ) %>
 
       <%# Off-canvas backdrop (mobile only). %>

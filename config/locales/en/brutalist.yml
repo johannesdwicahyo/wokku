@@ -133,24 +133,18 @@ en:
     license: "// dokku (mit) + wokku (agpl-3.0)"
   console:
     sidebar:
-      workspace: "// workspace"
-      account: "// account"
-      admin: "// admin"
+      workspace: "Workspace"
       items:
-        apps: "apps"
-        templates: "templates"
-        audit_log: "audit log"
-      account_items:
-        billing: "billing"
-        settings: "settings"
-        docs: "docs ↗"
-        support: "support ↗"
-      admin_items:
-        admin_console: "admin console →"
-        # Legacy entries kept for older non-brutalist sidebar; brutalist
-        # collapsed to a single admin_console link.
-        servers: "servers"
-        overview: "admin"
+        apps: "Apps"
+        databases: "Databases"
+        templates: "Templates"
+        activity: "Activity"
+        servers: "Servers"
+        team: "Team"
+        settings: "Settings"
+      footer:
+        docs: "Docs"
+        support: "Support"
     topbar:
       search: "search apps..."
       beta: "wokku.cloud is in public beta — not for production workloads yet."

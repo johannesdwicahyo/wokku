@@ -133,22 +133,18 @@ id:
     license: "// dokku (mit) + wokku (agpl-3.0)"
   console:
     sidebar:
-      workspace: "// workspace"
-      account: "// akun"
-      admin: "// admin"
+      workspace: "Ruang kerja"
       items:
-        apps: "apps"
-        templates: "templates"
-        audit_log: "audit log"
-      account_items:
-        billing: "billing"
-        settings: "settings"
-        docs: "docs ↗"
-        support: "support ↗"
-      admin_items:
-        admin_console: "konsol admin →"
-        servers: "servers"
-        overview: "admin"
+        apps: "Aplikasi"
+        databases: "Database"
+        templates: "Template"
+        activity: "Aktivitas"
+        servers: "Server"
+        team: "Tim"
+        settings: "Pengaturan"
+      footer:
+        docs: "Dokumentasi"
+        support: "Dukungan"
     topbar:
       search: "cari app..."
       beta: "wokku.cloud lagi public beta — belum buat workload production."

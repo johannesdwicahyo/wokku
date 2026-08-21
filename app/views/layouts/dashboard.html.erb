@@ -16,39 +16,33 @@
 <%
   path = request.path
 
-  nav_items = [
-    { label: t("console.sidebar.items.apps"),       key: :apps,       href: dashboard_apps_path,       active: path.start_with?("/dashboard/apps") },
-    { label: t("console.sidebar.items.templates"),  key: :templates,  href: dashboard_templates_path,  active: path.start_with?("/dashboard/templates") },
-    { label: t("console.sidebar.items.audit_log"),  key: :audit_log,  href: dashboard_activities_path, active: path.start_with?("/dashboard/activities") }
+  primary_items = [
+    { label: t("console.sidebar.items.apps"),      key: :apps,      href: dashboard_apps_path,       active: path.start_with?("/dashboard/apps") },
+    { label: t("console.sidebar.items.databases"), key: :databases, href: dashboard_addons_path,     active: path.start_with?("/dashboard/addons") },
+    { label: t("console.sidebar.items.templates"), key: :templates, href: dashboard_templates_path,  active: path.start_with?("/dashboard/templates") },
+    { label: t("console.sidebar.items.activity"),  key: :activity,  href: dashboard_activities_path, active: path.start_with?("/dashboard/activities") }
   ]
 
-  account_items = [
-    # Billing routes are drawn by the cloud host; a standalone engine has
-    # no billing item (same respond_to? hook as the low-balance banner).
-    (if respond_to?(:dashboard_billing_path)
-      { label: t("console.sidebar.account_items.billing"), key: :billing, href: dashboard_billing_path, active: current_page?(dashboard_billing_path) }
+  workspace_items = [
+    # Servers is admin-scoped in the engine; members have nothing to see there.
+    (if current_user&.admin?
+      { label: t("console.sidebar.items.servers"), key: :servers, href: admin_servers_path, active: path.start_with?("/admin") }
     end),
-    { label: t("console.sidebar.account_items.settings"), key: :settings, href: dashboard_profile_path,          active: current_page?(dashboard_profile_path) },
-    { label: t("console.sidebar.account_items.docs"),     key: :docs,     href: "/docs",                         external: true, active: false },
-    { label: t("console.sidebar.account_items.support"),  key: :support,  href: "mailto:support@wokku.cloud",    active: false }
+    { label: t("console.sidebar.items.team"),     key: :team,     href: dashboard_workspaces_path, active: path.start_with?("/dashboard/workspaces") },
+    { label: t("console.sidebar.items.settings"), key: :settings, href: dashboard_profile_path,
+      active: path.start_with?("/dashboard/profile", "/dashboard/two_factor", "/dashboard/notifications", "/dashboard/account_deletion") }
   ].compact
 
-  admin_items = []
-  if current_user&.admin?
-    # Single switch-to-admin entry. The admin layout has its own sidebar
-    # with all 5 admin sections (overview, servers, cloud credentials,
-    # promo codes, users); duplicating any of them here just confuses
-    # the IA (was 3 stray items, "admin" pointed at "/admin" which is
-    # already shown by clicking any of them). Wokku logo in the admin
-    # layout returns to dashboard.
-    # Cloud draws admin root (revenue overview); standalone's admin home
-    # is the servers page.
-    admin_home = respond_to?(:admin_root_path) ? admin_root_path : admin_servers_path
-    admin_items = [
-      { label: t("console.sidebar.admin_items.admin_console", default: "admin console →"),
-        key: :admin, href: admin_home, active: path.start_with?("/admin") }
-    ]
-  end
+  sidebar_groups = [
+    { label: nil, items: primary_items },
+    { label: t("console.sidebar.workspace"), items: workspace_items }
+  ]
+
+  # Billing (cloud-only) has no rail item — it lives on the Settings → Billing tab.
+  sidebar_footer_links = [
+    { label: t("console.sidebar.footer.docs"),    href: "/docs",                      external: true },
+    { label: t("console.sidebar.footer.support"), href: "mailto:support@wokku.cloud", external: false }
+  ]
 %>
 <!DOCTYPE html>
 <html lang="<%= I18n.locale %>"
@@ -121,13 +115,23 @@
         an overflow scroll-container would. %>
     <div class="flex min-h-screen overflow-x-clip">
       <%= render Organisms::ConsoleSidebarComponent.new(
-            nav: nav_items,
-            account: account_items,
-            workspace_label: t("console.sidebar.workspace"),
-            account_label: t("console.sidebar.account"),
-            admin: admin_items,
-            admin_label: t("console.sidebar.admin"),
-            version_line: "wokku v#{Wokku::VERSION}"
+            groups: sidebar_groups,
+            footer_links: sidebar_footer_links,
+            version_line: "wokku v#{Wokku::VERSION}",
+            workspaces: current_user.teams.includes(:plan).order(:created_at),
+            current_workspace: current_team,
+            workspaces_index_path: dashboard_workspaces_path,
+            workspace_new_path: new_dashboard_workspace_path,
+            search_url: search_dashboard_apps_path,
+            search_placeholder: t("console.topbar.search"),
+            user_email: current_user.email,
+            user_role: current_user.role,
+            user_avatar_url: current_user.try(:avatar_url),
+            sign_out_path: destroy_user_session_path,
+            sign_out_label: t("common.sign_out"),
+            locale: I18n.locale,
+            locale_toggle_path: dashboard_locale_path(locale: I18n.locale == :en ? :id : :en),
+            locale_toggle_title: I18n.locale == :en ? "Ganti ke Bahasa Indonesia" : "Switch to English"
           ) %>
 
       <%# Off-canvas backdrop (mobile only). %>
