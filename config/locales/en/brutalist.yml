@@ -176,11 +176,6 @@ en:
       metrics:  "metrics"
       requests: "requests"
       vitals:   "vitals"
-    settings_tabs:
-      profile:       "profile"
-      security:      "security"
-      notifications: "notifications"
-      billing:       "billing"
     apps:
       title: "apps"
       kicker: "// 5 apps · 5 running · region: jkt-1"

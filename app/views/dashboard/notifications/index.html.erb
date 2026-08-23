@@ -3,7 +3,7 @@
   (Phase 3 backlog #12) so it shares chrome with Profile / Security /
   Billing.
 %>
-<%= render Organisms::SettingsTabsComponent.new(active_tab: :notifications) do %>
+<%= render Organisms::SettingsTabsComponent.new(active_tab: :notifications, show_admin: current_user&.admin?) do %>
 
 <div data-controller="slide-panel">
 <div class="flex items-center justify-between gap-3 flex-wrap mb-6">

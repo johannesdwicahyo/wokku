@@ -3,7 +3,7 @@
   Wrapped in SettingsTabsComponent (Phase 3 backlog #12) so it shares
   the 4-tab chrome with Security / Notifications / Billing.
 %>
-<%= render Organisms::SettingsTabsComponent.new(active_tab: :profile) do %>
+<%= render Organisms::SettingsTabsComponent.new(active_tab: :profile, show_admin: current_user&.admin?) do %>
 
 <% panel_head = "px-5 py-2.5 border-b border-rule-soft flex items-center justify-between font-mono text-[11px] text-dim tracking-widest uppercase" %>
 

@@ -2,6 +2,7 @@
   Brutalist account deletion (P5). account-deletion Stimulus controller
   (email-gate: target input/submit, action check) preserved 1:1.
 %>
+<%= render Organisms::SettingsTabsComponent.new(active_tab: :account, show_admin: current_user&.admin?) do %>
 <div class="max-w-xl">
   <div class="mb-6">
     <h1 class="font-mono text-3xl font-semibold tracking-tighter text-ink m-0">
@@ -102,3 +103,4 @@
     </div>
   <% end %>
 </div>
+<% end %>
