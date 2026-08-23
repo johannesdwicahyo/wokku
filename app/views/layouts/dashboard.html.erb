@@ -140,30 +140,10 @@
            data-action="click->mobile-nav#close"></div>
 
       <div class="flex-1 flex flex-col min-w-0 lg:pl-56">
-        <%= render Organisms::ConsoleTopbarComponent.new(
-              user_email: current_user.email,
-              user_role: current_user.role,
-              user_avatar_url: current_user.try(:avatar_url),
-              locale: I18n.locale,
-              search_url: search_dashboard_apps_path,
-              search_placeholder: t("console.topbar.search"),
-              notifications_path: dashboard_notifications_path,
-              profile_path: dashboard_profile_path,
-              sign_out_path: destroy_user_session_path,
-              deploy_path: dashboard_templates_path,
-              deploy_label: "> deploy()",
-              locale_toggle_path: dashboard_locale_path(locale: I18n.locale == :en ? :id : :en),
-              locale_toggle_title: I18n.locale == :en ? "Ganti ke Bahasa Indonesia" : "Switch to English",
-              sign_out_label: t("common.sign_out"),
-              profile_label: t("dashboard.nav.profile"),
-              workspaces: current_user.teams.includes(:plan).order(:created_at),
-              current_workspace: current_team,
-              workspaces_index_path: dashboard_workspaces_path,
-              workspace_new_path: new_dashboard_workspace_path
-            ) %>
+        <%= render Organisms::ConsoleTopbarComponent.new %>
 
         <main class="flex-1 bg-bg">
-          <div class="px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+          <div class="px-6 py-5">
             <%= yield %>
           </div>
         </main>
