@@ -7,7 +7,7 @@ RSpec.describe Molecules::SidebarNavItemComponent, type: :component do
     render_inline(described_class.new(label: "Apps", key: :apps, href: "/dashboard/apps", icon: "apps", count: 3))
     expect(page).to have_link("Apps", href: "/dashboard/apps")
     expect(page).to have_css("a svg")
-    expect(page).to have_text("3")
+    expect(page).to have_css("span.text-dim", text: "3")
   end
 
   it "renders without icon or count" do

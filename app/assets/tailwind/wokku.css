@@ -48,7 +48,7 @@
   --color-inverse-surface: #e2e0fc;
   --color-inverse-on-surface: #2f2e43;
   --color-inverse-primary: #565995;
-  --font-headline: "Space Grotesk", system-ui, sans-serif;
+  --font-headline: "Inter Tight", "Inter", system-ui, sans-serif;
   --font-body: "Inter", system-ui, sans-serif;
   --font-label: "Inter", system-ui, sans-serif;
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
@@ -83,11 +83,11 @@
   --color-deploying:    #7A5BB0;
   --color-hot:          #C2483B;
   --color-hot-soft:     #FBEDEB;
-  --color-warn:         #B5862F;
+  --color-warn:         #8F6B12;
   --color-warn-soft:    #FBF4E4;
   --color-danger:       #C2483B;
   --color-danger-soft:  #FBEDEB;
-  --color-success:      #3E9460;
+  --color-success:      #2E7D4F;
   --color-success-soft: #EBF5EF;
 
   /* Type families for the brutalist surface. Inter Tight + JetBrains
@@ -109,6 +109,14 @@
   --t-drawer:     320ms;
   --ease:         cubic-bezier(0.16, 1, 0.3, 1);
   --ease-pulse:   ease-out;
+}
+
+/* Visible keyboard focus everywhere (spec §5). Tailwind preflight strips
+   outlines; nothing in the app restores them, so keyboard users get no
+   focus indicator at all without this. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 @keyframes wk-pulse {
