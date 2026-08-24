@@ -1,12 +1,12 @@
 module Atoms
   class ButtonComponent < ApplicationComponent
     VARIANTS = {
-      primary:         "bg-ink text-paper border border-ink hover:opacity-90",
-      outline:         "bg-paper text-ink border border-line hover:bg-bg",
-      inverse:         "bg-paper text-ink border border-line hover:bg-bg",
-      inverse_outline: "bg-transparent text-paper border border-paper/40 hover:border-paper",
-      ghost:           "bg-transparent text-ink-soft border border-transparent hover:text-ink hover:bg-bg",
-      danger:          "bg-transparent text-danger border border-line hover:bg-danger-soft"
+      primary:         "bg-ink text-paper border-1.5 border-ink shadow-brutal hover:bg-black",
+      outline:         "bg-paper text-ink border-1.5 border-ink shadow-brutal-sm hover:bg-bg-deep",
+      inverse:         "bg-paper text-ink border-1.5 border-ink shadow-brutal-sm hover:bg-bg-deep",
+      inverse_outline: "bg-transparent text-paper border-1.5 border-paper/40 hover:border-paper",
+      ghost:           "bg-transparent text-ink-soft border-1.5 border-transparent hover:text-ink hover:bg-bg-deep",
+      danger:          "bg-paper text-danger border-1.5 border-danger shadow-brutal-sm hover:bg-danger-soft"
     }.freeze
 
     SIZES = {
@@ -25,7 +25,7 @@ module Atoms
     end
 
     def classes
-      base = "inline-flex items-center justify-center gap-2 font-medium cursor-pointer rounded-md transition-colors"
+      base = "inline-flex items-center justify-center gap-2 font-semibold cursor-pointer rounded-md transition-[transform,box-shadow,background-color] duration-75 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
       font = @mono ? "font-mono font-normal" : ""
       cx(base, VARIANTS[@variant], SIZES[@size], font, @opts[:class])
     end

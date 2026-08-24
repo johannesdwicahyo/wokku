@@ -1,12 +1,12 @@
-<div class="border-b border-line-soft">
-  <div class="flex items-center gap-1 pb-3 text-sm overflow-x-auto">
+<div class="mb-5">
+  <div class="inline-flex border-1.5 border-ink rounded-md overflow-hidden shadow-brutal-sm max-w-full overflow-x-auto">
     <% tabs.each do |t| %>
       <%= link_to tab_label(t), tab_href(t),
-            class: "px-3 py-1.5 rounded-md whitespace-nowrap transition-colors #{t == active_tab ? 'bg-rule-soft text-ink font-medium' : 'text-ink-soft hover:bg-rule-soft/60'}" %>
+            class: "px-4 py-[7px] text-[13px] font-semibold whitespace-nowrap border-r-1.5 border-ink last:border-r-0 transition-colors #{t == active_tab ? 'bg-ink text-paper' : 'bg-paper text-dim hover:bg-bg-deep'}" %>
     <% end %>
   </div>
 </div>
 
-<div class="pt-5">
+<div>
   <%= content %>
 </div>

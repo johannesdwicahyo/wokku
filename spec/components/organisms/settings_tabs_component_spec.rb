@@ -18,9 +18,9 @@ RSpec.describe Organisms::SettingsTabsComponent, type: :component do
     expect(page).to have_link("Admin", href: "/admin/servers")
   end
 
-  it "marks the active tab with the calm active style" do
+  it "marks the active tab with the segmented ink style" do
     render_inline(described_class.new(active_tab: :account)) { "body" }
-    expect(page.find("a", text: "Account")[:class]).to include("bg-rule-soft")
+    expect(page.find("a", text: "Account")[:class]).to include("bg-ink")
   end
 
   it "renders its content" do
