@@ -3,7 +3,7 @@
   <div class="relative max-w-[1180px] mx-auto">
     <div class="flex items-end justify-between mb-8 md:mb-12 flex-wrap gap-5">
       <h2 class="font-sans text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tighter text-ink m-0 leading-[0.95] max-w-[760px]"><%= t('templates.headline') %></h2>
-      <div class="font-mono text-xs text-dim tracking-widest uppercase"><%= t('templates.count', n: template_count) %></div>
+      <div class="text-xs text-dim tracking-widest uppercase"><%= t('templates.count', n: template_count) %></div>
     </div>
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
       <% templates.each do |tpl| %>
