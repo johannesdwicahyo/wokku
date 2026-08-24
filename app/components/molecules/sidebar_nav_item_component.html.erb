@@ -1,4 +1,9 @@
-<a href="<%= href %>" class="<%= classes %>"<%= ' target="_blank" rel="noopener"'.html_safe if external %>>
-  <span class="w-3 <%= active ? 'text-ink' : 'text-dim' %>"><%= active ? '>' : ' ' %></span>
-  <span><%= label %></span>
-</a>
+<%= link_to href, class: classes, **(external ? { target: "_blank", rel: "noopener" } : {}) do %>
+  <% if icon.present? %>
+    <span class="w-4 h-4 flex-shrink-0 [&>svg]:w-4 [&>svg]:h-4"><%= render "shared/icons/#{icon}" %></span>
+  <% end %>
+  <span class="truncate"><%= label %></span>
+  <% if count.present? %>
+    <span class="ml-auto text-[11.5px] font-semibold text-faint"><%= count %></span>
+  <% end %>
+<% end %>
