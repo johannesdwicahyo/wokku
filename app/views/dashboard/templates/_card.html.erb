@@ -4,17 +4,17 @@
       <%= template_brand_icon(template, size: 24) %>
     </div>
     <% if (template[:tags] || []).first %>
-      <span class="border border-accent text-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"><%= template[:tags].first %></span>
+      <span class="border border-line text-dim bg-paper rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"><%= template[:tags].first %></span>
     <% end %>
   </div>
   <div class="flex items-baseline gap-2 mb-1">
-    <h3 class="font-mono text-base font-semibold text-ink group-hover:text-accent transition"><%= template[:name] %></h3>
+    <h3 class="text-base font-semibold text-ink group-hover:underline transition"><%= template[:name] %></h3>
     <% if template[:version].present? %>
-      <span class="text-[10px] font-mono text-dim tracking-wider">v<%= template[:version] %></span>
+      <span class="text-[10px] text-dim tracking-wider">v<%= template[:version] %></span>
     <% end %>
   </div>
-  <p class="font-mono text-xs text-dim leading-relaxed mb-4 line-clamp-2 min-h-[2.5rem]"><%= template[:description] %></p>
-  <div class="mt-auto flex items-center justify-between pt-3 border-t border-rule-soft font-mono">
+  <p class="text-xs text-dim leading-relaxed mb-4 line-clamp-2 min-h-[2.5rem]"><%= template[:description] %></p>
+  <div class="mt-auto flex items-center justify-between pt-3 border-t border-rule-soft">
     <div>
       <p class="text-[9px] text-dim uppercase tracking-widest font-bold">From</p>
       <p class="text-xs font-bold text-ink"><%= template_total_label(template) %></p>
