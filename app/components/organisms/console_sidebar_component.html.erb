@@ -1,20 +1,20 @@
-<aside class="fixed inset-y-0 left-0 z-30 w-56 bg-bg-deep border-r border-line flex flex-col -translate-x-full lg:translate-x-0 transition-transform duration-200"
+<aside class="fixed inset-y-0 left-0 z-30 w-[232px] bg-paper border-r-1.5 border-ink flex flex-col -translate-x-full lg:translate-x-0 transition-transform duration-200 px-3 pt-3.5 pb-3"
        id="dashboard-sidebar"
        data-mobile-nav-target="sidebar">
   <%# Workspace switcher — falls back to the plain logo when there's no
       multi-workspace context (admin layout). %>
-  <div class="px-3 py-3 border-b border-line-soft">
+  <div class="pb-2.5">
     <% if show_workspace_switcher? %>
       <div class="relative" data-controller="dropdown">
         <button type="button" data-action="click->dropdown#toggle"
-                class="w-full flex items-center gap-2 px-1.5 py-1.5 rounded-md hover:bg-rule-soft/60 transition-colors cursor-pointer"
+                class="w-full flex items-center gap-2 px-2 py-1.5 rounded font-bold text-sm hover:bg-bg-deep transition-colors cursor-pointer"
                 aria-haspopup="true">
-          <span class="inline-flex items-center justify-center flex-shrink-0 font-sans font-extrabold tracking-tightest text-bg bg-ink rounded-md w-6 h-6 text-xs">w</span>
-          <span class="font-semibold text-[13px] text-ink truncate flex-1 text-left"><%= workspace_option_label(current_workspace) %></span>
-          <span class="text-dim text-[10px] flex-shrink-0">▾</span>
+          <span class="w-[22px] h-[22px] border-1.5 border-ink rounded bg-ink text-paper grid place-items-center font-extrabold text-xs flex-shrink-0">w</span>
+          <span class="truncate flex-1 text-left"><%= workspace_option_label(current_workspace) %></span>
+          <span class="ml-auto text-faint text-[10px]">▾</span>
         </button>
         <div data-dropdown-target="menu"
-             class="hidden absolute left-0 top-full mt-1 w-64 bg-paper border border-line z-50">
+             class="hidden absolute left-0 top-full mt-1 w-64 bg-paper border-1.5 border-ink rounded-md shadow-brutal-sm z-50">
           <div class="px-3 py-2 border-b border-rule-soft">
             <p class="text-[11px] font-medium text-dim">Workspaces</p>
           </div>
@@ -54,27 +54,26 @@
   <%# App search — ⌘K field per spec §1. The kbd hint is cosmetic until U6
       wires the actual command menu. %>
   <% if search_url.present? %>
-    <div class="px-3 py-3">
-      <div class="flex items-center gap-2.5 w-full px-2.5 py-1.5 border border-line rounded-md bg-paper text-sm relative"
-           data-controller="app-search" data-app-search-url-value="<%= search_url %>">
-        <input type="text"
-               placeholder="<%= search_placeholder %>"
-               data-app-search-target="input"
-               data-action="input->app-search#filter keydown->app-search#navigate focus->app-search#filter"
-               class="flex-1 bg-transparent border-0 outline-none text-dim text-xs placeholder:text-dim focus:text-ink p-0">
-        <kbd class="text-[10px] text-dim border border-line rounded px-1 flex-shrink-0">⌘K</kbd>
-        <div data-app-search-target="results"
-             class="app-search-results-panel hidden absolute top-full left-0 right-0 mt-2 z-50"></div>
-      </div>
+    <div class="flex items-center gap-2 mx-0 mb-2.5 px-2.5 py-1.5 border-1.5 border-line rounded-md bg-bg text-[13px] text-faint relative"
+         data-controller="app-search" data-app-search-url-value="<%= search_url %>">
+      <span class="w-3.5 h-3.5 [&>svg]:w-3.5 [&>svg]:h-3.5"><%= render "shared/icons/search" %></span>
+      <input type="text"
+             placeholder="<%= search_placeholder %>"
+             data-app-search-target="input"
+             data-action="input->app-search#filter keydown->app-search#navigate focus->app-search#filter"
+             class="flex-1 bg-transparent border-0 outline-none text-dim text-xs placeholder:text-dim focus:text-ink p-0">
+      <kbd class="ml-auto text-[10.5px] font-semibold text-dim border border-line rounded bg-paper px-1.5">⌘K</kbd>
+      <div data-app-search-target="results"
+           class="app-search-results-panel hidden absolute top-full left-0 right-0 mt-2 z-50"></div>
     </div>
   <% end %>
 
   <%# Nav groups — first group unlabeled (objects), later groups labeled. %>
-  <div class="py-3 flex-1 overflow-y-auto">
+  <div class="flex-1 overflow-y-auto">
     <% groups.each_with_index do |group, i| %>
       <div class="<%= "mt-4" if i.positive? %>">
         <% if group[:label].present? %>
-          <div class="px-3 pb-1 text-[11px] font-medium text-dim"><%= group[:label] %></div>
+          <div class="px-2 pb-1.5 mt-4 text-[11px] font-bold uppercase tracking-[.06em] text-dim"><%= group[:label] %></div>
         <% end %>
         <% group[:items].each do |item| %>
           <%= render Molecules::SidebarNavItemComponent.new(
@@ -82,7 +81,9 @@
                 key: item[:key],
                 active: item[:active],
                 href: item[:href],
-                external: item.fetch(:external, false)
+                external: item.fetch(:external, false),
+                icon: item[:icon],
+                count: item[:count]
               ) %>
         <% end %>
       </div>
@@ -92,19 +93,24 @@
   <%# Rail footer — Docs · Support · theme · locale, then the user block,
       then the version line (spec §1). %>
   <% if show_footer? %>
-    <div class="border-t border-line-soft px-3 py-3">
+    <div class="border-t border-line pt-2.5">
       <% if footer_links.any? || locale_toggle_path.present? %>
-        <div class="flex items-center gap-3 mb-2 px-1.5">
+        <div class="flex items-center gap-3 px-1 text-xs text-dim mb-2">
           <% footer_links.each do |l| %>
             <%= link_to l[:label], l[:href],
-                  class: "text-[11px] text-dim hover:text-ink transition-colors",
+                  class: "font-medium hover:text-ink hover:underline",
                   **(l[:external] ? { target: "_blank", rel: "noopener" } : {}) %>
           <% end %>
           <span class="ml-auto flex items-center gap-1.5">
-            <%= render Molecules::ThemeToggleComponent.new %>
+            <button type="button"
+                    data-action="click->theme#toggle"
+                    aria-label="Toggle theme" title="Theme"
+                    class="w-6 h-6 grid place-items-center border-1.5 border-line rounded text-[10px] font-bold text-dim hover:border-ink hover:text-ink transition-colors cursor-pointer p-0">
+              <span class="[&>svg]:w-[13px] [&>svg]:h-[13px]"><%= render "shared/icons/moon" %></span>
+            </button>
             <% if locale_toggle_path.present? %>
               <%= button_to locale.to_s.upcase, locale_toggle_path, method: :post, title: locale_toggle_title,
-                    class: "w-7 h-7 flex items-center justify-center border border-line rounded-md bg-paper text-ink text-[10px] font-bold cursor-pointer hover:bg-bg-deep transition-colors" %>
+                    class: "w-6 h-6 grid place-items-center border-1.5 border-line rounded text-[10px] font-bold text-dim hover:border-ink hover:text-ink transition-colors cursor-pointer p-0" %>
             <% end %>
           </span>
         </div>
@@ -113,9 +119,9 @@
       <% if show_user_block? %>
         <div class="relative" data-controller="dropdown">
           <button type="button" data-action="click->dropdown#toggle"
-                  class="w-full flex items-center gap-2 px-1.5 py-1.5 rounded-md hover:bg-rule-soft/60 transition-colors cursor-pointer"
+                  class="w-full flex items-center gap-2 px-1 py-1 rounded hover:bg-bg-deep transition-colors cursor-pointer"
                   aria-haspopup="true">
-            <span class="w-7 h-7 border border-line rounded-md bg-accent flex items-center justify-center text-bg text-xs font-bold overflow-hidden flex-shrink-0">
+            <span class="w-[22px] h-[22px] border-1.5 border-ink rounded-full grid place-items-center font-extrabold text-[11px] bg-paper overflow-hidden flex-shrink-0">
               <% if user_avatar_url.present? %>
                 <img src="<%= user_avatar_url %>" alt="avatar" class="w-full h-full object-cover">
               <% else %>
@@ -123,12 +129,13 @@
               <% end %>
             </span>
             <span class="flex-1 min-w-0 text-left">
-              <span class="block text-xs text-ink truncate"><%= user_email %></span>
-              <span class="block text-[10px] text-dim truncate"><%= user_role %></span>
+              <span class="block text-[12.5px] font-semibold text-ink truncate"><%= user_email %></span>
+              <span class="block text-[11px] text-faint truncate"><%= user_role %></span>
             </span>
+            <span class="ml-auto text-faint">⋯</span>
           </button>
           <div data-dropdown-target="menu"
-               class="hidden absolute left-0 right-0 bottom-full mb-1 bg-paper border border-line z-50">
+               class="hidden absolute left-0 right-0 bottom-full mb-1 bg-paper border-1.5 border-ink rounded-md shadow-brutal-sm z-50">
             <%= link_to sign_out_label, sign_out_path, data: { turbo_method: :delete },
                   class: "block px-3 py-2 text-xs text-ink-soft hover:bg-bg-deep hover:text-ink transition-colors" %>
           </div>
@@ -136,7 +143,7 @@
       <% end %>
 
       <% if version_line.present? %>
-        <div class="mt-2 text-[10px] text-dim"><%= version_line %></div>
+        <div class="px-1 pt-1 text-[10.5px] text-faint"><%= version_line %></div>
       <% end %>
     </div>
   <% end %>

@@ -17,19 +17,19 @@
   path = request.path
 
   primary_items = [
-    { label: t("console.sidebar.items.apps"),      key: :apps,      href: dashboard_apps_path,       active: path.start_with?("/dashboard/apps") },
-    { label: t("console.sidebar.items.databases"), key: :databases, href: dashboard_addons_path,     active: path.start_with?("/dashboard/addons") },
-    { label: t("console.sidebar.items.templates"), key: :templates, href: dashboard_templates_path,  active: path.start_with?("/dashboard/templates") },
-    { label: t("console.sidebar.items.activity"),  key: :activity,  href: dashboard_activities_path, active: path.start_with?("/dashboard/activities") }
+    { label: t("console.sidebar.items.apps"),      key: :apps,      href: dashboard_apps_path,       icon: "apps",     count: current_team&.app_records&.size, active: path.start_with?("/dashboard/apps") },
+    { label: t("console.sidebar.items.databases"), key: :databases, href: dashboard_addons_path,     icon: "database", active: path.start_with?("/dashboard/addons") },
+    { label: t("console.sidebar.items.templates"), key: :templates, href: dashboard_templates_path,  icon: "template", active: path.start_with?("/dashboard/templates") },
+    { label: t("console.sidebar.items.activity"),  key: :activity,  href: dashboard_activities_path, icon: "activity", active: path.start_with?("/dashboard/activities") }
   ]
 
   workspace_items = [
     # Servers is admin-scoped in the engine; members have nothing to see there.
     (if current_user&.admin?
-      { label: t("console.sidebar.items.servers"), key: :servers, href: admin_servers_path, active: path.start_with?("/admin") }
+      { label: t("console.sidebar.items.servers"), key: :servers, href: admin_servers_path, icon: "server", count: Server.count, active: path.start_with?("/admin") }
     end),
-    { label: t("console.sidebar.items.team"),     key: :team,     href: dashboard_workspaces_path, active: path.start_with?("/dashboard/workspaces") },
-    { label: t("console.sidebar.items.settings"), key: :settings, href: dashboard_profile_path,
+    { label: t("console.sidebar.items.team"),     key: :team,     href: dashboard_workspaces_path, icon: "team",     active: path.start_with?("/dashboard/workspaces") },
+    { label: t("console.sidebar.items.settings"), key: :settings, href: dashboard_profile_path,    icon: "settings",
       active: path.start_with?("/dashboard/profile", "/dashboard/two_factor", "/dashboard/notifications", "/dashboard/account_deletion") }
   ].compact
 
@@ -139,7 +139,7 @@
            data-mobile-nav-target="overlay"
            data-action="click->mobile-nav#close"></div>
 
-      <div class="flex-1 flex flex-col min-w-0 lg:pl-56">
+      <div class="flex-1 flex flex-col min-w-0 lg:pl-[232px]">
         <%= render Organisms::ConsoleTopbarComponent.new %>
 
         <main class="flex-1 bg-bg">
