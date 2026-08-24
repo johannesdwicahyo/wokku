@@ -13,7 +13,7 @@
       <input type="text" name="q" placeholder="<%= t('dashboard.templates.search_placeholder') %>" value="<%= params[:q] %>"
              data-templates-search-target="input"
              data-action="input->templates-search#filter"
-             class="w-full pl-3 pr-10 py-2.5 bg-paper border-1.5 border-ink text-sm text-ink placeholder-dim focus:outline-none focus:border-accent"
+             class="w-full pl-3 pr-10 py-2.5 bg-paper border-1.5 border-ink text-sm text-ink placeholder-dim focus:outline-none focus:border-ink"
              <%= "autofocus" if params[:q].present? %>>
       <% if params[:q].present? %>
         <%= link_to dashboard_templates_path,
