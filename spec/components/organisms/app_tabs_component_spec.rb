@@ -5,12 +5,12 @@ RSpec.describe Organisms::AppTabsComponent, type: :component do
 
   it "renders all 4 tabs" do
     render_inline(described_class.new(app: app)) { "body" }
-    %w[overview deploy runtime settings].each { |l| expect(page).to have_link(l) }
+    %w[Overview Deploy Runtime Settings].each { |l| expect(page).to have_link(l) }
   end
 
   it "marks the active tab with dark style" do
     render_inline(described_class.new(app: app, active_tab: :runtime)) { "body" }
-    runtime_link = page.find("a", text: "runtime")
-    expect(runtime_link[:class]).to include("bg-ink text-bg")
+    runtime_link = page.find("a", text: "Runtime")
+    expect(runtime_link[:class]).to include("bg-ink text-paper")
   end
 end

@@ -18,10 +18,10 @@ RSpec.describe Organisms::PerformanceTabsComponent, type: :component do
     expect(page).to have_link(href: h.dashboard_app_performance_path(app))
   end
 
-  it "marks the active section bold/accent" do
+  it "marks the active section with dark style" do
     render_inline(described_class.new(app: app, active: :requests)) { "body" }
     link = page.find("a", text: /requests/i)
-    expect(link[:class]).to include("border-accent")
+    expect(link[:class]).to include("bg-ink text-paper")
   end
 
   it "yields the page body" do

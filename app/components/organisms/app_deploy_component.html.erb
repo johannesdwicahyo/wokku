@@ -1,9 +1,9 @@
 <%# Cloud-only deploy-marketing banner — skipped in a standalone engine. %>
 <%= render Molecules::GitMigrationBannerComponent.new(app: app) if defined?(Molecules::GitMigrationBannerComponent) %>
-<div class="flex gap-6 border-b border-rule-soft mb-6 font-mono text-[12px]">
+<div class="mb-5 inline-flex border-1.5 border-ink rounded-md overflow-hidden shadow-brutal-sm max-w-full overflow-x-auto">
   <% Organisms::AppDeployComponent::SECTIONS.each do |s| %>
-    <%= link_to s.to_s, helpers.section_path(:deploy, app, s),
-                class: "py-2 border-b-2 #{active == s ? 'border-accent text-ink font-bold' : 'border-transparent text-dim hover:text-ink'}" %>
+    <%= link_to s.to_s.titleize, helpers.section_path(:deploy, app, s),
+                class: "px-3 py-1.5 text-xs font-semibold whitespace-nowrap border-r-1.5 border-ink last:border-r-0 transition-colors #{active == s ? 'bg-ink text-paper' : 'bg-paper text-dim hover:bg-bg-deep'}" %>
   <% end %>
 </div>
 <div><%= content %></div>

@@ -124,15 +124,15 @@ en:
       delete_account: "Delete Account"
       estimated_monthly: "Estimated Monthly"
     app_tabs:
-      overview:    "overview"
-      deploy:      "deploy"
-      runtime:     "runtime"
-      performance: "performance"
-      settings:    "settings"
+      overview:    "Overview"
+      deploy:      "Deploy"
+      runtime:     "Runtime"
+      performance: "Performance"
+      settings:    "Settings"
     performance_tabs:
-      metrics:  "metrics"
-      requests: "requests"
-      vitals:   "vitals"
+      metrics:  "Metrics"
+      requests: "Requests"
+      vitals:   "Vitals"
     settings_tabs:
       profile: "Profile"
       security: "Security"

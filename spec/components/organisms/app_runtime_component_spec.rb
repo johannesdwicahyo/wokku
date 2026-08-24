@@ -5,14 +5,14 @@ RSpec.describe Organisms::AppRuntimeComponent, type: :component do
 
   it "renders the runtime sections (metrics moved to the Performance tab)" do
     render_inline(described_class.new(app: app)) { "body" }
-    %w[logs terminal scaling].each { |l| expect(page).to have_link(l) }
-    expect(page).not_to have_link("metrics")
+    %w[Logs Terminal Scaling].each { |l| expect(page).to have_link(l) }
+    expect(page).not_to have_link("Metrics")
   end
 
-  it "highlights the active section with the accent border" do
+  it "highlights the active section with dark style" do
     render_inline(described_class.new(app: app, active: :terminal)) { "body" }
-    terminal_link = page.find("a", text: "terminal")
-    expect(terminal_link[:class]).to include("border-accent")
+    terminal_link = page.find("a", text: "Terminal")
+    expect(terminal_link[:class]).to include("bg-ink text-paper")
   end
 
   it "renders the yielded body content" do

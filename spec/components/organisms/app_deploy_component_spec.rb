@@ -5,13 +5,13 @@ RSpec.describe Organisms::AppDeployComponent, type: :component do
 
   it "renders all 4 navigable deploy sections" do
     render_inline(described_class.new(app: app)) { "body" }
-    %w[releases github previews config].each { |l| expect(page).to have_link(l) }
+    %w[Releases Github Previews Config].each { |l| expect(page).to have_link(l) }
   end
 
-  it "highlights the active section with the accent border" do
+  it "highlights the active section with dark style" do
     render_inline(described_class.new(app: app, active: :config)) { "body" }
-    config_link = page.find("a", text: "config")
-    expect(config_link[:class]).to include("border-accent")
+    config_link = page.find("a", text: "Config")
+    expect(config_link[:class]).to include("bg-ink text-paper")
   end
 
   it "renders the yielded body content" do
