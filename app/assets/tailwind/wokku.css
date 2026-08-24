@@ -65,26 +65,30 @@
      to avoid colliding with Material's `--color-surface`.
      Default values are the LIGHT theme; dark overrides at the bottom of
      this file flip them under `[data-theme="dark"]`. */
-  --color-bg:           #fafafa;
-  --color-bg-deep:      #f5f5f5;
+  --color-bg:           #F6F6F5;
+  --color-bg-deep:      #F0F0EF;
   --color-paper:        #ffffff;
-  --color-ink:          #18181b;
-  --color-ink-soft:     #555555;
-  --color-dim:          #999999;
-  --color-rule:         #e5e5e5;
-  --color-rule-soft:    #ebebeb;
-  --color-line:         #e5e5e5;
-  --color-line-soft:    #ebebeb;
-  --color-accent:       #1961ed;
-  --color-accent-soft:  #eef4ff;
-  --color-hot:          #e05d38;
-  --color-hot-soft:     #feecec;
-  --color-warn:         #b07d10;
-  --color-warn-soft:    #fff6e0;
-  --color-danger:       #c0392b;
-  --color-danger-soft:  #feecec;
-  --color-success:      #2a8a5c;
-  --color-success-soft: #eafaf1;
+  --color-ink:          #171717;
+  --color-ink-soft:     #3F3F3F;
+  --color-dim:          #6B6B6B;
+  --color-faint:        #9A9A9A;
+  --color-rule:         #E6E6E4;
+  --color-rule-soft:    #F0F0EF;
+  --color-line:         #E6E6E4;
+  --color-line-soft:    #F0F0EF;
+  --color-accent:       #4C6FB5;
+  --color-accent-soft:  #EEF1FF;
+  --color-info:         #4C6FB5;
+  --color-info-soft:    #EEF1FF;
+  --color-deploying:    #7A5BB0;
+  --color-hot:          #C2483B;
+  --color-hot-soft:     #FBEDEB;
+  --color-warn:         #B5862F;
+  --color-warn-soft:    #FBF4E4;
+  --color-danger:       #C2483B;
+  --color-danger-soft:  #FBEDEB;
+  --color-success:      #3E9460;
+  --color-success-soft: #EBF5EF;
 
   /* Type families for the brutalist surface. Inter Tight + JetBrains
      Mono are loaded from Google Fonts in the marketing layout. */
@@ -92,10 +96,9 @@
   --font-mono-brutal: "JetBrains Mono", "IBM Plex Mono", "SF Mono", ui-monospace, monospace;
 
   /* Brutalist hard shadows — ink-coloured in light, accent in dark. */
-  /* transitional: renamed/removed in P7 */
-  --shadow-brutal-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-brutal:    0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-brutal-lg: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-brutal-sm: 2px 2px 0 var(--color-ink);
+  --shadow-brutal:    3px 3px 0 var(--color-ink);
+  --shadow-brutal-lg: 4px 4px 0 var(--color-ink);
 
   --grid-dot:           rgba(0, 0, 0, 0.06);
 
@@ -209,12 +212,16 @@
   --color-ink:          #ebebeb;
   --color-ink-soft:     #a3a3a3;
   --color-dim:          #737373;
+  --color-faint:        #5c5c5c;
   --color-rule:         #2a2a2a;
   --color-rule-soft:    #232323;
   --color-line:         #2a2a2a;
   --color-line-soft:    #232323;
   --color-accent:       #5b8def;
   --color-accent-soft:  rgba(91, 141, 239, 0.14);
+  --color-info:         #6d8fd4;
+  --color-info-soft:    rgba(109, 143, 212, 0.14);
+  --color-deploying:    #9b7fd4;
   --color-hot:          #ff8456;
   --color-hot-soft:     rgba(255, 132, 86, 0.14);
   --color-warn:         #d9a441;
@@ -223,9 +230,9 @@
   --color-danger-soft:  rgba(255, 110, 115, 0.14);
   --color-success:      #4ade80;
   --color-success-soft: rgba(74, 222, 128, 0.12);
-  --shadow-brutal-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-brutal:    0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-brutal-lg: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-brutal-sm: 2px 2px 0 #000;
+  --shadow-brutal:    3px 3px 0 #000;
+  --shadow-brutal-lg: 4px 4px 0 #000;
   --grid-dot:         rgba(255, 255, 255, 0.05);
 }
 
@@ -237,12 +244,11 @@ html { transition: background-color 200ms ease, color 200ms ease; }
    the brutalist component library leans on these for crisp panel/sidebar
    chrome. Defined as utilities so `border-1.5`, `border-r-1.5`, etc.
    resolve everywhere (landing + console). */
-/* transitional: shimmed to 1px, removed in P7 */
-@utility border-1.5 { border-width: 1px; }
-@utility border-t-1.5 { border-top-width: 1px; }
-@utility border-r-1.5 { border-right-width: 1px; }
-@utility border-b-1.5 { border-bottom-width: 1px; }
-@utility border-l-1.5 { border-left-width: 1px; }
+@utility border-1.5 { border-width: 1.5px; }
+@utility border-t-1.5 { border-top-width: 1.5px; }
+@utility border-r-1.5 { border-right-width: 1.5px; }
+@utility border-b-1.5 { border-bottom-width: 1.5px; }
+@utility border-l-1.5 { border-left-width: 1.5px; }
 
 /* Dotted grid helper used by hero + sections. */
 .bg-dotted {
