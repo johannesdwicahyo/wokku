@@ -67,6 +67,14 @@ id:
       box_size_label: "Ukuran Box"
       shared_addons_label: "Add-on Berbagi Gratis"
       dedicated_addons_label: "Add-on Dedicated (Opsional)"
+      aggregates:
+        total:
+          other: "%{count} app"
+        running:
+          other: "%{count} berjalan"
+        crashed:
+          other: "%{count} crash"
+        boxes: "Box terpakai %{used} / %{allowed}"
     databases:
       title: "Database"
       new_database: "Database Baru"

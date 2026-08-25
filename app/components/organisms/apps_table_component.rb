@@ -32,5 +32,10 @@ module Organisms
 
       DynoTier::DYNO_TIER_TO_BOX_SIZE[tier.name] || tier.name
     end
+
+    # First letter of the app name, uppercased — the schdl avatar mark.
+    def app_mark(app)
+      app.name.to_s[0].to_s.upcase
+    end
   end
 end

@@ -1,24 +1,37 @@
 <%# app/components/organisms/apps_table_component.html.erb %>
-<table class="w-full border-1.5 border-ink bg-paper">
-  <thead class="bg-bg-deep border-b-1.5 border-ink font-mono text-[11px] uppercase tracking-widest">
-    <tr>
-      <th class="text-left p-3">app</th>
-      <th class="text-left p-3">status</th>
-      <th class="text-left p-3">size</th>
-      <th class="text-left p-3">domain</th>
-      <th class="text-left p-3">last deploy</th>
-    </tr>
-  </thead>
-  <tbody>
-    <% apps.each do |app| %>
-      <% deployed_at = last_deployed_at(app) %>
-      <tr class="border-b border-rule-soft hover:bg-bg transition-colors">
-        <td class="p-3 font-semibold"><%= link_to app.name, dashboard_app_path(app), class: "hover:underline" %></td>
-        <td class="p-3"><%= render Atoms::StatusPillComponent.new(status: app.status.to_s) %></td>
-        <td class="p-3 font-mono text-xs"><%= box_label(app) %></td>
-        <td class="p-3 font-mono text-xs"><%= primary_domain(app) || "—" %></td>
-        <td class="p-3 font-mono text-xs text-dim"><%= deployed_at ? "#{time_ago_in_words(deployed_at)} ago" : "never" %></td>
+<div class="bg-paper border-1.5 border-ink rounded-md shadow-brutal overflow-hidden">
+  <table class="w-full text-[13.5px]">
+    <thead>
+      <tr class="bg-bg border-b-1.5 border-ink text-[10.5px] font-bold uppercase tracking-[.06em] text-dim text-left">
+        <th class="px-3.5 py-2.5 font-bold">App</th>
+        <th class="px-3.5 py-2.5 font-bold">Status</th>
+        <th class="px-3.5 py-2.5 font-bold">Size</th>
+        <th class="px-3.5 py-2.5 font-bold">Domain</th>
+        <th class="px-3.5 py-2.5 font-bold">Last deploy</th>
       </tr>
-    <% end %>
-  </tbody>
-</table>
+    </thead>
+    <tbody>
+      <% apps.each do |app| %>
+        <% deployed_at = last_deployed_at(app) %>
+        <tr class="border-b border-line last:border-b-0 hover:bg-bg-deep transition-colors">
+          <td class="px-3.5 py-2.5">
+            <%= link_to dashboard_app_path(app), class: "flex items-center gap-2.5 font-semibold hover:underline" do %>
+              <span class="w-[22px] h-[22px] border-1.5 border-ink rounded grid place-items-center font-extrabold text-[11px] bg-paper flex-shrink-0"><%= app_mark(app) %></span>
+              <%= app.name %>
+            <% end %>
+          </td>
+          <td class="px-3.5 py-2.5"><%= render Atoms::StatusPillComponent.new(status: app.status.to_s) %></td>
+          <td class="px-3.5 py-2.5 text-[12.5px] text-dim"><%= box_label(app) %></td>
+          <td class="px-3.5 py-2.5 text-[12.5px] text-dim"><%= primary_domain(app) || "—" %></td>
+          <td class="px-3.5 py-2.5 text-[12.5px] text-dim"><%= deployed_at ? "#{time_ago_in_words(deployed_at)} ago" : "never" %></td>
+        </tr>
+      <% end %>
+      <tr class="border-t border-dashed border-faint hover:bg-bg-deep transition-colors">
+        <td colspan="5" class="px-3.5 py-2.5">
+          <%= link_to "+ New app", new_dashboard_app_path, data: { turbo_frame: "_top" },
+                class: "block text-[13px] font-semibold text-faint hover:text-ink" %>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

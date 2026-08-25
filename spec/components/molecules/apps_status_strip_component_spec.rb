@@ -15,6 +15,18 @@ RSpec.describe Molecules::AppsStatusStripComponent, type: :component do
 
   let(:component) { described_class.new(apps: [], plan: plan, box_usage: box_usage) }
 
+  describe "rendering" do
+    it "renders the running/building/crashed/boxes chips with their counts" do
+      render_inline(component)
+
+      expect(page).to have_text("running")
+      expect(page).to have_text("building")
+      expect(page).to have_text("crashed")
+      expect(page).to have_text("boxes")
+      expect(page).to have_text("8") # total_boxes_used
+    end
+  end
+
   describe "#total_boxes_allowed" do
     # Regression (2026-06-25): the strip showed "8 / 5" for a Pro user
     # because the allowance summed only small/medium/large/xlarge and

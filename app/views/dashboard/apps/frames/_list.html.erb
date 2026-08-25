@@ -1,8 +1,14 @@
 <%# target: "_top" — links in the table break out to a full-page visit
     instead of navigating within this frame. Must match the placeholder. %>
 <%= turbo_frame_tag "apps_list", target: "_top" do %>
-  <%= render Molecules::AppsStatusStripComponent.new(apps: @apps, plan: @plan, box_usage: @box_usage) %>
-  <div class="mt-6">
+  <% strip = Molecules::AppsStatusStripComponent.new(apps: @apps, plan: @plan, box_usage: @box_usage) %>
+  <%= render strip %>
+  <div class="mt-5">
     <%= render Organisms::AppsTableComponent.new(apps: @apps) %>
+  </div>
+  <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium text-dim mt-3 px-0.5">
+    <span><%= t("dashboard.apps.aggregates.total", count: @apps.size) %></span>
+    <span><%= t("dashboard.apps.aggregates.running", count: strip.state_counts["running"].to_i) %> · <%= t("dashboard.apps.aggregates.crashed", count: strip.state_counts["crashed"].to_i) %></span>
+    <span><%= t("dashboard.apps.aggregates.boxes", used: strip.total_boxes_used, allowed: strip.total_boxes_allowed) %></span>
   </div>
 <% end %>

@@ -1,23 +1,18 @@
-<div class="border border-line bg-paper rounded-lg grid grid-cols-1 md:grid-cols-4 mb-6">
-  <div class="p-4 border-b md:border-b-0 md:border-r border-line">
-    <div class="text-[11px] font-medium text-dim normal-case tracking-normal">running</div>
-    <div class="font-headline text-3xl font-extrabold mt-1"
-         data-controller="motion--counter-tick"
-         data-motion--counter-tick-value-value="<%= state_counts['running'].to_i %>"><%= state_counts['running'].to_i %></div>
-  </div>
-  <div class="p-4 border-b md:border-b-0 md:border-r border-line">
-    <div class="text-[11px] font-medium text-dim normal-case tracking-normal">building</div>
-    <div class="font-headline text-3xl font-extrabold mt-1"><%= in_progress_count %></div>
-  </div>
-  <div class="p-4 border-b md:border-b-0 md:border-r border-line">
-    <div class="text-[11px] font-medium text-dim normal-case tracking-normal">crashed</div>
-    <div class="font-headline text-3xl font-extrabold mt-1 <%= state_counts['crashed'].to_i.positive? ? 'text-danger' : '' %>"><%= state_counts['crashed'].to_i %></div>
-  </div>
-  <div class="p-4">
-    <div class="text-[11px] font-medium text-dim normal-case tracking-normal"><%= plan.name.downcase %> · boxes</div>
-    <div class="font-headline text-3xl font-extrabold mt-1"><%= total_boxes_used %><span class="text-sm text-dim font-medium"> / <%= total_boxes_allowed %></span></div>
-    <% if box_breakdown.any? %>
-      <div class="text-[11px] text-dim mt-1.5"><%= box_breakdown.map { |size, used, allowed| "#{size} #{used}/#{allowed}" }.join(" · ") %></div>
-    <% end %>
-  </div>
+<div class="flex flex-wrap gap-2.5">
+  <span class="inline-flex items-baseline gap-2 text-[12.5px] font-semibold text-dim bg-paper border-1.5 border-ink rounded-md px-3 py-2 shadow-brutal-sm">
+    <span class="w-[7px] h-[7px] rounded-full self-center" style="background: var(--color-success)"></span>
+    running <b class="text-[15px] font-extrabold text-ink"><%= state_counts["running"].to_i %></b>
+  </span>
+  <span class="inline-flex items-baseline gap-2 text-[12.5px] font-semibold text-dim bg-paper border-1.5 border-ink rounded-md px-3 py-2 shadow-brutal-sm">
+    <span class="w-[7px] h-[7px] rounded-full self-center" style="background: var(--color-deploying)"></span>
+    building <b class="text-[15px] font-extrabold text-ink"><%= in_progress_count %></b>
+  </span>
+  <span class="inline-flex items-baseline gap-2 text-[12.5px] font-semibold text-dim bg-paper border-1.5 border-ink rounded-md px-3 py-2 shadow-brutal-sm">
+    <span class="w-[7px] h-[7px] rounded-full self-center" style="background: var(--color-danger)"></span>
+    crashed <b class="text-[15px] font-extrabold text-ink"><%= state_counts["crashed"].to_i %></b>
+  </span>
+  <span class="inline-flex items-baseline gap-2 text-[12.5px] font-semibold text-dim bg-paper border-1.5 border-ink rounded-md px-3 py-2 shadow-brutal-sm"
+        <% if box_breakdown.any? %>title="<%= box_breakdown.map { |size, used, allowed| "#{size} #{used}/#{allowed}" }.join(" · ") %>"<% end %>>
+    boxes <b class="text-[15px] font-extrabold text-ink"><%= total_boxes_used %></b><span class="font-medium">/ <%= total_boxes_allowed %></span>
+  </span>
 </div>

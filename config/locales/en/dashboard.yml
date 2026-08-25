@@ -67,6 +67,17 @@ en:
       box_size_label: "Box Size"
       shared_addons_label: "Free Shared Add-ons"
       dedicated_addons_label: "Dedicated Add-ons (Optional)"
+      aggregates:
+        total:
+          one: "1 app"
+          other: "%{count} apps"
+        running:
+          one: "1 running"
+          other: "%{count} running"
+        crashed:
+          one: "1 crashed"
+          other: "%{count} crashed"
+        boxes: "Boxes used %{used} / %{allowed}"
     databases:
       title: "Databases"
       new_database: "New Database"

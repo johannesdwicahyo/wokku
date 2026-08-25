@@ -3,12 +3,11 @@
     click->slide-panel#open (consistent with databases / admin/servers). %>
 <div data-controller="slide-panel">
   <% if @has_apps %>
-    <div class="container py-6">
-      <div class="flex items-center justify-between mb-6">
-        <h1 class="font-headline text-2xl font-extrabold">Apps</h1>
-        <%= link_to "+ new app", new_dashboard_app_path,
-                    data: { action: "click->slide-panel#open" },
-                    class: "border-1.5 border-ink bg-ink text-bg font-mono text-[11px] uppercase tracking-widest px-3 py-2 shadow-brutal cursor-pointer" %>
+    <div>
+      <div class="flex items-center justify-between mb-5">
+        <h1 class="font-headline text-2xl font-extrabold tracking-tight">Apps</h1>
+        <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, href: new_dashboard_app_path,
+              data: { action: "click->slide-panel#open" }) do %>+ New app<% end %>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">

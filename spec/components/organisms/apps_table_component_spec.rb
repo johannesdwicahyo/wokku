@@ -12,12 +12,18 @@ RSpec.describe Organisms::AppsTableComponent, type: :component do
 
     expect(page).to have_css("table")
     expect(page).to have_link("alpha", href: "/dashboard/apps/#{app.id}")
-    expect(page).to have_css("th", text: "status")
+    expect(page).to have_css("th", text: "Status")
   end
 
   it "renders an em dash when an app has no web dyno tier" do
     render_inline(described_class.new(apps: [ app ]))
     expect(page).to have_css("td", text: "—")
+  end
+
+  it "renders the inline new-app row and the avatar mark" do
+    render_inline(described_class.new(apps: [ app ]))
+    expect(page).to have_link("+ New app")
+    expect(page).to have_css("span", text: app.name[0].upcase)
   end
 
   describe "#box_label" do
