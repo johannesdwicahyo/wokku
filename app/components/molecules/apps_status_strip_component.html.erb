@@ -1,18 +1,18 @@
 <div class="flex flex-wrap gap-2.5">
   <span class="inline-flex items-baseline gap-2 text-[12.5px] font-semibold text-dim bg-paper border-1.5 border-ink rounded-md px-3 py-2 shadow-brutal-sm">
     <span class="w-[7px] h-[7px] rounded-full self-center" style="background: var(--color-success)"></span>
-    running <b class="text-[15px] font-extrabold text-ink"><%= state_counts["running"].to_i %></b>
+    <%= t("dashboard.apps.chips.running") %> <b class="text-[15px] font-extrabold text-ink"><%= state_counts["running"].to_i %></b>
   </span>
   <span class="inline-flex items-baseline gap-2 text-[12.5px] font-semibold text-dim bg-paper border-1.5 border-ink rounded-md px-3 py-2 shadow-brutal-sm">
     <span class="w-[7px] h-[7px] rounded-full self-center" style="background: var(--color-deploying)"></span>
-    building <b class="text-[15px] font-extrabold text-ink"><%= in_progress_count %></b>
+    <%= t("dashboard.apps.chips.building") %> <b class="text-[15px] font-extrabold text-ink"><%= in_progress_count %></b>
   </span>
   <span class="inline-flex items-baseline gap-2 text-[12.5px] font-semibold text-dim bg-paper border-1.5 border-ink rounded-md px-3 py-2 shadow-brutal-sm">
     <span class="w-[7px] h-[7px] rounded-full self-center" style="background: var(--color-danger)"></span>
-    crashed <b class="text-[15px] font-extrabold text-ink"><%= state_counts["crashed"].to_i %></b>
+    <%= t("dashboard.apps.chips.crashed") %> <b class="text-[15px] font-extrabold text-ink"><%= state_counts["crashed"].to_i %></b>
   </span>
   <span class="inline-flex items-baseline gap-2 text-[12.5px] font-semibold text-dim bg-paper border-1.5 border-ink rounded-md px-3 py-2 shadow-brutal-sm"
         <% if box_breakdown.any? %>title="<%= box_breakdown.map { |size, used, allowed| "#{size} #{used}/#{allowed}" }.join(" · ") %>"<% end %>>
-    boxes <b class="text-[15px] font-extrabold text-ink"><%= total_boxes_used %></b><span class="font-medium">/ <%= total_boxes_allowed %></span>
+    <%= t("dashboard.apps.chips.boxes") %> <b class="text-[15px] font-extrabold text-ink"><%= total_boxes_used %></b><span class="font-medium">/ <%= total_boxes_allowed %></span>
   </span>
 </div>

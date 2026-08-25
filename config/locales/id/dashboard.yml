@@ -75,6 +75,11 @@ id:
         crashed:
           other: "%{count} crash"
         boxes: "Box terpakai %{used} / %{allowed}"
+      chips:
+        running: "berjalan"
+        building: "membangun"
+        crashed: "crash"
+        boxes: "box"
     databases:
       title: "Database"
       new_database: "Database Baru"

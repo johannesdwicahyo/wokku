@@ -78,6 +78,11 @@ en:
           one: "1 crashed"
           other: "%{count} crashed"
         boxes: "Boxes used %{used} / %{allowed}"
+      chips:
+        running: "running"
+        building: "building"
+        crashed: "crashed"
+        boxes: "boxes"
     databases:
       title: "Databases"
       new_database: "New Database"
