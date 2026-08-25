@@ -13,7 +13,12 @@
     <tbody>
       <% apps.each do |app| %>
         <% deployed_at = last_deployed_at(app) %>
-        <tr class="border-b border-line last:border-b-0 hover:bg-bg-deep transition-colors">
+        <%# ponytail: a clicked <tr> isn't focusable, so closing a row-opened
+            panel restores focus to <body> instead of the row (Task 1's
+            slide-panel focus-restore). U6's grid keyboard-nav makes rows
+            focusable and fixes this for free — no fix needed here now. %>
+        <tr data-action="click->record-panel#show" data-record-panel-src-param="<%= panel_dashboard_app_path(app) %>"
+            class="border-b border-line last:border-b-0 hover:bg-bg-deep transition-colors cursor-pointer">
           <td class="px-3.5 py-2.5">
             <%= link_to dashboard_app_path(app), class: "flex items-center gap-2.5 font-semibold hover:underline" do %>
               <span class="w-[22px] h-[22px] border-1.5 border-ink rounded grid place-items-center font-extrabold text-[11px] bg-paper flex-shrink-0"><%= app_mark(app) %></span>

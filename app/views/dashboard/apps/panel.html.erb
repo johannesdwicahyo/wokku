@@ -1,0 +1,56 @@
+<%# Record panel (U3): read-only drawer opened from an apps-table row.
+    Rendered with layout: false into the "app_record_panel" turbo-frame
+    that lives inside the drawer shell in dashboard/apps/index.html.erb. %>
+<%= turbo_frame_tag "app_record_panel" do %>
+  <div class="flex items-center gap-2.5 pb-4 border-b border-line">
+    <span class="w-[28px] h-[28px] border-1.5 border-ink rounded grid place-items-center font-extrabold text-[13px] bg-paper"><%= @app.name.to_s[0].to_s.upcase %></span>
+    <span class="font-headline font-extrabold text-lg truncate"><%= @app.name %></span>
+    <%= render Atoms::StatusPillComponent.new(status: @app.status.to_s) %>
+    <%= link_to dashboard_app_path(@app), title: t("dashboard.apps.panel.open_full"), data: { turbo_frame: "_top" },
+          class: "ml-auto w-7 h-7 grid place-items-center border-1.5 border-line rounded text-dim hover:border-ink hover:text-ink" do %>↗<% end %>
+    <button type="button" data-action="click->slide-panel#close" aria-label="<%= t("dashboard.apps.panel.close") %>"
+            class="w-7 h-7 grid place-items-center border-1.5 border-line rounded text-dim hover:border-ink hover:text-ink cursor-pointer">✕</button>
+  </div>
+
+  <%# ponytail: stacked sections, not tabs — add a tabs controller when panel content outgrows one scroll %>
+  <div class="pt-4 space-y-5">
+    <div>
+      <div class="space-y-1.5">
+        <div class="flex justify-between gap-3 text-[13px]">
+          <span class="text-dim font-medium"><%= t(".box") %></span>
+          <span><%= box_label_for(@app) %> · <%= link_to t(".resize"), dashboard_app_scaling_path(@app), class: "text-accent hover:underline" %></span>
+        </div>
+        <div class="flex justify-between gap-3 text-[13px]">
+          <span class="text-dim font-medium"><%= t(".env") %></span>
+          <span><%= @app.env_vars.count %> · <%= link_to t(".manage"), dashboard_app_config_index_path(@app), class: "text-accent hover:underline" %></span>
+        </div>
+        <div class="flex justify-between gap-3 text-[13px]">
+          <span class="text-dim font-medium"><%= t(".branch") %></span>
+          <span><%= @app.deploy_branch %></span>
+        </div>
+        <div class="flex justify-between gap-3 text-[13px]">
+          <span class="text-dim font-medium"><%= t(".databases") %></span>
+          <span><%= link_to @databases_count, dashboard_app_resources_path(@app), class: "text-accent hover:underline" %></span>
+        </div>
+        <div class="flex justify-between gap-3 text-[13px]">
+          <span class="text-dim font-medium"><%= t(".domains") %></span>
+          <span><%= link_to @domains_count, dashboard_app_domains_path(@app), class: "text-accent hover:underline" %></span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="text-[10.5px] uppercase tracking-widest text-dim font-medium mb-2"><%= t(".deploys") %></div>
+      <%= deferred_section "app_panel_deploys_#{@app.id}",
+            src: sections_dashboard_apps_path(section: :panel_deploys, app_id: @app.id),
+            skeleton: :text %>
+    </div>
+
+    <div>
+      <div class="text-[10.5px] uppercase tracking-widest text-dim font-medium mb-2"><%= t(".logs") %></div>
+      <%= deferred_section "app_panel_logs_#{@app.id}",
+            src: sections_dashboard_apps_path(section: :panel_logs, app_id: @app.id),
+            skeleton: :text %>
+    </div>
+  </div>
+<% end %>

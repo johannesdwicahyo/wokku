@@ -5,7 +5,7 @@ module Dashboard
     include OnboardingTourable
     include Deferrable
 
-    deferred_sections :list, :activity
+    deferred_sections :list, :activity, :panel_deploys, :panel_logs
 
     rescue_from PlanEnforceable::PlanQuotaError do |e|
       redirect_to new_dashboard_app_path,
@@ -15,7 +15,7 @@ module Dashboard
     before_action :run_onboarding_waypoints, only: [ :index ]
     before_action :reject_creation_during_deletion_pending, only: [ :create ]
     before_action :enforce_free_container_limit!, only: [ :create ]
-    before_action :set_app, only: [ :show, :destroy, :restart, :stop, :start, :toggle_https, :toggle_maintenance, :toggle_cdn, :transfer, :danger, :backup_now, :unlock, :lock ]
+    before_action :set_app, only: [ :show, :destroy, :restart, :stop, :start, :toggle_https, :toggle_maintenance, :toggle_cdn, :transfer, :danger, :backup_now, :unlock, :lock, :panel ]
 
     def index
       # Instant shell: only the cheap existence check + the inline
@@ -41,6 +41,16 @@ module Dashboard
       @env_vars = @app.env_vars.order(:key)
       @current_allocation = defined?(DynoAllocation) ? @app.dyno_allocations.includes(:dyno_tier).find_by(process_type: "web") : nil
       @preview_apps = @app.preview_apps.order(pr_number: :desc) unless @app.is_preview?
+    end
+
+    # Record panel: read-only drawer opened from an apps-table row. The
+    # body's deploys/logs sections are lazy turbo-frames (load_panel_deploys
+    # / load_panel_logs below) — this action only needs the cheap counts.
+    def panel
+      authorize @app, :show?
+      @domains_count   = @app.domains.count
+      @databases_count = @app.app_databases.count
+      render layout: false
     end
 
     def new
@@ -401,6 +411,31 @@ module Dashboard
                                  .order(created_at: :desc).limit(10)
     rescue StandardError
       @recent_activity = []
+    end
+
+    # Panel-section loaders. Re-scope from params[:app_id] (a query param on
+    # the collection-level sections route, not the panel's own :id) rather
+    # than reusing @app — the section request is a separate GET.
+    def load_panel_deploys
+      @panel_app = policy_scope(AppRecord).find(params[:app_id])
+      @panel_releases = @panel_app.releases.includes(:deploy).order(version: :desc).limit(5)
+    end
+
+    def load_panel_logs
+      @panel_app = policy_scope(AppRecord).find(params[:app_id])
+      @panel_log_lines = recent_log_lines(@panel_app, limit: 8)
+    end
+
+    # Dashboard::LogsController#recent_log_lines is private there — not
+    # shared across controllers, so replicate the fetch+split here rather
+    # than reaching into another controller.
+    def recent_log_lines(app, limit:)
+      raw = ::Apps::LogReader.recent(app, lines: limit)
+      return [] if raw.blank?
+      raw.dup.force_encoding(Encoding::UTF_8).scrub("?").gsub(/\e\[[0-9;]*m/, "").split("\n").last(limit)
+    rescue => e
+      Rails.logger.warn "Failed to fetch panel logs for #{app.name}: #{e.message}"
+      []
     end
 
     def compute_box_usage(apps)

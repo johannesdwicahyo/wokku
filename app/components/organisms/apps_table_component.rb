@@ -4,6 +4,13 @@ module Organisms
   # The apps index table. Extracted from AppsIndexComponent so it can be
   # rendered inside a deferred (lazy turbo-frame) section.
   class AppsTableComponent < ApplicationComponent
+    # box_label delegates to ApplicationHelper#box_label_for (shared with the
+    # record panel). Included directly rather than called via `helpers.` —
+    # the component's spec calls #box_label on an unrendered instance, and
+    # ViewComponent's `helpers` proxy needs a render context that doesn't
+    # exist yet at that point.
+    include ApplicationHelper
+
     def initialize(apps:)
       @apps = apps
     end
@@ -23,14 +30,11 @@ module Organisms
       app.respond_to?(:last_commit_at) ? app.last_commit_at : nil
     end
 
-    # The SIZE column shows the user-facing box vocabulary
-    # (sleeping/small/medium/large/xlarge), translated from the app's web
-    # DynoTier name (free/basic/standard/...) via the canonical map.
+    # The SIZE column shows the user-facing box vocabulary — delegates to
+    # the shared ApplicationHelper#box_label_for so the record panel's Box
+    # field can't drift from this table's SIZE column.
     def box_label(app)
-      tier = app.dyno_allocations.find { |d| d.process_type == "web" }&.dyno_tier
-      return "—" unless tier
-
-      DynoTier::DYNO_TIER_TO_BOX_SIZE[tier.name] || tier.name
+      box_label_for(app)
     end
 
     # First letter of the app name, uppercased — the schdl avatar mark.

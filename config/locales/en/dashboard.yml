@@ -67,6 +67,20 @@ en:
       box_size_label: "Box Size"
       shared_addons_label: "Free Shared Add-ons"
       dedicated_addons_label: "Dedicated Add-ons (Optional)"
+      panel:
+        open_full: "Open full page"
+        close: "Close"
+        box: "Box"
+        resize: "Resize →"
+        env: "Env vars"
+        manage: "Manage →"
+        branch: "Branch"
+        databases: "Databases"
+        domains: "Domains"
+        deploys: "Recent deploys"
+        logs: "Recent logs"
+        no_deploys: "No deploys yet"
+        no_logs: "No recent log output"
       aggregates:
         total:
           one: "1 app"

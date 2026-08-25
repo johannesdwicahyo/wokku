@@ -67,6 +67,20 @@ id:
       box_size_label: "Ukuran Box"
       shared_addons_label: "Add-on Berbagi Gratis"
       dedicated_addons_label: "Add-on Dedicated (Opsional)"
+      panel:
+        open_full: "Buka halaman penuh"
+        close: "Tutup"
+        box: "Box"
+        resize: "Ubah ukuran →"
+        env: "Env var"
+        manage: "Kelola →"
+        branch: "Branch"
+        databases: "Database"
+        domains: "Domain"
+        deploys: "Deploy terakhir"
+        logs: "Log terakhir"
+        no_deploys: "Belum ada deploy"
+        no_logs: "Tidak ada log terakhir"
       aggregates:
         total:
           other: "%{count} app"

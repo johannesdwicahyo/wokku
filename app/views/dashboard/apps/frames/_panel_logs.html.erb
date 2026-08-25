@@ -1,0 +1,10 @@
+<%# Record panel "Recent logs" section — dark log style reused from
+    dashboard/logs/_glance's markup idiom. %>
+<%= turbo_frame_tag "app_panel_logs_#{@panel_app.id}" do %>
+  <% non_blank = @panel_log_lines.reject { |l| l.to_s.strip.empty? } %>
+  <% if non_blank.any? %>
+    <pre class="border-1.5 border-ink bg-ink text-[#9DEE9D] p-3 font-mono text-xs whitespace-pre-wrap break-words"><%= non_blank.join("\n") %></pre>
+  <% else %>
+    <p class="text-[13px] text-dim"><%= t("dashboard.apps.panel.no_logs") %></p>
+  <% end %>
+<% end %>

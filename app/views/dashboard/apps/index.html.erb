@@ -1,33 +1,46 @@
 <% content_for :title, "Apps" %>
-<%# Slide-panel scope so the "+ NEW APP" button can dispatch
-    click->slide-panel#open (consistent with databases / admin/servers). %>
-<div data-controller="slide-panel">
-  <% if @has_apps %>
-    <div>
-      <div class="flex items-center justify-between mb-5">
-        <h1 class="font-headline text-2xl font-extrabold tracking-tight">Apps</h1>
-        <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, href: new_dashboard_app_path,
-              data: { action: "click->slide-panel#open" }) do %>+ New app<% end %>
-      </div>
+<%# record-panel scope wraps the whole page: row clicks anywhere inside
+    (including inside the lazy "apps_list" frame) reach record-panel#show,
+    which opens the drawer below. Its own slide-panel scope is placed
+    FIRST so record-panel's querySelector('[data-controller~="slide-panel"]')
+    finds the drawer, not the "+ New app" panel's scope. %>
+<div data-controller="record-panel">
+  <div data-controller="slide-panel">
+    <%= render layout: "dashboard/shared/slide_panel", locals: { chromeless: true, size: "lg" } do %>
+      <%= turbo_frame_tag "app_record_panel", data: { record_panel_target: "frame" } %>
+    <% end %>
+  </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
-        <%# target: "_top" — the table links inside this frame must do
-            full-page visits, not navigate within the frame. %>
-        <%= deferred_section "apps_list",
-              src: sections_dashboard_apps_path(section: :list),
-              skeleton: :table, target: "_top" %>
-        <%= deferred_section "apps_activity",
-              src: sections_dashboard_apps_path(section: :activity),
-              skeleton: :card %>
-      </div>
-    </div>
-  <% else %>
-    <%# Zero apps → first-deploy onboarding chooser (instant, no defer). %>
-    <%= render "dashboard/shared/first_deploy_chooser" %>
-  <% end %>
+  <%# Slide-panel scope so the "+ NEW APP" button can dispatch
+      click->slide-panel#open (consistent with databases / admin/servers). %>
+  <div data-controller="slide-panel">
+    <% if @has_apps %>
+      <div>
+        <div class="flex items-center justify-between mb-5">
+          <h1 class="font-headline text-2xl font-extrabold tracking-tight">Apps</h1>
+          <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, href: new_dashboard_app_path,
+                data: { action: "click->slide-panel#open" }) do %>+ New app<% end %>
+        </div>
 
-  <%= render layout: "dashboard/shared/slide_panel",
-             locals: { title: "Create App", subtitle: "Deploy a new application to one of your servers", size: "lg" } do %>
-    <%= render "form", app: @app, servers: @servers %>
-  <% end %>
+        <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+          <%# target: "_top" — the table links inside this frame must do
+              full-page visits, not navigate within the frame. %>
+          <%= deferred_section "apps_list",
+                src: sections_dashboard_apps_path(section: :list),
+                skeleton: :table, target: "_top" %>
+          <%= deferred_section "apps_activity",
+                src: sections_dashboard_apps_path(section: :activity),
+                skeleton: :card %>
+        </div>
+      </div>
+    <% else %>
+      <%# Zero apps → first-deploy onboarding chooser (instant, no defer). %>
+      <%= render "dashboard/shared/first_deploy_chooser" %>
+    <% end %>
+
+    <%= render layout: "dashboard/shared/slide_panel",
+               locals: { title: "Create App", subtitle: "Deploy a new application to one of your servers", size: "lg" } do %>
+      <%= render "form", app: @app, servers: @servers %>
+    <% end %>
+  </div>
 </div>

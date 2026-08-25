@@ -10,15 +10,20 @@
 %>
 <div data-slide-panel-target="panel"
      class="fixed inset-y-0 right-0 z-50 w-full <%= width_class %> bg-paper border-l-1.5 border-ink shadow-brutal-lg transform translate-x-full transition-transform duration-300 ease-out overflow-y-auto">
-  <div class="flex items-center justify-between px-6 py-4 border-b-1.5 border-ink">
-    <div>
-      <h2 class="font-mono text-base font-semibold text-ink"># <%= title %></h2>
-      <% if local_assigns[:subtitle] %>
-        <p class="mt-0.5 font-mono text-xs text-dim">// <%= subtitle %></p>
-      <% end %>
+  <%# chromeless: true — skip the "# title" header bar. Used by the record
+      panel, which renders its own header (app name/status/close) inside
+      the yielded turbo-frame content instead. %>
+  <% unless local_assigns[:chromeless] %>
+    <div class="flex items-center justify-between px-6 py-4 border-b-1.5 border-ink">
+      <div>
+        <h2 class="font-mono text-base font-semibold text-ink"># <%= title %></h2>
+        <% if local_assigns[:subtitle] %>
+          <p class="mt-0.5 font-mono text-xs text-dim">// <%= subtitle %></p>
+        <% end %>
+      </div>
+      <button data-action="click->slide-panel#close" class="text-dim hover:text-ink transition cursor-pointer p-1 font-mono text-lg" aria-label="Close panel">✕</button>
     </div>
-    <button data-action="click->slide-panel#close" class="text-dim hover:text-ink transition cursor-pointer p-1 font-mono text-lg" aria-label="Close panel">✕</button>
-  </div>
+  <% end %>
   <div class="px-6 py-5">
     <%= yield %>
   </div>

@@ -50,6 +50,7 @@ Rails.application.routes.draw do
         post :backup_now
         post :unlock
         post :lock
+        get  :panel
       end
       # Bundle v2 — dedicated upgrade actions. Single action per engine + verb.
       post "addons/postgres/upgrade",
