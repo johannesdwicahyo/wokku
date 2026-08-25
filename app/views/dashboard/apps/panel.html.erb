@@ -18,11 +18,11 @@
       <div class="space-y-1.5">
         <div class="flex justify-between gap-3 text-[13px]">
           <span class="text-dim font-medium"><%= t(".box") %></span>
-          <span><%= box_label_for(@app) %> · <%= link_to t(".resize"), dashboard_app_scaling_path(@app), class: "text-accent hover:underline" %></span>
+          <span><%= box_label_for(@app) %> · <%= link_to t(".resize"), dashboard_app_scaling_path(@app), class: "text-ink font-semibold hover:underline" %></span>
         </div>
         <div class="flex justify-between gap-3 text-[13px]">
           <span class="text-dim font-medium"><%= t(".env") %></span>
-          <span><%= @app.env_vars.count %> · <%= link_to t(".manage"), dashboard_app_config_index_path(@app), class: "text-accent hover:underline" %></span>
+          <span><%= @app.env_vars.count %> · <%= link_to t(".manage"), dashboard_app_config_index_path(@app), class: "text-ink font-semibold hover:underline" %></span>
         </div>
         <div class="flex justify-between gap-3 text-[13px]">
           <span class="text-dim font-medium"><%= t(".branch") %></span>
@@ -30,11 +30,11 @@
         </div>
         <div class="flex justify-between gap-3 text-[13px]">
           <span class="text-dim font-medium"><%= t(".databases") %></span>
-          <span><%= link_to @databases_count, dashboard_app_resources_path(@app), class: "text-accent hover:underline" %></span>
+          <span><%= link_to @databases_count, dashboard_app_resources_path(@app), class: "text-ink font-semibold hover:underline" %></span>
         </div>
         <div class="flex justify-between gap-3 text-[13px]">
           <span class="text-dim font-medium"><%= t(".domains") %></span>
-          <span><%= link_to @domains_count, dashboard_app_domains_path(@app), class: "text-accent hover:underline" %></span>
+          <span><%= link_to @domains_count, dashboard_app_domains_path(@app), class: "text-ink font-semibold hover:underline" %></span>
         </div>
       </div>
     </div>
