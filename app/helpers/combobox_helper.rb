@@ -29,26 +29,26 @@ module ComboboxHelper
     content_tag :div, class: "relative", data: wrapper_data do
       hidden = hidden_field_tag(name, value, data: { "combobox-target": "input" }, required: required)
       trigger = content_tag :button, type: "button",
-        class: "w-full flex items-center justify-between rounded-md bg-surface-container-low border border-outline-variant/15 px-4 py-2.5 text-sm hover:border-outline-variant/30 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition cursor-pointer",
+        class: "w-full flex items-center justify-between rounded-md bg-paper border-1.5 border-ink px-3 py-2 text-sm hover:bg-bg-deep focus:outline-none focus:shadow-brutal-sm transition cursor-pointer",
         data: { "combobox-target": "trigger", action: "click->combobox#toggle keydown->combobox#triggerKeydown" },
         id: id,
         "aria-haspopup": "listbox",
         "aria-expanded": "false" do
         safe_join([
           content_tag(:span, (selected ? selected[:label] : placeholder),
-            class: "truncate #{selected ? 'text-on-surface' : 'text-outline-variant'}",
+            class: "truncate #{selected ? 'text-ink' : 'text-faint'}",
             data: { "combobox-target": "label" }),
-          content_tag(:span, "expand_more", class: "material-symbols-outlined text-[18px] text-outline ml-2 flex-shrink-0")
+          content_tag(:span, "▾", class: "text-dim text-[10px] ml-2 flex-shrink-0")
         ])
       end
 
       panel = content_tag :div,
-        class: "hidden absolute z-40 mt-1 w-full bg-surface-container rounded-md shadow-lg ring-1 ring-outline-variant/20 overflow-hidden",
+        class: "hidden absolute z-40 mt-1 w-full bg-paper border-1.5 border-ink rounded-md shadow-brutal-sm overflow-hidden",
         data: { "combobox-target": "panel" } do
         safe_join([
-          content_tag(:div, class: "p-2 border-b border-outline-variant/15") do
+          content_tag(:div, class: "p-2 border-b border-line") do
             content_tag(:input, "", type: "text",
-              class: "w-full bg-surface-container-low border border-outline-variant/15 rounded px-3 py-1.5 text-sm text-on-surface placeholder-outline-variant focus:outline-none focus:ring-1 focus:ring-primary/30",
+              class: "w-full bg-bg border-1.5 border-line rounded px-3 py-1.5 text-sm text-ink placeholder-faint focus:outline-none focus:border-ink",
               placeholder: "Search…",
               data: { "combobox-target": "search", action: "input->combobox#filter keydown->combobox#searchKeydown" })
           end,

@@ -70,8 +70,8 @@ export default class extends Controller {
     const current = this.inputTarget.value
     const match = this.optionsValue.find(o => String(o.value) === String(current))
     this.labelTarget.textContent = match ? match.label : (this.placeholderValue || "Select…")
-    this.labelTarget.classList.toggle("text-outline-variant", !match)
-    this.labelTarget.classList.toggle("text-on-surface", !!match)
+    this.labelTarget.classList.toggle("text-faint", !match)
+    this.labelTarget.classList.toggle("text-ink", !!match)
   }
 
   renderList(items) {
@@ -79,7 +79,7 @@ export default class extends Controller {
 
     if (items.length === 0) {
       const empty = document.createElement("li")
-      empty.className = "px-3 py-2 text-xs text-outline"
+      empty.className = "px-3 py-2 text-xs text-dim"
       empty.textContent = "No matches"
       this.listTarget.appendChild(empty)
       return
@@ -93,13 +93,13 @@ export default class extends Controller {
       li.className = "px-3 py-2 cursor-pointer rounded-md text-sm flex flex-col"
 
       const main = document.createElement("span")
-      main.className = "text-on-surface"
+      main.className = "text-ink"
       main.textContent = opt.label
       li.appendChild(main)
 
       if (opt.description) {
         const sub = document.createElement("span")
-        sub.className = "text-xs text-outline mt-0.5"
+        sub.className = "text-xs text-dim mt-0.5"
         sub.textContent = opt.description
         li.appendChild(sub)
       }
@@ -111,8 +111,8 @@ export default class extends Controller {
   highlight() {
     Array.from(this.listTarget.children).forEach((li, i) => {
       const active = i === this.activeIndex
-      li.classList.toggle("bg-primary/15", active)
-      li.classList.toggle("text-on-surface", active)
+      li.classList.toggle("bg-bg-deep", active)
+      li.classList.toggle("text-ink", active)
     })
     if (this.activeIndex >= 0) {
       this.listTarget.children[this.activeIndex]?.scrollIntoView({ block: "nearest" })
