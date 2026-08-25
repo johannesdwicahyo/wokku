@@ -21,7 +21,7 @@ RSpec.describe Organisms::AppOverviewComponent, type: :component do
 
   it "renders status pill + memory + action buttons" do
     render_inline(described_class.new(app: app))
-    expect(page).to have_css("[data-controller~=\"motion--status-pulse\"]")
+    expect(page).to have_css("span.border-ink.rounded-full")
     expect(page).to have_text(/memory/i)
     expect(page).to have_button("restart")
     expect(page).to have_button("stop")

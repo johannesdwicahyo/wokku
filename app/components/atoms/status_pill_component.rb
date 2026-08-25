@@ -1,12 +1,13 @@
 module Atoms
-  # Status pill with optional pulse animation when status=running.
+  # Status badge, schdl idiom: paper pill with ink border and a colored
+  # status dot. Color is never the only indicator — the label always shows.
   class StatusPillComponent < ApplicationComponent
     STATUSES = {
-      "running"   => { label: "Running",   color: "bg-success-soft text-success", dot_color: "var(--color-success)" },
-      "deploying" => { label: "Deploying", color: "bg-accent-soft text-accent",   dot_color: "var(--color-accent)" },
-      "crashed"   => { label: "Crashed",   color: "bg-danger-soft text-danger",   dot_color: "var(--color-danger)" },
-      "stopped"   => { label: "Stopped",   color: "bg-bg-deep text-ink-soft",     dot_color: "var(--color-dim)" },
-      "sleeping"  => { label: "Sleeping",  color: "bg-warn-soft text-warn",       dot_color: "var(--color-warn)" }
+      "running"   => { label: "Running",   dot: "var(--color-success)" },
+      "deploying" => { label: "Deploying", dot: "var(--color-deploying)" },
+      "crashed"   => { label: "Crashed",   dot: "var(--color-danger)" },
+      "stopped"   => { label: "Stopped",   dot: "var(--color-dim)" },
+      "sleeping"  => { label: "Sleeping",  dot: "var(--color-warn)" }
     }.freeze
 
     def initialize(status:)

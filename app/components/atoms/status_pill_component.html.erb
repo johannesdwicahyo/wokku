@@ -1,5 +1,4 @@
-<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium <%= spec[:color] %>"
-      data-controller="motion--status-pulse"
-      data-motion--status-pulse-status-value="<%= status %>">
-  <span class="wk-dot" style="background: <%= spec[:dot_color] %>"></span><%= spec[:label] %>
+<span class="inline-flex items-center gap-1.5 text-[11px] font-semibold capitalize px-2.5 py-[3px] border-1.5 border-ink rounded-full bg-paper text-ink whitespace-nowrap">
+  <span class="w-1.5 h-1.5 rounded-full flex-shrink-0<%= " animate-[wk-pulse_2s_ease-in-out_infinite]" if status == "running" %>" style="background: <%= spec[:dot] %>"></span>
+  <%= spec[:label] %>
 </span>
