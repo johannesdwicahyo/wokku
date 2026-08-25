@@ -37,7 +37,19 @@ RSpec.describe "Dashboard::Apps#panel", type: :request do
 
     it "does not allow viewing the panel" do
       get panel_dashboard_app_path(target_app)
-      expect(response).not_to have_http_status(:success)
+      # Pundit denials rescue to a redirect in this app; the sections below
+      # 404 instead because policy_scope hides the record entirely.
+      expect(response).to have_http_status(:redirect)
+    end
+
+    it "hides foreign apps from the panel_deploys section (IDOR)" do
+      get sections_dashboard_apps_path(section: :panel_deploys, app_id: target_app.id)
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "hides foreign apps from the panel_logs section (IDOR)" do
+      get sections_dashboard_apps_path(section: :panel_logs, app_id: target_app.id)
+      expect(response).to have_http_status(:not_found)
     end
   end
 
