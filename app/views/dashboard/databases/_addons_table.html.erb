@@ -1,0 +1,18 @@
+<%# R2 table card shared by the addons index — one instance per group
+    (by type / by app) and for the unlinked-addons section. Rows render
+    via the addon_card partial, which is also the turbo-stream target. %>
+<div class="bg-paper border-1.5 border-ink rounded-md shadow-brutal overflow-hidden">
+  <table class="w-full text-[13.5px]">
+    <thead>
+      <tr class="bg-bg border-b-1.5 border-ink text-[10.5px] font-bold uppercase tracking-[.06em] text-dim text-left">
+        <th scope="col" class="px-3.5 py-2.5 font-bold">Add-on</th>
+        <th scope="col" class="px-3.5 py-2.5 font-bold">Status</th>
+        <th scope="col" class="px-3.5 py-2.5 font-bold">Type</th>
+        <th scope="col" class="px-3.5 py-2.5 font-bold">Tier</th>
+        <th scope="col" class="px-3.5 py-2.5 font-bold">Apps</th>
+        <th scope="col" class="px-3.5 py-2.5 font-bold">Actions</th>
+      </tr>
+    </thead>
+    <%= render partial: "dashboard/databases/addon_card", collection: addons, as: :addon %>
+  </table>
+</div>

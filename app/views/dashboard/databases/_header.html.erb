@@ -1,22 +1,26 @@
 <%# Shared header + tab strip for addon pages (Overview / Monitor / Backups / Settings). %>
 <% linked_count = database.app_records.size %>
-<div class="font-mono text-xs text-dim mb-3">
-  <%= link_to dashboard_addons_path, class: "hover:text-accent transition-colors" do %>← cd ~/add-ons/<% end %><span class="text-accent"><%= database.name %></span>
-</div>
+<div class="mb-5">
+  <div class="text-[13px] text-dim mb-3">
+    <%= link_to t("dashboard.nav.addons"), dashboard_addons_path, class: "hover:text-ink hover:underline" %>
+    <span class="mx-1">/</span>
+    <span class="text-ink font-semibold"><%= database.name %></span>
+  </div>
 
-<div class="flex flex-wrap items-start justify-between gap-4 pb-6 border-b border-rule-soft mb-6">
-  <div>
-    <div class="flex items-center gap-3 flex-wrap">
-      <h1 class="font-mono text-3xl md:text-4xl font-semibold tracking-tighter text-ink m-0"><span class="text-dim"># </span><%= database.name %></h1>
-      <%= render Atoms::TagComponent.new(tone: :dim) do %><%= database.service_type %><% end %>
-      <%= render Atoms::TagComponent.new(tone: database.shared? ? :success : :accent) do %><%= database.shared? ? "shared" : "dedicated" %><% end %>
-      <% if database.status == "stopped" %>
-        <%= render Atoms::TagComponent.new(tone: :dim) do %>stopped<% end %>
-      <% elsif database.status == "error" %>
-        <%= render Atoms::TagComponent.new(tone: :danger) do %>error<% end %>
-      <% end %>
+  <div class="flex flex-wrap items-start justify-between gap-4 pb-6 border-b border-line">
+    <div>
+      <div class="flex items-center gap-3 flex-wrap">
+        <h1 class="font-headline text-2xl font-extrabold tracking-tight"><%= database.name %></h1>
+        <%= render Atoms::TagComponent.new(tone: :dim) do %><%= database.service_type %><% end %>
+        <%= render Atoms::TagComponent.new(tone: database.shared? ? :success : :accent) do %><%= database.shared? ? "Shared" : "Dedicated" %><% end %>
+        <% if database.status == "stopped" %>
+          <%= render Atoms::TagComponent.new(tone: :dim) do %>Stopped<% end %>
+        <% elsif database.status == "error" %>
+          <%= render Atoms::TagComponent.new(tone: :danger) do %>Error<% end %>
+        <% end %>
+      </div>
+      <p class="mt-2 text-sm text-dim">On <%= database.server.name %> · <%= linked_count %> linked app<%= linked_count == 1 ? '' : 's' %></p>
     </div>
-    <p class="mt-3 font-mono text-sm text-dim">on <%= database.server.name %> · <%= linked_count %> linked app<%= linked_count == 1 ? '' : 's' %></p>
   </div>
 </div>
 

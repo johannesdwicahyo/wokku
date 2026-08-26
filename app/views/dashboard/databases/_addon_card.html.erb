@@ -1,57 +1,55 @@
-<%# Single source of truth for addon row rendering. Used inline by
-    /dashboard/addons, by the per-app Resources page, and as the
-    Turbo Stream target so status changes (creating → running, or
-    creating → error) replace the row in place without a refresh.
-    Brutalist repaint (P4) — frame id + dom_id + turbo_frame _top
-    escapes preserved 1:1. %>
-<%= turbo_frame_tag dom_id(addon) do %>
-  <div id="<%= dom_id(addon) %>" class="px-5 py-3 flex items-center justify-between gap-3 hover:bg-bg-deep transition-colors font-mono">
-    <div class="min-w-0 flex-1">
-      <div class="flex items-center gap-2">
-        <p class="text-sm font-semibold text-ink truncate"><%= addon.name %></p>
-        <% case addon.status %>
-        <% when "creating" %>
-          <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-warn uppercase tracking-widest">
-            <span class="w-1.5 h-1.5 bg-warn animate-pulse"></span>provisioning
-          </span>
-        <% when "error" %>
-          <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-danger uppercase tracking-widest">
-            <span class="w-1.5 h-1.5 bg-danger"></span>failed
-          </span>
-        <% when "running" %>
-          <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-success uppercase tracking-widest">
-            <span class="w-1.5 h-1.5 bg-success"></span>running
-          </span>
-        <% end %>
+<%# Single source of truth for addon row rendering — the addons index
+    table (grouped by type/app, and the unlinked-addons section) and the
+    Turbo Stream replace/insert/remove target so status changes
+    (creating → running, or creating → error) update in place without a
+    refresh. Root is a <tbody>, not a <tr> — multiple <tbody> per <table>
+    is valid HTML, and it lets the optional last_error sub-row replace or
+    disappear atomically together with the main row on broadcast. dom_id
+    stays the target id (DatabaseService#broadcast_status_change /
+    #broadcast_card_insert / #broadcast_card_remove). %>
+<tbody id="<%= dom_id(addon) %>">
+  <tr class="border-b border-line hover:bg-bg-deep transition-colors">
+    <td class="px-3.5 py-2.5">
+      <div class="flex items-center gap-2.5 font-semibold">
+        <span class="w-[22px] h-[22px] border-1.5 border-ink rounded grid place-items-center font-extrabold text-[11px] bg-paper flex-shrink-0"><%= addon.name.to_s[0].to_s.upcase %></span>
+        <%= addon.name %>
       </div>
-      <div class="flex items-center gap-2 mt-0.5 text-xs text-dim">
-        <span class="capitalize"><%= addon.service_type %></span>
-        <span>·</span>
-        <span><%= addon.tier_name %></span>
-        <% if addon.app_records.any? %>
-          <span>·</span>
-          <span class="truncate">linked to <%= addon.app_records.map(&:name).join(", ") %></span>
-        <% end %>
-      </div>
-      <% if addon.status == "error" && addon.last_error.present? %>
-        <p class="mt-2 text-xs text-danger font-mono break-all line-clamp-2"><%= addon.last_error %></p>
+    </td>
+    <td class="px-3.5 py-2.5">
+      <% case addon.status %>
+      <% when "creating" %>
+        <%= render Atoms::StatusPillComponent.new(label: "Provisioning", tone: :deploying) %>
+      <% when "error" %>
+        <%= render Atoms::StatusPillComponent.new(label: "Failed", tone: :danger) %>
+      <% when "running" %>
+        <%= render Atoms::StatusPillComponent.new(label: "Running", tone: :success) %>
       <% end %>
-    </div>
-    <div class="flex items-center gap-2 flex-shrink-0">
+    </td>
+    <td class="px-3.5 py-2.5 text-[12.5px] text-dim capitalize"><%= addon.service_type %></td>
+    <td class="px-3.5 py-2.5 text-[12.5px] text-dim"><%= addon.tier_name %></td>
+    <td class="px-3.5 py-2.5 text-[12.5px] text-dim"><%= addon.app_records.any? ? addon.app_records.map(&:name).join(", ") : "—" %></td>
+    <td class="px-3.5 py-2.5 text-right">
       <% if addon.status == "error" %>
-        <%# data-turbo-frame=_top so the redirect after Retry / Destroy
-            navigates the whole page instead of trying to render inside
-            this card's frame (which would show "Content missing"). %>
-        <%= button_to "retry", retry_dashboard_addon_path(addon), method: :post, form: { data: { turbo_frame: "_top" } }, class: "text-xs px-3 py-1.5 bg-ink text-bg border-1.5 border-ink font-mono hover:bg-ink-soft transition cursor-pointer" %>
-        <%= button_to "destroy", dashboard_addon_path(addon), method: :delete, data: { turbo_confirm: "Destroy #{addon.name}? Cannot be undone." }, form: { data: { turbo_frame: "_top" } }, class: "text-xs px-3 py-1.5 bg-danger-soft text-danger border-1.5 border-danger font-mono hover:opacity-90 transition cursor-pointer" %>
+        <%# data-turbo-frame: "_top" — harmless belt-and-suspenders escape
+            in case an ancestor turbo-frame is ever reintroduced upstream
+            of this table; no functional dependency on it today. %>
+        <div class="flex items-center justify-end gap-2">
+          <%= button_to "Retry", retry_dashboard_addon_path(addon), method: :post,
+                form: { data: { turbo_frame: "_top" } },
+                class: Atoms::ButtonComponent.new(variant: :outline, size: :sm).classes %>
+          <%= button_to "Destroy", dashboard_addon_path(addon), method: :delete,
+                data: { turbo_confirm: "Destroy #{addon.name}? Cannot be undone." },
+                form: { data: { turbo_frame: "_top" } },
+                class: Atoms::ButtonComponent.new(variant: :danger, size: :sm).classes %>
+        </div>
       <% else %>
-        <%# data-turbo-frame=_top so the navigation escapes the
-            turbo_frame_tag wrapping this card. Without it, Turbo
-            tries to render the destination page inside this frame
-            and shows "Content missing" because the addon show page
-            doesn't have a matching frame. %>
-        <%= link_to "open →", dashboard_addon_path(addon), class: "text-xs text-accent hover:underline font-semibold font-mono", data: { turbo_frame: "_top" } %>
+        <%= render Atoms::ButtonComponent.new(variant: :ghost, size: :sm, href: dashboard_addon_path(addon), data: { turbo_frame: "_top" }) do %>Open<% end %>
       <% end %>
-    </div>
-  </div>
-<% end %>
+    </td>
+  </tr>
+  <% if addon.status == "error" && addon.last_error.present? %>
+    <tr class="border-b border-line">
+      <td colspan="6" class="px-3.5 py-2 text-[12px] text-danger font-mono break-all line-clamp-2"><%= addon.last_error %></td>
+    </tr>
+  <% end %>
+</tbody>

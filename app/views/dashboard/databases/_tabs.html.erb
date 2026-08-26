@@ -1,14 +1,14 @@
 <%
   tabs = [
-    { key: :overview, label: "overview", path: dashboard_addon_path(database) },
-    { key: :monitor,  label: "monitor",  path: dashboard_addon_monitor_path(database) },
-    { key: :backups,  label: "backups",  path: dashboard_addon_backups_path(database) },
-    { key: :settings, label: "settings", path: settings_dashboard_addon_path(database) }
+    { key: :overview, label: "Overview", path: dashboard_addon_path(database) },
+    { key: :monitor,  label: "Monitor",  path: dashboard_addon_monitor_path(database) },
+    { key: :backups,  label: "Backups",  path: dashboard_addon_backups_path(database) },
+    { key: :settings, label: "Settings", path: settings_dashboard_addon_path(database) }
   ]
 %>
-<div class="flex gap-6 border-b border-rule-soft mb-6 font-mono text-[12px]">
+<div class="mb-6 inline-flex border-1.5 border-ink rounded-md overflow-hidden shadow-brutal-sm max-w-full overflow-x-auto">
   <% tabs.each do |t| %>
     <%= link_to t[:label], t[:path],
-                class: "py-2 border-b-2 #{active == t[:key] ? 'border-accent text-ink font-bold' : 'border-transparent text-dim hover:text-ink'}" %>
+                class: "px-4 py-[7px] text-[13px] font-semibold whitespace-nowrap border-r-1.5 border-ink last:border-r-0 transition-colors #{active == t[:key] ? 'bg-ink text-paper' : 'bg-paper text-dim hover:bg-bg-deep'}" %>
   <% end %>
 </div>

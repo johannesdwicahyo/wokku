@@ -1,7 +1,7 @@
 <%#
-  Brutalist backups index (P4 of redesign-c-full, 2026-05-17). Policy
-  logic, turbo_stream_from, confirm-delete + download wiring and
-  routes preserved 1:1 from index.OLD_DESIGN.html.erb.
+  Backups index (schdl grid rollout, U4 Task 2). Policy logic,
+  turbo_stream_from, confirm-restore + download wiring and routes
+  preserved 1:1 — presentation only.
 %>
 <% content_for(:title, "Backups — #{@database.name}") %>
 
@@ -18,11 +18,9 @@
 <% policy = @database.backup_policy %>
 <% tier = @database.service_tier %>
 <% last_completed = @database.backups.completed.order(created_at: :desc).first %>
-<div class="border-1.5 border-ink bg-paper px-5 py-3 mb-6 flex flex-wrap items-center justify-between gap-3 font-mono">
-  <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-    <span class="px-2 py-0.5 border border-rule-soft text-ink-soft font-semibold capitalize tracking-wide">
-      <%= tier&.name&.tr("_", " ") || "—" %>
-    </span>
+<div class="border-1.5 border-ink bg-paper rounded-md px-5 py-3 mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs">
+    <%= render Atoms::TagComponent.new(tone: :dim) do %><%= tier&.name&.tr("_", " ")&.split(" ")&.map(&:capitalize)&.join(" ") || "—" %><% end %>
     <% if policy[:auto_backup] %>
       <span class="text-ink-soft">Daily auto-backup</span>
       <span class="text-dim">·</span>
@@ -45,65 +43,71 @@
 </div>
 
 <% if @backups.any? %>
-  <div class="border-1.5 border-ink bg-paper overflow-x-auto">
-    <table class="w-full font-mono text-sm">
+  <div class="bg-paper border-1.5 border-ink rounded-md shadow-brutal overflow-hidden">
+    <table class="w-full text-[13.5px]">
       <thead>
-        <tr class="text-xs text-dim border-b border-rule-soft uppercase tracking-widest">
-          <th class="px-5 py-3 text-left font-medium">Date</th>
-          <th class="px-5 py-3 text-left font-medium">Status</th>
-          <th class="px-5 py-3 text-right font-medium">Size</th>
-          <th class="px-5 py-3 text-right font-medium">Duration</th>
-          <th class="px-5 py-3 text-right font-medium">Actions</th>
+        <tr class="bg-bg border-b-1.5 border-ink text-[10.5px] font-bold uppercase tracking-[.06em] text-dim text-left">
+          <th scope="col" class="px-3.5 py-2.5 font-bold">Date</th>
+          <th scope="col" class="px-3.5 py-2.5 font-bold">Status</th>
+          <th scope="col" class="px-3.5 py-2.5 font-bold">Size</th>
+          <th scope="col" class="px-3.5 py-2.5 font-bold">Duration</th>
+          <th scope="col" class="px-3.5 py-2.5 font-bold">Actions</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-rule-soft">
+      <tbody>
         <% @backups.each do |backup| %>
-          <tr class="hover:bg-bg-deep transition-colors">
-            <td class="px-5 py-3 text-ink-soft"><%= backup.created_at.strftime("%b %d, %Y %H:%M") %></td>
-            <td class="px-5 py-3">
+          <tr class="border-b border-line last:border-b-0 hover:bg-bg-deep transition-colors">
+            <td class="px-3.5 py-2.5 text-[12.5px] text-dim"><%= backup.created_at.strftime("%b %d, %Y %H:%M") %></td>
+            <td class="px-3.5 py-2.5">
               <% bs = backup.status %>
-              <% if bs == "completed" %><span class="text-xs text-success">completed</span>
-              <% elsif bs == "running" %><span class="text-xs text-warn">running…</span>
-              <% elsif bs == "failed" %><span class="text-xs text-danger" title="<%= backup.error_message %>">failed</span>
-              <% elsif bs == "pending" %><span class="text-xs text-dim">pending</span>
+              <% if bs == "completed" %>
+                <%= render Atoms::StatusPillComponent.new(label: "Completed", tone: :success) %>
+              <% elsif bs == "running" %>
+                <%= render Atoms::StatusPillComponent.new(label: "Running", tone: :deploying) %>
+              <% elsif bs == "failed" %>
+                <span title="<%= backup.error_message %>"><%= render Atoms::StatusPillComponent.new(label: "Failed", tone: :danger) %></span>
+              <% elsif bs == "pending" %>
+                <%= render Atoms::StatusPillComponent.new(label: "Pending", tone: :deploying) %>
               <% end %>
             </td>
-            <td class="px-5 py-3 text-right text-ink-soft"><%= backup.size_human %></td>
-            <td class="px-5 py-3 text-right text-dim"><%= backup.duration ? "#{backup.duration.round(1)}s" : "—" %></td>
-            <td class="px-5 py-3 text-right">
+            <td class="px-3.5 py-2.5 text-[12.5px] text-dim"><%= backup.size_human %></td>
+            <td class="px-3.5 py-2.5 text-[12.5px] text-dim"><%= backup.duration ? "#{backup.duration.round(1)}s" : "—" %></td>
+            <td class="px-3.5 py-2.5">
               <% if backup.status == "completed" %>
-                <div class="flex items-center justify-end gap-3">
-                  <%= link_to "download", download_dashboard_addon_backup_path(@database, backup), class: "text-xs text-ink-soft hover:text-accent transition" %>
+                <div class="flex items-center gap-2">
+                  <%= render Atoms::ButtonComponent.new(variant: :ghost, size: :sm, href: download_dashboard_addon_backup_path(@database, backup)) do %>Download<% end %>
 
                   <%# Restore drawer — replaces the old confirm-delete modal so
                       destructive confirmations match the rest of the dashboard
-                      (Phase 3 motion--drawer controller). %>
+                      (Phase 3 motion--drawer controller). Ghost recipe with the
+                      warn tone in place of ButtonComponent's ink-soft default —
+                      there's no warn variant on the component. %>
                   <div data-controller="motion--drawer" class="inline-block">
                     <button data-action="motion--drawer#open"
                             type="button"
-                            class="text-xs text-warn hover:underline transition cursor-pointer bg-transparent border-0">
-                      restore
+                            class="inline-flex items-center justify-center gap-2 font-semibold cursor-pointer rounded-md transition-colors bg-transparent text-warn border-1.5 border-transparent hover:bg-bg-deep px-3 py-1.5 text-xs">
+                      Restore
                     </button>
                     <template data-motion--drawer-target="content">
                       <div class="p-6 space-y-4">
-                        <div class="font-mono text-[11px] uppercase tracking-widest text-warn">// destructive · restore from backup</div>
+                        <div class="text-[11px] font-bold uppercase tracking-[.06em] text-warn">Destructive — restore from backup</div>
                         <h2 class="font-headline text-xl font-extrabold">Restore <%= @database.name %>?</h2>
                         <p class="text-ink-soft text-sm leading-relaxed">
                           This <strong class="text-ink">overwrites</strong> the current contents of
-                          <span class="font-mono text-ink"><%= @database.name %></span> with the backup taken on
+                          <span class="text-ink font-semibold"><%= @database.name %></span> with the backup taken on
                           <strong class="text-ink"><%= backup.created_at.strftime('%b %d, %Y %H:%M') %></strong>.
                           The current state is lost and cannot be recovered.
                         </p>
                         <%= button_to "Yes, restore now", restore_dashboard_addon_backup_path(@database, backup),
                               method: :post,
-                              class: "w-full border-1.5 border-ink bg-danger text-bg font-mono text-[11px] uppercase tracking-widest px-4 py-3 shadow-brutal hover:bg-warn hover:text-ink transition cursor-pointer",
+                              class: "w-full border-1.5 border-ink rounded-md bg-danger text-bg font-semibold text-sm px-4 py-3 shadow-brutal hover:bg-warn hover:text-ink transition cursor-pointer",
                               data: {
                                 controller: "motion--optimistic-button",
                                 "motion--optimistic-button-pending-label-value": "restoring…"
                               } %>
                         <button data-action="motion--drawer#close"
                                 type="button"
-                                class="w-full border-1.5 border-ink bg-paper text-ink font-mono text-[11px] uppercase tracking-widest px-4 py-3 hover:bg-bg-deep transition cursor-pointer">
+                                class="w-full border-1.5 border-ink rounded-md bg-paper text-ink font-semibold text-sm px-4 py-3 hover:bg-bg-deep transition cursor-pointer">
                           Cancel
                         </button>
                       </div>
