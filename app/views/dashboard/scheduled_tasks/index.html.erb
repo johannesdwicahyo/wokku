@@ -1,81 +1,91 @@
+<%#
+  Scheduled tasks (schdl grid rollout, U4 Task 3). Renders inside
+  AppTabsComponent + AppSettingsComponent's content slot — no R1 page
+  header, just a compact section heading. Plan-gate, slide-panel form,
+  and run-history data preserved 1:1 — presentation only.
+%>
 <% content_for :title, "Scheduled tasks · #{@app.name}" %>
 <%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :settings) do %>
   <%= render Organisms::AppSettingsComponent.new(app: @app, active: :scheduled_tasks) do %>
 
 <div data-controller="slide-panel">
 <div class="flex items-center justify-between mb-6">
-  <h2 class="font-headline text-xl font-bold">Scheduled tasks</h2>
+  <h2 class="text-base font-bold">Scheduled tasks</h2>
   <% if Wokku.config.plan_enforcer.allowed?(current_user, :feature, slug: :scheduled_tasks) %>
     <%# Opens the slide-panel modal; href is the no-JS fallback. %>
-    <%= link_to "+ new", new_dashboard_app_scheduled_task_path(@app),
-          data: { action: "click->slide-panel#open" },
-          class: "border-1.5 border-ink bg-ink text-bg font-mono text-[11px] uppercase tracking-widest px-3 py-2 shadow-brutal cursor-pointer" %>
+    <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, href: new_dashboard_app_scheduled_task_path(@app), data: { action: "click->slide-panel#open" }) do %>+ New task<% end %>
   <% elsif respond_to?(:dashboard_billing_path) %>
-    <%= link_to "upgrade to Pro →", dashboard_billing_path,
-          class: "border-1.5 border-accent bg-accent-soft text-accent font-mono text-[11px] uppercase tracking-widest px-3 py-2",
-          data: { turbo_frame: "_top" } %>
+    <%= render Atoms::ButtonComponent.new(variant: :outline, size: :sm, href: dashboard_billing_path, data: { turbo_frame: "_top" }) do %>Upgrade to Pro<% end %>
   <% end %>
 </div>
 
 <% unless Wokku.config.plan_enforcer.allowed?(current_user, :feature, slug: :scheduled_tasks) %>
-  <div class="border-1.5 border-accent bg-accent-soft p-4 mb-6 text-sm text-ink">
-    <strong>Scheduled tasks is a Pro feature.</strong>
+  <div class="border-1.5 border-ink bg-bg-deep rounded-md p-4 mb-6 text-sm text-ink">
+    <strong class="font-semibold">Scheduled tasks is a Pro feature.</strong>
     Upgrade your plan to define cron jobs that run inside your app — patches, nightly cleanups, scheduled reports, etc.
   </div>
 <% end %>
 
 <% if @tasks.empty? %>
-  <div class="border-1.5 border-ink bg-bg-deep p-12 text-center">
-    <p class="text-ink-soft">No scheduled tasks yet.</p>
-    <p class="text-dim text-sm mt-2">// cron jobs run inside your app's container on the schedule you define</p>
-  </div>
+  <%= render Organisms::EmptyStateComponent.new(
+        headline: "No scheduled tasks yet.",
+        body: "Cron jobs run inside your app's container on the schedule you define."
+      ) %>
 <% else %>
-  <table class="w-full border-1.5 border-ink bg-paper">
-    <thead class="bg-bg-deep border-b-1.5 border-ink">
-      <tr class="font-mono text-[11px] uppercase tracking-widest">
-        <th class="text-left p-3">schedule</th>
-        <th class="text-left p-3">command</th>
-        <th class="text-left p-3">enabled</th>
-        <th class="text-left p-3"></th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @tasks.each do |t| %>
-        <tr class="border-b border-rule-soft">
-          <td class="p-3 font-mono text-sm"><%= t.schedule %></td>
-          <td class="p-3 font-mono text-xs"><%= truncate(t.command, length: 80) %></td>
-          <td class="p-3"><%= t.enabled ? "✓" : "—" %></td>
-          <td class="p-3">
-            <%= button_to "delete", dashboard_app_scheduled_task_path(@app, t),
-                  method: :delete,
-                  class: "font-mono text-[11px] text-danger underline cursor-pointer bg-transparent border-0",
-                  data: { turbo_confirm: "Delete this scheduled task?" } %>
-          </td>
+  <div class="bg-paper border-1.5 border-ink rounded-md shadow-brutal overflow-hidden">
+    <table class="w-full text-[13.5px]">
+      <thead>
+        <tr class="bg-bg border-b-1.5 border-ink text-[10.5px] font-bold uppercase tracking-[.06em] text-dim text-left">
+          <th scope="col" class="px-3.5 py-2.5 font-bold">Schedule</th>
+          <th scope="col" class="px-3.5 py-2.5 font-bold">Command</th>
+          <th scope="col" class="px-3.5 py-2.5 font-bold">Enabled</th>
+          <th scope="col" class="px-3.5 py-2.5 font-bold">Actions</th>
         </tr>
-        <% ((@recent_runs || {})[t.id] || []).first(10).each do |run| %>
-          <tr class="border-b border-rule-soft bg-bg-deep text-xs">
-            <td class="p-3 pl-6 font-mono text-dim"><%= run.started_at&.strftime("%b %d %H:%M") %></td>
-            <td class="p-3 font-mono" colspan="2">
-              <% if run.skipped_reason.present? %>
-                <span class="text-ink-soft">skipped (<%= run.skipped_reason %>)</span>
+      </thead>
+      <tbody>
+        <% @tasks.each do |t| %>
+          <tr class="border-b border-line hover:bg-bg-deep transition-colors">
+            <td class="px-3.5 py-2.5 font-mono text-[12.5px] text-ink"><%= t.schedule %></td>
+            <td class="px-3.5 py-2.5 font-mono text-[12px] text-dim"><%= truncate(t.command, length: 80) %></td>
+            <td class="px-3.5 py-2.5">
+              <% if t.enabled %>
+                <%= render Atoms::StatusPillComponent.new(label: "Enabled", tone: :success) %>
               <% else %>
-                <span class="<%= run.exit_code == 0 ? "text-success" : "text-danger" %>">exit <%= run.exit_code %></span>
-                · <%= run.finished_at && run.started_at ? "#{(run.finished_at - run.started_at).round}s" : "—" %>
+                <%= render Atoms::StatusPillComponent.new(label: "Disabled", tone: :neutral) %>
               <% end %>
             </td>
-            <td class="p-3">
-              <% if run.log_excerpt.present? %>
-                <details>
-                  <summary class="cursor-pointer text-dim font-mono">log</summary>
-                  <pre class="whitespace-pre-wrap text-xs mt-1"><%= run.log_excerpt.to_s.scrub %></pre>
-                </details>
-              <% end %>
+            <td class="px-3.5 py-2.5 text-right">
+              <%= button_to "Delete", dashboard_app_scheduled_task_path(@app, t),
+                    method: :delete,
+                    class: "text-xs text-danger hover:underline cursor-pointer bg-transparent border-0",
+                    data: { turbo_confirm: "Delete this scheduled task?" } %>
             </td>
           </tr>
+          <% ((@recent_runs || {})[t.id] || []).first(10).each do |run| %>
+            <tr class="border-b border-line bg-bg-deep text-xs">
+              <td class="px-3.5 py-2 pl-8 text-dim"><%= run.started_at&.strftime("%b %d %H:%M") %></td>
+              <td class="px-3.5 py-2" colspan="2">
+                <% if run.skipped_reason.present? %>
+                  <span class="text-ink-soft">skipped (<%= run.skipped_reason %>)</span>
+                <% else %>
+                  <span class="<%= run.exit_code == 0 ? "text-success" : "text-danger" %>">exit <%= run.exit_code %></span>
+                  <span class="text-dim">· <%= run.finished_at && run.started_at ? "#{(run.finished_at - run.started_at).round}s" : "—" %></span>
+                <% end %>
+              </td>
+              <td class="px-3.5 py-2">
+                <% if run.log_excerpt.present? %>
+                  <details>
+                    <summary class="cursor-pointer text-dim hover:text-ink">Log</summary>
+                    <pre class="whitespace-pre-wrap font-mono text-[11px] text-ink-soft mt-1"><%= run.log_excerpt.to_s.scrub %></pre>
+                  </details>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
         <% end %>
-      <% end %>
-    </tbody>
-  </table>
+      </tbody>
+    </table>
+  </div>
 <% end %>
 
   <% if Wokku.config.plan_enforcer.allowed?(current_user, :feature, slug: :scheduled_tasks) %>
