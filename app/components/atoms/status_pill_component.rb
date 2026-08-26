@@ -10,9 +10,23 @@ module Atoms
       "sleeping"  => { label: "Sleeping",  dot: "var(--color-warn)" }
     }.freeze
 
-    def initialize(status:)
-      @status = status.to_s
-      @spec   = STATUSES.fetch(@status, STATUSES["stopped"])
+    TONES = {
+      success:   "var(--color-success)",
+      info:      "var(--color-info)",
+      danger:    "var(--color-danger)",
+      warn:      "var(--color-warn)",
+      deploying: "var(--color-deploying)",
+      neutral:   "var(--color-dim)"
+    }.freeze
+
+    def initialize(status: nil, label: nil, tone: nil)
+      if label
+        @status = label.to_s.downcase
+        @spec   = { label: label, dot: TONES.fetch(tone || :neutral) }
+      else
+        @status = status.to_s
+        @spec   = STATUSES.fetch(@status, STATUSES["stopped"])
+      end
     end
     attr_reader :status, :spec
   end
