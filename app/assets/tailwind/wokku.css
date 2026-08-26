@@ -119,6 +119,18 @@
   outline-offset: 2px;
 }
 
+/* Text fields focus in the schdl idiom (ink border + hard shadow) instead
+   of the accent ring — the ring is for links/buttons where the element has
+   no border of its own to speak with. Inputs always match :focus-visible,
+   so without this override every field gets the blue ring on click. */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+  border-color: var(--color-ink);
+  box-shadow: var(--shadow-brutal-sm);
+}
+
 @keyframes wk-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50%      { opacity: 0.55; transform: scale(0.85); }
