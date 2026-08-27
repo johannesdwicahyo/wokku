@@ -1,17 +1,6 @@
 module Dashboard
   class DeploysController < BaseController
     include OnboardingTourable
-    # Team-wide deploys feed — one row per deploy across every app the
-    # current user can see. Vercel-style observability page; complements
-    # the per-app deploy log on apps#show.
-    def index
-      @deploys = Deploy
-        .joins(:app_record)
-        .where(app_record: policy_scope(AppRecord).main_apps)
-        .includes(app_record: :server)
-        .order(created_at: :desc)
-        .limit(50)
-    end
 
     def show
       @app = policy_scope(AppRecord).find(params[:app_id])

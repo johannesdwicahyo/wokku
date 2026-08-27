@@ -1,13 +1,13 @@
 <div data-controller="slide-panel">
-  <div class="flex items-center justify-between gap-3 flex-wrap mb-6">
+  <div class="flex items-center justify-between mb-5">
     <div>
-      <h1 class="font-mono text-xl font-semibold tracking-tighter text-ink"># <%= t("dashboard.servers.title") %></h1>
-      <p class="mt-0.5 font-mono text-sm text-dim">
-        // <% if @can_manage %>manage your servers<% else %>pick a server when deploying — read-only for non-admins<% end %>
+      <h1 class="font-headline text-2xl font-extrabold tracking-tight"><%= t("dashboard.servers.title") %></h1>
+      <p class="mt-0.5 text-sm text-dim">
+        <% if @can_manage %>Manage your servers<% else %>Pick a server when deploying — read-only for non-admins<% end %>
       </p>
     </div>
     <% if @can_manage %>
-      <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer">+ <%= t("dashboard.servers.add_server") %></button>
+      <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, data: { action: "click->slide-panel#open" }) do %>+ <%= t("dashboard.servers.add_server") %><% end %>
     <% end %>
   </div>
 
@@ -29,48 +29,40 @@
             cpu_pct = nil
             cont_count = nil
           end
-          pct_color = pct.nil? ? "bg-dim" : (pct > 85 ? "bg-danger" : pct > 65 ? "bg-warn" : "bg-accent")
+          pct_tone = pct.nil? ? "bg-dim" : (pct > 85 ? "bg-danger" : pct > 65 ? "bg-warn" : "bg-success")
+          status_tone = { "connected" => :success, "unreachable" => :danger, "auth_failed" => :danger, "syncing" => :deploying }[server.status]
         %>
-        <%= link_to admin_server_path(server), class: "block border-1.5 border-ink bg-paper hover:bg-bg-deep transition p-4 font-mono" do %>
-          <div class="flex items-start justify-between mb-3">
+        <%= link_to admin_server_path(server), class: "block bg-paper border-1.5 border-ink rounded-md shadow-brutal-sm hover:shadow-brutal transition-all p-4" do %>
+          <div class="flex items-start justify-between gap-2 mb-3">
             <div class="min-w-0">
               <p class="text-sm font-bold text-ink truncate"><%= server.name %></p>
-              <p class="text-[11px] text-dim mt-0.5"><%= server.host %><% if server.region.present? %> · <%= server.region %><% end %></p>
+              <p class="text-[11px] text-dim mt-0.5 font-mono"><%= server.host %><% if server.region.present? %> · <%= server.region %><% end %></p>
             </div>
-            <% case server.status %>
-            <% when "connected" %>
-              <span class="inline-flex items-center text-[10px] text-success"><span class="w-1.5 h-1.5 bg-success mr-1"></span><%= t("dashboard.servers.connected") %></span>
-            <% when "unreachable" %>
-              <span class="inline-flex items-center text-[10px] text-danger"><span class="w-1.5 h-1.5 bg-danger mr-1"></span><%= t("dashboard.servers.unreachable") %></span>
-            <% when "auth_failed" %>
-              <span class="inline-flex items-center text-[10px] text-warn"><span class="w-1.5 h-1.5 bg-warn mr-1"></span><%= t("dashboard.servers.auth_failed") %></span>
-            <% when "syncing" %>
-              <span class="inline-flex items-center text-[10px] text-warn"><span class="w-1.5 h-1.5 bg-warn animate-pulse mr-1"></span><%= t("dashboard.servers.syncing") %></span>
-            <% end %>
+            <%= render Atoms::StatusPillComponent.new(label: t("dashboard.servers.#{server.status}"), tone: status_tone) %>
           </div>
 
           <div class="space-y-2">
             <div>
               <div class="flex items-center justify-between text-[10px] text-dim mb-1">
-                <span class="uppercase tracking-widest"><%= live ? "Memory (live)" : "Capacity" %></span>
+                <span class="uppercase tracking-widest font-semibold"><%= live ? "Memory (live)" : "Capacity" %></span>
                 <span>
                   <% if pct %><%= pct %>% (<%= allocated %>MB / <%= total %>MB)<% else %><%= allocated %>MB allocated<% end %>
                 </span>
               </div>
-              <div class="h-1.5 bg-bg border border-rule-soft relative">
-                <div class="absolute inset-0 <%= pct_color %>" style="width: <%= pct ? [pct, 100].min : 0 %>%"></div>
+              <div class="h-1.5 bg-bg border border-line rounded-full relative overflow-hidden">
+                <div class="absolute inset-0 rounded-full <%= pct_tone %>" style="width: <%= pct ? [pct, 100].min : 0 %>%"></div>
               </div>
             </div>
 
             <% if cpu_pct %>
               <div>
                 <div class="flex items-center justify-between text-[10px] text-dim mb-1">
-                  <span class="uppercase tracking-widest">CPU (live)</span>
+                  <span class="uppercase tracking-widest font-semibold">CPU (live)</span>
                   <span><%= cpu_pct %>%</span>
                 </div>
-                <div class="h-1.5 bg-bg border border-rule-soft relative">
-                  <% cpu_color = cpu_pct > 80 ? "bg-danger" : cpu_pct > 50 ? "bg-warn" : "bg-accent" %>
-                  <div class="absolute inset-0 <%= cpu_color %>" style="width: <%= [cpu_pct, 100].min %>%"></div>
+                <div class="h-1.5 bg-bg border border-line rounded-full relative overflow-hidden">
+                  <% cpu_tone = cpu_pct > 80 ? "bg-danger" : cpu_pct > 50 ? "bg-warn" : "bg-success" %>
+                  <div class="absolute inset-0 rounded-full <%= cpu_tone %>" style="width: <%= [cpu_pct, 100].min %>%"></div>
                 </div>
               </div>
             <% end %>
@@ -80,22 +72,22 @@
                 <%= server.app_records.size %> apps
                 <% if cont_count %><span class="text-dim"> · <%= cont_count %> containers</span><% end %>
               </span>
-              <span>:<%= server.port %></span>
+              <span class="font-mono">:<%= server.port %></span>
             </div>
           </div>
         <% end %>
       <% end %>
     </div>
   <% else %>
-    <div class="text-center py-16 border-1.5 border-ink bg-paper">
-      <h3 class="font-mono text-sm font-medium text-ink-soft">// <%= t("dashboard.servers.no_servers") %></h3>
+    <div class="text-center py-16 bg-paper border-1.5 border-ink rounded-md shadow-brutal-sm">
+      <h3 class="text-sm font-medium text-ink-soft"><%= t("dashboard.servers.no_servers") %></h3>
       <% if @can_manage %>
-        <p class="mt-1 font-mono text-xs text-dim">Connect your first server — one command, no SSH keys.</p>
+        <p class="mt-1 text-xs text-dim">Connect your first server — one command, no SSH keys.</p>
         <div class="mt-4">
-          <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer">+ <%= t("dashboard.servers.add_server") %></button>
+          <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, data: { action: "click->slide-panel#open" }) do %>+ <%= t("dashboard.servers.add_server") %><% end %>
         </div>
       <% else %>
-        <p class="mt-1 font-mono text-xs text-dim">No platform servers available yet — check back soon.</p>
+        <p class="mt-1 text-xs text-dim">No platform servers available yet — check back soon.</p>
       <% end %>
     </div>
   <% end %>

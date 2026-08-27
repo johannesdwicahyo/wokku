@@ -30,7 +30,6 @@ Rails.application.routes.draw do
     get "/deploy",       to: redirect("/dashboard/apps/new")
     resources :templates, only: [ :index, :show, :create ]
     patch "onboarding/skip", to: "onboarding#skip", as: :onboarding_skip
-    resources :deploys, only: [ :index ]
     resources :apps do
       collection do
         get :check_name

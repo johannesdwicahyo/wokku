@@ -1,84 +1,85 @@
 <div class="max-w-5xl">
-  <div class="flex items-center justify-between mb-6">
-    <h1 class="font-mono text-2xl font-semibold tracking-tighter text-ink">
-      # <%= t("admin.users.index_title", default: "Users") %>
+  <div class="flex items-center justify-between mb-5">
+    <h1 class="font-headline text-2xl font-extrabold tracking-tight">
+      <%= t("admin.users.index_title", default: "Users") %>
       <span class="text-dim text-base font-normal ml-2">(<%= @total %>)</span>
     </h1>
   </div>
 
   <%# Search %>
-  <%= form_with url: admin_users_path, method: :get, class: "mb-6 flex gap-2" do |f| %>
-    <%= f.text_field :q, value: @query,
-          placeholder: t("admin.users.search_placeholder", default: "Search by email…"),
-          class: "flex-1 bg-bg border-1.5 border-ink text-ink font-mono text-sm px-3 py-2 focus:outline-none focus:border-accent" %>
-    <%= f.submit "Search", class: "px-4 py-2 bg-ink text-bg font-mono text-sm font-semibold border-1.5 border-ink cursor-pointer hover:bg-ink-soft" %>
+  <%= form_with url: admin_users_path, method: :get, class: "mb-5 flex items-end gap-2" do |f| %>
+    <label class="flex flex-col gap-1 flex-1">
+      <span class="block text-xs font-semibold text-ink-soft"><%= t("admin.users.search_placeholder", default: "Search by email…") %></span>
+      <%= f.text_field :q, value: @query,
+            placeholder: t("admin.users.search_placeholder", default: "Search by email…"),
+            class: "w-full bg-paper border-1.5 border-ink rounded-md px-2.5 py-1.5 text-sm focus:shadow-brutal-sm" %>
+    </label>
+    <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, type: "submit") do %>Search<% end %>
     <% if @query.present? %>
-      <%= link_to "Clear", admin_users_path, class: "px-3 py-2 font-mono text-sm text-dim border-1.5 border-ink hover:text-ink transition" %>
+      <%= render Atoms::ButtonComponent.new(variant: :ghost, size: :sm, href: admin_users_path) do %>Clear<% end %>
     <% end %>
   <% end %>
 
-  <div class="border-1.5 border-ink bg-paper overflow-x-auto">
-    <table class="w-full font-mono text-sm">
-      <thead class="border-b border-rule-soft">
-        <tr class="text-xs text-dim uppercase tracking-widest">
-          <th class="text-left px-4 py-3"><%= t("admin.users.columns.email", default: "Email") %></th>
-          <th class="text-left px-4 py-3"><%= t("admin.users.columns.role", default: "Role") %></th>
-          <th class="text-left px-4 py-3"><%= t("admin.users.columns.created_at", default: "Joined") %></th>
-          <th class="text-left px-4 py-3"><%= t("admin.users.columns.plan", default: "Plan") %></th>
-          <th class="text-left px-4 py-3"><%= t("admin.users.columns.status", default: "Status") %></th>
-          <th class="text-left px-4 py-3"><%= t("admin.users.columns.apps", default: "Apps") %></th>
-          <th class="px-4 py-3"></th>
+  <div class="bg-paper border-1.5 border-ink rounded-md shadow-brutal overflow-hidden">
+    <table class="w-full text-[13.5px]">
+      <thead>
+        <tr class="bg-bg border-b-1.5 border-ink text-[10.5px] font-bold uppercase tracking-[.06em] text-dim text-left">
+          <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("admin.users.columns.email", default: "Email") %></th>
+          <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("admin.users.columns.role", default: "Role") %></th>
+          <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("admin.users.columns.created_at", default: "Joined") %></th>
+          <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("admin.users.columns.plan", default: "Plan") %></th>
+          <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("admin.users.columns.status", default: "Status") %></th>
+          <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("admin.users.columns.apps", default: "Apps") %></th>
+          <th scope="col" class="px-3.5 py-2.5 font-bold"></th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-rule-soft">
+      <tbody>
         <% @users.each do |user| %>
-          <tr class="hover:bg-bg-deep transition-colors">
-            <td class="px-4 py-3 text-xs text-ink"><%= user.email %></td>
-            <td class="px-4 py-3">
-              <span class="text-xs px-2 py-0.5 border <%= user.admin? ? 'border-accent text-accent' : 'border-rule-soft text-dim' %>">
-                <%= user.role %>
-              </span>
+          <tr class="border-b border-line last:border-b-0 hover:bg-bg-deep transition-colors">
+            <td class="px-3.5 py-2.5 font-semibold"><%= user.email %></td>
+            <td class="px-3.5 py-2.5">
+              <%= render Atoms::TagComponent.new(tone: user.admin? ? :accent : :dim) do %><%= user.role %><% end %>
             </td>
-            <td class="px-4 py-3 text-dim text-xs"><%= user.created_at.strftime("%b %-d, %Y") %></td>
-            <td class="px-4 py-3 text-xs">
+            <td class="px-3.5 py-2.5 text-[12.5px] text-dim"><%= user.created_at.strftime("%b %-d, %Y") %></td>
+            <td class="px-3.5 py-2.5">
               <% plan_key = user.current_plan&.key %>
               <% if plan_key.present? %>
                 <%
                   tone = case plan_key
-                         when "free" then "border-rule-soft text-dim"
-                         when "solo" then "border-ink text-ink"
-                         when "pro"  then "border-accent text-accent"
-                         when "team" then "border-success text-success"
-                         else             "border-rule-soft text-dim"
+                         when "free" then :dim
+                         when "solo" then :ink
+                         when "pro"  then :accent
+                         when "team" then :success
+                         else             :dim
                          end
                 %>
-                <span class="px-2 py-0.5 border <%= tone %> uppercase tracking-widest text-[10px]"><%= plan_key %></span>
+                <%= render Atoms::TagComponent.new(tone: tone) do %><%= plan_key %><% end %>
               <% else %>
                 <span class="text-dim">—</span>
               <% end %>
             </td>
-            <td class="px-4 py-3">
+            <td class="px-3.5 py-2.5">
               <% if user.deleted? %>
-                <span class="text-xs px-2 py-0.5 border border-danger text-danger"><%= t("admin.users.status.deleted", default: "Deleted") %></span>
+                <%= render Atoms::StatusPillComponent.new(label: t("admin.users.status.deleted", default: "Deleted"), tone: :neutral) %>
               <% elsif user.deletion_pending? %>
-                <span class="text-xs px-2 py-0.5 border border-warn text-warn"><%= t("admin.users.status.pending_deletion", default: "Deletion pending") %></span>
+                <%= render Atoms::StatusPillComponent.new(label: t("admin.users.status.pending_deletion", default: "Deletion pending"), tone: :warn) %>
               <% else %>
-                <span class="text-xs px-2 py-0.5 border border-success text-success"><%= t("admin.users.status.active", default: "Active") %></span>
+                <%= render Atoms::StatusPillComponent.new(label: t("admin.users.status.active", default: "Active"), tone: :success) %>
               <% end %>
             </td>
-            <td class="px-4 py-3 text-dim text-xs">
+            <td class="px-3.5 py-2.5 text-[12.5px] text-dim">
               <%= user.teams.flat_map(&:app_records).count %>
             </td>
-            <td class="px-4 py-3 text-right">
+            <td class="px-3.5 py-2.5 text-right">
               <%= link_to t("admin.users.actions.show", default: "View"),
                           admin_user_path(user),
-                          class: "text-xs text-accent hover:underline" %>
+                          class: "text-[12.5px] text-accent hover:underline" %>
             </td>
           </tr>
         <% end %>
         <% if @users.empty? %>
           <tr>
-            <td colspan="7" class="px-4 py-8 text-center text-dim text-sm">// no users found</td>
+            <td colspan="7" class="px-3.5 py-8 text-center text-dim text-sm">no users found</td>
           </tr>
         <% end %>
       </tbody>
@@ -87,16 +88,14 @@
 
   <%# Pagination %>
   <% if @total_pages > 1 %>
-    <div class="flex items-center justify-between mt-4 font-mono text-sm text-dim">
+    <div class="flex items-center justify-between mt-4 text-sm text-dim">
       <span>Page <%= @page %> of <%= @total_pages %></span>
       <div class="flex gap-2">
         <% if @page > 1 %>
-          <%= link_to "← Prev", admin_users_path(q: @query, page: @page - 1),
-                class: "px-3 py-1.5 border-1.5 border-ink hover:text-ink transition" %>
+          <%= render Atoms::ButtonComponent.new(variant: :outline, size: :sm, href: admin_users_path(q: @query, page: @page - 1)) do %>← Prev<% end %>
         <% end %>
         <% if @page < @total_pages %>
-          <%= link_to "Next →", admin_users_path(q: @query, page: @page + 1),
-                class: "px-3 py-1.5 border-1.5 border-ink hover:text-ink transition" %>
+          <%= render Atoms::ButtonComponent.new(variant: :outline, size: :sm, href: admin_users_path(q: @query, page: @page + 1)) do %>Next →<% end %>
         <% end %>
       </div>
     </div>
