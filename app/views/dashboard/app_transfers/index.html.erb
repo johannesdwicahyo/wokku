@@ -6,12 +6,12 @@
 
 <div class="space-y-6">
   <div class="mb-5">
-    <h1 class="font-headline text-2xl font-extrabold tracking-tight">App transfers</h1>
+    <h1 class="font-headline text-2xl font-extrabold tracking-tight"><%= t("dashboard.app_transfers.title", default: "App transfers") %></h1>
     <p class="text-[12.5px] text-dim mt-1">Pending ownership transfers — review incoming requests and manage outgoing ones.</p>
   </div>
 
   <section>
-    <h2 class="text-sm font-bold text-ink mb-2">Incoming</h2>
+    <h2 class="text-sm font-bold text-ink mb-2"><%= t("dashboard.app_transfers.incoming", default: "Incoming") %></h2>
     <% if @incoming.any? %>
       <div class="bg-paper border-1.5 border-ink rounded-md shadow-brutal overflow-hidden">
         <div class="divide-y divide-line">
@@ -35,7 +35,7 @@
   </section>
 
   <section>
-    <h2 class="text-sm font-bold text-ink mb-2">Outgoing</h2>
+    <h2 class="text-sm font-bold text-ink mb-2"><%= t("dashboard.app_transfers.outgoing", default: "Outgoing") %></h2>
     <% if @outgoing.any? %>
       <div class="bg-paper border-1.5 border-ink rounded-md shadow-brutal overflow-hidden">
         <div class="divide-y divide-line">

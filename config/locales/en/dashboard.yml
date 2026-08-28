@@ -97,6 +97,12 @@ en:
         building: "building"
         crashed: "crashed"
         boxes: "boxes"
+      columns:
+        app: "App"
+        status: "Status"
+        size: "Size"
+        domain: "Domain"
+        last_deploy: "Last deploy"
     databases:
       title: "Databases"
       new_database: "New Database"
@@ -106,6 +112,13 @@ en:
       linked_apps: "Linked Apps"
       backups: "Backups"
       connection_info: "Connection Info"
+      columns:
+        addon: "Add-on"
+        status: "Status"
+        type: "Type"
+        tier: "Tier"
+        apps: "Apps"
+        actions: "Actions"
     servers:
       title: "Servers"
       new_server: "New Server"
@@ -174,3 +187,43 @@ en:
       rotate_token: "Rotate token"
       rotate_confirm: "Rotating invalidates any deployed script tags. Continue?"
       token_rotated: "Token rotated. Update your deployed script tag."
+    backups:
+      columns:
+        date: "Date"
+        status: "Status"
+        size: "Size"
+        duration: "Duration"
+        actions: "Actions"
+    releases:
+      heading: "Releases"
+      columns:
+        version: "Version"
+        commit: "Commit"
+        status: "Status"
+        duration: "Duration"
+        when: "When"
+        actions: "Actions"
+    previews:
+      heading: "PR previews"
+      columns:
+        pr: "PR"
+        branch: "Branch"
+        status: "Status"
+        url: "URL"
+        last_commit: "Last commit"
+        actions: "Actions"
+    scheduled_tasks:
+      heading: "Scheduled tasks"
+      columns:
+        schedule: "Schedule"
+        command: "Command"
+        enabled: "Enabled"
+        actions: "Actions"
+    activities:
+      title: "Activity log"
+    app_transfers:
+      title: "App transfers"
+      incoming: "Incoming"
+      outgoing: "Outgoing"
+    workspaces:
+      title: "Workspaces"

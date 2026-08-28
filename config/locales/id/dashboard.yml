@@ -94,6 +94,12 @@ id:
         building: "membangun"
         crashed: "crash"
         boxes: "box"
+      columns:
+        app: "Aplikasi"
+        status: "Status"
+        size: "Ukuran"
+        domain: "Domain"
+        last_deploy: "Deploy terakhir"
     databases:
       title: "Database"
       new_database: "Database Baru"
@@ -103,6 +109,13 @@ id:
       linked_apps: "Aplikasi Terhubung"
       backups: "Backup"
       connection_info: "Info Koneksi"
+      columns:
+        addon: "Add-on"
+        status: "Status"
+        type: "Tipe"
+        tier: "Tier"
+        apps: "Aplikasi"
+        actions: "Aksi"
     servers:
       title: "Server"
       new_server: "Server Baru"
@@ -171,3 +184,43 @@ id:
       rotate_token: "Putar ulang token"
       rotate_confirm: "Memutar ulang akan membatalkan script tag yang sudah dipasang. Lanjutkan?"
       token_rotated: "Token diputar ulang. Update script tag yang sudah terpasang."
+    backups:
+      columns:
+        date: "Tanggal"
+        status: "Status"
+        size: "Ukuran"
+        duration: "Durasi"
+        actions: "Aksi"
+    releases:
+      heading: "Rilis"
+      columns:
+        version: "Versi"
+        commit: "Commit"
+        status: "Status"
+        duration: "Durasi"
+        when: "Waktu"
+        actions: "Aksi"
+    previews:
+      heading: "Preview PR"
+      columns:
+        pr: "PR"
+        branch: "Branch"
+        status: "Status"
+        url: "URL"
+        last_commit: "Commit terakhir"
+        actions: "Aksi"
+    scheduled_tasks:
+      heading: "Tugas terjadwal"
+      columns:
+        schedule: "Jadwal"
+        command: "Perintah"
+        enabled: "Aktif"
+        actions: "Aksi"
+    activities:
+      title: "Log Aktivitas"
+    app_transfers:
+      title: "Transfer Aplikasi"
+      incoming: "Masuk"
+      outgoing: "Keluar"
+    workspaces:
+      title: "Workspace"

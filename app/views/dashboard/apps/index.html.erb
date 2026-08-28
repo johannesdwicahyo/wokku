@@ -17,7 +17,7 @@
     <% if @has_apps %>
       <div>
         <div class="flex items-center justify-between mb-5">
-          <h1 class="font-headline text-2xl font-extrabold tracking-tight">Apps</h1>
+          <h1 class="font-headline text-2xl font-extrabold tracking-tight"><%= t("dashboard.apps.title") %></h1>
           <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, href: new_dashboard_app_path,
                 data: { action: "click->slide-panel#open" }) do %>+ New app<% end %>
         </div>

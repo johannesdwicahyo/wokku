@@ -8,7 +8,7 @@
 <%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :deploy) do %>
   <%= render Organisms::AppDeployComponent.new(app: @app, active: :releases) do %>
 
-<h2 class="text-base font-bold mb-3">Releases</h2>
+<h2 class="text-base font-bold mb-3"><%= t("dashboard.releases.heading", default: "Releases") %></h2>
 
 <%# Deploy method %>
 <div class="border-1.5 border-ink bg-paper rounded-md mb-6 overflow-hidden">
@@ -88,12 +88,12 @@
     <table class="w-full text-[13.5px]">
       <thead>
         <tr class="bg-bg border-b-1.5 border-ink text-[10.5px] font-bold uppercase tracking-[.06em] text-dim text-left">
-          <th scope="col" class="px-3.5 py-2.5 font-bold">Version</th>
-          <th scope="col" class="px-3.5 py-2.5 font-bold">Commit</th>
-          <th scope="col" class="px-3.5 py-2.5 font-bold">Status</th>
-          <th scope="col" class="px-3.5 py-2.5 font-bold">Duration</th>
-          <th scope="col" class="px-3.5 py-2.5 font-bold">When</th>
-          <th scope="col" class="px-3.5 py-2.5 font-bold">Actions</th>
+          <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.releases.columns.version", default: "Version") %></th>
+          <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.releases.columns.commit", default: "Commit") %></th>
+          <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.releases.columns.status", default: "Status") %></th>
+          <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.releases.columns.duration", default: "Duration") %></th>
+          <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.releases.columns.when", default: "When") %></th>
+          <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.releases.columns.actions", default: "Actions") %></th>
         </tr>
       </thead>
       <tbody>

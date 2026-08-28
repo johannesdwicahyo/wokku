@@ -10,7 +10,7 @@
 
 <div data-controller="slide-panel">
 <div class="flex items-center justify-between mb-6">
-  <h2 class="text-base font-bold">Scheduled tasks</h2>
+  <h2 class="text-base font-bold"><%= t("dashboard.scheduled_tasks.heading", default: "Scheduled tasks") %></h2>
   <% if Wokku.config.plan_enforcer.allowed?(current_user, :feature, slug: :scheduled_tasks) %>
     <%# Opens the slide-panel modal; href is the no-JS fallback. %>
     <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, href: new_dashboard_app_scheduled_task_path(@app), data: { action: "click->slide-panel#open" }) do %>+ New task<% end %>
@@ -36,10 +36,10 @@
     <table class="w-full text-[13.5px]">
       <thead>
         <tr class="bg-bg border-b-1.5 border-ink text-[10.5px] font-bold uppercase tracking-[.06em] text-dim text-left">
-          <th scope="col" class="px-3.5 py-2.5 font-bold">Schedule</th>
-          <th scope="col" class="px-3.5 py-2.5 font-bold">Command</th>
-          <th scope="col" class="px-3.5 py-2.5 font-bold">Enabled</th>
-          <th scope="col" class="px-3.5 py-2.5 font-bold">Actions</th>
+          <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.scheduled_tasks.columns.schedule", default: "Schedule") %></th>
+          <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.scheduled_tasks.columns.command", default: "Command") %></th>
+          <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.scheduled_tasks.columns.enabled", default: "Enabled") %></th>
+          <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.scheduled_tasks.columns.actions", default: "Actions") %></th>
         </tr>
       </thead>
       <tbody>

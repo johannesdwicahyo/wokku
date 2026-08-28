@@ -14,7 +14,7 @@
 
 <div class="space-y-6">
   <div class="flex items-center justify-between mb-5">
-    <h1 class="font-headline text-2xl font-extrabold tracking-tight">Activity log</h1>
+    <h1 class="font-headline text-2xl font-extrabold tracking-tight"><%= t("dashboard.activities.title", default: "Activity log") %></h1>
     <%= render Atoms::ButtonComponent.new(variant: :outline, size: :sm,
           href: dashboard_activities_path(@filters.to_h.merge(format: :csv))) do %>Export CSV<% end %>
   </div>
