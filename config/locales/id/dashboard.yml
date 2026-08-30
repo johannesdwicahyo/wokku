@@ -83,10 +83,13 @@ id:
         no_logs: "Tidak ada log terakhir"
       aggregates:
         total:
+          one: "%{count} app"
           other: "%{count} app"
         running:
+          one: "%{count} berjalan"
           other: "%{count} berjalan"
         crashed:
+          one: "%{count} crash"
           other: "%{count} crash"
         boxes: "Box terpakai %{used} / %{allowed}"
       chips:
@@ -115,6 +118,7 @@ id:
       by_type: "Per tipe"
       by_app: "Per aplikasi"
       count:
+        one: "%{count} add-on"
         other: "%{count} add-on"
       new_addon_title: "Add-on Baru"
       new_addon_subtitle: "Sediakan database atau layanan"

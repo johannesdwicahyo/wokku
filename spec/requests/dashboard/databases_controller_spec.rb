@@ -35,15 +35,28 @@ RSpec.describe "Dashboard::Databases", type: :request do
   end
 
   describe "GET index" do
-    it "returns 200 for an authenticated admin", skip: "pre-existing: /dashboard/addons is now a 301 redirect to /dashboard/apps (Minitest also fails)" do
+    it "returns 200 for an authenticated admin" do
       sign_in user
       get "/dashboard/addons"
       expect(response).to have_http_status(:success)
     end
 
-    it "filters by group param", skip: "pre-existing: /dashboard/addons is now a 301 redirect to /dashboard/apps (Minitest also fails)" do
+    it "filters by group param" do
       sign_in user
       get "/dashboard/addons", params: { group: "app" }
+      expect(response).to have_http_status(:success)
+    end
+
+    # Regression: the grouped add-on count renders a pluralized i18n key
+    # (dashboard.databases.count) — every locale's plural data must carry
+    # both `one` and `other`, or count==1 raises I18n::InvalidPluralizationData
+    # (this app has no CLDR :id plural-rules gem, so :id uses the default
+    # pluralizer that requires `one`). The default-locale specs missed it
+    # because the count path only renders with an add-on present.
+    it "renders the grouped count without a pluralization error in id locale" do
+      sign_in user
+      database # ensure the team-two add-on fixture exists so the count path renders
+      get "/dashboard/addons", headers: { "Accept-Language" => "id" }, params: { locale: :id }
       expect(response).to have_http_status(:success)
     end
   end
