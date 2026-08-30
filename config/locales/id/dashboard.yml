@@ -109,6 +109,16 @@ id:
       linked_apps: "Aplikasi Terhubung"
       backups: "Backup"
       connection_info: "Info Koneksi"
+      new_addon: "+ Add-on baru"
+      unlinked: "Add-on tak tertaut"
+      unlinked_hint: "— tidak terhubung ke aplikasi mana pun. Tautkan atau hapus."
+      by_type: "Per tipe"
+      by_app: "Per aplikasi"
+      count:
+        other: "%{count} add-on"
+      new_addon_title: "Add-on Baru"
+      new_addon_subtitle: "Sediakan database atau layanan"
+      empty_body: "Tambah database, cache, dan layanan untuk aplikasimu."
       columns:
         addon: "Add-on"
         status: "Status"

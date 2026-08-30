@@ -11,15 +11,15 @@
 
   <div class="flex items-center justify-between mb-5">
     <h1 class="font-headline text-2xl font-extrabold tracking-tight"><%= t("dashboard.nav.addons") %></h1>
-    <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, data: { action: "click->slide-panel#open" }) do %>+ New add-on<% end %>
+    <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, data: { action: "click->slide-panel#open" }) do %><%= t("dashboard.databases.new_addon") %><% end %>
   </div>
 
   <% if @orphan_addons.any? %>
     <div>
       <div class="flex items-baseline gap-2 mb-2">
-        <h3 class="text-sm font-bold text-ink">Unlinked add-ons</h3>
+        <h3 class="text-sm font-bold text-ink"><%= t("dashboard.databases.unlinked") %></h3>
         <span class="text-xs text-dim"><%= @orphan_addons.size %></span>
-        <span class="text-xs text-dim">— not attached to any app. Link or destroy.</span>
+        <span class="text-xs text-dim"><%= t("dashboard.databases.unlinked_hint") %></span>
       </div>
       <%= render "addons_table", addons: @orphan_addons %>
     </div>
@@ -28,9 +28,9 @@
   <% if @databases.any? %>
     <%# Group toggle %>
     <div class="inline-flex border-1.5 border-ink rounded-md overflow-hidden shadow-brutal-sm">
-      <%= link_to "By type", dashboard_addons_path(group: "type"),
+      <%= link_to t("dashboard.databases.by_type"), dashboard_addons_path(group: "type"),
             class: "px-4 py-[7px] text-[13px] font-semibold border-r-1.5 border-ink transition-colors #{@group_by == 'type' ? 'bg-ink text-paper' : 'bg-paper text-dim hover:bg-bg-deep'}" %>
-      <%= link_to "By app", dashboard_addons_path(group: "app"),
+      <%= link_to t("dashboard.databases.by_app"), dashboard_addons_path(group: "app"),
             class: "px-4 py-[7px] text-[13px] font-semibold transition-colors #{@group_by == 'app' ? 'bg-ink text-paper' : 'bg-paper text-dim hover:bg-bg-deep'}" %>
     </div>
 
@@ -40,7 +40,7 @@
         <div>
           <div class="flex items-baseline gap-2 mb-2">
             <h3 class="text-sm font-bold text-ink<%= @group_by == 'type' ? ' capitalize' : '' %>"><%= group_name %></h3>
-            <span class="text-xs text-dim"><%= resources.size %> add-on<%= resources.size == 1 ? '' : 's' %></span>
+            <span class="text-xs text-dim"><%= t("dashboard.databases.count", count: resources.size) %></span>
           </div>
           <%= render "addons_table", addons: resources %>
         </div>
@@ -50,13 +50,13 @@
   <% else %>
     <%= render Molecules::PanelComponent.new(label: t("dashboard.databases.no_databases")) do %>
       <div class="px-6 py-12 text-center flex flex-col items-center gap-4">
-        <p class="text-sm text-dim">Add databases, caches, and services for your apps.</p>
-        <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, data: { action: "click->slide-panel#open" }) do %>+ New add-on<% end %>
+        <p class="text-sm text-dim"><%= t("dashboard.databases.empty_body") %></p>
+        <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, data: { action: "click->slide-panel#open" }) do %><%= t("dashboard.databases.new_addon") %><% end %>
       </div>
     <% end %>
   <% end %>
 
-  <%= render layout: "dashboard/shared/slide_panel", locals: { title: "New Add-on", subtitle: "Provision a database or service" } do %>
+  <%= render layout: "dashboard/shared/slide_panel", locals: { title: t("dashboard.databases.new_addon_title"), subtitle: t("dashboard.databases.new_addon_subtitle") } do %>
     <%= render "form", database: @database, apps: @apps, tiers_by_type: @tiers_by_type %>
   <% end %>
 </div>

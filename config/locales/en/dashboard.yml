@@ -112,6 +112,17 @@ en:
       linked_apps: "Linked Apps"
       backups: "Backups"
       connection_info: "Connection Info"
+      new_addon: "+ New add-on"
+      unlinked: "Unlinked add-ons"
+      unlinked_hint: "— not attached to any app. Link or destroy."
+      by_type: "By type"
+      by_app: "By app"
+      count:
+        one: "%{count} add-on"
+        other: "%{count} add-ons"
+      new_addon_title: "New Add-on"
+      new_addon_subtitle: "Provision a database or service"
+      empty_body: "Add databases, caches, and services for your apps."
       columns:
         addon: "Add-on"
         status: "Status"
