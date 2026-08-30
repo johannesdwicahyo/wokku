@@ -27,13 +27,13 @@
       # starts at servers.
       admin_nav = [
         (if respond_to?(:admin_root_path)
-          { label: "overview", key: :admin, href: admin_root_path, active: request.path == "/admin" }
+          { label: "Overview", key: :admin, href: admin_root_path, active: request.path == "/admin" }
         end),
-        { label: "servers",           key: :servers,           href: admin_servers_path,           active: request.path.start_with?("/admin/servers") },
-        { label: "cloud credentials", key: :cloud_credentials, href: admin_cloud_credentials_path, active: request.path.start_with?("/admin/cloud_credentials") },
-        { label: "users",             key: :users,             href: admin_users_path,             active: request.path.start_with?("/admin/users") },
+        { label: "Servers",           key: :servers,           href: admin_servers_path,           active: request.path.start_with?("/admin/servers") },
+        { label: "Cloud credentials", key: :cloud_credentials, href: admin_cloud_credentials_path, active: request.path.start_with?("/admin/cloud_credentials") },
+        { label: "Users",             key: :users,             href: admin_users_path,             active: request.path.start_with?("/admin/users") },
         (if respond_to?(:admin_root_path)
-          { label: "jobs", key: :jobs, href: "/admin/jobs", active: request.path.start_with?("/admin/jobs") }
+          { label: "Jobs", key: :jobs, href: "/admin/jobs", active: request.path.start_with?("/admin/jobs") }
         end)
       ].compact
 
@@ -42,7 +42,7 @@
       # layout's context. Rendered via the account: slot so it sits at
       # the bottom of the sidebar with its own divider.
       admin_account = [
-        { label: "← back to dashboard", key: :back_to_dashboard, href: dashboard_apps_path, active: false }
+        { label: "← Back to dashboard", key: :back_to_dashboard, href: dashboard_apps_path, active: false }
       ]
     %>
 
