@@ -12,7 +12,7 @@ export default class extends Controller {
     this.allRevealed = !this.allRevealed
     this.maskedValueTargets.forEach(el => el.classList.toggle("hidden", this.allRevealed))
     this.realValueTargets.forEach(el => el.classList.toggle("hidden", !this.allRevealed))
-    this.revealAllTextTarget.textContent = this.allRevealed ? "Hide Values" : "Reveal Values"
+    this.revealAllTextTarget.textContent = this.allRevealed ? "Hide values" : "Reveal values"
   }
 
   toggleOne(event) {

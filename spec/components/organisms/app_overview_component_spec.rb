@@ -30,7 +30,7 @@ RSpec.describe Organisms::AppOverviewComponent, type: :component do
 
   it "shows an empty add-ons hint when no addons attached" do
     render_inline(described_class.new(app: app))
-    expect(page).to have_text("// add-ons")
+    expect(page).to have_text("Add-ons")
     expect(page).to have_text(/no add-ons attached/i)
   end
 

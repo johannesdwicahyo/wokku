@@ -1,27 +1,27 @@
-<div id="<%= dom_id(domain) %>" class="px-6 py-3 hover:bg-bg-deep transition-colors font-mono">
+<div id="<%= dom_id(domain) %>" class="px-6 py-3 hover:bg-bg-deep transition-colors">
   <div class="flex items-center justify-between gap-3 flex-wrap">
     <div class="flex items-center gap-3 flex-wrap">
-      <span class="text-sm font-medium text-ink"><%= domain.hostname %></span>
+      <span class="text-sm font-medium text-ink font-mono"><%= domain.hostname %></span>
       <% if domain.ssl_enabled? %>
-        <span class="inline-flex items-center gap-1.5 text-xs text-success"><span class="w-1.5 h-1.5 bg-success"></span>ssl</span>
+        <%= render Atoms::StatusPillComponent.new(label: "SSL", tone: :success) %>
       <% end %>
       <% if domain.dns_verified? %>
-        <span class="inline-flex items-center gap-1.5 text-xs text-success"><span class="w-1.5 h-1.5 bg-success"></span>verified</span>
+        <%= render Atoms::StatusPillComponent.new(label: "Verified", tone: :success) %>
       <% else %>
-        <span class="inline-flex items-center gap-1.5 text-xs text-warn"><span class="w-1.5 h-1.5 bg-warn"></span>pending dns</span>
+        <%= render Atoms::StatusPillComponent.new(label: "Pending DNS", tone: :warn) %>
       <% end %>
     </div>
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-3 text-xs">
       <% if domain.pending_action == "ssl_enable" %>
         <%= render "dashboard/shared/spinning_button",
             label: "Issuing SSL",
-            classes: "px-2 py-1 text-xs text-accent border-1.5 border-ink bg-bg-deep" %>
+            classes: "px-2 py-1 text-xs text-accent border-1.5 border-ink bg-bg-deep rounded-md" %>
       <% elsif !domain.ssl_enabled? %>
-        <%= button_to "enable_ssl", ssl_dashboard_app_domain_path(app, domain), method: :post,
+        <%= button_to "Enable SSL", ssl_dashboard_app_domain_path(app, domain), method: :post,
             data: { turbo_submits_with: "Issuing SSL…" },
             class: "text-xs text-accent hover:underline transition cursor-pointer bg-transparent border-0" %>
       <% end %>
-      <%= link_to "remove", dashboard_app_domain_path(app, domain), data: { turbo_method: :delete, turbo_confirm: "Remove #{domain.hostname}?" }, class: "text-xs text-dim hover:text-danger transition" %>
+      <%= link_to "Remove", dashboard_app_domain_path(app, domain), data: { turbo_method: :delete, turbo_confirm: "Remove #{domain.hostname}?" }, class: "text-xs text-dim hover:text-danger transition" %>
     </div>
   </div>
 
@@ -32,15 +32,15 @@
       apex = !domain.hostname.include?(".") || domain.hostname.count(".") <= 1
       wokku_target = "#{app.name}.#{Wokku.config.canonical_domain}"
     %>
-    <div class="mt-3 border-1.5 border-warn bg-warn-soft px-4 py-3 text-xs">
-      <p class="text-[10px] uppercase tracking-widest text-warn font-bold mb-2">// add this DNS record at your registrar</p>
+    <div class="mt-3 border-1.5 border-warn bg-warn-soft rounded-md px-4 py-3 text-xs">
+      <p class="text-[10px] uppercase tracking-widest text-warn font-bold mb-2">Add this DNS record at your registrar</p>
       <% if apex %>
-        <p class="text-ink-soft">Add an <span class="text-ink font-bold">A record</span> for <span class="text-ink"><%= domain.hostname %></span> → <span class="text-accent select-all"><%= app.server&.host %></span></p>
-        <p class="text-[10px] text-dim mt-1">Or ALIAS/ANAME to <span class="select-all"><%= wokku_target %></span> if your DNS provider supports CNAME flattening.</p>
+        <p class="text-ink-soft">Add an <span class="text-ink font-bold">A record</span> for <span class="text-ink font-mono"><%= domain.hostname %></span> → <span class="text-accent font-mono select-all"><%= app.server&.host %></span></p>
+        <p class="text-[10px] text-dim mt-1">Or ALIAS/ANAME to <span class="font-mono select-all"><%= wokku_target %></span> if your DNS provider supports CNAME flattening.</p>
       <% else %>
-        <p class="text-ink-soft">Add a <span class="text-ink font-bold">CNAME</span> for <span class="text-ink"><%= domain.hostname %></span> → <span class="text-accent select-all"><%= wokku_target %></span></p>
+        <p class="text-ink-soft">Add a <span class="text-ink font-bold">CNAME</span> for <span class="text-ink font-mono"><%= domain.hostname %></span> → <span class="text-accent font-mono select-all"><%= wokku_target %></span></p>
       <% end %>
-      <p class="text-[10px] text-dim mt-2">Propagation usually takes 5-30 minutes. The pill flips to "verified" once DNS resolves correctly.</p>
+      <p class="text-[10px] text-dim mt-2">Propagation usually takes 5-30 minutes. The pill flips to "Verified" once DNS resolves correctly.</p>
     </div>
   <% end %>
 </div>

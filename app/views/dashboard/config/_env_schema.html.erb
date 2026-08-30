@@ -4,42 +4,40 @@
     required, otherwise yellow (recommended missing only). %>
 <% return if schema.required.empty? && schema.recommended.empty? %>
 
-<% tone = if !schema.valid?
-           { border: "border-danger", bg: "bg-danger-soft", text: "text-danger", label: "missing required" }
-         elsif schema.has_warnings?
-           { border: "border-warning", bg: "bg-warning-soft", text: "text-warning", label: "missing recommended" }
-         else
-           { border: "border-success", bg: "bg-success-soft", text: "text-success", label: "all set" }
-         end %>
+<% tone, tone_label = if !schema.valid?
+                        [:danger, "Missing required"]
+                      elsif schema.has_warnings?
+                        [:warn, "Missing recommended"]
+                      else
+                        [:success, "All set"]
+                      end %>
 
-<div class="border-1.5 border-ink bg-paper mb-6" data-testid="env-schema-panel">
-  <div class="px-6 py-4 border-b border-rule-soft flex items-center justify-between gap-3 flex-wrap">
+<div class="bg-paper border-1.5 border-ink rounded-md mb-6 overflow-hidden" data-testid="env-schema-panel">
+  <div class="px-6 py-4 border-b border-line flex items-center justify-between gap-3 flex-wrap">
     <div>
-      <h2 class="font-mono text-base font-semibold text-ink"># app_json.env</h2>
-      <p class="font-mono text-xs text-dim mt-1">
-        // <%= schema.required_set %>/<%= schema.total_required %> required vars set
+      <h2 class="font-headline text-base font-bold text-ink">app.json env</h2>
+      <p class="text-xs text-dim mt-1">
+        <%= schema.required_set %>/<%= schema.total_required %> required vars set
         <% if schema.has_warnings? %>· <%= schema.missing_recommended.size %> recommended unset<% end %>
       </p>
     </div>
-    <span class="font-mono text-[11px] uppercase tracking-widest font-bold px-3 py-1.5 border-1.5 <%= tone[:border] %> <%= tone[:bg] %> <%= tone[:text] %>">
-      <%= tone[:label] %>
-    </span>
+    <%= render Atoms::StatusPillComponent.new(label: tone_label, tone: tone) %>
   </div>
 
   <% if schema.missing_required.any? %>
-    <div class="px-6 py-4 border-b border-rule-soft">
-      <p class="font-mono text-xs text-dim mb-2 font-bold uppercase tracking-widest">// required, missing</p>
+    <div class="px-6 py-4 border-b border-line">
+      <p class="text-xs text-dim mb-2 font-bold uppercase tracking-widest">Required, missing</p>
       <ul class="space-y-2">
         <% schema.missing_required.each do |entry| %>
-          <li class="font-mono text-sm border-1.5 border-danger bg-paper px-3 py-2 flex items-center justify-between gap-3">
+          <li class="text-sm border-1.5 border-danger bg-danger-soft rounded-md px-3 py-2 flex items-center justify-between gap-3">
             <div class="min-w-0">
-              <span class="text-ink font-bold"><%= entry[:key] %></span>
+              <span class="text-ink font-bold font-mono"><%= entry[:key] %></span>
               <% if entry[:description].present? %>
                 <p class="text-dim text-xs mt-1 truncate"><%= entry[:description] %></p>
               <% end %>
             </div>
             <% if entry[:generator].present? %>
-              <span class="font-mono text-[10px] uppercase tracking-widest text-dim flex-shrink-0">// generated</span>
+              <span class="text-[10px] uppercase tracking-widest text-dim flex-shrink-0">Generated</span>
             <% end %>
           </li>
         <% end %>
@@ -49,11 +47,11 @@
 
   <% if schema.missing_recommended.any? %>
     <div class="px-6 py-4">
-      <p class="font-mono text-xs text-dim mb-2 font-bold uppercase tracking-widest">// recommended, unset</p>
+      <p class="text-xs text-dim mb-2 font-bold uppercase tracking-widest">Recommended, unset</p>
       <ul class="space-y-2">
         <% schema.missing_recommended.each do |entry| %>
-          <li class="font-mono text-sm border border-rule-soft bg-paper px-3 py-2">
-            <span class="text-ink"><%= entry[:key] %></span>
+          <li class="text-sm border border-line bg-paper rounded-md px-3 py-2">
+            <span class="text-ink font-mono"><%= entry[:key] %></span>
             <% if entry[:description].present? %>
               <span class="text-dim text-xs ml-2"><%= entry[:description] %></span>
             <% end %>

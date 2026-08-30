@@ -1,7 +1,7 @@
 <%#
-  Brutalist config vars (P5). config-vars + slide-panel controllers and
-  every data-config-vars-target / data-action preserved 1:1 from
-  index.OLD_DESIGN.html.erb (reveal toggles, inline edit modal, delete).
+  schdl config vars (U5 Task 3). config-vars + slide-panel controllers and
+  every data-config-vars-target / data-action preserved 1:1 — presentation
+  only. Env var VALUES stay mono (data); chrome de-mono'd.
 %>
 <%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :deploy) do %>
 <%= render Organisms::AppDeployComponent.new(app: @app, active: :config) do %>
@@ -13,86 +13,86 @@
   <%= render "dashboard/config/env_schema", schema: @env_schema, app: @app if @env_schema && !@env_schema.set_keys.empty? || (@env_schema && (@env_schema.required.any? || @env_schema.recommended.any?)) %>
 
   <%# Config Vars List %>
-  <div class="border-1.5 border-ink bg-paper mb-6">
-    <div class="px-6 py-4 border-b border-rule-soft flex items-center justify-between gap-3 flex-wrap">
+  <div class="bg-paper border-1.5 border-ink rounded-md mb-6 overflow-hidden">
+    <div class="px-6 py-4 border-b border-line flex items-center justify-between gap-3 flex-wrap">
       <div>
-        <h2 class="font-mono text-base font-semibold text-ink"># config_vars</h2>
-        <p class="font-mono text-xs text-dim mt-1">// environment variables for <span class="text-ink"><%= @app.name %></span></p>
+        <h2 class="font-headline text-base font-bold text-ink">Config vars</h2>
+        <p class="text-xs text-dim mt-1">Environment variables for <span class="text-ink font-medium"><%= @app.name %></span></p>
       </div>
       <div class="flex items-center gap-2">
         <% if @env_vars.any? %>
           <button data-action="click->config-vars#toggleAll" data-config-vars-target="revealAllBtn"
-                  class="inline-flex items-center px-3 py-1.5 font-mono text-xs text-ink border-1.5 border-ink bg-paper hover:bg-bg-deep transition-colors cursor-pointer">
-            <span data-config-vars-target="revealAllText">reveal_values</span>
+                  class="<%= Atoms::ButtonComponent.new(variant: :outline, size: :sm).classes %>">
+            <span data-config-vars-target="revealAllText">Reveal values</span>
           </button>
         <% end %>
-        <button data-action="click->slide-panel#open" class="inline-flex items-center px-3 py-1.5 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer">+ add_var</button>
+        <button data-action="click->slide-panel#open" class="<%= Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>">+ Add var</button>
       </div>
     </div>
 
     <% if @env_vars.any? %>
-      <div class="divide-y divide-rule-soft">
+      <div class="divide-y divide-line">
         <% @env_vars.each do |var| %>
-          <div class="px-6 py-3 flex items-center justify-between gap-3 hover:bg-bg-deep transition-colors group font-mono" data-config-vars-target="row">
-            <div class="flex items-center gap-4 flex-1 min-w-0">
-              <span class="text-sm font-medium text-accent shrink-0"><%= var.key %></span>
+          <div class="px-6 py-3 flex items-center justify-between gap-3 hover:bg-bg-deep transition-colors group" data-config-vars-target="row">
+            <div class="flex items-center gap-4 flex-1 min-w-0 font-mono">
+              <span class="text-sm font-semibold text-accent shrink-0"><%= var.key %></span>
               <span class="text-sm text-dim truncate" data-config-vars-target="maskedValue">••••••••</span>
               <span class="text-sm text-ink-soft truncate hidden" data-config-vars-target="realValue"><%= var.value %></span>
             </div>
             <div class="flex items-center gap-2 shrink-0 opacity-0 group-hover:opacity-100 transition text-xs">
               <button data-action="click->config-vars#toggleOne"
-                      class="px-2 py-1 text-dim hover:text-accent transition cursor-pointer" title="Reveal">reveal</button>
+                      class="px-2 py-1 text-dim hover:text-accent transition cursor-pointer" title="Reveal">Reveal</button>
               <button data-action="click->config-vars#edit"
                       data-var-id="<%= var.id %>" data-var-key="<%= var.key %>" data-var-value="<%= var.value %>"
-                      class="px-2 py-1 text-dim hover:text-accent transition cursor-pointer" title="Edit">edit</button>
-              <%= link_to "delete", dashboard_app_config_path(@app, var), data: { turbo_method: :delete, turbo_confirm: "Remove #{var.key}?" }, class: "px-2 py-1 text-dim hover:text-danger transition", title: "Delete" %>
+                      class="px-2 py-1 text-dim hover:text-accent transition cursor-pointer" title="Edit">Edit</button>
+              <%= link_to "Delete", dashboard_app_config_path(@app, var), data: { turbo_method: :delete, turbo_confirm: "Remove #{var.key}?" }, class: "px-2 py-1 text-dim hover:text-danger transition", title: "Delete" %>
             </div>
           </div>
         <% end %>
       </div>
     <% else %>
-      <div class="px-6 py-8 text-center font-mono text-sm text-dim">// no config vars set</div>
+      <div class="px-6 py-8 text-center text-sm text-dim">No config vars set.</div>
     <% end %>
   </div>
 
   <%# Edit Modal (hidden by default) %>
   <div data-config-vars-target="editModal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
     <div class="absolute inset-0 bg-ink/60" data-action="click->config-vars#closeEdit"></div>
-    <div class="relative bg-paper border-1.5 border-ink shadow-brutal-lg w-full max-w-lg mx-4 p-6">
-      <h3 class="font-mono text-base font-semibold text-ink mb-4"># edit_config_var</h3>
+    <div class="relative bg-paper border-1.5 border-ink rounded-md shadow-brutal-lg w-full max-w-lg mx-4 p-6">
+      <h3 class="font-headline text-base font-bold text-ink mb-4">Edit config var</h3>
       <%= form_with(url: "", method: :patch, data: { config_vars_target: "editForm" }, class: "space-y-4") do |f| %>
         <div>
-          <label class="block font-mono text-[10px] text-dim uppercase tracking-widest font-bold mb-1">Key</label>
+          <label class="block text-xs font-semibold text-ink-soft mb-1">Key</label>
           <input type="text" data-config-vars-target="editKey" disabled
-                 class="w-full bg-bg border-1.5 border-ink text-dim font-mono text-sm px-3 py-2 cursor-not-allowed">
+                 class="w-full bg-bg border-1.5 border-ink text-dim font-mono text-sm rounded-md px-3 py-2 cursor-not-allowed">
         </div>
         <div>
-          <label class="block font-mono text-[10px] text-dim uppercase tracking-widest font-bold mb-1">Value</label>
+          <label class="block text-xs font-semibold text-ink-soft mb-1">Value</label>
           <textarea name="env_var[value]" data-config-vars-target="editValue" rows="3"
-                    class="w-full bg-bg border-1.5 border-ink text-ink font-mono text-sm px-3 py-2 focus:outline-none focus:border-accent"></textarea>
+                    class="w-full bg-paper border-1.5 border-ink text-ink font-mono text-sm rounded-md px-3 py-2 focus:outline-none focus:shadow-brutal-sm"></textarea>
         </div>
         <div class="flex justify-end gap-3">
           <button type="button" data-action="click->config-vars#closeEdit"
-                  class="px-4 py-2 font-mono text-sm text-dim hover:text-ink transition cursor-pointer">Cancel</button>
-          <button type="submit" class="px-4 py-2 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer">Save</button>
+                  class="<%= Atoms::ButtonComponent.new(variant: :ghost, size: :sm).classes %>">Cancel</button>
+          <button type="submit" class="<%= Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>">Save</button>
         </div>
       <% end %>
     </div>
   </div>
 
-  <%= render layout: "dashboard/shared/slide_panel", locals: { title: "Add Config Var", subtitle: "New environment variable for #{@app.name}" } do %>
+  <%= render layout: "dashboard/shared/slide_panel", locals: { title: "Add config var", subtitle: "New environment variable for #{@app.name}" } do %>
     <%= form_with(model: EnvVar.new, url: dashboard_app_config_index_path(@app), class: "space-y-4") do |f| %>
       <div>
-        <%= f.label :key, class: "block font-mono text-[10px] text-dim uppercase tracking-widest font-bold mb-1" %>
-        <%= f.text_field :key, class: "w-full bg-bg border-1.5 border-ink text-ink font-mono text-sm px-3 py-2 focus:outline-none focus:border-accent", placeholder: "SECRET_KEY", autofocus: true %>
+        <%= f.label :key, class: "block text-xs font-semibold text-ink-soft mb-1" %>
+        <%= f.text_field :key, class: "w-full bg-paper border-1.5 border-ink text-ink font-mono text-sm rounded-md px-3 py-2 focus:outline-none focus:shadow-brutal-sm", placeholder: "SECRET_KEY", autofocus: true %>
       </div>
       <div>
-        <%= f.label :value, class: "block font-mono text-[10px] text-dim uppercase tracking-widest font-bold mb-1" %>
-        <%= f.text_area :value, rows: 4, class: "w-full bg-bg border-1.5 border-ink text-ink font-mono text-sm px-3 py-2 focus:outline-none focus:border-accent", placeholder: "value" %>
+        <%= f.label :value, class: "block text-xs font-semibold text-ink-soft mb-1" %>
+        <%= f.text_area :value, rows: 4, class: "w-full bg-paper border-1.5 border-ink text-ink font-mono text-sm rounded-md px-3 py-2 focus:outline-none focus:shadow-brutal-sm", placeholder: "value" %>
       </div>
       <div class="flex items-center gap-3">
-        <%= f.submit "Add Config Var", class: "px-4 py-2 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer" %>
-        <button type="button" data-action="click->slide-panel#close" class="font-mono text-sm text-dim hover:text-ink transition cursor-pointer">Cancel</button>
+        <%= f.submit "Add config var", class: Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>
+        <button type="button" data-action="click->slide-panel#close" class="<%= Atoms::ButtonComponent.new(variant: :ghost, size: :sm).classes %>">Cancel</button>
       </div>
     <% end %>
   <% end %>
