@@ -75,6 +75,7 @@ id:
         env: "Env var"
         manage: "Kelola →"
         branch: "Branch"
+        edit_branch: "Ubah branch"
         databases: "Database"
         domains: "Domain"
         deploys: "Deploy terakhir"

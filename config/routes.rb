@@ -50,6 +50,7 @@ Rails.application.routes.draw do
         post :unlock
         post :lock
         get  :panel
+        patch :deploy_branch, to: "apps#update_deploy_branch"
       end
       # Bundle v2 — dedicated upgrade actions. Single action per engine + verb.
       post "addons/postgres/upgrade",

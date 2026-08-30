@@ -15,7 +15,7 @@ module Dashboard
     before_action :run_onboarding_waypoints, only: [ :index ]
     before_action :reject_creation_during_deletion_pending, only: [ :create ]
     before_action :enforce_free_container_limit!, only: [ :create ]
-    before_action :set_app, only: [ :show, :destroy, :restart, :stop, :start, :toggle_https, :toggle_maintenance, :toggle_cdn, :transfer, :danger, :backup_now, :unlock, :lock, :panel ]
+    before_action :set_app, only: [ :show, :destroy, :restart, :stop, :start, :toggle_https, :toggle_maintenance, :toggle_cdn, :transfer, :danger, :backup_now, :unlock, :lock, :panel, :update_deploy_branch ]
 
     def index
       # Instant shell: only the cheap existence check + the inline
@@ -51,6 +51,16 @@ module Dashboard
       @domains_count   = @app.domains.count
       @databases_count = @app.app_databases.count
       render layout: false
+    end
+
+    # Inline record-panel edit (U5 locked decision #1): deploy_branch is the
+    # ONE safe click-to-edit field — a plain column with no fleet side
+    # effects, it only affects the next deploy. No converge/job here.
+    def update_deploy_branch
+      authorize @app, :update?
+      branch = params.require(:app_record).permit(:deploy_branch)[:deploy_branch].to_s.strip
+      @app.update(deploy_branch: branch) if branch.present?
+      redirect_to panel_dashboard_app_path(@app)
     end
 
     def new

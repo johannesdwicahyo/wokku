@@ -24,9 +24,21 @@
           <span class="text-dim font-medium"><%= t(".env") %></span>
           <span><%= @app.env_vars.count %> · <%= link_to t(".manage"), dashboard_app_config_index_path(@app), class: "text-ink font-semibold hover:underline" %></span>
         </div>
-        <div class="flex justify-between gap-3 text-[13px]">
+        <div class="flex justify-between gap-3 text-[13px]" data-controller="inline-edit">
           <span class="text-dim font-medium"><%= t(".branch") %></span>
-          <span><%= @app.deploy_branch %></span>
+          <span data-inline-edit-target="display" class="inline-flex items-center gap-1.5">
+            <%= @app.deploy_branch %>
+            <button type="button" data-action="click->inline-edit#edit" title="<%= t(".edit_branch") %>" aria-label="<%= t(".edit_branch") %>"
+                    class="text-dim hover:text-ink cursor-pointer">✎</button>
+          </span>
+          <%= form_with url: deploy_branch_dashboard_app_path(@app), method: :patch, scope: :app_record,
+                data: { inline_edit_target: "form", action: "keydown.esc->inline-edit#cancel" },
+                class: "hidden flex items-center gap-1.5" do |f| %>
+            <%= f.text_field :deploy_branch, value: @app.deploy_branch, data: { inline_edit_target: "input" },
+                  class: "w-28 border-1.5 border-ink rounded px-1.5 py-0.5 text-[13px] bg-paper focus:outline-none focus:border-accent" %>
+            <button type="submit" class="text-ink font-semibold hover:underline"><%= t("common.save") %></button>
+            <button type="button" data-action="click->inline-edit#cancel" class="text-dim hover:text-ink"><%= t("common.cancel") %></button>
+          <% end %>
         </div>
         <div class="flex justify-between gap-3 text-[13px]">
           <span class="text-dim font-medium"><%= t(".databases") %></span>

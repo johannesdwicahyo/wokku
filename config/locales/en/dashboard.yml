@@ -75,6 +75,7 @@ en:
         env: "Env vars"
         manage: "Manage →"
         branch: "Branch"
+        edit_branch: "Edit branch"
         databases: "Databases"
         domains: "Domains"
         deploys: "Recent deploys"
