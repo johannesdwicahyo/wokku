@@ -1,5 +1,5 @@
-<%# Brutalist (P6.5). form_with patch + hidden/checkbox pattern +
-    raw-report details preserved 1:1. %>
+<%# schdl (U5 Task 4). form_with patch + hidden/checkbox pattern +
+    raw-report details preserved 1:1 — presentation only. %>
 <%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :settings) do %>
 <%= render Organisms::AppSettingsComponent.new(app: @app, active: :checks) do %>
 <%= deferred_section "checks_report", src: dashboard_app_checks_path(@app, deferred: 1), skeleton: :card, target: "_top" %>

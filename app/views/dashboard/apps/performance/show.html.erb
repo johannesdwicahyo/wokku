@@ -16,14 +16,14 @@
       <% end %>
     </div>
 
-    <div class="mt-8 bg-paper border-1.5 border-ink p-4">
-      <h2 class="font-mono text-xs uppercase tracking-wide text-ink mb-2">Install snippet</h2>
-      <pre class="bg-bg-deep border-1.5 border-ink p-3 overflow-x-auto text-xs"><code><%= @snippet %></code></pre>
+    <div class="mt-8 bg-paper border-1.5 border-ink rounded-md p-4">
+      <h2 class="font-headline text-xs font-bold uppercase tracking-wide text-ink mb-2">Install snippet</h2>
+      <pre class="bg-bg-deep border-1.5 border-ink rounded-md p-3 overflow-x-auto text-xs font-mono"><code><%= @snippet %></code></pre>
       <%= button_to t("dashboard.performance.rotate_token", default: "Rotate token"),
                     rotate_token_dashboard_app_performance_path(@app),
                     method: :post,
                     data: { confirm: t("dashboard.performance.rotate_confirm", default: "Rotating invalidates any deployed script tags. Continue?") },
-                    class: "mt-3 inline-block px-3 py-1 bg-ink text-bg font-mono text-xs uppercase" %>
+                    class: "mt-3 #{Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes}" %>
     </div>
   <% end %>
 </div>

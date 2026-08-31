@@ -4,10 +4,10 @@
     tier = web_allocation&.dyno_tier
     total_dynos = @app.dyno_allocations.sum(:count)
   %>
-  <div class="border-1.5 border-ink bg-paper mb-6">
-    <div class="px-6 py-4 border-b border-rule-soft">
-      <h2 class="font-mono text-base font-semibold text-ink"># container</h2>
-      <p class="font-mono text-xs text-dim mt-1">// compute + memory allocated to <span class="text-ink"><%= @app.name %></span></p>
+  <div class="bg-paper border-1.5 border-ink rounded-md mb-6 overflow-hidden">
+    <div class="px-6 py-4 border-b border-line">
+      <h2 class="font-headline text-base font-bold text-ink">Container</h2>
+      <p class="text-xs text-dim mt-1">Compute + memory allocated to <span class="text-ink font-medium"><%= @app.name %></span></p>
     </div>
     <%
       # Bundle v2: render the existing DynoTier under the user-facing box
@@ -16,14 +16,14 @@
       user_plan = current_user.current_plan
     %>
     <% if tier %>
-      <div class="px-6 py-4 grid grid-cols-2 lg:grid-cols-4 gap-4 font-mono">
+      <div class="px-6 py-4 grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
           <p class="text-[10px] text-dim uppercase tracking-widest mb-1">Box size</p>
           <p class="text-sm font-bold text-ink capitalize"><%= current_box_size %></p>
         </div>
         <div>
           <p class="text-[10px] text-dim uppercase tracking-widest mb-1">Memory</p>
-          <p class="text-sm text-ink-soft"><%= tier.memory_mb >= 1024 ? "#{tier.memory_mb / 1024} GB" : "#{tier.memory_mb} MB" %></p>
+          <p class="text-sm text-ink-soft tabular-nums"><%= tier.memory_mb >= 1024 ? "#{tier.memory_mb / 1024} GB" : "#{tier.memory_mb} MB" %></p>
         </div>
         <div>
           <p class="text-[10px] text-dim uppercase tracking-widest mb-1">CPU</p>
@@ -32,19 +32,19 @@
         <div>
           <p class="text-[10px] text-dim uppercase tracking-widest mb-1">Plan</p>
           <p class="text-sm font-bold text-ink"><%= user_plan&.name || "Free" %></p>
-          <p class="text-[10px] text-dim mt-0.5">flat monthly price · no metering</p>
+          <p class="text-[10px] text-dim mt-0.5">Flat monthly price · no metering</p>
         </div>
       </div>
       <% if total_dynos > 1 || @app.dyno_allocations.count > 1 %>
-        <div class="px-6 py-3 border-t border-rule-soft flex flex-wrap items-center gap-2 font-mono text-xs text-dim">
+        <div class="px-6 py-3 border-t border-line flex flex-wrap items-center gap-2 text-xs text-dim">
           <span>Dynos:</span>
           <% @app.dyno_allocations.each do |alloc| %>
-            <span class="border border-rule-soft px-2 py-0.5"><%= alloc.process_type %> × <%= alloc.count %></span>
+            <span class="border border-line rounded-md px-2 py-0.5 font-mono tabular-nums"><%= alloc.process_type %> × <%= alloc.count %></span>
           <% end %>
         </div>
       <% end %>
     <% else %>
-      <div class="px-6 py-6 text-center font-mono text-xs text-dim">// no container tier assigned yet — deploy the app once to pick the free tier automatically</div>
+      <div class="px-6 py-6 text-center text-xs text-dim">No container tier assigned yet — deploy the app once to pick the free tier automatically.</div>
     <% end %>
 
     <%# Bundle v2 box-size picker. DynoTier rows are presented under the
@@ -52,8 +52,8 @@
         card shows a plan-aware availability badge so users can see at a
         glance which sizes their plan includes vs requires an upgrade. %>
     <% if @dyno_tiers.any? %>
-      <div class="px-6 py-4 border-t border-rule-soft">
-        <p class="font-mono text-xs text-dim mb-3">// change box size</p>
+      <div class="px-6 py-4 border-t border-line">
+        <p class="text-xs text-dim mb-3">Change box size</p>
         <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
           <% @dyno_tiers.each do |dt| %>
             <%
@@ -73,15 +73,15 @@
                             when "xlarge"   then "Team plan + buy extra"
                             end
             %>
-            <div class="border-1.5 p-3 transition font-mono <%= is_current ? 'border-accent bg-accent-soft' : (on_plan ? 'border-ink bg-paper hover:bg-bg-deep' : 'border-rule-soft bg-bg-deep opacity-60') %>">
+            <div class="border-1.5 rounded-md p-3 transition <%= is_current ? 'border-accent bg-accent-soft' : (on_plan ? 'border-ink bg-paper hover:bg-bg-deep' : 'border-line bg-bg-deep opacity-60') %>">
               <div class="flex items-baseline justify-between mb-1">
                 <h3 class="text-sm font-semibold text-ink capitalize"><%= box_size %></h3>
                 <% if is_current %>
-                  <span class="text-[10px] font-bold uppercase text-accent">current</span>
+                  <span class="text-[10px] font-bold uppercase text-accent">Current</span>
                 <% elsif on_plan %>
-                  <span class="text-[10px] font-bold uppercase text-ink-soft">included</span>
+                  <span class="text-[10px] font-bold uppercase text-ink-soft">Included</span>
                 <% else %>
-                  <span class="text-[10px] font-bold uppercase text-dim">upgrade</span>
+                  <span class="text-[10px] font-bold uppercase text-dim">Upgrade</span>
                 <% end %>
               </div>
               <ul class="text-[11px] text-dim space-y-0.5 mb-3">
@@ -99,14 +99,14 @@
                       params: { dyno_tier_id: dt.id, process_type: "web" },
                       method: :post,
                       data: { turbo_confirm: "Resize to #{box_size.capitalize} box (#{dt.memory_mb >= 1024 ? "#{dt.memory_mb / 1024}GB" : "#{dt.memory_mb}MB"}, #{dt.vcpu_label})?" },
-                      class: "w-full text-center px-2 py-1 text-[11px] font-semibold border-1.5 border-ink bg-paper text-ink hover:bg-bg-deep transition cursor-pointer" %>
+                      class: "w-full text-center px-2 py-1 text-[11px] font-semibold border-1.5 border-ink rounded-md bg-paper text-ink hover:bg-bg-deep transition cursor-pointer" %>
               <% elsif addon_avail && respond_to?(:dashboard_box_addons_path) %>
                 <%= button_to "Buy #{box_size} box",
                       dashboard_box_addons_path(size: box_size),
                       method: :post,
-                      class: "w-full text-center px-2 py-1 text-[11px] font-semibold border-1.5 border-ink bg-ink text-paper hover:bg-ink-soft transition cursor-pointer" %>
+                      class: "w-full text-center px-2 py-1 text-[11px] font-semibold border-1.5 border-ink rounded-md bg-ink text-paper hover:bg-ink-soft transition cursor-pointer" %>
               <% else %>
-                <p class="text-[10px] text-dim text-center px-1 py-1.5 border-1.5 border-rule-soft"><%= upgrade_msg %></p>
+                <p class="text-[10px] text-dim text-center px-1 py-1.5 border-1.5 border-line rounded-md"><%= upgrade_msg %></p>
               <% end %>
             </div>
           <% end %>

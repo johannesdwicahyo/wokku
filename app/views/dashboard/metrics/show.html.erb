@@ -1,8 +1,8 @@
 <%#
-  Brutalist metrics (P3c of redesign-c-full, 2026-05-17). All Ruby
-  computation blocks, line_chart calls and routes preserved 1:1 from
-  show.OLD_DESIGN.html.erb — only presentation repainted (chart
-  colours swapped to the brutalist accent palette).
+  schdl metrics (U5 Task 4). All Ruby computation blocks, line_chart
+  calls, and routes preserved 1:1 — presentation only. Chart chrome
+  (card wrapper, headings) restyled; the Chart.js dataset colours, grid,
+  and tick options are data-viz internals and are left untouched.
 %>
 <%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :performance) do %>
 <%= render Organisms::PerformanceTabsComponent.new(app: @app, active: :metrics) do %>
@@ -24,8 +24,8 @@
            elements: { point: { radius: 0 }, line: { tension: 0.3 } }
          }
        } %>
-    <div class="border-1.5 border-ink bg-paper p-6">
-      <h3 class="font-mono text-[10px] text-dim uppercase tracking-widest mb-4">cpu_usage · 24h</h3>
+    <div class="bg-paper border-1.5 border-ink rounded-md p-6">
+      <h3 class="text-[10px] text-dim uppercase tracking-widest font-bold mb-4">CPU usage · 24h</h3>
       <div data-controller="metrics-chart"
            data-metrics-chart-points-value="<%= @metrics.map { |m| [ m.recorded_at, m.cpu_percent ] }.to_json %>"
            data-metrics-chart-options-value="<%= cpu_opts.to_json %>"
@@ -40,8 +40,8 @@
            elements: { point: { radius: 0 }, line: { tension: 0.3 } }
          }
        } %>
-    <div class="border-1.5 border-ink bg-paper p-6">
-      <h3 class="font-mono text-[10px] text-dim uppercase tracking-widest mb-4">memory_usage · 24h</h3>
+    <div class="bg-paper border-1.5 border-ink rounded-md p-6">
+      <h3 class="text-[10px] text-dim uppercase tracking-widest font-bold mb-4">Memory usage · 24h</h3>
       <div data-controller="metrics-chart"
            data-metrics-chart-points-value="<%= @metrics.map { |m| [ m.recorded_at, (m.memory_usage.to_f / 1024 / 1024).round(1) ] }.to_json %>"
            data-metrics-chart-options-value="<%= mem_opts.to_json %>"
@@ -49,8 +49,8 @@
     </div>
   </div>
 <% else %>
-  <div class="mt-6 border-1.5 border-ink bg-paper p-6 text-center">
-    <p class="font-mono text-xs text-dim">// no historical data yet — metrics are collected every 5 minutes</p>
+  <div class="mt-6 bg-paper border-1.5 border-ink rounded-md p-6 text-center">
+    <p class="text-xs text-dim">No historical data yet — metrics are collected every 5 minutes.</p>
   </div>
 <% end %>
 <% end %>

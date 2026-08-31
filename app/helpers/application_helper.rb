@@ -14,7 +14,11 @@ module ApplicationHelper
     logs:     -> { Rails.application.routes.url_helpers.dashboard_app_logs_path(app) },
     metrics:  -> { Rails.application.routes.url_helpers.dashboard_app_metrics_path(app) },
     terminal: -> { Rails.application.routes.url_helpers.dashboard_app_terminal_path(app) },
-    scaling:  -> { Rails.application.routes.url_helpers.dashboard_app_scaling_path(app) }
+    # scaling#show is a dead-end redirect shell (ScalingController#show
+    # just redirects to Resources — process/box scaling now lives there).
+    # Point the sub-tab straight at the live page so it doesn't round-trip
+    # through the redirect (U5 Task 4, bug 3c).
+    scaling:  -> { Rails.application.routes.url_helpers.dashboard_app_resources_path(app) }
   }}
   SETTINGS_SECTION_PATHS = ->(app) { {
     domains:         -> { Rails.application.routes.url_helpers.dashboard_app_domains_path(app) },

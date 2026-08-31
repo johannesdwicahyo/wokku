@@ -12,7 +12,7 @@ RSpec.describe "Dashboard::Apps::Monitor", type: :request do
     it "renders the page with the empty-state banner when no buckets exist" do
       get dashboard_app_monitor_path(app_record)
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("no request data yet")
+      expect(response.body).to include("No request data yet")
     end
 
     it "renders stat tiles when aggregates exist" do
