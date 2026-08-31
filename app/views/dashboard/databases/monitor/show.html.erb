@@ -1,3 +1,8 @@
+<%#
+  schdl addon monitor (U5 Task 6). Snapshot math, sort links, and query
+  data preserved 1:1 — presentation only. Stat tiles already schdl
+  (Molecules::StatTileComponent); query table stays mono (data).
+%>
 <%
   fmt_bytes = ->(b) {
     return "—" unless b
@@ -32,13 +37,13 @@
 <div class="flex flex-col gap-6">
 
   <% if @latest.nil? && @latest_ok.nil? %>
-    <div class="border-1.5 border-warn bg-warn-soft px-5 py-4 font-mono text-xs text-ink">
-      // no snapshots yet · DatabaseStatsCollectorJob runs every 5 min · check back shortly
+    <div class="border-1.5 border-warn bg-warn-soft rounded-md px-5 py-4 text-xs text-ink">
+      no snapshots yet · DatabaseStatsCollectorJob runs every 5 min · check back shortly.
     </div>
   <% elsif @latest&.collection_error.present? %>
-    <div class="border-1.5 border-danger bg-bg px-5 py-4 font-mono text-xs">
-      <div class="text-danger uppercase tracking-widest text-[10px] mb-1">// collection_error</div>
-      <code class="text-ink"><%= @latest.collection_error %></code>
+    <div class="border-1.5 border-danger bg-bg rounded-md px-5 py-4 text-xs">
+      <div class="text-danger uppercase tracking-widest text-[10px] mb-1 font-bold">collection_error</div>
+      <code class="text-ink font-mono"><%= @latest.collection_error %></code>
     </div>
   <% end %>
 
@@ -48,20 +53,20 @@
           label: "Active Connections",
           value: @latest_ok&.active_connections.to_i,
           sub: @latest_ok&.max_connections ?
-                 "// / #{@latest_ok.max_connections} max" :
-                 "// no limit reported",
+                 "/ #{@latest_ok.max_connections} max" :
+                 "No limit reported",
           glyph: "⇄") %>
 
     <%= render Molecules::StatTileComponent.new(
           label: "#{@database.service_type == 'redis' ? 'Memory Used' : 'Database Size'}",
           value: fmt_bytes.call(@latest_ok&.db_size_bytes),
-          sub: "// total #{@database.service_type} #{@database.service_type == 'redis' ? 'memory' : 'volume'}",
+          sub: "Total #{@database.service_type} #{@database.service_type == 'redis' ? 'memory' : 'volume'}",
           glyph: "▢") %>
 
     <%= render Molecules::StatTileComponent.new(
           label: "Cache Hit Ratio",
           value: @latest_ok&.cache_hit_ratio ? "#{(@latest_ok.cache_hit_ratio * 100).round(1)}%" : "—",
-          sub: "// #{cache_label}",
+          sub: cache_label,
           tone: cache_tone,
           glyph: "%") %>
 
@@ -69,26 +74,26 @@
           label: "Monitoring Status",
           value: live ? "Live ●" : "Stale",
           sub: @last_seen_ago ?
-                 "// updated #{@last_seen_ago}m ago" :
-                 "// no data yet",
+                 "Updated #{@last_seen_ago}m ago" :
+                 "No data yet",
           tone: live ? :success : :warn,
           glyph: live ? "●" : "○") %>
   </div>
 
   <%# ── Query Performance / Slow Log ────────────────────────── %>
-  <div class="border-1.5 border-ink bg-paper">
-    <div class="px-6 py-4 border-b border-rule-soft flex flex-wrap items-center justify-between gap-3">
+  <div class="border-1.5 border-ink bg-paper rounded-md overflow-hidden">
+    <div class="px-6 py-4 border-b border-line flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h2 class="font-mono text-base font-semibold text-ink"># <%= @database.service_type == 'redis' ? 'slow_log' : 'query_performance' %></h2>
-        <p class="font-mono text-xs text-dim mt-1">
-          // <%= @database.service_type == 'redis' ? 'slowest commands (SLOWLOG GET 50)' : 'top 20 by selected sort · pg_stat_statements' %>
+        <h2 class="font-headline text-base font-bold text-ink"><%= @database.service_type == 'redis' ? 'Slow log' : 'Query performance' %></h2>
+        <p class="text-xs text-dim mt-1">
+          <%= @database.service_type == 'redis' ? 'Slowest commands (SLOWLOG GET 50)' : 'Top 20 by selected sort · pg_stat_statements' %>
         </p>
       </div>
-      <div class="flex items-center gap-1 font-mono">
+      <div class="flex items-center gap-1">
         <% [ [ "slowest", "Slowest" ], [ "most_time", "Most Time" ], [ "most_called", "Most Called" ] ].each do |key, label| %>
           <%= link_to label,
                 dashboard_addon_monitor_path(@database, sort: key),
-                class: "text-[10px] uppercase tracking-widest px-3 py-1.5 border #{@sort == key ? 'border-ink bg-ink text-paper' : 'border-rule-soft text-dim hover:border-ink hover:text-ink'}" %>
+                class: "text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-md border #{@sort == key ? 'border-ink bg-ink text-paper' : 'border-line text-dim hover:border-ink hover:text-ink'}" %>
         <% end %>
       </div>
     </div>
@@ -97,7 +102,7 @@
       <div class="overflow-x-auto">
         <table class="w-full font-mono text-xs">
           <thead>
-            <tr class="text-left text-[10px] text-dim tracking-widest uppercase border-b border-rule-soft">
+            <tr class="text-left text-[10px] text-dim tracking-widest uppercase border-b border-line">
               <th class="px-6 py-3 w-1/2">Query</th>
               <th class="px-3 py-3 text-right">Calls</th>
               <th class="px-3 py-3 text-right">Total Time</th>
@@ -107,7 +112,7 @@
           </thead>
           <tbody>
             <% @top_queries.each do |q| %>
-              <tr class="border-b border-rule-soft hover:bg-bg">
+              <tr class="border-b border-line hover:bg-bg-deep transition-colors">
                 <td class="px-6 py-3 text-ink break-all leading-relaxed">
                   <span class="line-clamp-2"><%= q["query"] %></span>
                 </td>
@@ -121,10 +126,10 @@
         </table>
       </div>
     <% else %>
-      <div class="px-6 py-8 font-mono text-xs text-dim text-center">
-        // no <%= @database.service_type == 'redis' ? 'slow log entries' : 'query stats' %> yet
+      <div class="px-6 py-8 text-xs text-dim text-center">
+        No <%= @database.service_type == 'redis' ? 'slow log entries' : 'query stats' %> yet.
         <% if @database.service_type == 'postgres' %>
-          <div class="mt-2 text-[10px]">// requires pg_stat_statements extension — enable via <code class="text-ink">ALTER SYSTEM SET shared_preload_libraries = 'pg_stat_statements';</code></div>
+          <div class="mt-2 text-[10px]">Requires pg_stat_statements extension — enable via <code class="text-ink font-mono">ALTER SYSTEM SET shared_preload_libraries = 'pg_stat_statements';</code></div>
         <% end %>
       </div>
     <% end %>
@@ -132,13 +137,13 @@
 
   <%# ── Redis: extra info ───────────────────────────────────── %>
   <% if @database.service_type == "redis" && @latest_ok&.raw_info&.any? %>
-    <div class="border-1.5 border-ink bg-paper px-6 py-5">
-      <div class="font-mono text-[10px] text-dim tracking-widest uppercase mb-3">// redis_info()</div>
-      <div class="grid grid-cols-2 md:grid-cols-3 gap-3 font-mono text-xs">
+    <div class="border-1.5 border-ink bg-paper rounded-md px-6 py-5">
+      <div class="text-[10px] text-dim tracking-widest uppercase font-bold mb-3">Redis info</div>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs">
         <% @latest_ok.raw_info.each do |k, v| %>
           <div>
             <div class="text-[10px] text-dim uppercase tracking-widest"><%= k.tr('_', ' ') %></div>
-            <div class="text-ink mt-1"><%= v %></div>
+            <div class="text-ink mt-1 font-mono"><%= v %></div>
           </div>
         <% end %>
       </div>

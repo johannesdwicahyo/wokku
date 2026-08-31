@@ -1,7 +1,7 @@
 <%#
-  Promoted connection-info panel — Supabase-style. Each field has its
-  own copy-to-clipboard button. Sensitive values (URLs with credentials,
-  password/secret/token keys) are masked with a reveal toggle.
+  schdl connection panel (U5 Task 6). Supabase-style: one row per field,
+  copy-to-clipboard + reveal-toggle Stimulus wiring preserved 1:1 —
+  presentation only. Values stay mono (data); chrome de-mono'd.
 %>
 <% if info.any? %>
   <%
@@ -9,45 +9,45 @@
     preferred = %w[dsn url host port database username user password]
     sorted = info.sort_by { |k, _| preferred.index(k.to_s.downcase) || preferred.size }
   %>
-  <div class="mb-8 border-1.5 border-ink bg-paper">
-    <div class="px-5 py-3 border-b border-rule-soft flex items-center justify-between font-mono">
-      <h2 class="text-base font-semibold text-ink"># connection</h2>
-      <span class="text-[10.5px] uppercase tracking-widest text-dim">// copy and paste into your app</span>
+  <div class="mb-8 border-1.5 border-ink bg-paper rounded-md overflow-hidden">
+    <div class="px-5 py-3 border-b border-line flex items-center justify-between">
+      <h2 class="font-headline text-base font-bold text-ink">Connection</h2>
+      <span class="text-[10.5px] uppercase tracking-widest text-dim">Copy and paste into your app</span>
     </div>
-    <div class="divide-y divide-rule-soft">
+    <div class="divide-y divide-line">
       <% sorted.each do |key, value| %>
         <% next if value.blank? %>
         <%
           sensitive = value.to_s.match?(/:\/\/[^@]+@/) || key.to_s.match?(/url|dsn|password|secret|token/i)
           field_id  = "addon-conn-#{database.id}-#{key.to_s.parameterize}"
         %>
-        <div class="px-5 py-3 flex items-center gap-4 font-mono">
+        <div class="px-5 py-3 flex items-center gap-4">
           <span class="text-[11px] uppercase tracking-widest text-dim w-32 shrink-0"><%= key.to_s.humanize %></span>
           <% if sensitive %>
             <div class="flex-1 min-w-0 flex items-center gap-2"
                  data-controller="reveal clipboard"
                  data-reveal-value-value="<%= value %>"
                  data-clipboard-text-value="<%= value %>">
-              <span data-reveal-target="display" class="text-xs text-ink-soft truncate select-all flex-1">••••••••••••••••</span>
+              <span data-reveal-target="display" class="font-mono text-xs text-ink-soft truncate select-all flex-1">••••••••••••••••</span>
               <button type="button"
                       data-reveal-target="toggle"
                       data-action="click->reveal#toggle"
-                      class="text-[10px] uppercase tracking-widest text-accent hover:underline shrink-0">reveal</button>
+                      class="text-[10px] uppercase tracking-widest text-accent hover:underline shrink-0">Reveal</button>
               <button type="button"
                       data-action="click->clipboard#copy"
-                      class="text-[10px] uppercase tracking-widest text-ink border-1.5 border-ink bg-paper px-2 py-0.5 hover:bg-bg-deep shrink-0">
-                <span data-clipboard-target="label">copy</span>
+                      class="text-[10px] uppercase tracking-widest text-ink border-1.5 border-ink bg-paper rounded-md px-2 py-0.5 hover:bg-bg-deep shrink-0">
+                <span data-clipboard-target="label">Copy</span>
               </button>
             </div>
           <% else %>
             <div class="flex-1 min-w-0 flex items-center gap-2"
                  data-controller="clipboard"
                  data-clipboard-text-value="<%= value %>">
-              <span class="text-xs text-ink-soft truncate select-all flex-1"><%= value %></span>
+              <span class="font-mono text-xs text-ink-soft truncate select-all flex-1"><%= value %></span>
               <button type="button"
                       data-action="click->clipboard#copy"
-                      class="text-[10px] uppercase tracking-widest text-ink border-1.5 border-ink bg-paper px-2 py-0.5 hover:bg-bg-deep shrink-0">
-                <span data-clipboard-target="label">copy</span>
+                      class="text-[10px] uppercase tracking-widest text-ink border-1.5 border-ink bg-paper rounded-md px-2 py-0.5 hover:bg-bg-deep shrink-0">
+                <span data-clipboard-target="label">Copy</span>
               </button>
             </div>
           <% end %>

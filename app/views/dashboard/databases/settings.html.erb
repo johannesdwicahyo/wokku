@@ -1,26 +1,33 @@
+<%#
+  schdl addon settings (U5 Task 6). Link/unlink app wiring, slide-panel
+  form, and the Danger Zone's confirm-delete Stimulus + button_to
+  method/turbo_frame/route preserved 1:1 — presentation only. Danger
+  Zone wrapped in Molecules::DangerZoneComponent (T1), mirroring the
+  app-danger conversion pattern.
+%>
 <%= render "header", database: @database, active: :settings %>
 
 <%# Linked Apps %>
 <div class="mb-8" data-controller="slide-panel">
-  <div class="flex items-center justify-between mb-3 font-mono">
-    <h2 class="text-base font-semibold text-ink"># <%= t("dashboard.databases.linked_apps") %></h2>
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="font-headline text-base font-bold text-ink"><%= t("dashboard.databases.linked_apps") %></h2>
     <% if @available_apps.any? %>
-      <button data-action="click->slide-panel#open" class="text-sm text-accent hover:underline cursor-pointer">+ link_app</button>
+      <button data-action="click->slide-panel#open" class="text-sm text-accent hover:underline cursor-pointer">+ Link app</button>
     <% end %>
   </div>
 
-  <div class="border-1.5 border-ink bg-paper overflow-hidden">
+  <div class="border-1.5 border-ink bg-paper rounded-md overflow-hidden">
     <% if @linked_apps.any? %>
-      <div class="divide-y divide-rule-soft">
+      <div class="divide-y divide-line">
         <% @linked_apps.each do |app| %>
-          <div class="flex items-center justify-between px-5 py-3 font-mono">
+          <div class="flex items-center justify-between px-5 py-3">
             <%= link_to app.name, dashboard_app_path(app), class: "text-sm text-ink hover:text-accent transition" %>
-            <%= button_to "unlink", unlink_dashboard_addon_path(@database, app_id: app.id), method: :post, data: { turbo_confirm: "Unlink #{app.name} from #{@database.name}?" }, class: "text-xs text-dim hover:text-danger transition cursor-pointer bg-transparent border-0" %>
+            <%= button_to "Unlink", unlink_dashboard_addon_path(@database, app_id: app.id), method: :post, data: { turbo_confirm: "Unlink #{app.name} from #{@database.name}?" }, class: "text-xs text-dim hover:text-danger transition cursor-pointer bg-transparent border-0" %>
           </div>
         <% end %>
       </div>
     <% else %>
-      <div class="px-5 py-8 text-center font-mono text-sm text-dim">// no apps linked yet</div>
+      <div class="px-5 py-8 text-center text-sm text-dim">No apps linked yet.</div>
     <% end %>
   </div>
 
@@ -28,12 +35,12 @@
     <%= render layout: "dashboard/shared/slide_panel", locals: { title: "Link App", subtitle: "Connect an app to #{@database.name}" } do %>
       <%= form_with(url: link_dashboard_addon_path(@database), method: :post, class: "space-y-4") do %>
         <div>
-          <label class="block font-mono text-[10px] font-bold text-dim mb-1.5 uppercase tracking-widest">Application</label>
+          <label class="block text-[10px] font-bold text-dim mb-1.5 uppercase tracking-widest">Application</label>
           <%= combobox_tag "app_id", @available_apps.map { |a| { value: a.id, label: a.name, description: a.server.name } }, placeholder: "Search apps…", required: true %>
         </div>
         <div class="flex items-center gap-2">
-          <%= submit_tag "Link App", class: "px-4 py-2.5 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer" %>
-          <button type="button" data-action="click->slide-panel#close" class="px-4 py-2.5 font-mono text-sm text-ink border-1.5 border-ink bg-paper hover:bg-bg-deep transition-colors cursor-pointer">Cancel</button>
+          <%= submit_tag "Link App", class: Atoms::ButtonComponent.new(variant: :primary, size: :md).classes %>
+          <button type="button" data-action="click->slide-panel#close" class="<%= Atoms::ButtonComponent.new(variant: :outline, size: :md).classes %>">Cancel</button>
         </div>
       <% end %>
     <% end %>
@@ -42,33 +49,32 @@
 
 <% unless @database.shared? %>
   <div class="mb-8">
-    <h2 class="font-mono text-base font-semibold text-ink mb-3"># sizing</h2>
-    <div class="border-1.5 border-ink bg-paper p-5 font-mono text-sm text-ink-soft">
+    <h2 class="font-headline text-base font-bold text-ink mb-3">Sizing</h2>
+    <div class="border-1.5 border-ink bg-paper rounded-md p-5 text-sm text-ink-soft">
       <p>Dedicated DB sizing follows your plan's box size. Change your app's box on the resources page, or upgrade your plan on
         <%= link_to "/dashboard/plan", (respond_to?(:dashboard_plan_path) ? dashboard_plan_path : "#"), class: "text-accent hover:underline" %>, to resize this database.</p>
     </div>
   </div>
 <% end %>
 
-<div class="mb-8">
-  <h2 class="font-mono text-base font-semibold text-danger mb-3"># danger zone</h2>
-  <div class="border-1.5 border-danger bg-danger-soft p-5">
-    <div class="flex items-start justify-between gap-4 flex-wrap">
-      <div class="font-mono text-sm text-ink-soft">
-        <p class="font-semibold text-ink mb-1">Delete this <%= @database.service_type %> add-on</p>
-        <p class="text-xs">All data is destroyed. Existing backups remain in your backup destination until they expire.</p>
-      </div>
-      <%= button_to "delete", dashboard_addon_path(@database),
-            method: :delete,
-            form: {
-              data: {
-                controller: "confirm-delete",
-                confirm_delete_name_value: @database.name,
-                confirm_delete_impact_value: "This will permanently delete the #{@database.service_type} database #{@database.name} and ALL its data. Existing backups will remain in your backup destination until they expire.",
-                confirm_delete_resource_value: "database"
-              }
-            },
-            class: "font-mono text-sm text-danger border-1.5 border-danger bg-paper hover:opacity-90 px-4 py-2 transition cursor-pointer flex-shrink-0" %>
-    </div>
+<%= render Molecules::DangerZoneComponent.new(
+      title: "Danger zone",
+      body: "All data is destroyed. Existing backups remain in your backup destination until they expire."
+    ) do %>
+  <div class="flex items-start justify-between gap-4 flex-wrap">
+    <p class="text-sm text-ink">
+      Delete this <span class="font-bold"><%= @database.service_type %></span> add-on, <span class="font-bold"><%= @database.name %></span>.
+    </p>
+    <%= button_to "Delete this add-on", dashboard_addon_path(@database),
+          method: :delete,
+          form: {
+            data: {
+              controller: "confirm-delete",
+              confirm_delete_name_value: @database.name,
+              confirm_delete_impact_value: "This will permanently delete the #{@database.service_type} database #{@database.name} and ALL its data. Existing backups will remain in your backup destination until they expire.",
+              confirm_delete_resource_value: "database"
+            }
+          },
+          class: Atoms::ButtonComponent.new(variant: :danger, size: :md).classes %>
   </div>
-</div>
+<% end %>
