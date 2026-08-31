@@ -1,24 +1,25 @@
 <%#
-  Brutalist logs (P3c of redesign-c-full, 2026-05-17). log-viewer +
-  slide-panel + clipboard wiring, combobox, helpers (log_line_class /
-  log_line_level) and routes preserved 1:1 from show.OLD_DESIGN.
+  schdl logs (U5 Task 5). log-viewer + slide-panel + clipboard wiring,
+  combobox, helpers (log_line_class / log_line_level) and routes
+  preserved 1:1 — presentation only. Log LINES stay mono (console data);
+  only the surrounding chrome is de-mono'd.
   Shell renders instantly; log-lines content is lazy-loaded via turbo-frame.
 %>
 <%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :runtime) do %>
 <%= render Organisms::AppRuntimeComponent.new(app: @app, active: :logs) do %>
-<div class="border-1.5 border-ink bg-paper" data-controller="log-viewer" data-log-viewer-level-value="all">
-  <div class="px-6 py-4 border-b border-rule-soft flex items-center justify-between gap-3 flex-wrap">
+<div class="border-1.5 border-ink bg-paper rounded-md overflow-hidden" data-controller="log-viewer" data-log-viewer-level-value="all">
+  <div class="px-6 py-4 border-b border-line flex items-center justify-between gap-3 flex-wrap">
     <div>
-      <h2 class="font-mono text-base font-semibold text-ink"># application_logs</h2>
-      <p class="font-mono text-xs text-dim mt-1">// recent logs for <span class="text-ink"><%= @app.name %></span></p>
+      <h2 class="font-headline text-base font-bold text-ink">Application logs</h2>
+      <p class="text-xs text-dim mt-1">Recent logs for <span class="text-ink font-medium"><%= @app.name %></span></p>
     </div>
     <div class="flex items-center gap-2">
       <button type="button"
               data-log-viewer-target="followButton"
               data-action="click->log-viewer#toggleFollow"
-              class="inline-flex items-center px-2.5 py-1 font-mono text-xs text-dim border-1.5 border-ink bg-paper hover:text-accent transition-colors cursor-pointer data-[active=true]:bg-ink data-[active=true]:text-success data-[active=true]:border-ink"
+              class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-ink-soft border-1.5 border-ink rounded-md bg-paper hover:bg-bg-deep transition-colors cursor-pointer data-[active=true]:bg-ink data-[active=true]:text-success data-[active=true]:border-ink"
               title="Auto-refresh every 5s">○ follow</button>
-      <a href="<%= dashboard_app_logs_path(@app) %>" data-turbo-action="replace" class="inline-flex items-center px-2.5 py-1 font-mono text-xs text-dim border-1.5 border-ink bg-paper hover:text-accent transition-colors cursor-pointer">↻ refresh</a>
+      <a href="<%= dashboard_app_logs_path(@app) %>" data-turbo-action="replace" class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-ink-soft border-1.5 border-ink rounded-md bg-paper hover:bg-bg-deep transition-colors cursor-pointer">↻ Refresh</a>
     </div>
   </div>
 
@@ -27,65 +28,63 @@
         client-side log-viewer filter still works on top for live narrowing,
         but full history search goes through the server with this form. %>
     <%= form_with url: dashboard_app_logs_path(@app), method: :get, local: true,
-                  class: "px-6 py-3 flex flex-wrap items-center gap-3 border-b border-rule-soft" do |f| %>
+                  class: "px-6 py-3 flex flex-wrap items-center gap-3 border-b border-line" do |f| %>
       <div class="relative flex-1 min-w-[200px]">
-        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-dim font-mono text-xs">/</span>
         <%= f.text_field :q, value: @search_query,
-              placeholder: "search 24h of history...",
-              class: "w-full pl-8 pr-9 py-1.5 bg-bg border-1.5 border-ink font-mono text-xs text-ink placeholder-dim focus:outline-none focus:border-accent" %>
+              placeholder: "Search 24h of history...",
+              class: "w-full px-3 py-1.5 bg-paper border-1.5 border-ink rounded-md text-xs text-ink placeholder:text-dim focus:outline-none focus:shadow-brutal-sm transition" %>
       </div>
-      <%= f.select :level, [ [ "all levels", "" ], [ "error", "error" ], [ "warn", "warn" ], [ "info", "info" ], [ "debug", "debug" ] ],
+      <%= f.select :level, [ [ "All levels", "" ], [ "Error", "error" ], [ "Warn", "warn" ], [ "Info", "info" ], [ "Debug", "debug" ] ],
             { selected: @level_filter || "" },
-            class: "py-1.5 px-2 bg-bg border-1.5 border-ink font-mono text-xs text-ink" %>
-      <%= f.submit "→ search", class: "py-1.5 px-3 bg-ink text-paper font-mono text-xs cursor-pointer hover:bg-ink-soft" %>
-      <%= link_to "live tail", dashboard_app_logs_path(@app, source: "live"),
-            class: "py-1.5 px-3 border-1.5 border-rule-soft text-dim font-mono text-xs hover:text-ink" %>
+            class: "py-1.5 px-2 bg-paper border-1.5 border-ink rounded-md text-xs text-ink" %>
+      <%= f.submit "Search", class: Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>
+      <%= link_to "Live tail", dashboard_app_logs_path(@app, source: "live"),
+            class: Atoms::ButtonComponent.new(variant: :ghost, size: :sm).classes %>
     <% end %>
   <% end %>
 
-  <div class="px-6 py-3 flex flex-wrap items-center gap-3 border-b border-rule-soft">
+  <div class="px-6 py-3 flex flex-wrap items-center gap-3 border-b border-line">
     <div class="relative flex-1 min-w-[200px]">
-      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-dim font-mono text-xs">$</span>
-      <input type="text" placeholder="filter visible logs (client-side)..."
+      <input type="text" placeholder="Filter visible logs..."
              data-log-viewer-target="search"
              data-action="input->log-viewer#filter"
-             class="w-full pl-8 pr-9 py-1.5 bg-bg border-1.5 border-ink font-mono text-xs text-ink placeholder-dim focus:outline-none focus:border-accent">
+             class="w-full pl-3 pr-9 py-1.5 bg-paper border-1.5 border-ink rounded-md text-xs text-ink placeholder:text-dim focus:outline-none focus:shadow-brutal-sm transition">
       <button type="button"
               data-log-viewer-target="clearSearch"
               data-action="click->log-viewer#clearSearch"
               style="visibility: hidden"
-              class="absolute right-2 top-1/2 -translate-y-1/2 text-dim hover:text-ink transition cursor-pointer font-mono text-xs"
+              class="absolute right-2 top-1/2 -translate-y-1/2 text-dim hover:text-ink transition cursor-pointer text-xs"
               title="Clear filter">✕</button>
     </div>
 
     <%# Level filter pills %>
-    <div class="flex items-center gap-1 font-mono text-[10px] font-medium">
+    <div class="flex items-center gap-1 text-[11px] font-medium">
       <% [
-        ["all", "all", "text-ink"],
-        ["error", "errors", "text-danger"],
-        ["warn", "warnings", "text-warn"],
-        ["info", "other", "text-dim"]
+        ["all", "All", "text-ink"],
+        ["error", "Errors", "text-danger"],
+        ["warn", "Warnings", "text-warn"],
+        ["info", "Other", "text-dim"]
       ].each do |level, label, color| %>
         <button type="button"
                 data-log-viewer-target="levelButton"
                 data-level="<%= level %>"
                 data-action="click->log-viewer#setLevel"
                 data-active="<%= level == "all" %>"
-                class="px-2 py-1 transition cursor-pointer border border-rule-soft hover:bg-bg-deep data-[active=true]:bg-ink data-[active=true]:text-bg data-[active=true]:border-ink <%= color %>">
+                class="px-2 py-1 rounded-md transition cursor-pointer border-1.5 border-transparent hover:bg-bg-deep data-[active=true]:bg-ink data-[active=true]:text-bg data-[active=true]:border-ink <%= color %>">
           <%= label %>
         </button>
       <% end %>
     </div>
 
     <%# Match counter %>
-    <span data-log-viewer-target="counter" class="font-mono text-[10px] text-dim tabular-nums"></span>
+    <span data-log-viewer-target="counter" class="text-[11px] text-dim tabular-nums"></span>
 
     <%# Line-buckets %>
-    <div class="flex items-center gap-1 font-mono">
-      <%= link_to dashboard_app_logs_path(@app, lines: 50), class: "text-[10px] px-2 py-1 border border-rule-soft #{(params[:lines] || '200') == '50' ? 'bg-ink text-bg' : 'text-dim'}" do %>50<% end %>
-      <%= link_to dashboard_app_logs_path(@app, lines: 100), class: "text-[10px] px-2 py-1 border border-rule-soft #{(params[:lines] || '200') == '100' ? 'bg-ink text-bg' : 'text-dim'}" do %>100<% end %>
-      <%= link_to dashboard_app_logs_path(@app, lines: 200), class: "text-[10px] px-2 py-1 border border-rule-soft #{(params[:lines] || '200') == '200' ? 'bg-ink text-bg' : 'text-dim'}" do %>200<% end %>
-      <%= link_to dashboard_app_logs_path(@app, lines: 500), class: "text-[10px] px-2 py-1 border border-rule-soft #{params[:lines] == '500' ? 'bg-ink text-bg' : 'text-dim'}" do %>500<% end %>
+    <div class="flex items-center gap-1">
+      <%= link_to dashboard_app_logs_path(@app, lines: 50), class: "text-[11px] px-2 py-1 rounded-md border-1.5 border-transparent #{(params[:lines] || '200') == '50' ? 'bg-ink text-bg' : 'text-dim hover:bg-bg-deep'}" do %>50<% end %>
+      <%= link_to dashboard_app_logs_path(@app, lines: 100), class: "text-[11px] px-2 py-1 rounded-md border-1.5 border-transparent #{(params[:lines] || '200') == '100' ? 'bg-ink text-bg' : 'text-dim hover:bg-bg-deep'}" do %>100<% end %>
+      <%= link_to dashboard_app_logs_path(@app, lines: 200), class: "text-[11px] px-2 py-1 rounded-md border-1.5 border-transparent #{(params[:lines] || '200') == '200' ? 'bg-ink text-bg' : 'text-dim hover:bg-bg-deep'}" do %>200<% end %>
+      <%= link_to dashboard_app_logs_path(@app, lines: 500), class: "text-[11px] px-2 py-1 rounded-md border-1.5 border-transparent #{params[:lines] == '500' ? 'bg-ink text-bg' : 'text-dim hover:bg-bg-deep'}" do %>500<% end %>
     </div>
   </div>
 

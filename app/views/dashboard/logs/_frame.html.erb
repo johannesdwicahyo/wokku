@@ -4,8 +4,8 @@
     <%# Persisted logs from the Log table (Vector-ingested). %>
     <% reversed = @persisted_logs.reverse %>
     <% if reversed.any? %>
-      <div class="text-[10px] text-dim mb-2">
-        // showing <%= reversed.size %> rows from
+      <div class="text-[10px] text-dim mb-2 font-sans">
+        Showing <%= reversed.size %> rows from
         <%= @since.strftime("%b %-d %H:%M") %> to <%= @until.strftime("%b %-d %H:%M") %><%= " · matching #{@search_query.inspect}" if @search_query.present? %>
       </div>
       <% reversed.each do |log_row| %>
@@ -17,7 +17,7 @@
         </div>
       <% end %>
     <% else %>
-      <p class="text-dim">// no matches in this window — try widening the time range or clearing the search</p>
+      <p class="text-dim font-sans">No matches in this window — try widening the time range or clearing the search.</p>
     <% end %>
   <% elsif @logs.present? %>
     <% @logs.each_line do |line| %>
@@ -26,7 +26,7 @@
            data-log-level="<%= log_line_level(line) %>"><%= line.rstrip %></div>
     <% end %>
   <% else %>
-    <p class="text-dim">// no logs available — the app may not have been deployed yet, or Vector hasn't shipped logs yet</p>
+    <p class="text-dim font-sans">No logs available — the app may not have been deployed yet, or Vector hasn't shipped logs yet.</p>
   <% end %>
 </div>
 <% end %>

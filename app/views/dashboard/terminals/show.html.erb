@@ -1,7 +1,9 @@
 <%#
-  Brutalist terminal (P6). data-controller="terminal" + all
+  schdl terminal (U5 Task 5). data-controller="terminal" + all
   data-terminal-* values/targets + reconnect action preserved 1:1
-  (xterm.js + ActionCable SSH session — do not rename).
+  (xterm.js + ActionCable SSH session — do not rename). Terminal output
+  itself stays mono (console data, rendered by xterm.js); only the
+  surrounding chrome is de-mono'd here.
 
   App-console mode (@app present) is wrapped in AppTabs + AppRuntime
   sub-nav so it lives inside the dashboard chrome alongside logs/
@@ -19,29 +21,29 @@
 
       <div class="space-y-3">
         <div class="flex items-center justify-between gap-3 flex-wrap">
-          <div class="flex items-center gap-2 font-mono text-xs text-dim">
-            <span>// console on <%= @server.name %></span>
+          <div class="flex items-center gap-2 text-xs text-dim">
+            <span>Console on <span class="text-ink font-medium"><%= @server.name %></span></span>
           </div>
-          <div class="flex items-center gap-3 font-mono">
+          <div class="flex items-center gap-3">
             <span data-terminal-target="status" class="text-xs text-warn">Connecting...</span>
-            <button data-action="click->terminal#reconnect" class="text-xs text-ink hover:bg-bg-deep transition px-2 py-1 border-1.5 border-ink cursor-pointer">Reconnect</button>
+            <button data-action="click->terminal#reconnect" class="<%= Atoms::ButtonComponent.new(variant: :outline, size: :sm).classes %>">Reconnect</button>
           </div>
         </div>
 
-        <details class="border-1.5 border-ink bg-paper">
-          <summary class="flex items-center gap-2 px-3 py-2 cursor-pointer select-none font-mono">
-            <span class="text-[10px] text-dim">This console runs inside your app's <span class="text-ink-soft">web</span> container. Run <span class="text-accent">ls</span>, <span class="text-accent">printenv</span>, or any binary your image provides — <span class="text-ink-soft">click for limits &amp; tips</span></span>
+        <details class="border-1.5 border-ink bg-paper rounded-md">
+          <summary class="flex items-center gap-2 px-3 py-2 cursor-pointer select-none">
+            <span class="text-[11px] text-dim">This console runs inside your app's <span class="text-ink-soft font-medium">web</span> container. Run <span class="font-mono text-accent">ls</span>, <span class="font-mono text-accent">printenv</span>, or any binary your image provides — <span class="text-ink-soft">click for limits &amp; tips</span></span>
           </summary>
-          <div class="px-3 pb-3 pt-1 font-mono text-[11px] text-dim grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
+          <div class="px-3 pb-3 pt-1 text-[11px] text-dim grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
             <div>
               <p class="font-semibold text-ink-soft mb-1">What works</p>
               <ul class="space-y-0.5 list-disc list-inside">
-                <li>Full interactive shell — anything your image's <span>$PATH</span> provides</li>
-                <li>Stack-specific REPLs (<span>rails c</span>, <span>python</span>, <span>node</span>, <span>bin/console</span>) if installed</li>
-                <li>Database clients via <span>$DATABASE_URL</span> (e.g. <span>psql $DATABASE_URL</span>) when the binary is available</li>
-                <li>All env vars are visible (<span>printenv</span>)</li>
+                <li>Full interactive shell — anything your image's <span class="font-mono">$PATH</span> provides</li>
+                <li>Stack-specific REPLs (<span class="font-mono">rails c</span>, <span class="font-mono">python</span>, <span class="font-mono">node</span>, <span class="font-mono">bin/console</span>) if installed</li>
+                <li>Database clients via <span class="font-mono">$DATABASE_URL</span> (e.g. <span class="font-mono">psql $DATABASE_URL</span>) when the binary is available</li>
+                <li>All env vars are visible (<span class="font-mono">printenv</span>)</li>
                 <li>Outbound network works</li>
-                <li>Debian/Ubuntu images include <span>bash</span>; Alpine images get <span>/bin/sh</span> — <span>apk add bash curl</span> for richer tools</li>
+                <li>Debian/Ubuntu images include <span class="font-mono">bash</span>; Alpine images get <span class="font-mono">/bin/sh</span> — <span class="font-mono">apk add bash curl</span> for richer tools</li>
               </ul>
             </div>
             <div>
@@ -56,7 +58,7 @@
           </div>
         </details>
 
-        <div class="border-1.5 border-ink bg-paper overflow-hidden"
+        <div class="border-1.5 border-ink bg-paper rounded-md overflow-hidden"
              data-controller="terminal"
              data-terminal-server-id-value="<%= @server.id %>"
              data-terminal-app-name-value="<%= @app.name %>">
@@ -75,19 +77,19 @@
       lives outside the app context. %>
   <div class="space-y-4">
     <div class="flex items-center justify-between gap-3 flex-wrap">
-      <div class="flex items-center gap-3 flex-wrap font-mono">
+      <div class="flex items-center gap-3 flex-wrap">
         <%= link_to "←", admin_server_path(@server), class: "text-dim hover:text-accent transition" %>
-        <h1 class="text-lg font-semibold text-ink"># server_terminal</h1>
-        <span class="text-[10px] text-danger uppercase tracking-widest font-bold border border-danger px-2 py-1">Admin Only</span>
-        <span class="text-xs text-dim"><%= @server.name %> (<%= @server.host %>)</span>
+        <h1 class="font-headline text-lg font-bold text-ink">Server terminal</h1>
+        <%= render Atoms::StatusPillComponent.new(label: "Admin only", tone: :danger) %>
+        <span class="text-xs text-dim"><%= @server.name %> (<span class="font-mono"><%= @server.host %></span>)</span>
       </div>
-      <div class="flex items-center gap-3 font-mono">
+      <div class="flex items-center gap-3">
         <span data-terminal-target="status" class="text-xs text-warn">Connecting...</span>
-        <button data-action="click->terminal#reconnect" class="text-xs text-ink hover:bg-bg-deep transition px-2 py-1 border-1.5 border-ink cursor-pointer">Reconnect</button>
+        <button data-action="click->terminal#reconnect" class="<%= Atoms::ButtonComponent.new(variant: :outline, size: :sm).classes %>">Reconnect</button>
       </div>
     </div>
 
-    <div class="border-1.5 border-ink bg-paper overflow-hidden"
+    <div class="border-1.5 border-ink bg-paper rounded-md overflow-hidden"
          data-controller="terminal"
          data-terminal-server-id-value="<%= @server.id %>">
       <div data-terminal-target="container" class="h-[calc(100vh-220px)] min-h-[300px] w-full"></div>
