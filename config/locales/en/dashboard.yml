@@ -169,6 +169,7 @@ en:
       all_templates: "All Templates"
     profile:
       title: "Settings"
+      subtitle: "Manage your account, security, API credentials, and billing."
       account: "Account"
       security: "Security"
       ssh_keys: "SSH Keys"

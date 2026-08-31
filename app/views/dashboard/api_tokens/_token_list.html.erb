@@ -1,12 +1,12 @@
-<%# Brutalist (P6). clipboard controller + form_tag turbo_frame +
-    button_to delete preserved 1:1. %>
+<%# schdl (U5 Task 7). form_tag turbo_frame + button_to delete + clipboard
+    wiring preserved 1:1 — presentation only. Token values stay mono (data). %>
 <% if local_assigns[:new_token] && new_token %>
-  <div class="border-1.5 border-success bg-success-soft p-4 mb-4">
-    <p class="font-mono text-xs text-ink font-bold mb-2">✓ Token created — copy it now, it won't be shown again</p>
+  <div class="border-1.5 border-success bg-success-soft rounded-md p-4 mb-4">
+    <p class="text-xs text-ink font-bold mb-2">Token created — copy it now, it won't be shown again</p>
     <div class="relative" data-controller="clipboard">
-      <code data-clipboard-target="source" class="block font-mono text-xs text-ink bg-paper border-1.5 border-ink px-3 py-2.5 select-all break-all pr-16"><%= new_token %></code>
+      <code data-clipboard-target="source" class="block font-mono text-xs text-ink bg-paper border-1.5 border-ink rounded-md px-3 py-2.5 select-all break-all pr-16"><%= new_token %></code>
       <button type="button" data-action="click->clipboard#copyFromSource"
-              class="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 font-mono text-[10px] font-bold text-accent border border-accent hover:bg-accent-soft transition">
+              class="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-[11px] font-bold text-accent border border-accent rounded hover:bg-accent-soft transition">
         <span data-clipboard-target="label">Copy</span>
       </button>
     </div>
@@ -16,18 +16,18 @@
 <%# Generate form %>
 <%= form_tag dashboard_api_tokens_path, method: :post, class: "flex gap-2 mb-4", data: { turbo_frame: "api_tokens" } do %>
   <input type="text" name="name" placeholder="Token name (e.g. claude-mcp)" required
-         class="flex-1 bg-bg border-1.5 border-ink px-3 py-1.5 font-mono text-xs text-ink placeholder-dim focus:outline-none focus:border-accent">
-  <button type="submit" class="px-3 py-1.5 font-mono text-xs font-bold text-bg bg-ink border-1.5 border-ink hover:bg-ink-soft transition">Generate</button>
+         class="flex-1 bg-paper border-1.5 border-ink rounded-md px-3 py-1.5 text-xs text-ink placeholder-dim focus:outline-none focus:shadow-brutal-sm">
+  <button type="submit" class="<%= Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>">Generate</button>
 <% end %>
 
 <%# Token list %>
 <% if tokens.any? %>
   <div class="space-y-2">
     <% tokens.each do |token| %>
-      <div class="flex items-center justify-between border-1.5 border-ink bg-bg px-3 py-2 font-mono">
+      <div class="flex items-center justify-between border-1.5 border-ink bg-bg rounded-md px-3 py-2">
         <div>
           <span class="text-xs font-bold text-ink"><%= token.name %></span>
-          <span class="text-[10px] text-dim ml-2">
+          <span class="text-[11px] text-dim ml-2">
             Created <%= time_ago_in_words(token.created_at) %> ago
             <% if token.last_used_at %>
               · Last used <%= time_ago_in_words(token.last_used_at) %> ago
@@ -35,13 +35,13 @@
           </span>
         </div>
         <%= button_to dashboard_api_token_path(token), method: :delete,
-            class: "text-[10px] text-danger hover:underline font-bold bg-transparent border-0 cursor-pointer",
+            class: "text-xs font-semibold text-dim hover:text-danger transition bg-transparent border-0 cursor-pointer",
             data: { turbo_frame: "api_tokens", turbo_confirm: "Revoke this token?" } do %>
-          revoke
+          Revoke
         <% end %>
       </div>
     <% end %>
   </div>
 <% else %>
-  <p class="font-mono text-xs text-dim text-center py-2">// no tokens yet — generate one above</p>
+  <p class="text-xs text-dim text-center py-2">No tokens yet — generate one above.</p>
 <% end %>

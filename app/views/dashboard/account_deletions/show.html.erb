@@ -1,106 +1,116 @@
 <%#
-  Brutalist account deletion (P5). account-deletion Stimulus controller
-  (email-gate: target input/submit, action check) preserved 1:1.
+  schdl (U5 Task 7). account-deletion Stimulus controller (email-gate:
+  target input/submit, action check), form_with url/method, and the
+  confirmation_email param name preserved 1:1 — presentation only.
+  The bespoke type-your-email confirm form is wrapped in
+  Molecules::DangerZoneComponent (T1) chrome (Locked #2/#3b): this page
+  IS the real destination profile#show and profile#edit's Danger Zones
+  now link to.
 %>
+<% content_for :title, "Delete account" %>
+
 <%= render Organisms::SettingsTabsComponent.new(active_tab: :account, show_admin: current_user&.admin?) do %>
 <div class="max-w-xl">
   <div class="mb-6">
-    <h1 class="font-mono text-3xl font-semibold tracking-tighter text-ink m-0">
-      <span class="text-dim"># </span><%= t("dashboard.account_deletions.show_title", default: "Delete Your Account") %>
-    </h1>
+    <h2 class="font-headline text-base font-bold text-ink"><%= t("dashboard.account_deletions.show_title", default: "Delete Your Account") %></h2>
   </div>
 
   <%# Warning banner %>
-  <div class="border-1.5 border-danger bg-danger-soft p-5 mb-6">
-    <p class="font-mono font-semibold text-danger mb-1">
-      ⚠ <%= t("dashboard.account_deletions.warning_heading", default: "This action is irreversible after 3 days.") %>
+  <div class="border-1.5 border-danger bg-danger-soft rounded-md p-5 mb-6">
+    <p class="font-bold text-danger mb-1">
+      <%= t("dashboard.account_deletions.warning_heading", default: "This action is irreversible after 3 days.") %>
     </p>
-    <p class="font-mono text-sm text-ink-soft">
+    <p class="text-sm text-ink-soft">
       <%= t("dashboard.account_deletions.warning_body",
             default: "All apps will be stopped immediately. Apps, databases, and all your data will be permanently deleted within 3 days. Your unused balance will be forfeit. This cannot be reversed after the grace period.") %>
     </p>
   </div>
 
   <%# Apps list %>
-  <div class="border-1.5 border-ink bg-paper p-5 mb-4">
-    <p class="font-mono text-sm font-semibold text-ink mb-3">
+  <div class="border-1.5 border-ink bg-paper rounded-md p-5 mb-4">
+    <p class="text-sm font-bold text-ink mb-3">
       <%= t("dashboard.account_deletions.apps_header", count: @apps.count, default: "Apps that will be deleted (#{@apps.count}):") %>
     </p>
     <% if @apps.any? %>
-      <ul class="space-y-1 font-mono">
+      <ul class="space-y-1">
         <% @apps.each do |app| %>
           <li class="text-sm text-ink-soft flex items-center gap-2"><span class="text-dim">▸</span><%= app.name %></li>
         <% end %>
       </ul>
     <% else %>
-      <p class="font-mono text-sm text-dim italic"><%= t("dashboard.account_deletions.no_apps", default: "No apps.") %></p>
+      <p class="text-sm text-dim italic"><%= t("dashboard.account_deletions.no_apps", default: "No apps.") %></p>
     <% end %>
   </div>
 
   <%# Databases list %>
-  <div class="border-1.5 border-ink bg-paper p-5 mb-4">
-    <p class="font-mono text-sm font-semibold text-ink mb-3">
+  <div class="border-1.5 border-ink bg-paper rounded-md p-5 mb-4">
+    <p class="text-sm font-bold text-ink mb-3">
       <%= t("dashboard.account_deletions.databases_header", count: @databases.count, default: "Databases that will be deleted (#{@databases.count}):") %>
     </p>
     <% if @databases.any? %>
-      <div class="border-1.5 border-warn bg-warn-soft p-3 mb-3 flex items-center gap-2">
-        <span class="font-mono text-sm text-ink">
-          ⚠ <%= t("dashboard.account_deletions.backup_callout", default: "Back up any important data first.") %>
+      <div class="border-1.5 border-warn bg-warn-soft rounded-md p-3 mb-3 flex items-center gap-2">
+        <span class="text-sm text-ink">
+          <%= t("dashboard.account_deletions.backup_callout", default: "Back up any important data first.") %>
           <%= link_to t("dashboard.account_deletions.backup_link", default: "Open backups"),
                       dashboard_addons_path,
                       class: "underline font-medium text-accent" %>
         </span>
       </div>
-      <ul class="space-y-1 font-mono">
+      <ul class="space-y-1">
         <% @databases.each do |db| %>
           <li class="text-sm text-ink-soft flex items-center gap-2"><span class="text-dim">▸</span><%= db.name %> <span class="text-dim text-xs">(<%= db.service_type %>)</span></li>
         <% end %>
       </ul>
     <% else %>
-      <p class="font-mono text-sm text-dim italic"><%= t("dashboard.account_deletions.no_databases", default: "No databases.") %></p>
+      <p class="text-sm text-dim italic"><%= t("dashboard.account_deletions.no_databases", default: "No databases.") %></p>
     <% end %>
   </div>
 
   <%# Balance forfeit %>
   <% if @has_balance %>
-    <div class="border-1.5 border-ink bg-paper p-5 mb-6">
-      <p class="font-mono text-sm font-semibold text-ink mb-1">
+    <div class="border-1.5 border-ink bg-paper rounded-md p-5 mb-6">
+      <p class="text-sm font-bold text-ink mb-1">
         <%= t("dashboard.account_deletions.balance_label", default: "Balance that will be forfeit:") %>
       </p>
-      <p class="font-mono text-danger font-bold text-lg"><%= @balance %></p>
+      <p class="text-danger font-bold text-lg"><%= @balance %></p>
     </div>
   <% end %>
 
-  <%# Confirmation form with Stimulus email-gate %>
-  <%= form_with url: dashboard_account_deletion_path, method: :post,
-        data: { controller: "account-deletion",
-                "account-deletion-email-value": current_user.email } do |f| %>
+  <%# Confirmation — bespoke type-your-email controller, wrapped in DangerZone chrome %>
+  <%= render Molecules::DangerZoneComponent.new(
+        title: t("dashboard.profile.danger_zone"),
+        body: t("dashboard.account_deletions.danger_zone_description")
+      ) do %>
+    <%= form_with url: dashboard_account_deletion_path, method: :post,
+          data: { controller: "account-deletion",
+                  "account-deletion-email-value": current_user.email } do |f| %>
 
-    <div class="border-1.5 border-ink bg-paper p-5 mb-4">
-      <%= label_tag :confirmation_email,
-            t("dashboard.account_deletions.confirm_label", default: "Type your email to confirm:"),
-            class: "block font-mono text-sm font-medium text-ink mb-2" %>
-      <%= text_field_tag :confirmation_email, nil,
-            placeholder: current_user.email,
-            autocomplete: "off",
-            class: "w-full bg-bg border-1.5 border-ink text-ink font-mono text-sm px-3 py-2 focus:outline-none focus:border-danger",
-            data: {
-              "account-deletion-target": "input",
-              action: "input->account-deletion#check"
-            } %>
-    </div>
+      <div class="mb-4">
+        <%= label_tag :confirmation_email,
+              t("dashboard.account_deletions.confirm_label", default: "Type your email to confirm:"),
+              class: "block text-xs font-semibold text-ink-soft mb-1" %>
+        <%= text_field_tag :confirmation_email, nil,
+              placeholder: current_user.email,
+              autocomplete: "off",
+              class: "w-full bg-paper border-1.5 border-ink rounded-md text-ink text-sm px-3 py-2 focus:outline-none focus:shadow-brutal-sm",
+              data: {
+                "account-deletion-target": "input",
+                action: "input->account-deletion#check"
+              } %>
+      </div>
 
-    <div class="flex items-center gap-4 pt-2">
-      <button type="submit"
-              disabled
-              data-account-deletion-target="submit"
-              class="px-5 py-2.5 bg-danger text-bg font-mono text-sm font-semibold border-1.5 border-danger hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">
-        <%= t("dashboard.account_deletions.submit_button", default: "Permanently delete my account") %>
-      </button>
-      <%= link_to t("dashboard.account_deletions.cancel_link", default: "Cancel"),
-                  dashboard_profile_path,
-                  class: "font-mono text-sm text-dim hover:text-ink transition" %>
-    </div>
+      <div class="flex items-center gap-4 pt-2">
+        <button type="submit"
+                disabled
+                data-account-deletion-target="submit"
+                class="<%= Atoms::ButtonComponent.new(variant: :danger, size: :md, class: "disabled:opacity-40 disabled:cursor-not-allowed").classes %>">
+          <%= t("dashboard.account_deletions.submit_button", default: "Permanently delete my account") %>
+        </button>
+        <%= link_to t("dashboard.account_deletions.cancel_link", default: "Cancel"),
+                    dashboard_profile_path,
+                    class: "text-sm text-dim hover:text-ink transition" %>
+      </div>
+    <% end %>
   <% end %>
 </div>
 <% end %>

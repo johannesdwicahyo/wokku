@@ -169,6 +169,7 @@ id:
       all_templates: "Semua Template"
     profile:
       title: "Pengaturan"
+      subtitle: "Kelola akun, keamanan, kredensial API, dan tagihan kamu."
       account: "Akun"
       security: "Keamanan"
       ssh_keys: "SSH Keys"
