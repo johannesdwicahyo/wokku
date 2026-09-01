@@ -95,13 +95,17 @@
   <% if show_footer? %>
     <div class="border-t border-line pt-2.5">
       <% if footer_links.any? || locale_toggle_path.present? %>
-        <div class="flex items-center gap-3 px-1 text-xs text-dim mb-2">
-          <% footer_links.each do |l| %>
-            <%= link_to l[:label], l[:href],
-                  class: "font-medium hover:text-ink hover:underline py-2 -my-2 px-1",
-                  **(l[:external] ? { target: "_blank", rel: "noopener" } : {}) %>
+        <div class="px-1 text-xs text-dim mb-2">
+          <% if footer_links.any? %>
+            <div class="flex items-center gap-3 mb-1.5">
+              <% footer_links.each do |l| %>
+                <%= link_to l[:label], l[:href],
+                      class: "font-medium hover:text-ink hover:underline py-2 -my-2 px-1",
+                      **(l[:external] ? { target: "_blank", rel: "noopener" } : {}) %>
+              <% end %>
+            </div>
           <% end %>
-          <span class="ml-auto flex items-center gap-1.5">
+          <div class="flex items-center gap-2">
             <button type="button"
                     data-action="click->theme#toggle"
                     aria-label="Toggle theme" title="Theme"
@@ -109,10 +113,11 @@
               <span class="[&>svg]:w-[13px] [&>svg]:h-[13px]"><%= render "shared/icons/moon" %></span>
             </button>
             <% if locale_toggle_path.present? %>
-              <%= button_to locale.to_s.upcase, locale_toggle_path, method: :post, title: locale_toggle_title,
+              <%= button_to locale.to_s.upcase, locale_toggle_path, method: :post,
+                    form_class: "contents", title: locale_toggle_title,
                     class: "w-7 h-7 grid place-items-center border-1.5 border-line rounded text-[10px] font-bold text-dim hover:border-ink hover:text-ink transition-colors cursor-pointer p-0" %>
             <% end %>
-          </span>
+          </div>
         </div>
       <% end %>
 
