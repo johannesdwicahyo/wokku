@@ -2,7 +2,7 @@
   <div class="flex items-center justify-between mb-5">
     <h1 class="font-headline text-2xl font-extrabold tracking-tight">
       <%= t("admin.users.index_title", default: "Users") %>
-      <span class="text-dim text-base font-normal ml-2">(<%= @total %>)</span>
+      <span class="text-sm font-semibold text-faint ml-1.5"><%= @total %></span>
     </h1>
   </div>
 
@@ -14,7 +14,7 @@
             placeholder: t("admin.users.search_placeholder", default: "Search by email…"),
             class: "w-full bg-paper border-1.5 border-ink rounded-md px-2.5 py-1.5 text-sm focus:shadow-brutal-sm" %>
     </label>
-    <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, type: "submit") do %>Search<% end %>
+    <%= render Atoms::ButtonComponent.new(variant: :outline, size: :sm, type: "submit") do %>Search<% end %>
     <% if @query.present? %>
       <%= render Atoms::ButtonComponent.new(variant: :ghost, size: :sm, href: admin_users_path) do %>Clear<% end %>
     <% end %>
