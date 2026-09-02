@@ -71,7 +71,7 @@
   --color-ink:          #171717;
   --color-ink-soft:     #3F3F3F;
   --color-dim:          #6B6B6B;
-  --color-faint:        #9A9A9A;
+  --color-faint:        #707070;
   --color-rule:         #E6E6E4;
   --color-rule-soft:    #F0F0EF;
   --color-line:         #E6E6E4;
@@ -95,7 +95,9 @@
   --font-sans-brutal: "Inter Tight", "Inter", system-ui, -apple-system, sans-serif;
   --font-mono-brutal: "JetBrains Mono", "IBM Plex Mono", "SF Mono", ui-monospace, monospace;
 
-  /* Brutalist hard shadows — ink-coloured in light, accent in dark. */
+  /* Brutalist hard shadows — ink-coloured in light; dropped entirely in
+     dark (near-black shadow on near-black bg is invisible), where the
+     1.5px ink borders carry elevation instead. */
   --shadow-brutal-sm: 2px 2px 0 var(--color-ink);
   --shadow-brutal:    3px 3px 0 var(--color-ink);
   --shadow-brutal-lg: 4px 4px 0 var(--color-ink);
@@ -231,8 +233,8 @@ select:focus-visible {
   --color-paper:        #1b1b1b;
   --color-ink:          #ebebeb;
   --color-ink-soft:     #a3a3a3;
-  --color-dim:          #737373;
-  --color-faint:        #5c5c5c;
+  --color-dim:          #8f8f8f;
+  --color-faint:        #868686;
   --color-rule:         #2a2a2a;
   --color-rule-soft:    #232323;
   --color-line:         #2a2a2a;
@@ -250,9 +252,9 @@ select:focus-visible {
   --color-danger-soft:  rgba(255, 110, 115, 0.14);
   --color-success:      #4ade80;
   --color-success-soft: rgba(74, 222, 128, 0.12);
-  --shadow-brutal-sm: 2px 2px 0 #000;
-  --shadow-brutal:    3px 3px 0 #000;
-  --shadow-brutal-lg: 4px 4px 0 #000;
+  --shadow-brutal-sm: none;
+  --shadow-brutal:    none;
+  --shadow-brutal-lg: none;
   --grid-dot:         rgba(255, 255, 255, 0.05);
 }
 

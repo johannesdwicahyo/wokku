@@ -1,7 +1,7 @@
 module Atoms
   class ButtonComponent < ApplicationComponent
     VARIANTS = {
-      primary:         "bg-ink text-paper border-1.5 border-ink shadow-brutal hover:bg-black",
+      primary:         "bg-ink text-paper border-1.5 border-ink shadow-brutal hover:bg-ink/90",
       outline:         "bg-paper text-ink border-1.5 border-ink shadow-brutal-sm hover:bg-bg-deep",
       inverse:         "bg-paper text-ink border-1.5 border-ink shadow-brutal-sm hover:bg-bg-deep",
       inverse_outline: "bg-transparent text-paper border-1.5 border-paper/40 hover:border-paper",
