@@ -14,10 +14,15 @@ module Admin
       # credential under their own team. Tenant ownership isn't load-
       # bearing here — admin can use any credential across servers.
       @credential = current_team.cloud_credentials.build(credential_params)
+      # Two callers post here: the index slide-panel (params[:after] ==
+      # "index") and the server-new inline form (after: "server", or no
+      # param at all — the pre-slide-panel default). Explicit param, not
+      # request.referer (brittle) — see task-4 brief.
+      redirect_target = params[:after] == "index" ? admin_cloud_credentials_path : new_admin_server_path
       if @credential.save
-        redirect_to new_admin_server_path, notice: "#{@credential.provider.capitalize} connected"
+        redirect_to redirect_target, notice: "#{@credential.provider.capitalize} connected"
       else
-        redirect_to new_admin_server_path, alert: @credential.errors.full_messages.join(", ")
+        redirect_to redirect_target, alert: @credential.errors.full_messages.join(", ")
       end
     end
 

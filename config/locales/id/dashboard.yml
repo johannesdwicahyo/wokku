@@ -143,6 +143,15 @@ id:
       unreachable: "Tidak Terjangkau"
       auth_failed: "Autentikasi Gagal"
       syncing: "Menyinkronkan"
+    cloud_credentials:
+      empty_headline: "Belum ada kredensial cloud."
+      empty_body: "Hubungkan API key Hetzner / DigitalOcean / Linode untuk menyediakan server dari dashboard."
+      panel_title: "Tambah Provider"
+      panel_subtitle: "Hubungkan API key untuk menyediakan server dari akun ini"
+      provider_label: "Provider"
+      name_label: "Nama (opsional)"
+      api_key_label: "API key"
+      submit: "Tambah Provider"
     billing:
       title: "Tagihan"
       current_plan: "Paket Saat Ini"

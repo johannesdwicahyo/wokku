@@ -44,10 +44,19 @@ RSpec.describe "Admin::CloudCredentials", type: :request do
       get admin_cloud_credentials_path
       expect(response).to have_http_status(:success)
     end
+
+    it "renders the slide-panel create form" do
+      sign_in_admin
+      get admin_cloud_credentials_path
+      expect(response.body).to include('data-controller="slide-panel"')
+      expect(response.body).to include('name="cloud_credential[provider]"')
+      expect(response.body).to include('name="cloud_credential[api_key]"')
+      expect(response.body).to include('name="after"').and include('value="index"')
+    end
   end
 
   describe "POST create" do
-    it "creates a credential and redirects to new server with a notice" do
+    it "creates a credential and redirects to new server with a notice (legacy default / server flow)" do
       sign_in_admin
       expect {
         post admin_cloud_credentials_path, params: {
@@ -59,6 +68,43 @@ RSpec.describe "Admin::CloudCredentials", type: :request do
       follow_redirect!
       expect(flash[:notice]).to match(/Hetzner connected/i)
       expect(CloudCredential.last.team).to eq(team)
+    end
+
+    it "creates a credential from the server-new inline form (after: server) and redirects there" do
+      sign_in_admin
+      expect {
+        post admin_cloud_credentials_path, params: {
+          cloud_credential: { provider: "vultr", api_key: "secret-key", name: "My Vultr" },
+          after: "server"
+        }
+      }.to change { CloudCredential.count }.by(1)
+
+      expect(response).to redirect_to(new_admin_server_path)
+    end
+
+    it "creates a credential from the index slide-panel (after: index) and redirects to the index" do
+      sign_in_admin
+      expect {
+        post admin_cloud_credentials_path, params: {
+          cloud_credential: { provider: "linode", api_key: "secret-key", name: "My Linode" },
+          after: "index"
+        }
+      }.to change { CloudCredential.count }.by(1)
+
+      expect(response).to redirect_to(admin_cloud_credentials_path)
+      follow_redirect!
+      expect(flash[:notice]).to match(/Linode connected/i)
+      expect(CloudCredential.last.team).to eq(team)
+    end
+
+    it "404s for a non-admin trying to create a credential" do
+      sign_in users(:one)
+      expect {
+        post admin_cloud_credentials_path, params: {
+          cloud_credential: { provider: "hetzner", api_key: "x", name: "Nope" }
+        }
+      }.not_to change { CloudCredential.count }
+      expect(response).to have_http_status(:not_found)
     end
 
     it "redirects with an alert when the credential is invalid (bad provider)" do

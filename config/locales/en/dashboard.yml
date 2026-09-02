@@ -143,6 +143,15 @@ en:
       unreachable: "Unreachable"
       auth_failed: "Auth Failed"
       syncing: "Syncing"
+    cloud_credentials:
+      empty_headline: "No cloud credentials yet."
+      empty_body: "Connect a Hetzner / DigitalOcean / Linode API key to provision servers from the dashboard."
+      panel_title: "Add provider"
+      panel_subtitle: "Connect an API key to provision servers from this account"
+      provider_label: "Provider"
+      name_label: "Name (optional)"
+      api_key_label: "API key"
+      submit: "Add provider"
     billing:
       title: "Billing"
       current_plan: "Current Plan"

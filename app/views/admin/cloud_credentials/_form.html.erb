@@ -1,0 +1,35 @@
+<%# Slide-panel create form on the cloud-credentials index. Posts to
+    Admin::CloudCredentialsController#create with after: "index" so the
+    controller redirects back here (the OTHER caller — the server-new
+    inline form at app/views/admin/servers/new.html.erb — sends
+    after: "server" and lands back on new_admin_server_path). %>
+<%= form_with url: admin_cloud_credentials_path, method: :post, class: "space-y-4" do |f| %>
+  <%= hidden_field_tag :after, "index" %>
+
+  <div>
+    <label class="block text-xs font-semibold text-ink-soft mb-1"><%= t("dashboard.cloud_credentials.provider_label") %></label>
+    <%= combobox_tag "cloud_credential[provider]",
+          [[ "Hetzner", "hetzner" ], [ "Vultr", "vultr" ], [ "DigitalOcean", "digitalocean" ], [ "Linode", "linode" ]],
+          placeholder: "Select provider", required: true %>
+  </div>
+
+  <div>
+    <%= f.label :name, t("dashboard.cloud_credentials.name_label"), class: "block text-xs font-semibold text-ink-soft mb-1" %>
+    <%= f.text_field :name, name: "cloud_credential[name]",
+          class: "w-full bg-paper border-1.5 border-ink rounded-md px-3 py-2 text-sm focus:shadow-brutal-sm",
+          placeholder: "Prod HZ" %>
+  </div>
+
+  <div>
+    <%= f.label :api_key, t("dashboard.cloud_credentials.api_key_label"), class: "block text-xs font-semibold text-ink-soft mb-1" %>
+    <%= f.password_field :api_key, name: "cloud_credential[api_key]",
+          class: "w-full bg-paper border-1.5 border-ink rounded-md px-3 py-2 text-sm focus:shadow-brutal-sm",
+          autocomplete: "off", required: true %>
+  </div>
+
+  <div class="flex justify-end gap-2 pt-2">
+    <button type="button" data-action="click->slide-panel#close"
+            class="<%= Atoms::ButtonComponent.new(variant: :ghost).classes %>">Cancel</button>
+    <%= f.submit t("dashboard.cloud_credentials.submit"), class: Atoms::ButtonComponent.new(variant: :primary).classes %>
+  </div>
+<% end %>
