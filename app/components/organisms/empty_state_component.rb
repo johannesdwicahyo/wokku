@@ -1,7 +1,8 @@
 module Organisms
-  # Brutalist empty state used across list views (templates, notifications,
+  # Empty state used across list views (templates, notifications,
   # cloud credentials, activities, backups, log drains, etc.). Single
-  # canonical pattern — no per-screen bespoke designs.
+  # canonical schdl pattern — no per-screen bespoke designs. CTAs render
+  # via Atoms::ButtonComponent (primary + optional outline secondary).
   class EmptyStateComponent < ApplicationComponent
     def initialize(headline:, body:, cta_label: nil, cta_href: nil, secondary_label: nil, secondary_href: nil)
       @headline = headline
