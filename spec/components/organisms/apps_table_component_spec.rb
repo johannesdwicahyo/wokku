@@ -15,6 +15,15 @@ RSpec.describe Organisms::AppsTableComponent, type: :component do
     expect(page).to have_css("th", text: "Status")
   end
 
+  it "renders each row as a focusable grid item with a status aria-label" do
+    render_inline(described_class.new(apps: [ app ]))
+
+    row = page.find("tr[data-grid-nav-target='row']")
+    expect(row["tabindex"]).to eq("0")
+    expect(row["role"]).to eq("button")
+    expect(row["aria-label"]).to eq("alpha, Running")
+  end
+
   it "renders an em dash when an app has no web dyno tier" do
     render_inline(described_class.new(apps: [ app ]))
     expect(page).to have_css("td", text: "—")
