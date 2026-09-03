@@ -28,7 +28,11 @@ export default class extends Controller {
     this.commands = []
     this.onKeydown = this.onKeydown.bind(this)
     this.onTriggerClick = this.onTriggerClick.bind(this)
-    document.addEventListener("keydown", this.onKeydown)
+    // Capture phase (3rd arg true): fire before bubble-phase handlers a
+    // browser extension may have installed to swallow ⌘K. Doesn't help
+    // when the *browser itself* reserves ⌘K (Arc) — that's what "/" and
+    // the click trigger are for.
+    document.addEventListener("keydown", this.onKeydown, true)
     // Mouse path: any [data-command-menu-open] element (the sidebar search
     // box) opens the menu. Essential because some browsers (Arc, Brave)
     // reserve ⌘K for their own UI, so the keyboard shortcut alone can be
@@ -37,20 +41,32 @@ export default class extends Controller {
   }
 
   disconnect() {
-    document.removeEventListener("keydown", this.onKeydown)
+    document.removeEventListener("keydown", this.onKeydown, true)
     document.removeEventListener("click", this.onTriggerClick)
     clearTimeout(this.timeout)
   }
 
-  // Global ⌘K / Ctrl+K opens; works even while typing in another field.
+  // ⌘K / Ctrl+K opens from anywhere (even while typing). "/" also opens —
+  // a browser-proof fallback for setups that reserve ⌘K — but only when
+  // not already typing into a field, so users can still type a slash.
   onKeydown(event) {
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+    const cmdK = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k"
+    const slash = event.key === "/" &&
+      !event.metaKey && !event.ctrlKey && !event.altKey &&
+      !this.isTypingContext(event.target)
+    if (cmdK || slash) {
       event.preventDefault()
       this.open()
     } else if (event.key === "Escape" && this.isOpen()) {
       event.preventDefault()
       this.close()
     }
+  }
+
+  isTypingContext(el) {
+    if (!el) return false
+    const tag = el.tagName
+    return el.isContentEditable || tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT"
   }
 
   onTriggerClick(event) {
