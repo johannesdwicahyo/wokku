@@ -33,9 +33,9 @@ RSpec.describe Organisms::ConsoleSidebarComponent, type: :component do
     expect(page).to have_link("+ New workspace", href: "/dashboard/workspaces/new")
   end
 
-  it "renders the search field when a search url is given" do
+  it "renders the command-menu trigger when a search url is given" do
     render_inline(described_class.new(groups: groups, search_url: "/dashboard/apps/search", search_placeholder: "search"))
-    expect(page).to have_css("[data-controller='app-search']")
+    expect(page).to have_css("button[data-command-menu-open]")
     expect(page).to have_text("⌘K")
   end
 

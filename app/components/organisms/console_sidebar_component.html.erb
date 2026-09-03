@@ -51,21 +51,18 @@
     <% end %>
   </div>
 
-  <%# App search — ⌘K field per spec §1. The kbd hint is cosmetic until U6
-      wires the actual command menu. %>
+  <%# App search — ⌘K field per spec §1. This is the command menu's trigger:
+      clicking it opens the same palette as ⌘K (command_menu_controller
+      delegates clicks on [data-command-menu-open]). A mouse path matters
+      because some browsers reserve ⌘K for their own UI. %>
   <% if search_url.present? %>
-    <div class="flex items-center gap-2 mx-0 mb-2.5 px-2.5 py-1.5 border-1.5 border-line rounded-md bg-bg text-[13px] text-faint relative"
-         data-controller="app-search" data-app-search-url-value="<%= search_url %>">
+    <button type="button" data-command-menu-open
+            aria-label="<%= search_placeholder %>"
+            class="flex items-center gap-2 w-full mx-0 mb-2.5 px-2.5 py-1.5 border-1.5 border-line rounded-md bg-bg text-[13px] text-faint cursor-pointer hover:border-ink transition-colors">
       <span class="w-3.5 h-3.5 [&>svg]:w-3.5 [&>svg]:h-3.5"><%= render "shared/icons/search" %></span>
-      <input type="text"
-             placeholder="<%= search_placeholder %>"
-             data-app-search-target="input"
-             data-action="input->app-search#filter keydown->app-search#navigate focus->app-search#filter"
-             class="flex-1 bg-transparent border-0 outline-none text-dim text-xs placeholder:text-dim focus:text-ink p-0">
+      <span class="flex-1 text-left text-dim text-xs"><%= search_placeholder %></span>
       <kbd class="ml-auto text-[10.5px] font-semibold text-dim border border-line rounded bg-paper px-1.5">⌘K</kbd>
-      <div data-app-search-target="results"
-           class="app-search-results-panel hidden absolute top-full left-0 right-0 mt-2 z-50"></div>
-    </div>
+    </button>
   <% end %>
 
   <%# Nav groups — first group unlabeled (objects), later groups labeled. %>

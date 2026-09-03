@@ -27,11 +27,18 @@ export default class extends Controller {
     this.selectedIndex = -1
     this.commands = []
     this.onKeydown = this.onKeydown.bind(this)
+    this.onTriggerClick = this.onTriggerClick.bind(this)
     document.addEventListener("keydown", this.onKeydown)
+    // Mouse path: any [data-command-menu-open] element (the sidebar search
+    // box) opens the menu. Essential because some browsers (Arc, Brave)
+    // reserve ⌘K for their own UI, so the keyboard shortcut alone can be
+    // swallowed before the page ever sees it.
+    document.addEventListener("click", this.onTriggerClick)
   }
 
   disconnect() {
     document.removeEventListener("keydown", this.onKeydown)
+    document.removeEventListener("click", this.onTriggerClick)
     clearTimeout(this.timeout)
   }
 
@@ -43,6 +50,13 @@ export default class extends Controller {
     } else if (event.key === "Escape" && this.isOpen()) {
       event.preventDefault()
       this.close()
+    }
+  }
+
+  onTriggerClick(event) {
+    if (event.target.closest("[data-command-menu-open]")) {
+      event.preventDefault()
+      this.open()
     }
   }
 
