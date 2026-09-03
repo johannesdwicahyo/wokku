@@ -30,10 +30,11 @@ export default class extends Controller {
         event.preventDefault()
         rows[rows.length - 1]?.focus()
         break
+      case "Enter":
       case " ":
-        // Enter already fires a native click on a focusable element (which
-        // record-panel#show listens for) — only Space needs a manual
-        // trigger, and only after preventDefault so it doesn't scroll.
+        // A <tr role="button"> gets no native click from Enter/Space (only
+        // real <button>/<a> do), so WAI-ARIA requires handling both here.
+        // preventDefault stops Space from scrolling the page.
         event.preventDefault()
         event.target.click()
         break
