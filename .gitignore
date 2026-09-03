@@ -15,3 +15,9 @@ harness/log
 # Test-only: engine symlinked into the harness so Rails.root.join("engines/wokku/...") specs resolve
 harness/engines
 harness/spec/fixtures
+
+# Superpowers/SDD scratch workspace (brainstorm mockups, ledgers, server pids)
+.superpowers/
+
+# Compiled Tailwind output (regenerated at build time)
+harness/app/assets/builds/
