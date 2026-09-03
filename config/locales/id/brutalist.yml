@@ -145,6 +145,12 @@ id:
       footer:
         docs: "Dokumentasi"
         support: "Dukungan"
+    command:
+      placeholder: "Ketik perintah atau cari aplikasi…"
+      nav: "Navigasi"
+      apps: "Aplikasi"
+      actions: "Aksi"
+      empty: "Tidak ada yang cocok"
     topbar:
       search: "cari app..."
       beta: "wokku.cloud lagi public beta — belum buat workload production."

@@ -145,6 +145,12 @@ en:
       footer:
         docs: "Docs"
         support: "Support"
+    command:
+      placeholder: "Type a command or search apps…"
+      nav: "Navigate"
+      apps: "Apps"
+      actions: "Actions"
+      empty: "No matches"
     topbar:
       search: "search apps..."
       beta: "wokku.cloud is in public beta — not for production workloads yet."
