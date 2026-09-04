@@ -1,10 +1,10 @@
 <aside class="sticky top-[100px] h-[calc(100vh-128px)] overflow-y-auto py-10 pr-2"
        data-controller="docs-sidebar">
-  <div class="font-mono text-[10px] text-dim tracking-widest uppercase mb-3"><%= t("docs.sidebar.label", default: "Docs") %></div>
+  <div class="text-[10px] text-dim tracking-widest uppercase mb-3"><%= t("docs.sidebar.label", default: "Docs") %></div>
 
   <% sidebar.each do |section| %>
     <details class="cat" <%= "open" if section_open?(section) %>>
-      <summary class="flex items-center gap-2 px-3 py-1.5 font-mono text-[11px] text-dim tracking-widest uppercase select-none cursor-pointer">
+      <summary class="flex items-center gap-2 px-3 py-1.5 text-[11px] text-dim tracking-widest uppercase select-none cursor-pointer">
         <span class="caret">▸</span><span><%= section["title"] %></span>
       </summary>
       <div class="mt-1 mb-3">

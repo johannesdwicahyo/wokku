@@ -30,29 +30,29 @@
   <% if defined?(Organisms::SiteNavComponent) %>
     <%= render Organisms::SiteNavComponent.new(active: :docs) %>
   <% else %>
-    <div class="border-b border-rule-soft px-8 py-3"><a href="/" class="font-mono text-sm font-bold">wokku</a></div>
+    <div class="border-b border-line-soft px-8 py-3"><a href="/" class="font-sans text-sm font-bold">wokku</a></div>
   <% end %>
 
   <%# Docs sub-bar: breadcrumb path + search. Language toggle lives in
       SiteNavComponent (top right) — no duplicate here. %>
-  <div class="border-y border-rule-soft bg-bg/95 backdrop-blur-sm sticky top-0 z-20">
+  <div class="border-y border-line-soft bg-bg/95 backdrop-blur-sm sticky top-0 z-20">
     <div class="max-w-[1440px] mx-auto flex items-center justify-between h-12 px-8 gap-4">
-      <a href="/docs" class="font-mono text-xs text-dim hover:text-ink transition uppercase tracking-widest">~/docs</a>
+      <a href="/docs" class="text-xs text-dim hover:text-ink transition uppercase tracking-widest">~/docs</a>
 
       <div class="relative" data-controller="docs-search">
         <input type="text"
                placeholder="Search docs..."
-               class="w-64 bg-paper border-1.5 border-ink rounded-md px-3 py-1.5 font-mono text-xs text-ink placeholder:text-dim focus:outline-none focus:shadow-brutal-sm"
+               class="w-64 bg-paper border-1.5 border-ink rounded-md px-3 py-1.5 text-xs text-ink placeholder:text-dim focus:outline-none focus:shadow-brutal-sm"
                data-docs-search-target="input"
                data-action="input->docs-search#search keydown->docs-search#navigate">
-        <kbd class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-dim border border-rule-soft rounded px-1.5 py-0.5 pointer-events-none font-mono bg-bg-deep">/</kbd>
+        <kbd class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-dim border border-line-soft rounded px-1.5 py-0.5 pointer-events-none bg-bg-deep">/</kbd>
         <div class="absolute top-full right-0 mt-2 w-80 bg-paper border-1.5 border-ink rounded-md shadow-brutal-sm overflow-hidden hidden" data-docs-search-target="results"></div>
       </div>
     </div>
   </div>
 
   <%# Mobile sidebar toggle %>
-  <button class="lg:hidden fixed bottom-4 right-4 z-40 bg-ink text-bg rounded-full w-12 h-12 flex items-center justify-center shadow-brutal font-mono text-lg"
+  <button class="lg:hidden fixed bottom-4 right-4 z-40 bg-ink text-bg rounded-full w-12 h-12 flex items-center justify-center shadow-brutal text-lg"
           data-action="click->docs-sidebar#toggleMobile"
           aria-label="Toggle sidebar">≡</button>
 
