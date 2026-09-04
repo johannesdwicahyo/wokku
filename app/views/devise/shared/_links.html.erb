@@ -1,13 +1,13 @@
 <div class="mt-6 space-y-3 text-center text-sm">
   <%- if controller_name != 'sessions' %>
     <div>
-      <%= link_to t("auth.sign_in"), new_session_path(resource_name), class: "text-[#c0c1ff] hover:text-[#c0c1ff]" %>
+      <%= link_to t("auth.sign_in"), new_session_path(resource_name), class: "text-accent hover:text-accent" %>
     </div>
   <% end %>
 
   <%- if devise_mapping.lockable? && resource_class.unlock_strategy_enabled?(:email) && controller_name != 'unlocks' %>
     <div>
-      <%= link_to "Didn't receive unlock instructions?", new_unlock_path(resource_name), class: "text-[#c0c1ff] hover:text-[#c0c1ff]" %>
+      <%= link_to "Didn't receive unlock instructions?", new_unlock_path(resource_name), class: "text-accent hover:text-accent" %>
     </div>
   <% end %>
 </div>
