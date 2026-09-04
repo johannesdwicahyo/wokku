@@ -30,7 +30,8 @@
     end),
     { label: t("console.sidebar.items.team"),     key: :team,     href: dashboard_workspaces_path, icon: "team",     active: path.start_with?("/dashboard/workspaces") },
     { label: t("console.sidebar.items.settings"), key: :settings, href: dashboard_profile_path,    icon: "settings",
-      active: path.start_with?("/dashboard/profile", "/dashboard/two_factor", "/dashboard/notifications", "/dashboard/account_deletion") }
+      active: path.start_with?("/dashboard/profile", "/dashboard/two_factor", "/dashboard/notifications", "/dashboard/account_deletion") ||
+        (respond_to?(:dashboard_billing_path) && path.start_with?("/dashboard/billing")) }
   ].compact
 
   sidebar_groups = [
