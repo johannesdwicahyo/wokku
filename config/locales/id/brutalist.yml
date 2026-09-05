@@ -130,7 +130,7 @@ id:
         head: "Perusahaan"
         links: ["Kontak", "Privasi", "Syarat", "Kebijakan refund"]
     legal: "© 2026 Wokku · wokku.cloud"
-    license: "// dokku (mit) + wokku (agpl-3.0)"
+    license: "wokku · agpl-3.0"
   console:
     sidebar:
       workspace: "Ruang kerja"
