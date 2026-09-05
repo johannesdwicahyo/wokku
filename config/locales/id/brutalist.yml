@@ -111,7 +111,7 @@ id:
     reassure: "Cuma baca email kamu — nggak ada akses ke repo atau kode."
     continue_with: "Lanjut pakai %{provider}"
   footer:
-    tagline: "PaaS open-source di atas Dokku. Dibuat di Bali buat developer Indonesia."
+    tagline: "PaaS open-source. Dibuat di Bali buat developer Indonesia."
     status_ok: "Semua sistem normal"
     cols:
       product:
@@ -321,7 +321,7 @@ id:
           - "Backup harian · 30 hari · support manusia dedikasi"
   pricing_page:
     footnote: "App sudah include web, worker, scheduler, dan clock di container yang sama. Butuh kapasitas lebih? Resize app (Small → Medium → Large) atau tambah replika dengan harga per-ukuran yang sama. Tanpa metering, tanpa overage."
-    bundling_note_html: "Box dihitung per-Dokku-container. Multi-process app (mis. Rails + Sidekiq) bisa di-bundle jadi satu container pakai foreman/supervisor — box sama, harga sama. Lihat <a href=\"/docs/scaling/bundled-processes\" class=\"text-accent hover:underline\">panduan bundling</a>."
+    bundling_note_html: "Box dihitung per-container. Multi-process app (mis. Rails + Sidekiq) bisa di-bundle jadi satu container pakai foreman/supervisor — box sama, harga sama. Lihat <a href=\"/docs/scaling/bundled-processes\" class=\"text-accent hover:underline\">panduan bundling</a>."
     team_addon_note_html: "Plan Team: tambah box Large ekstra <strong>%{large}</strong> per box atau X-Large <strong>%{xlarge}</strong> per box. Tanpa metering, ditagih bulanan bareng plan."
     compare_heading: "Perbandingan fitur lengkap"
     compare_table:

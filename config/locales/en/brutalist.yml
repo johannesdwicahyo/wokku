@@ -111,7 +111,7 @@ en:
     reassure: "We only read your email — no access to your repos or code."
     continue_with: "Continue with %{provider}"
   footer:
-    tagline: "Open-source PaaS on Dokku. Built in Bali for Indonesian developers."
+    tagline: "Open-source PaaS. Built in Bali for Indonesian developers."
     status_ok: "All systems operational"
     cols:
       product:
@@ -321,7 +321,7 @@ en:
           - "Daily backups · 30-day · dedicated human support"
   pricing_page:
     footnote: "Apps include their web, workers, schedulers, and clock processes in the same container. Need more capacity? Resize the app (Small → Medium → Large) or add replicas at the same per-size price. No metering, no overage bills."
-    bundling_note_html: "A box is one Dokku container. Multi-process apps (e.g. Rails + Sidekiq) can bundle their processes into one container with foreman/supervisor — same box, same price. See <a href=\"/docs/scaling/bundled-processes\" class=\"text-accent hover:underline\">the bundling guide</a>."
+    bundling_note_html: "A box is one container. Multi-process apps (e.g. Rails + Sidekiq) can bundle their processes into one container with foreman/supervisor — same box, same price. See <a href=\"/docs/scaling/bundled-processes\" class=\"text-accent hover:underline\">the bundling guide</a>."
     team_addon_note_html: "Team plan: add extra Large boxes for <strong>%{large}</strong> each or X-Large boxes for <strong>%{xlarge}</strong> each. No metering, billed monthly with the plan."
     compare_heading: "Full feature comparison"
     compare_table:
