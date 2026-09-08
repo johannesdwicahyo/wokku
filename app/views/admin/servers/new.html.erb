@@ -48,7 +48,7 @@
   <% else %>
     <div class="border-1.5 border-ink bg-paper p-6 mb-6">
       <h2 class="font-mono text-sm font-semibold text-ink uppercase tracking-widest mb-2">Auto-Provision a Server</h2>
-      <p class="font-mono text-xs text-dim mb-3">Connect a cloud provider API key to create Dokku servers with one click.</p>
+      <p class="font-mono text-xs text-dim mb-3">Connect a cloud provider API key to create servers with one click.</p>
       <%= form_with url: admin_cloud_credentials_path, method: :post, class: "flex items-end gap-2" do |f| %>
         <%# after: "server" — tells Admin::CloudCredentialsController#create to
             redirect back to this page (not the index slide-panel form, the

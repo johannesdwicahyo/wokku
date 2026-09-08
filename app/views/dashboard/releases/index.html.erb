@@ -22,17 +22,22 @@
     <div>
       <h4 class="text-xs font-semibold text-ink-soft mb-1">Git remote</h4>
       <p class="text-[11.5px] text-dim mb-2.5">Add the remote to your repository and push to deploy.</p>
-      <% git_remote = "dokku@#{@app.server.host}:#{@app.name}" %>
+      <%# Canonical remote via the wokku SSH gateway (git@git.wokku.cloud),
+          named "wokku" — matches the API push_instructions, the profile
+          page, and the CLI. The legacy dokku@<server-host> bypass still
+          works but isn't shown (see AppRecord#direct_git_remote_url). %>
+      <% git_remote = @app.git_remote_url %>
+      <% branch = @app.deploy_branch || "main" %>
       <div class="space-y-2">
         <div class="flex items-center gap-2">
-          <code class="flex-1 bg-bg border-1.5 border-ink rounded-md px-3 py-2 font-mono text-sm text-ink-soft overflow-x-auto">git remote add dokku <%= git_remote %></code>
-          <button type="button" data-controller="clipboard" data-clipboard-text-value="git remote add dokku <%= git_remote %>" data-action="click->clipboard#copy" class="px-3 py-2 border-1.5 border-ink rounded-md bg-paper text-dim hover:text-ink transition-colors cursor-pointer" title="Copy">
+          <code class="flex-1 bg-bg border-1.5 border-ink rounded-md px-3 py-2 font-mono text-sm text-ink-soft overflow-x-auto">git remote add wokku <%= git_remote %></code>
+          <button type="button" data-controller="clipboard" data-clipboard-text-value="git remote add wokku <%= git_remote %>" data-action="click->clipboard#copy" class="px-3 py-2 border-1.5 border-ink rounded-md bg-paper text-dim hover:text-ink transition-colors cursor-pointer" title="Copy">
             <span data-clipboard-target="label" class="text-xs">Copy</span>
           </button>
         </div>
         <div class="flex items-center gap-2">
-          <code class="flex-1 bg-bg border-1.5 border-ink rounded-md px-3 py-2 font-mono text-sm text-ink-soft overflow-x-auto">git push dokku <%= @app.deploy_branch || "main" %></code>
-          <button type="button" data-clipboard-text-value="git push dokku <%= @app.deploy_branch || "main" %>" data-action="click->clipboard#copy" class="px-3 py-2 border-1.5 border-ink rounded-md bg-paper text-dim hover:text-ink transition-colors cursor-pointer" title="Copy">
+          <code class="flex-1 bg-bg border-1.5 border-ink rounded-md px-3 py-2 font-mono text-sm text-ink-soft overflow-x-auto">git push wokku <%= branch %></code>
+          <button type="button" data-clipboard-text-value="git push wokku <%= branch %>" data-action="click->clipboard#copy" class="px-3 py-2 border-1.5 border-ink rounded-md bg-paper text-dim hover:text-ink transition-colors cursor-pointer" title="Copy">
             <span data-clipboard-target="label" class="text-xs">Copy</span>
           </button>
         </div>
