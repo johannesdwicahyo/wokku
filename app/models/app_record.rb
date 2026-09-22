@@ -121,6 +121,11 @@ class AppRecord < ApplicationRecord
   # destroyed with the box (handled by Addons::SharedProvisioner cleanup
   # in Phase 7 sweep). Default empty array.
   SHARED_ENGINES = DatabaseService::SHARED_ENGINES
+  # Strip blank/whitespace entries (e.g. the create-app form's empty hidden
+  # input submitted when no shared engine is checked, which arrives as [""]).
+  # An empty string is "no selection", not an unknown engine — normalizing
+  # here covers the form, API, and console before validation runs.
+  normalizes :enabled_shared_engines, with: ->(v) { Array(v).map { |e| e.to_s.strip }.reject(&:blank?) }
   validate :enabled_shared_engines_subset_of_known
 
   def shared_engine_enabled?(engine)

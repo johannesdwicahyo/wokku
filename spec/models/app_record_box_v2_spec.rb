@@ -45,6 +45,29 @@ RSpec.describe AppRecord, "bundle v2 box model" do
       expect(app.errors[:enabled_shared_engines].first).to include("riak")
     end
 
+    # Regression: the create-app form ships an empty hidden input
+    # (app_record[enabled_shared_engines][]="") so the array key is present
+    # when no engine checkbox is ticked — it arrives as [""] and used to be
+    # rejected as an unknown engine (HTTP 422). Blank entries must normalize
+    # away, not error.
+    it "normalizes the form's empty-hidden-input [\"\"] to [] and stays valid" do
+      app.enabled_shared_engines = [""]
+      expect(app.enabled_shared_engines).to eq([])
+      expect(app).to be_valid
+    end
+
+    it "strips blank/whitespace entries but keeps real engines" do
+      app.enabled_shared_engines = ["postgres", "", " ", "redis"]
+      expect(app.enabled_shared_engines).to eq(%w[postgres redis])
+      expect(app).to be_valid
+    end
+
+    it "can be created with no shared engine selected" do
+      expect {
+        create(:app_record, creator: user, server: server, enabled_shared_engines: [""])
+      }.to change(AppRecord, :count).by(1)
+    end
+
     describe "#shared_engine_enabled?" do
       it "is true when the engine is in the array" do
         app.enabled_shared_engines = %w[postgres meilisearch]

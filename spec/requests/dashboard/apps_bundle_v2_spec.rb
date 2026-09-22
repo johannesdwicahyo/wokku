@@ -90,6 +90,25 @@ RSpec.describe "Dashboard::Apps (Bundle v2 create)", type: :request do
       end
     end
 
+    # Regression (external bug report, 2026-09-22): the create-app form ships
+    # an empty hidden input so the array key is present when no engine box is
+    # ticked. That submits enabled_shared_engines: [""], which used to be
+    # rejected as an unknown engine → HTTP 422. It must create the app.
+    context "empty addons: form submits the empty hidden input ([\"\"])" do
+      it "creates the app instead of returning 422" do
+        params = base_params(enabled_shared_engines: [ "" ])
+
+        expect {
+          post dashboard_apps_path, params: params
+        }.to change(AppRecord, :count).by(1)
+
+        expect(response).to have_http_status(:redirect)
+        created = AppRecord.find_by(name: params[:app_record][:name])
+        expect(created).not_to be_nil
+        expect(Array(created.enabled_shared_engines)).to be_empty
+      end
+    end
+
     context "dedicated DB at creation: dedicated_db_engine mysql" do
       it "calls DatabaseServiceUpgrade with engine: mysql after saving the app" do
         dedicated_db = instance_double(DatabaseService, id: SecureRandom.uuid)
