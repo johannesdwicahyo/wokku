@@ -6,10 +6,15 @@ module Resources
     def call(db:, user:, shape:)
       return ApplyChange::Result.new(ok: false, error: "Shared add-ons can't be resized") if db.shared?
       return ApplyChange::Result.new(ok: false, error: shape.errors.join(", ")) unless shape.valid?
-      if db.disk_gb && shape.disk_gb < db.disk_gb
-        return ApplyChange::Result.new(ok: false, error: "Disk can only grow (currently #{db.disk_gb} GB)")
+      # A legacy tier-only service (no shape yet) has disk_gb nil — its
+      # floor is the tier's storage_gb, not 0, or a first resize could
+      # record a disk smaller than what the tier already provisioned
+      # (review fix round 1).
+      current_disk_gb = db.disk_gb || db.service_tier&.spec&.dig("storage_gb").to_i
+      if shape.disk_gb < current_disk_gb
+        return ApplyChange::Result.new(ok: false, error: "Disk can only grow (currently #{current_disk_gb} GB)")
       end
-      team = db.app_records.first&.team
+      team = db.billing_team
       if team
         before = ApplyChange.team_allocations(team)
         after  = before.reject { |a| a[:service_id] == db.id } + [ { shape: shape, instances: 1, service_id: db.id } ]

@@ -87,4 +87,16 @@ RSpec.describe Resources::ApplyChange do
     expect(result.ok).to be(true)
     expect(target.dyno_allocations.find_by(process_type: "web").memory_mb).to eq(1536)
   end
+
+  describe ".team_allocations" do
+    it "includes an unlinked shaped service created by a team member (fix round 1)" do
+      member = create(:user, :with_personal_team)
+      team = member.teams.first
+      unlinked_db = create(:database_service, server: server, creator: member, cpu: 0.25, memory_mb: 512, disk_gb: 5)
+
+      allocations = described_class.team_allocations(team)
+
+      expect(allocations).to include(a_hash_including(service_id: unlinked_db.id, shape: unlinked_db.shape, instances: 1))
+    end
+  end
 end

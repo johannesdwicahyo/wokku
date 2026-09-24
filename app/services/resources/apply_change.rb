@@ -17,8 +17,15 @@ module Resources
           { shape: a.shape, instances: scales[a.process_type]&.count || (a.process_type == "web" ? 1 : 0) }
         end
       end
-      services = DatabaseService.where(shared: false).where.not(cpu: nil)
+      linked_services = DatabaseService.where(shared: false).where.not(cpu: nil)
         .joins(:app_records).where(app_records: { team_id: team.id }).distinct
+      # Not every shaped dedicated service is linked to an app yet — a
+      # not-yet-linked datastore is still billed to its creator's team
+      # (DatabaseService#billing_team), so it must count here too, or the
+      # enforcer's before/after view never sees it (review fix round 1).
+      unlinked_services = DatabaseService.where(shared: false).where.not(cpu: nil)
+        .where.missing(:app_databases).where(creator_id: team.users.select(:id))
+      services = (linked_services.to_a + unlinked_services.to_a).uniq(&:id)
       procs + services.map { |db| { shape: db.shape, instances: 1, service_id: db.id } }
     end
 
