@@ -271,6 +271,19 @@ RSpec.describe Resources::ApplyChange do
       end
     end
 
+    describe ".inherited_shape_for (legacy tier)" do
+      it "a legacy 1024 MB / 0.5 tier web scaled 1→2 keeps its size" do
+        legacy = create(:dyno_tier, memory_mb: 1024, cpu_shares: 0.5, sleeps: false)
+        app.dyno_allocations.create!(process_type: "web", count: 1, dyno_tier: legacy)
+        app.process_scales.create!(process_type: "web", count: 1)
+        r = described_class.call(app: app, user: user, processes: described_class.processes_for_counts(app, { "web" => "2" }))
+        expect(r.ok).to be(true)
+        alloc = app.dyno_allocations.find_by(process_type: "web")
+        expect([ alloc.cpu.to_f, alloc.memory_mb, alloc.count ]).to eq([ 0.5, 1024, 2 ])
+        expect(described_class.inherited_shape_for(app, "worker").to_h).to include(cpu: 0.5, memory_mb: 1024)
+      end
+    end
+
     describe ".processes_for_counts (I3)" do
       it "keeps a shaped allocation's shape, falls back to web's, else starter; sleeping stays sleeping" do
         app.dyno_allocations.create!(process_type: "web", count: 1, cpu: 1.0, memory_mb: 2048)

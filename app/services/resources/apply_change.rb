@@ -16,20 +16,31 @@ module Resources
       OpsMailer.capacity_full(server).deliver_later
     end
 
-    # Count-only changes (scaling UI / legacy API) routed through #call: each
-    # type keeps its own shape, else web's, else the Starter preset;
-    # sleeping allocations stay sleeping.
+    # Count-only changes (scaling UI / legacy API) routed through #call.
+    # Sleeping allocations stay sleeping; everything else keeps the size
+    # inherited_shape_for resolves.
     def self.processes_for_counts(app, counts)
       allocs = app.dyno_allocations.includes(:dyno_tier).index_by(&:process_type)
-      fallback = allocs["web"]&.shape || Shape.new(**Shape::PRESETS["starter"])
       counts.to_h do |type, count|
-        a = allocs[type.to_s]
-        spec = if a&.shape then { cpu: a.shape.cpu, memory_mb: a.shape.memory_mb }
-        elsif a&.sleeping? then { sleeping: true }
-        else { cpu: fallback.cpu, memory_mb: fallback.memory_mb }
+        spec = if allocs[type.to_s]&.sleeping? then { sleeping: true }
+        else inherited_shape_for(app, type, allocs).to_h.slice(:cpu, :memory_mb)
         end
         [ type.to_s, spec.merge(count: count) ]
       end
+    end
+
+    # The shape a process keeps when only its count changes: its own shape;
+    # else its non-sleeping legacy tier's size rounded up onto the grid;
+    # else web's by the same rule; else Starter. Legacy tiers must never
+    # silently shrink to Starter on a scale.
+    def self.inherited_shape_for(app, process_type, allocs = nil)
+      allocs ||= app.dyno_allocations.includes(:dyno_tier).index_by(&:process_type)
+      own_or_tier = lambda do |a|
+        next unless a
+        next a.shape if a.shape
+        Shape.round_up(cpu: a.effective_cpu, memory_mb: a.effective_memory_mb) unless a.sleeping? || a.dyno_tier.nil?
+      end
+      own_or_tier.(allocs[process_type.to_s]) || own_or_tier.(allocs["web"]) || Shape.new(**Shape::PRESETS["starter"])
     end
 
     def self.call(**) = new(**).call
