@@ -246,13 +246,16 @@ module Lifecycle
       raise EmptyFormation, "formation omits web while app runs web — pass web: N explicitly (formation_would_empty)"
     end
 
-    # Same reader ApplyDynoTierJob uses (allocation.dyno_tier.memory_mb/cpu_shares) —
-    # the app's web DynoAllocation, since dyno tiers are app-wide today (only
-    # `web` gets a tier assigned by the scaling UI). Every process type in the
-    # desired formation shares it.
+    # Per-process resources (spec 2026-09-24): each process type uses its own
+    # DynoAllocation shape; a type with no row (a new Procfile entry, the
+    # one-off `run`) inherits web's. Tier-only rows (legacy + sleeping)
+    # resolve through the tier, so pre-shape apps converge exactly as before.
     def self.resources_for(app, process_types)
-      tier = app.dyno_allocations.find_by(process_type: "web")&.dyno_tier
-      process_types.index_with { tier ? { memory_mb: tier.memory_mb.to_i, cpu: tier.cpu_shares.to_f } : {} }
+      allocs = app.dyno_allocations.includes(:dyno_tier).index_by(&:process_type)
+      process_types.index_with do |proc|
+        a = allocs[proc] || allocs["web"]
+        a ? { memory_mb: a.effective_memory_mb, cpu: a.effective_cpu } : {}
+      end
     end
 
     def self.issue!(app, kind, params, wait:, timeout:)

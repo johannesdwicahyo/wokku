@@ -26,6 +26,10 @@ class DynoAllocation < ApplicationRecord
     Resources::Shape.new(cpu: cpu, memory_mb: memory_mb) if cpu.present? && memory_mb.present?
   end
 
+  def effective_cpu = cpu.present? ? cpu.to_f : dyno_tier&.cpu_shares&.to_f
+  def effective_memory_mb = memory_mb.presence || dyno_tier&.memory_mb&.to_i
+  def sleeping? = shape.nil? && !!dyno_tier&.sleeps
+
   private
 
   def tier_or_shape
