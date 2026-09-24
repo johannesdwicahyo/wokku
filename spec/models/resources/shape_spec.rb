@@ -25,6 +25,23 @@ RSpec.describe Resources::Shape do
     expect(shape.to_h).to eq(cpu: 0.75, memory_mb: 768, disk_gb: 2)
   end
 
+  it "accepts whole-number floats for memory_mb and disk_gb" do
+    shape = described_class.new(cpu: 0.5, memory_mb: 1024.0, disk_gb: 5.0)
+    expect(shape).to be_valid
+    expect(shape.to_h).to eq(cpu: 0.5, memory_mb: 1024, disk_gb: 5)
+  end
+
+  it "accepts whole-number float strings for memory_mb and disk_gb" do
+    shape = described_class.new(cpu: 0.5, memory_mb: "1024.0", disk_gb: "5.0")
+    expect(shape).to be_valid
+    expect(shape.to_h).to eq(cpu: 0.5, memory_mb: 1024, disk_gb: 5)
+  end
+
+  it "rejects non-whole-number floats for memory_mb and disk_gb" do
+    expect(described_class.new(cpu: 0.5, memory_mb: 300.5)).not_to be_valid
+    expect(described_class.new(cpu: 0.5, memory_mb: 1024, disk_gb: 5.5)).not_to be_valid
+  end
+
   it "treats garbage strings as invalid, not zero-but-valid" do
     expect(described_class.new(cpu: "abc", memory_mb: 512)).not_to be_valid
   end

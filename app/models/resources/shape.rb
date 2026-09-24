@@ -42,10 +42,17 @@ module Resources
       ((value.to_f / g[:step]).ceil * g[:step]).clamp(g[:min], g[:max])
     end
 
+    def self.whole(v)
+      f = Float(v, exception: false)
+      f && f == f.floor ? f.to_i : nil
+    end
+
     def initialize(cpu:, memory_mb:, disk_gb: 0)
       @cpu       = Float(cpu, exception: false)
-      @memory_mb = Integer(memory_mb.to_s, exception: false)
-      @disk_gb   = Integer((disk_gb || 0).to_s, exception: false)
+      @memory_mb = self.class.whole(memory_mb)
+      # If disk_gb is explicitly nil or 0, it defaults to 0. Otherwise coerce
+      # via whole(), which returns nil for non-whole values (error).
+      @disk_gb   = disk_gb.nil? || disk_gb == 0 ? 0 : self.class.whole(disk_gb)
     end
 
     def errors
