@@ -15,11 +15,27 @@ module Wokku
       def deposit_shortfall(_user, **) = nil
     end
 
+    # OSS default: no prices anywhere. Managed injects Billing::PricingProvider.
+    class NullPricing
+      def monthly_idr(_shape, instances: 1) = nil
+      def unit_prices = nil
+    end
+
     attr_accessor :tls, :billing
-    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration
+    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder
 
     def plan_enforcer
       @plan_enforcer ||= NullPlanEnforcer.new
+    end
+
+    def pricing
+      @pricing ||= NullPricing.new
+    end
+
+    # Per-resource slider builder vs the legacy box-tier picker. Self-host
+    # has no plans, so it's on; the cloud flips it with its billing launch.
+    def resource_builder?
+      @resource_builder.nil? ? true : @resource_builder
     end
 
     def dns_provider
