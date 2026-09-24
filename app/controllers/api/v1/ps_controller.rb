@@ -29,6 +29,17 @@ module Api
 
         raw = params[:scaling]
         scaling = raw.respond_to?(:to_unsafe_h) ? raw.to_unsafe_h : raw
+
+        if (res = params[:resources]).present?
+          res = res.respond_to?(:to_unsafe_h) ? res.to_unsafe_h : res
+          counts = @app_record.process_scales.pluck(:process_type, :count).to_h
+          processes = res.to_h { |t, s| [ t.to_s, s.to_h.merge("count" => (scaling.is_a?(Hash) && scaling[t]) || counts[t.to_s] || 1) ] }
+          result = Resources::ApplyChange.call(app: @app_record, user: current_user, processes: processes)
+          return render_api_error(:invalid_params, message: result.error, status: :unprocessable_entity) unless result.ok
+          return render json: { message: "Resources updated", resources: res } if params[:scaling].blank?
+        end
+
+        return render_api_error(:invalid_params, message: "scaling parameter required") if scaling.blank? && params[:resources].blank?
         return render_api_error(:invalid_params, message: "scaling parameter required") unless scaling.is_a?(Hash)
         scaling = scaling.transform_values(&:to_i)
 

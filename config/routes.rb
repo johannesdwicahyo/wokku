@@ -85,7 +85,7 @@ Rails.application.routes.draw do
       resource :performance, only: [ :show ], module: "apps", controller: "performance" do
         post :rotate_token
       end
-      resource :resources, only: [ :show, :create, :destroy ], controller: "resources"
+      resource :resources, only: [ :show, :create, :update, :destroy ], controller: "resources"
       resource :scaling, only: [ :show, :update ], controller: "scaling" do
         post :change_tier
       end
@@ -104,6 +104,7 @@ Rails.application.routes.draw do
         post :unlink
         post :change_tier
         post :retry
+        patch :resize
         get :settings
       end
       # Sumopod-style monitor page — Active Conns / DB Size / Cache Hit

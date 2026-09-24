@@ -39,6 +39,21 @@ module Dashboard
       redirect_to dashboard_app_resources_path(@app), alert: "Failed to add #{service_type}: #{e.message}"
     end
 
+    def update
+      authorize @app, :update?
+      result = Resources::ApplyChange.call(
+        app: @app, user: current_user,
+        processes: params.fetch(:processes, {}).permit!.to_h,
+        volume_disk_gb: params[:volume_disk_gb].presence
+      )
+      @app.update(pending_action: "resize") if result.ok
+      if result.ok
+        redirect_to dashboard_app_resources_path(@app), notice: t("resources.applying", default: "Applying new size — containers restart.")
+      else
+        redirect_to dashboard_app_resources_path(@app), alert: result.error
+      end
+    end
+
     def destroy
       authorize @app, :update?
 
