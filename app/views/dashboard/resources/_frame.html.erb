@@ -1,5 +1,6 @@
 <%= turbo_frame_tag "resources_processes", target: "_top" do %>
 <% if Wokku.config.resource_builder? %>
+  <%= render Molecules::DiskUsageBannerComponent.new(record: @app) %>
   <%= form_with url: dashboard_app_resources_path(@app), method: :patch, data: { turbo_frame: "_top" } do %>
     <div class="bg-paper border-1.5 border-ink rounded-md mb-6 divide-y divide-line">
       <% (@allocations.presence || [ @app.dyno_allocations.build(process_type: "web", cpu: 0.25, memory_mb: 512) ]).each do |a| %>

@@ -53,6 +53,7 @@
     <% if Wokku.config.resource_builder? %>
       <%# Per-resource billing (spec 2026-09-24 §5.3): direct slider resize,
           replacing the legacy "go change your app's box" copy. %>
+      <%= render Molecules::DiskUsageBannerComponent.new(record: @database) %>
       <div class="border-1.5 border-ink bg-paper rounded-md p-5">
         <%= form_with url: resize_dashboard_addon_path(@database), method: :patch, class: "space-y-4",
                        data: { turbo_confirm: "Containers will restart with the new size." } do %>
