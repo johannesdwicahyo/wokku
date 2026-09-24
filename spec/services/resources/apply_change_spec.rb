@@ -104,6 +104,34 @@ RSpec.describe Resources::ApplyChange do
     expect(target.dyno_allocations.find_by(process_type: "web").memory_mb).to eq(1536)
   end
 
+  describe ".check_new_shape" do
+    it "accepts a valid shape with room" do
+      result = described_class.check_new_shape(team: app.team, server: server, shape: Resources::Shape.new(cpu: 0.25, memory_mb: 512))
+      expect(result.ok).to be(true)
+    end
+
+    it "rejects an off-grid shape without touching capacity" do
+      result = described_class.check_new_shape(team: app.team, server: server, shape: Resources::Shape.new(cpu: 0.3, memory_mb: 512))
+      expect(result.ok).to be(false)
+      expect(result.error).to match(/CPU/)
+    end
+
+    it "rejects when the server is full" do
+      server.update!(vitals: { "mem_total_mb" => 1000 })
+      result = described_class.check_new_shape(team: app.team, server: server, shape: Resources::Shape.new(cpu: 1.0, memory_mb: 4096))
+      expect(result.ok).to be(false)
+      expect(result.error).to match(/capacity/)
+    end
+
+    it "rejects when the plan enforcer says no" do
+      allow(Wokku.config.plan_enforcer).to receive(:allowed?).and_call_original
+      allow(Wokku.config.plan_enforcer).to receive(:allowed?).with(anything, :resources, hash_including(:from, :to)).and_return(false)
+      result = described_class.check_new_shape(team: app.team, server: server, shape: Resources::Shape.new(cpu: 0.25, memory_mb: 512))
+      expect(result.ok).to be(false)
+      expect(result.error).to match(/limit/)
+    end
+  end
+
   describe ".team_allocations" do
     it "includes an unlinked shaped service created by a team member (fix round 1)" do
       member = create(:user, :with_personal_team)

@@ -62,6 +62,25 @@
     </div>
   </div>
 
+  <%# Per-resource billing (spec 2026-09-24 §5.3): sized dedicated create.
+      Two blocks (SQL engines share a shape; Redis has its own) — the
+      Stimulus controller shows/enables only the one matching the selected
+      engine + "dedicated" mode. disabled by default so an inactive
+      fieldset's inputs never post (fieldset[disabled] disables all
+      descendants), even before JS has run. %>
+  <% if Wokku.config.resource_builder? %>
+    <fieldset disabled data-addon-tier-picker-target="shapeBuilder" data-shape-engines="postgres mariadb mongodb" class="hidden border-0 p-0 m-0">
+      <%= render Organisms::ResourceBuilderComponent.new(
+            name: "", shape: Resources::Shape.new(**Resources::Shape::SERVICE_PRESETS.fetch("postgres")["small"]),
+            presets: Resources::Shape::SERVICE_PRESETS.fetch("postgres"), disk: true) %>
+    </fieldset>
+    <fieldset disabled data-addon-tier-picker-target="shapeBuilder" data-shape-engines="redis" class="hidden border-0 p-0 m-0">
+      <%= render Organisms::ResourceBuilderComponent.new(
+            name: "", shape: Resources::Shape.new(**Resources::Shape::SERVICE_PRESETS.fetch("redis")["small"]),
+            presets: Resources::Shape::SERVICE_PRESETS.fetch("redis"), disk: true) %>
+    </fieldset>
+  <% end %>
+
   <div class="flex items-center gap-2 pt-2">
     <%= f.submit "Create Add-on", class: "flex-1 py-2.5 px-4 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer text-center disabled:opacity-50", disabled: apps.empty? %>
     <button type="button" data-action="click->slide-panel#close" class="py-2.5 px-4 font-mono text-sm text-ink border-1.5 border-ink bg-paper hover:bg-bg-deep transition-colors cursor-pointer">Cancel</button>

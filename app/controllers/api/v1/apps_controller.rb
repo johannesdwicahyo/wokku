@@ -29,10 +29,16 @@ module Api
         team = current_user.teams.first
         return render json: { error: "User has no team" }, status: :unprocessable_entity if team.nil?
 
+        # Per-resource billing (spec 2026-09-24 §5.3): callers send a
+        # `resources` hash (processes[web][...] shape) instead of box_size.
+        builder_mode = Wokku.config.resource_builder? && params[:resources].present?
+
         # Bundle v2: read new params when feature flag is on.
         box_size = "sleeping"
         shared_engines = []
-        if Addons::SharedProvisioner.feature_enabled?
+        if builder_mode
+          box_size = nil
+        elsif Addons::SharedProvisioner.feature_enabled?
           box_size = params[:box_size].presence || "sleeping"
           shared_engines = Array(params[:enabled_shared_engines])
           begin
@@ -66,8 +72,13 @@ module Api
 
         app.save!
 
-        # Bundle v2: create DynoAllocation from box_size mapping.
-        if Addons::SharedProvisioner.feature_enabled?
+        warnings = []
+        if builder_mode
+          result = Resources::ApplyChange.call(app: app, user: current_user,
+                                               processes: params.require(:resources).permit!.to_h)
+          warnings << result.error unless result.ok
+        elsif Addons::SharedProvisioner.feature_enabled?
+          # Bundle v2: create DynoAllocation from box_size mapping.
           tier_name = DynoTier::BOX_SIZE_TO_DYNO_TIER[box_size]
           chosen_tier = tier_name ? DynoTier.find_by(name: tier_name) : nil
           app.dyno_allocations.create!(process_type: "web", dyno_tier: chosen_tier, count: 1) if chosen_tier
@@ -79,7 +90,6 @@ module Api
         track("app.created", target: app)
 
         # Bundle v2: optional dedicated DB / Redis provisioning at create time.
-        warnings = []
         if Addons::SharedProvisioner.feature_enabled?
           dedicated_db_engine = params[:dedicated_db_engine].presence
           if dedicated_db_engine.present? && dedicated_db_engine.in?(%w[postgres mysql mongodb])

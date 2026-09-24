@@ -1,4 +1,33 @@
 <%= turbo_frame_tag "resources_processes", target: "_top" do %>
+<% if Wokku.config.resource_builder? %>
+  <%= form_with url: dashboard_app_resources_path(@app), method: :patch, data: { turbo_frame: "_top" } do %>
+    <div class="bg-paper border-1.5 border-ink rounded-md mb-6 divide-y divide-line">
+      <% (@allocations.presence || [ @app.dyno_allocations.build(process_type: "web", cpu: 0.25, memory_mb: 512) ]).each do |a| %>
+        <div class="px-6 py-4">
+          <h3 class="font-headline text-sm font-bold text-ink mb-3"><%= a.process_type %></h3>
+          <%= render Organisms::ResourceBuilderComponent.new(
+                name: "processes[#{a.process_type}]",
+                shape: a.shape || Resources::Shape.new(cpu: 0.25, memory_mb: 512),
+                presets: Resources::Shape::PRESETS,
+                instances: @scales[a.process_type] || 1,
+                sleeping_option: a.process_type == "web",
+                sleeping: a.sleeping?, rails_hint: true) %>
+        </div>
+      <% end %>
+      <% if @app.storage_mounts.present? %>
+        <div class="px-6 py-4">
+          <h3 class="font-headline text-sm font-bold text-ink mb-1">Volume disk</h3>
+          <p class="text-[11px] text-dim mb-2">Used: <%= @app.volume_used_gb || "—" %> GB</p>
+          <input type="range" name="volume_disk_gb" value="<%= @app.volume_disk_gb %>" min="0" max="100" step="1" class="w-full">
+        </div>
+      <% end %>
+      <div class="px-6 py-4 flex justify-end">
+        <%= submit_tag "Save resources", data: { turbo_confirm: "Containers will restart with the new size." },
+              class: Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>
+      </div>
+    </div>
+  <% end %>
+<% else %>
   <%
     web_allocation = @current_allocation
     tier = web_allocation&.dyno_tier
@@ -114,4 +143,5 @@
       </div>
     <% end %>
   </div>
+<% end %>
 <% end %>

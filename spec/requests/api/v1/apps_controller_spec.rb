@@ -108,6 +108,16 @@ RSpec.describe "API::V1::AppsController", type: :request do
     expect(Wokku.config.dns_provider).to have_received(:create_app_record).with("api-dns-app", server.host)
   end
 
+  it "create sizes the web allocation from a resources shape (spec 2026-09-24 §5.3)" do
+    post api_v1_apps_path,
+         params: { name: "shaped-api-app", server_id: server.id,
+                   resources: { web: { cpu: "0.5", memory_mb: "1024", count: "1" } } },
+         headers: headers
+    expect(response).to have_http_status(:created)
+    app = AppRecord.find_by!(name: "shaped-api-app")
+    expect(app.dyno_allocations.find_by(process_type: "web").shape.to_h).to include(cpu: 0.5, memory_mb: 1024)
+  end
+
   it "create never SSHes to the host — native creates are control-plane-only (B6 W2)" do
     expect(Hosts::Ssh).not_to receive(:new)
     post api_v1_apps_path,

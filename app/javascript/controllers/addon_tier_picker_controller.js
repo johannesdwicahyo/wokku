@@ -16,16 +16,20 @@ import { Controller } from "@hotwired/stimulus"
 // (read by the form's POST handler) + a card grid that swaps when
 // the engine changes.
 export default class extends Controller {
-  static targets = ["serviceType", "cards", "tierInput"]
+  static targets = ["serviceType", "cards", "tierInput", "shapeBuilder"]
   static values  = { engines: Object, planUpgradeUrl: { type: String, default: "" } }
 
   connect() { this.refresh() }
 
-  refresh() {
+  currentEngineKey() {
     const el = this.serviceTypeTarget
-    const engineKey = "value" in el && el.value !== undefined && el.tagName !== "DIV"
+    return "value" in el && el.value !== undefined && el.tagName !== "DIV"
       ? el.value
       : (el.querySelector('input[data-combobox-target="input"]')?.value || "")
+  }
+
+  refresh() {
+    const engineKey = this.currentEngineKey()
     const engine = this.enginesValue[engineKey]
 
     while (this.cardsTarget.firstChild) this.cardsTarget.removeChild(this.cardsTarget.firstChild)
@@ -36,6 +40,7 @@ export default class extends Controller {
       note.textContent = "No picker options for this engine — created with default settings."
       this.cardsTarget.appendChild(note)
       this.tierInputTarget.value = ""
+      this.updateShapeBuilders(engineKey, "")
       return
     }
 
@@ -49,6 +54,7 @@ export default class extends Controller {
     this.tierInputTarget.value = selected
 
     engine.modes.forEach(m => this.cardsTarget.appendChild(this.buildCard(m, m.mode === selected)))
+    this.updateShapeBuilders(engineKey, selected)
   }
 
   selectMode(event) {
@@ -61,6 +67,20 @@ export default class extends Controller {
       el.classList.toggle("border-accent", sel)
       el.classList.toggle("bg-accent-soft", sel)
       el.classList.toggle("border-ink", !sel)
+    })
+    this.updateShapeBuilders(this.currentEngineKey(), mode)
+  }
+
+  // Per-resource billing (spec 2026-09-24 §5.3) — shows + enables the
+  // slider builder matching the selected engine only when Dedicated is
+  // picked; every other builder (including this one, when mode is
+  // Shared) stays hidden AND disabled so only the active shape's
+  // cpu/memory_mb/disk_gb fields post.
+  updateShapeBuilders(engineKey, mode) {
+    this.shapeBuilderTargets.forEach(el => {
+      const active = mode === "dedicated" && (el.dataset.shapeEngines || "").split(" ").includes(engineKey)
+      el.classList.toggle("hidden", !active)
+      el.disabled = !active
     })
   }
 

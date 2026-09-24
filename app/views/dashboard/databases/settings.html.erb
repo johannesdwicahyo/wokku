@@ -50,10 +50,29 @@
 <% unless @database.shared? %>
   <div class="mb-8">
     <h2 class="font-headline text-base font-bold text-ink mb-3">Sizing</h2>
+    <% if Wokku.config.resource_builder? %>
+      <%# Per-resource billing (spec 2026-09-24 §5.3): direct slider resize,
+          replacing the legacy "go change your app's box" copy. %>
+      <div class="border-1.5 border-ink bg-paper rounded-md p-5">
+        <%= form_with url: resize_dashboard_addon_path(@database), method: :patch, class: "space-y-4",
+                       data: { turbo_confirm: "Containers will restart with the new size." } do %>
+          <%= render Organisms::ResourceBuilderComponent.new(
+                name: "",
+                shape: @database.shape || Resources::Shape.round_up(
+                  cpu: 0.25,
+                  memory_mb: @database.service_tier&.spec&.dig("memory_mb").to_i,
+                  disk_gb: @database.service_tier&.spec&.dig("storage_gb").to_i),
+                presets: Resources::Shape::SERVICE_PRESETS.fetch(@database.service_type, Resources::Shape::PRESETS),
+                disk: true, min_disk_gb: @database.disk_gb.to_i) %>
+          <%= submit_tag "Resize", class: Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>
+        <% end %>
+      </div>
+    <% else %>
     <div class="border-1.5 border-ink bg-paper rounded-md p-5 text-sm text-ink-soft">
       <p>Dedicated DB sizing follows your plan's box size. Change your app's box on the resources page, or upgrade your plan on
         <%= link_to "/dashboard/plan", (respond_to?(:dashboard_plan_path) ? dashboard_plan_path : "#"), class: "text-accent hover:underline" %>, to resize this database.</p>
     </div>
+    <% end %>
   </div>
 <% end %>
 

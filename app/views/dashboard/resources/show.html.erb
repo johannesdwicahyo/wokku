@@ -170,6 +170,28 @@
         </div>
       </div>
 
+      <%# Per-resource billing (spec 2026-09-24 §5.3): sized dedicated create.
+          Two blocks (SQL engines share a shape; Redis has its own) — the
+          Stimulus controller shows/enables only the one matching the
+          selected engine + "dedicated" mode, and disables the other's
+          inputs so only the active shape's cpu/memory_mb/disk_gb post. %>
+      <% if Wokku.config.resource_builder? %>
+        <%# disabled by default (border-0/p-0/m-0 resets browser fieldset
+            chrome) — a fieldset's disabled attribute disables every
+            descendant input, so an inactive block never posts its
+            cpu/memory_mb/disk_gb even if JS hasn't run yet. %>
+        <fieldset disabled data-addon-tier-picker-target="shapeBuilder" data-shape-engines="postgres mariadb mongodb" class="hidden border-0 p-0 m-0">
+          <%= render Organisms::ResourceBuilderComponent.new(
+                name: "", shape: Resources::Shape.new(**Resources::Shape::SERVICE_PRESETS.fetch("postgres")["small"]),
+                presets: Resources::Shape::SERVICE_PRESETS.fetch("postgres"), disk: true) %>
+        </fieldset>
+        <fieldset disabled data-addon-tier-picker-target="shapeBuilder" data-shape-engines="redis" class="hidden border-0 p-0 m-0">
+          <%= render Organisms::ResourceBuilderComponent.new(
+                name: "", shape: Resources::Shape.new(**Resources::Shape::SERVICE_PRESETS.fetch("redis")["small"]),
+                presets: Resources::Shape::SERVICE_PRESETS.fetch("redis"), disk: true) %>
+        </fieldset>
+      <% end %>
+
       <div class="flex items-center gap-2 pt-2">
         <button type="submit" class="flex-1 <%= Atoms::ButtonComponent.new(variant: :primary, size: :md).classes %>">Create add-on</button>
         <button type="button" data-action="click->slide-panel#close" class="<%= Atoms::ButtonComponent.new(variant: :ghost, size: :md).classes %>">Cancel</button>

@@ -35,6 +35,22 @@ module Resources
       procs + services.map { |db| { shape: db.shape, instances: 1, service_id: db.id } }
     end
 
+    # Enforcer + capacity check for a shape that doesn't have a service_id
+    # yet — a brand-new dedicated datastore being created (Task 11). Mirrors
+    # ResizeService's checks without the "already exists" bookkeeping.
+    def self.check_new_shape(team:, server:, shape:)
+      return Result.new(ok: false, error: shape.errors.join(", ")) unless shape.valid?
+      before = team_allocations(team)
+      after = before + [ { shape: shape, instances: 1 } ]
+      unless Wokku.config.plan_enforcer.allowed?(team, :resources, from: before, to: after)
+        return Result.new(ok: false, error: "That size is over your account limit — pay your first invoice to go higher.")
+      end
+      CapacityGuard.check!(server, add_mb: shape.memory_mb)
+      Result.new(ok: true)
+    rescue CapacityGuard::Full => e
+      Result.new(ok: false, error: e.message)
+    end
+
     def initialize(app:, user:, processes:, volume_disk_gb: nil)
       @app, @user = app, user
       @processes = processes.to_h.transform_keys(&:to_s).transform_values { |v| v.to_h.symbolize_keys }

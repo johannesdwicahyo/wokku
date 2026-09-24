@@ -95,6 +95,24 @@ module Dashboard
       attrs = database_params.except(:app_id).merge(server: server, status: :creating, creator: current_user)
       attrs[:tier_name] = "basic" if attrs[:tier_name].blank?
 
+      # Per-resource billing (spec 2026-09-24 §5.3): the builder's dedicated
+      # panel posts bare cpu/memory_mb/disk_gb (ResourceBuilderComponent
+      # name: "") instead of picking a tier. Same enforcer + capacity checks
+      # ResizeService runs, via the shared Resources::ApplyChange helper.
+      if mode == "dedicated" && Wokku.config.resource_builder? && params[:cpu].present?
+        shape = Resources::Shape.new(cpu: params[:cpu], memory_mb: params[:memory_mb], disk_gb: params[:disk_gb])
+        unless shape.valid?
+          redirect_to dashboard_addons_path, alert: shape.errors.join(", ")
+          return
+        end
+        check = Resources::ApplyChange.check_new_shape(team: app.team, server: server, shape: shape)
+        unless check.ok
+          redirect_to dashboard_addons_path, alert: check.error
+          return
+        end
+        attrs.merge!(cpu: shape.cpu, memory_mb: shape.memory_mb, disk_gb: shape.disk_gb)
+      end
+
       # Stuck error/creating rows from a prior failed attempt hold the
       # unique (server_id, name) slot and block retries with a useless
       # "name already taken". Sweep them before saving — the row never

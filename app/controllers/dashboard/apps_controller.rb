@@ -119,11 +119,19 @@ module Dashboard
       team = current_team
       server = policy_scope(Server).find(params[:app_record][:server_id])
 
+      # Per-resource billing (spec 2026-09-24 §5.3): the builder posts
+      # processes[web][...] instead of a box_size — skip the tier picker
+      # entirely and size the app via Resources::ApplyChange after save.
+      builder_mode = Wokku.config.resource_builder? && params[:processes].present?
+
       # Bundle v2: box_size drives both the quota check and the DynoTier.
       # Falls back to "sleeping" (free tier) so hand-rolled POSTs without
       # the new form field land on the cheapest available tier.
-      requested_size = params.dig(:app_record, :box_size).presence || "sleeping"
-      box_size = resolve_box_size(current_user, required: requested_size)
+      box_size = nil
+      unless builder_mode
+        requested_size = params.dig(:app_record, :box_size).presence || "sleeping"
+        box_size = resolve_box_size(current_user, required: requested_size)
+      end
       shared_engines = params.dig(:app_record, :enabled_shared_engines) || []
 
       @app = AppRecord.new(
@@ -142,18 +150,24 @@ module Dashboard
       end
       authorize @app
 
-      enforce_plan_quota!(current_user, size: box_size, additional: 1)
+      enforce_plan_quota!(current_user, size: box_size, additional: 1) unless builder_mode
 
       if @app.save
-        # Derive the DynoTier from box_size (Bundle v2 mapping).
-        # Falls back to the cheapest non-capped tier if no mapping exists.
-        tier_name = DynoTier::BOX_SIZE_TO_DYNO_TIER[box_size]
-        chosen_tier = tier_name ? DynoTier.find_by(name: tier_name) : nil
-        if chosen_tier&.at_cap_for?(current_user, exclude_app: @app)
-          chosen_tier = DynoTier.order(:monthly_price_cents).find { |t| !t.at_cap_for?(current_user, exclude_app: @app) }
-        end
-        if chosen_tier
-          @app.dyno_allocations.create!(process_type: "web", dyno_tier: chosen_tier, count: 1)
+        if builder_mode
+          result = Resources::ApplyChange.call(app: @app, user: current_user,
+                                               processes: params.require(:processes).permit!.to_h)
+          flash[:warning] = result.error unless result.ok
+        else
+          # Derive the DynoTier from box_size (Bundle v2 mapping).
+          # Falls back to the cheapest non-capped tier if no mapping exists.
+          tier_name = DynoTier::BOX_SIZE_TO_DYNO_TIER[box_size]
+          chosen_tier = tier_name ? DynoTier.find_by(name: tier_name) : nil
+          if chosen_tier&.at_cap_for?(current_user, exclude_app: @app)
+            chosen_tier = DynoTier.order(:monthly_price_cents).find { |t| !t.at_cap_for?(current_user, exclude_app: @app) }
+          end
+          if chosen_tier
+            @app.dyno_allocations.create!(process_type: "web", dyno_tier: chosen_tier, count: 1)
+          end
         end
 
         # Create the DNS record in the canonical zone only (wokku.app once

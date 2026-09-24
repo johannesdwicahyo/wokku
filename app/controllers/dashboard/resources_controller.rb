@@ -24,12 +24,25 @@ module Dashboard
       mode = (params[:mode] || params[:tier]).to_s.presence || "shared"
       tier = mode == "shared" ? DatabaseProvisioner::SHARED_TIER : DatabaseProvisioner::DEFAULT_TIER
 
+      # Per-resource billing (spec 2026-09-24 §5.3): a dedicated create from
+      # the slider builder posts bare cpu/memory_mb/disk_gb (ResourceBuilderComponent
+      # name: "") instead of picking a fixed tier. Same enforcer + capacity
+      # checks ResizeService runs, via the shared Resources::ApplyChange helper.
+      shape = nil
+      if mode == "dedicated" && Wokku.config.resource_builder? && params[:cpu].present?
+        shape = Resources::Shape.new(cpu: params[:cpu], memory_mb: params[:memory_mb], disk_gb: params[:disk_gb])
+        return redirect_to dashboard_app_resources_path(@app), alert: shape.errors.join(", ") unless shape.valid?
+        check = Resources::ApplyChange.check_new_shape(team: @app.team, server: @app.server, shape: shape)
+        return redirect_to dashboard_app_resources_path(@app), alert: check.error unless check.ok
+      end
+
       db = DatabaseProvisioner.new(
         app: @app,
         service_type: service_type,
         tier: tier,
         name: params[:addon_name].presence || params.dig(:database_service, :name).presence,
-        creator: current_user
+        creator: current_user,
+        shape: shape
       ).call
 
       track("addon.created", target: db)
@@ -73,6 +86,8 @@ module Dashboard
       # Resources tab shows compute + add-ons + cost (Heroku model).
       sync_process_scales_safely
       @process_scales = @app.process_scales.order(:process_type)
+      @allocations = @app.dyno_allocations.includes(:dyno_tier).order(:process_type)
+      @scales = @app.process_scales.pluck(:process_type, :count).to_h
       @dyno_tiers = defined?(DynoTier) ? DynoTier.available.order(:memory_mb) : []
       @current_allocation = defined?(DynoAllocation) ? @app.dyno_allocations.includes(:dyno_tier).find_by(process_type: "web") : nil
       # Per-size headroom (base plan quota + active purchased addons − current usage),

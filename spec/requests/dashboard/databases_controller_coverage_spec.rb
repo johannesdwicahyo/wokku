@@ -76,6 +76,19 @@ RSpec.describe "Dashboard::Databases coverage", type: :request do
       get "/dashboard/addons/#{database.id}/settings"
       expect(response).to have_http_status(:success)
     end
+
+    it "renders the slider resize form for a dedicated database (spec 2026-09-24 §5.3)" do
+      get "/dashboard/addons/#{database.id}/settings"
+      expect(response.body).to include(resize_dashboard_addon_path(database))
+    end
+
+    it "does not render the resize form for a shared database" do
+      parent = create(:database_service, server: server, service_type: "postgres", shared: false, creator: user)
+      shared = create(:database_service, server: server, service_type: "postgres", parent_service: parent,
+                                         creator: user, shared: true)
+      get "/dashboard/addons/#{shared.id}/settings"
+      expect(response.body).not_to include(resize_dashboard_addon_path(shared))
+    end
   end
 
   # ---------------------------------------------------------------------------
@@ -107,6 +120,25 @@ RSpec.describe "Dashboard::Databases coverage", type: :request do
       }
       created = DatabaseService.find_by(name: "blank-tier-pg")
       expect(created.tier_name).to eq("basic")
+    end
+
+    it "sizes a builder-mode dedicated create with the posted shape (spec 2026-09-24 §5.3)" do
+      post "/dashboard/addons", params: {
+        database_service: { name: "shaped-pg", service_type: "postgres", app_id: target_app.id },
+        mode: "dedicated", cpu: "0.5", memory_mb: "1024", disk_gb: "5"
+      }
+      created = DatabaseService.find_by(name: "shaped-pg")
+      expect(created.shape.to_h).to include(cpu: 0.5, memory_mb: 1024, disk_gb: 5)
+    end
+
+    it "refuses a builder-mode dedicated create when the shape is off-grid" do
+      post "/dashboard/addons", params: {
+        database_service: { name: "badshape-pg", service_type: "postgres", app_id: target_app.id },
+        mode: "dedicated", cpu: "0.3", memory_mb: "1024"
+      }
+      expect(DatabaseService.find_by(name: "badshape-pg")).to be_nil
+      follow_redirect!
+      expect(response.body).to include("CPU")
     end
 
     it "sweeps stuck error/creating rows holding the name slot" do
