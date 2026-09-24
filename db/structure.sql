@@ -196,7 +196,8 @@ CREATE TABLE public.app_records (
     healthcheck_json jsonb,
     deploy_locked_at timestamp(6) without time zone,
     https_redirect boolean DEFAULT true NOT NULL,
-    maintenance_mode boolean DEFAULT false NOT NULL
+    maintenance_mode boolean DEFAULT false NOT NULL,
+    volume_disk_gb integer DEFAULT 0 NOT NULL
 );
 
 
@@ -369,7 +370,10 @@ CREATE TABLE public.database_services (
     pending_destroy_at timestamp(6) without time zone,
     upgrade_source_id uuid,
     wokkud_managed boolean DEFAULT false NOT NULL,
-    dsn text
+    dsn text,
+    cpu numeric(4,2),
+    memory_mb integer,
+    disk_gb integer
 );
 
 
@@ -497,7 +501,9 @@ CREATE TABLE public.dyno_allocations (
     updated_at timestamp(6) without time zone NOT NULL,
     id uuid DEFAULT public.uuidv7() NOT NULL,
     app_record_id uuid NOT NULL,
-    dyno_tier_id uuid NOT NULL
+    dyno_tier_id uuid,
+    cpu numeric(4,2),
+    memory_mb integer
 );
 
 
@@ -4362,6 +4368,7 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260925000001'),
 ('20260806050000'),
 ('20260801000000'),
 ('20260729042535'),
