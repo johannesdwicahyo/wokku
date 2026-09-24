@@ -4,6 +4,7 @@ module Resources
     module_function
 
     def call(db:, user:, shape:)
+      return ApplyChange.disabled unless Wokku.config.resource_builder?
       return ApplyChange::Result.new(ok: false, error: "Shared add-ons can't be resized") if db.shared?
       return ApplyChange::Result.new(ok: false, error: shape.errors.join(", ")) unless shape.valid?
       # A legacy tier-only service (no shape yet) has disk_gb nil — its
@@ -28,6 +29,7 @@ module Resources
       ApplyDatabaseTierJob.perform_later(db.id)
       ApplyChange::Result.new(ok: true)
     rescue CapacityGuard::Full => e
+      ApplyChange.notify_capacity_full(db.server)
       ApplyChange::Result.new(ok: false, error: e.message)
     end
   end

@@ -3,6 +3,8 @@ module Resources
   # to overcommit (limits are ceilings on a shared box); RAM is not.
   # ponytail: sums DB rows per check — fine at one-host scale; cache per
   # server if placement ever spans many hosts.
+  # Raises Full; callers mail ops (ApplyChange.notify_capacity_full) after
+  # their transaction so a rollback can't drop the mail.
   module CapacityGuard
     Full = Class.new(StandardError)
     HEADROOM = 0.9
@@ -29,7 +31,6 @@ module Resources
       total = server.vitals&.dig("mem_total_mb").to_i
       return if total.zero? || add_mb <= 0
       return if reserved_mb(server) + add_mb <= total * HEADROOM
-      OpsMailer.capacity_full(server).deliver_later
       raise Full, "Server capacity is full — try a smaller size."
     end
 
@@ -44,7 +45,6 @@ module Resources
       return if total.zero?
       after = reserved_mb(server)
       return if after <= before_mb || after <= total * HEADROOM
-      OpsMailer.capacity_full(server).deliver_later
       raise Full, "Server capacity is full — try a smaller size."
     end
   end

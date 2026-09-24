@@ -10,12 +10,13 @@ class ApplyResourcesJob < ApplicationJob
     error = nil
     begin
       Lifecycle::Ops.converge!(app, restart: true)
-    rescue Lifecycle::Ops::Failed, Lifecycle::Ops::Timeout, Lifecycle::Ops::Busy => e
-      error = e.message.to_s.lines.first&.strip || e.class.name
-      Rails.logger.warn "ApplyResourcesJob failed for #{app.name}: #{error}"
+    rescue StandardError => e
+      error = e.message.to_s.lines.first&.strip.presence || e.class.name
+      Rails.logger.warn "ApplyResourcesJob failed for #{app.name}: #{e.class}: #{error}"
+    ensure
+      app.update(pending_action: nil) if app.pending_action == "resize"
     end
 
-    app.update(pending_action: nil) if app.pending_action == "resize"
     if error
       app.broadcast_action_toast(level: "error", message: "#{app.name} resize failed — #{error}")
     else

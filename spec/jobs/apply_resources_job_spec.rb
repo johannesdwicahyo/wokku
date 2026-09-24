@@ -18,4 +18,11 @@ RSpec.describe ApplyResourcesJob do
   it "no-ops on a deleted app" do
     expect { described_class.perform_now(SecureRandom.uuid) }.not_to raise_error
   end
+
+  it "clears the flag and toasts an error on an unexpected error (I9)" do
+    allow(Lifecycle::Ops).to receive(:converge!).and_raise(ArgumentError, "no image")
+    expect_any_instance_of(AppRecord).to receive(:broadcast_action_toast).with(level: "error", message: /no image/)
+    expect { described_class.perform_now(app.id) }.not_to raise_error
+    expect(app.reload.pending_action).to be_nil
+  end
 end

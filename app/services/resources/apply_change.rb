@@ -4,18 +4,48 @@ module Resources
   class ApplyChange
     Result = Struct.new(:ok, :error, keyword_init: true)
     Rejected = Class.new(StandardError)
+    DISABLED = "Custom sizing is not enabled on this server.".freeze
+
+    def self.disabled = Result.new(ok: false, error: DISABLED)
+
+    # Capacity refusals mail ops at most once per server per hour. Called
+    # after any transaction (a deliver_later enqueued inside a rolled-back
+    # transaction is dropped).
+    def self.notify_capacity_full(server)
+      return unless Rails.cache.write("capacity-full:#{server.id}", true, expires_in: 1.hour, unless_exist: true)
+      OpsMailer.capacity_full(server).deliver_later
+    end
+
+    # Count-only changes (scaling UI / legacy API) routed through #call: each
+    # type keeps its own shape, else web's, else the Starter preset;
+    # sleeping allocations stay sleeping.
+    def self.processes_for_counts(app, counts)
+      allocs = app.dyno_allocations.includes(:dyno_tier).index_by(&:process_type)
+      fallback = allocs["web"]&.shape || Shape.new(**Shape::PRESETS["starter"])
+      counts.to_h do |type, count|
+        a = allocs[type.to_s]
+        spec = if a&.shape then { cpu: a.shape.cpu, memory_mb: a.shape.memory_mb }
+        elsif a&.sleeping? then { sleeping: true }
+        else { cpu: fallback.cpu, memory_mb: fallback.memory_mb }
+        end
+        [ type.to_s, spec.merge(count: count) ]
+      end
+    end
 
     def self.call(**) = new(**).call
 
-    # Team-wide [{shape:, instances:, service_id:}] for the enforcer's
-    # before/after view — shaped processes AND shaped dedicated services.
+    # Team-wide [{shape:, instances:, service_id:|volume_app_id:}] for the
+    # enforcer's before/after view — shaped processes, app volume disks (a
+    # disk-only shape, never validated), AND shaped dedicated services.
     def self.team_allocations(team)
       procs = AppRecord.where(team: team).includes(:process_scales, :dyno_allocations).flat_map do |app|
         scales = app.process_scales.index_by(&:process_type)
-        app.dyno_allocations.filter_map do |a|
+        allocs = app.dyno_allocations.filter_map do |a|
           next unless a.shape
           { shape: a.shape, instances: scales[a.process_type]&.count || (a.process_type == "web" ? 1 : 0) }
         end
+        next allocs unless app.volume_disk_gb.to_i.positive?
+        allocs + [ { shape: Shape.new(cpu: 0, memory_mb: 0, disk_gb: app.volume_disk_gb), instances: 1, volume_app_id: app.id } ]
       end
       linked_services = DatabaseService.where(shared: false).where.not(cpu: nil)
         .joins(:app_records).where(app_records: { team_id: team.id }).distinct
@@ -39,6 +69,7 @@ module Resources
     # yet — a brand-new dedicated datastore being created (Task 11). Mirrors
     # ResizeService's checks without the "already exists" bookkeeping.
     def self.check_new_shape(team:, server:, shape:)
+      return disabled unless Wokku.config.resource_builder?
       return Result.new(ok: false, error: shape.errors.join(", ")) unless shape.valid?
       before = team_allocations(team)
       after = before + [ { shape: shape, instances: 1 } ]
@@ -48,16 +79,19 @@ module Resources
       CapacityGuard.check!(server, add_mb: shape.memory_mb)
       Result.new(ok: true)
     rescue CapacityGuard::Full => e
+      notify_capacity_full(server)
       Result.new(ok: false, error: e.message)
     end
 
     def initialize(app:, user:, processes:, volume_disk_gb: nil)
       @app, @user = app, user
-      @processes = processes.to_h.transform_keys(&:to_s).transform_values { |v| v.to_h.symbolize_keys }
+      @raw_processes = processes
       @volume_disk_gb = volume_disk_gb
     end
 
     def call
+      return self.class.disabled unless Wokku.config.resource_builder?
+      @processes = normalize(@raw_processes)
       shapes = @processes.to_h do |proc, p|
         next [ proc, :sleeping ] if ActiveModel::Type::Boolean.new.cast(p[:sleeping])
         shape = Shape.new(cpu: p[:cpu], memory_mb: p[:memory_mb])
@@ -66,6 +100,10 @@ module Resources
       end
       counts = @processes.transform_values { |p| Integer(p.fetch(:count, 1).to_s, exception: false) }
       raise Rejected, "Instance count must be 0–10" unless counts.values.all? { |c| c&.between?(0, 10) }
+      raise Rejected, "Use Stop to stop the app — web can't be scaled to 0 here." if counts["web"]&.zero?
+      if shapes.any? { |proc, s| s == :sleeping && counts[proc] > 1 }
+        raise Rejected, "Free sleeping apps run a single instance."
+      end
 
       disk = @volume_disk_gb.nil? ? nil : Integer(@volume_disk_gb.to_s, exception: false)
       raise Rejected, "Disk must be 0–100 GB" if !@volume_disk_gb.nil? && !disk&.between?(0, 100)
@@ -88,11 +126,24 @@ module Resources
         ApplyResourcesJob.perform_later(@app.id)
       end
       Result.new(ok: true)
-    rescue Rejected, CapacityGuard::Full => e
+    rescue CapacityGuard::Full => e
+      self.class.notify_capacity_full(@app.server)
+      Result.new(ok: false, error: e.message)
+    rescue Rejected, ActiveRecord::RecordInvalid, ActiveRecord::RecordNotFound => e
       Result.new(ok: false, error: e.message)
     end
 
     private
+
+    def normalize(processes)
+      processes = processes.to_unsafe_h if processes.respond_to?(:to_unsafe_h)
+      raise Rejected, "processes must be an object" unless processes.is_a?(Hash)
+      processes.to_h do |proc, p|
+        p = p.to_unsafe_h if p.respond_to?(:to_unsafe_h)
+        raise Rejected, "#{proc}: must be an object" unless p.is_a?(Hash)
+        [ proc.to_s, p.symbolize_keys ]
+      end
+    end
 
     # Free sleeping quota (fix round 1 #2). Builder-mode create/resize skips
     # enforce_plan_quota!, and a sleeping allocation has no shape, so

@@ -68,4 +68,22 @@ RSpec.describe Resources::ResizeService do
     described_class.call(db: unlinked_db, user: user, shape: Resources::Shape.new(cpu: 0.5, memory_mb: 1024, disk_gb: 20))
     expect(Wokku.config.plan_enforcer).to have_received(:allowed?).with(team, :resources, hash_including(:from, :to))
   end
+  it "C1: refuses when the resource builder is off" do
+    allow(Wokku.config).to receive(:resource_builder?).and_return(false)
+    r = described_class.call(db: db, user: user, shape: Resources::Shape.new(cpu: 0.5, memory_mb: 1024, disk_gb: 20))
+    expect(r.ok).to be(false)
+    expect(r.error).to eq("Custom sizing is not enabled on this server.")
+    expect(db.reload.disk_gb).to eq(10)
+  end
+
+  it "I6: mails ops (throttled) when capacity is full" do
+    orig = Rails.cache
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
+    server.update!(vitals: { "mem_total_mb" => 1000 })
+    expect {
+      2.times { described_class.call(db: db, user: user, shape: Resources::Shape.new(cpu: 1.0, memory_mb: 4096, disk_gb: 20)) }
+    }.to have_enqueued_mail(OpsMailer, :capacity_full).once
+  ensure
+    Rails.cache = orig
+  end
 end

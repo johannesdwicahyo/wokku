@@ -200,4 +200,88 @@ RSpec.describe Resources::ApplyChange do
       expect(described_class.team_allocations(other_team)).not_to include(a_hash_including(service_id: unlinked_db.id))
     end
   end
+  describe "final review fixes" do
+    it "C1: refuses everything when the resource builder is off" do
+      allow(Wokku.config).to receive(:resource_builder?).and_return(false)
+      r = described_class.call(app: app, user: user, processes: { "web" => { cpu: "0.5", memory_mb: "1024", count: "1" } }, volume_disk_gb: "5")
+      expect(r.ok).to be(false)
+      expect(r.error).to eq("Custom sizing is not enabled on this server.")
+      expect(app.dyno_allocations.count).to eq(0)
+      expect(app.reload.volume_disk_gb.to_i).to eq(0)
+      c = described_class.check_new_shape(team: app.team, server: server, shape: Resources::Shape.new(cpu: 0.25, memory_mb: 512))
+      expect(c.ok).to be(false)
+      expect(c.error).to eq("Custom sizing is not enabled on this server.")
+    end
+
+    it "C2: rejects web count 0 but allows a non-web process at 0" do
+      r = described_class.call(app: app, user: user, processes: { "web" => { cpu: "0.5", memory_mb: "1024", count: "0" } })
+      expect(r.ok).to be(false)
+      expect(r.error).to eq("Use Stop to stop the app — web can't be scaled to 0 here.")
+      ok = described_class.call(app: app, user: user, processes: { "worker" => { cpu: "0.25", memory_mb: "512", count: "0" } })
+      expect(ok.ok).to be(true)
+    end
+
+    it "I4: rejects more than one sleeping instance" do
+      r = described_class.call(app: app, user: user, processes: { "web" => { sleeping: "1", count: "2" } })
+      expect(r.ok).to be(false)
+      expect(r.error).to eq("Free sleeping apps run a single instance.")
+      expect(app.dyno_allocations.count).to eq(0)
+    end
+
+    it "M3: turns a missing free DynoTier into a refusal, not an exception" do
+      DynoTier.where(name: "free").delete_all
+      r = described_class.call(app: app, user: user, processes: { "web" => { sleeping: "1", count: "1" } })
+      expect(r.ok).to be(false)
+      expect(r.error).to be_present
+    end
+
+    it "M2: rejects non-hash processes / process entries" do
+      expect(described_class.call(app: app, user: user, processes: "junk").ok).to be(false)
+      expect(described_class.call(app: app, user: user, processes: { "web" => "junk" }).ok).to be(false)
+    end
+
+    it "I8: a volume-only change shows up in the enforcer's to: with the new disk" do
+      seen = nil
+      allow(Wokku.config.plan_enforcer).to receive(:allowed?).and_wrap_original do |_m, _team, _kind, from:, to:|
+        seen = to
+        true
+      end
+      described_class.call(app: app, user: user, processes: {}, volume_disk_gb: "7")
+      expect(seen).to include(a_hash_including(volume_app_id: app.id, instances: 1))
+      expect(seen.find { |a| a[:volume_app_id] == app.id }[:shape].disk_gb).to eq(7)
+    end
+
+    describe "I6: capacity ops mail" do
+      around { |ex| orig = Rails.cache; Rails.cache = ActiveSupport::Cache::MemoryStore.new; ex.run; Rails.cache = orig }
+
+      it "enqueues one mail for two refusals in a row, after the rolled-back transaction" do
+        server.update!(vitals: { "mem_total_mb" => 1000 })
+        procs = { "web" => { cpu: "1", memory_mb: "4096", count: "1" } }
+        expect {
+          2.times { expect(described_class.call(app: app, user: user, processes: procs).ok).to be(false) }
+        }.to have_enqueued_mail(OpsMailer, :capacity_full).once
+      end
+
+      it "check_new_shape also mails (throttled)" do
+        server.update!(vitals: { "mem_total_mb" => 1000 })
+        shape = Resources::Shape.new(cpu: 1.0, memory_mb: 4096)
+        expect {
+          2.times { described_class.check_new_shape(team: app.team, server: server, shape: shape) }
+        }.to have_enqueued_mail(OpsMailer, :capacity_full).once
+      end
+    end
+
+    describe ".processes_for_counts (I3)" do
+      it "keeps a shaped allocation's shape, falls back to web's, else starter; sleeping stays sleeping" do
+        app.dyno_allocations.create!(process_type: "web", count: 1, cpu: 1.0, memory_mb: 2048)
+        app.dyno_allocations.create!(process_type: "clock", count: 1, dyno_tier: DynoTier.find_by!(name: "free"))
+        out = described_class.processes_for_counts(app, { "web" => "3", "worker" => "2", "clock" => "1" })
+        expect(out["web"]).to include(cpu: 1.0, memory_mb: 2048, count: "3")
+        expect(out["worker"]).to include(cpu: 1.0, memory_mb: 2048, count: "2")
+        expect(out["clock"]).to include(sleeping: true, count: "1")
+        bare = create(:app_record, server: server, creator: user)
+        expect(described_class.processes_for_counts(bare, { "web" => 1 })["web"]).to include(cpu: 0.25, memory_mb: 512)
+      end
+    end
+  end
 end
