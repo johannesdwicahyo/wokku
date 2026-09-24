@@ -74,9 +74,12 @@ module Api
 
         warnings = []
         if builder_mode
-          result = Resources::ApplyChange.call(app: app, user: current_user,
-                                               processes: params.require(:resources).permit!.to_h)
-          warnings << result.error unless result.ok
+          # Before DNS/provisioning: a refused size un-creates the app.
+          result = Resources::ApplyChange.call(app: app, user: current_user, processes: params[:resources])
+          unless result.ok
+            app.destroy!
+            return render_api_error(:invalid_params, message: result.error, status: :unprocessable_entity)
+          end
         elsif Addons::SharedProvisioner.feature_enabled?
           # Bundle v2: create DynoAllocation from box_size mapping.
           tier_name = DynoTier::BOX_SIZE_TO_DYNO_TIER[box_size]

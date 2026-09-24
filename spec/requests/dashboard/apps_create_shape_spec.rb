@@ -41,9 +41,9 @@ RSpec.describe "Create app with a shape", type: :request do
 
     post "/dashboard/apps", params: { app_record: { name: "quotafull-app", server_id: servers(:one).id },
                                       processes: { web: { sleeping: "1", count: "1" } } }
-    app = AppRecord.find_by!(name: "quotafull-app")
-    expect(app.dyno_allocations.find_by(process_type: "web")).to be_nil
-    follow_redirect!
+    # Final review I5: a refused size un-creates the app and re-renders.
+    expect(AppRecord.find_by(name: "quotafull-app")).to be_nil
+    expect(response).to have_http_status(:unprocessable_entity)
     expect(response.body).to include("free sleeping apps")
   end
 end

@@ -210,7 +210,7 @@ module Dashboard
 
     def resize
       db = DatabaseService.find(params[:id])
-      authorize db, :update?
+      authorize db, :resize?
       shape = Resources::Shape.new(cpu: params[:cpu], memory_mb: params[:memory_mb], disk_gb: params[:disk_gb])
       result = Resources::ResizeService.call(db: db, user: current_user, shape: shape)
       redirect_to dashboard_addon_path(db), **(result.ok ? { notice: "Resizing #{db.name}…" } : { alert: result.error })

@@ -19,6 +19,16 @@ module Dashboard
     def update
       authorize @app, :update?
 
+      # Builder mode: counts go through the same enforcer/capacity checks
+      # as a resize (Resources::ApplyChange), never the legacy box quota.
+      if Wokku.config.resource_builder?
+        counts = params.require(:scaling).permit!.to_h
+        result = Resources::ApplyChange.call(app: @app, user: current_user,
+                                             processes: Resources::ApplyChange.processes_for_counts(@app, counts))
+        flash_kind = result.ok ? { notice: "Scaling updated." } : { alert: result.error }
+        return redirect_to dashboard_app_scaling_path(@app), **flash_kind
+      end
+
       if defined?(DynoAllocation)
         # Plan box-quota check: verify the user won't exceed their plan's
         # allocation limits for each process type being scaled up.

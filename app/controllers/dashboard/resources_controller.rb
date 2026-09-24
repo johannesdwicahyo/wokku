@@ -56,7 +56,7 @@ module Dashboard
       authorize @app, :update?
       result = Resources::ApplyChange.call(
         app: @app, user: current_user,
-        processes: params[:processes].present? ? params[:processes].permit!.to_h : {},
+        processes: params[:processes].respond_to?(:to_unsafe_h) ? params[:processes].to_unsafe_h : (params[:processes] || {}),
         volume_disk_gb: params[:volume_disk_gb].presence
       )
       if result.ok

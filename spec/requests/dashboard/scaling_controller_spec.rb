@@ -3,6 +3,9 @@
 require "rails_helper"
 
 RSpec.describe "Dashboard::Scaling", type: :request do
+  # Legacy box-quota scaling path (resource builder off).
+  before { allow(Wokku.config).to receive(:resource_builder?).and_return(false) }
+
   include Devise::Test::IntegrationHelpers
 
   let(:user)       { users(:two) }

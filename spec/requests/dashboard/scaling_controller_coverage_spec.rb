@@ -10,6 +10,9 @@ require "rails_helper"
 #   - change_tier: plan box-quota check on a size-bucket change
 #   - change_tier: downgrade-to-non-scalable worker-scale-to-0 branch
 RSpec.describe "Dashboard::Scaling (coverage)", type: :request do
+  # Legacy box-quota scaling path (resource builder off).
+  before { allow(Wokku.config).to receive(:resource_builder?).and_return(false) }
+
   include Devise::Test::IntegrationHelpers
 
   let(:user)       { users(:two) }

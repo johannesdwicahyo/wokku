@@ -3,6 +3,9 @@
 require "rails_helper"
 
 RSpec.describe "API::V1::PsController (deep)", type: :request do
+  # Legacy box-quota scaling path (resource builder off).
+  before { allow(Wokku.config).to receive(:resource_builder?).and_return(false) }
+
   let(:user) { users(:one) }
   let(:app_record) { app_records(:one) }
   let(:plain_token) { api_v1_token_for(user) }

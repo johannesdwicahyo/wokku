@@ -5,6 +5,9 @@ require "rails_helper"
 # Deep coverage tests for Dashboard::ScalingController
 # Exercises sync_process_scales logic, update scaling, and change_tier paths.
 RSpec.describe "Dashboard::Scaling (deep)", type: :request do
+  # Legacy box-quota scaling path (resource builder off).
+  before { allow(Wokku.config).to receive(:resource_builder?).and_return(false) }
+
   include Devise::Test::IntegrationHelpers
 
   let(:user)       { users(:two) }

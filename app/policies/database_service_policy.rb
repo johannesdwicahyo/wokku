@@ -19,6 +19,11 @@ class DatabaseServicePolicy < ApplicationPolicy
     team_admin?
   end
 
+  # Resizing spends money — viewers can't.
+  def resize?
+    team_member_or_above?
+  end
+
   def link?
     user_in_team?
   end
@@ -53,6 +58,15 @@ class DatabaseServicePolicy < ApplicationPolicy
     record.creator_id == user&.id ||
       record.app_records.exists?(team_id: user.team_ids) ||
       record.server.team&.team_memberships&.exists?(user_id: user.id)
+  end
+
+  def team_member_or_above?
+    return true if user&.admin?
+    record.creator_id == user&.id ||
+      record.app_records
+            .joins(team: :team_memberships)
+            .exists?(team_memberships: { user_id: user.id, role: [ :member, :admin ] }) ||
+      record.server.team&.team_memberships&.exists?(user_id: user.id, role: [ :member, :admin ])
   end
 
   def team_admin?
