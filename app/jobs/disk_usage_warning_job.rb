@@ -7,7 +7,8 @@ class DiskUsageWarningJob < ApplicationJob
     AppRecord.where("volume_disk_gb > 0").includes(:server, team: :owner).find_each do |app|
       warn(app, app.team&.owner, "#{app.name} · disk", app.volume_used_gb, app.volume_disk_gb)
     end
-    DatabaseService.where(shared: false).where.not(disk_gb: nil).includes(:server).find_each do |db|
+    DatabaseService.where(shared: false).where.not(disk_gb: nil)
+      .includes(:server, app_records: { team: :owner }, creator: { teams: :owner }).find_each do |db|
       warn(db, db.billing_team&.owner, "#{db.name} · #{db.service_type}", db.disk_used_gb, db.disk_gb)
     end
   end
