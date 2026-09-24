@@ -4,6 +4,8 @@ class DynoAllocation < ApplicationRecord
 
   validates :process_type, presence: true, uniqueness: { scope: :app_record_id }
   validates :count, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+  validate :tier_or_shape
+  validate :shape_on_grid, if: -> { cpu.present? || memory_mb.present? }
 
   # Under Phase 4 invoice billing, container cost is bundled into the
   # user's monthly plan invoice — no per-allocation usage segments. The
@@ -16,5 +18,21 @@ class DynoAllocation < ApplicationRecord
 
   def resource_id_ref
     "AppRecord:#{app_record_id}:#{process_type}"
+  end
+
+  # Per-resource shape (spec 2026-09-24); nil for tier-only rows (legacy,
+  # and the free sleeping preset which stays a tier).
+  def shape
+    Resources::Shape.new(cpu: cpu, memory_mb: memory_mb) if cpu.present? && memory_mb.present?
+  end
+
+  private
+
+  def tier_or_shape
+    errors.add(:base, "needs a tier or a shape") if dyno_tier.nil? && (cpu.blank? || memory_mb.blank?)
+  end
+
+  def shape_on_grid
+    Resources::Shape.new(cpu: cpu, memory_mb: memory_mb).errors.each { |e| errors.add(:base, e) }
   end
 end

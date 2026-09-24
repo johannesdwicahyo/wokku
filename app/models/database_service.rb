@@ -70,6 +70,7 @@ class DatabaseService < ApplicationRecord
   }
   validate :shared_tenants_must_have_parent
   validate :service_type_not_retired, on: :create
+  validate :shape_on_grid, if: -> { cpu.present? || memory_mb.present? }
 
   def over_quota?
     over_quota_at.present?
@@ -91,6 +92,10 @@ class DatabaseService < ApplicationRecord
   # The old ResourceUsage open/close/rotate helpers were removed in 1.8
   # along with the daily-debit rail.
 
+  def shape
+    Resources::Shape.new(cpu: cpu, memory_mb: memory_mb, disk_gb: disk_gb.to_i) if cpu.present? && memory_mb.present?
+  end
+
   private
 
   def service_type_not_retired
@@ -102,6 +107,10 @@ class DatabaseService < ApplicationRecord
   def shared_tenants_must_have_parent
     return unless shared?
     errors.add(:parent_service_id, "required for shared tenants") if parent_service_id.blank?
+  end
+
+  def shape_on_grid
+    Resources::Shape.new(cpu: cpu, memory_mb: memory_mb, disk_gb: disk_gb.to_i).errors.each { |e| errors.add(:base, e) }
   end
 
   public
