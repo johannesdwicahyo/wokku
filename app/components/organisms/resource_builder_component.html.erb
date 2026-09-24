@@ -1,0 +1,52 @@
+<%# app/components/organisms/resource_builder_component.html.erb %>
+<div data-controller="resource-builder"
+     <% if units %>data-resource-builder-units-value="<%= units.to_json %>"<% end %>
+     class="space-y-4">
+  <div class="flex flex-wrap gap-2">
+    <% if sleeping_option? %>
+      <button type="button" data-action="resource-builder#toggleSleeping" data-resource-builder-target="sleeping"
+              aria-pressed="<%= sleeping %>"
+              class="px-2.5 py-1 text-xs border-1.5 rounded-md <%= sleeping ? 'border-accent bg-accent-soft' : 'border-line' %>">Sleeping (free)</button>
+    <% end %>
+    <% presets.each do |key, p| %>
+      <button type="button" data-action="resource-builder#pick" data-resource-builder-target="preset"
+              data-cpu="<%= p[:cpu] %>" data-memory-mb="<%= p[:memory_mb] %>" data-disk-gb="<%= p[:disk_gb] %>"
+              aria-pressed="<%= !sleeping && shape.cpu == p[:cpu] && shape.memory_mb == p[:memory_mb] %>"
+              class="px-2.5 py-1 text-xs border-1.5 border-line rounded-md aria-pressed:border-accent aria-pressed:bg-accent-soft"><%= key.capitalize %></button>
+    <% end %>
+  </div>
+  <% if rails_hint %>
+    <p class="text-[11px] text-dim"><%= t("resources.rails_hint", default: "256 MB is not enough for Rails — pick 512 MB or more.") %></p>
+  <% end %>
+
+  <input type="hidden" name="<%= field(:sleeping) %>" value="<%= sleeping ? 1 : 0 %>" data-resource-builder-target="sleepingField">
+  <div data-resource-builder-target="sliders" class="space-y-3 <%= 'opacity-40 pointer-events-none' if sleeping %>">
+    <label class="block text-xs text-dim">CPU <span class="text-ink font-medium tabular-nums" data-resource-builder-target="cpuLabel"><%= shape.cpu %> vCPU</span>
+      <input type="range" name="<%= field(:cpu) %>" value="<%= shape.cpu %>" min="<%= grid(:cpu)[:min] %>" max="<%= grid(:cpu)[:max] %>" step="<%= grid(:cpu)[:step] %>"
+             data-resource-builder-target="cpu" data-action="input->resource-builder#input" class="w-full">
+    </label>
+    <label class="block text-xs text-dim">RAM <span class="text-ink font-medium tabular-nums" data-resource-builder-target="memoryLabel"><%= mem_label(shape.memory_mb) %></span>
+      <input type="range" name="<%= field(:memory_mb) %>" value="<%= shape.memory_mb %>" min="<%= grid(:memory_mb)[:min] %>" max="<%= grid(:memory_mb)[:max] %>" step="<%= grid(:memory_mb)[:step] %>"
+             data-resource-builder-target="memory" data-action="input->resource-builder#input" class="w-full">
+    </label>
+    <% if disk? %>
+      <label class="block text-xs text-dim">Disk <span class="text-ink font-medium tabular-nums" data-resource-builder-target="diskLabel"><%= shape.disk_gb %> GB</span>
+        <input type="range" name="<%= field(:disk_gb) %>" value="<%= shape.disk_gb %>" min="<%= min_disk_gb %>" max="<%= grid(:disk_gb)[:max] %>" step="<%= grid(:disk_gb)[:step] %>"
+               data-resource-builder-target="disk" data-action="input->resource-builder#input" class="w-full">
+      </label>
+    <% end %>
+    <% if instances %>
+      <label class="block text-xs text-dim">Instances
+        <input type="number" name="<%= field(:count) %>" value="<%= instances %>" min="0" max="10"
+               data-resource-builder-target="count" data-action="input->resource-builder#input"
+               class="ml-2 w-16 border-1.5 border-line rounded-md px-2 py-0.5 text-ink">
+      </label>
+    <% end %>
+  </div>
+
+  <% if units %>
+    <p class="text-sm font-semibold text-ink tabular-nums" data-resource-builder-target="price">
+      <%= sleeping ? "Rp0" : idr(price_idr) %>/<%= t("resources.month", default: "month") %>
+    </p>
+  <% end %>
+</div>
