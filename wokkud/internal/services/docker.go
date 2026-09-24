@@ -99,7 +99,7 @@ type dockerAPI interface {
 	ContainerStop(ctx context.Context, name string) error
 	ContainerRestart(ctx context.Context, name string) error
 	ContainerRemove(ctx context.Context, name string) error
-	ContainerUpdate(ctx context.Context, name string, memoryMB int) error
+	ContainerUpdate(ctx context.Context, name string, memoryMB int, cpu float64) error
 	// ContainerExists reports whether a container with this name exists
 	// (any state). A not-found is (false, nil); any other docker error is
 	// (false, err) so callers never mistake a broken socket for "missing".
@@ -224,11 +224,16 @@ func (r *realDockerAPI) ContainerRemove(ctx context.Context, name string) error 
 	return r.cli.ContainerRemove(ctx, name, container.RemoveOptions{})
 }
 
-func (r *realDockerAPI) ContainerUpdate(ctx context.Context, name string, memoryMB int) error {
-	mb := int64(memoryMB) * 1024 * 1024
-	_, err := r.cli.ContainerUpdate(ctx, name, container.UpdateConfig{
-		Resources: container.Resources{Memory: mb, MemorySwap: mb},
-	})
+func (r *realDockerAPI) ContainerUpdate(ctx context.Context, name string, memoryMB int, cpu float64) error {
+	res := container.Resources{}
+	if memoryMB > 0 {
+		mb := int64(memoryMB) * 1024 * 1024
+		res.Memory, res.MemorySwap = mb, mb
+	}
+	if cpu > 0 {
+		res.NanoCPUs = int64(cpu * 1e9)
+	}
+	_, err := r.cli.ContainerUpdate(ctx, name, container.UpdateConfig{Resources: res})
 	return err
 }
 

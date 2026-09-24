@@ -173,16 +173,16 @@ func serviceCreate(ctx context.Context, d dockerAPI, containerName string, p Cre
 		return fmt.Errorf("container start: %w", err)
 	}
 
-	return serviceSetLimits(ctx, d, containerName, p.ServiceType, p.MemoryMB, p.MaxConns)
+	return serviceSetLimits(ctx, d, containerName, p.ServiceType, p.MemoryMB, p.MaxConns, p.CPU)
 }
 
 // serviceSetLimits mirrors database_resources.rb:27-50 exactly: docker
-// update for memory (skip if <=0), then the engine's ALTER for
+// update for memory/cpu (skip if both <=0), then the engine's ALTER for
 // max_connections (skip if <=0), restarting only when the engine requires
 // it (postgres does, mariadb doesn't).
-func serviceSetLimits(ctx context.Context, d dockerAPI, containerName, serviceType string, memoryMB, maxConns int) error {
-	if memoryMB > 0 {
-		if err := d.ContainerUpdate(ctx, containerName, memoryMB); err != nil {
+func serviceSetLimits(ctx context.Context, d dockerAPI, containerName, serviceType string, memoryMB, maxConns int, cpu float64) error {
+	if memoryMB > 0 || cpu > 0 {
+		if err := d.ContainerUpdate(ctx, containerName, memoryMB, cpu); err != nil {
 			return fmt.Errorf("update memory: %w", err)
 		}
 	}

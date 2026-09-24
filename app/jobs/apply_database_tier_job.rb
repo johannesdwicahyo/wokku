@@ -14,6 +14,14 @@ class ApplyDatabaseTierJob < ApplicationJob
     return unless db
     return if db.shared?
 
+    if db.shape
+      Services::Ops.issue_and_wait!(
+        service: db, kind: "service.set_limits",
+        params: { memory_mb: db.memory_mb, cpu: db.cpu.to_f, max_connections: db.max_connections_for_shape }
+      )
+      return
+    end
+
     tier = db.service_tier
     return unless tier
 

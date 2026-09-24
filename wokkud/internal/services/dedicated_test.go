@@ -83,8 +83,12 @@ func (f *fakeDocker) ContainerRemove(ctx context.Context, name string) error {
 	return f.fail("ContainerRemove")
 }
 
-func (f *fakeDocker) ContainerUpdate(ctx context.Context, name string, memoryMB int) error {
-	f.calls = append(f.calls, fmt.Sprintf("ContainerUpdate(%s,%d)", name, memoryMB))
+func (f *fakeDocker) ContainerUpdate(ctx context.Context, name string, memoryMB int, cpu float64) error {
+	if cpu > 0 {
+		f.calls = append(f.calls, fmt.Sprintf("ContainerUpdate(%s,%d,cpu=%g)", name, memoryMB, cpu))
+	} else {
+		f.calls = append(f.calls, fmt.Sprintf("ContainerUpdate(%s,%d)", name, memoryMB))
+	}
 	return f.fail("ContainerUpdate")
 }
 
@@ -379,7 +383,7 @@ func TestServiceCreateUnsupportedServiceType(t *testing.T) {
 
 func TestServiceSetLimitsPostgresAltersAndRestarts(t *testing.T) {
 	f := &fakeDocker{}
-	if err := serviceSetLimits(context.Background(), f, "dokku.postgres.mydb", "postgres", 512, 100); err != nil {
+	if err := serviceSetLimits(context.Background(), f, "dokku.postgres.mydb", "postgres", 512, 100, 0); err != nil {
 		t.Fatal(err)
 	}
 	want := []string{
@@ -399,7 +403,7 @@ func TestServiceSetLimitsPostgresAltersAndRestarts(t *testing.T) {
 
 func TestServiceSetLimitsMariadbWritesConfAndRestarts(t *testing.T) {
 	f := &fakeDocker{}
-	if err := serviceSetLimits(context.Background(), f, "dokku.mariadb.mydb", "mariadb", 512, 100); err != nil {
+	if err := serviceSetLimits(context.Background(), f, "dokku.mariadb.mydb", "mariadb", 512, 100, 0); err != nil {
 		t.Fatal(err)
 	}
 	got := strings.Join(f.calls, " | ")
@@ -419,11 +423,32 @@ func TestServiceSetLimitsMariadbWritesConfAndRestarts(t *testing.T) {
 
 func TestServiceSetLimitsSkipsZeroValues(t *testing.T) {
 	f := &fakeDocker{}
-	if err := serviceSetLimits(context.Background(), f, "c", "postgres", 0, 0); err != nil {
+	if err := serviceSetLimits(context.Background(), f, "c", "postgres", 0, 0, 0); err != nil {
 		t.Fatal(err)
 	}
 	if len(f.calls) != 0 {
 		t.Fatalf("want no calls when memory_mb=0 and max_connections=0, got %v", f.calls)
+	}
+}
+
+func TestSetLimitsAppliesCPU(t *testing.T) {
+	f := &fakeDocker{}
+	if err := serviceSetLimits(context.Background(), f, "dokku.postgres.mydb", "postgres", 512, 0, 0.5); err != nil {
+		t.Fatal(err)
+	}
+	got := strings.Join(f.calls, "|")
+	if !strings.Contains(got, "ContainerUpdate(dokku.postgres.mydb,512,cpu=0.5)") {
+		t.Errorf("want cpu applied, got %v", f.calls)
+	}
+}
+
+func TestSetLimitsCPUOnly(t *testing.T) {
+	f := &fakeDocker{}
+	if err := serviceSetLimits(context.Background(), f, "dokku.redis.c", "redis", 0, 0, 0.25); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(strings.Join(f.calls, "|"), "ContainerUpdate(dokku.redis.c,0,cpu=0.25)") {
+		t.Errorf("want cpu-only update, got %v", f.calls)
 	}
 }
 

@@ -21,20 +21,22 @@ import (
 // (docs/superpowers/specs/2026-07-09-track-b-phase-b4-datastores.md).
 
 type CreateParams struct { // "service.create"
-	ServiceType string `json:"service_type"` // postgres|redis|mariadb|mongodb|shared parents
-	Image       string `json:"image"`        // e.g. "postgres:16-alpine"
-	MemoryMB    int    `json:"memory_mb"`
-	MaxConns    int    `json:"max_connections"`
-	Network     string `json:"network"`
-	VolumePath  string `json:"volume_path"` // host dir, created 0700
-	AdminPass   string `json:"admin_pass"`  // control-plane-generated
-	Database    string `json:"database"`    // Task 10: application DB to create on first boot (POSTGRES_DB/MARIADB_DATABASE/MONGO_INITDB_DATABASE); "" = none (redis)
+	ServiceType string  `json:"service_type"` // postgres|redis|mariadb|mongodb|shared parents
+	Image       string  `json:"image"`        // e.g. "postgres:16-alpine"
+	MemoryMB    int     `json:"memory_mb"`
+	CPU         float64 `json:"cpu"` // 0 = unlimited/unchanged
+	MaxConns    int     `json:"max_connections"`
+	Network     string  `json:"network"`
+	VolumePath  string  `json:"volume_path"` // host dir, created 0700
+	AdminPass   string  `json:"admin_pass"`  // control-plane-generated
+	Database    string  `json:"database"`    // Task 10: application DB to create on first boot (POSTGRES_DB/MARIADB_DATABASE/MONGO_INITDB_DATABASE); "" = none (redis)
 }
 type AdoptParams struct{}     // "service.adopt" — inspect + return AdoptResult
 type LifecycleParams struct{} // "service.start" | "service.stop" | "service.restart" | "service.destroy" (destroy: params {"force": true} required)
 type SetLimitsParams struct { // "service.set_limits" — docker update + ALTER SYSTEM, then restart if engine requires
-	MemoryMB int `json:"memory_mb"`
-	MaxConns int `json:"max_connections"`
+	MemoryMB int     `json:"memory_mb"`
+	CPU      float64 `json:"cpu"` // 0 = unlimited/unchanged
+	MaxConns int     `json:"max_connections"`
 }
 type TenantProvisionParams struct { // "tenant.provision" (shared parents only)
 	Slug     string `json:"slug"`
@@ -180,7 +182,7 @@ func runOp(ctx context.Context, client *control.Client, docker dockerAPI, op *qu
 			return nil, fmt.Errorf("decode params: %w", err)
 		}
 		serviceType := serviceTypeFromContainerName(op.service)
-		if err := serviceSetLimits(ctx, docker, op.service, serviceType, p.MemoryMB, p.MaxConns); err != nil {
+		if err := serviceSetLimits(ctx, docker, op.service, serviceType, p.MemoryMB, p.MaxConns, p.CPU); err != nil {
 			return nil, err
 		}
 		return map[string]string{"status": "applied"}, nil

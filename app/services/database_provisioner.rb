@@ -33,7 +33,7 @@ class DatabaseProvisioner
   # @param service_type [String] "postgres" | "mysql" | ...
   # @param tier [String] "shared_free" | "basic" | "standard" | "performance"
   # @param name [String] optional explicit DB name
-  def initialize(app:, service_type:, tier: DEFAULT_TIER, name: nil, creator: nil, server: nil)
+  def initialize(app:, service_type:, tier: DEFAULT_TIER, name: nil, creator: nil, server: nil, shape: nil)
     @app = app
     @service_type = service_type.to_s
     @tier = (tier.presence || DEFAULT_TIER).to_s
@@ -45,6 +45,10 @@ class DatabaseProvisioner
     # in-flight or unlinked addons in their list. Defaults to the app's
     # creator when not given (template deployer path).
     @creator = creator || app&.creator
+    # Resources::Shape|nil — per-resource billing (spec 2026-09-24 §5.3):
+    # when present, the row and the service.create op both get a
+    # cpu/memory_mb (and disk_gb) size instead of the tier's fixed spec.
+    @shape = shape
   end
 
   def call
@@ -204,7 +208,7 @@ class DatabaseProvisioner
     end
 
     name = @name || default_name
-    db = DatabaseService.create!(
+    attrs = {
       name: name,
       service_type: @service_type,
       server: @server,
@@ -212,7 +216,9 @@ class DatabaseProvisioner
       tier_name: @tier,
       shared: false,
       creator: @creator
-    )
+    }
+    attrs.merge!(cpu: @shape.cpu, memory_mb: @shape.memory_mb, disk_gb: @shape.disk_gb) if @shape
+    db = DatabaseService.create!(attrs)
 
     provision_dedicated_via_ops!(db, name)
 
@@ -235,8 +241,9 @@ class DatabaseProvisioner
         # B4 gate 5 friendly refusal lives in image_for; tier-spec images
         # (pgvector et al.) win over the stock DEFAULT_IMAGES entry.
         image: self.class.image_for(db),
-        memory_mb: spec["memory_mb"].to_i,
-        max_connections: spec["connections"].to_i,
+        memory_mb: db.memory_mb || spec["memory_mb"].to_i,
+        cpu: db.cpu&.to_f,
+        max_connections: db.memory_mb ? db.max_connections_for_shape : spec["connections"].to_i,
         network: DEDICATED_NETWORK,
         volume_path: "/var/lib/dokku/services/#{@service_type}/#{name}/data",
         admin_pass: admin_pass,

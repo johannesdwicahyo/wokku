@@ -96,6 +96,11 @@ class DatabaseService < ApplicationRecord
     Resources::Shape.new(cpu: cpu, memory_mb: memory_mb, disk_gb: disk_gb.to_i) if cpu.present? && memory_mb.present?
   end
 
+  # Derived connection cap for a shape-driven service (spec 2026-09-24 §5.3)
+  # — matches today's dedicated tier presets exactly (128MB→10, 256→20,
+  # 512→40), capped at 500 so a huge shape doesn't blow past engine limits.
+  def max_connections_for_shape = [ memory_mb.to_i * 10 / 128, 500 ].min
+
   private
 
   def service_type_not_retired
