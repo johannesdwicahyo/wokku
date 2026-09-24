@@ -70,6 +70,8 @@ module Resources
       disk = @volume_disk_gb.nil? ? nil : Integer(@volume_disk_gb.to_s, exception: false)
       raise Rejected, "Disk must be 0–100 GB" if !@volume_disk_gb.nil? && !disk&.between?(0, 100)
 
+      check_sleeping_quota!(shapes)
+
       before = self.class.team_allocations(@app.team)
       before_mb = CapacityGuard.reserved_mb(@app.server)
       ActiveRecord::Base.transaction do
@@ -91,6 +93,30 @@ module Resources
     end
 
     private
+
+    # Free sleeping quota (fix round 1 #2). Builder-mode create/resize skips
+    # enforce_plan_quota!, and a sleeping allocation has no shape, so
+    # team_allocations (the plan_enforcer :resources view) never sees it —
+    # without this, a builder user could mint unlimited free sleeping apps.
+    # Counts the same way PlanEnforceable#current_box_count does
+    # (dyno_tier&.size_key == "sleeping") so this agrees with the legacy
+    # box-picker's own enforcement instead of drifting from it. `.to_f`
+    # comparison: quota may be Float::INFINITY (OSS null enforcer).
+    def check_sleeping_quota!(shapes)
+      new_sleeping = shapes.count do |proc, s|
+        next false unless s == :sleeping
+        existing = @app.dyno_allocations.find_by(process_type: proc)
+        !(existing && existing.dyno_tier&.size_key == "sleeping")
+      end
+      return if new_sleeping.zero?
+
+      quota = Wokku.config.plan_enforcer.quota(@user, :box, "sleeping").to_f
+      current = @user.teams.flat_map(&:app_records).flat_map(&:dyno_allocations)
+                     .select { |a| a.dyno_tier&.size_key == "sleeping" }.sum(&:count)
+      return if current + new_sleeping <= quota
+
+      raise Rejected, "You can have #{quota.to_i} free sleeping apps — pick a paid size."
+    end
 
     def persist!(shapes, counts, disk)
       shapes.each do |proc, shape|

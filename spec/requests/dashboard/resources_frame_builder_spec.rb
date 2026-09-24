@@ -19,4 +19,17 @@ RSpec.describe "Resources frame builder", type: :request do
     expect(response.body).to include("Change box size")
     expect(response.body).not_to include("processes[web][cpu]")
   end
+
+  # Fix round 1 #3: a legacy tier-only allocation (dyno_tier set, cpu/
+  # memory_mb nil — a.shape is nil) used to fall back to the Starter
+  # preset (0.25 vCPU / 512 MB) regardless of the tier's real size, so
+  # just opening the page and clicking Save would silently downsize it.
+  it "renders a legacy tier allocation's real size, not the Starter fallback" do
+    legacy_tier = create(:dyno_tier, memory_mb: 1024, cpu_shares: 0.5, sleeps: false)
+    app_record.dyno_allocations.destroy_all
+    app_record.dyno_allocations.create!(process_type: "web", count: 1, dyno_tier: legacy_tier)
+    get "/dashboard/apps/#{app_record.id}/resources", params: { deferred: 1 }
+    expect(response.body).to include('name="processes[web][memory_mb]" value="1024"')
+    expect(response.body).to include('name="processes[web][cpu]" value="0.5"')
+  end
 end

@@ -7,7 +7,7 @@
           <h3 class="font-headline text-sm font-bold text-ink mb-3"><%= a.process_type %></h3>
           <%= render Organisms::ResourceBuilderComponent.new(
                 name: "processes[#{a.process_type}]",
-                shape: a.shape || Resources::Shape.new(cpu: 0.25, memory_mb: 512),
+                shape: a.shape || (a.sleeping? ? Resources::Shape.new(**Resources::Shape::PRESETS["starter"]) : Resources::Shape.round_up(cpu: a.effective_cpu, memory_mb: a.effective_memory_mb)),
                 presets: Resources::Shape::PRESETS,
                 instances: @scales[a.process_type] || 1,
                 sleeping_option: a.process_type == "web",

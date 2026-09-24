@@ -156,7 +156,15 @@ module Dashboard
         if builder_mode
           result = Resources::ApplyChange.call(app: @app, user: current_user,
                                                processes: params.require(:processes).permit!.to_h)
-          flash[:warning] = result.error unless result.ok
+          # Molecules::FlashToastComponent only renders flash[:notice] /
+          # flash[:alert] / flash[:warn] — NOT flash[:warning] (the
+          # dashboard/shared/_flash partial that read any flash key is
+          # dead/unrendered since the schdl layout switched to the
+          # component). Pre-existing `flash[:warning]` calls a few lines
+          # below share this bug but are out of this fix's scope — this
+          # one must actually reach the user, so it uses the key the
+          # component reads.
+          flash[:warn] = result.error unless result.ok
         else
           # Derive the DynoTier from box_size (Bundle v2 mapping).
           # Falls back to the cheapest non-capped tier if no mapping exists.

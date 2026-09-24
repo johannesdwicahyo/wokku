@@ -104,6 +104,52 @@ RSpec.describe Resources::ApplyChange do
     expect(target.dyno_allocations.find_by(process_type: "web").memory_mb).to eq(1536)
   end
 
+  describe "free sleeping quota (fix round 1 #2)" do
+    let(:quota_user) { create(:user, :with_personal_team) }
+    let(:quota_team) { quota_user.teams.first }
+    let(:quota_app)  { create(:app_record, server: server, creator: quota_user, team: quota_team) }
+    let(:free_tier)  { DynoTier.find_by!(name: "free") }
+
+    def create_sleeping_app!
+      a = create(:app_record, server: server, creator: quota_user, team: quota_team)
+      a.dyno_allocations.create!(process_type: "web", dyno_tier: free_tier, count: 1)
+    end
+
+    def stub_quota(n)
+      allow(Wokku.config.plan_enforcer).to receive(:quota).and_call_original
+      allow(Wokku.config.plan_enforcer).to receive(:quota).with(quota_user, :box, "sleeping").and_return(n)
+    end
+
+    it "rejects a new sleeping allocation when the user is already at quota" do
+      stub_quota(3)
+      3.times { create_sleeping_app! }
+      result = described_class.call(app: quota_app, user: quota_user, processes: { "web" => { sleeping: "1", count: "1" } })
+      expect(result.ok).to be(false)
+      expect(result.error).to match(/free sleeping apps/)
+      expect(quota_app.dyno_allocations.find_by(process_type: "web")).to be_nil
+    end
+
+    it "allows a new sleeping allocation when under quota" do
+      stub_quota(3)
+      2.times { create_sleeping_app! }
+      result = described_class.call(app: quota_app, user: quota_user, processes: { "web" => { sleeping: "1", count: "1" } })
+      expect(result.ok).to be(true)
+    end
+
+    it "does not double-count a process that is already sleeping" do
+      stub_quota(1)
+      quota_app.dyno_allocations.create!(process_type: "web", dyno_tier: free_tier, count: 1)
+      result = described_class.call(app: quota_app, user: quota_user, processes: { "web" => { sleeping: "1", count: "1" } })
+      expect(result.ok).to be(true)
+    end
+
+    it "never rejects under the OSS null enforcer (Float::INFINITY quota)" do
+      5.times { create_sleeping_app! }
+      result = described_class.call(app: quota_app, user: quota_user, processes: { "web" => { sleeping: "1", count: "1" } })
+      expect(result.ok).to be(true)
+    end
+  end
+
   describe ".check_new_shape" do
     it "accepts a valid shape with room" do
       result = described_class.check_new_shape(team: app.team, server: server, shape: Resources::Shape.new(cpu: 0.25, memory_mb: 512))
