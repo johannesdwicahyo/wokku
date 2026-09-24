@@ -98,5 +98,16 @@ RSpec.describe Resources::ApplyChange do
 
       expect(allocations).to include(a_hash_including(service_id: unlinked_db.id, shape: unlinked_db.shape, instances: 1))
     end
+
+    it "counts an unlinked shaped service only toward its billing (first) team, not every team the creator belongs to (fix round 2)" do
+      member = create(:user, :with_personal_team)
+      first_team = member.teams.first
+      other_team = create(:team)
+      create(:team_membership, team: other_team, user: member, role: :member)
+      unlinked_db = create(:database_service, server: server, creator: member, cpu: 0.25, memory_mb: 512, disk_gb: 5)
+
+      expect(described_class.team_allocations(first_team)).to include(a_hash_including(service_id: unlinked_db.id))
+      expect(described_class.team_allocations(other_team)).not_to include(a_hash_including(service_id: unlinked_db.id))
+    end
   end
 end

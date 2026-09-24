@@ -23,9 +23,15 @@ module Resources
       # not-yet-linked datastore is still billed to its creator's team
       # (DatabaseService#billing_team), so it must count here too, or the
       # enforcer's before/after view never sees it (review fix round 1).
+      # SQL narrows to "created by a member of this team" (cheap), then
+      # #billing_team resolves the actual team it bills to — a creator on
+      # several teams must only count it toward ONE of them, else it's
+      # double-counted across every team they belong to (review fix
+      # round 2).
       unlinked_services = DatabaseService.where(shared: false).where.not(cpu: nil)
         .where.missing(:app_databases).where(creator_id: team.users.select(:id))
-      services = (linked_services.to_a + unlinked_services.to_a).uniq(&:id)
+        .select { |db| db.billing_team == team }
+      services = (linked_services.to_a + unlinked_services).uniq(&:id)
       procs + services.map { |db| { shape: db.shape, instances: 1, service_id: db.id } }
     end
 
