@@ -39,15 +39,16 @@ module ApplicationHelper
     paths.call(app).fetch(section).call
   end
 
-  # The user-facing box vocabulary (sleeping/small/medium/large/xlarge),
-  # translated from the app's web DynoTier name (free/basic/standard/...)
-  # via the canonical map. Shared by AppsTableComponent's SIZE column and
-  # the record panel so both stay in sync with one source of truth.
+  # The user-facing box vocabulary (sleeping/small/medium/large/xlarge) for
+  # tier-backed allocations, or the "0.5 vCPU · 1 GB" shape label for
+  # per-resource-shape allocations (dyno_tier nil) — see
+  # DynoAllocation#size_label. Shared by AppsTableComponent's SIZE column
+  # and the record panel so both stay in sync with one source of truth.
   def box_label_for(app)
-    tier = app.dyno_allocations.find { |d| d.process_type == "web" }&.dyno_tier
-    return "—" unless tier
+    alloc = app.dyno_allocations.find { |d| d.process_type == "web" }
+    return "—" unless alloc
 
-    DynoTier::DYNO_TIER_TO_BOX_SIZE[tier.name] || tier.name
+    alloc.size_label
   end
 
   # Flash keys that are reserved exclusively for the PostHog analytics

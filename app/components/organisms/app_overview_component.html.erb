@@ -21,6 +21,7 @@
                data-controller="motion--counter-tick"
                data-motion--counter-tick-value-value="<%= memory_used_mb %>"><%= memory_used_mb %> <span class="text-sm text-dim font-medium">/ <%= memory_max_mb %> MB</span></div>
           <div class="text-[10px] text-dim mt-1"><%= memory_pct %>% used</div>
+          <% if size_label %><div class="text-[10px] text-dim mt-0.5"><%= size_label %></div><% end %>
         </div>
       </div>
     </div>

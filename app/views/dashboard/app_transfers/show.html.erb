@@ -39,6 +39,9 @@
           <span class="font-semibold"><%= tier.name.titleize %></span>
           · <%= tier.memory_mb %> MB · <%= vcpu_display(tier.cpu_shares) %> vCPU
           × <%= alloc.count || 1 %>
+        <% elsif alloc %>
+          <span class="font-semibold"><%= alloc.size_label %></span>
+          × <%= alloc.count || 1 %>
         <% else %>
           —
         <% end %>

@@ -145,7 +145,7 @@
               <tr class="border-b border-rule-soft">
                 <td class="py-3 text-ink"><%= link_to app.name, dashboard_app_path(app), class: "hover:underline" %></td>
                 <td class="py-3 text-dim text-xs"><%= app.status %></td>
-                <td class="py-3 text-ink-soft text-xs"><%= alloc&.dyno_tier&.name || "—" %></td>
+                <td class="py-3 text-ink-soft text-xs"><%= alloc&.size_label || "—" %></td>
                 <td class="py-3 text-right text-ink"><%= alloc&.count || 0 %></td>
               </tr>
             <% end %>

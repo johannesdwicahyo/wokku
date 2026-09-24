@@ -6,8 +6,9 @@ module Organisms
     attr_reader :app
 
     def memory_used_mb; app.respond_to?(:memory_used_mb) ? app.memory_used_mb.to_i : 0; end
-    def memory_max_mb;  app.dyno_allocations.first&.dyno_tier&.memory_mb.to_i; end
+    def memory_max_mb;  app.dyno_allocations.first&.effective_memory_mb.to_i; end
     def memory_pct;     memory_max_mb.positive? ? (memory_used_mb * 100.0 / memory_max_mb).round : 0; end
+    def size_label;     app.dyno_allocations.first&.size_label; end
 
     def recent_events
       app.respond_to?(:activities) ? (app.activities.order(created_at: :desc).limit(8) rescue []) : []
