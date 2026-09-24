@@ -21,4 +21,13 @@ RSpec.describe "PATCH /dashboard/apps/:id/resources", type: :request do
     follow_redirect!
     expect(response.body).to include("Server capacity is full")
   end
+
+  it "handles a volume-only resize with no processes param (fix round 2 — no 500)" do
+    allow(Resources::ApplyChange).to receive(:call).and_return(Resources::ApplyChange::Result.new(ok: true))
+    patch "/dashboard/apps/#{app_record.id}/resources", params: { volume_disk_gb: "5" }
+    expect(Resources::ApplyChange).to have_received(:call).with(
+      app: app_record, user: user, processes: {}, volume_disk_gb: "5"
+    )
+    expect(response).to redirect_to("/dashboard/apps/#{app_record.id}/resources")
+  end
 end

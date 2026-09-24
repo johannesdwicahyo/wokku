@@ -65,7 +65,10 @@ module Resources
         CapacityGuard.check_change!(@app.server, before_mb: before_mb)
       end
       # Not-yet-deployed apps get their shape on first deploy's converge.
-      ApplyResourcesJob.perform_later(@app.id) if shapes.any? && !@app.created?
+      if shapes.any? && !@app.created?
+        @app.update(pending_action: "resize")
+        ApplyResourcesJob.perform_later(@app.id)
+      end
       Result.new(ok: true)
     rescue Rejected, CapacityGuard::Full => e
       Result.new(ok: false, error: e.message)

@@ -57,6 +57,22 @@ RSpec.describe Resources::ApplyChange do
     expect(described_class.call(app: app, user: user, processes: {}, volume_disk_gb: "-1").ok).to be(false)
   end
 
+  it "sets pending_action when it enqueues the resize job (fix round 2)" do
+    described_class.call(app: app, user: user, processes: { "web" => { cpu: "0.5", memory_mb: "1024", count: "1" } })
+    expect(app.reload.pending_action).to eq("resize")
+  end
+
+  it "does not set pending_action for a volume-only change (fix round 2)" do
+    described_class.call(app: app, user: user, processes: {}, volume_disk_gb: "10")
+    expect(app.reload.pending_action).to be_nil
+  end
+
+  it "does not set pending_action for a not-yet-deployed (created) app (fix round 2)" do
+    app.update!(status: :created)
+    described_class.call(app: app, user: user, processes: { "web" => { cpu: "0.5", memory_mb: "1024", count: "1" } })
+    expect(app.reload.pending_action).to be_nil
+  end
+
   it "allows a near-limit upsize whose true post-change total stays under 90% (fix round 1)" do
     full_host = create(:server, vitals: { "mem_total_mb" => 10_000 })
     other_app = create(:app_record, server: full_host)

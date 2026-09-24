@@ -32,11 +32,31 @@ module Api
 
         if (res = params[:resources]).present?
           res = res.respond_to?(:to_unsafe_h) ? res.to_unsafe_h : res
+          resource_types = res.keys.map(&:to_s)
           counts = @app_record.process_scales.pluck(:process_type, :count).to_h
+
+          # A combined resources+scaling request must not also fall through
+          # to the synchronous converge below — ApplyChange already queues
+          # its own async converge (ApplyResourcesJob), and running both
+          # would race the host's op lane (Lifecycle::Ops::Busy). Any
+          # scaling entries NOT covered by resources are still honored, but
+          # only as a plain process_scales count write.
+          extra_scaling = scaling.is_a?(Hash) ? scaling.reject { |t, _| resource_types.include?(t.to_s) } : {}
+          extra_scaling.each_value do |count|
+            n = Integer(count.to_s, exception: false)
+            return render_api_error(:invalid_params, message: "scaling counts must be 0-10", status: :unprocessable_entity) unless n&.between?(0, 10)
+          end
+
           processes = res.to_h { |t, s| [ t.to_s, s.to_h.merge("count" => (scaling.is_a?(Hash) && scaling[t]) || counts[t.to_s] || 1) ] }
           result = Resources::ApplyChange.call(app: @app_record, user: current_user, processes: processes)
           return render_api_error(:invalid_params, message: result.error, status: :unprocessable_entity) unless result.ok
-          return render json: { message: "Resources updated", resources: res } if params[:scaling].blank?
+
+          extra_scaling.each do |process_type, count|
+            ps = @app_record.process_scales.find_or_initialize_by(process_type: process_type.to_s)
+            ps.update!(count: Integer(count.to_s))
+          end
+
+          return render json: { message: "Resources updated", resources: res }
         end
 
         return render_api_error(:invalid_params, message: "scaling parameter required") if scaling.blank? && params[:resources].blank?
