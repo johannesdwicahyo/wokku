@@ -29,6 +29,10 @@ import (
 // Version is stamped at build time via -ldflags "-X main.Version=…".
 var Version = "0.7.0"
 
+// volumeCache holds the hourly per-resource disk usage walk (Task 9) so the
+// 15s heartbeat loop never blocks on a disk walk.
+var volumeCache = vitals.NewUsageCache()
+
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
@@ -97,6 +101,10 @@ func main() {
 		})
 	}
 
+	// Warm the volume-usage cache off the beat path — a cold first walk on a
+	// host with large volumes shouldn't delay the first heartbeat.
+	go volumeCache.Get(time.Now())
+
 	// Loop 1: heartbeat. Fires immediately, then every cfg.Interval.
 	log.Printf("wokkud %s → %s every %s", Version, cfg.URL, cfg.Interval)
 	ticker := time.NewTicker(cfg.Interval)
@@ -128,6 +136,7 @@ func beat(ctx context.Context, mon *dockermon.Monitor, client *control.Client, b
 	if mon != nil {
 		v.Swarm = mon.SwarmStatus(ctx)
 	}
+	v.VolumeUsage = volumeCache.Get(time.Now())
 	resp, err := client.PostHeartbeat(v, lc.TaskStates(ctx))
 	if err != nil {
 		log.Printf("wokkud: heartbeat: %v", err)

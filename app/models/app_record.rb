@@ -226,4 +226,14 @@ class AppRecord < ApplicationRecord
       { "volume" => "wokku-#{name}-#{slug}", "path" => path.to_s }
     end
   end
+
+  # Bytes → GB from the wokkud heartbeat's hourly volume_usage (spec §6).
+  # nil when the host hasn't reported (never guess — billing falls back to
+  # the allocated size).
+  def volume_used_gb
+    usage = server&.vitals&.dig("volume_usage")
+    return nil unless usage
+    bytes = mounts_for_converge.sum { |m| usage["/var/lib/docker/volumes/#{m['volume']}/_data"].to_i }
+    (bytes / 1024.0**3).round(2)
+  end
 end

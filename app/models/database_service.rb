@@ -146,6 +146,18 @@ class DatabaseService < ApplicationRecord
   # name keeps its hyphens.
   def dedicated_db_name = name.tr("-", "_")
 
+  # The bind-mount data dir DatabaseProvisioner#provision_dedicated_via_ops!
+  # creates (volume_path) — the key wokkud's volume_usage heartbeat reports
+  # this dedicated service under.
+  def data_dir = "/var/lib/dokku/services/#{service_type}/#{name}/data"
+
+  # GB from the wokkud heartbeat's hourly volume_usage (Task 9). nil = no
+  # telemetry yet — never guess.
+  def disk_used_gb
+    bytes = server&.vitals&.dig("volume_usage", data_dir)
+    bytes && (bytes / 1024.0**3).round(2)
+  end
+
   def container_name
     return parent_service.container_name if shared?
     # Shared-host parents are named after their container (dokku-shared-<engine>).
