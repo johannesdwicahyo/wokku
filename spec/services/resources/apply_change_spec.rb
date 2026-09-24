@@ -56,4 +56,35 @@ RSpec.describe Resources::ApplyChange do
     expect(app.reload.volume_disk_gb).to eq(10)
     expect(described_class.call(app: app, user: user, processes: {}, volume_disk_gb: "-1").ok).to be(false)
   end
+
+  it "allows a near-limit upsize whose true post-change total stays under 90% (fix round 1)" do
+    full_host = create(:server, vitals: { "mem_total_mb" => 10_000 })
+    other_app = create(:app_record, server: full_host)
+    other_app.dyno_allocations.create!(process_type: "web", count: 1, cpu: 1.0, memory_mb: 5120)
+    other_app.process_scales.create!(process_type: "web", count: 1)
+
+    target = create(:app_record, server: full_host, creator: user)
+    target.dyno_allocations.create!(process_type: "web", count: 1, cpu: 0.25, memory_mb: 256)
+    target.process_scales.create!(process_type: "web", count: 1)
+
+    # True post-change total: 5120 (other app) + 2048 (this resize) = 7168 < 9000 (90% of 10_000).
+    result = described_class.call(app: target, user: user, processes: { "web" => { cpu: "0.5", memory_mb: "2048", count: "1" } })
+
+    expect(result.ok).to be(true)
+    expect(target.dyno_allocations.find_by(process_type: "web").memory_mb).to eq(2048)
+  end
+
+  it "allows resizing off a legacy tier-only allocation (no shape yet) when the true total stays under 90% (fix round 1)" do
+    small_host = create(:server, vitals: { "mem_total_mb" => 3_000 })
+    legacy_tier = create(:dyno_tier, memory_mb: 1024, cpu_shares: 0.5, sleeps: false)
+    target = create(:app_record, server: small_host, creator: user)
+    target.dyno_allocations.create!(process_type: "web", count: 1, dyno_tier: legacy_tier)
+    target.process_scales.create!(process_type: "web", count: 1)
+
+    # True post-change total: 1536 < 2700 (90% of 3_000).
+    result = described_class.call(app: target, user: user, processes: { "web" => { cpu: "0.5", memory_mb: "1536", count: "1" } })
+
+    expect(result.ok).to be(true)
+    expect(target.dyno_allocations.find_by(process_type: "web").memory_mb).to eq(1536)
+  end
 end

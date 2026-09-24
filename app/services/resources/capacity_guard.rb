@@ -32,5 +32,20 @@ module Resources
       OpsMailer.capacity_full(server).deliver_later
       raise Full, "Server capacity is full — try a smaller size."
     end
+
+    # For callers (ApplyChange) that persist the new shape first and then
+    # check the resulting live total — reserved_mb already includes the
+    # change, so it's compared directly instead of adding a delta on top
+    # (checking add_mb here would double-count). A shrink (after <=
+    # before_mb) always passes even over 90%, so downsizing a full host
+    # never gets refused.
+    def check_change!(server, before_mb:)
+      total = server.vitals&.dig("mem_total_mb").to_i
+      return if total.zero?
+      after = reserved_mb(server)
+      return if after <= before_mb || after <= total * HEADROOM
+      OpsMailer.capacity_full(server).deliver_later
+      raise Full, "Server capacity is full — try a smaller size."
+    end
   end
 end
