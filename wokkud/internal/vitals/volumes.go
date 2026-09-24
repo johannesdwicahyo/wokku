@@ -39,24 +39,45 @@ func DirUsage(globs []string) map[string]int64 {
 }
 
 // UsageCache keeps the last DirUsage result for TTL so the 15s heartbeat
-// never walks disks more than hourly.
+// never walks disks more than hourly — and Get NEVER blocks on the walk
+// itself. It returns the last known snapshot immediately (nil until the
+// first background collect ever completes); when that snapshot is missing
+// or older than TTL, and no refresh is already running, it kicks off
+// exactly one background goroutine to collect (single-flight via
+// `refreshing`, guarded by mu). The mutex is held only around the map/time
+// fields, never while collect() runs.
 type UsageCache struct {
 	TTL     time.Duration
 	collect func() map[string]int64
-	mu      sync.Mutex
-	at      time.Time
-	last    map[string]int64
+
+	mu         sync.Mutex
+	at         time.Time
+	last       map[string]int64
+	refreshing bool
 }
 
 func NewUsageCache() *UsageCache {
 	return &UsageCache{TTL: time.Hour, collect: func() map[string]int64 { return DirUsage(DataGlobs) }}
 }
 
+// Get returns the cached snapshot without ever blocking on a disk walk.
 func (c *UsageCache) Get(now time.Time) map[string]int64 {
 	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.last == nil || now.Sub(c.at) >= c.TTL {
-		c.last, c.at = c.collect(), now
+	last := c.last
+	stale := c.last == nil || now.Sub(c.at) >= c.TTL
+	if stale && !c.refreshing {
+		c.refreshing = true
+		go c.refresh(now)
 	}
-	return c.last
+	c.mu.Unlock()
+	return last
+}
+
+// refresh runs collect() with the lock released — a disk walk can take a
+// while — then stores the result under the lock.
+func (c *UsageCache) refresh(now time.Time) {
+	result := c.collect()
+	c.mu.Lock()
+	c.last, c.at, c.refreshing = result, now, false
+	c.mu.Unlock()
 }

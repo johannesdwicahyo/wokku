@@ -101,10 +101,6 @@ func main() {
 		})
 	}
 
-	// Warm the volume-usage cache off the beat path — a cold first walk on a
-	// host with large volumes shouldn't delay the first heartbeat.
-	go volumeCache.Get(time.Now())
-
 	// Loop 1: heartbeat. Fires immediately, then every cfg.Interval.
 	log.Printf("wokkud %s → %s every %s", Version, cfg.URL, cfg.Interval)
 	ticker := time.NewTicker(cfg.Interval)
