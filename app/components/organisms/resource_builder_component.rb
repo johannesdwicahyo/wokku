@@ -22,5 +22,13 @@ module Organisms
 
     def idr(n) = "Rp#{n.to_i.to_s.reverse.scan(/\d{1,3}/).join('.').reverse}"
     def mem_label(mb) = mb >= 1024 ? "#{(mb / 1024.0).to_s.delete_suffix('.0')} GB" : "#{mb} MB"
+
+    # A chip is pressed only when cpu+memory match AND, when this preset
+    # carries a disk_gb (datastore presets), the current disk matches too —
+    # otherwise moving only the disk slider would leave a stale chip lit.
+    def preset_pressed?(p)
+      !sleeping && shape.cpu == p[:cpu] && shape.memory_mb == p[:memory_mb] &&
+        (p[:disk_gb].nil? || !disk? || p[:disk_gb] == shape.disk_gb)
+    end
   end
 end

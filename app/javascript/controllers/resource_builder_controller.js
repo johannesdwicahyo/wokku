@@ -34,7 +34,8 @@ export default class extends Controller {
     this.memoryLabelTarget.textContent = mem >= 1024 ? `${mem / 1024} GB` : `${mem} MB`
     if (this.hasDiskLabelTarget) this.diskLabelTarget.textContent = `${disk} GB`
     this.presetTargets.forEach(p => p.setAttribute("aria-pressed",
-      this.sleepingFieldTarget.value !== "1" && parseFloat(p.dataset.cpu) === cpu && parseInt(p.dataset.memoryMb, 10) === mem))
+      this.sleepingFieldTarget.value !== "1" && parseFloat(p.dataset.cpu) === cpu && parseInt(p.dataset.memoryMb, 10) === mem &&
+      (!p.dataset.diskGb || !this.hasDiskTarget || parseInt(p.dataset.diskGb, 10) === disk)))
     if (!this.hasPriceTarget || !this.hasUnitsValue) return
     const u = this.unitsValue
     const monthly = this.sleepingFieldTarget.value === "1" ? 0

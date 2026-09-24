@@ -43,4 +43,22 @@ RSpec.describe Organisms::ResourceBuilderComponent, type: :component do
     expect(page).to have_button("Sleeping (free)")
     expect(page).to have_css("input[name='p[disk_gb]'][min='10']")
   end
+
+  it "only marks a datastore preset chip pressed when disk also matches" do
+    small = Resources::Shape::SERVICE_PRESETS["postgres"]["small"]
+
+    render_inline(described_class.new(
+      name: "p",
+      shape: Resources::Shape.new(cpu: small[:cpu], memory_mb: small[:memory_mb], disk_gb: small[:disk_gb]),
+      presets: Resources::Shape::SERVICE_PRESETS["postgres"], disk: true
+    ))
+    expect(page).to have_css("button[aria-pressed='true']", text: "Small")
+
+    render_inline(described_class.new(
+      name: "p",
+      shape: Resources::Shape.new(cpu: small[:cpu], memory_mb: small[:memory_mb], disk_gb: 10),
+      presets: Resources::Shape::SERVICE_PRESETS["postgres"], disk: true
+    ))
+    expect(page).to have_css("button[aria-pressed='false']", text: "Small")
+  end
 end
