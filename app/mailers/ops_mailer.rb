@@ -18,4 +18,10 @@ class OpsMailer < ApplicationMailer
       end
     mail(to: ENV["ADMIN_EMAIL"], subject: subject)
   end
+
+  def capacity_full(server)
+    return if ENV["ADMIN_EMAIL"].blank?
+    @server = server
+    mail(to: ENV["ADMIN_EMAIL"], subject: "[Wokku OPS] RAM capacity full: #{server.name} — add a host")
+  end
 end

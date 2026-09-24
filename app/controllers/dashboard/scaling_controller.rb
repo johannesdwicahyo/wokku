@@ -105,14 +105,14 @@ module Dashboard
         allocation.save!
       end
 
-      if defined?(ApplyDynoTierJob)
+      if defined?(ApplyResourcesJob)
         @app.update(pending_action: "resize")
-        ApplyDynoTierJob.perform_later(allocation.id)
+        ApplyResourcesJob.perform_later(@app.id)
       end
 
       # If downgrading to non-scalable tier, scale workers to 0
       unless tier.scalable
-        # Apps reconcile declaratively via the ApplyDynoTierJob enqueued just
+        # Apps reconcile declaratively via the ApplyResourcesJob enqueued just
         # above (one stack.converge per app). Zeroing the counts here is
         # enough — converge reads process_scales and drops the workers;
         # issuing a second converge would race that op.

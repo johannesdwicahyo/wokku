@@ -1,0 +1,2 @@
+<%= @server.name %> refused a resource change: reserved RAM would pass 90% of <%= @server.vitals["mem_total_mb"] %> MB.
+Reserved now: <%= Resources::CapacityGuard.reserved_mb(@server) %> MB. Time to add a host.
