@@ -101,12 +101,15 @@ class DatabaseService < ApplicationRecord
   # 512→40), capped at 500 so a huge shape doesn't blow past engine limits.
   def max_connections_for_shape = [ memory_mb.to_i * 10 / 128, 500 ].min
 
-  # The team that pays for this service — via a linked app when one
-  # exists, else the creator's (personal) team for a not-yet-linked
-  # datastore. Review fix round 1: `app_records.first&.team` alone left
-  # unlinked services invisible to the plan enforcer and team_allocations.
+  # The team that pays for this service — the EARLIEST link (deterministic:
+  # a service linked into a second team later must not flip who's billed,
+  # or change which team's enforcer/allocations sees it, depending on
+  # `app_records.first`'s undefined order — cloud P2 fix round 1), else
+  # the creator's (personal) team for a not-yet-linked datastore (review
+  # fix round 1: `app_records.first&.team` alone left unlinked services
+  # invisible to the plan enforcer and team_allocations).
   def billing_team
-    app_records.first&.team || creator&.teams&.first
+    app_databases.order(:created_at).first&.app_record&.team || creator&.teams&.first
   end
 
   private

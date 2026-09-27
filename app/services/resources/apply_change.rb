@@ -58,8 +58,13 @@ module Resources
         next allocs unless app.volume_disk_gb.to_i.positive?
         allocs + [ { shape: Shape.new(cpu: 0, memory_mb: 0, disk_gb: app.volume_disk_gb), instances: 1, volume_app_id: app.id } ]
       end
+      # Linked to one of this team's apps is necessary but not sufficient —
+      # a service linked into two teams' apps must only count for its
+      # #billing_team (the earliest link), or it's double-counted across
+      # both teams (cloud P2 fix round 1).
       linked_services = DatabaseService.where(shared: false).where.not(cpu: nil)
         .joins(:app_records).where(app_records: { team_id: team.id }).distinct
+        .select { |db| db.billing_team == team }
       # Not every shaped dedicated service is linked to an app yet — a
       # not-yet-linked datastore is still billed to its creator's team
       # (DatabaseService#billing_team), so it must count here too, or the
