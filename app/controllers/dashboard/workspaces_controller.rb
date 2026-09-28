@@ -4,13 +4,17 @@ module Dashboard
   # provisions an org team (paid plans only, per the locked decision
   # #4 in project_personal_multi_team_refactor).
   class WorkspacesController < BaseController
+    # Only these are selectable for an org workspace — never free, and never
+    # a hidden plan like the managed cloud's "usage" (all features, Rp0).
+    PAID_PLAN_KEYS = %w[solo pro team].freeze
+
     def index
       @workspaces = current_user.teams.includes(:plan).order(:created_at)
       # Pre-populate for the inline slide-panel modal so it renders
       # without a round-trip. Standalone /dashboard/workspaces/new still
       # works for direct links.
       @workspace  = Team.new(kind: :org, owner: current_user)
-      @paid_plans = Plan.where(key: %w[solo pro team]).order(:price_idr)
+      @paid_plans = Plan.where(key: PAID_PLAN_KEYS).order(:price_idr)
     end
 
     def show
@@ -28,13 +32,13 @@ module Dashboard
 
     def new
       @workspace = Team.new(kind: :org, owner: current_user)
-      @paid_plans = Plan.where(key: %w[solo pro team]).order(:price_idr)
+      @paid_plans = Plan.where(key: PAID_PLAN_KEYS).order(:price_idr)
     end
 
     def create
       plan = Plan.find_by(id: params.dig(:team, :plan_id))
       return render_form_error("Pick a plan.") if plan.nil?
-      return render_form_error("Org workspaces require a paid plan.") if plan.free?
+      return render_form_error("Org workspaces require a paid plan.") unless PAID_PLAN_KEYS.include?(plan.key)
 
       name = params.dig(:team, :name).to_s.strip
       return render_form_error("Name can't be blank.") if name.empty?
@@ -71,7 +75,7 @@ module Dashboard
 
     def render_form_error(message)
       @workspace = Team.new(name: params.dig(:team, :name), kind: :org)
-      @paid_plans = Plan.where(key: %w[solo pro team]).order(:price_idr)
+      @paid_plans = Plan.where(key: PAID_PLAN_KEYS).order(:price_idr)
       flash.now[:alert] = message
       render :new, status: :unprocessable_entity
     end

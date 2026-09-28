@@ -52,6 +52,16 @@ RSpec.describe "Dashboard::Workspaces (PR C)", type: :request do
       expect(response.body).to include("require a paid plan")
     end
 
+    it "rejects a hidden non-selectable plan (e.g. the cloud's Rp0 usage plan)" do
+      # "usage" is a cloud-only key (engine key validation rejects it) — insert raw.
+      usage = Plan.find_by(key: "usage") || build(:plan, key: "usage", name: "Usage").tap { |p| p.save!(validate: false) }
+      expect {
+        post dashboard_workspaces_path, params: { team: { name: "Agency Usage", plan_id: usage.id } }
+      }.not_to change { Team.count }
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include("require a paid plan")
+    end
+
     it "rejects creation with a blank name" do
       expect {
         post dashboard_workspaces_path, params: { team: { name: "", plan_id: pro.id } }
