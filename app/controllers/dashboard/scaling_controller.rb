@@ -70,6 +70,8 @@ module Dashboard
       end
 
       redirect_to dashboard_app_scaling_path(@app), notice: "Scaling updated."
+    rescue Lifecycle::Ops::RunNotAllowed => e
+      redirect_to dashboard_app_scaling_path(@app), alert: e.message
     rescue => e
       redirect_to dashboard_app_scaling_path(@app), alert: "Scaling failed: #{e.message}"
     end

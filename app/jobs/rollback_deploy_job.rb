@@ -60,6 +60,7 @@ class RollbackDeployJob < ApplicationJob
       deploy.update!(status: :failed, log: "#{deploy.log}\n#{AppRecord::RUN_BLOCKED_MESSAGE}".strip, finished_at: Time.current)
       DeployChannel.broadcast_to(deploy, { type: "log", data: AppRecord::RUN_BLOCKED_MESSAGE })
       DeployChannel.broadcast_to(deploy, { type: "status", data: "failed" })
+      fire_notifications(app.team, "deploy_failed", deploy)
       return
     end
 
@@ -109,7 +110,7 @@ class RollbackDeployJob < ApplicationJob
     DeployChannel.broadcast_to(deploy, { type: "status", data: "timed_out" })
   rescue Deploys::BuildAndConverge::Error, ::Lifecycle::Ops::Failed, ::Lifecycle::Ops::Timeout, ::Lifecycle::Ops::Busy => e
     detail = e.message
-    if e.is_a?(::Lifecycle::Ops::Failed) && (out = e.op.result&.dig("output")).present?
+    if e.is_a?(::Lifecycle::Ops::Failed) && (out = e.op&.result&.dig("output")).present?
       detail = "#{e.message}\n#{out}"
     end
     deploy.update!(status: :failed, log: deploy.reload.log.to_s + "\n#{detail}", finished_at: Time.current)

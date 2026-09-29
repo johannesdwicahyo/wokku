@@ -9,6 +9,13 @@ module Lifecycle
     end
     class Timeout < StandardError; end
     class EmptyFormation < StandardError; end
+    # Billing seam: bringing any process UP for an app whose run is refused
+    # (managed: billing-suspended team owner). < Failed so every existing
+    # `rescue Failed` caller handles it; op is nil (nothing was issued).
+    class RunNotAllowed < Failed
+      def initialize(_app = nil); end # skip Failed's op-based message
+      def to_s = AppRecord::RUN_BLOCKED_MESSAGE
+    end
     # Raised by issue! when LifecycleOp.create! collides with the one-live-op
     # partial unique index (index_lifecycle_ops_one_live_per_app) — a
     # restart/scale/wake/rollback/deploy already has a pending/claimed op in
@@ -77,6 +84,10 @@ module Lifecycle
       # { web: 2 }) must survive the guard and match the string-keyed
       # process_scales the agent reconciles against.
       desired = (formation || current_formation(app)).transform_keys(&:to_s)
+      # THE run gate every scale/resize/restart/relink/rename/clone/deploy
+      # converge passes through. All-zero formations (stop, SleepAppsJob,
+      # crash-loop) always pass.
+      raise RunNotAllowed, app if desired.values.any? { |c| c.to_i.positive? } && !app.run_allowed?
       guard_formation!(app, desired) unless allow_empty
       # dokku injects PORT at container create; Swarm tasks only get env from
       # these params, and ingress TargetPort routes to container_port — the

@@ -18,6 +18,8 @@ RSpec.describe "run_apps gate" do
 
   def deny!
     allow(denying).to receive(:allowed?).and_return(true)
+    allow(denying).to receive(:quota).and_return(Float::INFINITY)
+    allow(denying).to receive(:deposit_shortfall).and_return(nil)
     allow(denying).to receive(:allowed?).with(team, :run_apps).and_return(false)
     allow(Wokku.config).to receive(:plan_enforcer).and_return(denying)
   end
@@ -83,6 +85,48 @@ RSpec.describe "run_apps gate" do
       deny!
       post stop_api_v1_app_path(app_record), headers: headers
       expect(response).to have_http_status(:accepted)
+    end
+  end
+
+  describe "scaling (builder + legacy)", type: :request do
+    include Devise::Test::IntegrationHelpers
+
+    before do
+      app_record.process_scales.create!(process_type: "web", count: 1)
+      create(:deploy, :succeeded, :wokkud, app_record: app_record)
+    end
+
+    it "dashboard scaling shows the suspension message" do
+      deny!
+      sign_in user
+      patch dashboard_app_scaling_path(app_record), params: { scaling: { web: 2 } }
+      expect(flash[:alert]).to eq(AppRecord::RUN_BLOCKED_MESSAGE)
+      expect(app_record.process_scales.find_by(process_type: "web").count).to eq(1)
+    end
+
+    it "legacy (non-builder) dashboard scaling surfaces the converge-level refusal" do
+      deny!
+      allow(Wokku.config).to receive(:resource_builder?).and_return(false)
+      sign_in user
+      patch dashboard_app_scaling_path(app_record), params: { scaling: { web: 1 } }
+      expect(flash[:alert]).to eq(AppRecord::RUN_BLOCKED_MESSAGE)
+    end
+
+    it "legacy API ps scale maps RunNotAllowed to account_suspended" do
+      deny!
+      allow(Wokku.config).to receive(:resource_builder?).and_return(false)
+      allow_any_instance_of(AppRecord).to receive(:run_allowed?).and_return(true, false) # pass the upfront check, refuse in converge
+      put api_v1_app_ps_path(app_record), params: { scaling: { web: 1 } },
+                                          headers: { "Authorization" => "Bearer #{api_v1_token_for(user)}" }
+      expect(response).to have_http_status(:payment_required)
+    end
+
+    it "API ps scale renders 402 account_suspended" do
+      deny!
+      put api_v1_app_ps_path(app_record), params: { scaling: { web: 2 } },
+                                          headers: { "Authorization" => "Bearer #{api_v1_token_for(user)}" }
+      expect(response).to have_http_status(:payment_required)
+      expect(JSON.parse(response.body)["error_code"]).to eq("account_suspended")
     end
   end
 

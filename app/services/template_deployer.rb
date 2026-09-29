@@ -180,7 +180,7 @@ class TemplateDeployer
           # the failed command's own output (TarballDeployJob's idiom) so the
           # generic rescue below doesn't surface a bare "stack.run failed:
           # ... (command_failed)" with no clue what the command printed.
-          out = e.op.result&.dig("output")
+          out = e.op&.result&.dig("output")
           raise e, [ e.message, out ].compact.join("\n") if out.present?
           raise
         end

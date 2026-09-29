@@ -107,6 +107,10 @@ module Resources
 
     def call
       return self.class.disabled unless Wokku.config.resource_builder?
+      # Every change here converges the app up (async, ApplyResourcesJob —
+      # where Lifecycle::Ops would refuse anyway); refuse up front with the
+      # message instead of persisting a change that can't apply.
+      raise Rejected, AppRecord::RUN_BLOCKED_MESSAGE unless @app.run_allowed?
       @processes = normalize(@raw_processes)
       shapes = @processes.to_h do |proc, p|
         next [ proc, :sleeping ] if ActiveModel::Type::Boolean.new.cast(p[:sleeping])

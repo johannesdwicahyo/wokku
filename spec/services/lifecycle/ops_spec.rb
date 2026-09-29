@@ -154,6 +154,40 @@ RSpec.describe Lifecycle::Ops do
       end
     end
 
+    context "run_apps gate (billing suspension seam)" do
+      before do
+        app.process_scales.create!(process_type: "web", count: 1)
+        enforcer = double("enforcer")
+        allow(enforcer).to receive(:allowed?).with(app.team, :run_apps).and_return(run_allowed)
+        allow(Wokku.config).to receive(:plan_enforcer).and_return(enforcer)
+      end
+
+      context "when the owner is suspended (run refused)" do
+        let(:run_allowed) { false }
+
+        it "raises RunNotAllowed (a Failed) for any count > 0 and issues no op" do
+          expect { described_class.converge!(app, wait: false) }
+            .to raise_error(Lifecycle::Ops::RunNotAllowed, AppRecord::RUN_BLOCKED_MESSAGE)
+          expect { described_class.converge!(app, formation: { "web" => 2 }, wait: false) }
+            .to raise_error(Lifecycle::Ops::Failed)
+          expect(app.lifecycle_ops).to be_empty
+        end
+
+        it "lets an all-zero (stop/sleep) formation through" do
+          op = described_class.converge!(app, formation: Lifecycle::Ops.stop_formation(app), allow_empty: true, wait: false)
+          expect(op.params["formation"]).to eq("web" => 0)
+        end
+      end
+
+      context "when the owner is active" do
+        let(:run_allowed) { true }
+
+        it "converges normally" do
+          expect(described_class.converge!(app, wait: false)).to be_a(LifecycleOp)
+        end
+      end
+    end
+
     it "raises ArgumentError when there is no succeeded deploy and no image_ref/tag_from_local" do
       deploy.update!(status: :pending)
       expect { described_class.converge!(app, wait: false) }.to raise_error(ArgumentError, /no image/)

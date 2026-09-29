@@ -26,6 +26,7 @@ module Api
 
       def update
         authorize @app_record, :update?
+        return render_api_error(:account_suspended, message: AppRecord::RUN_BLOCKED_MESSAGE) unless @app_record.run_allowed?
 
         raw = params[:scaling]
         scaling = raw.respond_to?(:to_unsafe_h) ? raw.to_unsafe_h : raw
@@ -101,6 +102,8 @@ module Api
         render_api_error(:service_busy, message: e.message)
       rescue ::Lifecycle::Ops::EmptyFormation => e
         render_api_error(:formation_would_empty, message: e.message)
+      rescue ::Lifecycle::Ops::RunNotAllowed => e
+        render_api_error(:account_suspended, message: e.message)
       rescue ::Lifecycle::Ops::Failed, ::Lifecycle::Ops::Timeout => e
         render_api_error(:dokku_command_failed, message: e.message)
       rescue ArgumentError => e

@@ -32,7 +32,7 @@ module ApiErrors
                          hint: "Check wokku_get_usage / wokku_get_current_plan; upgrade the plan or free capacity." },
     account_suspended: { status: :payment_required, retryable: false,
                          message: "This account is suspended for an unpaid invoice",
-                         hint: "Pay the overdue invoice at wokku.cloud/dashboard/invoices; apps can start/deploy again once it is paid." },
+                         hint: "Pay the outstanding invoice in the dashboard (Billing → Invoices); apps can start, scale and deploy again once it is paid." },
     invalid_time:      { status: :bad_request, retryable: false,
                          message: "Invalid time parameter",
                          hint: "Use ISO8601, e.g. 2026-07-04T12:00:00Z." },
