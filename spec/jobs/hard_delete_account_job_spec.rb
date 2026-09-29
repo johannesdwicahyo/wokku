@@ -75,6 +75,15 @@ RSpec.describe HardDeleteAccountJob, type: :job do
     described_class.perform_now(user.id)
   end
 
+  # Host apps (the managed cloud's billing teardown) hook after_update_commit
+  # on deleted_at — update_columns would silently skip them.
+  it "marks deleted_at through a callback-firing save" do
+    user # create before the expectation (create! also calls save!)
+    expect_any_instance_of(User).to receive(:save!).with(validate: false).and_call_original
+    described_class.perform_now(user.id)
+    expect(user.reload.deleted_at).to be_present
+  end
+
   it "never references Dokku:: anywhere in the job" do
     source = File.read(Wokku::Engine.root.join("app/jobs/hard_delete_account_job.rb"))
     expect(source).not_to match(/Dokku::/)

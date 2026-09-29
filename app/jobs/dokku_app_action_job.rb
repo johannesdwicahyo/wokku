@@ -13,6 +13,14 @@ class DokkuAppActionJob < ApplicationJob
     app = AppRecord.find_by(id: app_id)
     return unless app
 
+    # Suspension may land between enqueue and pickup (or a caller skipped
+    # the controller gate): never bring a suspended account's app up.
+    if action.to_s != "stop" && !app.run_allowed?
+      app.update(pending_action: nil)
+      app.broadcast_action_toast(level: "error", message: "#{app.name}: #{AppRecord::RUN_BLOCKED_MESSAGE}")
+      return
+    end
+
     success = false
     error_message = nil
     begin

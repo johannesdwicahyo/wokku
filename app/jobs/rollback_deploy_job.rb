@@ -53,6 +53,16 @@ class RollbackDeployJob < ApplicationJob
     # that's already reached a terminal state.
     return if deploy.status.in?(%w[succeeded failed timed_out])
 
+    # Billing suspension (seam gate): fail the deploy before touching the
+    # app's status — a suspended app stays :sleeping so RestoreAppsJob
+    # brings it back on payment. The log line reaches `git push` output.
+    unless app.run_allowed?
+      deploy.update!(status: :failed, log: "#{deploy.log}\n#{AppRecord::RUN_BLOCKED_MESSAGE}".strip, finished_at: Time.current)
+      DeployChannel.broadcast_to(deploy, { type: "log", data: AppRecord::RUN_BLOCKED_MESSAGE })
+      DeployChannel.broadcast_to(deploy, { type: "status", data: "failed" })
+      return
+    end
+
     # Validate the rollback artifact BEFORE flipping any status. The
     # controller (RollbackArtifactResolver) should never enqueue this job
     # without one, but the old code raised ArgumentError from inside the

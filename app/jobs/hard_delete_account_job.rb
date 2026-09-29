@@ -67,8 +67,12 @@ class HardDeleteAccountJob < ApplicationJob
     end
   end
 
+  # save!(validate: false), not update_columns: host apps hook
+  # after_update_commit on deleted_at (the managed cloud stops billing a
+  # deleted account there). Validations are skipped — the scrubbed row
+  # would fail password/email rules by design.
   def null_pii(user)
-    user.update_columns(
+    user.assign_attributes(
       deleted_at: Time.current,
       email: "deleted-#{user.id}@deleted.wokku.cloud",
       encrypted_password: "",
@@ -79,5 +83,6 @@ class HardDeleteAccountJob < ApplicationJob
       uid: nil,
       otp_secret: nil
     )
+    user.save!(validate: false)
   end
 end

@@ -264,6 +264,9 @@ module Dashboard
     # cleared by the job — that broadcasts back the normal frame.
     def queue_app_action(action)
       authorize @app, :update?
+      if action != "stop" && !@app.run_allowed?
+        return redirect_to dashboard_app_path(@app), alert: AppRecord::RUN_BLOCKED_MESSAGE
+      end
       @app.update(pending_action: action)
       DokkuAppActionJob.perform_later(@app.id, action)
       track("app.#{action}_queued", target: @app)

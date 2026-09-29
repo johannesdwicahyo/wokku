@@ -43,6 +43,15 @@ class AppRecord < ApplicationRecord
   belongs_to :team
   belongs_to :creator, class_name: "User", foreign_key: :created_by_id
 
+  RUN_BLOCKED_MESSAGE = "This account is suspended for an unpaid invoice — pay it to restart your apps.".freeze
+
+  # Seam gate for anything that brings the app UP (start/restart/deploy/
+  # rollback). OSS NullPlanEnforcer always allows; the managed enforcer
+  # refuses while the team owner is billing-suspended.
+  def run_allowed?
+    Wokku.config.plan_enforcer.allowed?(team, :run_apps)
+  end
+
   # Resolves the plan whose retention/quota rules apply to this app.
   # Falls back to Plan(free) if the app has no owner or its owner has no
   # current subscription. Cached per instance — the per-plan retention

@@ -360,6 +360,9 @@ module Api
       def queue_process_action(action)
         app = AppRecord.lookup!(params[:id])
         authorize app
+        if action != "stop" && !app.run_allowed?
+          return render_api_error(:account_suspended, message: AppRecord::RUN_BLOCKED_MESSAGE)
+        end
         app.update(pending_action: action)
         DokkuAppActionJob.perform_later(app.id, action)
         track("app.#{action}_queued", target: app)
