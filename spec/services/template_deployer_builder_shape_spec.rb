@@ -47,11 +47,26 @@ RSpec.describe TemplateDeployer, "builder-mode shapes" do
       expect(web).to be_sleeping
     end
 
-    it "refuses a shape the plan enforcer rejects" do
+    it "refuses over the account limit before creating anything" do
       allow(Wokku.config.plan_enforcer).to receive(:allowed?).and_return(false)
-      result = described_class.new(template: template, app_name: "shaped", server: server, user: user).deploy!
+      expect(DatabaseProvisioner).not_to receive(:new)
+      result = nil
+      expect {
+        result = described_class.new(template: template, app_name: "shaped", server: server, user: user).deploy!
+      }.to not_change(AppRecord, :count).and not_change(DynoAllocation, :count).and not_change(DatabaseService, :count)
       expect(result[:error]).to match(/over your account limit/)
-      expect(DynoAllocation.joins(:app_record).where(app_records: { name: "shaped" })).to be_empty
+    end
+
+    it "checks the web process and its datastores as one change" do
+      expect(Resources::ApplyChange).to receive(:check_new_shape)
+        .with(hash_including(shapes: [ Resources::Shape.new(cpu: 0.5, memory_mb: 512), Resources::Shape.new(cpu: 0.25, memory_mb: 512, disk_gb: 5) ]))
+        .and_return(Resources::ApplyChange::Result.new(ok: true))
+      deploy
+    end
+
+    it "#builder_preflight is ok for a free template with no datastores" do
+      deployer = described_class.new(template: { repo: "x" }, app_name: "p", server: server, user: user)
+      expect(deployer.builder_preflight(AppRecord.new(team: user.teams.first)).ok).to be true
     end
   end
 

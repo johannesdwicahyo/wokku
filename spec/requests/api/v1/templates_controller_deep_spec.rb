@@ -92,4 +92,17 @@ RSpec.describe "API::V1::TemplatesController (deep)", type: :request do
     expect(body["app"]["name"]).to eq("fresh-app")
     expect(body["deploy"]["id"]).to be_present
   end
+
+  # Per-resource builder: a refused template deploy creates nothing.
+  it "deploy refuses over the account limit before creating anything (builder mode)" do
+    allow(Wokku.config).to receive(:resource_builder?).and_return(true)
+    allow(Wokku.config.plan_enforcer).to receive(:allowed?).and_return(false)
+    allow_any_instance_of(TemplateRegistry).to receive(:find).and_return({ slug: "n8n", name: "n8n", repo: "https://github.com/x/y", min_tier: "basic", addons: [ { "type" => "postgres" } ] })
+
+    expect {
+      post "/api/v1/templates/deploy", params: { slug: "n8n", server_id: server.id, app_name: "refused-tpl" }, headers: headers
+    }.to not_change(AppRecord, :count).and not_change(Deploy, :count).and not_have_enqueued_job(TemplateDeployJob)
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(JSON.parse(response.body)["error"]).to match(/over your account limit/)
+  end
 end

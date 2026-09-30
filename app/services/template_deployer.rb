@@ -39,6 +39,13 @@ class TemplateDeployer
             "services to have a reachable database"
     end
 
+    # Builder mode: plan limit + capacity for everything this template will
+    # size, before any app/DB/container exists. The template controllers run
+    # the same preflight before they create the AppRecord; this re-check
+    # covers anything that changed while the job was queued.
+    preflight = builder_preflight(AppRecord.find_by(name: app_name, server: server) || AppRecord.new(team: user.teams.first))
+    raise Resources::ApplyChange::Rejected, preflight.error unless preflight.ok
+
     step("Creating app #{app_name}...") do
       AppRecord.find_or_initialize_by(name: app_name, server: server).tap do |a|
         a.assign_attributes(
@@ -74,7 +81,6 @@ class TemplateDeployer
       tier = container_tier(app)
       shape = builder_shape_for(tier) if tier
       if shape && !app.dyno_allocations.exists?(process_type: "web")
-        check_builder_shape!(app, shape)
         app.dyno_allocations.create!(process_type: "web", cpu: shape.cpu, memory_mb: shape.memory_mb, count: 1)
       elsif tier
         app.dyno_allocations.find_or_create_by!(process_type: "web") do |a|
@@ -334,6 +340,21 @@ class TemplateDeployer
     steps
   end
 
+  # Builder mode: the plan enforcer + capacity check for every shape this
+  # template will create (web + dedicated datastores), as one change, with
+  # the builder's own refusal message. Ok when nothing is shaped (builder
+  # off, free sleeping template with no datastores). `app` may be unsaved.
+  # Not Resources::ApplyChange.call: that enqueues a resize converge on a
+  # non-`created` app, which would race the deploy.
+  def builder_preflight(app)
+    tier = container_tier(app)
+    web = builder_shape_for(tier) if tier && !(app.persisted? && app.dyno_allocations.exists?(process_type: "web"))
+    dbs = planned_dedicated_dbs.map { |engine, tier_name| Resources::ApplyChange.service_shape_for_tier(engine, tier_name) }
+    shapes = [ web, *dbs ].compact
+    return Resources::ApplyChange::Result.new(ok: true) if shapes.empty?
+    Resources::ApplyChange.check_new_shape(team: app.team, server: server, shapes: shapes)
+  end
+
   private
 
   # B5b Task 6: this used to be a private copy of DatabaseProvisioner that
@@ -346,7 +367,6 @@ class TemplateDeployer
   # provisioning something the app can never reach.
   def provision_dedicated_db!(app, engine, tier_name: "basic")
     shape = Resources::ApplyChange.service_shape_for_tier(engine, tier_name)
-    check_builder_shape!(app, shape) if shape
     db = DatabaseProvisioner.new(
       app: app, service_type: engine, tier: tier_name, creator: user, shape: shape
     ).call
@@ -370,12 +390,14 @@ class TemplateDeployer
     Resources::Shape.round_up(cpu: tier.cpu_shares, memory_mb: tier.memory_mb)
   end
 
-  # Same enforcer + capacity gate the builder runs for a new shape. Not
-  # Resources::ApplyChange.call: that enqueues a resize converge on a
-  # non-`created` app, which would race this deploy.
-  def check_builder_shape!(app, shape)
-    check = Resources::ApplyChange.check_new_shape(team: app.team, server: app.server, shape: shape)
-    raise check.error unless check.ok
+  # Dedicated datastores deploy! will create, as [engine, tier_name] — the
+  # same routing as deploy! (bundle-v2 dedicated_db_engine wins over addons:).
+  def planned_dedicated_dbs
+    if (template[:shared_engines] || []).any? || template[:dedicated_db_engine].present?
+      template[:dedicated_db_engine].present? ? [ [ template[:dedicated_db_engine], "basic" ] ] : []
+    else
+      (template[:addons] || []).map { |a| [ a["type"], a["tier"] || a[:tier] || "basic" ] }
+    end
   end
 
   # DatabaseProvisioner names the connection var after the engine

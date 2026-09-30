@@ -52,6 +52,11 @@ module Api
           end
         end
 
+        # Builder mode: plan limit + capacity before anything is created.
+        preflight = TemplateDeployer.new(template: template, app_name: app_name, server: server, user: current_user)
+                                    .builder_preflight(AppRecord.new(team: current_user.teams.first, box_size: box_size))
+        return render_api_error(:invalid_params, message: preflight.error, status: :unprocessable_entity) unless preflight.ok
+
         app = AppRecord.create!(
           name: app_name,
           server: server,

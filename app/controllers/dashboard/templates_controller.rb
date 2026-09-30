@@ -72,6 +72,12 @@ module Dashboard
         end
       end
 
+      # Builder mode: plan limit + capacity for the template's shapes before
+      # anything is created (TemplateDeployer re-checks in the job).
+      preflight = TemplateDeployer.new(template: template, app_name: app_name, server: server, user: current_user)
+                                  .builder_preflight(AppRecord.new(team: current_team, box_size: box_size))
+      return redirect_to dashboard_template_path(params[:template_slug]), alert: preflight.error unless preflight.ok
+
       app = AppRecord.create!(
         name: app_name,
         server: server,

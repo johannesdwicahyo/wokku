@@ -97,6 +97,19 @@ RSpec.describe "Dashboard::Templates", type: :request do
         expect(response).to have_http_status(:redirect)
       end
 
+      # Per-resource builder: a refused template deploy creates nothing.
+      it "refuses over the account limit before creating anything (builder mode)" do
+        allow(Wokku.config).to receive(:resource_builder?).and_return(true)
+        allow(Wokku.config.plan_enforcer).to receive(:allowed?).and_return(false)
+        allow_any_instance_of(TemplateRegistry).to receive(:find).and_return({ slug: "n8n", name: "n8n", repo: "https://github.com/x/y", min_tier: "basic", addons: [ { "type" => "postgres" } ] })
+
+        expect {
+          post "/dashboard/templates", params: { template_slug: "n8n", server_id: server.id, app_name: "refused-tpl" }
+        }.to not_change(AppRecord, :count).and not_change(Deploy, :count).and not_have_enqueued_job(TemplateDeployJob)
+        expect(response).to redirect_to(dashboard_template_path("n8n"))
+        expect(flash[:alert]).to match(/over your account limit/)
+      end
+
       context "Bundle v2 (box_size + plan quota)" do
         around do |ex|
           orig = ENV["BUNDLE_V2_ENABLED"]
@@ -119,7 +132,6 @@ RSpec.describe "Dashboard::Templates", type: :request do
           expect(app).to be_present
           expect(app.box_size).to be_in(AppRecord::BOX_SIZES)
         end
-
       end
     end
   end
