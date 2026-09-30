@@ -30,10 +30,10 @@ class ApplyDatabaseTierJob < ApplicationJob
     connections = (spec["connections"] || spec[:connections]).to_i
     return if memory_mb.zero? && connections.zero?
 
-    Services::Ops.issue_and_wait!(
-      service: db, kind: "service.set_limits",
-      params: { memory_mb: memory_mb, max_connections: connections }
-    )
+    params = { memory_mb: memory_mb, max_connections: connections }
+    cpu = tier_cpu(db, spec, memory_mb)
+    params[:cpu] = cpu if cpu
+    Services::Ops.issue_and_wait!(service: db, kind: "service.set_limits", params: params)
 
     track_apply(db, tier)
   rescue Services::Ops::Failed, Services::Ops::Timeout => e
@@ -43,6 +43,17 @@ class ApplyDatabaseTierJob < ApplicationJob
   end
 
   private
+
+  # wokkud treats cpu 0/absent as "unchanged", so a row that once carried a
+  # shape would keep that shape's CPU cap after a legacy tier change. Send
+  # the tier's CPU: the spec's own, else — for a once-shaped row (disk_gb is
+  # only ever written with a shape) — the grid rule Billing::ShapeBackfill
+  # uses (memory/2048 rounded up). Never-shaped tier rows: params unchanged.
+  def tier_cpu(db, spec, memory_mb)
+    cpu = (spec["cpu"] || spec[:cpu]).to_f
+    return cpu if cpu.positive?
+    Resources::Shape.snap_up(memory_mb / 2048.0, :cpu) if db.disk_gb && memory_mb.positive?
+  end
 
   def track_apply(db, tier)
     return unless defined?(Activity)

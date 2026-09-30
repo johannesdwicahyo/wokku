@@ -64,6 +64,31 @@ RSpec.describe ApplyDatabaseTierJob, type: :job do
               params: { memory_mb: 1024, max_connections: 100 })
     end
 
+    # Review #2: a once-shaped row keeps its old CPU cap unless the tier op
+    # sends one (wokkud: cpu 0 = unchanged).
+    it "sends the tier's grid CPU for a once-shaped row, replacing the old cap" do
+      make_tier(name: "was-shaped", spec: { "memory_mb" => 1024, "connections" => 40 })
+      db = create(:database_service, server: server, tier_name: "was-shaped")
+      db.update_columns(cpu: nil, memory_mb: nil, disk_gb: 20)
+
+      described_class.perform_now(db.id)
+
+      expect(Services::Ops).to have_received(:issue_and_wait!)
+        .with(service: db, kind: "service.set_limits",
+              params: { memory_mb: 1024, max_connections: 40, cpu: 0.5 })
+    end
+
+    it "sends the tier spec's own CPU when it has one" do
+      make_tier(name: "has-cpu", spec: { "memory_mb" => 512, "connections" => 20, "cpu" => 1.5 })
+      db = create(:database_service, server: server, tier_name: "has-cpu")
+
+      described_class.perform_now(db.id)
+
+      expect(Services::Ops).to have_received(:issue_and_wait!)
+        .with(service: db, kind: "service.set_limits",
+              params: { memory_mb: 512, max_connections: 20, cpu: 1.5 })
+    end
+
     it "issues the op with a zero connections cap when the tier is memory-only" do
       make_tier(name: "ram-only", spec: { "memory_mb" => 512 })
       db = create(:database_service, server: server, tier_name: "ram-only")
