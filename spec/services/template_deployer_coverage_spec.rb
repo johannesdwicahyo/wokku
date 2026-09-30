@@ -68,6 +68,9 @@ RSpec.describe TemplateDeployer, "branch coverage" do
   end
 
   describe "tier resolution" do
+    # Legacy tier rows; builder-mode shapes: template_deployer_builder_shape_spec.rb.
+    before { allow(Wokku.config).to receive(:resource_builder?).and_return(false) }
+
     it "uses template[:min_tier] verbatim when present (overrides addons heuristic)" do
       template = { repo: "https://github.com/x/y", min_tier: "standard" }
       tier = DynoTier.find_by(name: "standard")
