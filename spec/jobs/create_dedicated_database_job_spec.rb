@@ -134,4 +134,14 @@ RSpec.describe CreateDedicatedDatabaseJob, type: :job do
       end
     end
   end
+
+  it "sizes the container from a builder-shaped row, not its tier" do
+    link_app!
+    dedicated.update_columns(cpu: 0.5, memory_mb: 1024, disk_gb: 20)
+    expect(Services::Ops).to receive(:issue_and_wait!)
+      .with(service: dedicated, kind: "service.create",
+            params: hash_including(memory_mb: 1024, cpu: 0.5, max_connections: 80))
+      .and_return(build_stubbed(:service_op, status: :succeeded))
+    described_class.new.perform(dedicated.id)
+  end
 end

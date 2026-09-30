@@ -34,6 +34,13 @@ class UpgradeError < StandardError
     UI_MESSAGE = "Your dataset exceeds the dedicated size cap for your plan.".freeze
   end
 
+  # Builder mode: the plan enforcer / capacity guard refused the shape.
+  # Raised with Resources::ApplyChange's message.
+  class OverLimit < UpgradeError
+    UI_MESSAGE = "That size is over your account limit — pay your first invoice to go higher.".freeze
+    def initialize(msg = UI_MESSAGE); super; end
+  end
+
   class ProvisioningFailed < UpgradeError
     UI_MESSAGE = "We couldn't provision a dedicated container. Try again or contact support.".freeze
     def initialize(msg = UI_MESSAGE); super; end

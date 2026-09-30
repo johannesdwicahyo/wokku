@@ -199,4 +199,34 @@ RSpec.describe DatabaseServiceUpgrade do
         .to raise_error(UpgradeError::PlanNoSlots)
     end
   end
+
+  # Per-resource launch blocker (fix round 1): builder mode must create a
+  # shaped row, gated by the builder's enforcer before anything exists.
+  describe "per-resource builder" do
+    before { ServiceTier.create!(service_type: "postgres", name: "basic", spec: { "memory_mb" => 512, "storage_gb" => 5 }) }
+
+    it "creates a shaped row from the tier spec when the builder is on" do
+      allow(Wokku.config).to receive(:resource_builder?).and_return(true)
+      dedicated = described_class.call(app: app, user: user)
+      expect(dedicated.tier_name).to eq("basic")
+      expect(dedicated.shape.to_h).to eq(cpu: 0.25, memory_mb: 512, disk_gb: 5)
+    end
+
+    it "keeps a tier-only row when the builder is off" do
+      allow(Wokku.config).to receive(:resource_builder?).and_return(false)
+      dedicated = described_class.call(app: app, user: user)
+      expect([ dedicated.tier_name, dedicated.cpu, dedicated.memory_mb, dedicated.disk_gb ]).to eq([ "basic", nil, nil, nil ])
+    end
+
+    it "refuses over the account limit before creating anything" do
+      allow(Wokku.config).to receive(:resource_builder?).and_return(true)
+      allow(Wokku.config.plan_enforcer).to receive(:allowed?).and_return(false)
+      before_count = DatabaseService.where(shared: false).count
+      expect {
+        expect { described_class.call(app: app, user: user) }
+          .to raise_error(UpgradeError::OverLimit, /over your account limit/)
+      }.not_to have_enqueued_job(UpgradeSharedPgToDedicatedJob)
+      expect(DatabaseService.where(shared: false).count).to eq(before_count)
+    end
+  end
 end

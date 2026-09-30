@@ -81,6 +81,22 @@ module Resources
       procs + services.map { |db| { shape: db.shape, instances: 1, service_id: db.id } }
     end
 
+    # Builder-mode shape for a dedicated service created from a legacy tier
+    # name (templates, DatabaseServiceUpgrade) — a tier-only row bills Rp0.
+    # The tier's spec rounded up onto the grid exactly as the cloud's
+    # Billing::ShapeBackfill does; SERVICE_PRESETS small when the tier has no
+    # spec. nil when the builder is off (legacy tier row).
+    def self.service_shape_for_tier(engine, tier_name)
+      return unless Wokku.config.resource_builder?
+      spec = ServiceTier.find_by(service_type: engine.to_s, name: tier_name)&.spec || {}
+      mem = spec["memory_mb"].to_i
+      if mem.zero?
+        preset = Shape::SERVICE_PRESETS.dig(engine.to_s, "small")
+        return preset && Shape.new(**preset)
+      end
+      Shape.round_up(cpu: mem / 2048.0, memory_mb: mem, disk_gb: [ spec["storage_gb"].to_i, 1 ].max)
+    end
+
     # Enforcer + capacity check for a shape that doesn't have a service_id
     # yet — a brand-new dedicated datastore being created (Task 11). Mirrors
     # ResizeService's checks without the "already exists" bookkeeping.

@@ -82,8 +82,10 @@ class CreateDedicatedDatabaseJob < ApplicationJob
         image: DEFAULT_IMAGES.fetch(dedicated.service_type) {
           raise ArgumentError, "dedicated #{dedicated.service_type} is not supported on wokkud-managed servers yet"
         },
-        memory_mb: spec["memory_mb"].to_i,
-        max_connections: spec["connections"].to_i,
+        # A builder-shaped row wins over its tier (same as DatabaseProvisioner).
+        memory_mb: dedicated.memory_mb || spec["memory_mb"].to_i,
+        max_connections: dedicated.memory_mb ? dedicated.max_connections_for_shape : spec["connections"].to_i,
+        **(dedicated.cpu ? { cpu: dedicated.cpu.to_f } : {}),
         network: DatabaseProvisioner::DEDICATED_NETWORK,
         volume_path: "/var/lib/dokku/services/#{dedicated.service_type}/#{dedicated.name}/data",
         admin_pass: admin_pass

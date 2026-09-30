@@ -345,7 +345,7 @@ class TemplateDeployer
   # It also raises on an engine wokkud has no image for, rather than silently
   # provisioning something the app can never reach.
   def provision_dedicated_db!(app, engine, tier_name: "basic")
-    shape = builder_service_shape_for(engine, tier_name)
+    shape = Resources::ApplyChange.service_shape_for_tier(engine, tier_name)
     check_builder_shape!(app, shape) if shape
     db = DatabaseProvisioner.new(
       app: app, service_type: engine, tier: tier_name, creator: user, shape: shape
@@ -362,22 +362,12 @@ class TemplateDeployer
 
   # Per-resource billing (spec 2026-09-24): with the builder on, a tier-only
   # row bills Rp0, so templates are born shaped — the tier's size rounded up
-  # onto the grid exactly as the cloud's Billing::ShapeBackfill does. Free
-  # sleeping stays a tier (sleeping is tier-driven). nil = legacy tier row.
+  # onto the grid exactly as the cloud's Billing::ShapeBackfill does (DBs:
+  # ApplyChange.service_shape_for_tier). Free sleeping stays a tier
+  # (sleeping is tier-driven). nil = legacy tier row.
   def builder_shape_for(tier)
     return unless Wokku.config.resource_builder? && !tier.sleeps
     Resources::Shape.round_up(cpu: tier.cpu_shares, memory_mb: tier.memory_mb)
-  end
-
-  def builder_service_shape_for(engine, tier_name)
-    return unless Wokku.config.resource_builder?
-    spec = ServiceTier.find_by(service_type: engine.to_s, name: tier_name)&.spec || {}
-    mem = spec["memory_mb"].to_i
-    if mem.zero?
-      preset = Resources::Shape::SERVICE_PRESETS.dig(engine.to_s, "small")
-      return preset && Resources::Shape.new(**preset)
-    end
-    Resources::Shape.round_up(cpu: mem / 2048.0, memory_mb: mem, disk_gb: [ spec["storage_gb"].to_i, 1 ].max)
   end
 
   # Same enforcer + capacity gate the builder runs for a new shape. Not

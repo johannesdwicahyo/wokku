@@ -69,7 +69,7 @@ class DatabaseServiceUpgrade
         end
       end
 
-      dedicated = DatabaseService.create!(
+      attrs = {
         server: @app.server,
         service_type: @engine,
         name: "#{@app.name}-#{@engine}-dedicated",
@@ -78,7 +78,15 @@ class DatabaseServiceUpgrade
         status: :upgrading_provisioning,
         creator: @user,
         upgrade_source_id: shared&.id
-      )
+      }
+      # Builder mode: born shaped (a tier-only row bills Rp0), gated by the
+      # builder's enforcer + capacity check before anything is created.
+      if (shape = Resources::ApplyChange.service_shape_for_tier(@engine, attrs[:tier_name]))
+        check = Resources::ApplyChange.check_new_shape(team: @app.team, server: @app.server, shape: shape)
+        raise UpgradeError::OverLimit, check.error unless check.ok
+        attrs.merge!(cpu: shape.cpu, memory_mb: shape.memory_mb, disk_gb: shape.disk_gb)
+      end
+      dedicated = DatabaseService.create!(attrs)
 
       job_class.perform_later(dedicated.id)
       dedicated
