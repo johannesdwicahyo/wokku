@@ -81,6 +81,14 @@ module Resources
       procs + services.map { |db| { shape: db.shape, instances: 1, service_id: db.id } }
     end
 
+    # Builder-mode shape for a legacy DynoTier: its size rounded up onto the
+    # grid, as Billing::ShapeBackfill does. nil for a sleeping tier (sleeping
+    # is tier-driven) and when the builder is off.
+    def self.shape_for_dyno_tier(tier)
+      return unless Wokku.config.resource_builder? && tier && !tier.sleeps
+      Shape.round_up(cpu: tier.cpu_shares, memory_mb: tier.memory_mb)
+    end
+
     # Builder-mode shape for a dedicated service created from a legacy tier
     # name (templates, DatabaseServiceUpgrade) — a tier-only row bills Rp0.
     # The tier's spec rounded up onto the grid exactly as the cloud's
@@ -88,6 +96,7 @@ module Resources
     # spec. nil when the builder is off (legacy tier row).
     def self.service_shape_for_tier(engine, tier_name)
       return unless Wokku.config.resource_builder?
+      return if DatabaseService::UNSHAPED_TIERS.include?(tier_name.to_s)
       spec = ServiceTier.find_by(service_type: engine.to_s, name: tier_name)&.spec || {}
       mem = spec["memory_mb"].to_i
       if mem.zero?

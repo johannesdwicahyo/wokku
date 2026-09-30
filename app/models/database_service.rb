@@ -64,6 +64,10 @@ class DatabaseService < ApplicationRecord
   # (dashboard, API, MCP) is covered in one place.
   RETIRED_TYPES = %w[mysql].freeze
 
+  # Free / infra tiers never get a per-resource shape (mirrors the cloud's
+  # Billing::ShapeBackfill::EXCLUDED_SERVICE_TIERS).
+  UNSHAPED_TIERS = %w[mini shared_free shared_host].freeze
+
   validates :name, presence: true, uniqueness: { scope: :server_id }
   validates :service_type, presence: true, inclusion: {
     in: %w[postgres redis mysql mariadb mongodb memcached rabbitmq elasticsearch meilisearch clickhouse nats]
@@ -71,10 +75,11 @@ class DatabaseService < ApplicationRecord
   validate :shared_tenants_must_have_parent
   validate :service_type_not_retired, on: :create
   validate :shape_on_grid, if: -> { cpu.present? || memory_mb.present? }
-  # Shape wins over tier: a legacy tier change (change_tier) that leaves a
-  # backfilled shape would be ignored, so hand sizing back to the tier.
-  # disk_gb stays — it's ResizeService's grow-only floor.
-  before_save :release_shape, if: -> { will_save_change_to_tier_name? && tier_name.present? && !will_save_change_to_cpu? && !will_save_change_to_memory_mb? }
+  # Shape wins over tier: a legacy tier assignment that leaves an old shape
+  # would be ignored, so re-size to the tier — builder on → the tier rounded
+  # onto the grid (tier-only rows bill Rp0); builder off → shape cleared so
+  # the tier governs. disk_gb never shrinks (ResizeService's grow-only floor).
+  before_save :shape_from_tier, if: -> { will_save_change_to_tier_name? && tier_name.present? && !will_save_change_to_cpu? && !will_save_change_to_memory_mb? }
 
   def over_quota?
     over_quota_at.present?
@@ -118,8 +123,10 @@ class DatabaseService < ApplicationRecord
 
   private
 
-  def release_shape
-    self.cpu = self.memory_mb = nil
+  def shape_from_tier
+    shape = Resources::ApplyChange.service_shape_for_tier(service_type, tier_name) unless shared?
+    self.cpu, self.memory_mb = shape&.cpu, shape&.memory_mb
+    self.disk_gb = [ disk_gb.to_i, shape.disk_gb ].max if shape
   end
 
   def service_type_not_retired

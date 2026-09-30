@@ -23,7 +23,9 @@ RSpec.describe DynoAllocation do
     expect(a.errors[:base].join).to match(/CPU/)
   end
 
-  describe "legacy tier change on a shaped row" do
+  describe "legacy tier change on a shaped row (builder off)" do
+    before { allow(Wokku.config).to receive(:resource_builder?).and_return(false) }
+
     let(:large)    { create(:dyno_tier, memory_mb: 2048, cpu_shares: 1.0) }
     let(:sleepy)   { create(:dyno_tier, memory_mb: 256, cpu_shares: 0.15, sleeps: true) }
     # Backfilled row: shape, no tier.
@@ -49,6 +51,32 @@ RSpec.describe DynoAllocation do
     it "keeps the shape when the tier doesn't change" do
       alloc.update!(count: 2)
       expect(alloc.reload.shape).to be_present
+    end
+  end
+
+  # Builder on: a tier-only non-sleeping row bills Rp0, so a legacy tier
+  # assignment re-shapes to the tier rounded onto the grid instead.
+  describe "legacy tier assignment with the builder on" do
+    before { allow(Wokku.config).to receive(:resource_builder?).and_return(true) }
+
+    let(:basic)  { create(:dyno_tier, memory_mb: 512, cpu_shares: 0.3) }
+    let(:sleepy) { create(:dyno_tier, memory_mb: 256, cpu_shares: 0.15, sleeps: true) }
+    let!(:alloc) { DynoAllocation.create!(app_record: app, process_type: "web", count: 1, cpu: 2.0, memory_mb: 4096) }
+
+    it "re-shapes to the tier rounded onto the grid" do
+      alloc.update!(dyno_tier: basic)
+      expect(alloc.reload.shape).to eq(Resources::Shape.new(cpu: 0.5, memory_mb: 512))
+    end
+
+    it "shapes a tier-only row on create" do
+      other = DynoAllocation.create!(app_record: app, process_type: "worker", count: 1, dyno_tier: basic)
+      expect(other.reload.shape).to eq(Resources::Shape.new(cpu: 0.5, memory_mb: 512))
+    end
+
+    it "a sleeping tier stays unshaped and sleeping" do
+      alloc.update!(dyno_tier: sleepy)
+      expect(alloc.reload.shape).to be_nil
+      expect(alloc).to be_sleeping
     end
   end
 end

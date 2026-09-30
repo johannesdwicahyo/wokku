@@ -29,7 +29,9 @@ RSpec.describe DatabaseService, "#billing_team" do
   end
 end
 
-RSpec.describe DatabaseService, "legacy tier change on a shaped row" do
+RSpec.describe DatabaseService, "legacy tier change on a shaped row (builder off)" do
+  before { allow(Wokku.config).to receive(:resource_builder?).and_return(false) }
+
   # Backfilled row: keeps tier_name, gains a shape.
   let(:db) { create(:database_service, tier_name: "basic", cpu: 0.25, memory_mb: 256, disk_gb: 5) }
 
@@ -48,5 +50,29 @@ RSpec.describe DatabaseService, "legacy tier change on a shaped row" do
   it "keeps the shape on unrelated saves" do
     db.update!(status: :stopped)
     expect(db.reload.shape).to be_present
+  end
+end
+
+RSpec.describe DatabaseService, "legacy tier assignment with the builder on" do
+  before do
+    allow(Wokku.config).to receive(:resource_builder?).and_return(true)
+    ServiceTier.create!(service_type: "postgres", name: "standard", spec: { "memory_mb" => 1024, "storage_gb" => 8 })
+  end
+
+  let(:db) { create(:database_service, tier_name: "basic", cpu: 2.0, memory_mb: 4096, disk_gb: 20) }
+
+  it "re-shapes to the tier rounded onto the grid, never shrinking disk" do
+    db.update!(tier_name: "standard")
+    expect(db.reload.shape.to_h).to eq(cpu: 0.5, memory_mb: 1024, disk_gb: 20)
+  end
+
+  it "shapes a tier-only dedicated row on create" do
+    fresh = create(:database_service, tier_name: "standard")
+    expect(fresh.reload.shape.to_h).to eq(cpu: 0.5, memory_mb: 1024, disk_gb: 8)
+  end
+
+  it "leaves free/infra tiers unshaped" do
+    host = create(:database_service, tier_name: "shared_host")
+    expect(host.reload.shape).to be_nil
   end
 end

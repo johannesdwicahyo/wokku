@@ -196,6 +196,12 @@ module Dashboard
         return
       end
 
+      # Builder mode: resize goes through Resources::ResizeService (limit +
+      # capacity checks) — a legacy tier change would bypass them.
+      if Wokku.config.resource_builder?
+        return redirect_to dashboard_addon_path(@database), alert: "Tiers are retired — use the resource builder to resize this database."
+      end
+
       tier = ServiceTier.find_by!(service_type: @database.service_type, name: params[:tier_name])
       @database.update!(tier_name: tier.name)
       ApplyDatabaseTierJob.perform_later(@database.id)

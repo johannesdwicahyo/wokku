@@ -41,7 +41,9 @@ RSpec.describe Resources::ResizeService do
       ServiceTier.find_or_create_by!(name: "legacy-basic", service_type: "postgres") do |t|
         t.spec = { "memory_mb" => 256, "storage_gb" => 8 }
       end
-      create(:database_service, server: server, tier_name: "legacy-basic", cpu: nil, memory_mb: nil, disk_gb: nil)
+      # Written pre-flip (builder off) — builder-mode saves shape tier rows.
+      create(:database_service, server: server, tier_name: "legacy-basic")
+        .tap { |db| db.update_columns(cpu: nil, memory_mb: nil, disk_gb: nil) }
     end
 
     it "refuses a resize that would land below the tier's storage_gb" do

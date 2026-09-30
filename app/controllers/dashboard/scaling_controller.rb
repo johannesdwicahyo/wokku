@@ -79,6 +79,12 @@ module Dashboard
     def change_tier
       authorize @app, :update?
 
+      # Builder mode: sizes change only through Resources::ApplyChange (limit +
+      # capacity checks) — a legacy tier change would bypass them.
+      if Wokku.config.resource_builder?
+        return redirect_to dashboard_app_resources_path(@app), alert: "Box sizes are retired — use the resource builder to change this app's size."
+      end
+
       unless defined?(DynoTier)
         redirect_to dashboard_app_path(@app), alert: "Upgrade to EE for this feature"
         return

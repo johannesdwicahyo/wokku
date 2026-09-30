@@ -9,8 +9,20 @@ RSpec.describe "Dashboard::Scaling change_tier", type: :request do
   let(:app_record) { app_records(:two) }
 
   before do
+    allow(Wokku.config).to receive(:resource_builder?).and_return(false)
     app_record.update!(status: :running) unless app_record.status == "running"
     sign_in user
+  end
+
+  # Builder mode: a legacy tier change would bypass ApplyChange's limit and
+  # capacity checks, so the endpoint refuses.
+  it "change_tier refuses in builder mode" do
+    allow(Wokku.config).to receive(:resource_builder?).and_return(true)
+    expect {
+      post "/dashboard/apps/#{app_record.id}/scaling/change_tier", params: { dyno_tier_id: dyno_tiers(:standard).id }
+    }.not_to change { app_record.dyno_allocations.reload.map { |a| [ a.dyno_tier_id, a.cpu, a.memory_mb ] } }
+    expect(response).to redirect_to(dashboard_app_resources_path(app_record))
+    expect(flash[:alert]).to match(/resource builder/)
   end
 
   it "change_tier blocks when app has not deployed yet" do

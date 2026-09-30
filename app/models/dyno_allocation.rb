@@ -6,11 +6,13 @@ class DynoAllocation < ApplicationRecord
   validates :count, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validate :tier_or_shape
   validate :shape_on_grid, if: -> { cpu.present? || memory_mb.present? }
-  # A shape wins over a tier, so a legacy tier change (scaling picker, API
-  # dynos) that leaves a backfilled shape in place would be silently ignored.
-  # Assigning a tier without touching the shape hands sizing back to the tier.
-  # The builder (Resources::ApplyChange) always writes cpu/memory_mb itself.
-  before_save :release_shape, if: -> { will_save_change_to_dyno_tier_id? && dyno_tier_id.present? && !will_save_change_to_cpu? && !will_save_change_to_memory_mb? }
+  # A shape wins over a tier, so a legacy tier assignment (scaling picker, API
+  # dynos) that leaves an old shape in place would be silently ignored.
+  # Assigning a tier without touching the shape re-sizes the row to that tier:
+  # builder on → the tier rounded onto the grid (a tier-only non-sleeping row
+  # would bill Rp0); builder off → shape cleared so the tier governs. The
+  # builder (Resources::ApplyChange) always writes cpu/memory_mb itself.
+  before_save :shape_from_tier, if: -> { will_save_change_to_dyno_tier_id? && dyno_tier_id.present? && !will_save_change_to_cpu? && !will_save_change_to_memory_mb? }
 
   # Under Phase 4 invoice billing, container cost is bundled into the
   # user's monthly plan invoice — no per-allocation usage segments. The
@@ -46,8 +48,9 @@ class DynoAllocation < ApplicationRecord
 
   private
 
-  def release_shape
-    self.cpu = self.memory_mb = nil
+  def shape_from_tier
+    shape = Resources::ApplyChange.shape_for_dyno_tier(dyno_tier)
+    self.cpu, self.memory_mb = shape&.cpu, shape&.memory_mb
   end
 
   def tier_or_shape

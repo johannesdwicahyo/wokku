@@ -295,6 +295,19 @@ RSpec.describe "Dashboard::Databases coverage", type: :request do
       end
     end
 
+    before { allow(Wokku.config).to receive(:resource_builder?).and_return(false) }
+
+    # Builder mode: resizing goes through ResizeService's limit/capacity checks.
+    it "refuses in builder mode" do
+      allow(Wokku.config).to receive(:resource_builder?).and_return(true)
+      expect do
+        post "/dashboard/addons/#{database.id}/change_tier", params: { tier_name: "standard" }
+      end.not_to have_enqueued_job(ApplyDatabaseTierJob)
+      expect(database.reload.tier_name).not_to eq("standard")
+      expect(response).to redirect_to(dashboard_addon_path(database))
+      expect(flash[:alert]).to match(/resource builder/)
+    end
+
     it "updates the tier and queues ApplyDatabaseTierJob" do
       expect do
         post "/dashboard/addons/#{database.id}/change_tier", params: { tier_name: "standard" }

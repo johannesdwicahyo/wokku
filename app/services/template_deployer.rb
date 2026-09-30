@@ -79,7 +79,7 @@ class TemplateDeployer
     # — the cost card on the template page already advertises basic.
     step("Setting resource limits...") do
       tier = container_tier(app)
-      shape = builder_shape_for(tier) if tier
+      shape = Resources::ApplyChange.shape_for_dyno_tier(tier) if tier
       if shape && !app.dyno_allocations.exists?(process_type: "web")
         app.dyno_allocations.create!(process_type: "web", cpu: shape.cpu, memory_mb: shape.memory_mb, count: 1)
       elsif tier
@@ -348,7 +348,7 @@ class TemplateDeployer
   # non-`created` app, which would race the deploy.
   def builder_preflight(app)
     tier = container_tier(app)
-    web = builder_shape_for(tier) if tier && !(app.persisted? && app.dyno_allocations.exists?(process_type: "web"))
+    web = Resources::ApplyChange.shape_for_dyno_tier(tier) if tier && !(app.persisted? && app.dyno_allocations.exists?(process_type: "web"))
     dbs = planned_dedicated_dbs.map { |engine, tier_name| Resources::ApplyChange.service_shape_for_tier(engine, tier_name) }
     shapes = [ web, *dbs ].compact
     return Resources::ApplyChange::Result.new(ok: true) if shapes.empty?
@@ -378,16 +378,6 @@ class TemplateDeployer
     # without this every template-provisioned dedicated db ships uncapped.
     ApplyDatabaseTierJob.perform_later(db.id)
     db
-  end
-
-  # Per-resource billing (spec 2026-09-24): with the builder on, a tier-only
-  # row bills Rp0, so templates are born shaped — the tier's size rounded up
-  # onto the grid exactly as the cloud's Billing::ShapeBackfill does (DBs:
-  # ApplyChange.service_shape_for_tier). Free sleeping stays a tier
-  # (sleeping is tier-driven). nil = legacy tier row.
-  def builder_shape_for(tier)
-    return unless Wokku.config.resource_builder? && !tier.sleeps
-    Resources::Shape.round_up(cpu: tier.cpu_shares, memory_mb: tier.memory_mb)
   end
 
   # Dedicated datastores deploy! will create, as [engine, tier_name] — the

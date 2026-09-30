@@ -7,6 +7,8 @@ RSpec.describe ApplyDatabaseTierJob, type: :job do
 
   before do
     allow(Services::Ops).to receive(:issue_and_wait!)
+    # The tier branch is legacy mode; builder-mode saves shape tier rows.
+    allow(Wokku.config).to receive(:resource_builder?).and_return(false)
   end
 
   def make_tier(name:, service_type: "postgres", spec: {})
