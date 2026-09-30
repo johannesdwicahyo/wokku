@@ -1,5 +1,5 @@
 module Hosts
-  # Generic root-SSH transport to a host: run_raw, run_raw_streaming, the
+  # Generic host-SSH transport to a host: run_raw, run_raw_streaming, the
   # error classes, and the SSH plumbing. This is the ONLY raw command
   # transport in the app (W7 Phase 4: the dokku wrapper layer it was
   # extracted from is deleted); higher-level host mutations go through
@@ -18,24 +18,28 @@ module Hosts
     class ConnectionError < StandardError; end
     class TimeoutError < ConnectionError; end
 
+    # The platform's SSH login on app hosts (Wokku.config.host_ssh_user,
+    # default root). Every raw host-SSH site reads this, never a literal.
+    def self.user = Wokku.config.host_ssh_user
+
+    # Non-root users reach root-only ops via `sudo -n` host helpers.
+    def self.root_user? = user == "root"
+
     def initialize(server)
       @server = server
     end
 
-    # Executes `command` verbatim as root over SSH — no dokku-wire wrapping,
-    # no dependence on `@server.ssh_user`. Root is the only ssh identity that
-    # gets a genuine login shell on our hosts: the "dokku" user has a
-    # host-side forced command that prepends `dokku` to everything it
-    # receives, so raw `docker ...` etc. is unreachable through it. Same
-    # trust level the platform already extends to host-level probes (see
-    # DockerHealthCheckJob), not a new escalation.
+    # Executes `command` verbatim as the platform host user (Ssh.user) —
+    # no dokku-wire wrapping, no dependence on `@server.ssh_user` (the
+    # "dokku" user has a forced command, so raw `docker ...` is unreachable
+    # through it).
     def run_raw(command, timeout: 30, stdin: nil)
-      output, error, exit_code = execute_over_ssh("root", command, display_command: command, timeout: timeout, stdin: stdin)
+      output, error, exit_code = execute_over_ssh(self.class.user, command, display_command: command, timeout: timeout, stdin: stdin)
       raise_on_failure!(command, exit_code, error)
       output.strip
     end
 
-    # Root + verbatim + streaming. Streams stdout (+ stderr when
+    # Host user + verbatim + streaming. Streams stdout (+ stderr when
     # include_stderr, the default) line by line through &block, captures the
     # remote exit-status and raises CommandError if non-zero — tar failing
     # mid-export must not look like a clean stream.
@@ -50,7 +54,7 @@ module Hosts
       stderr_tail = +""
       begin
         Timeout.timeout(timeout) do
-          Net::SSH.start(@server.host, "root", ssh_options) do |ssh|
+          Net::SSH.start(@server.host, self.class.user, ssh_options) do |ssh|
             channel = ssh.open_channel do |ch|
               ch.exec(command) do |_ch, success|
                 raise ConnectionError, "Failed to execute command" unless success
@@ -85,7 +89,7 @@ module Hosts
       end
     end
 
-    # Liveness probe: a bare root no-op over the same transport.
+    # Liveness probe: a bare no-op over the same transport.
     def connected?
       run_raw("true")
       true

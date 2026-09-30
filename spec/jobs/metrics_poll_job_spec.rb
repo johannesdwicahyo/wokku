@@ -71,6 +71,17 @@ RSpec.describe MetricsPollJob, type: :job do
     expect(calls.first[:key_data]).to include("fake-key-data")
   end
 
+  it "SSHes as the configured host SSH user" do
+    allow(Wokku.config).to receive(:host_ssh_user).and_return("wokku")
+    users = []
+    mock_ssh = Object.new
+    mock_ssh.define_singleton_method(:exec!) { |_cmd| "" }
+    allow(Net::SSH).to receive(:start) { |_h, user, **_o, &block| users << user; block.call(mock_ssh) }
+
+    described_class.perform_now(server.id)
+    expect(users.first).to eq("wokku")
+  end
+
   it "logs warning but does not raise on SSH failure" do
     allow(Net::SSH).to receive(:start).and_raise(Net::SSH::Exception, "connection refused")
     expect { described_class.perform_now(server.id) }.not_to raise_error

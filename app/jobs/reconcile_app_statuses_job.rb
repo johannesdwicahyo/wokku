@@ -119,7 +119,7 @@ class ReconcileAppStatusesJob < ApplicationJob
   # host, or nil if SSH/Docker is unreachable (so the caller can skip
   # rather than mistake "can't reach" for "every app is missing").
   def fetch_running_app_names(server)
-    output = Net::SSH.start(server.host, "root",
+    output = Net::SSH.start(server.host, Hosts::Ssh.user,
                             port: server.port || 22,
                             non_interactive: true,
                             timeout: 5,

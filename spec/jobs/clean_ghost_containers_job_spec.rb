@@ -78,4 +78,12 @@ RSpec.describe CleanGhostContainersJob, type: :job do
     expect { described_class.perform_now }.not_to raise_error
     expect(call_count).to be >= 2
   end
+
+  it "SSHes as the configured host SSH user" do
+    allow(Wokku.config).to receive(:host_ssh_user).and_return("wokku")
+    stub_ssh("")
+    described_class.perform_now
+    expect(Net::SSH).to have_received(:start).with(server.host, "wokku", anything).at_least(:once)
+    expect(Net::SSH).not_to have_received(:start).with(anything, "root", anything)
+  end
 end

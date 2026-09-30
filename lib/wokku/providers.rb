@@ -22,7 +22,7 @@ module Wokku
     end
 
     attr_accessor :tls, :billing
-    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder
+    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder, :host_ssh_user
 
     def plan_enforcer
       @plan_enforcer ||= NullPlanEnforcer.new
@@ -68,6 +68,13 @@ module Wokku
     # the zero-config self-host still gets working URLs.
     def canonical_domain
       @canonical_domain ||= ENV.fetch("WOKKU_CANONICAL_DOMAIN", "localhost")
+    end
+
+    # SSH login for platform access to app hosts. Self-host default is root
+    # (no helpers installed); the cloud sets a docker-group user that
+    # reaches the few root-only ops through sudo'd /usr/local/sbin helpers.
+    def host_ssh_user
+      @host_ssh_user.presence || "root"
     end
 
     def owned_domains

@@ -338,7 +338,7 @@ class RestoreDrillJob < ApplicationJob
     ssh_opts[:key_data] = [ server.ssh_private_key ] if server.ssh_private_key.present?
 
     Timeout.timeout(CHANNEL_TIMEOUT) do
-      Net::SSH.start(server.host, "root", ssh_opts) do |ssh|
+      Net::SSH.start(server.host, Hosts::Ssh.user, ssh_opts) do |ssh|
         channel = ssh.open_channel do |ch|
           ch.exec(wire) do |_ch, success|
             raise "Failed to execute #{wire}" unless success
@@ -476,7 +476,7 @@ class RestoreDrillJob < ApplicationJob
     ssh_opts[:key_data] = [ server.ssh_private_key ] if server.ssh_private_key.present?
 
     Timeout.timeout(CHANNEL_TIMEOUT) do
-      Net::SSH.start(server.host, "root", ssh_opts) do |ssh|
+      Net::SSH.start(server.host, Hosts::Ssh.user, ssh_opts) do |ssh|
         channel = ssh.open_channel do |ch|
           ch.exec(wire) do |_ch, success|
             raise "Failed to execute #{wire}" unless success

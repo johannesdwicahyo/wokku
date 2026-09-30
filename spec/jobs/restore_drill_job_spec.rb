@@ -579,6 +579,22 @@ RSpec.describe RestoreDrillJob do
       end
     end
 
+    it "stream_gunzip and upload_and_untar connect as the configured host SSH user" do
+      allow(Wokku.config).to receive(:host_ssh_user).and_return("wokku")
+      server = create(:server)
+      gz = Tempfile.create([ "s", ".gz" ])
+      Zlib::GzipWriter.open(gz.path) { |w| w.write("x") }
+      fake_ssh_channel(sent: +"", execed: [])
+      allow(Rails.logger).to receive(:warn)
+
+      job.send(:stream_gunzip, server, "wire-cmd", gz.path)
+      job.send(:upload_and_untar, server, gz.path, "/tmp/dr-volume-abc")
+
+      expect(Net::SSH).to have_received(:start).with(server.host, "wokku", anything).twice
+    ensure
+      File.unlink(gz.path) if gz && File.exist?(gz.path)
+    end
+
     describe "#upload_and_untar" do
       it "streams the raw tarball bytes into a root tar -xzf into the throwaway dir" do
         server = create(:server) # no ssh_private_key -> no key_data

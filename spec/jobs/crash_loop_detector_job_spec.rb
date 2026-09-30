@@ -172,4 +172,14 @@ RSpec.describe CrashLoopDetectorJob do
       described_class.perform_now(server.id)
     end
   end
+
+  it "SSHes as the configured host SSH user for container rows and crash details" do
+    allow(Wokku.config).to receive(:host_ssh_user).and_return("wokku")
+    fake_ssh = double("ssh", exec!: "")
+    allow(Net::SSH).to receive(:start).and_yield(fake_ssh)
+    job = described_class.new
+    job.send(:fetch_container_rows, server)
+    job.send(:fetch_crash_details, server, "loopy.web.1")
+    expect(Net::SSH).to have_received(:start).with(server.host, "wokku", anything).twice
+  end
 end

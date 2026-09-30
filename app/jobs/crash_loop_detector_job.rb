@@ -74,7 +74,7 @@ class CrashLoopDetectorJob < ApplicationJob
   end
 
   def fetch_crash_details(server, container_name)
-    Net::SSH.start(server.host, "root", port: server.port || 22, non_interactive: true, timeout: 5,
+    Net::SSH.start(server.host, Hosts::Ssh.user, port: server.port || 22, non_interactive: true, timeout: 5,
                    key_data: Array(server.ssh_private_key).reject(&:blank?)) do |ssh|
       meta = ssh.exec!("docker inspect #{Shellwords.escape(container_name)} --format '{{.State.ExitCode}}|{{.State.OOMKilled}}' 2>&1").to_s.strip
       logs = ssh.exec!("docker logs --tail 100 #{Shellwords.escape(container_name)} 2>&1").to_s
@@ -131,7 +131,7 @@ class CrashLoopDetectorJob < ApplicationJob
   # Returns [{ app:, crashed: bool, age_seconds: int }, ...] for web
   # containers, or nil if the host/docker is unreachable.
   def fetch_container_rows(server)
-    raw = Net::SSH.start(server.host, "root",
+    raw = Net::SSH.start(server.host, Hosts::Ssh.user,
                          port: server.port || 22, non_interactive: true, timeout: 5,
                          key_data: Array(server.ssh_private_key).reject(&:blank?)) do |ssh|
       ssh.exec!(%(docker ps -a --format "{{.Names}}|{{.Status}}|{{.CreatedAt}}" 2>&1)).to_s

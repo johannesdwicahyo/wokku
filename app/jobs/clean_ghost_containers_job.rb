@@ -31,7 +31,7 @@ class CleanGhostContainersJob < ApplicationJob
       key_data: Array(server.ssh_private_key).reject(&:blank?)
     }
 
-    removed = Net::SSH.start(server.host, "root", **ssh_opts) do |ssh|
+    removed = Net::SSH.start(server.host, Hosts::Ssh.user, **ssh_opts) do |ssh|
       raw = ssh.exec!("docker ps --format '{{.Names}}|{{.RunningFor}}'").to_s
       to_remove = raw.split("\n").filter_map do |line|
         name, running_for = line.split("|", 2)

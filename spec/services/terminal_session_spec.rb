@@ -77,6 +77,24 @@ RSpec.describe TerminalSession do
       expect { session.connect! }.to raise_error(/No running task for swarmy/)
     end
 
+    it "Swarm and db_connect sessions use the configured host SSH user" do
+      allow(Wokku.config).to receive(:host_ssh_user).and_return("wokku")
+      users_seen = []
+      stub_ssh(swarm_ssh) { |u| users_seen << u }
+
+      described_class.new(server: server, mode: :enter, target: "swarmy").connect! rescue nil
+
+      expect(users_seen).to eq([ "wokku" ])
+      expect(described_class.new(server: server, mode: :db_connect, target: "db").send(:ssh_user)).to eq("wokku")
+    end
+
+    it "legacy dokku sessions ignore the host SSH user setting" do
+      allow(Wokku.config).to receive(:host_ssh_user).and_return("wokku")
+      app.update!(wokkud_lifecycle: false)
+      expect(described_class.new(server: server, mode: :enter, target: "swarmy").send(:ssh_user))
+        .to eq(server.ssh_user || "dokku")
+    end
+
     it "keeps legacy apps on the dokku user and dokku enter" do
       app.update!(wokkud_lifecycle: false)
       users_seen = []

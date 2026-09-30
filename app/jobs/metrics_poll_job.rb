@@ -10,15 +10,15 @@ class MetricsPollJob < ApplicationJob
   def perform(server_id)
     server = Server.find(server_id)
 
-    # Use root SSH to access docker stats (dokku user has a restricted shell).
-    # The provision script authorizes the same ssh_private_key for root.
+    # SSH as the platform host user (Hosts::Ssh.user) for docker stats —
+    # the dokku user has a restricted shell.
     # Also fetch nproc on the same connection — docker stats CPUPerc is
     # %-per-core, so summing across containers needs to be divided by the
     # number of cores to express server load as a single host-wide %.
     output, ncpu, host_mem_total_mb = nil, 1, nil
     Net::SSH.start(
       server.host,
-      "root",
+      Hosts::Ssh.user,
       port: server.port,
       non_interactive: true,
       timeout: 5,

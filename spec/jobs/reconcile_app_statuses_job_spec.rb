@@ -196,4 +196,11 @@ RSpec.describe ReconcileAppStatusesJob, type: :job do
       described_class.new.perform(server.id)
     end
   end
+
+  it "SSHes as the configured host SSH user" do
+    allow(Wokku.config).to receive(:host_ssh_user).and_return("wokku")
+    stub_docker_ps("")
+    described_class.new.send(:fetch_running_app_names, server)
+    expect(Net::SSH).to have_received(:start).with(server.host, "wokku", anything)
+  end
 end

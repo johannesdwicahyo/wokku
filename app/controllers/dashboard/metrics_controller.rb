@@ -48,12 +48,11 @@ module Dashboard
 
     def fetch_container_stats
       server = @app.server
-      # docker stats requires an unrestricted shell. The `dokku` user is forced
-      # to a dokku-wrapper command, so we SSH as root — the provision script
-      # authorizes the same ssh_private_key for root as for dokku.
+      # docker stats requires an unrestricted shell (the `dokku` user is
+      # forced to a dokku-wrapper command), so SSH as the platform host user.
       output = Net::SSH.start(
         server.host,
-        "root",
+        Hosts::Ssh.user,
         port: server.port,
         non_interactive: true,
         timeout: 10,

@@ -61,6 +61,15 @@ RSpec.describe "Dashboard::Metrics (deep)", type: :request do
       expect(captured[:key_data]).to be_a(Array)
     end
 
+    it "SSHes as the configured host SSH user for docker stats" do
+      allow(Wokku.config).to receive(:host_ssh_user).and_return("wokku")
+      users = []
+      allow(Net::SSH).to receive(:start) { |_h, ssh_user, **_o| users << ssh_user; "" }
+      get "/dashboard/apps/#{app_record.id}/metrics", params: { deferred: 1 }
+      expect(response).to have_http_status(:success)
+      expect(users).to eq([ "wokku" ])
+    end
+
     it "sets metrics_error on Net::SSH::AuthenticationFailed (via deferred fragment)" do
       stub_net_ssh_raise(Net::SSH::AuthenticationFailed)
       get "/dashboard/apps/#{app_record.id}/metrics", params: { deferred: 1 }

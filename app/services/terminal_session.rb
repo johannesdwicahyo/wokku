@@ -158,7 +158,7 @@ class TerminalSession
   def db_target? = @mode == :db_connect
 
   def ssh_user
-    (db_target? || swarm_target?) ? "root" : (server.ssh_user || "dokku")
+    (db_target? || swarm_target?) ? Hosts::Ssh.user : (server.ssh_user || "dokku")
   end
 
   def resolve_swarm_container!

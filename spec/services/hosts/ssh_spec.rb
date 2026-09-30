@@ -111,4 +111,36 @@ RSpec.describe Hosts::Ssh do
       expect(ssh.connected?).to eq(false)
     end
   end
+
+  describe "host SSH user (Wokku.config.host_ssh_user)" do
+    it "defaults to root" do
+      expect(Wokku::Providers.new.host_ssh_user).to eq("root")
+      expect(described_class.user).to eq("root")
+      expect(described_class.root_user?).to be true
+    end
+
+    it "treats a blank setting as root" do
+      config = Wokku::Providers.new
+      config.host_ssh_user = ""
+      expect(config.host_ssh_user).to eq("root")
+    end
+
+    context "when set to wokku" do
+      before { allow(Wokku.config).to receive(:host_ssh_user).and_return("wokku") }
+
+      it "is not root" do
+        expect(described_class.user).to eq("wokku")
+        expect(described_class.root_user?).to be false
+      end
+
+      it "run_raw, run_raw_streaming and connected? all connect as wokku" do
+        users = []
+        stub_ssh_session(output: "ok", capture_user: ->(u) { users << u })
+        ssh.run_raw("docker ps")
+        ssh.run_raw_streaming("docker ps") { |_| }
+        ssh.connected?
+        expect(users).to eq(%w[wokku wokku wokku])
+      end
+    end
+  end
 end
