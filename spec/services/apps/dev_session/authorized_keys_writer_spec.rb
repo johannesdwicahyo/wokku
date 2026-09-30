@@ -43,7 +43,33 @@ RSpec.describe Apps::DevSession::AuthorizedKeysWriter do
 
   describe "#remove" do
     it "removes the line containing the ssh_principal" do
-      expect(client).to receive(:run_raw).with(/grep -v 'dev-session-abc' .+dev-session-authorized-keys.+sudo cp/)
+      expect(client).to receive(:run_raw).with(
+        "tmp=$(mktemp) && grep -v 'dev-session-abc' /etc/wokku/dev-session-authorized-keys > $tmp && " \
+        "sudo cp $tmp /etc/wokku/dev-session-authorized-keys && rm $tmp"
+      )
+      described_class.new(app).remove(ssh_principal: "dev-session-abc")
+    end
+  end
+
+  context "when the host SSH user is not root" do
+    before { allow(Wokku.config).to receive(:host_ssh_user).and_return("wokku") }
+
+    it "append pipes exactly the one line to the wokku-dev-keys helper on stdin" do
+      expect(client).to receive(:run_raw).with("sudo -n /usr/local/sbin/wokku-dev-keys add", stdin: anything) do |_cmd, stdin:|
+        expect(stdin).to start_with('command="/opt/wokku/bin/wokku-dev-shell",no-pty,no-agent-forwarding,no-X11-forwarding,no-user-rc,permitopen="dokku-postgres-myapp:5432",environment="WOKKU_DEV_SESSION=dev-session-abc" ssh-ed25519 AAAA')
+        expect(stdin).to end_with("user@host\n")
+        expect(stdin.count("\n")).to eq(1)
+      end
+      described_class.new(app).append(
+        ssh_principal: "dev-session-abc",
+        user_pubkey: pubkey,
+        db_remote_host: "dokku-postgres-myapp",
+        db_remote_port: 5432
+      )
+    end
+
+    it "remove calls the helper with the principal" do
+      expect(client).to receive(:run_raw).with("sudo -n /usr/local/sbin/wokku-dev-keys remove dev-session-abc")
       described_class.new(app).remove(ssh_principal: "dev-session-abc")
     end
   end

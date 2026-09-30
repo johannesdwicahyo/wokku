@@ -47,4 +47,28 @@ RSpec.describe DockerHealthCheckJob, type: :job do
     described_class.new.perform(server.id)
     expect(server.reload.docker_status).to be_nil
   end
+
+  describe "host SSH user" do
+    def capture_ssh
+      seen = {}
+      fake_ssh = double("ssh")
+      allow(fake_ssh).to receive(:exec!) { |cmd| seen[:cmd] = cmd; "active\n" }
+      allow(Net::SSH).to receive(:start) { |_h, user, **_o, &blk| seen[:user] = user; blk.call(fake_ssh) }
+      seen
+    end
+
+    it "as root, probes systemctl directly" do
+      seen = capture_ssh
+      described_class.new.perform(server.id)
+      expect(seen).to eq(user: "root", cmd: "systemctl is-active docker 2>&1")
+    end
+
+    it "as a non-root user, probes through the sudo helper" do
+      allow(Wokku.config).to receive(:host_ssh_user).and_return("wokku")
+      seen = capture_ssh
+      described_class.new.perform(server.id)
+      expect(seen).to eq(user: "wokku", cmd: "sudo -n /usr/local/sbin/wokku-docker-health 2>&1")
+      expect(server.reload.docker_status).to eq("active")
+    end
+  end
 end

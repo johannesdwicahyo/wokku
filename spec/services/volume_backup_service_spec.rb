@@ -113,6 +113,26 @@ RSpec.describe VolumeBackupService do
       end
     end
 
+    it "as a non-root host user, tars through the sudo helper" do
+      allow(Wokku.config).to receive(:host_ssh_user).and_return("wokku")
+      app = create(:app_record)
+      dest = create(:backup_destination, server: app.server)
+      allow(app.server).to receive(:backup_destination).and_return(dest)
+      mount = "/var/lib/dokku/data/storage/#{app.name}/a b"
+      streamed = nil
+      allow_any_instance_of(Hosts::Ssh).to receive(:run_raw_streaming) do |_c, cmd, **_kw, &blk|
+        streamed = cmd
+        blk.call("FAKE")
+      end
+      s3 = dest.s3_client
+      allow(dest).to receive(:s3_client).and_return(s3)
+      allow(s3).to receive(:put_object)
+
+      with_env("BACKUP_ENCRYPTION_KEY" => key) { described_class.new(app, mount).perform! }
+
+      expect(streamed).to eq("sudo -n /usr/local/sbin/wokku-volume-tar #{Shellwords.escape(mount)}")
+    end
+
     it "refuses a mount path outside the storage root before touching a root shell" do
       app = create(:app_record)
       expect { described_class.new(app, "/etc").perform! }

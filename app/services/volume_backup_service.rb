@@ -91,7 +91,7 @@ class VolumeBackupService
     tar_tempfile = Tempfile.new([ "volume", ".tar.gz" ], binmode: true)
     begin
       ssh = Hosts::Ssh.new(@server)
-      ssh.run_raw_streaming("tar -czf - -C #{Shellwords.escape(@mount)} .", include_stderr: false, timeout: TAR_TIMEOUT) do |data|
+      ssh.run_raw_streaming(tar_command, include_stderr: false, timeout: TAR_TIMEOUT) do |data|
         tar_tempfile.write(data)
       end
       tar_tempfile.flush
@@ -125,6 +125,13 @@ class VolumeBackupService
   end
 
   private
+
+  # Volumes are root-owned; a non-root host user tars through the helper
+  # (which re-checks the storage root on its side too).
+  def tar_command
+    mount = Shellwords.escape(@mount)
+    Hosts::Ssh.root_user? ? "tar -czf - -C #{mount} ." : "sudo -n /usr/local/sbin/wokku-volume-tar #{mount}"
+  end
 
   # File.basename alone collides when an app mounts two dirs sharing a leaf
   # name (uploads/a/data + uploads/b/data). Always suffix a short digest of

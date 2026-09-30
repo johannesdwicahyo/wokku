@@ -5,6 +5,7 @@ module Apps
     class AuthorizedKeysWriter
       PATH = "/etc/wokku/dev-session-authorized-keys".freeze
       FORCE_COMMAND = "/opt/wokku/bin/wokku-dev-shell".freeze
+      HELPER = "/usr/local/sbin/wokku-dev-keys".freeze
 
       def initialize(app)
         @app = app
@@ -12,28 +13,33 @@ module Apps
 
       def append(ssh_principal:, user_pubkey:, db_remote_host:, db_remote_port:)
         line = build_line(ssh_principal, user_pubkey, db_remote_host, db_remote_port)
-        # sshd's StrictModes rejects AuthorizedKeysFile entries that aren't
-        # root-owned when authenticating as a non-root user, so we keep the
-        # file root:root and write through sudo. The NOPASSWD sudoers fragment
-        # whitelists exactly `tee -a` against this path — see provision script.
-        # Escape single quotes in the line for safe single-quoted shell interpolation.
-        escaped = line.gsub("'", "'\\\\''")
-        cmd = "printf '%s\\n' '#{escaped}' | sudo tee -a #{PATH} > /dev/null"
-        run!(cmd)
+        # PATH is root-owned (sshd StrictModes). Root appends directly; a
+        # non-root host user pipes the line to the wokku-dev-keys helper,
+        # which validates it against build_line's exact option prefix.
+        if Hosts::Ssh.root_user?
+          # Escape single quotes for safe single-quoted shell interpolation.
+          escaped = line.gsub("'", "'\\\\''")
+          run!("printf '%s\\n' '#{escaped}' | sudo tee -a #{PATH} > /dev/null")
+        else
+          run!("sudo -n #{HELPER} add", stdin: "#{line}\n")
+        end
       end
 
       def remove(ssh_principal:)
-        # Rewrite the file atomically through a tmp file, then `sudo cp` it
-        # back so the destination keeps root ownership. Principals are
-        # server-generated and only contain [a-z0-9-], so stripping single
-        # quotes is sufficient sanitization.
-        safe = ssh_principal.to_s.gsub("'", "")
-        cmd = "tmp=$(mktemp) && grep -v '#{safe}' #{PATH} > $tmp && sudo cp $tmp #{PATH} && rm $tmp"
-        run!(cmd)
+        if Hosts::Ssh.root_user?
+          # Rewrite through a tmp file, then cp back so PATH keeps root
+          # ownership. Principals are server-generated [a-z0-9-], so
+          # stripping single quotes is sufficient sanitization.
+          safe = ssh_principal.to_s.gsub("'", "")
+          run!("tmp=$(mktemp) && grep -v '#{safe}' #{PATH} > $tmp && sudo cp $tmp #{PATH} && rm $tmp")
+        else
+          run!("sudo -n #{HELPER} remove #{Shellwords.escape(ssh_principal.to_s)}")
+        end
       end
 
       private
 
+      # Option order is load-bearing: the host helper matches this exact prefix.
       def build_line(principal, pubkey, db_host, db_port)
         opts = [
           %(command="#{FORCE_COMMAND}"),
@@ -45,8 +51,8 @@ module Apps
         "#{opts} #{cleaned}"
       end
 
-      def run!(cmd)
-        Hosts::Ssh.new(@app.server).run_raw(cmd)
+      def run!(cmd, **opts)
+        Hosts::Ssh.new(@app.server).run_raw(cmd, **opts)
       rescue Hosts::Ssh::CommandError, Hosts::Ssh::ConnectionError => e
         raise Apps::DevSession::Error.new(message_from(e), code: :ssh_error)
       end

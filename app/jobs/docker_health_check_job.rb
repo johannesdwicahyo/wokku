@@ -46,17 +46,23 @@ class DockerHealthCheckJob < ApplicationJob
   # Returns one of: "active", "failed", "inactive", "activating",
   # "deactivating", or "unreachable" (we couldn't SSH at all).
   def probe_docker(server)
-    Net::SSH.start(server.host, "root",
+    Net::SSH.start(server.host, Hosts::Ssh.user,
                    port: server.port || 22,
                    non_interactive: true,
                    timeout: 5,
                    key_data: Array(server.ssh_private_key).reject(&:blank?)) do |ssh|
-      out = ssh.exec!("systemctl is-active docker 2>&1").to_s.strip
+      out = ssh.exec!("#{docker_health_command} 2>&1").to_s.strip
       # is-active returns a single token on stdout; trim anything spurious.
       out.split("\n").last.to_s.strip.presence || "unknown"
     end
   rescue Errno::ECONNREFUSED, Errno::ETIMEDOUT, Errno::EHOSTUNREACH,
          Errno::ENETUNREACH, SocketError, Net::SSH::Exception => _
     "unreachable"
+  end
+
+  # systemctl needs root; a non-root host user goes through the helper
+  # (same `active`/`failed`/... output).
+  def docker_health_command
+    Hosts::Ssh.root_user? ? "systemctl is-active docker" : "sudo -n /usr/local/sbin/wokku-docker-health"
   end
 end
