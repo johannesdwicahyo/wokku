@@ -37,6 +37,20 @@ RSpec.describe "Dashboard::Apps::Addons", type: :request do
       end
     end
 
+    # Review #3b: a builder capacity refusal must read as capacity, not as
+    # OverLimit's generic "over your account limit" UI_MESSAGE.
+    context "when the builder refuses on capacity (UpgradeError::OverLimit)" do
+      before do
+        allow(DatabaseServiceUpgrade).to receive(:call)
+          .and_raise(UpgradeError::OverLimit, "Server capacity is full — try a smaller size.")
+      end
+
+      it "shows the real refusal message" do
+        post url
+        expect(flash[:alert]).to eq("Server capacity is full — try a smaller size.")
+      end
+    end
+
     context "when pre-flight raises UpgradeError::NoFreeSlots" do
       before do
         allow(DatabaseServiceUpgrade).to receive(:call).and_raise(UpgradeError::NoFreeSlots)
