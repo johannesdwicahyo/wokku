@@ -43,4 +43,15 @@ RSpec.describe "Resources frame builder", type: :request do
     expect(response.body).to include('name="processes[web][memory_mb]" value="1024"')
     expect(response.body).to include('name="processes[web][cpu]" value="0.5"')
   end
+
+  # A backfilled row has a shape and no tier — the legacy picker must still
+  # mark the tier it rounded from as current.
+  it "marks the tier a backfilled shape came from as current in the legacy picker" do
+    allow(Wokku.config).to receive(:resource_builder?).and_return(false)
+    create(:dyno_tier, memory_mb: 3072, cpu_shares: 1.4)
+    app_record.dyno_allocations.destroy_all
+    app_record.dyno_allocations.create!(process_type: "web", count: 1, cpu: 1.5, memory_mb: 3072)
+    get "/dashboard/apps/#{app_record.id}/resources", params: { deferred: 1 }
+    expect(response.body.scan(">Current</span>").size).to eq(1)
+  end
 end

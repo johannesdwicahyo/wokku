@@ -88,7 +88,10 @@
           <% @dyno_tiers.each do |dt| %>
             <%
               box_size  = DynoTier::DYNO_TIER_TO_BOX_SIZE[dt.name] || dt.name
-              is_current = @current_allocation&.dyno_tier_id == dt.id
+              # Backfilled rows carry a shape, not a tier: match the tier it rounded from.
+              is_current = @current_allocation&.dyno_tier_id == dt.id ||
+                           (!dt.sleeps && @current_allocation&.shape.present? &&
+                            Resources::Shape.round_up(cpu: dt.cpu_shares, memory_mb: dt.memory_mb) == @current_allocation.shape)
               # Available means: plan has at least 1 quota for this size OR
               # (only Team plan) it's listed in addons_available.
               # Headroom-aware: includes purchased box-addons (Part 2), not just plan base quota.

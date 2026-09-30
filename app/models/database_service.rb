@@ -71,6 +71,10 @@ class DatabaseService < ApplicationRecord
   validate :shared_tenants_must_have_parent
   validate :service_type_not_retired, on: :create
   validate :shape_on_grid, if: -> { cpu.present? || memory_mb.present? }
+  # Shape wins over tier: a legacy tier change (change_tier) that leaves a
+  # backfilled shape would be ignored, so hand sizing back to the tier.
+  # disk_gb stays — it's ResizeService's grow-only floor.
+  before_save :release_shape, if: -> { will_save_change_to_tier_name? && tier_name.present? && !will_save_change_to_cpu? && !will_save_change_to_memory_mb? }
 
   def over_quota?
     over_quota_at.present?
@@ -113,6 +117,10 @@ class DatabaseService < ApplicationRecord
   end
 
   private
+
+  def release_shape
+    self.cpu = self.memory_mb = nil
+  end
 
   def service_type_not_retired
     return unless RETIRED_TYPES.include?(service_type)
