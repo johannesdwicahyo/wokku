@@ -43,8 +43,16 @@ class TemplateDeployer
     # size, before any app/DB/container exists. The template controllers run
     # the same preflight before they create the AppRecord; this re-check
     # covers anything that changed while the job was queued.
-    preflight = builder_preflight(AppRecord.find_by(name: app_name, server: server) || AppRecord.new(team: user.teams.first))
-    raise Resources::ApplyChange::Rejected, preflight.error unless preflight.ok
+    # A refusal here has created nothing on the host, so no rollback: the
+    # Deploy fails with the reason and the app is left never-deployed.
+    existing = AppRecord.find_by(name: app_name, server: server)
+    preflight = builder_preflight(existing || AppRecord.new(team: user.teams.first))
+    unless preflight.ok
+      @log << { step: "Refused", error: preflight.error, at: Time.current }
+      @on_progress&.call("Deploy refused: #{preflight.error}")
+      existing.update!(status: :created) if existing&.deploying?
+      return { success: false, error: preflight.error, log: @log }
+    end
 
     step("Creating app #{app_name}...") do
       AppRecord.find_or_initialize_by(name: app_name, server: server).tap do |a|

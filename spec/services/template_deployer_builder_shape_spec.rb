@@ -57,6 +57,19 @@ RSpec.describe TemplateDeployer, "builder-mode shapes" do
       expect(result[:error]).to match(/over your account limit/)
     end
 
+    # Review #4: a job-time refusal (the controller already created the app)
+    # fails cleanly — no host rollback op, app not marked crashed.
+    it "a job-time refusal leaves the controller-created app never-deployed, with no host op" do
+      allow(Wokku.config.plan_enforcer).to receive(:allowed?).and_return(false)
+      app = AppRecord.create!(name: "queued", server: server, team: user.teams.first, creator: user,
+                              deploy_branch: "main", status: :deploying)
+      expect(::Lifecycle::Ops).not_to receive(:remove!)
+      result = described_class.new(template: template, app_name: "queued", server: server, user: user).deploy!
+      expect(result).to include(success: false, error: match(/over your account limit/))
+      expect(app.reload.status).to eq("created")
+      expect(app.dyno_allocations).to be_empty
+    end
+
     it "checks the web process and its datastores as one change" do
       expect(Resources::ApplyChange).to receive(:check_new_shape)
         .with(hash_including(shapes: [ Resources::Shape.new(cpu: 0.5, memory_mb: 512), Resources::Shape.new(cpu: 0.25, memory_mb: 512, disk_gb: 5) ]))
