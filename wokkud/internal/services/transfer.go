@@ -207,13 +207,14 @@ func dumpCmd(serviceType, database, password string) ([]string, error) {
 	case "mariadb":
 		// mariadb:11.x dropped the mysqldump compat symlink (dangling → exec
 		// fails); only mariadb-dump works. --single-transaction = consistent
-		// InnoDB snapshot without locking the tenant's tables.
+		// InnoDB snapshot without locking the tenant's tables; --routines
+		// --events so stored procedures/functions and events survive a restore.
 		if password == "" {
 			// Shared-mariadb tenants: the control plane never holds the
 			// parent's root password — read it from the container env.
-			return []string{"sh", "-c", `MYSQL_PWD="$MARIADB_ROOT_PASSWORD" exec mariadb-dump -uroot --single-transaction "$1"`, "mariadb-dump", database}, nil
+			return []string{"sh", "-c", `MYSQL_PWD="$MARIADB_ROOT_PASSWORD" exec mariadb-dump -uroot --single-transaction --routines --events "$1"`, "mariadb-dump", database}, nil
 		}
-		return []string{"mariadb-dump", "-uroot", "-p" + password, "--single-transaction", database}, nil
+		return []string{"mariadb-dump", "-uroot", "-p" + password, "--single-transaction", "--routines", "--events", database}, nil
 	case "mysql":
 		return []string{"mysqldump", "-uroot", "-p" + password, database}, nil
 	case "mongodb":

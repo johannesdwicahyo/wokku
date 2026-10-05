@@ -490,11 +490,11 @@ func TestTransferMariadbEnvFallbackAndSingleTransaction(t *testing.T) {
 		t.Fatal(err)
 	}
 	joined := strings.Join(cmd, " ")
-	if !strings.Contains(joined, `MYSQL_PWD="$MARIADB_ROOT_PASSWORD"`) || !strings.Contains(joined, "--single-transaction") || cmd[len(cmd)-1] != "app1" {
+	if !strings.Contains(joined, `MYSQL_PWD="$MARIADB_ROOT_PASSWORD"`) || !strings.Contains(joined, "--single-transaction --routines --events") || cmd[len(cmd)-1] != "app1" {
 		t.Fatalf("shared dump must use the container's root env + single-transaction: %v", cmd)
 	}
 	cmd, _ = dumpCmd("mariadb", "app1", "pw")
-	if !strings.Contains(strings.Join(cmd, " "), "-ppw --single-transaction app1") {
+	if !strings.Contains(strings.Join(cmd, " "), "-ppw --single-transaction --routines --events app1") {
 		t.Fatalf("dedicated dump: %v", cmd)
 	}
 	cmd, _ = restoreCmd("mariadb", "app1", "")
