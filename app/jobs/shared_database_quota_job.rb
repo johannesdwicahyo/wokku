@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 # Periodic per-server sweep: delegates the actual size measurement +
-# revoke/restore work to wokkud via a typed service.check_quotas op on the
-# shared-postgres parent, then mirrors the over-quota state into Rails for
+# revoke/restore work to wokkud via a typed service.check_quotas op on each
+# shared SQL parent (postgres, mariadb), then mirrors the over-quota state into Rails for
 # billing/notification purposes.
 #
 # Failure of one server's op does NOT kill the sweep — we log and continue.
@@ -14,20 +14,23 @@ class SharedDatabaseQuotaJob < ApplicationJob
 
   def perform
     Server.find_each do |server|
-      pg_tenants = DatabaseService.where(server: server, shared: true, service_type: "postgres")
-      pg_parent  = pg_tenants.first&.parent_service
-      next unless pg_parent
+      DatabaseProvisioner::SHARED_PARENTS.each_key do |engine|
+        tenants = DatabaseService.where(server: server, shared: true, service_type: engine)
+        parent  = tenants.first&.parent_service
+        next unless parent
 
-      sweep_pg_via_ops!(pg_tenants, pg_parent)
+        sweep_via_ops!(tenants, parent)
+      end
     end
   end
 
   private
 
-  # Phase B4: the shared-postgres parent is wokkud-managed. CARRY-FORWARD:
-  # this op is shared-postgres-only (wokkud has no equivalent for other
-  # shared engines yet), so only this engine's tenants get swept.
-  def sweep_pg_via_ops!(tenants, parent)
+  # Same op + semantics for both SQL engines: wokkud measures each tenant
+  # and flips it read-only (postgres) / write-revoked (mariadb) when over
+  # its storage_mb_quota (stamped from plan.db_bundle_mb at provision).
+  # Redis/memcached tenants are not swept here.
+  def sweep_via_ops!(tenants, parent)
     op = Services::Ops.issue_and_wait!(
       service: parent, kind: "service.check_quotas",
       params: { tenants: tenants.map { |t| { slug: t.shared_db_name, cap_bytes: t.storage_mb_quota.to_i * 1.megabyte } } }

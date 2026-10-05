@@ -54,7 +54,7 @@ RSpec.describe DatabaseProvisioner do
       expect(db.tier_name).to eq("basic")
     end
 
-    it "routes mongodb + shared_free to the dedicated path (shared? is postgres-only)" do
+    it "routes mongodb + shared_free to the dedicated path (shared? is postgres/mariadb-only)" do
       db = described_class.new(
         app: app, service_type: "mongodb", tier: "shared_free"
       ).call

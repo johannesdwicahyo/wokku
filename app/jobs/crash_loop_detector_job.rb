@@ -10,7 +10,7 @@ class CrashLoopDetectorJob < ApplicationJob
   queue_as :health
   include Notifiable
 
-  IGNORED_CONTAINERS = %w[dokku dokku-shared-postgres prom01 nginx-proxy].freeze
+  IGNORED_CONTAINERS = %w[dokku dokku-shared-postgres dokku-shared-mariadb prom01 nginx-proxy].freeze
   TIER1_COUNT  = 3
   TIER1_WINDOW = 5 * 60
   TIER2_COUNT  = 10

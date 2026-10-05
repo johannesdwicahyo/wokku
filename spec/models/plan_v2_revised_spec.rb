@@ -15,7 +15,7 @@ RSpec.describe Plan, "bundle v2 REVISED" do
     it "every plan, Free included, sees every shared engine at box creation" do
       [ free, solo, pro, team ].each do |p|
         expect(p.shared_engines_available).to contain_exactly(
-          "postgres", "redis", "memcached"
+          "postgres", "mariadb", "redis", "memcached"
         )
       end
     end

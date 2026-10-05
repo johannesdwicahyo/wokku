@@ -10,6 +10,11 @@ class DatabaseProvisioner
   # Name of the shared-postgres parent container — the host every shared
   # tenant DSN points at (resolves on the wokku-services overlay).
   SHARED_PG_NETWORK = "dokku-shared-postgres".freeze
+  # The shared-MariaDB parent container (wokkud births it on first ensure).
+  SHARED_MARIADB_PARENT = "dokku-shared-mariadb".freeze
+  # SQL engines with a shared (tenant-in-a-parent) path, engine => parent
+  # container/row name.
+  SHARED_PARENTS = { "postgres" => SHARED_PG_NETWORK, "mariadb" => SHARED_MARIADB_PARENT }.freeze
   # Free-tier quota for new shared tenants when the creator has no plan
   # resolution (was the dokku-shared-postgres plugin default).
   DEFAULT_SHARED_STORAGE_MB = 150
@@ -129,6 +134,7 @@ class DatabaseProvisioner
   # keys Addons::SharedProvisioner#tenant_envs / the shared pg path set.
   SHARED_TENANT_ENV_KEYS = {
     "postgres"  => %w[DATABASE_URL],
+    "mariadb"   => %w[MARIADB_URL], # + DATABASE_URL only when it is ours (see below)
     "redis"     => %w[REDIS_URL],
     "memcached" => %w[MEMCACHED_URL MEMCACHED_KEY_PREFIX]
   }.freeze
@@ -142,6 +148,7 @@ class DatabaseProvisioner
     keys = SHARED_TENANT_ENV_KEYS.fetch(db.service_type, [])
     db.app_records.each do |app_record|
       Apps::EnvWriter.unset(app_record, *keys)
+      release_mariadb_database_url!(app_record, db) if db.service_type == "mariadb"
     rescue => e
       Rails.logger.warn "Failed to unset #{keys.join(', ')} on #{app_record.name}: #{e.message}"
     end
@@ -161,6 +168,17 @@ class DatabaseProvisioner
 
     db.destroy
   end
+
+  # A shared mariadb tenant only claims DATABASE_URL when the app had none
+  # (a shared postgres tenant keeps it) — so only drop it when it still
+  # points at THIS tenant. Values are encrypted, so compare in Ruby.
+  def self.release_mariadb_database_url!(app_record, db)
+    row = app_record.env_vars.find_by(key: "DATABASE_URL")
+    row.destroy if row && db.dsn.present? && row.value == mysql2_url(db.dsn)
+  end
+
+  # Rails' mysql2 adapter wants the mysql2:// scheme in DATABASE_URL.
+  def self.mysql2_url(dsn) = dsn.sub(/\Amysql:/, "mysql2:")
 
   # The host-side tenant slug for a shared row. shared_db_name is canonical
   # (== the slug for every engine since W7 Phase 3); older rows fall back to
@@ -182,7 +200,7 @@ class DatabaseProvisioner
   private
 
   def shared?
-    @tier == SHARED_TIER && @service_type == "postgres"
+    @tier == SHARED_TIER && SHARED_PARENTS.key?(@service_type)
   end
 
   def default_name
@@ -282,7 +300,7 @@ class DatabaseProvisioner
   end
 
   def provision_shared!
-    raise Error, "Shared tier requires a postgres service_type" unless @service_type == "postgres"
+    raise Error, "Shared tier requires a postgres or mariadb service_type" unless SHARED_PARENTS.key?(@service_type)
 
     parent = find_or_create_parent_record!
     slug = @app ? @app.name : "shared-#{SecureRandom.hex(3)}"
@@ -292,11 +310,14 @@ class DatabaseProvisioner
     # (e.g. seeded fixtures or system-owned tenants).
     quota_mb = @creator&.current_plan&.db_bundle_mb || DEFAULT_SHARED_STORAGE_MB
 
+    # The mariadb parent is born by wokkud on its first service.ensure — it
+    # must be up before a tenant can exist on it (no-op once it runs).
+    ensure_shared_parent!(parent) if @service_type == "mariadb"
     tenant = provision_tenant_via_ops!(parent: parent, slug: slug, quota_mb: quota_mb)
 
     db = DatabaseService.create!(
-      name: "#{slug}-pg-shared-#{SecureRandom.hex(3)}",
-      service_type: "postgres",
+      name: "#{slug}-#{@service_type == 'postgres' ? 'pg' : @service_type}-shared-#{SecureRandom.hex(3)}",
+      service_type: @service_type,
       server: @server,
       status: :running,
       tier_name: SHARED_TIER,
@@ -311,19 +332,33 @@ class DatabaseProvisioner
     )
 
     if @app
-      url = tenant[:connection_url]
-      Apps::EnvWriter.set(@app, { "DATABASE_URL" => url })
-      # The DATABASE_URL host (`dokku-shared-postgres`) is the PARENT
+      Apps::EnvWriter.set(@app, shared_envs(tenant[:connection_url]))
+      # The DATABASE_URL host (`dokku-shared-<engine>`) is the PARENT
       # container name, which only resolves on the wokku-services overlay —
       # the network every app's Swarm tasks run on. service.ensure attaches
       # the parent idempotently (agent-side, exists-path). The old dokku
       # bridge attach for non-native apps died with the dokku runtime.
-      raise Error, "shared parent #{parent.name} is not wokkud-managed — cannot ensure overlay attachment" unless parent.wokkud_managed?
-      Services::Ops.issue_and_wait!(service: parent, kind: "service.ensure", params: {})
-      @app.app_databases.create!(database_service: db, alias_name: "DATABASE")
+      ensure_shared_parent!(parent)
+      @app.app_databases.create!(database_service: db, alias_name: @service_type == "postgres" ? "DATABASE" : "MARIADB")
     end
 
     db
+  end
+
+  def ensure_shared_parent!(parent)
+    raise Error, "shared parent #{parent.name} is not wokkud-managed — cannot ensure overlay attachment" unless parent.wokkud_managed?
+    Services::Ops.issue_and_wait!(service: parent, kind: "service.ensure", params: {})
+  end
+
+  # postgres: DATABASE_URL. mariadb: MARIADB_URL (mysql://, same name and
+  # scheme as a dedicated mariadb) + DATABASE_URL (mysql2://) unless the app
+  # already has one — a shared postgres tenant on the same app keeps it.
+  def shared_envs(url)
+    return { "DATABASE_URL" => url } if @service_type == "postgres"
+
+    envs = { "MARIADB_URL" => url }
+    envs["DATABASE_URL"] = self.class.mysql2_url(url) unless @app.env_vars.exists?(key: "DATABASE_URL")
+    envs
   end
 
   # Phase B4: the shared-postgres PARENT container is never created via
@@ -356,6 +391,10 @@ class DatabaseProvisioner
       end
       return { role: existing.shared_role_name, db: existing.shared_db_name, connection_url: existing.dsn }
     end
+    if @service_type == "mariadb"
+      # Mirrors wokkud's mariadbProvisionTenant: user = database = slug.
+      return { role: slug, db: slug, connection_url: "mysql://#{slug}:#{password}@#{SHARED_MARIADB_PARENT}:3306/#{slug}" }
+    end
     {
       role: "#{slug}_role",
       db: slug,
@@ -369,12 +408,15 @@ class DatabaseProvisioner
   def find_or_create_parent_record!
     DatabaseService.find_or_create_by!(
       server: @server,
-      name: "dokku-shared-postgres",
-      service_type: "postgres"
+      name: SHARED_PARENTS.fetch(@service_type),
+      service_type: @service_type
     ) do |r|
       r.status = :running
       r.tier_name = "shared_host"
       r.shared = false
+      # wokkud births the mariadb parent itself (first service.ensure); the
+      # postgres parent is adopted, which is what marks it managed.
+      r.wokkud_managed = true if @service_type == "mariadb"
     end
   end
 end

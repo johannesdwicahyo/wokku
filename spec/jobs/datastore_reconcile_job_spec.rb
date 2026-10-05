@@ -24,6 +24,14 @@ RSpec.describe DatastoreReconcileJob, type: :job do
     expect(seen).not_to include(tenant)
   end
 
+  it "ensures the shared mariadb parent with empty params (wokkud owns its run-spec)" do
+    parent = managed(service_type: "mariadb", tier_name: "shared_host", name: "dokku-shared-mariadb")
+    expect(Services::Ops).to receive(:issue_and_wait!)
+      .with(service: parent, kind: "service.ensure", params: {}, timeout: described_class::ENSURE_TIMEOUT)
+      .and_return(instance_double("ServiceOp", succeeded?: true))
+    described_class.perform_now
+  end
+
   it "excludes other shared parents (shared_host that are not dokku-shared-postgres)" do
     memcached_parent = managed(service_type: "memcached", tier_name: "shared_host", name: "dokku-shared-memcached")
     seen = []

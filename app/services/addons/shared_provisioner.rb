@@ -5,7 +5,7 @@ module Addons
   # engine per box.
   #
   # Engines:
-  #   * postgres — DatabaseProvisioner shared path (tenant.provision op)
+  #   * postgres / mariadb — DatabaseProvisioner shared path (tenant.provision op)
   #   * redis / memcached — same wokkud tenant-op
   #     contract, issued here against the engine's shared PARENT row
   #     (W7 Phase 3: was the dokku-shared-* plugins over SSH).
@@ -13,7 +13,7 @@ module Addons
   # Idempotent: skip provisioning if the app already has a shared
   # tenant of the same engine attached. Safe to re-run on redeploy.
   class SharedProvisioner
-    SUPPORTED_ENGINES = %w[postgres redis memcached].freeze
+    SUPPORTED_ENGINES = DatabaseService::SHARED_ENGINES
 
     # Engine → metadata used by the generic provisioner branch.
     # alias_env: env name used for the AppDatabase alias column.
@@ -56,17 +56,17 @@ module Addons
     end
 
     def provision!
-      if @engine == "postgres"
-        provision_postgres!
+      if DatabaseProvisioner::SHARED_PARENTS.key?(@engine)
+        provision_sql!
       else
         provision_generic!
       end
     end
 
-    def provision_postgres!
+    def provision_sql!
       DatabaseProvisioner.new(
         app: @app,
-        service_type: "postgres",
+        service_type: @engine,
         tier: DatabaseProvisioner::SHARED_TIER,
         creator: @app.creator
       ).call

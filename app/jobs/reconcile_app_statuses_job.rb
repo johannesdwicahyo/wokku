@@ -29,7 +29,7 @@ class ReconcileAppStatusesJob < ApplicationJob
   queue_as :health
 
   # Containers we ignore — they're not user apps.
-  IGNORED_CONTAINERS = %w[dokku dokku-shared-postgres prom01 nginx-proxy].freeze
+  IGNORED_CONTAINERS = %w[dokku dokku-shared-postgres dokku-shared-mariadb prom01 nginx-proxy].freeze
 
   def perform(server_id)
     server = Server.find_by(id: server_id)

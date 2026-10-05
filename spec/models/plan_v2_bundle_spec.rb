@@ -14,7 +14,7 @@ RSpec.describe Plan, "bundle v2 columns" do
     it "every plan ships the same shared engines" do
       Plan.where(key: Plan::KEYS).find_each do |p|
         expect(p.shared_engines).to contain_exactly(
-          "postgres", "redis", "memcached"
+          "postgres", "mariadb", "redis", "memcached"
         )
       end
     end

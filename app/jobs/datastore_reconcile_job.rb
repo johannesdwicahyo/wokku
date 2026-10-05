@@ -32,7 +32,7 @@ class DatastoreReconcileJob < ApplicationJob
 
   # Services this phase can ensure: every DEDICATED service (its engine is in
   # wokkud's dedicatedEngines) PLUS the one shared parent wokkud has baked-in
-  # constants for (dokku-shared-postgres). Excluded:
+  # constants for (dokku-shared-postgres, dokku-shared-mariadb). Excluded:
   #   - shared TENANTS (tier "shared_free") — a role+DB inside the parent, no
   #     own container; the parent's ensure covers them.
   #   - OTHER shared parents (tier "shared_host", e.g. shared-memcached/minio) —
@@ -43,8 +43,8 @@ class DatastoreReconcileJob < ApplicationJob
   # (tier_name is NOT NULL DEFAULT 'basic', so the NOT IN clause is exact.)
   def container_owning_services
     DatabaseService.where(wokkud_managed: true)
-                   .where("tier_name NOT IN (?) OR name = ?",
-                          %w[shared_free shared_host], DatabaseProvisioner::SHARED_PG_NETWORK)
+                   .where("tier_name NOT IN (?) OR name IN (?)",
+                          %w[shared_free shared_host], DatabaseProvisioner::SHARED_PARENTS.values)
   end
 
   def reconcile_one(db)
@@ -90,7 +90,7 @@ class DatastoreReconcileJob < ApplicationJob
   # its baked-in path/image/alias); a dedicated service reuses the same run-spec
   # DatabaseProvisioner assembles for service.create.
   def ensure_params(db)
-    return {} if db.name == DatabaseProvisioner::SHARED_PG_NETWORK # shared parent
+    return {} if DatabaseProvisioner::SHARED_PARENTS.value?(db.name) # shared parent
     DatabaseProvisioner.ensure_params_for(db)
   end
 end

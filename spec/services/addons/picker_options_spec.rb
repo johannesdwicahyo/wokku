@@ -46,8 +46,21 @@ RSpec.describe Addons::PickerOptions do
 
     it "exposes dedicated-only engines without a shared card" do
       result = described_class.for_user(free_user)
-      expect(result["mariadb"][:modes].map { |m| m[:mode] }).to eq(%w[dedicated])
       expect(result["mongodb"][:modes].map { |m| m[:mode] }).to eq(%w[dedicated])
+    end
+
+    it "offers exactly the four shared engines, all free and available on the free plan" do
+      result = described_class.for_user(free_user)
+      shared = result.select { |_, e| e[:modes].any? { |m| m[:mode] == "shared" } }
+      expect(shared.keys).to contain_exactly("postgres", "mariadb", "redis", "memcached")
+      expect(shared.keys).to match_array(DatabaseService::SHARED_ENGINES)
+      expect(DatabaseService::SHARED_ENGINES_FREE).to match_array(DatabaseService::SHARED_ENGINES)
+      shared.each_value do |e|
+        mode = e[:modes].find { |m| m[:mode] == "shared" }
+        expect(mode).to include(available: true, kicker: "Free, included")
+      end
+      expect(result["mariadb"][:label]).to eq("MariaDB")
+      expect(result["mariadb"][:modes].map { |m| m[:mode] }).to eq(%w[shared dedicated])
     end
   end
 
