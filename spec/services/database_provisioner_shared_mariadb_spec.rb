@@ -103,6 +103,52 @@ RSpec.describe DatabaseProvisioner, "shared mariadb" do
     end
   end
 
+  describe "env ownership (never clobber or remove someone else's URL)" do
+    let(:dedicated_url) { "mysql://root:dedpw@dokku.mariadb.shop-mariadb:3306/shop_mariadb" }
+
+    it "dedicated mariadb + shared mariadb: the dedicated MARIADB_URL survives provision and destroy" do
+      Apps::EnvWriter.set(app, { "MARIADB_URL" => dedicated_url })
+
+      db = provision
+      expect(app.env_vars.find_by(key: "MARIADB_URL").value).to eq(dedicated_url)
+      expect(app.env_vars.find_by(key: "DATABASE_URL").value).to eq(described_class.mysql2_url(db.dsn))
+
+      allow(db).to receive(:farewell_snapshot!)
+      described_class.destroy!(database_service: db)
+
+      expect(app.env_vars.find_by(key: "MARIADB_URL").value).to eq(dedicated_url)
+      expect(app.env_vars.find_by(key: "DATABASE_URL")).to be_nil # that one was ours
+    end
+
+    it "shared mariadb, then shared postgres, then destroying postgres leaves mariadb's DATABASE_URL" do
+      DatabaseService.create!(server: server, name: "dokku-shared-postgres", service_type: "postgres",
+                              status: :running, tier_name: "shared_host", shared: false, wokkud_managed: true)
+      maria = provision
+      maria_db_url = described_class.mysql2_url(maria.dsn)
+
+      pg = described_class.new(app: app, service_type: "postgres", tier: "shared_free", creator: creator).call
+      expect(app.env_vars.find_by(key: "DATABASE_URL").value).to eq(maria_db_url) # pg didn't clobber it
+
+      allow(pg).to receive(:farewell_snapshot!)
+      described_class.destroy!(database_service: pg)
+
+      expect(app.env_vars.find_by(key: "DATABASE_URL").value).to eq(maria_db_url)
+      expect(app.env_vars.find_by(key: "MARIADB_URL").value).to eq(maria.dsn)
+    end
+
+    it "a shared postgres tenant removes DATABASE_URL on destroy when it is still its own" do
+      DatabaseService.create!(server: server, name: "dokku-shared-postgres", service_type: "postgres",
+                              status: :running, tier_name: "shared_host", shared: false, wokkud_managed: true)
+      pg = described_class.new(app: app, service_type: "postgres", tier: "shared_free", creator: creator).call
+      expect(app.env_vars.find_by(key: "DATABASE_URL").value).to eq(pg.dsn)
+
+      allow(pg).to receive(:farewell_snapshot!)
+      described_class.destroy!(database_service: pg)
+
+      expect(app.env_vars.find_by(key: "DATABASE_URL")).to be_nil
+    end
+  end
+
   it "is reached from Addons::SharedProvisioner for engine mariadb" do
     allow(Addons::SharedProvisioner).to receive(:feature_enabled?).and_return(true)
 

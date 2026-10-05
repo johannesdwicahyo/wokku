@@ -117,7 +117,12 @@ RSpec.describe DatabaseProvisioner do
       end
 
       context "when the shared-postgres parent is wokkud_managed" do
-        before { parent.update!(wokkud_managed: true) }
+        before do
+          parent.update!(wokkud_managed: true)
+          # The app fixture ships a DATABASE_URL; a shared tenant only sets
+          # it when absent (env ownership rule), so start from none here.
+          app.env_vars.where(key: "DATABASE_URL").delete_all
+        end
 
         it "provisions the tenant via a tenant.provision op and ensures the parent on the overlay" do
           # find_or_create_by! inside the provisioner resolves this exact row

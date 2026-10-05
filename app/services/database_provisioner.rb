@@ -130,11 +130,10 @@ class DatabaseProvisioner
     database_service.destroy
   end
 
-  # Env vars a shared tenant's destroy must unset on linked apps — the same
-  # keys Addons::SharedProvisioner#tenant_envs / the shared pg path set.
+  # Env vars a shared redis/memcached tenant's destroy unsets on linked apps
+  # (the keys Addons::SharedProvisioner#tenant_envs sets). Shared SQL
+  # tenants follow the ownership rule in .shared_sql_env instead.
   SHARED_TENANT_ENV_KEYS = {
-    "postgres"  => %w[DATABASE_URL],
-    "mariadb"   => %w[MARIADB_URL], # + DATABASE_URL only when it is ours (see below)
     "redis"     => %w[REDIS_URL],
     "memcached" => %w[MEMCACHED_URL MEMCACHED_KEY_PREFIX]
   }.freeze
@@ -147,8 +146,11 @@ class DatabaseProvisioner
   def self.destroy_shared_tenant!(db)
     keys = SHARED_TENANT_ENV_KEYS.fetch(db.service_type, [])
     db.app_records.each do |app_record|
-      Apps::EnvWriter.unset(app_record, *keys)
-      release_mariadb_database_url!(app_record, db) if db.service_type == "mariadb"
+      if SHARED_PARENTS.key?(db.service_type)
+        release_owned_env!(app_record, db)
+      else
+        Apps::EnvWriter.unset(app_record, *keys)
+      end
     rescue => e
       Rails.logger.warn "Failed to unset #{keys.join(', ')} on #{app_record.name}: #{e.message}"
     end
@@ -169,12 +171,32 @@ class DatabaseProvisioner
     db.destroy
   end
 
-  # A shared mariadb tenant only claims DATABASE_URL when the app had none
-  # (a shared postgres tenant keeps it) — so only drop it when it still
-  # points at THIS tenant. Values are encrypted, so compare in Ruby.
-  def self.release_mariadb_database_url!(app_record, db)
-    row = app_record.env_vars.find_by(key: "DATABASE_URL")
-    row.destroy if row && db.dsn.present? && row.value == mysql2_url(db.dsn)
+  # Env ownership for shared SQL tenants (review fixes 2 + 13): key => the
+  # value THIS tenant sets. A tenant sets a key only when the app has none
+  # (never clobbering a dedicated DB's or another tenant's URL), and its
+  # destroy removes a key only while it still holds this tenant's value.
+  def self.shared_sql_env(service_type, url)
+    case service_type
+    when "postgres" then { "DATABASE_URL" => url }
+    # MARIADB_URL: same name + scheme as a dedicated mariadb; DATABASE_URL
+    # in the mysql2:// scheme Rails' adapter wants.
+    when "mariadb"  then { "MARIADB_URL" => url, "DATABASE_URL" => mysql2_url(url) }
+    else {}
+    end
+  end
+
+  # Values are encrypted (non-deterministic), so compare in Ruby.
+  def self.release_owned_env!(app_record, db)
+    if db.dsn.blank?
+      # Legacy pg tenants adopted without a stored dsn can't prove ownership:
+      # keep the historical unconditional unset for them.
+      Apps::EnvWriter.unset(app_record, "DATABASE_URL") if db.service_type == "postgres"
+      return
+    end
+    shared_sql_env(db.service_type, db.dsn).each do |key, value|
+      row = app_record.env_vars.find_by(key: key)
+      row.destroy if row && row.value == value
+    end
   end
 
   # Rails' mysql2 adapter wants the mysql2:// scheme in DATABASE_URL.
@@ -350,15 +372,9 @@ class DatabaseProvisioner
     Services::Ops.issue_and_wait!(service: parent, kind: "service.ensure", params: {})
   end
 
-  # postgres: DATABASE_URL. mariadb: MARIADB_URL (mysql://, same name and
-  # scheme as a dedicated mariadb) + DATABASE_URL (mysql2://) unless the app
-  # already has one — a shared postgres tenant on the same app keeps it.
+  # Only keys the app doesn't have yet — see .shared_sql_env.
   def shared_envs(url)
-    return { "DATABASE_URL" => url } if @service_type == "postgres"
-
-    envs = { "MARIADB_URL" => url }
-    envs["DATABASE_URL"] = self.class.mysql2_url(url) unless @app.env_vars.exists?(key: "DATABASE_URL")
-    envs
+    self.class.shared_sql_env(@service_type, url).reject { |key, _| @app.env_vars.exists?(key: key) }
   end
 
   # Phase B4: the shared-postgres PARENT container is never created via
