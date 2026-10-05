@@ -170,13 +170,14 @@ func TestEnsureSharedMariadbFirstBootCreates(t *testing.T) {
 	}
 	joined := strings.Join(f.calls, " | ")
 	for _, want := range []string{
-		"ImageEnsure(mariadb:11.4)",
-		"env=[MARIADB_ROOT_PASSWORD=" + pw + "]",
+		"ImageEnsure(mariadb:11.4.13)",
+		"env=[MARIADB_ROOT_PASSWORD=" + pw + " MARIADB_ROOT_HOST=localhost]",
+		"--max-connections=200",
 		"bind=" + filepath.Join(base, "data") + ":/var/lib/mysql",
 		"--innodb-buffer-pool-size=384M",
 		"NetworkConnect(wokku-services,dokku-shared-mariadb,aliases=dokku-shared-mariadb)",
 		"ContainerUpdate(dokku-shared-mariadb,1024)",
-		"mariadb-admin -h127.0.0.1",
+		"mariadb-admin -h127.0.0.1 --protocol=tcp ping",
 	} {
 		if !strings.Contains(joined, want) {
 			t.Errorf("missing %q in %v", want, f.calls)
@@ -222,4 +223,42 @@ func TestEnsureSharedMariadbRefusals(t *testing.T) {
 			t.Fatal("must not mint a password over existing data")
 		}
 	})
+}
+
+// Review fix 1: a failed first pull must leave NOTHING behind — the retry is
+// a clean first boot, never a permanent data_dir_missing.
+func TestEnsureSharedMariadbFailedPullIsRetryable(t *testing.T) {
+	base := withSharedMariadbDir(t)
+	f := &fakeDocker{existing: map[string]bool{}, failOn: map[string]error{"ImageEnsure": errors.New("toomanyrequests")}}
+	if _, err := serviceEnsure(context.Background(), f, sharedMariadbContainer, CreateParams{}); err == nil {
+		t.Fatal("pull failure must surface")
+	}
+	if _, ok := readMetaFile(base, "ROOT_PASSWORD"); ok {
+		t.Fatal("ROOT_PASSWORD must not be written before the image is pulled")
+	}
+
+	f2 := &fakeDocker{existing: map[string]bool{}}
+	res, err := serviceEnsure(context.Background(), f2, sharedMariadbContainer, CreateParams{})
+	if err != nil || res.Action != "created" {
+		t.Fatalf("retry must be a clean first boot, got %q %v", res.Action, err)
+	}
+	if !dataDirPresent(filepath.Join(base, "data")) {
+		t.Fatal("data dir must exist once ROOT_PASSWORD does")
+	}
+}
+
+// A first boot that dies after the marker (e.g. container create fails)
+// recreates on the next ensure with the SAME stored password.
+func TestEnsureSharedMariadbFailedCreateRecreatesWithStoredPassword(t *testing.T) {
+	base := withSharedMariadbDir(t)
+	f := &fakeDocker{existing: map[string]bool{}, failOn: map[string]error{"ContainerCreate": errors.New("boom")}}
+	if _, err := serviceEnsure(context.Background(), f, sharedMariadbContainer, CreateParams{}); err == nil {
+		t.Fatal("create failure must surface")
+	}
+	pw, _ := readMetaFile(base, "ROOT_PASSWORD")
+	f2 := &fakeDocker{existing: map[string]bool{}}
+	res, err := serviceEnsure(context.Background(), f2, sharedMariadbContainer, CreateParams{})
+	if err != nil || res.Action != "recreated" || !strings.Contains(strings.Join(f2.calls, " "), "MARIADB_ROOT_PASSWORD="+pw) {
+		t.Fatalf("want recreate with stored password: %q %v %v", res.Action, err, f2.calls)
+	}
 }
