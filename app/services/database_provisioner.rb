@@ -185,6 +185,26 @@ class DatabaseProvisioner
     end
   end
 
+  # Ops pre-warm (rake wokku:shared:ensure_parents): ensure a server's shared
+  # parent so the first customer attach doesn't pay the image pull + init
+  # inside a dashboard request. mariadb parents are born here if missing;
+  # a postgres parent can't be created from nothing (it is adopted), so only
+  # an existing row is ensured. Returns the parent row, or nil if skipped.
+  def self.ensure_shared_parent!(server:, engine:)
+    raise ArgumentError, "no shared parent for #{engine.inspect}" unless SHARED_PARENTS.key?(engine)
+
+    provisioner = new(app: nil, service_type: engine, tier: SHARED_TIER, server: server)
+    parent = if engine == "mariadb"
+      provisioner.send(:find_or_create_parent_record!)
+    else
+      DatabaseService.find_by(server: server, name: SHARED_PARENTS[engine])
+    end
+    return nil unless parent
+
+    provisioner.send(:ensure_shared_parent!, parent)
+    parent
+  end
+
   # Values are encrypted (non-deterministic), so compare in Ruby.
   def self.release_owned_env!(app_record, db)
     if db.dsn.blank?
