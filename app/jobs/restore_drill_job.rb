@@ -209,10 +209,12 @@ class RestoreDrillJob < ApplicationJob
 
   # One representative running DB per engine (deterministic: oldest first) whose
   # latest backup is completed. Excludes shared-host infra rows via NULL-safe
-  # IS DISTINCT FROM (the recurring shared_host-parent bug family).
+  # IS DISTINCT FROM (the recurring shared_host-parent bug family), and shared
+  # TENANTS: the drill counts/boots by container + dedicated_db_name, which
+  # don't describe a tenant inside a parent (shared drill = follow-up).
   def representative_db(engine)
     DatabaseService
-      .where(service_type: engine, status: :running)
+      .where(service_type: engine, status: :running, shared: false)
       .where("tier_name IS DISTINCT FROM 'shared_host'")
       .order(:created_at, :id)
       .find { |d| d.backups.completed.exists? }

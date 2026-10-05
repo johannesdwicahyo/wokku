@@ -302,6 +302,26 @@ RSpec.describe RestoreService do
       end
     end
 
+    context "with a shared mariadb tenant" do
+      let(:parent) { DatabaseService.new(name: "dokku-shared-mariadb", service_type: "mariadb", server: server, tier_name: "shared_host") }
+      let(:db) do
+        DatabaseService.new(name: "shop-mariadb-shared-abc", service_type: "mariadb", server: server, shared: true,
+                             parent_service: parent, shared_db_name: "shop", wokkud_managed: true,
+                             dsn: "mysql://shop:tenantpw@dokku-shared-mariadb:3306/shop")
+      end
+      let(:backup) { Backup.new(database_service: db, backup_destination: destination, s3_key: "dbs/x.gz") }
+
+      it "imports into the tenant db through the PARENT without the tenant's password (wokkud uses the root env)" do
+        allow(destination).to receive(:s3_presigned_url).and_return("https://r2.example/get")
+        expect(Services::Ops).to receive(:issue_and_wait!)
+          .with(service: parent, kind: "service.import",
+                params: { service_type: "mariadb", database: "shop", presigned_get_url: "https://r2.example/get" })
+          .and_return(build_stubbed(:service_op, status: :succeeded))
+
+        expect(described_class.new(backup).perform!).to eq(true)
+      end
+    end
+
     context "when the flag is off (regression)" do
       it "still runs the legacy ssh import, never touching Services::Ops" do
         service = build_restore_service(db_type: "postgres", ssh_user: "dokku")

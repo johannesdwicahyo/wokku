@@ -72,7 +72,11 @@ class BackupService
     }.compact
   end
 
+  # A shared tenant's DSN holds the TENANT's password, not the parent's
+  # root one — send none: postgres dumps as the local superuser, mariadb
+  # reads the root password from the parent container's env (wokkud).
   def dsn_password
+    return nil if @db.shared?
     @db.dsn.present? ? URI.parse(@db.dsn).password : nil
   end
 

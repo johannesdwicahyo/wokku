@@ -144,6 +144,18 @@ RSpec.describe RestoreDrillJob do
       expect(job.send(:representative_db, "postgres")).to eq(real)
     end
 
+    it "excludes shared tenants (the drill restores by container + dedicated db name)" do
+      parent = create(:database_service, service_type: "mariadb", status: :running, tier_name: "shared_host",
+                                         name: "dokku-shared-mariadb", created_at: 6.days.ago)
+      tenant = create(:database_service, service_type: "mariadb", status: :running, shared: true,
+                                         tier_name: "shared_free", parent_service: parent, created_at: 5.days.ago)
+      create(:backup, database_service: tenant, status: "completed")
+      real = create(:database_service, service_type: "mariadb", status: :running, created_at: 1.day.ago)
+      create(:backup, database_service: real, status: "completed")
+
+      expect(job.send(:representative_db, "mariadb")).to eq(real)
+    end
+
     it "skips dbs without a completed backup" do
       no_backup = create(:database_service, service_type: "postgres", status: :running, created_at: 5.days.ago)
       create(:backup, database_service: no_backup, status: "running") # in-flight, not completed

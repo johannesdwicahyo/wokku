@@ -195,8 +195,8 @@ func runImport(ctx context.Context, x streamExecer, container string, p ImportPa
 
 // dumpCmd / restoreCmd mirror the plugin export/import commands
 // (BackupService::EXPORT_COMMANDS / RestoreService::IMPORT_COMMANDS on the
-// Rails side). Shared-postgres tenants use the postgres branch with the
-// tenant db as Database.
+// Rails side). Shared tenants use their engine's branch with the tenant db
+// as Database (and, for mariadb, no password — see the env fallback).
 func dumpCmd(serviceType, database, password string) ([]string, error) {
 	if err := validateIdent(database); err != nil {
 		return nil, err
@@ -206,8 +206,14 @@ func dumpCmd(serviceType, database, password string) ([]string, error) {
 		return []string{"pg_dump", "-U", "postgres", database}, nil
 	case "mariadb":
 		// mariadb:11.x dropped the mysqldump compat symlink (dangling → exec
-		// fails); only mariadb-dump works.
-		return []string{"mariadb-dump", "-uroot", "-p" + password, database}, nil
+		// fails); only mariadb-dump works. --single-transaction = consistent
+		// InnoDB snapshot without locking the tenant's tables.
+		if password == "" {
+			// Shared-mariadb tenants: the control plane never holds the
+			// parent's root password — read it from the container env.
+			return []string{"sh", "-c", `MYSQL_PWD="$MARIADB_ROOT_PASSWORD" exec mariadb-dump -uroot --single-transaction "$1"`, "mariadb-dump", database}, nil
+		}
+		return []string{"mariadb-dump", "-uroot", "-p" + password, "--single-transaction", database}, nil
 	case "mysql":
 		return []string{"mysqldump", "-uroot", "-p" + password, database}, nil
 	case "mongodb":
@@ -239,6 +245,9 @@ func restoreCmd(serviceType, database, password string) ([]string, error) {
 		return []string{"psql", "-U", "postgres", "-d", database}, nil
 	case "mariadb":
 		// mariadb:11.x dropped the mysql compat symlink; use the mariadb client.
+		if password == "" { // shared-mariadb tenant: root password from the container env
+			return []string{"sh", "-c", `MYSQL_PWD="$MARIADB_ROOT_PASSWORD" exec mariadb -uroot "$1"`, "mariadb", database}, nil
+		}
 		return []string{"mariadb", "-uroot", "-p" + password, database}, nil
 	case "mysql":
 		return []string{"mysql", "-uroot", "-p" + password, database}, nil

@@ -483,3 +483,22 @@ func TestImportPGDMPSniffOnlyAppliesToPostgres(t *testing.T) {
 		t.Errorf("cmd = %v, want mariadb client", rec.lastCmd)
 	}
 }
+
+func TestTransferMariadbEnvFallbackAndSingleTransaction(t *testing.T) {
+	cmd, err := dumpCmd("mariadb", "app1", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	joined := strings.Join(cmd, " ")
+	if !strings.Contains(joined, `MYSQL_PWD="$MARIADB_ROOT_PASSWORD"`) || !strings.Contains(joined, "--single-transaction") || cmd[len(cmd)-1] != "app1" {
+		t.Fatalf("shared dump must use the container's root env + single-transaction: %v", cmd)
+	}
+	cmd, _ = dumpCmd("mariadb", "app1", "pw")
+	if !strings.Contains(strings.Join(cmd, " "), "-ppw --single-transaction app1") {
+		t.Fatalf("dedicated dump: %v", cmd)
+	}
+	cmd, _ = restoreCmd("mariadb", "app1", "")
+	if !strings.Contains(strings.Join(cmd, " "), `MYSQL_PWD="$MARIADB_ROOT_PASSWORD"`) || cmd[len(cmd)-1] != "app1" {
+		t.Fatalf("shared restore: %v", cmd)
+	}
+}
