@@ -3,7 +3,8 @@ class DatabaseService < ApplicationRecord
   # Plan aliases these for cloud back-compat). Which engines exist is
   # product; which a PLAN may use stays plan logic in the cloud.
   SHARED_ENGINES      = %w[postgres redis memcached].freeze
-  SHARED_ENGINES_FREE = %w[postgres redis].freeze
+  # Every shared engine is free on every plan (founder, 2026-10-05).
+  SHARED_ENGINES_FREE = SHARED_ENGINES
   DEDICATED_ENGINES   = %w[postgres mariadb mongodb redis].freeze
   belongs_to :server
   belongs_to :creator, class_name: "User", foreign_key: :creator_id, optional: true

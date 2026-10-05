@@ -29,7 +29,6 @@ RSpec.describe Plan, "bundle v2 columns" do
     it "raises on unknown engines" do
       expect { solo.shared_tenant_cap("riak") }.to raise_error(ArgumentError, /Unknown shared engine/)
     end
-
   end
 
   describe "dedicated upgrade slots" do

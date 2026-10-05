@@ -95,11 +95,11 @@ class Plan < ApplicationRecord
     SHARED_ENGINES
   end
 
-  # Bundle v2 REVISED 2026-05-31: which shared engines can a user pick
-  # from at box creation under this plan? Free: Pg+Redis only. All
-  # others: all 5. Used by the new-app form addon picker.
+  # Which shared engines can a user pick from at box creation under this
+  # plan? Every shared engine is free on every plan (2026-10-05). Used by
+  # the new-app form addon picker and the cloud plan enforcer.
   def shared_engines_available
-    free? ? SHARED_ENGINES_FREE : SHARED_ENGINES
+    SHARED_ENGINES_FREE
   end
 
   # Bundle v2 REVISED 2026-05-31: only Team plan can buy boxes/addons
