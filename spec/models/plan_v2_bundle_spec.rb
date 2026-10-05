@@ -20,7 +20,11 @@ RSpec.describe Plan, "bundle v2 columns" do
     end
 
     it "shared_tenant_cap returns the right column per engine" do
-      expect(solo.shared_tenant_cap("postgres")).to    eq(50)
+      # SQL engines report the ENFORCED cap (db_bundle_mb, stamped on the
+      # tenant row at provision), not the dead shared_pg_mb_per_tenant.
+      expect(solo.shared_tenant_cap("postgres")).to    eq(solo.db_bundle_mb)
+      expect(solo.shared_tenant_cap("mariadb")).to     eq(solo.db_bundle_mb)
+      expect(solo.shared_tenant_cap("postgres")).not_to eq(solo.shared_pg_mb_per_tenant)
       expect(solo.shared_tenant_cap("redis")).to       eq(10)
       expect(solo.shared_tenant_cap("memcached")).to   eq(16)
       expect { solo.shared_tenant_cap("rabbitmq") }.to raise_error(ArgumentError)

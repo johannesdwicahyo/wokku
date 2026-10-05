@@ -54,9 +54,14 @@ class Plan < ApplicationRecord
 
   # Per-engine, per-tenant cap. Routes the lookup to the right column
   # so callers don't have to special-case engine names.
+  #
+  # SQL engines report the ENFORCED cap: DatabaseProvisioner stamps
+  # db_bundle_mb onto the tenant row's storage_mb_quota at provision, and
+  # SharedDatabaseQuotaJob enforces that. (shared_pg_mb_per_tenant was a
+  # dead 50 MB read that disagreed with what was enforced — 2026-10-05.)
   def shared_tenant_cap(engine)
     case engine.to_s
-    when "postgres"    then shared_pg_mb_per_tenant.to_i
+    when "postgres", "mariadb" then db_bundle_mb.to_i
     when "redis"       then shared_redis_mb_per_tenant.to_i
     when "memcached"   then shared_memcached_mb_per_tenant.to_i
     else raise ArgumentError, "Unknown shared engine #{engine.inspect}"

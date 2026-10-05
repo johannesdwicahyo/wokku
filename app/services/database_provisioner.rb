@@ -286,7 +286,8 @@ class DatabaseProvisioner
 
     parent = find_or_create_parent_record!
     slug = @app ? @app.name : "shared-#{SecureRandom.hex(3)}"
-    # Plan bundle: each plan ships with 1 shared DB up to plan.db_bundle_mb.
+    # Plan bundle: each plan ships with 1 shared DB up to plan.db_bundle_mb
+    # (== Plan#shared_tenant_cap for SQL engines — keep them in step).
     # Fall back to the plugin default if the creator has no plan resolution
     # (e.g. seeded fixtures or system-owned tenants).
     quota_mb = @creator&.current_plan&.db_bundle_mb || DEFAULT_SHARED_STORAGE_MB
