@@ -1,0 +1,249 @@
+package services
+
+import (
+	"context"
+	"crypto/rand"
+	"encoding/hex"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
+)
+
+// Shared MariaDB parent: one container per server, born by wokkud itself on
+// the first service.ensure (unlike shared-postgres, which was adopted from
+// the dokku plugin). wokkud owns name, image, data path and the root
+// credential — the control plane never sees the root password.
+const (
+	sharedMariadbContainer = "dokku-shared-mariadb"
+	sharedMariadbImage     = "mariadb:11.4" // 11.4 = the MariaDB 11 LTS
+	sharedMariadbMemoryMB  = 1024
+)
+
+// sharedMariadbDir holds data/ (bind-mounted to /var/lib/mysql) and
+// ROOT_PASSWORD (0600). Under servicesDataRoot's "shared-" subtree, so
+// service.destroy can never remove it. var so tests can point it at a tmpdir.
+var sharedMariadbDir = "/var/lib/dokku/services/shared-mariadb"
+
+// sharedMariadbCmd sizes the parent for many small tenants: a 384M buffer
+// pool inside the 1 GB container limit, 500 global connections (tenants are
+// capped at MAX_USER_CONNECTIONS each), utf8mb4 by default.
+var sharedMariadbCmd = []string{
+	"mariadbd",
+	"--innodb-buffer-pool-size=384M",
+	"--max-connections=500",
+	"--character-set-server=utf8mb4",
+	"--collation-server=utf8mb4_unicode_ci",
+}
+
+// mariadbReservedSlugs: system schemas and built-in accounts. A tenant slug
+// is both a database AND a user name — "root" would let tenant.destroy drop
+// root@'%'.
+var mariadbReservedSlugs = map[string]bool{
+	"mysql": true, "sys": true, "information_schema": true,
+	"performance_schema": true, "root": true, "healthcheck": true,
+}
+
+func mariadbValidSlug(slug string) bool {
+	return validSlug(slug) && !mariadbReservedSlugs[slug]
+}
+
+// mariadbAdminWrapper runs the client as root INSIDE the container, reading
+// the root password from the container's own env — it never crosses argv or
+// the control plane. SQL arrives as $1 (no shell interpolation of it).
+const mariadbAdminWrapper = `MYSQL_PWD="$MARIADB_ROOT_PASSWORD" exec mariadb -uroot -N -B -e "$1"`
+
+func mariadbArgs(sql string) []string {
+	return []string{"sh", "-c", mariadbAdminWrapper, "mariadb", sql}
+}
+
+// mariadbQuote escapes a single-quoted MariaDB string literal (backslash is
+// an escape character there, unlike standard SQL).
+func mariadbQuote(s string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(s, `\`, `\\`), "'", `\'`)
+}
+
+// mariadbGrantDB is the slug as a GRANT database pattern: '_' is a wildcard
+// in db-level grants, so "my_app" unescaped would also grant on "myxapp".
+func mariadbGrantDB(slug string) string {
+	return "`" + strings.ReplaceAll(slug, "_", `\_`) + "`.*"
+}
+
+func mariadbUser(slug string) string { return "'" + slug + "'@'%'" }
+
+// mariadbProvisionTenant: user (password, per-user connection cap) + utf8mb4
+// database + ALL on that database only. QuotaMB is enforced by
+// mariadbCheckQuotas, not here (same split as postgres).
+func mariadbProvisionTenant(ctx context.Context, x execer, container string, p TenantProvisionParams) (map[string]string, error) {
+	if !mariadbValidSlug(p.Slug) {
+		return nil, fmt.Errorf("invalid tenant slug: %q", p.Slug)
+	}
+	maxConns := p.MaxConns
+	if maxConns <= 0 {
+		maxConns = 40
+	}
+	createUser := fmt.Sprintf(`CREATE USER %s IDENTIFIED BY '%s' WITH MAX_USER_CONNECTIONS %d;`,
+		mariadbUser(p.Slug), mariadbQuote(p.Password), maxConns)
+	if _, err := x.Exec(ctx, container, "", mariadbArgs(createUser)...); err != nil {
+		// ERROR 1396: Operation CREATE USER failed for 'x'@'%'
+		if strings.Contains(err.Error(), "Operation CREATE USER failed") {
+			return nil, fmt.Errorf("tenant %q: %w", p.Slug, errTenantExists)
+		}
+		return nil, fmt.Errorf("create user: %w", err)
+	}
+	createDB := fmt.Sprintf("CREATE DATABASE `%s` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;", p.Slug)
+	if _, err := x.Exec(ctx, container, "", mariadbArgs(createDB)...); err != nil {
+		return nil, fmt.Errorf("create database: %w", err)
+	}
+	grant := fmt.Sprintf("GRANT ALL PRIVILEGES ON %s TO %s;", mariadbGrantDB(p.Slug), mariadbUser(p.Slug))
+	if _, err := x.Exec(ctx, container, "", mariadbArgs(grant)...); err != nil {
+		return nil, fmt.Errorf("grant: %w", err)
+	}
+	return map[string]string{"slug": p.Slug, "user": p.Slug, "database": p.Slug}, nil
+}
+
+// mariadbDestroyTenant drops the tenant's database and user; IF EXISTS makes
+// an already-gone tenant a success (compensation paths rely on it).
+func mariadbDestroyTenant(ctx context.Context, x execer, container, slug string) error {
+	if !mariadbValidSlug(slug) {
+		return fmt.Errorf("invalid tenant slug: %q", slug)
+	}
+	if _, err := x.Exec(ctx, container, "", mariadbArgs(fmt.Sprintf("DROP DATABASE IF EXISTS `%s`;", slug))...); err != nil {
+		return fmt.Errorf("drop database: %w", err)
+	}
+	if _, err := x.Exec(ctx, container, "", mariadbArgs(fmt.Sprintf("DROP USER IF EXISTS %s;", mariadbUser(slug)))...); err != nil {
+		return fmt.Errorf("drop user: %w", err)
+	}
+	return nil
+}
+
+// mariadbCheckQuotas: MariaDB has no per-database size cap, so measure
+// data_length+index_length from information_schema and flip privileges in
+// the same pass, unconditionally (like pgCheckQuotas). Over quota keeps
+// SELECT/DELETE/DROP so the tenant can read and clean up (DROP/TRUNCATE are
+// what actually free InnoDB space); under quota restores ALL. Privilege
+// changes reach NEW connections (pooled ones keep theirs until reconnect —
+// same as postgres' default_transaction_read_only).
+func mariadbCheckQuotas(ctx context.Context, x execer, container string, tenants []TenantQuota) ([]TenantQuotaStatus, error) {
+	statuses := make([]TenantQuotaStatus, 0, len(tenants))
+	for _, t := range tenants {
+		if !mariadbValidSlug(t.Slug) {
+			return nil, fmt.Errorf("invalid tenant slug: %q", t.Slug)
+		}
+		sizeSQL := fmt.Sprintf(`SELECT COALESCE(SUM(data_length + index_length), 0) FROM information_schema.tables WHERE table_schema = '%s';`, t.Slug)
+		out, err := x.Exec(ctx, container, "", mariadbArgs(sizeSQL)...)
+		if err != nil {
+			return nil, fmt.Errorf("size %q: %w", t.Slug, err)
+		}
+		size, err := strconv.ParseInt(strings.TrimSpace(out), 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("parse size %q: %w", t.Slug, err)
+		}
+
+		over := size > t.CapBytes
+		db, user := mariadbGrantDB(t.Slug), mariadbUser(t.Slug)
+		flip := fmt.Sprintf("GRANT ALL PRIVILEGES ON %s TO %s;", db, user)
+		if over {
+			// The leading GRANT guarantees a db-level grant row exists, so
+			// REVOKE ALL can never fail with "no such grant".
+			flip = fmt.Sprintf("GRANT SELECT ON %[1]s TO %[2]s; REVOKE ALL PRIVILEGES ON %[1]s FROM %[2]s; GRANT SELECT, DELETE, DROP ON %[1]s TO %[2]s;", db, user)
+		}
+		if _, err := x.Exec(ctx, container, "", mariadbArgs(flip)...); err != nil {
+			return nil, fmt.Errorf("quota flip %q: %w", t.Slug, err)
+		}
+
+		statuses = append(statuses, TenantQuotaStatus{
+			Slug:      t.Slug,
+			SizeBytes: size,
+			CapBytes:  t.CapBytes,
+			Over:      over,
+			ReadOnly:  over,
+		})
+	}
+	return statuses, nil
+}
+
+// ensureSharedMariadb (re)creates the missing shared parent. ROOT_PASSWORD
+// is the "this parent was born" marker:
+//   - no marker, no data  → first boot: mint the root password, create.
+//   - marker, data dir    → recreate on the intact data (password from file).
+//   - marker, no data dir → data_dir_missing: tenants' data is gone, that is
+//     a human's restore decision (same refusal as shared-postgres).
+//   - data but no marker  → refuse: never boot over data we can't log into.
+func ensureSharedMariadb(ctx context.Context, d dockerAPI) (EnsureResult, error) {
+	dataDir := filepath.Join(sharedMariadbDir, "data")
+	pw, born := readMetaFile(sharedMariadbDir, "ROOT_PASSWORD")
+	action := "recreated"
+	switch {
+	case !born && dataDirNonEmpty(dataDir):
+		return EnsureResult{}, fmt.Errorf("%s has data at %q but no ROOT_PASSWORD — refusing to boot over it", sharedMariadbContainer, dataDir)
+	case !born:
+		buf := make([]byte, 16)
+		if _, err := rand.Read(buf); err != nil {
+			return EnsureResult{}, err
+		}
+		pw = hex.EncodeToString(buf)
+		if err := os.MkdirAll(sharedMariadbDir, 0o700); err != nil {
+			return EnsureResult{}, err
+		}
+		// Written BEFORE anything boots: a container must never hold a root
+		// password wokkud can't recover on the next recreate.
+		if err := os.WriteFile(filepath.Join(sharedMariadbDir, "ROOT_PASSWORD"), []byte(pw+"\n"), 0o600); err != nil {
+			return EnsureResult{}, err
+		}
+		action = "created"
+	case !dataDirPresent(dataDir):
+		return EnsureResult{}, errDataDirMissing(sharedMariadbContainer, dataDir)
+	}
+
+	if err := d.ImageEnsure(ctx, sharedMariadbImage); err != nil {
+		return EnsureResult{}, fmt.Errorf("image: %w", err)
+	}
+	if err := d.VolumeCreate(ctx, dataDir); err != nil {
+		return EnsureResult{}, fmt.Errorf("volume dir: %w", err)
+	}
+	if err := d.ContainerCreate(ctx, ContainerSpec{
+		Name:  sharedMariadbContainer,
+		Image: sharedMariadbImage,
+		Env:   []string{"MARIADB_ROOT_PASSWORD=" + pw},
+		Bind:  dataDir + ":/var/lib/mysql",
+		Cmd:   sharedMariadbCmd,
+	}); err != nil {
+		return EnsureResult{}, fmt.Errorf("container create: %w", err)
+	}
+	// Overlay WITH the alias: tenant DSNs use the container name as host.
+	if err := d.NetworkEnsure(ctx, "wokku-services"); err != nil {
+		return EnsureResult{}, fmt.Errorf("overlay ensure: %w", err)
+	}
+	if err := d.NetworkConnect(ctx, "wokku-services", sharedMariadbContainer, sharedMariadbContainer); err != nil {
+		return EnsureResult{}, fmt.Errorf("overlay attach: %w", err)
+	}
+	if err := d.ContainerStart(ctx, sharedMariadbContainer); err != nil {
+		return EnsureResult{}, fmt.Errorf("start: %w", err)
+	}
+	if err := d.ContainerUpdate(ctx, sharedMariadbContainer, sharedMariadbMemoryMB, 0); err != nil {
+		return EnsureResult{}, fmt.Errorf("memory limit: %w", err)
+	}
+	if err := waitMariadbReady(ctx, d); err != nil {
+		return EnsureResult{}, err
+	}
+	return EnsureResult{Running: true, Action: action}, nil
+}
+
+// waitMariadbReady polls over TCP on purpose: the entrypoint's first-boot
+// temp server runs --skip-networking, so a socket ping can succeed and then
+// die when the entrypoint restarts mysqld. TCP only answers once the real
+// server is up — tenant.provision right after ensure must not race init.
+func waitMariadbReady(ctx context.Context, d dockerAPI) error {
+	probe := []string{"sh", "-c", `MYSQL_PWD="$MARIADB_ROOT_PASSWORD" exec mariadb-admin -h127.0.0.1 -uroot ping`}
+	var err error
+	for attempt := 0; attempt <= setConnsRetryAttempts; attempt++ {
+		if _, err = d.Exec(ctx, sharedMariadbContainer, "", probe...); err == nil {
+			return nil
+		}
+		time.Sleep(setConnsRetryInterval)
+	}
+	return fmt.Errorf("%s not ready: %w", sharedMariadbContainer, err)
+}

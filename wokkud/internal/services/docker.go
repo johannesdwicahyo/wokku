@@ -27,7 +27,9 @@ import (
 // Without this, a CREATE ROLE failure other than "already exists" would
 // carry the secret through redactArgv into service_ops.error, logs, and
 // Sentry (I1).
-var sqlPasswordRe = regexp.MustCompile(`(?i)password\s*'[^']*'`)
+// Also covers mariadb.go's `CREATE USER ... IDENTIFIED BY '<pw>'` (the
+// literal may contain \' escapes, hence the escape-aware body).
+var sqlPasswordRe = regexp.MustCompile(`(?i)(password|identified\s+by)\s*'(?:[^'\\]|\\.)*'`)
 
 // redactArgv masks credential-bearing exec arguments before they reach an
 // error string (which flows to service_ops.error and logs). mysql/mariadb
@@ -50,7 +52,7 @@ func redactArgv(cmd []string) []string {
 			// password rides argv as a single ">pw" element.
 			out[i] = ">***"
 		}
-		out[i] = sqlPasswordRe.ReplaceAllString(out[i], "PASSWORD '***'")
+		out[i] = sqlPasswordRe.ReplaceAllString(out[i], "$1 '***'")
 	}
 	return out
 }

@@ -84,6 +84,7 @@ var sharedTenantEngines = map[string]sharedTenantEngine{
 	},
 	// rabbitmq + meilisearch removed from the offering 2026-10-05 (zero
 	// tenants in prod) — their containers now get the friendly refusal below.
+	sharedMariadbContainer:   {provision: mariadbProvisionTenant, destroy: mariadbDestroyTenant, check: mariadbCheckQuotas},
 	"dokku-shared-redis":     {provision: redisProvisionTenant, destroy: redisDestroyTenant, check: redisCheckQuotas},
 	"dokku-shared-memcached": {provision: memcachedProvisionTenant, destroy: memcachedDestroyTenant, check: memcachedCheckQuotas},
 }

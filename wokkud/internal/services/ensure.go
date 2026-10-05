@@ -53,6 +53,9 @@ func serviceEnsure(ctx context.Context, d dockerAPI, name string, p CreateParams
 	if name == sharedPostgresContainer {
 		return ensureSharedParent(ctx, d)
 	}
+	if name == sharedMariadbContainer {
+		return ensureSharedMariadb(ctx, d)
+	}
 	return ensureDedicated(ctx, d, name, p)
 }
 
