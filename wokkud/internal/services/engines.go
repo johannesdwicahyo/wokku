@@ -31,6 +31,10 @@ type TenantQuotaStatus struct {
 	CapBytes  int64  `json:"cap_bytes"`
 	Over      bool   `json:"over"`
 	ReadOnly  bool   `json:"read_only"`
+	// Error is set (and the other fields are zero) when this tenant could
+	// not be checked — the sweep continues for the rest. Callers must not
+	// read Over from an errored status.
+	Error string `json:"error,omitempty"`
 }
 
 // errTenantExists is the sentinel for a "role already exists" failure on

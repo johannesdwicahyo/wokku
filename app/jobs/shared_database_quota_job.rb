@@ -40,6 +40,12 @@ class SharedDatabaseQuotaJob < ApplicationJob
     tenants.each do |tenant|
       status = statuses[tenant.shared_db_name]
       next unless status
+      # wokkud reports a per-tenant failure instead of aborting the sweep
+      # (mariadb); its over/size fields are meaningless — change nothing.
+      if status["error"].present?
+        Rails.logger.warn("SharedDatabaseQuotaJob: #{tenant.name} check failed: #{status['error']}")
+        next
+      end
 
       if status["over"] && tenant.over_quota_at.nil?
         tenant.update!(over_quota_at: Time.current)

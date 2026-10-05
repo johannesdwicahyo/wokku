@@ -136,6 +136,20 @@ RSpec.describe SharedDatabaseQuotaJob, type: :job do
       expect(tenant.reload.over_quota_at).to be_nil
     end
 
+    it "leaves a tenant untouched when wokkud reports an error for it, and still applies the rest" do
+      broken = maria_tenant(name: "broken-mariadb-shared-abc", shared_db_name: "broken", over_quota_at: 2.hours.ago)
+      fine   = maria_tenant(name: "fine-mariadb-shared-abc", shared_db_name: "fine")
+      allow(Services::Ops).to receive(:issue_and_wait!).and_return(op_reporting(
+        { "slug" => "broken", "error" => "quota flip: no such grant" },
+        { "slug" => "fine", "size_bytes" => 2.gigabytes, "over" => true }
+      ))
+
+      described_class.new.perform
+
+      expect(broken.reload.over_quota_at).to be_present # not cleared by a failed check
+      expect(fine.reload.over_quota_at).to be_present
+    end
+
     it "sweeps postgres and mariadb parents on the same server separately" do
       make_tenant(name: "pg1", shared_db_name: "pg1")
       maria_tenant(name: "m1-mariadb-shared-abc", shared_db_name: "m1")

@@ -85,8 +85,8 @@ func TestMariadbDestroyTenant(t *testing.T) {
 }
 
 func TestMariadbCheckQuotasOverAndUnder(t *testing.T) {
-	// call order: size(over), flip(over), size(under), flip(under)
-	x := &fakeExecer{outputs: []string{"2097152\n", "", "1024\n", ""}}
+	// call order: size(big, still writable), flip(over), KILL, size(small), flip(under)
+	x := &fakeExecer{outputs: []string{"2097152\t1\n", "", "", "1024\t1\n", ""}}
 	st, err := mariadbCheckQuotas(context.Background(), x, "c", []TenantQuota{
 		{Slug: "big", CapBytes: 1048576},
 		{Slug: "small", CapBytes: 1048576},
@@ -100,28 +100,101 @@ func TestMariadbCheckQuotasOverAndUnder(t *testing.T) {
 	if st[1].Over || st[1].ReadOnly || st[1].SizeBytes != 1024 {
 		t.Fatalf("small: %+v", st[1])
 	}
-	if !strings.Contains(sqlOf(x.calls[0]), "information_schema.tables WHERE table_schema = 'big'") {
-		t.Fatalf("size query: %s", sqlOf(x.calls[0]))
+	size := sqlOf(x.calls[0])
+	for _, frag := range []string{"information_schema.tables WHERE table_schema = 'big'", "GRANTEE = '''big''@''%''' AND PRIVILEGE_TYPE = 'INSERT'"} {
+		if !strings.Contains(size, frag) {
+			t.Errorf("size query missing %q: %s", frag, size)
+		}
 	}
 	over := sqlOf(x.calls[1])
-	for _, frag := range []string{"REVOKE ALL PRIVILEGES ON `big`.* FROM 'big'@'%'", "GRANT SELECT, DELETE, DROP ON `big`.* TO 'big'@'%'"} {
+	for _, frag := range []string{"REVOKE ALL PRIVILEGES ON `big`.* FROM 'big'@'%'", "GRANT SELECT, DELETE, DROP, ALTER ON `big`.* TO 'big'@'%'"} {
 		if !strings.Contains(over, frag) {
 			t.Errorf("over flip missing %q: %s", frag, over)
+		}
+	}
+	finalGrant := over[strings.LastIndex(over, "GRANT"):]
+	for _, banned := range []string{"INSERT", "UPDATE", "CREATE", "ALL"} {
+		if strings.Contains(finalGrant, banned) {
+			t.Errorf("over-quota grant must not include %s: %s", banned, finalGrant)
 		}
 	}
 	if strings.Index(over, "GRANT SELECT ON") > strings.Index(over, "REVOKE") {
 		t.Errorf("a grant row must exist before REVOKE ALL: %s", over)
 	}
-	if sqlOf(x.calls[3]) != "GRANT ALL PRIVILEGES ON `small`.* TO 'small'@'%';" {
-		t.Errorf("under flip: %s", sqlOf(x.calls[3]))
+	if sqlOf(x.calls[2]) != "KILL USER 'big'@'%';" {
+		t.Errorf("flip to over must kill the tenant's live connections, got %s", sqlOf(x.calls[2]))
 	}
-	// The JSON wire shape the control plane reads.
+	if sqlOf(x.calls[4]) != "GRANT ALL PRIVILEGES ON `small`.* TO 'small'@'%';" {
+		t.Errorf("under flip: %s", sqlOf(x.calls[4]))
+	}
+	if len(x.calls) != 5 {
+		t.Fatalf("under-quota tenant must not be killed: %d calls", len(x.calls))
+	}
 	b, _ := json.Marshal(st[0])
 	for _, k := range []string{`"slug":"big"`, `"size_bytes":2097152`, `"over":true`} {
 		if !strings.Contains(string(b), k) {
 			t.Errorf("wire missing %s: %s", k, b)
 		}
 	}
+	if strings.Contains(string(b), `"error"`) {
+		t.Errorf("healthy status must omit error: %s", b)
+	}
+}
+
+// Already over (INSERT already revoked): no kill on every sweep, only on the flip.
+func TestMariadbCheckQuotasAlreadyOverDoesNotKillAgain(t *testing.T) {
+	x := &fakeExecer{outputs: []string{"2097152\t0\n", ""}}
+	if _, err := mariadbCheckQuotas(context.Background(), x, "c", []TenantQuota{{Slug: "big", CapBytes: 1}}); err != nil {
+		t.Fatal(err)
+	}
+	if len(x.calls) != 2 {
+		t.Fatalf("want size + flip only, got %v", x.calls)
+	}
+}
+
+// Review fix 6: one broken tenant is reported, the rest are still swept.
+func TestMariadbCheckQuotasContinuesPastTenantErrors(t *testing.T) {
+	x := &fakeExecer{
+		outputs: []string{"", "10\t1\n", ""},
+		errs:    []error{errors.New("ERROR 1133: Can't find any matching row in the user table")},
+	}
+	st, err := mariadbCheckQuotas(context.Background(), x, "c", []TenantQuota{
+		{Slug: "root", CapBytes: 1}, // reserved: refused without SQL
+		{Slug: "gone", CapBytes: 100},
+		{Slug: "fine", CapBytes: 100},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(st) != 3 || st[0].Error == "" || st[1].Error == "" || st[2].Error != "" || st[2].SizeBytes != 10 {
+		t.Fatalf("want per-tenant errors and a completed sweep: %+v", st)
+	}
+	if st[1].Over {
+		t.Fatal("an errored status must not claim over")
+	}
+}
+
+// Review fix 7: failures after CREATE USER undo what this call created.
+func TestMariadbProvisionCleansUpOnFailure(t *testing.T) {
+	t.Run("grant fails: drop db and user", func(t *testing.T) {
+		x := &fakeExecer{errs: []error{nil, nil, errors.New("grant boom")}}
+		if _, err := mariadbProvisionTenant(context.Background(), x, "c", TenantProvisionParams{Slug: "app1", Password: "p"}); err == nil {
+			t.Fatal("want error")
+		}
+		got := []string{sqlOf(x.calls[3]), sqlOf(x.calls[4])}
+		if got[0] != "DROP DATABASE IF EXISTS `app1`;" || got[1] != "DROP USER IF EXISTS 'app1'@'%';" {
+			t.Fatalf("cleanup: %v", got)
+		}
+	})
+	t.Run("create database fails: drop only the user", func(t *testing.T) {
+		x := &fakeExecer{errs: []error{nil, errors.New("database exists")}}
+		if _, err := mariadbProvisionTenant(context.Background(), x, "c", TenantProvisionParams{Slug: "app1", Password: "p"}); err == nil {
+			t.Fatal("want error")
+		}
+		if len(x.calls) != 3 || sqlOf(x.calls[2]) != "DROP USER IF EXISTS 'app1'@'%';" {
+			t.Fatalf("must drop only the user it created: %v", x.calls)
+		}
+	})
 }
 
 func TestMariadbDispatchRegistered(t *testing.T) {

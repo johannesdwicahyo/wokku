@@ -293,6 +293,9 @@ func runOp(ctx context.Context, client *control.Client, docker dockerAPI, op *qu
 		if err != nil {
 			return nil, typedFail("quota_check_failed", err)
 		}
+		if statuses[0].Error != "" { // per-tenant failure (mariadb continues sweeps)
+			return nil, typedFail("quota_check_failed", errors.New(statuses[0].Error))
+		}
 		return statuses[0], nil
 
 	default:

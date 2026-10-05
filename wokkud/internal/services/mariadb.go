@@ -96,12 +96,19 @@ func mariadbProvisionTenant(ctx context.Context, x execer, container string, p T
 		}
 		return nil, fmt.Errorf("create user: %w", err)
 	}
+	// Review fix 7: a failure after CREATE USER must not strand the user
+	// (every retry would hit tenant_exists with no reusable row). Undo only
+	// what THIS call created: a CREATE DATABASE failure may mean someone
+	// else's database already exists, so that path drops just the user.
+	dropUser := fmt.Sprintf("DROP USER IF EXISTS %s;", mariadbUser(p.Slug))
 	createDB := fmt.Sprintf("CREATE DATABASE `%s` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;", p.Slug)
 	if _, err := x.Exec(ctx, container, "", mariadbArgs(createDB)...); err != nil {
+		_, _ = x.Exec(ctx, container, "", mariadbArgs(dropUser)...)
 		return nil, fmt.Errorf("create database: %w", err)
 	}
 	grant := fmt.Sprintf("GRANT ALL PRIVILEGES ON %s TO %s;", mariadbGrantDB(p.Slug), mariadbUser(p.Slug))
 	if _, err := x.Exec(ctx, container, "", mariadbArgs(grant)...); err != nil {
+		_ = mariadbDestroyTenant(ctx, x, container, p.Slug) // we created both
 		return nil, fmt.Errorf("grant: %w", err)
 	}
 	return map[string]string{"slug": p.Slug, "user": p.Slug, "database": p.Slug}, nil
@@ -124,48 +131,69 @@ func mariadbDestroyTenant(ctx context.Context, x execer, container, slug string)
 
 // mariadbCheckQuotas: MariaDB has no per-database size cap, so measure
 // data_length+index_length from information_schema and flip privileges in
-// the same pass, unconditionally (like pgCheckQuotas). Over quota keeps
-// SELECT/DELETE/DROP so the tenant can read and clean up (DROP/TRUNCATE are
-// what actually free InnoDB space); under quota restores ALL. Privilege
-// changes reach NEW connections (pooled ones keep theirs until reconnect —
-// same as postgres' default_transaction_read_only).
+// the same pass, unconditionally (like pgCheckQuotas).
+//   - over:  SELECT, DELETE, DROP, ALTER only (review fix 5) — read and clean
+//     up; DROP/TRUNCATE are what actually free InnoDB space. INSERT, UPDATE,
+//     CREATE etc. are revoked.
+//   - under: ALL restored.
+//
+// On the sweep that FLIPS a tenant to over (it still held INSERT), its live
+// connections are killed (review fix 4): db-level privilege changes only
+// reach new connections, so pooled writers would otherwise keep writing.
+// A failure on one tenant is reported in that tenant's status and the
+// sweep continues (review fix 6) — one stale row can't stall the server.
 func mariadbCheckQuotas(ctx context.Context, x execer, container string, tenants []TenantQuota) ([]TenantQuotaStatus, error) {
 	statuses := make([]TenantQuotaStatus, 0, len(tenants))
 	for _, t := range tenants {
-		if !mariadbValidSlug(t.Slug) {
-			return nil, fmt.Errorf("invalid tenant slug: %q", t.Slug)
-		}
-		sizeSQL := fmt.Sprintf(`SELECT COALESCE(SUM(data_length + index_length), 0) FROM information_schema.tables WHERE table_schema = '%s';`, t.Slug)
-		out, err := x.Exec(ctx, container, "", mariadbArgs(sizeSQL)...)
+		st, err := mariadbCheckTenant(ctx, x, container, t)
 		if err != nil {
-			return nil, fmt.Errorf("size %q: %w", t.Slug, err)
+			st = TenantQuotaStatus{Slug: t.Slug, CapBytes: t.CapBytes, Error: err.Error()}
 		}
-		size, err := strconv.ParseInt(strings.TrimSpace(out), 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("parse size %q: %w", t.Slug, err)
-		}
-
-		over := size > t.CapBytes
-		db, user := mariadbGrantDB(t.Slug), mariadbUser(t.Slug)
-		flip := fmt.Sprintf("GRANT ALL PRIVILEGES ON %s TO %s;", db, user)
-		if over {
-			// The leading GRANT guarantees a db-level grant row exists, so
-			// REVOKE ALL can never fail with "no such grant".
-			flip = fmt.Sprintf("GRANT SELECT ON %[1]s TO %[2]s; REVOKE ALL PRIVILEGES ON %[1]s FROM %[2]s; GRANT SELECT, DELETE, DROP ON %[1]s TO %[2]s;", db, user)
-		}
-		if _, err := x.Exec(ctx, container, "", mariadbArgs(flip)...); err != nil {
-			return nil, fmt.Errorf("quota flip %q: %w", t.Slug, err)
-		}
-
-		statuses = append(statuses, TenantQuotaStatus{
-			Slug:      t.Slug,
-			SizeBytes: size,
-			CapBytes:  t.CapBytes,
-			Over:      over,
-			ReadOnly:  over,
-		})
+		statuses = append(statuses, st)
 	}
 	return statuses, nil
+}
+
+func mariadbCheckTenant(ctx context.Context, x execer, container string, t TenantQuota) (TenantQuotaStatus, error) {
+	if !mariadbValidSlug(t.Slug) {
+		return TenantQuotaStatus{}, fmt.Errorf("invalid tenant slug: %q", t.Slug)
+	}
+	// One round trip: size + whether the user can still write (GRANTEE is
+	// the quoted account, ''-doubled inside the literal).
+	sizeSQL := fmt.Sprintf(`SELECT COALESCE(SUM(data_length + index_length), 0), `+
+		`(SELECT COUNT(*) FROM information_schema.SCHEMA_PRIVILEGES WHERE GRANTEE = '''%[1]s''@''%%''' AND PRIVILEGE_TYPE = 'INSERT') `+
+		`FROM information_schema.tables WHERE table_schema = '%[1]s';`, t.Slug)
+	out, err := x.Exec(ctx, container, "", mariadbArgs(sizeSQL)...)
+	if err != nil {
+		return TenantQuotaStatus{}, fmt.Errorf("size %q: %w", t.Slug, err)
+	}
+	fields := strings.Fields(out)
+	if len(fields) != 2 {
+		return TenantQuotaStatus{}, fmt.Errorf("size %q: unexpected output %q", t.Slug, out)
+	}
+	size, err := strconv.ParseInt(fields[0], 10, 64)
+	if err != nil {
+		return TenantQuotaStatus{}, fmt.Errorf("parse size %q: %w", t.Slug, err)
+	}
+	writable := fields[1] != "0"
+
+	over := size > t.CapBytes
+	db, user := mariadbGrantDB(t.Slug), mariadbUser(t.Slug)
+	flip := fmt.Sprintf("GRANT ALL PRIVILEGES ON %s TO %s;", db, user)
+	if over {
+		// The leading GRANT guarantees a db-level grant row exists, so
+		// REVOKE ALL can never fail with "no such grant".
+		flip = fmt.Sprintf("GRANT SELECT ON %[1]s TO %[2]s; REVOKE ALL PRIVILEGES ON %[1]s FROM %[2]s; GRANT SELECT, DELETE, DROP, ALTER ON %[1]s TO %[2]s;", db, user)
+	}
+	if _, err := x.Exec(ctx, container, "", mariadbArgs(flip)...); err != nil {
+		return TenantQuotaStatus{}, fmt.Errorf("quota flip %q: %w", t.Slug, err)
+	}
+	if over && writable {
+		if _, err := x.Exec(ctx, container, "", mariadbArgs(fmt.Sprintf("KILL USER %s;", user))...); err != nil {
+			return TenantQuotaStatus{}, fmt.Errorf("kill connections %q: %w", t.Slug, err)
+		}
+	}
+	return TenantQuotaStatus{Slug: t.Slug, SizeBytes: size, CapBytes: t.CapBytes, Over: over, ReadOnly: over}, nil
 }
 
 // ensureSharedMariadb (re)creates the missing shared parent. ROOT_PASSWORD
