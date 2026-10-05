@@ -53,7 +53,7 @@ RSpec.describe Resources::Shape do
   end
 
   it "ships the five app presets, all on-grid" do
-    expect(described_class::PRESETS.keys).to eq(%w[nano starter standard pro big])
+    expect(described_class::PRESETS.keys).to eq(%w[nano starter standard large x-large])
     described_class::PRESETS.each_value { |p| expect(described_class.new(**p)).to be_valid }
   end
 

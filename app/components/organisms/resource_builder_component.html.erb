@@ -12,7 +12,7 @@
       <button type="button" data-action="resource-builder#pick" data-resource-builder-target="preset"
               data-cpu="<%= p[:cpu] %>" data-memory-mb="<%= p[:memory_mb] %>" data-disk-gb="<%= p[:disk_gb] %>"
               aria-pressed="<%= preset_pressed?(p) %>"
-              class="px-2.5 py-1 text-xs border-1.5 border-line rounded-md aria-pressed:border-accent aria-pressed:bg-accent-soft"><%= key.capitalize %></button>
+              class="px-2.5 py-1 text-xs border-1.5 border-line rounded-md aria-pressed:border-accent aria-pressed:bg-accent-soft"><%= key.split("-").map(&:capitalize).join("-") %></button>
     <% end %>
   </div>
   <% if rails_hint %>

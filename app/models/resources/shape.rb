@@ -13,8 +13,8 @@ module Resources
       "nano"     => { cpu: 0.25, memory_mb: 256 },
       "starter"  => { cpu: 0.25, memory_mb: 512 },
       "standard" => { cpu: 0.5,  memory_mb: 1024 },
-      "pro"      => { cpu: 1.0,  memory_mb: 2048 },
-      "big"      => { cpu: 2.0,  memory_mb: 4096 }
+      "large"    => { cpu: 1.0,  memory_mb: 2048 },
+      "x-large"  => { cpu: 2.0,  memory_mb: 4096 }
     }.freeze
 
     sql_presets = {

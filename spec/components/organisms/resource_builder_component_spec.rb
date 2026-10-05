@@ -20,7 +20,7 @@ RSpec.describe Organisms::ResourceBuilderComponent, type: :component do
 
   it "renders preset chips with the Rails hint on 256MB presets" do
     render_inline(described_class.new(name: "p", shape: shape, presets: Resources::Shape::PRESETS, rails_hint: true))
-    %w[Nano Starter Standard Pro Big].each { |n| expect(page).to have_button(n) }
+    %w[Nano Starter Standard Large X-Large].each { |n| expect(page).to have_button(n) }
     expect(page).to have_text("not enough for Rails")
   end
 
