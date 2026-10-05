@@ -6,14 +6,14 @@ module Addons
   #
   # Engines:
   #   * postgres — DatabaseProvisioner shared path (tenant.provision op)
-  #   * redis / memcached / rabbitmq / meilisearch — same wokkud tenant-op
+  #   * redis / memcached — same wokkud tenant-op
   #     contract, issued here against the engine's shared PARENT row
   #     (W7 Phase 3: was the dokku-shared-* plugins over SSH).
   #
   # Idempotent: skip provisioning if the app already has a shared
   # tenant of the same engine attached. Safe to re-run on redeploy.
   class SharedProvisioner
-    SUPPORTED_ENGINES = %w[postgres redis memcached rabbitmq meilisearch].freeze
+    SUPPORTED_ENGINES = %w[postgres redis memcached].freeze
 
     # Engine → metadata used by the generic provisioner branch.
     # alias_env: env name used for the AppDatabase alias column.
@@ -21,10 +21,8 @@ module Addons
     #   parent container (= the DSN host, resolvable on the wokku-services
     #   overlay every app task runs on).
     ENGINE_CONFIG = {
-      "redis"       => { alias_env: "REDIS",       parent_name: "dokku-shared-redis" },
-      "memcached"   => { alias_env: "MEMCACHED",   parent_name: "dokku-shared-memcached" },
-      "rabbitmq"    => { alias_env: "RABBITMQ",    parent_name: "dokku-shared-rabbitmq" },
-      "meilisearch" => { alias_env: "MEILISEARCH", parent_name: "dokku-shared-meilisearch" }
+      "redis"     => { alias_env: "REDIS",     parent_name: "dokku-shared-redis" },
+      "memcached" => { alias_env: "MEMCACHED", parent_name: "dokku-shared-memcached" }
     }.freeze
 
     class UnsupportedEngine < StandardError; end
@@ -96,10 +94,10 @@ module Addons
       slug     = tenant_slug
       password = SecureRandom.hex(16)
       begin
-        op = provision_tenant_via_ops!(parent, slug, password)
-        envs = tenant_envs(config[:parent_name], slug, password, op.result.to_h)
+        provision_tenant_via_ops!(parent, slug, password)
+        envs = tenant_envs(config[:parent_name], slug, password)
         db.update!(
-          shared_role_name: %w[redis rabbitmq].include?(@engine) ? slug : nil,
+          shared_role_name: @engine == "redis" ? slug : nil,
           shared_db_name: slug,
           dsn: envs.values.first,
           wokkud_managed: parent.wokkud_managed?
@@ -114,7 +112,6 @@ module Addons
         # exists to attach anymore.
         ensure_parent_on_overlay!(parent)
         db.update!(status: :running)
-        redact_op_result!(op)
         db
       rescue => e
         # Compensate: drop any host tenant this attempt created so the retry's
@@ -132,19 +129,15 @@ module Addons
       end
     end
 
-    # The host-side tenant slug. Meilisearch forbids hyphens ('-' is its
-    # index separator — tenant "foo"'s "foo-*" key pattern would read
-    # "foo-bar"'s indexes), so hyphenated app names transform with the same
-    # underscore convention dedicated_db_name uses. Other engines use the
-    # app name as-is (byte-parity with the plugin era).
+    # The host-side tenant slug: the app name as-is (byte-parity with the
+    # plugin era).
     def tenant_slug
-      @engine == "meilisearch" ? @app.name.tr("-", "_") : @app.name
+      @app.name
     end
 
     # Same tenant-op contract as DatabaseProvisioner#provision_tenant_via_ops!
     # (C1: op.service is the PARENT, slug travels in params, CP generates the
-    # password — except meilisearch, whose keys are server-minted and travel
-    # back in op.result). tenant_exists means a prior half-finished attempt
+    # password). tenant_exists means a prior half-finished attempt
     # left the host tenant behind while the row never reached :running —
     # nothing is using it (already_attached? would have short-circuited), so
     # recycle: destroy the leftover and provision cleanly with the fresh
@@ -152,7 +145,7 @@ module Addons
     # wire no-op — prefix convention only).
     def provision_tenant_via_ops!(parent, slug, password)
       params = { slug: slug }
-      params[:password] = password if %w[redis rabbitmq].include?(@engine)
+      params[:password] = password if @engine == "redis"
       Services::Ops.issue_and_wait!(service: parent, kind: "tenant.provision", params: params)
     rescue Services::Ops::Failed => e
       raise unless e.op.error_code == "tenant_exists"
@@ -165,37 +158,14 @@ module Addons
     # CP-composed env values, byte-compatible with what the dokku-shared-*
     # plugins emitted (same scheme/host/port shapes) so new tenants look
     # exactly like existing ones. Host is the parent container name.
-    def tenant_envs(host, slug, password, result)
+    def tenant_envs(host, slug, password)
       case @engine
       when "redis"
         { "REDIS_URL" => "redis://#{slug}:#{password}@#{host}:6379/0" }
       when "memcached"
         # No per-tenant credentials — isolation is by key prefix only.
         { "MEMCACHED_URL" => "#{host}:11211", "MEMCACHED_KEY_PREFIX" => "#{slug}:" }
-      when "rabbitmq"
-        { "RABBITMQ_URL" => "amqp://#{slug}:#{password}@#{host}:5672/#{slug}" }
-      when "meilisearch"
-        # Meilisearch mints key values server-side (derived from its master
-        # key) — the rw key comes back in the op result, not from a CP
-        # password.
-        api_key = result["api_key"].presence ||
-                  raise(UnsupportedEngine, "meilisearch tenant.provision returned no api_key")
-        { "MEILISEARCH_URL" => "http://#{host}:7700", "MEILISEARCH_API_KEY" => api_key }
       end
-    end
-
-    # Meilisearch op results carry live API keys; once the env rows hold
-    # them the copy at rest in service_ops.result is dead weight (params get
-    # the same treatment at report time). Consumer-side because the report
-    # endpoint can't redact what this waiter still needs to read.
-    def redact_op_result!(op)
-      return unless op.respond_to?(:result) && op.respond_to?(:update_column)
-      redacted = op.result.to_h.map { |k, v|
-        [ k, %w[api_key api_key_ro].include?(k.to_s) ? "[REDACTED]" : v ]
-      }.to_h
-      op.update_column(:result, redacted) if redacted != op.result.to_h
-    rescue StandardError
-      # best-effort hygiene; never fail a successful provision over it
     end
 
     # Find the in-flight/failed row for this (app, engine) to resume, or build

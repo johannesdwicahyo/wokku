@@ -11,10 +11,10 @@ RSpec.describe Plan, "bundle v2 columns" do
   let(:team) { Plan.find_by!(key: "team") }
 
   describe "shared engines (auto-attached at box create)" do
-    it "every plan ships all five shared engines" do
+    it "every plan ships the same shared engines" do
       Plan.where(key: Plan::KEYS).find_each do |p|
         expect(p.shared_engines).to contain_exactly(
-          "postgres", "redis", "memcached", "rabbitmq", "meilisearch"
+          "postgres", "redis", "memcached"
         )
       end
     end
@@ -23,18 +23,13 @@ RSpec.describe Plan, "bundle v2 columns" do
       expect(solo.shared_tenant_cap("postgres")).to    eq(50)
       expect(solo.shared_tenant_cap("redis")).to       eq(10)
       expect(solo.shared_tenant_cap("memcached")).to   eq(16)
-      expect(solo.shared_tenant_cap("rabbitmq")).to    eq(10_000)
-      expect(solo.shared_tenant_cap("meilisearch")).to eq(50)
+      expect { solo.shared_tenant_cap("rabbitmq") }.to raise_error(ArgumentError)
     end
 
     it "raises on unknown engines" do
       expect { solo.shared_tenant_cap("riak") }.to raise_error(ArgumentError, /Unknown shared engine/)
     end
 
-    it "RabbitMQ + Meilisearch caps scale up across paid plans" do
-      expect([ free, solo, pro, team ].map(&:shared_rabbitmq_msg_per_tenant)).to eq([ 10_000, 10_000, 50_000, 200_000 ])
-      expect([ free, solo, pro, team ].map(&:shared_meilisearch_mb_per_tenant)).to eq([ 50, 50, 250, 1024 ])
-    end
   end
 
   describe "dedicated upgrade slots" do

@@ -16,8 +16,8 @@ module Addons
   #               slots on Pro/Team. Provisioned by DatabaseProvisioner.
   #
   # Some engines only support one mode for now — mariadb / mongodb only
-  # have dedicated paths; memcached / rabbitmq / meilisearch only have
-  # shared (no dedicated Dokku plugin shipped yet).
+  # have dedicated paths; memcached only has shared. rabbitmq + meilisearch
+  # left the offering 2026-10-05 (zero tenants in prod).
   # mysql retired 2026-07-09 (dedicated MySQL retired, see
   # DatabaseService::RETIRED_TYPES) — not offered here for new services.
   class PickerOptions
@@ -25,8 +25,6 @@ module Addons
       { key: "postgres",      label: "PostgreSQL",   modes: %w[shared dedicated] },
       { key: "redis",         label: "Redis",        modes: %w[shared dedicated] },
       { key: "memcached",     label: "Memcached",    modes: %w[shared] },
-      { key: "rabbitmq",      label: "RabbitMQ",     modes: %w[shared] },
-      { key: "meilisearch",   label: "Meilisearch",  modes: %w[shared] },
       { key: "mariadb",       label: "MariaDB",      modes: %w[dedicated] },
       { key: "mongodb",       label: "MongoDB",      modes: %w[dedicated] }
       # elasticsearch pulled 2026-07-15: dokku-elasticsearch has no

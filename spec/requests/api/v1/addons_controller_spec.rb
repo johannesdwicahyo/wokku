@@ -72,7 +72,7 @@ RSpec.describe "API::V1::AddonsController", type: :request do
     end
 
     it "POST /addons/shared with valid engine returns 202 and updates app" do
-      allow_any_instance_of(Plan).to receive(:shared_engines_available).and_return(%w[postgres redis memcached rabbitmq meilisearch])
+      allow_any_instance_of(Plan).to receive(:shared_engines_available).and_return(%w[postgres redis memcached])
       post shared_api_v1_app_addons_path(app_record),
            params: { engine: "redis" },
            headers: headers

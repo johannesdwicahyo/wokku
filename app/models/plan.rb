@@ -36,8 +36,9 @@ class Plan < ApplicationRecord
   # Bundle v2 (founder decision 2026-05-29, see
   # memory/project_bundle_v2_locked_spec.md).
   #
-  # Every app box auto-attaches the full shared stack at create time:
-  # Pg + Redis + Memcached + RabbitMQ + Meilisearch. Per-tenant size
+  # Every app box can attach the shared stack at create time:
+  # Pg + Redis + Memcached (rabbitmq/meilisearch left the offering
+  # 2026-10-05). Per-tenant size
   # caps come from this model. Dedicated Pg/Redis are upgrade slots
   # (per workspace, plan-quota of N, no overage).
   # ─────────────────────────────────────────────────────────────────
@@ -58,8 +59,6 @@ class Plan < ApplicationRecord
     when "postgres"    then shared_pg_mb_per_tenant.to_i
     when "redis"       then shared_redis_mb_per_tenant.to_i
     when "memcached"   then shared_memcached_mb_per_tenant.to_i
-    when "rabbitmq"    then shared_rabbitmq_msg_per_tenant.to_i
-    when "meilisearch" then shared_meilisearch_mb_per_tenant.to_i
     else raise ArgumentError, "Unknown shared engine #{engine.inspect}"
     end
   end

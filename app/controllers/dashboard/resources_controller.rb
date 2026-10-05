@@ -116,9 +116,7 @@ module Dashboard
         { type: "memcached", label: "Memcached", category: "Caching", description: "High-performance memory cache" },
         # Search
         { type: "elasticsearch", label: "Elasticsearch", category: "Search", description: "Full-text search and analytics engine" },
-        { type: "meilisearch", label: "Meilisearch", category: "Search", description: "Fast, typo-tolerant search engine" },
         # Messaging
-        { type: "rabbitmq", label: "RabbitMQ", category: "Messaging", description: "Message broker for async processing" },
         { type: "nats", label: "NATS", category: "Messaging", description: "High-performance message streaming" }
       ]
     end

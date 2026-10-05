@@ -2,7 +2,7 @@ class DatabaseService < ApplicationRecord
   # Datastore engine catalogs (engine-owned since the P2 rider cleanup;
   # Plan aliases these for cloud back-compat). Which engines exist is
   # product; which a PLAN may use stays plan logic in the cloud.
-  SHARED_ENGINES      = %w[postgres redis memcached rabbitmq meilisearch].freeze
+  SHARED_ENGINES      = %w[postgres redis memcached].freeze
   SHARED_ENGINES_FREE = %w[postgres redis].freeze
   DEDICATED_ENGINES   = %w[postgres mariadb mongodb redis].freeze
   belongs_to :server

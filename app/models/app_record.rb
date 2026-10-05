@@ -143,8 +143,11 @@ class AppRecord < ApplicationRecord
 
   private
 
+  # Only NEWLY added entries must be known: an engine retired from the
+  # offering (rabbitmq/meilisearch, 2026-10-05) may linger on old rows and
+  # must not make every later save of that app fail.
   def enabled_shared_engines_subset_of_known
-    extras = Array(enabled_shared_engines).map(&:to_s) - SHARED_ENGINES
+    extras = Array(enabled_shared_engines).map(&:to_s) - Array(enabled_shared_engines_was).map(&:to_s) - SHARED_ENGINES
     errors.add(:enabled_shared_engines, "unknown engine(s): #{extras.join(', ')}") if extras.any?
   end
 

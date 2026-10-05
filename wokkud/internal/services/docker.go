@@ -49,11 +49,6 @@ func redactArgv(cmd []string) []string {
 			// redis `ACL SETUSER <user> on ><password>` — the tenant
 			// password rides argv as a single ">pw" element.
 			out[i] = ">***"
-		case a == "add_user":
-			// rabbitmqctl add_user <name> <password>
-			if i+2 < len(out) {
-				out[i+2] = "***"
-			}
 		}
 		out[i] = sqlPasswordRe.ReplaceAllString(out[i], "PASSWORD '***'")
 	}

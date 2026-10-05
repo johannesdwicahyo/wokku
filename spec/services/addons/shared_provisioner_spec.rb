@@ -82,10 +82,10 @@ RSpec.describe Addons::SharedProvisioner do
       expect(service.call).to eq(:provisioned)
     end
 
-    describe "generic engine path (redis/memcached/rabbitmq/meilisearch)" do
+    describe "generic engine path (redis/memcached)" do
       # Byte pins for the CP-composed env shapes: same scheme/host/port form
       # the dokku-shared-* plugins emitted, host = parent container name.
-      # slug = app name ("myapp"); meilisearch's key comes from op.result.
+      # slug = app name ("myapp").
       {
         "redis" => {
           alias_env: "REDIS", password_sent: true, result: { "slug" => "myapp" },
@@ -95,17 +95,6 @@ RSpec.describe Addons::SharedProvisioner do
         "memcached" => {
           alias_env: "MEMCACHED", password_sent: false, result: { "slug" => "myapp" },
           envs: { "MEMCACHED_URL" => "dokku-shared-memcached:11211", "MEMCACHED_KEY_PREFIX" => "myapp:" },
-          role: nil
-        },
-        "rabbitmq" => {
-          alias_env: "RABBITMQ", password_sent: true, result: { "slug" => "myapp" },
-          envs: { "RABBITMQ_URL" => "amqp://myapp:s3cret@dokku-shared-rabbitmq:5672/myapp" },
-          role: "myapp"
-        },
-        "meilisearch" => {
-          alias_env: "MEILISEARCH", password_sent: false,
-          result: { "slug" => "myapp", "api_key" => "meili-rw-key", "api_key_ro" => "meili-ro-key" },
-          envs: { "MEILISEARCH_URL" => "http://dokku-shared-meilisearch:7700", "MEILISEARCH_API_KEY" => "meili-rw-key" },
           role: nil
         }
       }.each do |engine, cfg|
@@ -173,56 +162,6 @@ RSpec.describe Addons::SharedProvisioner do
             db = app.database_services.where(service_type: engine, shared: true).first
             expect(db.status).to eq("error")
           end
-        end
-      end
-
-      context "meilisearch slug transform" do
-        let(:app) { create(:app_record, name: "my-app", creator: user, server: server) }
-        let!(:parent) do
-          DatabaseService.create!(server: server, name: "dokku-shared-meilisearch",
-                                  service_type: "meilisearch", status: :running,
-                                  tier_name: "shared_host", shared: false, wokkud_managed: true)
-        end
-
-        it "underscores hyphens (meilisearch forbids '-' — it is the index separator)" do
-          allow(Services::Ops).to receive(:issue_and_wait!)
-            .and_return(double("op", result: { "api_key" => "k" }))
-
-          described_class.new(app: app, engine: "meilisearch").call
-
-          expect(Services::Ops).to have_received(:issue_and_wait!)
-            .with(service: parent, kind: "tenant.provision", params: { slug: "my_app" })
-          db = app.database_services.where(service_type: "meilisearch", shared: true).first
-          expect(db.shared_db_name).to eq("my_app")
-          # Prefix-shaped like the plugin era; slug is the transformed one.
-          expect(app.env_vars.find_by(key: "MEILISEARCH_API_KEY").value).to eq("k")
-        end
-      end
-
-      context "meilisearch result redaction" do
-        let!(:parent) do
-          DatabaseService.create!(server: server, name: "dokku-shared-meilisearch",
-                                  service_type: "meilisearch", status: :running,
-                                  tier_name: "shared_host", shared: false, wokkud_managed: true)
-        end
-
-        it "redacts api keys from the persisted op result once the envs hold them" do
-          op = ServiceOp.create!(
-            database_service: parent, server: server, kind: "tenant.provision",
-            params: { slug: app.name }, status: :succeeded,
-            result: { "slug" => app.name, "api_key" => "rw-secret", "api_key_ro" => "ro-secret" }
-          )
-          allow(Services::Ops).to receive(:issue_and_wait!) do |kind:, **|
-            kind == "tenant.provision" ? op : double("op", result: {})
-          end
-
-          described_class.new(app: app, engine: "meilisearch").call
-
-          expect(op.reload.result["api_key"]).to eq("[REDACTED]")
-          expect(op.reload.result["api_key_ro"]).to eq("[REDACTED]")
-          expect(op.reload.result["slug"]).to eq(app.name)
-          # The live key still reached the app env before redaction.
-          expect(app.env_vars.find_by(key: "MEILISEARCH_API_KEY").value).to eq("rw-secret")
         end
       end
 

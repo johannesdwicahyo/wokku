@@ -82,10 +82,10 @@ var sharedTenantEngines = map[string]sharedTenantEngine{
 		destroy: pgDestroyTenant,
 		check:   pgCheckQuotas,
 	},
-	"dokku-shared-redis":       {provision: redisProvisionTenant, destroy: redisDestroyTenant, check: redisCheckQuotas},
-	"dokku-shared-memcached":   {provision: memcachedProvisionTenant, destroy: memcachedDestroyTenant, check: memcachedCheckQuotas},
-	"dokku-shared-rabbitmq":    {provision: rabbitProvisionTenant, destroy: rabbitDestroyTenant, check: rabbitCheckQuotas},
-	"dokku-shared-meilisearch": {provision: meiliProvisionTenant, destroy: meiliDestroyTenant, check: meiliCheckQuotas},
+	// rabbitmq + meilisearch removed from the offering 2026-10-05 (zero
+	// tenants in prod) — their containers now get the friendly refusal below.
+	"dokku-shared-redis":     {provision: redisProvisionTenant, destroy: redisDestroyTenant, check: redisCheckQuotas},
+	"dokku-shared-memcached": {provision: memcachedProvisionTenant, destroy: memcachedDestroyTenant, check: memcachedCheckQuotas},
 }
 
 // sharedEngineFor resolves the tenant-op handler set for a parent

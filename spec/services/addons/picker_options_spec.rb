@@ -17,9 +17,9 @@ RSpec.describe Addons::PickerOptions do
   end
 
   describe "engine list" do
-    it "exposes the 7 Bundle v2 engines in a stable order" do
+    it "exposes the 5 Bundle v2 engines in a stable order" do
       result = described_class.for_user(free_user)
-      expect(result.keys).to eq(%w[postgres redis memcached rabbitmq meilisearch mariadb mongodb])
+      expect(result.keys).to eq(%w[postgres redis memcached mariadb mongodb])
     end
 
     it "does not expose mysql — dedicated MySQL is retired" do
@@ -41,7 +41,7 @@ RSpec.describe Addons::PickerOptions do
     it "exposes shared-only engines without a dedicated card" do
       result = described_class.for_user(free_user)
       expect(result["memcached"][:modes].map { |m| m[:mode] }).to eq(%w[shared])
-      expect(result["meilisearch"][:modes].map { |m| m[:mode] }).to eq(%w[shared])
+      expect(result.keys).not_to include("rabbitmq", "meilisearch")
     end
 
     it "exposes dedicated-only engines without a shared card" do

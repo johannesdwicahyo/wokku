@@ -68,11 +68,21 @@ RSpec.describe AppRecord, "bundle v2 box model" do
       }.to change(AppRecord, :count).by(1)
     end
 
+    it "rejects a retired engine newly added, but grandfathers one already stored" do
+      app.enabled_shared_engines = %w[postgres rabbitmq]
+      expect(app).not_to be_valid
+      expect(app.errors[:enabled_shared_engines].join).to include("rabbitmq")
+
+      app.save!(validate: false)
+      app.reload.enabled_shared_engines = %w[postgres rabbitmq redis]
+      expect(app).to be_valid
+    end
+
     describe "#shared_engine_enabled?" do
       it "is true when the engine is in the array" do
-        app.enabled_shared_engines = %w[postgres meilisearch]
+        app.enabled_shared_engines = %w[postgres memcached]
         expect(app.shared_engine_enabled?("postgres")).to be true
-        expect(app.shared_engine_enabled?(:meilisearch)).to be true
+        expect(app.shared_engine_enabled?(:memcached)).to be true
         expect(app.shared_engine_enabled?("redis")).to be false
       end
     end

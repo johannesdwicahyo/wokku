@@ -184,7 +184,7 @@ class TemplateParser
   # Whitelist to the engines Addons::SharedProvisioner actually supports.
   # Unknown engines silently drop — keeping the contract narrow stops a
   # typo in a template manifest from spawning a meaningless DB tenant.
-  SHARED_ENGINE_WHITELIST = %w[postgres redis memcached rabbitmq meilisearch].freeze
+  SHARED_ENGINE_WHITELIST = DatabaseService::SHARED_ENGINES
   # redis: Sidekiq writes unprefixed keys, and shared-redis tenants are
   # ACL-locked to a key prefix (NOPERM, 2026-07-24) — job backends need a
   # dedicated redis.

@@ -128,11 +128,9 @@ class DatabaseProvisioner
   # Env vars a shared tenant's destroy must unset on linked apps — the same
   # keys Addons::SharedProvisioner#tenant_envs / the shared pg path set.
   SHARED_TENANT_ENV_KEYS = {
-    "postgres"    => %w[DATABASE_URL],
-    "redis"       => %w[REDIS_URL],
-    "memcached"   => %w[MEMCACHED_URL MEMCACHED_KEY_PREFIX],
-    "rabbitmq"    => %w[RABBITMQ_URL],
-    "meilisearch" => %w[MEILISEARCH_URL MEILISEARCH_API_KEY]
+    "postgres"  => %w[DATABASE_URL],
+    "redis"     => %w[REDIS_URL],
+    "memcached" => %w[MEMCACHED_URL MEMCACHED_KEY_PREFIX]
   }.freeze
 
   # Tears down a shared tenant (any engine) via a tenant.destroy op on its
@@ -167,7 +165,7 @@ class DatabaseProvisioner
   # The host-side tenant slug for a shared row. shared_db_name is canonical
   # (== the slug for every engine since W7 Phase 3); older rows fall back to
   # the role name (pg: "<slug>_role", redis: "<slug>") and, for engines that
-  # stored neither (memcached/meilisearch), to the row-name convention
+  # stored neither (memcached), to the row-name convention
   # "<slug>-<engine>-shared-<hex>" / "<slug>-pg-shared-<hex>".
   def self.shared_tenant_slug(db)
     db.shared_db_name.presence ||
