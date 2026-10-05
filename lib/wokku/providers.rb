@@ -19,6 +19,9 @@ module Wokku
     class NullPricing
       def monthly_idr(_shape, instances: 1) = nil
       def unit_prices = nil
+      # A scheduled unit-price increase, or nil: { effective_on: Date,
+      # from: unit_prices-shaped hash, to: unit_prices-shaped hash }.
+      def upcoming_change = nil
     end
 
     attr_accessor :tls, :billing

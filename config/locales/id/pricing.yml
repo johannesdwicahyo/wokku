@@ -70,3 +70,5 @@ id:
     faq_a6: "Ya. Perubahan berlaku segera dan dihitung secara proporsional per jam. Tanpa komitmen, batalkan kapan saja."
     faq_q7: "Apa yang terjadi jika saya melebihi tier gratis?"
     faq_a7: "Kamu akan diminta menambahkan metode pembayaran. Sumber daya yang ada tetap berjalan — kami tidak akan pernah diam-diam mulai menagih kamu."
+  resources:
+    price_change: "Harga berubah pada %{date}: %{changes} (per bulan)."

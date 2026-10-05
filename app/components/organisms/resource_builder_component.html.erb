@@ -48,5 +48,8 @@
     <p class="text-sm font-semibold text-ink tabular-nums" data-resource-builder-target="price">
       <%= sleeping ? "Rp0" : idr(price_idr) %>/<%= t("resources.month", default: "month") %>
     </p>
+    <% if (change = upcoming_change) %>
+      <p class="text-[11px] text-dim" data-test="price-change"><%= upcoming_change_text(change) %></p>
+    <% end %>
   <% end %>
 </div>

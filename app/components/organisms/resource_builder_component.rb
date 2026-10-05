@@ -20,6 +20,23 @@ module Organisms
     def units = Wokku.config.pricing.unit_prices
     def price_idr = Wokku.config.pricing.monthly_idr(shape, instances: instances || 1)
 
+    # Optional seam method (older/custom providers may lack it → nothing shown).
+    def upcoming_change
+      pricing = Wokku.config.pricing
+      pricing.upcoming_change if pricing.respond_to?(:upcoming_change)
+    end
+
+    UNIT_LABELS = { "cpu" => "vCPU", "memory_gb" => "RAM GB", "disk_gb" => "disk GB" }.freeze
+
+    def upcoming_change_text(change)
+      parts = UNIT_LABELS.filter_map do |key, label|
+        from, to = change[:from][key], change[:to][key]
+        "#{label} #{idr(from)} → #{idr(to)}" unless from == to
+      end
+      t("resources.price_change", date: l(change[:effective_on], format: "%-d %b %Y"), changes: parts.join(" · "),
+        default: "Prices change on %{date}: %{changes} (per month).")
+    end
+
     def idr(n) = "Rp#{n.to_i.to_s.reverse.scan(/\d{1,3}/).join('.').reverse}"
     def mem_label(mb) = mb >= 1024 ? "#{(mb / 1024.0).to_s.delete_suffix('.0')} GB" : "#{mb} MB"
 

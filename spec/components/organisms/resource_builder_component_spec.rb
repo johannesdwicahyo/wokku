@@ -61,4 +61,33 @@ RSpec.describe Organisms::ResourceBuilderComponent, type: :component do
     ))
     expect(page).to have_css("button[aria-pressed='false']", text: "Small")
   end
+
+  describe "upcoming price change" do
+    let(:units) { { "cpu" => 16_000, "memory_gb" => 24_000, "disk_gb" => 1_000 } }
+
+    it "renders nothing with the null provider (OSS)" do
+      expect(Wokku::Providers::NullPricing.new.upcoming_change).to be_nil
+      render_inline(described_class.new(name: "p", shape: shape, presets: {}))
+      expect(page).to have_no_css("[data-test='price-change']")
+    end
+
+    it "renders nothing when a provider lacks the method or has no change" do
+      allow(Wokku.config).to receive(:pricing).and_return(double(unit_prices: units, monthly_idr: 32_000))
+      render_inline(described_class.new(name: "p", shape: shape, presets: {}))
+      expect(page).to have_no_css("[data-test='price-change']")
+
+      allow(Wokku.config).to receive(:pricing).and_return(double(unit_prices: units, monthly_idr: 32_000, upcoming_change: nil))
+      render_inline(described_class.new(name: "p", shape: shape, presets: {}))
+      expect(page).to have_no_css("[data-test='price-change']")
+    end
+
+    it "shows the date and the changed unit prices near the total" do
+      change = { effective_on: Date.new(2026, 11, 4), from: units, to: units.merge("cpu" => 20_000) }
+      allow(Wokku.config).to receive(:pricing).and_return(double(unit_prices: units, monthly_idr: 32_000, upcoming_change: change))
+      render_inline(described_class.new(name: "p", shape: shape, presets: {}))
+      note = page.find("[data-test='price-change']")
+      expect(note.text).to include("4 Nov 2026", "vCPU Rp16.000 → Rp20.000")
+      expect(note.text).not_to include("RAM")
+    end
+  end
 end
