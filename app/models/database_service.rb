@@ -2,7 +2,11 @@ class DatabaseService < ApplicationRecord
   # Datastore engine catalogs (engine-owned since the P2 rider cleanup;
   # Plan aliases these for cloud back-compat). Which engines exist is
   # product; which a PLAN may use stays plan logic in the cloud.
-  SHARED_ENGINES      = %w[postgres mariadb redis memcached].freeze
+  # memcached left the offering 2026-10-06: a shared memcached isolates
+  # tenants by key prefix only (no auth), so any tenant can read or
+  # flush_all everyone's keys. Existing tenants keep running + stay
+  # destroyable (DatabaseProvisioner::SHARED_TENANT_ENV_KEYS).
+  SHARED_ENGINES      = %w[postgres mariadb redis].freeze
   # Every shared engine is free on every plan (founder, 2026-10-05).
   SHARED_ENGINES_FREE = SHARED_ENGINES
   DEDICATED_ENGINES   = %w[postgres mariadb mongodb redis].freeze

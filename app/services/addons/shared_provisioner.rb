@@ -6,7 +6,7 @@ module Addons
   #
   # Engines:
   #   * postgres / mariadb — DatabaseProvisioner shared path (tenant.provision op)
-  #   * redis / memcached — same wokkud tenant-op
+  #   * redis — same wokkud tenant-op
   #     contract, issued here against the engine's shared PARENT row
   #     (W7 Phase 3: was the dokku-shared-* plugins over SSH).
   #
@@ -21,8 +21,7 @@ module Addons
     #   parent container (= the DSN host, resolvable on the wokku-services
     #   overlay every app task runs on).
     ENGINE_CONFIG = {
-      "redis"     => { alias_env: "REDIS",     parent_name: "dokku-shared-redis" },
-      "memcached" => { alias_env: "MEMCACHED", parent_name: "dokku-shared-memcached" }
+      "redis"     => { alias_env: "REDIS",     parent_name: "dokku-shared-redis" }
     }.freeze
 
     class UnsupportedEngine < StandardError; end
@@ -97,7 +96,7 @@ module Addons
         provision_tenant_via_ops!(parent, slug, password)
         envs = tenant_envs(config[:parent_name], slug, password)
         db.update!(
-          shared_role_name: @engine == "redis" ? slug : nil,
+          shared_role_name: slug,
           shared_db_name: slug,
           dsn: envs.values.first,
           wokkud_managed: parent.wokkud_managed?
@@ -141,11 +140,9 @@ module Addons
     # left the host tenant behind while the row never reached :running —
     # nothing is using it (already_attached? would have short-circuited), so
     # recycle: destroy the leftover and provision cleanly with the fresh
-    # password. memcached never raises the sentinel (its provision is a
-    # wire no-op — prefix convention only).
+    # password.
     def provision_tenant_via_ops!(parent, slug, password)
-      params = { slug: slug }
-      params[:password] = password if @engine == "redis"
+      params = { slug: slug, password: password }
       Services::Ops.issue_and_wait!(service: parent, kind: "tenant.provision", params: params)
     rescue Services::Ops::Failed => e
       raise unless e.op.error_code == "tenant_exists"
@@ -159,13 +156,7 @@ module Addons
     # plugins emitted (same scheme/host/port shapes) so new tenants look
     # exactly like existing ones. Host is the parent container name.
     def tenant_envs(host, slug, password)
-      case @engine
-      when "redis"
-        { "REDIS_URL" => "redis://#{slug}:#{password}@#{host}:6379/0" }
-      when "memcached"
-        # No per-tenant credentials — isolation is by key prefix only.
-        { "MEMCACHED_URL" => "#{host}:11211", "MEMCACHED_KEY_PREFIX" => "#{slug}:" }
-      end
+      { "REDIS_URL" => "redis://#{slug}:#{password}@#{host}:6379/0" }
     end
 
     # Find the in-flight/failed row for this (app, engine) to resume, or build
