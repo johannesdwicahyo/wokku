@@ -7,17 +7,22 @@ import (
 	"strings"
 )
 
-// redisAdminWrapper discovers the shared parent's admin credentials
-// IN-CONTAINER, mirroring dokku-shared-redis's run_redis_admin but with no
-// host-side .admin_password file: REDIS_PASSWORD env if the container has
-// one, else the requirepass line wokkud's dedicated create writes to
-// /data/redis.conf, else no auth (the adopted plugin parent's `default` ACL
-// user is passwordless inside the container — verified by the plugin's own
-// "AUTH failed noise is harmless" behavior). The password never crosses
-// into argv, so it can't leak through exec error strings.
-const redisAdminWrapper = `pw="${REDIS_PASSWORD:-}"
+// redisPwDiscovery sets $pw to the parent's admin password, found
+// IN-CONTAINER (no host-side .admin_password file): REDIS_PASSWORD env, else
+// the requirepass line in /data/redis.conf (wokkud's dedicated create writes
+// it; for the adopted plugin parent the operator pins it there — that parent
+// loads an --aclfile whose `default` user shipped `nopass ~* +@all`,
+// reachable unauthenticated from every app on wokku-services, 2026-10-06;
+// redis-server never reads this file, the --aclfile does the enforcing).
+// Empty → no auth. Its --requirepass argv is NOT discoverable: redis
+// rewrites its process title, so /proc/1/cmdline shows "redis-server *:6379".
+const redisPwDiscovery = `pw="${REDIS_PASSWORD:-}"
 if [ -z "$pw" ] && [ -f /data/redis.conf ]; then pw="$(sed -n 's/^requirepass //p' /data/redis.conf)"; fi
-if [ -n "$pw" ]; then exec redis-cli --no-auth-warning -a "$pw" "$@"; fi
+`
+
+// redisAdminWrapper execs redis-cli as the parent's admin. The password
+// never crosses into argv, so it can't leak through exec error strings.
+const redisAdminWrapper = redisPwDiscovery + `if [ -n "$pw" ]; then exec redis-cli --no-auth-warning -a "$pw" "$@"; fi
 exec redis-cli --no-auth-warning "$@"`
 
 // Lua scripts copied verbatim from dokku-shared-redis/functions —

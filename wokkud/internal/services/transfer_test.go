@@ -282,13 +282,18 @@ func TestDumpCmdRedisSpoolsRDBWithAuth(t *testing.T) {
 	}
 }
 
-func TestDumpCmdRedisNoPasswordOmitsAuth(t *testing.T) {
+// No control-plane password (shared parent): discover the admin password
+// in-container (REDIS_PASSWORD / /data/redis.conf) and pass -a only when one
+// was found — never a literal empty -a.
+func TestDumpCmdRedisNoPasswordDiscoversAdminAuth(t *testing.T) {
 	cmd, err := dumpCmd("redis", "ignored", "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(cmd[2], "-a ") {
-		t.Fatalf("no-auth redis must omit -a, got %s", cmd[2])
+	for _, frag := range []string{"REDIS_PASSWORD", "/data/redis.conf", `${pw:+-a "$pw"}`, "--rdb /tmp/wokku-export.rdb"} {
+		if !strings.Contains(cmd[2], frag) {
+			t.Fatalf("missing %q in %s", frag, cmd[2])
+		}
 	}
 }
 

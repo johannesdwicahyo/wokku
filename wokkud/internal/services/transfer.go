@@ -225,13 +225,13 @@ func dumpCmd(serviceType, database, password string) ([]string, error) {
 		// RDB snapshot: `redis-cli --rdb` requires a real path (stdout is not
 		// supported across versions), so spool to a temp file and cat it.
 		// --no-auth-warning keeps the stderr warning out of mixed streams;
-		// password may be empty on dokku-built redis (no auth) — omit -a then.
-		auth := ""
-		if password != "" {
-			auth = " --no-auth-warning -a " + shellQuote(password)
+		// No password from the control plane (shared parent) → discover the
+		// admin password in-container, same as redisAdminWrapper.
+		rdb := " --rdb /tmp/wokku-export.rdb >/dev/null && cat /tmp/wokku-export.rdb && rm -f /tmp/wokku-export.rdb"
+		if password == "" {
+			return []string{"sh", "-c", redisPwDiscovery + `redis-cli --no-auth-warning ${pw:+-a "$pw"}` + rdb}, nil
 		}
-		return []string{"sh", "-c",
-			"redis-cli" + auth + " --rdb /tmp/wokku-export.rdb >/dev/null && cat /tmp/wokku-export.rdb && rm -f /tmp/wokku-export.rdb"}, nil
+		return []string{"sh", "-c", "redis-cli --no-auth-warning -a " + shellQuote(password) + rdb}, nil
 	default:
 		return nil, fmt.Errorf("export unsupported for service_type %q", serviceType)
 	}
