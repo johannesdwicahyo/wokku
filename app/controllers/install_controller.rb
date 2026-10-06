@@ -23,13 +23,10 @@ class InstallController < ActionController::API
 
   private
 
-  # wokkud/ sits at the repo root: Rails.root/wokkud in the monorepo,
-  # Rails.root/../wokkud in the exported repo (harness is a subdir).
+  # wokkud/ ships inside this repo, so read it from the engine root — the
+  # git-gem checkout in wokku-cloud, the repo root standalone (harness/ is
+  # the host app there). Not Rails.root: the host app has no wokkud/.
   def read_deploy_file(name)
-    [ Rails.root.join("wokkud/deploy", name),
-      Rails.root.join("../wokkud/deploy", name) ].each do |p|
-      return p.read if p.file?
-    end
-    raise "wokkud deploy unit #{name} not found"
+    Wokku::Engine.root.join("wokkud/deploy", name).read
   end
 end
