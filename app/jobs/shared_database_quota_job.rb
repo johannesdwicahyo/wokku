@@ -34,12 +34,12 @@ class SharedDatabaseQuotaJob < ApplicationJob
   def sweep_via_ops!(tenants, parent)
     op = Services::Ops.issue_and_wait!(
       service: parent, kind: "service.check_quotas",
-      params: { tenants: tenants.map { |t| { slug: t.shared_db_name, cap_bytes: cap_mb(t) * 1.megabyte } } }
+      params: { tenants: tenants.map { |t| { slug: slug(t), cap_bytes: cap_mb(t) * 1.megabyte } } }
     )
 
     statuses = (op.result["tenants"] || []).index_by { |s| s["slug"] }
     tenants.each do |tenant|
-      status = statuses[tenant.shared_db_name]
+      status = statuses[slug(tenant)]
       next unless status
       # wokkud reports a per-tenant failure instead of aborting the sweep
       # (mariadb); its over/size fields are meaningless — change nothing.
@@ -57,6 +57,12 @@ class SharedDatabaseQuotaJob < ApplicationJob
     end
   rescue Services::Ops::Failed, Services::Ops::Timeout => e
     Rails.logger.warn("SharedDatabaseQuotaJob: #{parent.server.host} — #{e.class}: #{e.message}")
+  end
+
+  # Plugin-era rows lack shared_db_name; a blank slug makes wokkud reject the
+  # whole sweep (2026-10-06: superscalper's row stalled every redis tenant).
+  def slug(tenant)
+    DatabaseProvisioner.shared_tenant_slug(tenant)
   end
 
   # ponytail: no plan → 10 MB (the shared_redis_mb_per_tenant column default)
