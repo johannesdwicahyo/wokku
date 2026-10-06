@@ -21,7 +21,7 @@ func TestRedisProvisionTenantSequence(t *testing.T) {
 	}
 	wantFrags := []string{
 		"ACL GETUSER app1",
-		"ACL SETUSER app1 on >s3cret ~app1:* +@all",
+		"ACL SETUSER app1 on >s3cret ~app1:* nocommands +@all -@admin -@dangerous +info",
 		"ACL SAVE",
 	}
 	for i, frag := range wantFrags {
@@ -135,7 +135,7 @@ func TestRedisCheckQuotasOverCapFlipsReadOnly(t *testing.T) {
 	if !got[0].Over || got[0].SizeBytes != 999999999 || !got[0].ReadOnly {
 		t.Fatalf("got %+v", got[0])
 	}
-	if !strings.Contains(redisCmdLine(x.calls[1]), "ACL SETUSER app1 nocommands +@read +@connection +ping") {
+	if !strings.Contains(redisCmdLine(x.calls[1]), "ACL SETUSER app1 nocommands +@read +@connection -@admin -@dangerous +info +del +unlink") {
 		t.Fatalf("flip call wrong: %v", x.calls[1].cmd)
 	}
 }
@@ -150,7 +150,7 @@ func TestRedisCheckQuotasUnderCapRestoresFull(t *testing.T) {
 	if got[0].Over || got[0].ReadOnly {
 		t.Fatalf("got %+v", got[0])
 	}
-	if !strings.Contains(redisCmdLine(x.calls[1]), "ACL SETUSER app1 allcommands") {
+	if !strings.Contains(redisCmdLine(x.calls[1]), "ACL SETUSER app1 nocommands +@all -@admin -@dangerous +info") {
 		t.Fatalf("flip call wrong: %v", x.calls[1].cmd)
 	}
 }

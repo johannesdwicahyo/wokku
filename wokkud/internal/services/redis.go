@@ -47,9 +47,24 @@ func runRedisAdmin(ctx context.Context, x execer, container string, args ...stri
 	return out, nil
 }
 
+// Tenant command grants. The key pattern (~slug:*) only fences commands
+// that NAME keys — keyless ones (FLUSHALL, CONFIG SET, ACL SETUSER, SHUTDOWN,
+// KEYS) reach every tenant on the shared parent, so they must never be
+// granted (the plugin-era +@all did). Each set starts with `nocommands`
+// because ACL SETUSER is additive: re-granting without a reset would keep
+// whatever an earlier flip allowed. +info: client libs (ioredis ready
+// check, BullMQ) call it on connect and it is @dangerous only for leaking
+// server stats.
+var (
+	redisTenantGrants = []string{"nocommands", "+@all", "-@admin", "-@dangerous", "+info"}
+	// Over quota: read-only, but DEL/UNLINK stay so the tenant can free
+	// space and get back under (the next sweep restores redisTenantGrants).
+	redisOverQuotaGrants = []string{"nocommands", "+@read", "+@connection", "-@admin", "-@dangerous", "+info", "+del", "+unlink"}
+)
+
 // redisProvisionTenant creates the tenant ACL user, translated from the
 // plugin's service_create: login on, password, keys scoped to "<slug>:*",
-// full command surface, persisted via ACL SAVE. QuotaMB/MaxConns are
+// redisTenantGrants, persisted via ACL SAVE. QuotaMB/MaxConns are
 // accepted per the op params contract but unused (quota enforcement is
 // redisCheckQuotas's job; redis has no per-user connection limit knob here).
 func redisProvisionTenant(ctx context.Context, x execer, container string, p TenantProvisionParams) (map[string]string, error) {
@@ -66,7 +81,8 @@ func redisProvisionTenant(ctx context.Context, x execer, container string, p Ten
 	if strings.TrimSpace(out) != "" {
 		return nil, fmt.Errorf("tenant %q: %w", p.Slug, errTenantExists)
 	}
-	if _, err := runRedisAdmin(ctx, x, container, "ACL", "SETUSER", p.Slug, "on", ">"+p.Password, "~"+p.Slug+":*", "+@all"); err != nil {
+	args := append([]string{"ACL", "SETUSER", p.Slug, "on", ">" + p.Password, "~" + p.Slug + ":*"}, redisTenantGrants...)
+	if _, err := runRedisAdmin(ctx, x, container, args...); err != nil {
 		return nil, fmt.Errorf("acl setuser: %w", err)
 	}
 	if _, err := runRedisAdmin(ctx, x, container, "ACL", "SAVE"); err != nil {
@@ -120,12 +136,11 @@ func redisCheckQuotas(ctx context.Context, x execer, container string, tenants [
 		}
 
 		over := size > t.CapBytes
-		flip := []string{"ACL", "SETUSER", t.Slug, "allcommands"}
+		grants := redisTenantGrants
 		if over {
-			// `nocommands` clears grants; read + connection + ping restored
-			// (`resetcommands` is NOT valid Redis 7 ACL syntax — plugin note).
-			flip = []string{"ACL", "SETUSER", t.Slug, "nocommands", "+@read", "+@connection", "+ping"}
+			grants = redisOverQuotaGrants
 		}
+		flip := append([]string{"ACL", "SETUSER", t.Slug}, grants...)
 		if _, err := runRedisAdmin(ctx, x, container, flip...); err != nil {
 			return nil, fmt.Errorf("quota flip %q: %w", t.Slug, err)
 		}
