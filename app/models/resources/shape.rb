@@ -55,15 +55,24 @@ module Resources
       @disk_gb   = disk_gb.nil? || disk_gb == 0 ? 0 : self.class.whole(disk_gb)
     end
 
-    def errors
-      GRID.filter_map do |key, g|
+    # mongod's WiredTiger cache floor is 256 MB and the image's first-boot
+    # init runs mongosh beside it; at 128 MB init is OOM-killed before the
+    # root user exists (prod smoke 2026-10-07). wokkud clamps to the same
+    # floor (dedicatedEngineSpec.minMemoryMB) for legacy-tier paths.
+    ENGINE_MIN_MEMORY_MB = { "mongodb" => 512 }.freeze
+
+    def errors(engine: nil)
+      grid = GRID.filter_map do |key, g|
         v = public_send(key)
         next if v && v.between?(g[:min], g[:max]) && (v / g[:step].to_f % 1).zero?
         "#{key.to_s.tr('_', ' ').sub('mb', '(MB)').sub('gb', '(GB)').sub('cpu', 'CPU')} must be #{g[:min]}–#{g[:max]} in steps of #{g[:step]}"
       end
+      floor = ENGINE_MIN_MEMORY_MB[engine.to_s]
+      grid << "#{engine} needs at least #{floor} MB memory" if floor && memory_mb && memory_mb < floor
+      grid
     end
 
-    def valid? = errors.empty?
+    def valid?(engine: nil) = errors(engine: engine).empty?
     def to_h = { cpu: cpu, memory_mb: memory_mb, disk_gb: disk_gb }
     def ==(other) = other.is_a?(Shape) && to_h == other.to_h
     alias eql? ==

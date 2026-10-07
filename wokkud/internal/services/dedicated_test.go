@@ -930,3 +930,23 @@ func TestAdoptMongoDSNCarriesAuthSourceAdmin(t *testing.T) {
 	}
 	t.Fatal("no mongo adopt DSN entry")
 }
+
+// Mongo below its floor is clamped up — 128 MB OOM-killed first-boot init
+// before the root user existed (prod smoke 2026-10-07). Other engines keep
+// whatever was asked.
+func TestSetLimitsClampsMongoToMemoryFloor(t *testing.T) {
+	f := &fakeDocker{}
+	if err := serviceSetLimits(context.Background(), f, "dokku.mongodb.x", "mongodb", 128, 0, 0); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Join(f.calls, " "); !strings.Contains(got, "ContainerUpdate(dokku.mongodb.x,512") {
+		t.Fatalf("mongo 128 MB must clamp to 512: %v", f.calls)
+	}
+	f = &fakeDocker{}
+	if err := serviceSetLimits(context.Background(), f, "dokku.postgres.x", "postgres", 128, 0, 0); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Join(f.calls, " "); !strings.Contains(got, "ContainerUpdate(dokku.postgres.x,128") {
+		t.Fatalf("postgres keeps 128: %v", f.calls)
+	}
+}

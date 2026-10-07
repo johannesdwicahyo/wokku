@@ -101,8 +101,9 @@ module Dashboard
       # ResizeService runs, via the shared Resources::ApplyChange helper.
       if mode == "dedicated" && Wokku.config.resource_builder? && params[:cpu].present?
         shape = Resources::Shape.new(cpu: params[:cpu], memory_mb: params[:memory_mb], disk_gb: params[:disk_gb])
-        unless shape.valid?
-          redirect_to dashboard_addons_path, alert: shape.errors.join(", ")
+        engine = attrs[:service_type]
+        unless shape.valid?(engine: engine)
+          redirect_to dashboard_addons_path, alert: shape.errors(engine: engine).join(", ")
           return
         end
         check = Resources::ApplyChange.check_new_shape(team: app.team, server: server, shape: shape)

@@ -6,7 +6,7 @@ module Resources
     def call(db:, user:, shape:)
       return ApplyChange.disabled unless Wokku.config.resource_builder?
       return ApplyChange::Result.new(ok: false, error: "Shared add-ons can't be resized") if db.shared?
-      return ApplyChange::Result.new(ok: false, error: shape.errors.join(", ")) unless shape.valid?
+      return ApplyChange::Result.new(ok: false, error: shape.errors(engine: db.service_type).join(", ")) unless shape.valid?(engine: db.service_type)
       # A legacy tier-only service (no shape yet) has disk_gb nil — its
       # floor is the tier's storage_gb, not 0, or a first resize could
       # record a disk smaller than what the tier already provisioned

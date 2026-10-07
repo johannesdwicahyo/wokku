@@ -29,6 +29,10 @@ type dedicatedEngineSpec struct {
 	// the data dir (redis requirepass). adminPass is "" on ensure recreates.
 	cmd     []string
 	prepare func(volumePath, adminPass string) error
+	// minMemoryMB clamps any requested limit up (0 = no floor). Mongo's
+	// first-boot init runs mongosh beside mongod; below ~512 MB it is
+	// OOM-killed before the root user exists (prod smoke 2026-10-07).
+	minMemoryMB int
 }
 
 var dedicatedEngines = map[string]dedicatedEngineSpec{
@@ -102,7 +106,8 @@ var dedicatedEngines = map[string]dedicatedEngineSpec{
 		},
 	},
 	"mongodb": {
-		dataPath: "/data/db",
+		dataPath:    "/data/db",
+		minMemoryMB: 512,
 		env: func(pw, db string) []string {
 			e := []string{"MONGO_INITDB_ROOT_USERNAME=root", "MONGO_INITDB_ROOT_PASSWORD=" + pw}
 			if db != "" {
@@ -181,6 +186,9 @@ func serviceCreate(ctx context.Context, d dockerAPI, containerName string, p Cre
 // max_connections (skip if <=0), restarting only when the engine requires
 // it (postgres does, mariadb doesn't).
 func serviceSetLimits(ctx context.Context, d dockerAPI, containerName, serviceType string, memoryMB, maxConns int, cpu float64) error {
+	if floor := dedicatedEngines[serviceType].minMemoryMB; memoryMB > 0 && memoryMB < floor {
+		memoryMB = floor
+	}
 	if memoryMB > 0 || cpu > 0 {
 		if err := d.ContainerUpdate(ctx, containerName, memoryMB, cpu); err != nil {
 			return fmt.Errorf("update memory: %w", err)
