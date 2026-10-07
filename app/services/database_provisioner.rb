@@ -120,6 +120,11 @@ class DatabaseProvisioner
       return
     end
 
+    # Linked apps keep env pointing at this DB (<TYPE>_URL from create, or a
+    # DATABASE_URL a link set) — drop exactly the vars still holding its DSN,
+    # never one since repointed (2026-10-07: a dead MONGODB_URL lingered).
+    release_dedicated_env!(database_service)
+
     # Phase B4: a dedicated service has no dokku plugin container to destroy
     # over SSH — tear it down via a service.destroy op.
     begin
@@ -217,6 +222,13 @@ class DatabaseProvisioner
       row = app_record.env_vars.find_by(key: key)
       row.destroy if row && row.value == value
     end
+  end
+
+  def self.release_dedicated_env!(db)
+    return if db.dsn.blank?
+    values = [ db.dsn, mysql2_url(db.dsn) ]
+    # value is non-deterministically encrypted — compare in Ruby, not SQL.
+    db.app_records.each { |app_record| app_record.env_vars.select { |e| values.include?(e.value) }.each(&:destroy) }
   end
 
   # Rails' mysql2 adapter wants the mysql2:// scheme in DATABASE_URL.
