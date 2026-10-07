@@ -915,3 +915,18 @@ func TestContainerExistsFake(t *testing.T) {
 		t.Fatal("want exists=false for a missing container")
 	}
 }
+
+// Mongo root is created in the admin DB; a DSN naming the app database must
+// say so, or drivers authenticate against the app DB and fail.
+func TestAdoptMongoDSNCarriesAuthSourceAdmin(t *testing.T) {
+	for _, spec := range adoptDSNEnvs {
+		if spec.envKey == "MONGO_INITDB_ROOT_PASSWORD" {
+			got := fmt.Sprintf(spec.format, "pw", "dokku.mongodb.x", "x")
+			if got != "mongodb://root:pw@dokku.mongodb.x:27017/x?authSource=admin" {
+				t.Fatalf("got %q", got)
+			}
+			return
+		}
+	}
+	t.Fatal("no mongo adopt DSN entry")
+}
