@@ -43,11 +43,32 @@ class ServiceOpJanitorJob < ApplicationJob
                           "reaped_pending", "no agent ever claimed it", keys)
     Rails.logger.info("[ServiceOpJanitorJob] reaped #{reaped} wedged #{klass.name} op(s)") if reaped.positive?
 
-    pruned = klass.where(status: %i[succeeded failed])
-                  .where(finished_at: ...PRUNE_AFTER.ago).delete_all
+    prunable = klass.where(status: %i[succeeded failed]).where(finished_at: ...PRUNE_AFTER.ago)
+    prunable = prunable.where.not(id: latest_converge_ids) if klass == LifecycleOp
+    pruned = prunable.delete_all
+    scrub_kept_converge_env! if klass == LifecycleOp
     Rails.logger.info("[ServiceOpJanitorJob] pruned #{pruned} terminal #{klass.name} op(s)") if pruned.positive?
 
     redact_stale_tenant_keys! if klass == ServiceOp
+  end
+
+  # An app's newest succeeded stack.converge is Lifecycle::Ops.converge!'s
+  # image + command fallback — for adopted apps with no wokkud-built deploy,
+  # the ONLY one. Pruning it left batumas/hermes/prom01/umami-inwz with "no
+  # image" on every restart/scale/resize/env change (2026-10-07). Its
+  # services[].command may hold $VARs baked at converge time; that is the
+  # price of a correct restart — per-service env is scrubbed (EnvVar rows
+  # are the env truth; converge re-assembles it every time).
+  def latest_converge_ids
+    LifecycleOp.succeeded.where(kind: "stack.converge")
+               .select("DISTINCT ON (app_record_id) id").order(:app_record_id, created_at: :desc)
+  end
+
+  def scrub_kept_converge_env!
+    LifecycleOp.where(id: latest_converge_ids).where(finished_at: ...PRUNE_AFTER.ago).find_each do |op|
+      scrubbed = LifecycleOp.scrub_service_env(op.params)
+      op.update_columns(params: scrubbed, updated_at: Time.current) if scrubbed != op.params
+    end
   end
 
   # meilisearch tenant.provision RESULTS carry the minted api keys (params

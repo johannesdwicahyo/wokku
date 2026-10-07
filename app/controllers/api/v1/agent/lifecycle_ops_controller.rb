@@ -58,6 +58,7 @@ module Api
 
         def redact_secret_params!
           redacted = @op.params.to_h.map { |k, v| [ k, SECRET_PARAM_KEYS.include?(k.to_s) ? "[REDACTED]" : v ] }.to_h
+          redacted = LifecycleOp.scrub_service_env(redacted)
           @op.update_column(:params, redacted) if redacted != @op.params
         end
 
