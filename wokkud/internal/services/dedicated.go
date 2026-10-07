@@ -312,7 +312,7 @@ var adoptDSNEnvs = []struct {
 	{"POSTGRES_PASSWORD", "postgres://postgres:%s@%s:5432/%s"},
 	{"MARIADB_ROOT_PASSWORD", "mysql://root:%s@%s:3306/%s"},
 	{"MYSQL_ROOT_PASSWORD", "mysql://root:%s@%s:3306/%s"},
-	{"MONGO_INITDB_ROOT_PASSWORD", "mongodb://root:%s@%s:27017/%s"},
+	{"MONGO_INITDB_ROOT_PASSWORD", "mongodb://root:%s@%s:27017/%s?authSource=admin"}, // root lives in admin
 }
 
 // sharedPostgresContainer is the fixed shared-parent container name (spec

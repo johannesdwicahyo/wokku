@@ -335,7 +335,9 @@ class DatabaseProvisioner
     db_name = db.dedicated_db_name
     case @service_type
     when "mariadb", "mysql" then "mysql://root:#{pass}@#{host}:3306/#{db_name}"
-    when "mongodb"          then "mongodb://root:#{pass}@#{host}:27017/#{db_name}"
+    # root is created in the admin DB (MONGO_INITDB_ROOT_*); without
+    # authSource, drivers authenticate against the path database and fail.
+    when "mongodb"          then "mongodb://root:#{pass}@#{host}:27017/#{db_name}?authSource=admin"
     when "redis"            then "redis://:#{pass}@#{host}:6379/0"
     else "postgres://postgres:#{pass}@#{host}:5432/#{db_name}"
     end
