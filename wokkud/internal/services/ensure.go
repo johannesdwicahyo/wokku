@@ -56,6 +56,9 @@ func serviceEnsure(ctx context.Context, d dockerAPI, name string, p CreateParams
 	if name == sharedMariadbContainer {
 		return ensureSharedMariadb(ctx, d)
 	}
+	if name == sharedRedisContainer {
+		return ensureSharedRedis(ctx, d)
+	}
 	return ensureDedicated(ctx, d, name, p)
 }
 
@@ -91,6 +94,56 @@ func ensureDedicated(ctx context.Context, d dockerAPI, name string, p CreatePara
 	// the only thing serviceCreate lacks for the ensure contract.
 	if err := serviceCreate(ctx, d, name, p); err != nil {
 		return EnsureResult{}, fmt.Errorf("recreate %s: %w", name, err)
+	}
+	return EnsureResult{Running: true, Action: "recreated"}, nil
+}
+
+// The adopted dokku-shared-redis parent's run-spec (live inspect 2026-10-07).
+// Tenants + the password-pinned `default` user live ONLY in /data/users.acl,
+// so the recreate MUST load it — the generic dedicated path would boot
+// `redis-server /data/redis.conf`, dropping every tenant and admin auth.
+// --requirepass is omitted on purpose: users.acl's default line governs.
+const (
+	sharedRedisContainer = "dokku-shared-redis"
+	sharedRedisImage     = "redis:7-alpine"
+)
+
+var (
+	sharedRedisDataDir = "/var/lib/dokku/services/shared-redis/_redisdata"
+	sharedRedisCmd     = []string{"redis-server", "--appendonly", "yes", "--aclfile", "/data/users.acl"}
+)
+
+func ensureSharedRedis(ctx context.Context, d dockerAPI) (EnsureResult, error) {
+	if !dataDirPresent(sharedRedisDataDir) {
+		return EnsureResult{}, errDataDirMissing(sharedRedisContainer, sharedRedisDataDir)
+	}
+	if _, err := os.Stat(filepath.Join(sharedRedisDataDir, "users.acl")); err != nil {
+		return EnsureResult{}, fmt.Errorf("%s: users.acl missing in %q — refusing to boot without tenant users (restore it first): %w", sharedRedisContainer, sharedRedisDataDir, err)
+	}
+	if err := d.ImageEnsure(ctx, sharedRedisImage); err != nil {
+		return EnsureResult{}, fmt.Errorf("image: %w", err)
+	}
+	if err := d.ContainerCreate(ctx, ContainerSpec{
+		Name:  sharedRedisContainer,
+		Image: sharedRedisImage,
+		Bind:  sharedRedisDataDir + ":/data",
+		Cmd:   sharedRedisCmd,
+	}); err != nil {
+		return EnsureResult{}, fmt.Errorf("container create: %w", err)
+	}
+	// Same two networks as the live parent: its own bridge, then the overlay
+	// WITH the alias app tasks resolve (REDIS_URL host = container name).
+	if err := d.NetworkConnect(ctx, sharedRedisContainer, sharedRedisContainer); err != nil {
+		return EnsureResult{}, fmt.Errorf("bridge attach: %w", err)
+	}
+	if err := d.NetworkEnsure(ctx, "wokku-services"); err != nil {
+		return EnsureResult{}, fmt.Errorf("overlay ensure: %w", err)
+	}
+	if err := d.NetworkConnect(ctx, "wokku-services", sharedRedisContainer, sharedRedisContainer); err != nil {
+		return EnsureResult{}, fmt.Errorf("overlay attach: %w", err)
+	}
+	if err := d.ContainerStart(ctx, sharedRedisContainer); err != nil {
+		return EnsureResult{}, fmt.Errorf("start: %w", err)
 	}
 	return EnsureResult{Running: true, Action: "recreated"}, nil
 }

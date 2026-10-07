@@ -140,3 +140,63 @@ func TestEnsureMissingWithoutDataRefuses(t *testing.T) {
 		}
 	}
 }
+
+func withSharedRedisDir(t *testing.T) string {
+	t.Helper()
+	orig := sharedRedisDataDir
+	t.Cleanup(func() { sharedRedisDataDir = orig })
+	sharedRedisDataDir = t.TempDir()
+	return sharedRedisDataDir
+}
+
+// The generic dedicated path would boot `redis-server /data/redis.conf` with
+// no --aclfile: every tenant user gone, admin auth gone (2026-10-07 audit).
+func TestEnsureMissingSharedRedisRecreatesWithACLFile(t *testing.T) {
+	base := withSharedRedisDir(t)
+	if err := os.WriteFile(filepath.Join(base, "users.acl"), []byte("user default on #x ~* &* +@all\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	f := &fakeDocker{existing: map[string]bool{}}
+	res, err := serviceEnsure(context.Background(), f, sharedRedisContainer, CreateParams{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Action != "recreated" {
+		t.Fatalf("got %q", res.Action)
+	}
+	joined := strings.Join(f.calls, " | ")
+	for _, want := range []string{
+		"image=redis:7-alpine",
+		"bind=" + base + ":/data",
+		"cmd=[redis-server --appendonly yes --aclfile /data/users.acl]",
+		"NetworkConnect(dokku-shared-redis,dokku-shared-redis",
+		"NetworkConnect(wokku-services,dokku-shared-redis,aliases=dokku-shared-redis)",
+	} {
+		if !strings.Contains(joined, want) {
+			t.Fatalf("missing %q in %v", want, f.calls)
+		}
+	}
+}
+
+func TestEnsureMissingSharedRedisRefusesWithoutACLFile(t *testing.T) {
+	withSharedRedisDir(t) // data dir present, users.acl absent
+	f := &fakeDocker{existing: map[string]bool{}}
+	if _, err := serviceEnsure(context.Background(), f, sharedRedisContainer, CreateParams{}); err == nil {
+		t.Fatal("must refuse: without users.acl the parent boots with no tenants and a passwordless default")
+	}
+	for _, c := range f.calls {
+		if strings.HasPrefix(c, "ContainerCreate") {
+			t.Fatalf("must NOT create: %v", f.calls)
+		}
+	}
+}
+
+func TestEnsureMissingSharedRedisRefusesWithoutDataDir(t *testing.T) {
+	orig := sharedRedisDataDir
+	t.Cleanup(func() { sharedRedisDataDir = orig })
+	sharedRedisDataDir = "/tmp/definitely-not-here-shared-redis-123"
+	f := &fakeDocker{existing: map[string]bool{}}
+	if _, err := serviceEnsure(context.Background(), f, sharedRedisContainer, CreateParams{}); err == nil {
+		t.Fatal("missing data dir must refuse")
+	}
+}
