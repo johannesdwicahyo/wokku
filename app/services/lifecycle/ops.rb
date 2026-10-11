@@ -251,10 +251,16 @@ module Lifecycle
     # zeroes every process in the current formation (converge with allow_empty).
     def self.stop_formation(app) = current_formation(app).transform_values { 0 }
 
+    # Refuses a formation that drops a running web by accident: web omitted,
+    # or web: 0 with nothing else left running (stopping goes through
+    # stop_formation + allow_empty). An explicit web: 0 alongside another
+    # process scaled up is a deliberate worker-only app — allowed (a bot
+    # could never leave web before, 2026-10-09).
     def self.guard_formation!(app, desired)
-      had_web = current_formation(app)["web"].to_i.positive?
-      return unless had_web && (!desired.key?("web") || desired["web"].to_i.zero?)
-      raise EmptyFormation, "formation omits web while app runs web — pass web: N explicitly (formation_would_empty)"
+      return unless current_formation(app)["web"].to_i.positive?
+      return if desired["web"].to_i.positive?
+      return if desired.key?("web") && desired.except("web").values.any? { |c| c.to_i.positive? }
+      raise EmptyFormation, "formation omits web while app runs web — pass web: N, or web: 0 with another process scaled up (formation_would_empty)"
     end
 
     # Per-process resources (spec 2026-09-24): each process type uses its own
