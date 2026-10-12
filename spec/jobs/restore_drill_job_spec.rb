@@ -112,7 +112,10 @@ RSpec.describe RestoreDrillJob do
   end
 
   it "drills a shared tenant as its own '<engine>-shared' row" do
-    tenant = create(:database_service, service_type: "postgres", status: :running, shared: true)
+    parent = create(:database_service, service_type: "postgres", status: :running, tier_name: "shared_host",
+                                       name: "dokku-shared-postgres")
+    tenant = create(:database_service, service_type: "postgres", status: :running, shared: true,
+                                       tier_name: "shared_free", parent_service: parent, server: parent.server)
     create(:backup, database_service: tenant, status: "completed")
     job = described_class.new
     allow(job).to receive(:representative_db).and_return(nil)

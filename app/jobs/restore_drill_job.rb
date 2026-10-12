@@ -219,9 +219,9 @@ class RestoreDrillJob < ApplicationJob
   # latest backup is completed. Excludes shared-host infra rows via NULL-safe
   # IS DISTINCT FROM (the recurring shared_host-parent bug family), and shared
   # TENANTS (see representative_shared_tenant).
-  def representative_db(engine, shared: false)
+  def representative_db(engine)
     DatabaseService
-      .where(service_type: engine, status: :running, shared: shared)
+      .where(service_type: engine, status: :running, shared: false)
       .where("tier_name IS DISTINCT FROM 'shared_host'")
       .order(:created_at, :id)
       .find { |d| d.backups.completed.exists? }
@@ -229,8 +229,12 @@ class RestoreDrillJob < ApplicationJob
 
   # Tenants have no backup schedule (snapshots on request only), so this is
   # often nil and the shared drill skips — same as an engine with no DBs.
+  # (shared: true already excludes the shared_host parents.)
   def representative_shared_tenant(engine)
-    representative_db(engine, shared: true)
+    DatabaseService
+      .where(service_type: engine, status: :running, shared: true)
+      .order(:created_at, :id)
+      .find { |d| d.backups.completed.exists? }
   end
 
   def latest_completed_backup(db)
