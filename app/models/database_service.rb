@@ -206,6 +206,15 @@ class DatabaseService < ApplicationRecord
     backup_policy[:auto_backup]
   end
 
+  # Shared redis tenants are never backed up (2026-10-12): the export is the
+  # whole parent's RDB — every tenant's keys — and redis restore isn't
+  # streamable anyway. Dedicated redis keeps its nightly export.
+  BACKUPS_UNSUPPORTED_MESSAGE = "Shared Redis isn't backed up. Upgrade to a dedicated Redis for backups."
+
+  def backups_unsupported?
+    shared? && service_type == "redis"
+  end
+
   def backup_limit_reached?
     cap = backup_policy[:free_cap]
     return false unless cap # paid tiers have no cap
@@ -218,6 +227,7 @@ class DatabaseService < ApplicationRecord
   # claimable, and the data must still exist to be exported.
   def farewell_snapshot!
     return unless backup_policy[:on_destroy_snapshot]
+    return if backups_unsupported?
     return unless BackupSchedulerJob::BACKUPABLE_TYPES.include?(service_type)
     return unless server&.backup_destination&.enabled?
 

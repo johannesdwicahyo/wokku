@@ -4,7 +4,9 @@
 <div id="backup_actions">
   <% destination = database.server.backup_destination %>
   <% in_flight = database.backups.in_flight.exists? %>
-  <% if in_flight %>
+  <% if database.backups_unsupported? %>
+    <div class="text-xs text-dim"><%= DatabaseService::BACKUPS_UNSUPPORTED_MESSAGE %></div>
+  <% elsif in_flight %>
     <%= render "dashboard/shared/spinning_button",
         label: "Backing up",
         classes: Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>

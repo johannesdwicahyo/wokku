@@ -14,6 +14,11 @@ module Api
         db = DatabaseService.lookup!(params[:database_id])
         authorize db.server, :update?
 
+        if db.backups_unsupported?
+          render json: { error: DatabaseService::BACKUPS_UNSUPPORTED_MESSAGE }, status: :unprocessable_entity
+          return
+        end
+
         if db.backup_limit_reached?
           render json: {
             error: "Free tier limit reached (2 backups). Upgrade to Basic for daily auto-backups with 7-day retention."
