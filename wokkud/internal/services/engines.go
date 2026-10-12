@@ -90,7 +90,6 @@ var sharedTenantEngines = map[string]sharedTenantEngine{
 	// tenants in prod) — their containers now get the friendly refusal below.
 	sharedMariadbContainer:   {provision: mariadbProvisionTenant, destroy: mariadbDestroyTenant, check: mariadbCheckQuotas},
 	"dokku-shared-redis":     {provision: redisProvisionTenant, destroy: redisDestroyTenant, check: redisCheckQuotas},
-	"dokku-shared-memcached": {provision: memcachedProvisionTenant, destroy: memcachedDestroyTenant, check: memcachedCheckQuotas},
 }
 
 // sharedEngineFor resolves the tenant-op handler set for a parent

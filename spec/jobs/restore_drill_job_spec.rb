@@ -111,6 +111,21 @@ RSpec.describe RestoreDrillJob do
     expect(RestoreDrill.passed.count).to eq(1)
   end
 
+  it "drills a shared tenant as its own '<engine>-shared' row" do
+    tenant = create(:database_service, service_type: "postgres", status: :running, shared: true)
+    create(:backup, database_service: tenant, status: "completed")
+    job = described_class.new
+    allow(job).to receive(:representative_db).and_return(nil)
+    allow(job).to receive(:representative_shared_tenant) { |engine| engine == "postgres" ? tenant : nil }
+    allow(job).to receive(:run_drill_restore).and_return(
+      { live_tables: 2, live_rows: 7, restored_tables: 2, restored_rows: 7, rto_ms: 300 }
+    )
+    allow(job).to receive(:destroy_throwaway)
+
+    expect { job.perform }.to change(RestoreDrill.passed, :count).by(1)
+    expect(RestoreDrill.passed.last).to have_attributes(engine: "postgres-shared", database_service: tenant)
+  end
+
   it "skips a drill when the host disk is under pressure" do
     db = create(:database_service, service_type: "postgres", status: :running)
     db.server.update!(vitals: { "disk_used_pct" => 95 })
@@ -144,7 +159,7 @@ RSpec.describe RestoreDrillJob do
       expect(job.send(:representative_db, "postgres")).to eq(real)
     end
 
-    it "excludes shared tenants (the drill restores by container + dedicated db name)" do
+    it "excludes shared tenants (they drill separately via representative_shared_tenant)" do
       parent = create(:database_service, service_type: "mariadb", status: :running, tier_name: "shared_host",
                                          name: "dokku-shared-mariadb", created_at: 6.days.ago)
       tenant = create(:database_service, service_type: "mariadb", status: :running, shared: true,
@@ -154,6 +169,17 @@ RSpec.describe RestoreDrillJob do
       create(:backup, database_service: real, status: "completed")
 
       expect(job.send(:representative_db, "mariadb")).to eq(real)
+    end
+
+    it "representative_shared_tenant picks a backed-up running tenant, never the parent" do
+      parent = create(:database_service, service_type: "mariadb", status: :running, tier_name: "shared_host",
+                                         name: "dokku-shared-mariadb", created_at: 6.days.ago)
+      create(:backup, database_service: parent, status: "completed")
+      tenant = create(:database_service, service_type: "mariadb", status: :running, shared: true,
+                                         tier_name: "shared_free", parent_service: parent, created_at: 5.days.ago)
+      create(:backup, database_service: tenant, status: "completed")
+
+      expect(job.send(:representative_shared_tenant, "mariadb")).to eq(tenant)
     end
 
     it "skips dbs without a completed backup" do
@@ -267,6 +293,13 @@ RSpec.describe RestoreDrillJob do
       it "mariadb: uses the mariadb client and no -e env without a password" do
         cmd = job.send(:count_exec, "mariadb", "c", "drill", nil, "SELECT 1;")
         expect(cmd).to start_with("docker exec c mariadb -uroot -N drill -e")
+      end
+
+      it "mariadb shared parent: reads root's password from the container env, never the argv" do
+        cmd = job.send(:count_exec, "mariadb", "dokku-shared-mariadb", "shop", :container_env, "SELECT 1;")
+        expect(cmd).to start_with("docker exec dokku-shared-mariadb sh -c ")
+        expect(cmd).to include("\\$MARIADB_ROOT_PASSWORD")
+        expect(cmd).to end_with(" sh shop SELECT\\ 1\\;")
       end
 
       it "mongodb: authenticates against admin only when a password is present" do
@@ -442,6 +475,28 @@ RSpec.describe RestoreDrillJob do
       expect(job).to have_received(:wait_for_engine).with(anything, "postgres", "dr-verify-x")
       # decrypted plaintext dump removed on the way out
       expect(File.exist?(dec.path)).to be(false)
+    end
+
+    it "counts a shared tenant live in its PARENT's container, by tenant db name, with the parent's credentials" do
+      parent = create(:database_service, service_type: "mariadb", status: :running, tier_name: "shared_host",
+                                         name: "dokku-shared-mariadb")
+      tenant = create(:database_service, service_type: "mariadb", status: :running, shared: true, tier_name: "shared_free",
+                                         parent_service: parent, server: parent.server, shared_db_name: "shop",
+                                         dsn: "mysql://shop:tenantpw@dokku-shared-mariadb:3306/shop")
+      backup = create(:backup, database_service: tenant, status: "completed")
+      allow(Hosts::Ssh).to receive(:new).and_return(counting_ssh)
+      allow(job).to receive(:latest_completed_backup).and_return(backup)
+      stub_s3_download(backup, "gz")
+      allow(job).to receive(:decrypt_backup) { |_b, path| path }
+      allow(job).to receive(:create_throwaway)
+      allow(job).to receive(:wait_for_engine)
+      allow(job).to receive(:import_dump).and_return(10)
+      expect(job).to receive(:counts)
+        .with(anything, "mariadb", "dokku-shared-mariadb", db: "shop", password: :container_env).and_return([ 1, 1 ])
+      expect(job).to receive(:counts)
+        .with(anything, "mariadb", "dr-verify-s", db: "drill", password: nil).and_return([ 1, 1 ])
+
+      job.send(:run_drill_restore, tenant, "dr-verify-s")
     end
 
     it "routes redis through import_rdb instead of import_dump" do
@@ -650,6 +705,12 @@ RSpec.describe RestoreDrillJob do
 
       without = build(:database_service, dsn: nil)
       expect(job.send(:dsn_password, without)).to be_nil
+    end
+
+    it "live_password: never a tenant's own dsn password" do
+      expect(job.send(:live_password, build(:database_service, service_type: "mariadb", shared: true, dsn: "mysql://t:pw@h/d"))).to eq(:container_env)
+      expect(job.send(:live_password, build(:database_service, service_type: "postgres", shared: true, dsn: "postgres://t:pw@h/d"))).to be_nil
+      expect(job.send(:live_password, build(:database_service, service_type: "postgres", dsn: "postgres://u:pw@h/d"))).to eq("pw")
     end
   end
 

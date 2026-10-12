@@ -18,6 +18,12 @@ class RestoreDrillJob < ApplicationJob
 
   ENGINES = %w[postgres mysql mariadb mongodb redis].freeze
 
+  # Shared tenants drill separately (recorded as "<engine>-shared"): their
+  # dump is one tenant db, restored like a dedicated one. redis is left out —
+  # a shared-redis "tenant" backup is the whole parent's RDB, nothing to
+  # count per tenant.
+  SHARED_ENGINES = %w[postgres mariadb].freeze
+
   # Hard ceiling on the raw Net::SSH channels below (stream_gunzip,
   # upload_and_untar) — these bypass Hosts::Ssh so they don't get its
   # timeout: kwarg for free; a wedged transfer must not pin the job forever.
@@ -111,8 +117,10 @@ class RestoreDrillJob < ApplicationJob
   }.freeze
 
   def perform
-    ENGINES.each do |engine|
-      db = representative_db(engine)
+    targets = ENGINES.map { |e| [ e, representative_db(e) ] } +
+      SHARED_ENGINES.map { |e| [ "#{e}-shared", representative_shared_tenant(e) ] }
+
+    targets.each do |engine, db|
       next unless db
 
       # Skip if the host is already disk-pressured — a drill spins up a whole
@@ -210,14 +218,19 @@ class RestoreDrillJob < ApplicationJob
   # One representative running DB per engine (deterministic: oldest first) whose
   # latest backup is completed. Excludes shared-host infra rows via NULL-safe
   # IS DISTINCT FROM (the recurring shared_host-parent bug family), and shared
-  # TENANTS: the drill counts/boots by container + dedicated_db_name, which
-  # don't describe a tenant inside a parent (shared drill = follow-up).
-  def representative_db(engine)
+  # TENANTS (see representative_shared_tenant).
+  def representative_db(engine, shared: false)
     DatabaseService
-      .where(service_type: engine, status: :running, shared: false)
+      .where(service_type: engine, status: :running, shared: shared)
       .where("tier_name IS DISTINCT FROM 'shared_host'")
       .order(:created_at, :id)
       .find { |d| d.backups.completed.exists? }
+  end
+
+  # Tenants have no backup schedule (snapshots on request only), so this is
+  # often nil and the shared drill skips — same as an engine with no DBs.
+  def representative_shared_tenant(engine)
+    representative_db(engine, shared: true)
   end
 
   def latest_completed_backup(db)
@@ -242,8 +255,11 @@ class RestoreDrillJob < ApplicationJob
     backup = latest_completed_backup(db)
     dest   = backup.backup_destination
 
+    # A tenant's container_name is its parent's, so the live count and the
+    # throwaway's image both come from the parent.
     live_tables, live_rows = counts(ssh, db.service_type, db.container_name,
-                                    db: db.dedicated_db_name, password: dsn_password(db))
+                                    db: db.shared? ? db.shared_db_name : db.dedicated_db_name,
+                                    password: live_password(db))
 
     gz = dec_path = nil
     begin
@@ -379,6 +395,12 @@ class RestoreDrillJob < ApplicationJob
       "docker exec #{c} psql -U postgres -d #{Shellwords.escape(db)} -Atc #{q}"
     when "mysql", "mariadb"
       client = service_type == "mariadb" ? "mariadb" : "mysql"
+      if password == :container_env
+        # Shared-mariadb parent: its root password lives only in the
+        # container env (same read as wokkud's tenant dumpCmd).
+        script = %(MYSQL_PWD="$MARIADB_ROOT_PASSWORD" exec mariadb -uroot -N "$1" -e "$2")
+        return "docker exec #{c} sh -c #{Shellwords.escape(script)} sh #{Shellwords.escape(db)} #{q}"
+      end
       # MYSQL_PWD rides docker exec -e: visible in root's host ps only, never
       # in the container argv — same shape as TerminalSession#db_connect_command.
       env = password.present? ? "-e MYSQL_PWD=#{Shellwords.escape(password)} " : ""
@@ -396,6 +418,13 @@ class RestoreDrillJob < ApplicationJob
 
   def dsn_password(db)
     db.dsn.presence && URI.parse(db.dsn).password
+  end
+
+  # A tenant DSN holds the TENANT's password, not the parent's root one.
+  # Shared postgres counts as -U postgres over the local socket (no password).
+  def live_password(db)
+    return dsn_password(db) unless db.shared?
+    db.service_type == "mariadb" ? :container_env : nil
   end
 
   # Real SSH. Best-effort teardown in the perform `ensure`; a failure here can

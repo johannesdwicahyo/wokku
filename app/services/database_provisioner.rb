@@ -135,13 +135,10 @@ class DatabaseProvisioner
     database_service.destroy
   end
 
-  # Env vars a shared redis/memcached tenant's destroy unsets on linked apps
+  # Env vars a shared redis tenant's destroy unsets on linked apps
   # (the keys Addons::SharedProvisioner#tenant_envs sets). Shared SQL
   # tenants follow the ownership rule in .shared_sql_env instead.
-  SHARED_TENANT_ENV_KEYS = {
-    "redis"     => %w[REDIS_URL],
-    "memcached" => %w[MEMCACHED_URL MEMCACHED_KEY_PREFIX]
-  }.freeze
+  SHARED_TENANT_ENV_KEYS = { "redis" => %w[REDIS_URL] }.freeze
 
   # Tears down a shared tenant (any engine) via a tenant.destroy op on its
   # PARENT row (C1 contract: op.service is the parent container, the slug

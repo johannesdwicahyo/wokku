@@ -42,6 +42,8 @@ RSpec.describe SharedDatabaseQuotaJob, type: :job do
     described_class.new.perform
 
     expect(tenant.reload.over_quota_at).to be_present
+    expect(tenant.live_db_bytes).to eq(999) # the sweep is shared tenants' only size source
+    expect(tenant.live_metrics_at).to be_present
   end
 
   it "clears over_quota_at when the op reports the tenant back under quota" do
@@ -147,6 +149,7 @@ RSpec.describe SharedDatabaseQuotaJob, type: :job do
       described_class.new.perform
 
       expect(broken.reload.over_quota_at).to be_present # not cleared by a failed check
+      expect(broken.live_db_bytes).to be_nil            # nor sized from a meaningless field
       expect(fine.reload.over_quota_at).to be_present
     end
 

@@ -3,8 +3,7 @@
 # Periodic per-server sweep: delegates the actual size measurement +
 # revoke/restore work to wokkud via a typed service.check_quotas op on each
 # shared parent (postgres, mariadb, redis), then mirrors the over-quota state
-# into Rails for billing/notification purposes. Leftover memcached tenants
-# (engine retired 2026-10-06) are not swept.
+# into Rails for billing/notification purposes.
 #
 # Failure of one server's op does NOT kill the sweep — we log and continue.
 # wokkud handles all SQL on the host; Rails owns `over_quota_at` and (if
@@ -47,6 +46,10 @@ class SharedDatabaseQuotaJob < ApplicationJob
         Rails.logger.warn("SharedDatabaseQuotaJob: #{tenant.name} check failed: #{status['error']}")
         next
       end
+
+      # MetricsPollJob skips shared rows, so this sweep is their only size
+      # source (the over-quota banner + dedicated-upgrade cap check read it).
+      tenant.update_columns(live_db_bytes: status["size_bytes"].to_i, live_metrics_at: Time.current)
 
       if status["over"] && tenant.over_quota_at.nil?
         tenant.update!(over_quota_at: Time.current)
