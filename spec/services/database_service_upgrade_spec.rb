@@ -172,6 +172,25 @@ RSpec.describe DatabaseServiceUpgrade do
         .and have_enqueued_job(CreateDedicatedDatabaseJob)
     end
 
+    it "for mariadb with a shared tenant MIGRATES it (not a fresh empty DB) and enforces the size cap" do
+      maria_parent = DatabaseService.create!(server: server, name: "dokku-shared-mariadb", service_type: "mariadb",
+                                             tier_name: "shared_host", shared: false, status: :running)
+      maria = DatabaseService.create!(server: server, parent_service: maria_parent, name: "#{app.name}-mariadb-shared-abc",
+                                      service_type: "mariadb", tier_name: DatabaseProvisioner::SHARED_TIER, shared: true,
+                                      status: :running, creator: user, live_db_bytes: 10.megabytes)
+      AppDatabase.create!(app_record: app, database_service: maria, alias_name: "MARIADB")
+
+      dedicated = nil
+      expect { dedicated = described_class.call(app: app, user: user, engine: "mariadb") }
+        .to have_enqueued_job(UpgradeSharedPgToDedicatedJob)
+      expect(dedicated.upgrade_source).to eq(maria)
+
+      maria.update_column(:live_db_bytes, 2.gigabytes) # over solo_db cap (1024 MB)
+      dedicated.destroy!
+      expect { described_class.call(app: app, user: user, engine: "mariadb") }
+        .to raise_error(UpgradeError::ExceedsDedicatedCap)
+    end
+
     it "size follows box_size, not plan cap" do
       app.update!(box_size: "medium")
       dedicated = described_class.call(app: app, user: user, engine: "mongodb")

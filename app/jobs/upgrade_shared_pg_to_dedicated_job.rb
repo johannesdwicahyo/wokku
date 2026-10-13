@@ -1,9 +1,9 @@
-# Promotes a shared Pg tenant to a dedicated wokkud-managed postgres
-# container. Six-step state machine:
+# Promotes a shared SQL tenant (postgres or mariadb) to a dedicated
+# wokkud-managed container of the same engine. Six-step state machine:
 #   1. provision dedicated container (service.create op via DatabaseProvisioner)
 #   2. export shared tenant (service.export op on the shared parent → R2)
 #   3. import into dedicated (service.import op)
-#   4. flip DATABASE_URL + relink AppDatabase
+#   4. flip the tenant-owned URL(s) + relink AppDatabase
 #   5. restart app (converge waits — no separate health poll needed)
 #   6. schedule DropSharedTenantJob 24h out
 #
@@ -13,15 +13,18 @@ class UpgradeSharedPgToDedicatedJob < ApplicationJob
   queue_as :default
   retry_on StandardError, attempts: 1
 
-  ENV_KEY = "DATABASE_URL".freeze
+  # The engine's own URL key — always flipped. Other keys the shared tenant
+  # set (mariadb's DATABASE_URL) flip only while they still hold its value.
+  PRIMARY_KEY = { "postgres" => "DATABASE_URL", "mariadb" => "MARIADB_URL" }.freeze
+  LINK_ALIAS  = { "postgres" => "DATABASE", "mariadb" => "MARIADB" }.freeze
 
   def perform(dedicated_db_id)
     dedicated = DatabaseService.find(dedicated_db_id)
     shared    = dedicated.upgrade_source
     app       = shared.app_records.first
-    # Captured pre-cutover so rollback can restore the exact URL the app was
+    # Captured pre-cutover so rollback can restore the exact URLs the app was
     # running on (older shared rows may predate the dsn column).
-    original_url = app.runtime_env[ENV_KEY]
+    original_env = app.runtime_env.slice("DATABASE_URL", "MARIADB_URL")
 
     begin
       provision_container!(dedicated)
@@ -44,7 +47,7 @@ class UpgradeSharedPgToDedicatedJob < ApplicationJob
         metadata: { shared_id: shared.id, dedicated_id: dedicated.id }
       )
     rescue => e
-      rollback!(dedicated, shared, app, e, original_url)
+      rollback!(dedicated, shared, app, e, original_env)
       raise
     end
   end
@@ -70,15 +73,21 @@ class UpgradeSharedPgToDedicatedJob < ApplicationJob
     key = "migrations/#{dedicated.id}.gz"
 
     put_url = destination.s3_presigned_put(key)
+    # No password on the export: postgres dumps as the local superuser, mariadb
+    # reads the parent's root password from its container env (wokkud).
     Services::Ops.issue_and_wait!(
       service: shared.parent_service, kind: "service.export",
-      params: { service_type: "postgres", database: shared.shared_db_name, presigned_put_url: put_url }
+      params: { service_type: shared.service_type, database: shared.shared_db_name, presigned_put_url: put_url }
     )
 
+    # dedicated_db_name (underscored) is the database the container was born
+    # with and the DSN points at — dedicated.name (hyphenated) doesn't exist.
     get_url = destination.s3_presigned_url(key)
     Services::Ops.issue_and_wait!(
       service: dedicated, kind: "service.import",
-      params: { service_type: "postgres", database: dedicated.name, presigned_get_url: get_url }
+      params: { service_type: dedicated.service_type, database: dedicated.dedicated_db_name,
+                password: (URI.parse(dedicated.dsn).password if dedicated.service_type == "mariadb"),
+                presigned_get_url: get_url }.compact
     )
   end
 
@@ -86,24 +95,32 @@ class UpgradeSharedPgToDedicatedJob < ApplicationJob
     # Op-created services carry their own control-plane-composed DSN
     # (set by provision_existing! above).
     new_url = dedicated.dsn.presence || raise(UpgradeError::CutoverFailed, "no DSN on dedicated row")
-    Apps::EnvWriter.set(app, { ENV_KEY => new_url })
-    AppDatabase.where(app_record: app, database_service: shared, alias_name: "DATABASE").destroy_all
-    AppDatabase.create!(app_record: app, database_service: dedicated, alias_name: "DATABASE")
+    engine  = dedicated.service_type
+    current = app.runtime_env
+    owned   = DatabaseProvisioner.shared_sql_env(engine, shared.dsn.to_s)
+    env = DatabaseProvisioner.shared_sql_env(engine, new_url)
+      .select { |key, _| key == PRIMARY_KEY[engine] || (current[key].present? && current[key] == owned[key]) }
+    Apps::EnvWriter.set(app, env)
+    AppDatabase.where(app_record: app, database_service: shared, alias_name: LINK_ALIAS[engine]).destroy_all
+    AppDatabase.create!(app_record: app, database_service: dedicated, alias_name: LINK_ALIAS[engine])
     # Converge-rotate blocks until the new tasks serve — the old dokku
     # ps:report health poll is dead (every app is Swarm-run).
     Apps::Restarter.restart(app)
   end
 
-  def rollback!(dedicated, shared, app, error, original_url)
+  def rollback!(dedicated, shared, app, error, original_env)
     status_at_failure = dedicated.status
+    engine = dedicated.service_type
 
     begin
       if status_at_failure == "upgrading_cutover"
-        shared_url = original_url.presence || shared.dsn.presence ||
-                     raise(UpgradeError::RollbackFailed, "no shared #{ENV_KEY} to restore")
-        Apps::EnvWriter.set(app, { ENV_KEY => shared_url })
-        AppDatabase.where(app_record: app, alias_name: "DATABASE").destroy_all
-        AppDatabase.create!(app_record: app, database_service: shared, alias_name: "DATABASE")
+        primary = PRIMARY_KEY[engine]
+        restore = original_env.compact
+        restore[primary] ||= shared.dsn.presence ||
+                             raise(UpgradeError::RollbackFailed, "no shared #{primary} to restore")
+        Apps::EnvWriter.set(app, restore)
+        AppDatabase.where(app_record: app, alias_name: LINK_ALIAS[engine]).destroy_all
+        AppDatabase.create!(app_record: app, database_service: shared, alias_name: LINK_ALIAS[engine])
         Apps::Restarter.restart(app)
       end
 

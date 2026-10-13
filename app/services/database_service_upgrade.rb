@@ -4,14 +4,16 @@ class DatabaseServiceUpgrade
   #   (plan.dedicated_pg_slots) since the locked spec describes a single
   #   "dedicated DB" slot per box, regardless of engine.
   # - Redis is its own engine + own quota pool (plan.dedicated_redis_slots).
-  # - Only postgres has a shared→dedicated migration path. MySQL/Mongo
-  #   are fresh-create only (no shared variant exists).
+  # - postgres/redis must upgrade FROM a shared tenant (data migrated).
+  #   mariadb migrates its shared tenant when the app has one (shared
+  #   MariaDB, 2026-10-06), else fresh-creates. MySQL/Mongo: fresh only.
   # - Size of the dedicated container follows the BOX size, not a plan-
   #   fixed cap. See BOX_SIZE_TO_TIER.
 
   DB_ENGINES_POOL    = %w[postgres mysql mariadb mongodb].freeze
   REDIS_ENGINE       = "redis".freeze
   ENGINES_WITH_SHARED_SOURCE = %w[postgres redis].freeze
+  ENGINES_WITH_OPTIONAL_SHARED_SOURCE = %w[mariadb].freeze
 
   # Map box size → DynoTier/ServiceTier name. Mirrors the seed names in
   # db/seeds.rb. Used to derive the dedicated container's resource specs.
@@ -42,12 +44,13 @@ class DatabaseServiceUpgrade
     plan = @user.current_plan
     raise UpgradeError::PlanNoSlots.new(engine: @engine) if slots_cap(plan).zero?
 
-    # Only postgres and redis have a shared variant to upgrade FROM.
-    # MySQL/Mongo are fresh-create — no shared source row to check.
+    # postgres/redis require a shared tenant to upgrade FROM; mariadb uses
+    # one if present (before 2026-10-13 it was ignored → the app landed on an
+    # EMPTY dedicated DB). MySQL/Mongo are fresh-create — nothing to check.
     shared = nil
-    if ENGINES_WITH_SHARED_SOURCE.include?(@engine)
+    if (ENGINES_WITH_SHARED_SOURCE + ENGINES_WITH_OPTIONAL_SHARED_SOURCE).include?(@engine)
       shared = @app.database_services.where(service_type: @engine, shared: true).first
-      raise UpgradeError::NoSharedTenant.new(engine: @engine) if shared.nil?
+      raise UpgradeError::NoSharedTenant.new(engine: @engine) if shared.nil? && ENGINES_WITH_SHARED_SOURCE.include?(@engine)
     end
 
     User.transaction do
@@ -88,7 +91,7 @@ class DatabaseServiceUpgrade
       end
       dedicated = DatabaseService.create!(attrs)
 
-      job_class.perform_later(dedicated.id)
+      job_class(shared).perform_later(dedicated.id)
       dedicated
     end
   end
@@ -116,11 +119,12 @@ class DatabaseServiceUpgrade
     end
   end
 
-  def job_class
+  def job_class(shared)
     case @engine
     when "postgres"    then UpgradeSharedPgToDedicatedJob
     when "redis"       then UpgradeSharedRedisToDedicatedJob
-    when "mysql", "mariadb", "mongodb" then CreateDedicatedDatabaseJob
+    when "mariadb"     then shared ? UpgradeSharedPgToDedicatedJob : CreateDedicatedDatabaseJob
+    when "mysql", "mongodb" then CreateDedicatedDatabaseJob
     end
   end
 

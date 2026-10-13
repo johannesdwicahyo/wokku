@@ -71,7 +71,10 @@ RSpec.describe UpgradeSharedPgToDedicatedJob do
     expect(ops_log[1][:params][:presigned_put_url]).to be_a(String)
     expect(ops_log[2][:service]).to eq(dedicated)
     expect(ops_log[2][:kind]).to eq("service.import")
-    expect(ops_log[2][:params]).to include(service_type: "postgres", database: dedicated.name)
+    # The container's database is the underscored dedicated_db_name (what the
+    # DSN points at) — the hyphenated row name never exists.
+    expect(ops_log[2][:params]).to include(service_type: "postgres", database: dedicated.dedicated_db_name)
+    expect(ops_log[2][:params]).not_to have_key(:password)
     expect(ops_log[2][:params][:presigned_get_url]).to be_a(String)
   end
 
@@ -143,6 +146,78 @@ RSpec.describe UpgradeSharedPgToDedicatedJob do
         expect(shared.reload.status).to eq("running")
         expect(app.app_databases.where(alias_name: "DATABASE").map(&:database_service_id)).to eq([ shared.id ])
       end
+    end
+  end
+
+  describe "shared mariadb tenant" do
+    let(:maria_parent) { DatabaseService.create!(server: server, name: "dokku-shared-mariadb", service_type: "mariadb", tier_name: "shared_host", shared: false, status: :running, wokkud_managed: true) }
+    let(:shared_dsn) { "mysql://shop_user:tpw@dokku-shared-mariadb:3306/shop" }
+    let!(:maria) do
+      DatabaseService.create!(
+        server: server, parent_service: maria_parent, name: "shop-mariadb-shared-abc",
+        service_type: "mariadb", tier_name: DatabaseProvisioner::SHARED_TIER,
+        shared: true, status: :running, creator: user, shared_db_name: "shop", dsn: shared_dsn
+      ).tap { |db| AppDatabase.create!(app_record: app, database_service: db, alias_name: "MARIADB") }
+    end
+    let!(:maria_dedicated) do
+      DatabaseService.create!(
+        server: server, name: "#{app.name}-mariadb-dedicated", service_type: "mariadb", tier_name: "basic",
+        shared: false, status: :upgrading_provisioning, creator: user, upgrade_source_id: maria.id
+      )
+    end
+
+    before do
+      AppDatabase.where(database_service: shared).destroy_all
+      app.env_vars.find_by(key: "DATABASE_URL").update!(value: DatabaseProvisioner.mysql2_url(shared_dsn))
+      app.env_vars.create!(key: "MARIADB_URL", value: shared_dsn)
+    end
+
+    it "exports the tenant from the parent (no password) and imports into the dedicated db with its root password" do
+      described_class.new.perform(maria_dedicated.id)
+
+      export = ops_log.find { |o| o[:kind] == "service.export" }
+      expect(export).to include(service: maria_parent)
+      expect(export[:params]).to include(service_type: "mariadb", database: "shop")
+      expect(export[:params]).not_to have_key(:password)
+
+      import = ops_log.find { |o| o[:kind] == "service.import" }
+      expect(import).to include(service: maria_dedicated)
+      expect(import[:params]).to include(service_type: "mariadb", database: maria_dedicated.dedicated_db_name,
+                                         password: URI.parse(maria_dedicated.reload.dsn).password)
+    end
+
+    it "flips MARIADB_URL + the tenant-owned DATABASE_URL (mysql2://) and relinks the MARIADB alias" do
+      described_class.new.perform(maria_dedicated.id)
+
+      dsn = maria_dedicated.reload.dsn
+      expect(dsn).to start_with("mysql://root:")
+      expect(app.env_vars.find_by(key: "MARIADB_URL").value).to eq(dsn)
+      expect(app.env_vars.find_by(key: "DATABASE_URL").value).to eq(DatabaseProvisioner.mysql2_url(dsn))
+      expect(app.app_databases.where(alias_name: "MARIADB").map(&:database_service_id)).to eq([ maria_dedicated.id ])
+      expect(maria.reload.status).to eq("pending_destroy")
+    end
+
+    it "leaves a DATABASE_URL the tenant doesn't own (e.g. a postgres DB) alone" do
+      pg_url = "postgres://u:p@elsewhere:5432/app"
+      app.env_vars.find_by(key: "DATABASE_URL").update!(value: pg_url)
+
+      described_class.new.perform(maria_dedicated.id)
+
+      expect(app.env_vars.find_by(key: "DATABASE_URL").value).to eq(pg_url)
+      expect(app.env_vars.find_by(key: "MARIADB_URL").value).to eq(maria_dedicated.reload.dsn)
+    end
+
+    it "restores both URLs and the shared link when the post-cutover restart fails" do
+      calls = 0
+      allow(Apps::Restarter).to receive(:restart) { (calls += 1) == 1 ? raise(Lifecycle::Ops::Timeout, "boom") : nil }
+
+      expect { described_class.new.perform(maria_dedicated.id) }.to raise_error(Lifecycle::Ops::Timeout)
+
+      expect(app.env_vars.find_by(key: "MARIADB_URL").value).to eq(shared_dsn)
+      expect(app.env_vars.find_by(key: "DATABASE_URL").value).to eq(DatabaseProvisioner.mysql2_url(shared_dsn))
+      expect(app.app_databases.where(alias_name: "MARIADB").map(&:database_service_id)).to eq([ maria.id ])
+      expect(DatabaseService.exists?(maria_dedicated.id)).to be(false)
+      expect(maria.reload.status).to eq("running")
     end
   end
 end
