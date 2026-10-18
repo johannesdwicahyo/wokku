@@ -32,6 +32,16 @@ RSpec.describe DatastoreReconcileJob, type: :job do
     described_class.perform_now
   end
 
+  it "skips engines wokkud can't run (legacy dedicated mysql) instead of raising every sweep" do
+    mysql = managed(service_type: "postgres", tier_name: "basic", name: "ghost-mysql")
+    mysql.update_column(:service_type, "mysql") # grandfathered pre-retirement row
+    seen = []
+    allow(Services::Ops).to receive(:issue_and_wait!) { |a| seen << a[:service]; instance_double("ServiceOp", succeeded?: true) }
+    expect(Sentry).not_to receive(:capture_exception) if defined?(Sentry)
+    described_class.perform_now
+    expect(seen).not_to include(mysql)
+  end
+
   it "excludes other shared parents (shared_host that are not dokku-shared-postgres)" do
     memcached_parent = managed(service_type: "memcached", tier_name: "shared_host", name: "dokku-shared-memcached")
     seen = []

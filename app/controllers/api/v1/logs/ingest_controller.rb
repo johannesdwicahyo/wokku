@@ -33,10 +33,12 @@ module Api
           # container name so we don't query 1000 times for 1 batch.
           app_cache = {}
           rows = lines.filter_map do |entry|
-            container = entry["container"].to_s
+            # Postgres text can't hold NUL — one "\0" in an app's output made
+            # insert_all raise and dropped the whole batch (2026-10-19).
+            container = entry["container"].to_s.delete("\u0000")
             next if container.blank?
 
-            line_text = entry["message"].to_s
+            line_text = entry["message"].to_s.delete("\u0000")
             next if line_text.blank?
             line_text = line_text[0, MAX_LINE_BYTES]
 

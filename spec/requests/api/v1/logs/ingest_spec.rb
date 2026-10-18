@@ -26,6 +26,18 @@ RSpec.describe "API::V1::Logs::Ingest", type: :request do
       expect(JSON.parse(response.body)["ingested"]).to eq(2)
     end
 
+    it "strips NUL bytes instead of failing the whole batch (Postgres text can't hold them)" do
+      body = [
+        { ts: "2026-05-25T12:00:00Z", container: "#{app_record.name}.web.1", message: "bin\u0000ary out" },
+        { ts: "2026-05-25T12:00:01Z", container: "#{app_record.name}.web.1", message: "fine" }
+      ].map(&:to_json).join("\n")
+      expect {
+        post "/api/v1/logs/ingest", params: body, headers: headers
+      }.to change { Log.count }.by(2)
+      expect(response).to have_http_status(:ok)
+      expect(Log.where(container: "#{app_record.name}.web.1").pluck(:line)).to include("binary out")
+    end
+
     it "maps container name to the app record" do
       post "/api/v1/logs/ingest", params: ndjson, headers: headers
       log = Log.where(container: "#{app_record.name}.web.1").order(:ts).first

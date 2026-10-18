@@ -40,9 +40,13 @@ class DatastoreReconcileJob < ApplicationJob
   #     (not in dedicatedEngines, no baked-in path). Supervising them is a
   #     follow-up (each needs its own ensure branch); ensuring them now would
   #     fail every sweep. Excluding is explicit; a silent false-success is worse.
+  #   - engines wokkud can't run (no DEFAULT_IMAGES entry: legacy dedicated
+  #     mysql rows, e.g. the Ghost templates' DBs) — ensure raises ArgumentError
+  #     for them on every sweep (2026-10-19: ~100 Sentry events/day), and
+  #     nothing could recreate them anyway.
   # (tier_name is NOT NULL DEFAULT 'basic', so the NOT IN clause is exact.)
   def container_owning_services
-    DatabaseService.where(wokkud_managed: true)
+    DatabaseService.where(wokkud_managed: true, service_type: DatabaseProvisioner::DEFAULT_IMAGES.keys)
                    .where("tier_name NOT IN (?) OR name IN (?)",
                           %w[shared_free shared_host], DatabaseProvisioner::SHARED_PARENTS.values)
   end
