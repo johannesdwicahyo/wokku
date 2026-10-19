@@ -127,6 +127,14 @@ class Server < ApplicationRecord
     rescue StandardError => e
       Rails.logger.warn("record_heartbeat! task fan-out: #{e.class}: #{e.message}")
     end
+
+    # Wake-on-request: Caddy per-host request counters → last_request_at.
+    # Same contract as the blocks above: never break the beat.
+    begin
+      Apps::VisitTracker.call(self, vitals["host_requests"])
+    rescue StandardError => e
+      Rails.logger.warn("record_heartbeat! visit tracking: #{e.class}: #{e.message}")
+    end
   end
 
   # Builds waiting for this host's wokkud to claim them (Phase 4c). The

@@ -1,0 +1,49 @@
+require "rails_helper"
+
+RSpec.describe Apps::VisitTracker do
+  let(:server) { create(:server) }
+  let(:app) { create(:app_record, server: server, name: "shop") }
+
+  before do
+    create(:domain, app_record: app, hostname: "shop.wokku.app")
+    create(:domain, app_record: app, hostname: "shop.example.com")
+  end
+
+  it "treats the first observation as a visit (30-min grace) and stores the total" do
+    freeze_time do
+      described_class.call(server, { "shop.wokku.app" => 5 })
+      expect(app.reload.last_request_at).to eq(Time.current)
+      expect(app.request_count_seen).to eq(5)
+    end
+  end
+
+  it "sums the app's hostnames" do
+    described_class.call(server, { "shop.wokku.app" => 5, "shop.example.com" => 3 })
+    expect(app.reload.request_count_seen).to eq(8)
+  end
+
+  it "does not move last_request_at when the total is unchanged" do
+    app.update_columns(last_request_at: 1.hour.ago, request_count_seen: 8)
+    described_class.call(server, { "shop.wokku.app" => 5, "shop.example.com" => 3 })
+    expect(app.reload.last_request_at).to be < 59.minutes.ago
+  end
+
+  it "counts a changed total (incl. a counter reset after a Caddy restart) as a visit" do
+    app.update_columns(last_request_at: 1.hour.ago, request_count_seen: 800)
+    described_class.call(server, { "shop.wokku.app" => 2 })
+    expect(app.reload.last_request_at).to be > 1.minute.ago
+    expect(app.request_count_seen).to eq(2)
+  end
+
+  it "leaves apps absent from the payload untouched, and ignores junk" do
+    described_class.call(server, { "other.wokku.app" => 1 })
+    expect(app.reload.last_request_at).to be_nil
+    expect { described_class.call(server, nil) }.not_to raise_error
+    expect { described_class.call(server, "x") }.not_to raise_error
+  end
+
+  it "is wired into the heartbeat" do
+    server.record_heartbeat!(vitals: { "docker" => "ok", "host_requests" => { "shop.wokku.app" => 4 } })
+    expect(app.reload.request_count_seen).to eq(4)
+  end
+end
