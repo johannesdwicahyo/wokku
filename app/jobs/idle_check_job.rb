@@ -15,8 +15,9 @@ class IdleCheckJob < ApplicationJob
 
       Lifecycle::Ops.converge!(app, formation: Lifecycle::Ops.stop_formation(app), allow_empty: true)
       app.sleeping!
-    rescue Lifecycle::Ops::Failed, Lifecycle::Ops::Timeout, Lifecycle::Ops::Busy, ArgumentError => e
+    rescue StandardError => e
       Rails.logger.warn("IdleCheckJob: Failed to sleep #{app.name}: #{e.message}")
+      Sentry.capture_exception(e, extra: { app: app.name }) if defined?(Sentry)
     end
   end
 

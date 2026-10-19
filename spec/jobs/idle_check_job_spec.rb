@@ -49,4 +49,21 @@ RSpec.describe IdleCheckJob, type: :job do
     expect(bad.reload).to be_running
     expect(good.reload).to be_sleeping
   end
+
+  it "never sleeps a shaped (paid) allocation even on a sleeping tier" do
+    app = create(:app_record, status: :running, last_request_at: 2.hours.ago)
+    app.dyno_allocations.create!(process_type: "web", count: 1, dyno_tier: free_tier, cpu: 0.5, memory_mb: 512)
+    described_class.perform_now
+    expect(Lifecycle::Ops).not_to have_received(:converge!)
+    expect(app.reload).to be_running
+  end
+
+  it "logs any per-app error and continues the sweep" do
+    bad = app_on(free_tier, last_request_at: 2.hours.ago)
+    good = app_on(free_tier, last_request_at: 2.hours.ago)
+    allow(Lifecycle::Ops).to receive(:converge!).with(bad, anything).and_raise(RuntimeError, "boom")
+    described_class.perform_now
+    expect(bad.reload).to be_running
+    expect(good.reload).to be_sleeping
+  end
 end

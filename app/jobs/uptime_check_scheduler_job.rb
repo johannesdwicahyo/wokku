@@ -16,7 +16,8 @@ class UptimeCheckSchedulerJob < ApplicationJob
     # visit and keep them awake forever (wake-on-request, 2026-10-19).
     candidates = AppRecord.running.joins(:domains).distinct
       .where.not(id: DynoAllocation.joins(:dyno_tier)
-        .where(process_type: "web", cpu: nil, dyno_tiers: { sleeps: true }).select(:app_record_id))
+        .where(process_type: "web", dyno_tiers: { sleeps: true })
+        .where("dyno_allocations.cpu IS NULL OR dyno_allocations.memory_mb IS NULL").select(:app_record_id))
     cap = [ candidates.count * 2, 20 ].max
     return if scheduler_saturated?("UptimeCheckJob", cap: cap)
 
