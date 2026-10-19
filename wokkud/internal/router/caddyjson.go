@@ -61,9 +61,21 @@ func Render(cfg *control.RouterConfig, upstreams map[string][]string, askURL, ce
 							"protocol": "http",
 							"tls":      map[string]any{"server_name": app.Wake.Upstream},
 						},
-						"headers": map[string]any{"request": map[string]any{
-							"set": map[string]any{"Host": []any{app.Wake.Upstream}},
-						}},
+						// Host + X-Forwarded-Host name the control plane so its
+						// HostAuthorization accepts the request. Its HSTS
+						// (includeSubDomains) and cookies must never be served
+						// under the customer's domain — strip them.
+						"headers": map[string]any{
+							"request": map[string]any{
+								"set": map[string]any{
+									"Host":             []any{app.Wake.Upstream},
+									"X-Forwarded-Host": []any{app.Wake.Upstream},
+								},
+							},
+							"response": map[string]any{
+								"delete": []any{"Strict-Transport-Security", "Set-Cookie"},
+							},
+						},
 					},
 				},
 			})

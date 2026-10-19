@@ -499,6 +499,9 @@ func TestRenderWakeRouteProxiesToControlPlane(t *testing.T) {
 		`"dial": "wokku.cloud:443"`,
 		`"server_name": "wokku.cloud"`,
 		`"Host": [`,
+		`"X-Forwarded-Host": [`,
+		`"Strict-Transport-Security"`,
+		`"Set-Cookie"`,
 	} {
 		if !strings.Contains(s, want) {
 			t.Errorf("missing %s in:\n%s", want, s)
@@ -507,6 +510,51 @@ func TestRenderWakeRouteProxiesToControlPlane(t *testing.T) {
 	if strings.Contains(s, "127.0.0.1:30001") {
 		t.Error("sleeping app must not proxy to its (stopped) upstream")
 	}
+	// The control plane's HSTS (includeSubDomains) and cookies must never
+	// be served under a customer's domain.
+	var doc any
+	if err := json.Unmarshal(out, &doc); err != nil {
+		t.Fatal(err)
+	}
+	h := findWakeProxyHeaders(doc)
+	if h == nil {
+		t.Fatal("wake reverse_proxy headers not found")
+	}
+	resp, _ := h["response"].(map[string]any)
+	del, _ := resp["delete"].([]any)
+	if len(del) != 2 || del[0] != "Strict-Transport-Security" || del[1] != "Set-Cookie" {
+		t.Errorf("wake proxy response.delete = %v", resp["delete"])
+	}
+	req, _ := h["request"].(map[string]any)
+	set, _ := req["set"].(map[string]any)
+	if xfh, _ := set["X-Forwarded-Host"].([]any); len(xfh) != 1 || xfh[0] != "wokku.cloud" {
+		t.Errorf("wake proxy X-Forwarded-Host = %v", set["X-Forwarded-Host"])
+	}
+}
+
+// findWakeProxyHeaders returns the headers block of the first reverse_proxy
+// handler whose request rewrites Host (only the wake proxy does).
+func findWakeProxyHeaders(n any) map[string]any {
+	switch v := n.(type) {
+	case map[string]any:
+		if v["handler"] == "reverse_proxy" {
+			if h, ok := v["headers"].(map[string]any); ok {
+				return h
+			}
+		}
+		for _, c := range v {
+			if h := findWakeProxyHeaders(c); h != nil {
+				return h
+			}
+		}
+	case []any:
+		for _, c := range v {
+			if h := findWakeProxyHeaders(c); h != nil {
+				return h
+			}
+		}
+	}
+	return nil
 }
 
 func TestRenderMaintenanceBeatsWake(t *testing.T) {
