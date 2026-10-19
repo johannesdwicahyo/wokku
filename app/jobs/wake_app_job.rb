@@ -7,8 +7,8 @@ class WakeAppJob < ApplicationJob
 
     # Converge back to the app's process_scales formation via wokkud.
     Lifecycle::Ops.converge!(app)
-    app.running!
-  rescue Lifecycle::Ops::Failed, Lifecycle::Ops::Timeout, Lifecycle::Ops::Busy => e
-    Rails.logger.error("WakeAppJob: Failed to wake #{app&.name}: #{e.message}")
+    app.update!(status: :running, last_request_at: Time.current)
+  rescue Lifecycle::Ops::Failed, Lifecycle::Ops::Timeout, Lifecycle::Ops::Busy, Lifecycle::Ops::RunNotAllowed => e
+    Rails.logger.error("WakeAppJob: Failed to wake #{app&.name}: #{e.class}: #{e.message}")
   end
 end

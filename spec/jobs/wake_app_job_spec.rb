@@ -40,4 +40,18 @@ RSpec.describe WakeAppJob, type: :job do
     expect { described_class.perform_now(app.id) }.not_to raise_error
     expect(app.reload).to be_sleeping
   end
+
+  it "stamps last_request_at so the woken app gets a full idle window" do
+    allow(Lifecycle::Ops).to receive(:converge!)
+    freeze_time do
+      described_class.perform_now(app.id)
+      expect(app.reload.last_request_at).to eq(Time.current)
+    end
+  end
+
+  it "logs and leaves the app sleeping when its team may not run apps" do
+    allow(Lifecycle::Ops).to receive(:converge!).and_raise(Lifecycle::Ops::RunNotAllowed.new(app))
+    expect { described_class.perform_now(app.id) }.not_to raise_error
+    expect(app.reload).to be_sleeping
+  end
 end
