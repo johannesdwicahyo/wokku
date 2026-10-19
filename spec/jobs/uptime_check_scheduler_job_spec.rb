@@ -20,4 +20,11 @@ RSpec.describe UptimeCheckSchedulerJob, type: :job do
     allow_any_instance_of(described_class).to receive(:scheduler_saturated?).and_return(true)
     expect { described_class.perform_now }.not_to have_enqueued_job(UptimeCheckJob)
   end
+
+  it "does not probe sleeping-tier apps (probes would keep them awake)" do
+    free = create(:app_record, status: :running)
+    free.dyno_allocations.create!(process_type: "web", count: 1, dyno_tier: create(:dyno_tier, name: "free-u", sleeps: true))
+    create(:domain, app_record: free, hostname: "free-u.wokku.app")
+    expect { described_class.perform_now }.not_to have_enqueued_job(UptimeCheckJob).with(free.id)
+  end
 end

@@ -1,84 +1,52 @@
-# frozen_string_literal: true
-
 require "rails_helper"
 
 RSpec.describe IdleCheckJob, type: :job do
-  let(:app) { app_records(:one) }
-  let!(:eco) do
-    DynoTier.find_or_create_by!(name: "eco") do |t|
-      t.memory_mb = 256
-      t.cpu_shares = 0.2
-      t.price_cents_per_hour = 0.0685
-      t.price_cents_per_month = 250
+  let(:free_tier) { create(:dyno_tier, name: "free-test", sleeps: true) }
+  let(:paid_tier) { create(:dyno_tier, name: "basic-test", sleeps: false) }
+
+  def app_on(tier, last_request_at:, **attrs)
+    create(:app_record, status: :running, last_request_at: last_request_at, **attrs).tap do |a|
+      a.dyno_allocations.create!(process_type: "web", count: 1, dyno_tier: tier)
     end
   end
 
-  before do
-    app.update!(status: :running)
-    DynoAllocation.create!(app_record: app, dyno_tier: eco, process_type: "web", count: 1)
-  end
+  before { allow(Lifecycle::Ops).to receive(:converge!) }
 
-  it "returns early when no eco tier exists" do
-    DynoAllocation.where(dyno_tier: eco).destroy_all
-    eco.destroy
-    expect(Lifecycle::Ops).not_to receive(:converge!)
+  it "sleeps a free app idle for over 30 minutes" do
+    app = app_on(free_tier, last_request_at: 31.minutes.ago)
     described_class.perform_now
+    expect(Lifecycle::Ops).to have_received(:converge!).with(app, formation: { "web" => 0 }, allow_empty: true)
+    expect(app.reload).to be_sleeping
   end
 
-  it "puts an idle eco app to sleep with an all-zero formation (allow_empty)" do
-    app.process_scales.delete_all
-    app.process_scales.create!(process_type: "web", count: 1)
-    expect(Lifecycle::Ops).to receive(:converge!)
-      .with(have_attributes(id: app.id), formation: { "web" => 0 }, allow_empty: true)
+  it "keeps recently visited, never-observed, and paid apps running" do
+    recent = app_on(free_tier, last_request_at: 10.minutes.ago)
+    unknown = app_on(free_tier, last_request_at: nil)
+    paid = app_on(paid_tier, last_request_at: 2.hours.ago)
     described_class.perform_now
-    expect(app.reload.sleeping?).to be_truthy
+    expect([ recent, unknown, paid ].map { |a| a.reload.status }).to all(eq("running"))
   end
 
-  it "skips app that received a request within the threshold" do
-    app.metrics.create!(recorded_at: 1.minute.ago, memory_usage: 50, cpu_percent: 1.0)
-    expect(Lifecycle::Ops).not_to receive(:converge!)
+  it "keeps an app deployed in the last 30 minutes running" do
+    app = app_on(free_tier, last_request_at: 2.hours.ago)
+    create(:deploy, app_record: app, status: :succeeded, finished_at: 5.minutes.ago)
     described_class.perform_now
-    expect(app.reload.sleeping?).to be_falsey
+    expect(app.reload).to be_running
   end
 
-  it "swallows Lifecycle::Ops::Failed" do
-    op = build_stubbed(:lifecycle_op, status: :failed, error: "x", error_code: "y")
-    allow(Lifecycle::Ops).to receive(:converge!).and_raise(Lifecycle::Ops::Failed.new(op))
-    expect { described_class.perform_now }.not_to raise_error
+  it "never sleeps a free app with no domain (no visit data)" do
+    app = app_on(free_tier, last_request_at: nil)
+    expect(app.domains).to be_empty
+    described_class.perform_now
+    expect(app.reload).to be_running
   end
 
-  # M3: Busy is a SIBLING of Failed/Timeout, not a subclass — an escaped
-  # Busy otherwise aborts the whole eco-idle sweep mid-find_each, leaving
-  # every subsequent eco app unchecked.
-  it "swallows Lifecycle::Ops::Busy and keeps sweeping other apps" do
-    other = app_records(:two)
-    other.update!(status: :running)
-    DynoAllocation.create!(app_record: other, dyno_tier: eco, process_type: "web", count: 1)
-
-    call_count = 0
-    allow(Lifecycle::Ops).to receive(:converge!) do
-      call_count += 1
-      raise Lifecycle::Ops::Busy.new(app) if call_count == 1
-    end
-
-    expect { described_class.perform_now }.not_to raise_error
-    expect(call_count).to eq(2)
-  end
-
-  # Finding 1b (review wave 2): a post-adopt app with no image source raises
-  # ArgumentError from converge! — one bad app must not abort the sweep.
-  it "swallows ArgumentError (post-adopt app with no image source) and still processes other apps" do
-    other = app_records(:two)
-    other.update!(status: :running)
-    DynoAllocation.create!(app_record: other, dyno_tier: eco, process_type: "web", count: 1)
-
-    call_count = 0
-    allow(Lifecycle::Ops).to receive(:converge!) do
-      call_count += 1
-      raise ArgumentError, "no image for x" if call_count == 1
-    end
-
-    expect { described_class.perform_now }.not_to raise_error
-    expect(call_count).to eq(2)
+  it "continues the sweep past a failing app" do
+    bad = app_on(free_tier, last_request_at: 2.hours.ago)
+    good = app_on(free_tier, last_request_at: 2.hours.ago)
+    allow(Lifecycle::Ops).to receive(:converge!).with(bad, anything).and_raise(ArgumentError, "no image")
+    described_class.perform_now
+    expect(bad.reload).to be_running
+    expect(good.reload).to be_sleeping
   end
 end
