@@ -74,6 +74,14 @@ module Lifecycle
       # restart/scale would silently revert the task to the image's CMD).
       prev_converge = app.lifecycle_ops.succeeded.where(kind: "stack.converge").order(:created_at).last
       image_ref ||= image_ref_from(prev_converge&.params)
+      # Last resort: the running Swarm service itself (2026-10-19 — 10 adopted
+      # apps had neither source, so suspension couldn't stop ghost-kqgd). The
+      # live argv comes too, so the op this converge records restores the app
+      # with its real command later (a stop's params are the wake's fallback).
+      if image_ref.blank? && !tag_from_local
+        image_ref, live_commands = live_web_spec(app)
+        formation_commands ||= live_commands
+      end
       raise ArgumentError, "no image for #{app.name} — deploy first or pass tag_from_local" if image_ref.blank? && !tag_from_local
       # Adopt push target for the dokku-built local image (spec §3.6): same
       # registry/repo convention as Deploy#wokkud_image_ref, tagged with an
@@ -160,6 +168,25 @@ module Lifecycle
         local_ref: (tag_from_local ? "dokku/#{app.name}:latest" : nil)
       }.compact
       issue!(app, "stack.converge", params, wait: wait, timeout: timeout)
+    end
+
+    # [image_ref, formation_commands] of the app's live web service, read-only
+    # (`docker service inspect`, same transport as Apps::LogReader); [nil, nil]
+    # when there is no service or the host can't be read.
+    # ponytail: web only, and an argv with a whitespace arg (nginx's
+    # "daemon off;") falls back to the image CMD — splitCommand can't carry
+    # it; every such image seen in prod had that argv as its own default.
+    def self.live_web_spec(app)
+      out = Hosts::Ssh.new(app.server).run_raw(
+        "docker service inspect #{Shellwords.escape("wokku-#{app.name}-web")} --format '{{json .Spec.TaskTemplate.ContainerSpec}}'"
+      )
+      spec  = JSON.parse(out)
+      image = spec["Image"].to_s.sub(/@sha256:\h+\z/, "").presence
+      argv  = Array(spec["Command"]) + Array(spec["Args"])
+      commands = { "web" => argv.join(" ") } if image && argv.any? && argv.none? { |a| a.match?(/\s/) }
+      [ image, commands ]
+    rescue Hosts::Ssh::CommandError, Hosts::Ssh::ConnectionError, JSON::ParserError
+      [ nil, nil ]
     end
 
     def self.remove!(app, wait: true) = issue!(app, "stack.remove", {}, wait: wait, timeout: 330)

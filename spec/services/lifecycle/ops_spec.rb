@@ -7,6 +7,9 @@ RSpec.describe Lifecycle::Ops do
 
   before do
     create(:dyno_allocation, app_record: app, dyno_tier: tier, process_type: "web")
+    # The live-spec fallback SSHes to the host; default it to "no service"
+    # so the no-image paths keep their meaning. Exercised in its own describe.
+    allow(described_class).to receive(:live_web_spec).and_return([ nil, nil ])
     # cp env truth (B6 W3): converge assembles env from EnvVar rows.
     app.env_vars.create!(key: "FOO", value: "bar")
   end
@@ -549,6 +552,42 @@ RSpec.describe Lifecycle::Ops do
       op = described_class.issue!(app, "stack.converge", {}, wait: false, timeout: 10)
       expect(op).to be_persisted
       expect(op).to be_pending
+    end
+  end
+
+  describe "live Swarm spec fallback (no deploy, no prior converge)" do
+    before { allow(described_class).to receive(:issue!) { |_a, _k, params, **| params } }
+
+    it "converges from the running service's image and argv, and records them for the next restore" do
+      allow(described_class).to receive(:live_web_spec).and_return([ "127.0.0.1:5000/wokku/x:adopt-1", { "web" => "/start web" } ])
+      params = described_class.converge!(app, formation: { "web" => 0 }, allow_empty: true, wait: false)
+      expect(params[:image_ref]).to eq("127.0.0.1:5000/wokku/x:adopt-1")
+      expect(params[:services]["web"]).to include("image" => "127.0.0.1:5000/wokku/x:adopt-1", "command" => "/start web")
+    end
+
+    it "still raises when the service can't be read either" do
+      expect { described_class.converge!(app, wait: false) }.to raise_error(ArgumentError, /no image/)
+    end
+
+    describe ".live_web_spec" do
+      before { allow(described_class).to receive(:live_web_spec).and_call_original }
+
+      def stub_inspect(json) = allow_any_instance_of(Hosts::Ssh).to receive(:run_raw).and_return(json)
+
+      it "parses image (digest stripped) and joins command + args" do
+        stub_inspect({ "Image" => "reg/x:adopt-1@sha256:abc123", "Command" => [ "docker-php-entrypoint" ], "Args" => [ "/start.sh" ] }.to_json)
+        expect(described_class.live_web_spec(app)).to eq([ "reg/x:adopt-1", { "web" => "docker-php-entrypoint /start.sh" } ])
+      end
+
+      it "leaves commands to the image CMD when an arg holds whitespace" do
+        stub_inspect({ "Image" => "reg/w:1", "Command" => [ "nginx", "-g", "daemon off;" ] }.to_json)
+        expect(described_class.live_web_spec(app)).to eq([ "reg/w:1", nil ])
+      end
+
+      it "returns [nil, nil] when the service doesn't exist" do
+        allow_any_instance_of(Hosts::Ssh).to receive(:run_raw).and_raise(Hosts::Ssh::CommandError.new("no such service"))
+        expect(described_class.live_web_spec(app)).to eq([ nil, nil ])
+      end
     end
   end
 end
