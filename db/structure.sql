@@ -197,7 +197,9 @@ CREATE TABLE public.app_records (
     deploy_locked_at timestamp(6) without time zone,
     https_redirect boolean DEFAULT true NOT NULL,
     maintenance_mode boolean DEFAULT false NOT NULL,
-    volume_disk_gb integer DEFAULT 0 NOT NULL
+    volume_disk_gb integer DEFAULT 0 NOT NULL,
+    last_request_at timestamp(6) without time zone,
+    request_count_seen bigint
 );
 
 
@@ -4368,6 +4370,7 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261019000001'),
 ('20260925000001'),
 ('20260806050000'),
 ('20260801000000'),
