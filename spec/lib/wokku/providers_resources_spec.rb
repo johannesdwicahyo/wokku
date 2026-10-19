@@ -21,6 +21,13 @@ RSpec.describe Wokku::Providers do
     expect(config.resource_builder?).to be(false)
   end
 
+  it "defaults control_plane_host to canonical_domain (self-host: dashboard on the apex)" do
+    config.canonical_domain = "paas.example.com"
+    expect(config.control_plane_host).to eq("paas.example.com")
+    config.control_plane_host = "cp.example.com"
+    expect(config.control_plane_host).to eq("cp.example.com")
+  end
+
   it "null plan enforcer allows any resource change" do
     expect(config.plan_enforcer.allowed?(nil, :resources, from: [], to: [ { shape: shape, instances: 3 } ])).to be(true)
   end

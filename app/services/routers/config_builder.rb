@@ -52,7 +52,7 @@ module Routers
     end
 
     def app_entries
-      @server.app_records.includes(:domains).order(:name).filter_map do |app|
+      @server.app_records.includes(:domains, dyno_allocations: :dyno_tier).order(:name).filter_map do |app|
         domains = app.domains.sort_by(&:hostname)
         next if domains.empty?
         entry = {
@@ -66,11 +66,13 @@ module Routers
         # (appended last) so every other app's JSON — and therefore the
         # config version hash — is byte-identical to before the flag existed.
         entry["maintenance"] = true if app.maintenance_mode?
-        # Wake-on-request: a sleeping app's vhosts proxy to the control
-        # plane's wake endpoint. Appended last and only while sleeping, so
-        # awake apps' JSON (and the version hash) stays byte-identical.
-        if app.sleeping?
-          entry["wake"] = { "upstream" => Wokku.config.canonical_domain, "path" => "/__wake/#{app.wake_token}" }
+        # Wake-on-request: a sleeping free-tier app's vhosts proxy to the
+        # control plane's wake endpoint. Appended last and only while
+        # sleeping, so awake apps' JSON (and the version hash) stays
+        # byte-identical. Billing-suspended paid apps also sit at
+        # status: sleeping — sleeping_tier? keeps them off the wake path.
+        if app.sleeping? && app.sleeping_tier?
+          entry["wake"] = { "upstream" => Wokku.config.control_plane_host, "path" => "/__wake/#{app.wake_token}" }
         end
         entry
       end

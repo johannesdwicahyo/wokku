@@ -170,4 +170,22 @@ RSpec.describe AppRecord do
       expect(volumes.uniq.length).to eq(2), "colliding volume names would silently share one volume"
     end
   end
+
+  describe "#sleeping_tier?" do
+    let(:app) { create(:app_record) }
+
+    it "is true only for an unshaped web allocation on a sleeping tier" do
+      expect(app.sleeping_tier?).to be(false)
+      alloc = app.dyno_allocations.create!(process_type: "web", count: 1, dyno_tier: create(:dyno_tier, sleeps: true))
+      expect(app.reload.sleeping_tier?).to be(true)
+      alloc.update!(cpu: 0.5, memory_mb: 512)
+      expect(app.reload.sleeping_tier?).to be(false)
+    end
+
+    it "ignores non-web allocations and paid tiers" do
+      app.dyno_allocations.create!(process_type: "worker", count: 1, dyno_tier: create(:dyno_tier, sleeps: true))
+      app.dyno_allocations.create!(process_type: "web", count: 1, dyno_tier: create(:dyno_tier, sleeps: false))
+      expect(app.reload.sleeping_tier?).to be(false)
+    end
+  end
 end

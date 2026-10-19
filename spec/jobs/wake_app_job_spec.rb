@@ -5,7 +5,10 @@ require "rails_helper"
 RSpec.describe WakeAppJob, type: :job do
   let(:app) { app_records(:one) }
 
-  before { app.update!(status: :sleeping) }
+  before do
+    app.dyno_allocations.create!(process_type: "web", count: 1, dyno_tier: create(:dyno_tier, sleeps: true))
+    app.update!(status: :sleeping)
+  end
 
   it "wakes a sleeping app and transitions to running" do
     expect(Lifecycle::Ops).to receive(:converge!).with(have_attributes(id: app.id))
@@ -47,6 +50,21 @@ RSpec.describe WakeAppJob, type: :job do
       described_class.perform_now(app.id)
       expect(app.reload.last_request_at).to eq(Time.current)
     end
+  end
+
+  # A billing-suspended paid app also sits at status: sleeping — a visit
+  # must never bring it back up.
+  it "does not wake a sleeping app on a paid tier" do
+    app.dyno_allocations.first.update!(dyno_tier: create(:dyno_tier, sleeps: false))
+    expect(Lifecycle::Ops).not_to receive(:converge!)
+    described_class.perform_now(app.id)
+    expect(app.reload).to be_sleeping
+  end
+
+  it "logs and leaves the app sleeping when it has no image source" do
+    allow(Lifecycle::Ops).to receive(:converge!).and_raise(ArgumentError, "no image source")
+    expect { described_class.perform_now(app.id) }.not_to raise_error
+    expect(app.reload).to be_sleeping
   end
 
   it "logs and leaves the app sleeping when its team may not run apps" do

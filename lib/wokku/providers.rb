@@ -25,7 +25,7 @@ module Wokku
     end
 
     attr_accessor :tls, :billing
-    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder, :host_ssh_user
+    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder, :host_ssh_user, :control_plane_host
 
     def plan_enforcer
       @plan_enforcer ||= NullPlanEnforcer.new
@@ -78,6 +78,14 @@ module Wokku
     # reaches the few root-only ops through sudo'd /usr/local/sbin helpers.
     def host_ssh_user
       @host_ssh_user.presence || "root"
+    end
+
+    # Host the dashboard answers on — the wake proxy's upstream. Self-host
+    # serves the dashboard on the canonical apex; the cloud markets apps on
+    # wokku.app but its control plane only answers on wokku.cloud. No memo,
+    # same reason as owned_domains.
+    def control_plane_host
+      @control_plane_host.presence || canonical_domain
     end
 
     def owned_domains
