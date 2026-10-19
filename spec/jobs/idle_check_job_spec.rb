@@ -58,6 +58,29 @@ RSpec.describe IdleCheckJob, type: :job do
     expect(app.reload).to be_running
   end
 
+  # A suspended owner's slept free app could never wake (converge raises
+  # RunNotAllowed) — leave it up, as before wake-on-request.
+  it "never sleeps an app whose team may not run apps" do
+    app = app_on(free_tier, last_request_at: 2.hours.ago)
+    allow_any_instance_of(AppRecord).to receive(:run_allowed?).and_return(false)
+    described_class.perform_now
+    expect(Lifecycle::Ops).not_to have_received(:converge!)
+    expect(app.reload).to be_running
+  end
+
+  # A visit (or a user stop) landing during a long serial sweep must win.
+  it "re-checks idleness right before sleeping each app" do
+    first = app_on(free_tier, last_request_at: 3.hours.ago)
+    second = app_on(free_tier, last_request_at: 2.hours.ago)
+    allow(Lifecycle::Ops).to receive(:converge!) do |a, **|
+      other = a.id == first.id ? second : first
+      other.update_column(:last_request_at, Time.current)
+    end
+    described_class.perform_now
+    expect(Lifecycle::Ops).to have_received(:converge!).once
+    expect([ first, second ].map { |a| a.reload.status }.sort).to eq(%w[running sleeping])
+  end
+
   it "logs any per-app error and continues the sweep" do
     bad = app_on(free_tier, last_request_at: 2.hours.ago)
     good = app_on(free_tier, last_request_at: 2.hours.ago)

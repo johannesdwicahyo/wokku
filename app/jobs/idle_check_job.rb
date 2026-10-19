@@ -10,8 +10,13 @@ class IdleCheckJob < ApplicationJob
   def perform
     AppRecord.running.where(last_request_at: ...IDLE_THRESHOLD.ago)
       .includes(dyno_allocations: :dyno_tier).find_each do |app|
-      next unless app.dyno_allocations.find { |a| a.process_type == "web" }&.sleeping?
+      next unless app.sleeping_tier?
+      # A suspended owner's slept app could never wake (RunNotAllowed).
+      next unless app.run_allowed?
       next if recently_deployed?(app)
+      # Re-check right before stopping: a visit or a user stop landing
+      # during a long serial sweep must win over the stale batch row.
+      next unless AppRecord.running.where(id: app.id, last_request_at: ...IDLE_THRESHOLD.ago).exists?
 
       Lifecycle::Ops.converge!(app, formation: Lifecycle::Ops.stop_formation(app), allow_empty: true)
       app.sleeping!
