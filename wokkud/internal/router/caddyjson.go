@@ -45,6 +45,30 @@ func Render(cfg *control.RouterConfig, upstreams map[string][]string, askURL, ce
 			})
 			continue
 		}
+		// Wake (2026-10-19): a sleeping app's vhosts proxy to the control
+		// plane's wake endpoint (URI rewritten to the signed path), which
+		// starts the app and answers a self-refreshing 503. Checked before
+		// upstream resolution — the app's own upstream is stopped.
+		if app.Wake != nil && app.Wake.Upstream != "" && app.Wake.Path != "" {
+			routes = append(routes, map[string]any{
+				"match": []any{map[string]any{"host": hosts}},
+				"handle": []any{
+					map[string]any{"handler": "rewrite", "uri": app.Wake.Path},
+					map[string]any{
+						"handler":   "reverse_proxy",
+						"upstreams": []any{map[string]any{"dial": app.Wake.Upstream + ":443"}},
+						"transport": map[string]any{
+							"protocol": "http",
+							"tls":      map[string]any{"server_name": app.Wake.Upstream},
+						},
+						"headers": map[string]any{"request": map[string]any{
+							"set": map[string]any{"Host": []any{app.Wake.Upstream}},
+						}},
+					},
+				},
+			})
+			continue
+		}
 		var dials []string
 		hasLocal := false
 		for _, u := range app.Upstreams {
@@ -117,6 +141,10 @@ func Render(cfg *control.RouterConfig, upstreams map[string][]string, askURL, ce
 		"admin": map[string]any{"listen": "127.0.0.1:2019"},
 		"apps": map[string]any{
 			"http": map[string]any{
+				// Per-host request counters (wake-on-request idle detection).
+				// Unconfigured Host headers aggregate under "_other", so a
+				// junk Host can't grow cardinality.
+				"metrics":    map[string]any{"per_host": true},
 				"https_port": httpsPort,
 				"http_port":  httpPort,
 				"servers": map[string]any{

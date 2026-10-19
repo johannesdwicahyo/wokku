@@ -386,6 +386,9 @@ const renderGolden = `{
     "http": {
       "http_port": 8080,
       "https_port": 8443,
+      "metrics": {
+        "per_host": true
+      },
       "servers": {
         "wokku": {
           "listen": [
@@ -476,5 +479,51 @@ func TestRenderDisablesHTTP3(t *testing.T) {
 	}
 	if len(protos) != 2 || protos[0] != "h1" || protos[1] != "h2" {
 		t.Fatalf("protocols = %v, want [h1 h2]", protos)
+	}
+}
+
+func TestRenderWakeRouteProxiesToControlPlane(t *testing.T) {
+	cfg := &control.RouterConfig{ListenMode: "live", Apps: []control.RouterApp{{
+		Name:      "sleepy",
+		Domains:   []control.RouterDomain{{Hostname: "sleepy.wokku.app", TLS: "wildcard"}},
+		Upstreams: []control.RouterUpstream{{Dial: "127.0.0.1:30001"}},
+		Wake:      &control.RouterWake{Upstream: "wokku.cloud", Path: "/__wake/tok"},
+	}}}
+	out, err := Render(cfg, nil, "https://cp/ask", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(out)
+	for _, want := range []string{
+		`"uri": "/__wake/tok"`,
+		`"dial": "wokku.cloud:443"`,
+		`"server_name": "wokku.cloud"`,
+		`"Host": [`,
+	} {
+		if !strings.Contains(s, want) {
+			t.Errorf("missing %s in:\n%s", want, s)
+		}
+	}
+	if strings.Contains(s, "127.0.0.1:30001") {
+		t.Error("sleeping app must not proxy to its (stopped) upstream")
+	}
+}
+
+func TestRenderMaintenanceBeatsWake(t *testing.T) {
+	cfg := &control.RouterConfig{Apps: []control.RouterApp{{
+		Name: "m", Maintenance: true,
+		Domains: []control.RouterDomain{{Hostname: "m.wokku.app"}},
+		Wake:    &control.RouterWake{Upstream: "wokku.cloud", Path: "/__wake/t"},
+	}}}
+	out, _ := Render(cfg, nil, "https://cp/ask", "")
+	if strings.Contains(string(out), "/__wake/") {
+		t.Error("maintenance must win over wake")
+	}
+}
+
+func TestRenderEnablesPerHostMetrics(t *testing.T) {
+	out, _ := Render(&control.RouterConfig{}, nil, "https://cp/ask", "")
+	if !strings.Contains(string(out), `"per_host": true`) {
+		t.Errorf("per-host metrics not enabled:\n%s", out)
 	}
 }

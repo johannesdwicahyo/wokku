@@ -130,6 +130,15 @@ type RouterApp struct {
 	// absent decodes to false, and agents older than this field ignore it
 	// (plain json.Unmarshal — unknown fields are dropped). Safe both ways.
 	Maintenance bool `json:"maintenance,omitempty"`
+	// Wake (2026-10-19): set only for a sleeping app — its vhosts proxy to
+	// the control plane's wake endpoint instead of the stopped upstream.
+	// Absent for every other app (and ignored by older agents).
+	Wake *RouterWake `json:"wake,omitempty"`
+}
+
+type RouterWake struct {
+	Upstream string `json:"upstream"` // control-plane host, e.g. "wokku.cloud"
+	Path     string `json:"path"`     // "/__wake/<signed token>"
 }
 
 type RouterDomain struct {
