@@ -133,6 +133,7 @@ func beat(ctx context.Context, mon *dockermon.Monitor, client *control.Client, b
 		v.Swarm = mon.SwarmStatus(ctx)
 	}
 	v.VolumeUsage = volumeCache.Get(time.Now())
+	v.HostRequests = rtr.HostRequests(ctx)
 	resp, err := client.PostHeartbeat(v, lc.TaskStates(ctx))
 	if err != nil {
 		log.Printf("wokkud: heartbeat: %v", err)

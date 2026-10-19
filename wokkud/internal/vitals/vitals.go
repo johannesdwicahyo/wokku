@@ -26,6 +26,7 @@ type Vitals struct {
 	RouterConfigApplied string           `json:"router_config_applied,omitempty"` // sha of the last successfully applied router config
 	Swarm               string           `json:"swarm,omitempty"`                 // raw Docker Swarm.LocalNodeState, e.g. "active" — B5a adopt guard
 	VolumeUsage         map[string]int64 `json:"volume_usage,omitempty"`          // per-resource data dir → bytes, hourly (Task 9)
+	HostRequests        map[string]int64 `json:"host_requests,omitempty"`         // hostname → cumulative Caddy request count (wake-on-request)
 }
 
 // Collect gathers live vitals. dockerStatus is injected by the caller
