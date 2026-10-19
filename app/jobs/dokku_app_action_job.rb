@@ -53,6 +53,9 @@ class DokkuAppActionJob < ApplicationJob
     # state + a toast to subscribed pages.
     update_attrs = { pending_action: nil }
     update_attrs[:status] = new_status if new_status
+    # A user-started app gets a fresh idle window; otherwise an idle-slept
+    # app is re-slept by the next IdleCheckJob sweep.
+    update_attrs[:last_request_at] = Time.current if new_status == :running
     app.update(update_attrs)
 
     if success

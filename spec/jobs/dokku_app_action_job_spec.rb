@@ -39,6 +39,25 @@ RSpec.describe DokkuAppActionJob, type: :job do
     expect(app.reload.status).to eq("running")
   end
 
+  # An idle-slept app started/restarted from the dashboard gets a fresh
+  # idle window instead of being re-slept by the next sweep.
+  %w[start restart].each do |action|
+    it "#{action} stamps last_request_at" do
+      app.update!(last_request_at: 2.hours.ago)
+      allow(Lifecycle::Ops).to receive(:converge!)
+      freeze_time do
+        described_class.new.perform(app.id, action)
+        expect(app.reload.last_request_at).to eq(Time.current)
+      end
+    end
+  end
+
+  it "stop leaves last_request_at untouched" do
+    app.update!(last_request_at: 2.hours.ago.change(usec: 0))
+    allow(Lifecycle::Ops).to receive(:converge!)
+    expect { described_class.new.perform(app.id, "stop") }.not_to change { app.reload.last_request_at }
+  end
+
   it "start failure via Lifecycle::Ops::Failed marks app crashed" do
     app.update!(status: :stopped)
     op = build_stubbed(:lifecycle_op, status: :failed, error: "no route", error_code: "connect_failed")
