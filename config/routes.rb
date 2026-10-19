@@ -207,6 +207,9 @@ Rails.application.routes.draw do
 
   get "up" => "rails/health#show", as: :rails_health_check
 
+  # Wake-on-request: sleeping apps' vhosts are proxied here by Caddy.
+  match "/__wake/:token", to: "wake#show", via: %i[get post head], as: :wake
+
   # ── REST API (product surface; the cloud host adds billing/dyno/tunnel
   # endpoints in its own config/routes/api.rb) ─────────────────────────────
   namespace :api do

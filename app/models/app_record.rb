@@ -153,6 +153,15 @@ class AppRecord < ApplicationRecord
 
   public
 
+  # Wake-on-request: unguessable, non-expiring token naming this app in the
+  # /__wake/<token> path its sleeping vhosts proxy to.
+  def wake_token = Rails.application.message_verifier(:wake).generate(id, purpose: :wake)
+
+  def self.find_by_wake_token(token)
+    id = Rails.application.message_verifier(:wake).verified(token.to_s, purpose: :wake)
+    id && find_by(id: id)
+  end
+
   # Live-update the action button area on the show page when an
   # async action (restart/stop/start) starts or finishes. The button
   # frame is rendered server-side and replaced via Turbo Stream from

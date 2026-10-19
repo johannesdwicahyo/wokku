@@ -66,6 +66,12 @@ module Routers
         # (appended last) so every other app's JSON — and therefore the
         # config version hash — is byte-identical to before the flag existed.
         entry["maintenance"] = true if app.maintenance_mode?
+        # Wake-on-request: a sleeping app's vhosts proxy to the control
+        # plane's wake endpoint. Appended last and only while sleeping, so
+        # awake apps' JSON (and the version hash) stays byte-identical.
+        if app.sleeping?
+          entry["wake"] = { "upstream" => Wokku.config.canonical_domain, "path" => "/__wake/#{app.wake_token}" }
+        end
         entry
       end
     end
