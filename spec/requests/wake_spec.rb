@@ -2,10 +2,11 @@ require "rails_helper"
 
 RSpec.describe "Wake endpoint", type: :request do
   include ActiveJob::TestHelper
-  let(:app) { create(:app_record, status: :sleeping) }
-  let(:path) { "/__wake/#{app.wake_token}" }
+  let(:sleeper) { create(:app_record, status: :sleeping) }
+  let(:path) { "/__wake/#{sleeper.wake_token}" }
 
-  before { Rails.cache.clear }
+  # test env uses :null_store; the burst dedupe needs a real one
+  before { allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new) }
 
   it "404s an invalid token" do
     get "/__wake/garbage"
@@ -15,11 +16,11 @@ RSpec.describe "Wake endpoint", type: :request do
   it "enqueues one wake for a burst of requests and answers a refreshing 503 page" do
     expect {
       3.times { get path, headers: { "Accept" => "text/html" } }
-    }.to have_enqueued_job(WakeAppJob).with(app.id).exactly(:once)
+    }.to have_enqueued_job(WakeAppJob).with(sleeper.id).exactly(:once)
     expect(response).to have_http_status(:service_unavailable)
     expect(response.headers["Retry-After"]).to eq("5")
     expect(response.headers["Cache-Control"]).to include("no-store")
-    expect(response.body).to include('http-equiv="refresh"', app.name)
+    expect(response.body).to include('http-equiv="refresh"', sleeper.name)
   end
 
   it "answers plain text to API clients" do
@@ -34,14 +35,14 @@ RSpec.describe "Wake endpoint", type: :request do
   end
 
   it "answers the waking page without enqueueing once the app is running" do
-    app.update!(status: :running)
+    sleeper.update!(status: :running)
     expect { get path }.not_to have_enqueued_job(WakeAppJob)
     expect(response).to have_http_status(:service_unavailable)
   end
 
   it "404s a token for a deleted app" do
-    token = app.wake_token
-    app.destroy!
+    token = sleeper.wake_token
+    sleeper.destroy!
     get "/__wake/#{token}"
     expect(response).to have_http_status(:not_found)
   end
