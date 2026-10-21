@@ -2821,12 +2821,6 @@ paths:
                 properties:
                   error:
                     type: string
-        '403':
-          description: caller is not a system admin
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
         '404':
           description: unknown database, or one the caller's teams cannot see
           content:
