@@ -23,7 +23,9 @@ RSpec.describe "API::V1::ChecksController", type: :request do
   it "update refuses with the Swarm-managed message" do
     put "/api/v1/apps/#{app_record.id}/checks", params: { enabled: "true" }, headers: headers
     expect(response).to have_http_status(:unprocessable_entity)
-    expect(JSON.parse(response.body)["message"]).to match(/Swarm runtime/)
+    body = JSON.parse(response.body)
+    expect(body["error"]).to match(/Swarm runtime/)
+    expect(body["error_code"]).to eq("validation_failed")
   end
 
   it "show requires a token" do

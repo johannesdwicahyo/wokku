@@ -16,7 +16,7 @@ module Api
 
       def update
         authorize @app_record, :update?
-        render json: { message: REFUSAL_MESSAGE }, status: :unprocessable_entity
+        render_api_error(:validation_failed, message: REFUSAL_MESSAGE)
       end
 
       private

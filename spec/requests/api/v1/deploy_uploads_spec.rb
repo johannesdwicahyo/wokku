@@ -7,7 +7,7 @@ RSpec.describe "POST /api/v1/apps/:app_id/deploys/uploads", type: :request do
   let(:app_record) { app_records(:one) }
   let(:token) { api_v1_token_for(user) }
   let(:headers) { { "Authorization" => "Bearer #{token}", "Content-Type" => "application/json" } }
-  let(:store) { instance_double(Wokku::Providers::LocalBackupStore) }
+  let(:store) { instance_double(DeployArchiveStore) }
 
   before do
     allow(Wokku.config).to receive(:backup_store).and_return(store)
@@ -18,12 +18,12 @@ RSpec.describe "POST /api/v1/apps/:app_id/deploys/uploads", type: :request do
     expect(response).to have_http_status(:unauthorized)
   end
 
-  it "returns 403 for a non-team member" do
+  it "returns 404 for a non-team member" do
     other_user = users(:two)
     other_token = api_v1_token_for(other_user)
     post "/api/v1/apps/#{app_record.id}/deploys/uploads",
          headers: { "Authorization" => "Bearer #{other_token}" }
-    expect(response).to have_http_status(:forbidden)
+    expect(response).to have_http_status(:not_found)
   end
 
   context "when the store is configured" do
