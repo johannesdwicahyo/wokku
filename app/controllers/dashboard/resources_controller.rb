@@ -68,13 +68,17 @@ module Dashboard
 
     def destroy
       authorize @app, :update?
-
-      db = DatabaseService.find(params[:addon_id])
+      # Only an add-on attached to this app, and only a team admin may destroy
+      # it — same rule as DELETE /api/v1/apps/:id/addons/:id.
+      db = @app.database_services.find(params[:addon_id])
+      authorize db, :destroy?
 
       DatabaseProvisioner.destroy!(database_service: db)
       track("addon.destroyed", target: db)
 
       redirect_to dashboard_app_resources_path(@app), notice: "#{db.name} removed."
+    rescue ActiveRecord::RecordNotFound, Pundit::NotAuthorizedError
+      raise # ApplicationController renders 404 / not-authorized, not the generic alert
     rescue => e
       redirect_to dashboard_app_resources_path(@app), alert: "Failed to remove add-on: #{e.message}"
     end
@@ -100,7 +104,7 @@ module Dashboard
     end
 
     def set_app
-      @app = AppRecord.find(params[:app_id])
+      @app = policy_scope(AppRecord).find(params[:app_id])
     end
 
     def addon_types

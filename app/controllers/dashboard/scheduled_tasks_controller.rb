@@ -21,6 +21,7 @@ module Dashboard
     end
 
     def create
+      authorize @app, :update? # cron runs commands in the app — member+, as the API
       @task = ::Apps::Cron::TaskCreator.new(@app).call!(
         command: task_params[:command].to_s,
         schedule: task_params[:schedule].to_s,
@@ -36,6 +37,7 @@ module Dashboard
     end
 
     def destroy
+      authorize @app, :update?
       @task = @app.scheduled_tasks.find(params[:id])
       ::Apps::Cron::TaskDestroyer.new(@app).call!(@task)
       redirect_to dashboard_app_scheduled_tasks_path(@app), notice: "Scheduled task removed."

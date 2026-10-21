@@ -12,7 +12,7 @@ module Api
 
       def create
         db = policy_scope(DatabaseService).lookup!(params[:database_id])
-        authorize db.server, :update?
+        authorize db, :update? # same rule as the dashboard (and #restore below)
 
         if db.backups_unsupported?
           render json: { error: DatabaseService::BACKUPS_UNSUPPORTED_MESSAGE }, status: :unprocessable_entity

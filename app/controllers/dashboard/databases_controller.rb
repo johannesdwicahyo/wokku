@@ -229,6 +229,7 @@ module Dashboard
       # Scope app lookup to the user's own apps — `@database.server`
       # has every tenant's apps. Same leak we fixed on the show page.
       app = policy_scope(AppRecord).where(server_id: @database.server_id).find(params[:app_id])
+      authorize app, :update? # writes the app's env + restarts it — viewers can't
 
       # W7 Phase 2: linking is a control-plane write, not a dokku command —
       # an AppDatabase row plus an EnvWriter env write, exactly the stanza
@@ -244,6 +245,8 @@ module Dashboard
       restart_for_env(app)
 
       redirect_to dashboard_addon_path(@database), notice: "Linked #{app.name} to #{@database.name}."
+    rescue ActiveRecord::RecordNotFound, Pundit::NotAuthorizedError
+      raise # ApplicationController renders 404 / not-authorized, not the generic alert
     rescue => e
       redirect_to dashboard_addon_path(@database), alert: "Link failed: #{e.message}"
     end
@@ -251,7 +254,8 @@ module Dashboard
     def unlink
       @database = DatabaseService.find(params[:id])
       authorize @database
-      app = @database.app_records.find(params[:app_id])
+      app = policy_scope(AppRecord).where(id: @database.app_records.select(:id)).find(params[:app_id])
+      authorize app, :update? # unsets the app's env + restarts it — viewers can't
 
       # W7 Phase 2: mirror of #link — unset the alias'd URL env var (same
       # naming DatabaseProvisioner's destroy path unsets) and drop the row.
@@ -263,6 +267,8 @@ module Dashboard
       restart_for_env(app)
 
       redirect_to dashboard_addon_path(@database), notice: "Unlinked #{app.name} from #{@database.name}."
+    rescue ActiveRecord::RecordNotFound, Pundit::NotAuthorizedError
+      raise # ApplicationController renders 404 / not-authorized, not the generic alert
     rescue => e
       redirect_to dashboard_addon_path(@database), alert: "Unlink failed: #{e.message}"
     end

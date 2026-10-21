@@ -2,13 +2,11 @@
 
 require "openapi_helper"
 
-# Backup writes authorize the database's *server* (ServerPolicy#update?), which
-# only a system admin passes — so success cases run as the admin fixture and
-# the 403 case as a regular team member.
+# Backup writes authorize the database (DatabaseServicePolicy#update?): any
+# member of a team that can see it — success cases run as a regular team user.
 RSpec.describe "API v1 database backups", type: :request do
-  let(:admin) { users(:admin) }
   let(:member) { users(:one) }
-  let(:Authorization) { "Bearer #{api_v1_token_for(admin)}" }
+  let(:Authorization) { member_auth }
   let(:database) { database_services(:one) }
   let(:foreign_db) { database_services(:two) }
   let(:member_auth) { "Bearer #{api_v1_token_for(member)}" }
@@ -50,7 +48,6 @@ RSpec.describe "API v1 database backups", type: :request do
       end
 
       response "404", "unknown database, or one the caller's teams cannot see" do
-        let(:Authorization) { member_auth }
         let(:database_id) { foreign_db.id }
         schema error
         run_test!
@@ -81,14 +78,7 @@ RSpec.describe "API v1 database backups", type: :request do
         run_test!
       end
 
-      response "403", "caller is not a system admin" do
-        let(:Authorization) { member_auth }
-        schema error
-        run_test!
-      end
-
       response "404", "unknown database, or one the caller's teams cannot see" do
-        let(:Authorization) { member_auth }
         let(:database_id) { foreign_db.id }
         schema error
         run_test!

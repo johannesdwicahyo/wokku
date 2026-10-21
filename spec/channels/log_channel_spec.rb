@@ -18,4 +18,22 @@ RSpec.describe LogChannel, type: :channel do
     expect(subscription).to be_confirmed
     expect(subscription).to have_stream_for(app)
   end
+
+  it "rejects a user who is not a member of the app's team (IDOR guard)" do
+    stub_connection current_user: users(:one)
+    subscribe(app_id: app_records(:two).id)
+    expect(subscription).to be_rejected
+  end
+
+  it "rejects an unauthenticated connection" do
+    stub_connection current_user: nil
+    subscribe(app_id: app_records(:one).id)
+    expect(subscription).to be_rejected
+  end
+
+  it "confirms an admin regardless of team membership" do
+    stub_connection current_user: users(:admin)
+    subscribe(app_id: app_records(:two).id)
+    expect(subscription).to be_confirmed
+  end
 end
