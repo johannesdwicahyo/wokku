@@ -27,7 +27,7 @@ RSpec.describe "OpenAPI completeness" do
     "POST /api/v1/templates/deploy",
     "POST /api/v1/tunnels",
     "POST /api/v1/tunnels/authorize/{plugin_secret}",
-    "PUT /api/v1/apps/{app_id}/dynos/{id}",
+    "PUT /api/v1/apps/{app_id}/dynos/{id}"
   ].freeze
 
   def routes
