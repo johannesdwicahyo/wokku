@@ -39,6 +39,20 @@ RSpec.describe "API::V1::ServersController", type: :request do
     expect(JSON.parse(response.body)["name"]).to eq("prod-api-test")
   end
 
+  it "never returns host credentials (show, create, index)" do
+    get api_v1_server_path(server), headers: user_headers
+    show_body = JSON.parse(response.body)
+    post api_v1_servers_path,
+      params: { name: "leak-check", host: "5.6.7.9", ssh_private_key: "FAKE-PRIVATE-KEY" },
+      headers: admin_headers
+    create_body = JSON.parse(response.body)
+    get api_v1_servers_path, headers: user_headers
+    [ show_body, create_body, *JSON.parse(response.body) ].each do |s|
+      expect(s.keys).not_to include("ssh_private_key", "ingest_token")
+    end
+    expect(response.body).not_to include("FAKE-PRIVATE-KEY")
+  end
+
   it "create succeeds for system admin" do
     post api_v1_servers_path,
       params: { name: "staging-api-test", host: "5.6.7.8" },

@@ -417,6 +417,202 @@ components:
         updated_at:
           type: string
           format: date-time
+    Server:
+      type: object
+      required:
+      - id
+      - name
+      - host
+      - port
+      - status
+      - created_at
+      - heartbeat_status
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        host:
+          type: string
+        port:
+          type: integer
+        status:
+          type: string
+          enum:
+          - connected
+          - unreachable
+          - auth_failed
+          - syncing
+        heartbeat_status:
+          type: string
+          enum:
+          - unknown
+          - ok
+          - degraded
+          - down
+        heartbeat_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        ssh_user:
+          type: string
+          nullable: true
+        team_id:
+          type: string
+          format: uuid
+          nullable: true
+        region:
+          type: string
+          nullable: true
+        cloud_provider:
+          type: string
+          nullable: true
+        cloud_server_id:
+          type: string
+          nullable: true
+        monthly_cost_cents:
+          type: integer
+          nullable: true
+        capacity_total_mb:
+          type: integer
+          nullable: true
+        live_cpu_pct:
+          type: string
+          nullable: true
+          description: Decimal serialized as a string
+        live_mem_used_mb:
+          type: integer
+          nullable: true
+        live_mem_total_mb:
+          type: integer
+          nullable: true
+        live_container_count:
+          type: integer
+          nullable: true
+        live_metrics_at:
+          type: string
+          format: date-time
+          nullable: true
+        docker_status:
+          type: string
+          nullable: true
+        docker_status_checked_at:
+          type: string
+          format: date-time
+          nullable: true
+        vitals:
+          type: object
+        agent_version:
+          type: string
+          nullable: true
+        wokkud_builds_enabled:
+          type: boolean
+        wokkud_router_enabled:
+          type: boolean
+        wokkud_services_enabled:
+          type: boolean
+        wokkud_cron_enabled:
+          type: boolean
+    Template:
+      type: object
+      required:
+      - name
+      - slug
+      - description
+      - category
+      - tags
+      - deploy_method
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+          nullable: true
+        category:
+          type: string
+        icon:
+          type: string
+          nullable: true
+        icon_slug:
+          type: string
+          nullable: true
+        icon_color:
+          type: string
+          nullable: true
+        version:
+          type: string
+          nullable: true
+        repo:
+          type: string
+          nullable: true
+        branch:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        deploy_method:
+          type: string
+          description: e.g. docker_image, git
+        docker_image:
+          type: string
+          nullable: true
+        container_port:
+          type: integer
+          nullable: true
+        addons:
+          type: array
+          items:
+            type: object
+        env:
+          type: object
+          additionalProperties:
+            type: string
+        post_deploy:
+          type: string
+          nullable: true
+        healthcheck:
+          nullable: true
+        command:
+          type: string
+          nullable: true
+        min_tier:
+          type: string
+          nullable: true
+        set_url:
+          type: array
+          items:
+            type: string
+        generate_secrets:
+          type: array
+          items:
+            type: string
+        alias_env:
+          type: object
+        storage_mounts:
+          type: array
+          items: {}
+        shared_engines:
+          type: array
+          items:
+            type: string
+        dedicated_db_engine:
+          type: string
+          nullable: true
+        builder:
+          nullable: true
+        services:
+          type: object
     Device:
       type: object
       required:
@@ -5470,6 +5666,290 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
+  "/api/v1/servers":
+    get:
+      summary: List servers
+      operationId: servers.list
+      tags:
+      - servers
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: all platform servers (summary fields only; any signed-in user)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - id
+                  - name
+                  - host
+                  - port
+                  - status
+                  - created_at
+                  - heartbeat_status
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    host:
+                      type: string
+                    port:
+                      type: integer
+                    status:
+                      type: string
+                    heartbeat_status:
+                      type: string
+                    heartbeat_at:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    created_at:
+                      type: string
+                      format: date-time
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    post:
+      summary: Add a platform server (admin only)
+      operationId: servers.create
+      tags:
+      - servers
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '201':
+          description: server created (ssh_private_key and ingest_token are never
+            returned)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Server"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is not a system admin
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: missing or duplicate name/host (validation_failed)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              - host
+              properties:
+                name:
+                  type: string
+                  example: edge-01
+                host:
+                  type: string
+                  example: 203.0.113.10
+                port:
+                  type: integer
+                  example: 22
+                ssh_user:
+                  type: string
+                ssh_private_key:
+                  type: string
+                  description: Write-only; never returned
+  "/api/v1/servers/{id}":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: Server UUID or name
+      required: true
+    get:
+      summary: Show a server
+      operationId: servers.show
+      tags:
+      - servers
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: server (any signed-in user; secrets stripped)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Server"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown server
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      summary: Remove a server (admin only)
+      operationId: servers.destroy
+      tags:
+      - servers
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: server removed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is not a system admin
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown server
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/servers/{id}/status":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: Server UUID or name
+      required: true
+    get:
+      summary: Server reachability from the wokkud heartbeat (admin only)
+      operationId: servers.status
+      tags:
+      - servers
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: status (connected = heartbeat is fresh)
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - connected
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - connected
+                    - unreachable
+                    - auth_failed
+                    - syncing
+                  connected:
+                    type: boolean
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is not a system admin
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown server
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/servers/{id}/dokku":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: Server UUID or name
+      required: true
+    post:
+      summary: Retired raw dokku passthrough
+      operationId: servers.dokku
+      tags:
+      - servers
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is not a system admin
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown server
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '410':
+          description: passthrough_retired — always returned for admins
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                args:
+                  type: array
+                  items:
+                    type: string
   "/api/v1/ssh_keys":
     get:
       summary: List SSH public keys
@@ -5765,3 +6245,200 @@ paths:
               properties:
                 name:
                   type: string
+  "/api/v1/templates":
+    get:
+      summary: List gallery templates
+      operationId: templates.list
+      tags:
+      - templates
+      security:
+      - bearer: []
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Search name, description and tags
+      - name: category
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Category slug (ignored when q is given)
+      responses:
+        '200':
+          description: templates and categories
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - templates
+                - categories
+                properties:
+                  templates:
+                    type: array
+                    items:
+                      "$ref": "#/components/schemas/Template"
+                  categories:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - name
+                      - slug
+                      properties:
+                        name:
+                          type: string
+                        slug:
+                          type: string
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/templates/{id}":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: Template slug
+      required: true
+    get:
+      summary: Show a template
+      operationId: templates.show
+      tags:
+      - templates
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: template
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Template"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown template slug
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/templates/deploy":
+    post:
+      summary: Deploy a template as a new app
+      operationId: templates.deploy
+      tags:
+      - templates
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '201':
+          description: app created; the deploy runs in the background
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - app
+                - deploy
+                properties:
+                  app:
+                    type: object
+                    required:
+                    - id
+                    - name
+                    - status
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      name:
+                        type: string
+                      status:
+                        type: string
+                      box_size:
+                        type: string
+                        nullable: true
+                  deploy:
+                    type: object
+                    required:
+                    - id
+                    - status
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      status:
+                        type: string
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: plan box quota reached (ad-hoc body)
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: unknown template or server
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '409':
+          description: app name already taken on that server (already_exists)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: blank app_name (ad-hoc body) or builder preflight refusal (typed
+            Error)
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                properties:
+                  error:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - slug
+              - server_id
+              - app_name
+              properties:
+                slug:
+                  type: string
+                  example: n8n
+                server_id:
+                  type: string
+                  description: Server UUID or name
+                app_name:
+                  type: string
+                  example: my-n8n
+                  description: Parameterized to a DNS-safe name

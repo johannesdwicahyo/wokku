@@ -183,6 +183,80 @@ RSpec.configure do |config|
               updated_at: { type: :string, format: "date-time" }
             }
           },
+          # Server as rendered by servers.show/create (as_json minus
+          # ssh_private_key and ingest_token). servers.list returns only the
+          # first block of fields. Platform-shared: every signed-in user sees
+          # every server (ServerPolicy::Scope = all).
+          Server: {
+            type: :object,
+            required: %w[id name host port status created_at heartbeat_status],
+            properties: {
+              id: { type: :string, format: :uuid },
+              name: { type: :string },
+              host: { type: :string },
+              port: { type: :integer },
+              status: { type: :string, enum: %w[connected unreachable auth_failed syncing] },
+              heartbeat_status: { type: :string, enum: %w[unknown ok degraded down] },
+              heartbeat_at: { type: :string, format: "date-time", nullable: true },
+              created_at: { type: :string, format: "date-time" },
+              updated_at: { type: :string, format: "date-time" },
+              ssh_user: { type: :string, nullable: true },
+              team_id: { type: :string, format: :uuid, nullable: true },
+              region: { type: :string, nullable: true },
+              cloud_provider: { type: :string, nullable: true },
+              cloud_server_id: { type: :string, nullable: true },
+              monthly_cost_cents: { type: :integer, nullable: true },
+              capacity_total_mb: { type: :integer, nullable: true },
+              live_cpu_pct: { type: :string, nullable: true, description: "Decimal serialized as a string" },
+              live_mem_used_mb: { type: :integer, nullable: true },
+              live_mem_total_mb: { type: :integer, nullable: true },
+              live_container_count: { type: :integer, nullable: true },
+              live_metrics_at: { type: :string, format: "date-time", nullable: true },
+              docker_status: { type: :string, nullable: true },
+              docker_status_checked_at: { type: :string, format: "date-time", nullable: true },
+              vitals: { type: :object },
+              agent_version: { type: :string, nullable: true },
+              wokkud_builds_enabled: { type: :boolean },
+              wokkud_router_enabled: { type: :boolean },
+              wokkud_services_enabled: { type: :boolean },
+              wokkud_cron_enabled: { type: :boolean }
+            }
+          },
+          # Template from the bundled gallery (TemplateRegistry), rendered as-is.
+          Template: {
+            type: :object,
+            required: %w[name slug description category tags deploy_method],
+            properties: {
+              name: { type: :string },
+              slug: { type: :string },
+              description: { type: :string, nullable: true },
+              category: { type: :string },
+              icon: { type: :string, nullable: true },
+              icon_slug: { type: :string, nullable: true },
+              icon_color: { type: :string, nullable: true },
+              version: { type: :string, nullable: true },
+              repo: { type: :string, nullable: true },
+              branch: { type: :string, nullable: true },
+              tags: { type: :array, items: { type: :string } },
+              deploy_method: { type: :string, description: "e.g. docker_image, git" },
+              docker_image: { type: :string, nullable: true },
+              container_port: { type: :integer, nullable: true },
+              addons: { type: :array, items: { type: :object } },
+              env: { type: :object, additionalProperties: { type: :string } },
+              post_deploy: { type: :string, nullable: true },
+              healthcheck: { nullable: true },
+              command: { type: :string, nullable: true },
+              min_tier: { type: :string, nullable: true },
+              set_url: { type: :array, items: { type: :string } },
+              generate_secrets: { type: :array, items: { type: :string } },
+              alias_env: { type: :object },
+              storage_mounts: { type: :array, items: {} },
+              shared_engines: { type: :array, items: { type: :string } },
+              dedicated_db_engine: { type: :string, nullable: true },
+              builder: { nullable: true },
+              services: { type: :object }
+            }
+          },
           Device: {
             type: :object,
             required: %w[token platform],
