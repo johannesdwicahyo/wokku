@@ -35,8 +35,26 @@ RSpec.describe Apps::VisitTracker do
     expect(app.request_count_seen).to eq(2)
   end
 
-  it "leaves apps absent from the payload untouched, and ignores junk" do
+  # Caddy only emits a host after its first request, so an app absent from a
+  # non-empty payload has had zero requests since Caddy started — a real
+  # observation, or zero-traffic apps would never sleep.
+  it "observes an app absent from a non-empty payload as 0 requests" do
+    freeze_time do
+      described_class.call(server, { "other.wokku.app" => 1 })
+      expect(app.reload.last_request_at).to eq(Time.current)
+      expect(app.request_count_seen).to eq(0)
+    end
+    travel 1.hour do
+      described_class.call(server, { "other.wokku.app" => 2 })
+      expect(app.reload.last_request_at).to be < 59.minutes.ago
+    end
+  end
+
+  it "leaves apps without domains untouched, and ignores junk or empty payloads" do
+    bare = create(:app_record, server: server, name: "bare")
     described_class.call(server, { "other.wokku.app" => 1 })
+    expect(bare.reload.last_request_at).to be_nil
+    described_class.call(server, {})
     expect(app.reload.last_request_at).to be_nil
     expect { described_class.call(server, nil) }.not_to raise_error
     expect { described_class.call(server, "x") }.not_to raise_error

@@ -9,10 +9,11 @@ module Apps
       return unless host_requests.is_a?(Hash) && host_requests.any?
 
       server.app_records.includes(:domains).find_each do |app|
-        counts = app.domains.filter_map { |d| host_requests[d.hostname] }
-        next if counts.empty?
+        next if app.domains.empty?
 
-        total = counts.sum(&:to_i)
+        # Caddy emits a host only after its first request: absent = 0 since
+        # Caddy started, or zero-traffic apps would never be observed/slept.
+        total = app.domains.sum { |d| host_requests[d.hostname].to_i }
         next if app.request_count_seen == total
 
         app.update_columns(last_request_at: Time.current, request_count_seen: total)
