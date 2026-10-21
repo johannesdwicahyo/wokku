@@ -14,21 +14,636 @@ components:
     Error:
       type: object
       required:
-      - code
-      - message
+      - error
+      - error_code
+      - retryable
       properties:
-        code:
+        error:
           type: string
-        message:
+        error_code:
           type: string
         hint:
           type: string
           nullable: true
+        retryable:
+          type: boolean
         details:
           nullable: true
+        errors:
+          nullable: true
+    Team:
+      type: object
+      required:
+      - id
+      - name
+      - owner_id
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        owner_id:
+          type: string
+          format: uuid
+        plan_id:
+          type: string
+          format: uuid
+          nullable: true
+        kind:
+          type: string
+          enum:
+          - personal
+          - org
+          nullable: true
+        slug:
+          type: string
+          nullable: true
+        trial_ends_at:
+          type: string
+          format: date-time
+          nullable: true
+        billing_anchor_date:
+          type: string
+          format: date
+          nullable: true
+        payment_method_type:
+          type: string
+        billing_model:
+          type: string
+        billing_credit_idr:
+          type: integer
+        billing_switched_on:
+          type: string
+          format: date
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    TeamMember:
+      type: object
+      required:
+      - id
+      - user_id
+      - email
+      - role
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        role:
+          type: string
+          enum:
+          - viewer
+          - member
+          - admin
+    Device:
+      type: object
+      required:
+      - token
+      - platform
+      properties:
+        token:
+          type: string
+        platform:
+          type: string
+          enum:
+          - ios
+          - android
+    Activity:
+      type: object
+      required:
+      - id
+      - action
+      - description
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        action:
+          type: string
+        description:
+          type: string
+        target_name:
+          type: string
+          nullable: true
+        target_type:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
 security:
 - bearer: []
 paths:
+  "/api/v1/activities":
+    get:
+      summary: Recent activity for the caller's first team
+      operationId: activities.list
+      tags:
+      - activities
+      security:
+      - bearer: []
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+      responses:
+        '200':
+          description: activities, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Activity"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/ai/diagnose":
+    post:
+      summary: Diagnose a failed deploy
+      operationId: ai.diagnose
+      tags:
+      - ai
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: diagnosis (shape is AiDebugger's free-form result)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  diagnosis:
+                    type: string
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: deploy not found or belongs to another team
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - deploy_id
+              properties:
+                deploy_id:
+                  type: string
+                  format: uuid
+  "/api/v1/auth/device/code":
+    post:
+      summary: Start the device authorization flow
+      operationId: auth_devices.code
+      tags:
+      - auth
+      security: []
+      responses:
+        '200':
+          description: device + user codes
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - device_code
+                - user_code
+                - verification_uri
+                - verification_uri_complete
+                - expires_in
+                - interval
+                properties:
+                  device_code:
+                    type: string
+                  user_code:
+                    type: string
+                  verification_uri:
+                    type: string
+                  verification_uri_complete:
+                    type: string
+                  expires_in:
+                    type: integer
+                  interval:
+                    type: integer
+  "/api/v1/auth/device/token":
+    post:
+      summary: Poll for the token once the user approved the device
+      operationId: auth_devices.token
+      tags:
+      - auth
+      security: []
+      parameters: []
+      responses:
+        '200':
+          description: approved; token returned once
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - token
+                - user
+                properties:
+                  token:
+                    type: string
+                  user:
+                    type: object
+                    required:
+                    - id
+                    - email
+                    - role
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      email:
+                        type: string
+                      role:
+                        type: string
+        '202':
+          description: authorization_pending
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                properties:
+                  error:
+                    type: string
+        '400':
+          description: slow_down (polled faster than interval)
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                properties:
+                  error:
+                    type: string
+        '403':
+          description: access_denied
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                properties:
+                  error:
+                    type: string
+        '410':
+          description: expired_token (unknown or expired code) or token_already_retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                properties:
+                  error:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - device_code
+              properties:
+                device_code:
+                  type: string
+  "/api/v1/auth/login":
+    post:
+      summary: Exchange email + password (+ otp_code for admins) for an API token
+      operationId: auth.login
+      tags:
+      - auth
+      security: []
+      parameters: []
+      responses:
+        '201':
+          description: token created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - token
+                - user
+                properties:
+                  token:
+                    type: string
+                  user:
+                    type: object
+                    required:
+                    - id
+                    - email
+                    - role
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      email:
+                        type: string
+                      role:
+                        type: string
+        '401':
+          description: invalid credentials (or bad/missing admin OTP)
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                properties:
+                  error:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - email
+              - password
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                otp_code:
+                  type: string
+                  description: Required for admin users
+                name:
+                  type: string
+                  description: Label for the new token
+  "/api/v1/auth/logout":
+    delete:
+      summary: Revoke the calling token
+      operationId: auth.logout
+      tags:
+      - auth
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: token revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/auth/whoami":
+    get:
+      summary: Current user
+      operationId: auth.whoami
+      tags:
+      - auth
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: current user
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - id
+                - email
+                - role
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  email:
+                    type: string
+                  role:
+                    type: string
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/auth/tokens":
+    get:
+      summary: List active API tokens
+      operationId: auth_tokens.list
+      tags:
+      - auth_tokens
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: tokens
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - id
+                  - name
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    last_used_at:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    expires_at:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    created_at:
+                      type: string
+                      format: date-time
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    post:
+      summary: Create an API token (plaintext returned once)
+      operationId: auth_tokens.create
+      tags:
+      - auth_tokens
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '201':
+          description: token created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - id
+                - token
+                - name
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  token:
+                    type: string
+                  name:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                expires_at:
+                  type: string
+                  format: date-time
+  "/api/v1/auth/tokens/{id}":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    delete:
+      summary: Revoke an API token
+      operationId: auth_tokens.delete
+      tags:
+      - auth_tokens
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: token belongs to another user
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/devices":
+    post:
+      summary: Register a push device token
+      operationId: devices.create
+      tags:
+      - devices
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: registered
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - registered
+                properties:
+                  registered:
+                    type: boolean
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: invalid platform
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/Device"
+  "/api/v1/devices/{id}":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      required: true
+    delete:
+      summary: Unregister a push device token (idempotent; always 200)
+      operationId: devices.delete
+      tags:
+      - devices
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: unregistered
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - unregistered
+                properties:
+                  unregistered:
+                    type: boolean
   "/api/v1/meta":
     get:
       summary: Version and client-compatibility probe
@@ -62,3 +677,482 @@ paths:
                   client:
                     type: object
                     nullable: true
+  "/api/v1/notifications":
+    get:
+      summary: List notification rules for the caller's teams
+      operationId: notifications.list
+      tags:
+      - notifications
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - id
+                  - team_id
+                  - channel
+                  - events
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    team_id:
+                      type: string
+                      format: uuid
+                    app_record_id:
+                      type: string
+                      format: uuid
+                      nullable: true
+                    channel:
+                      type: string
+                      enum:
+                      - email
+                      - slack
+                      - webhook
+                      - discord
+                      - telegram
+                      - push
+                    events:
+                      type: array
+                      items:
+                        type: string
+                    config:
+                      type: object
+                      nullable: true
+                    created_at:
+                      type: string
+                      format: date-time
+                    updated_at:
+                      type: string
+                      format: date-time
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    post:
+      summary: Create a notification rule (team admin only)
+      operationId: notifications.create
+      tags:
+      - notifications
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '201':
+          description: created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - id
+                - team_id
+                - channel
+                - events
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  team_id:
+                    type: string
+                    format: uuid
+                  app_record_id:
+                    type: string
+                    format: uuid
+                    nullable: true
+                  channel:
+                    type: string
+                    enum:
+                    - email
+                    - slack
+                    - webhook
+                    - discord
+                    - telegram
+                    - push
+                  events:
+                    type: array
+                    items:
+                      type: string
+                  config:
+                    type: object
+                    nullable: true
+                  created_at:
+                    type: string
+                    format: date-time
+                  updated_at:
+                    type: string
+                    format: date-time
+        '422':
+          description: invalid (no events)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - team_id
+              - channel
+              - events
+              properties:
+                team_id:
+                  type: string
+                  format: uuid
+                channel:
+                  type: string
+                  enum:
+                  - email
+                  - slack
+                  - webhook
+                  - discord
+                  - telegram
+                  - push
+                events:
+                  type: array
+                  items:
+                    type: string
+                app_record_id:
+                  type: string
+                  format: uuid
+                config:
+                  type: object
+  "/api/v1/notifications/{id}":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    delete:
+      summary: Delete a notification rule (team admin only)
+      operationId: notifications.delete
+      tags:
+      - notifications
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: notification of a team the caller does not belong to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/ssh_keys":
+    get:
+      summary: List SSH public keys
+      operationId: ssh_keys.list
+      tags:
+      - ssh_keys
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: keys
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - id
+                  - name
+                  - fingerprint
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    fingerprint:
+                      type: string
+                      nullable: true
+                    created_at:
+                      type: string
+                      format: date-time
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    post:
+      summary: Add an SSH public key
+      operationId: ssh_keys.create
+      tags:
+      - ssh_keys
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '201':
+          description: key added
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - id
+                - name
+                - fingerprint
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  name:
+                    type: string
+                  fingerprint:
+                    type: string
+                    nullable: true
+                  created_at:
+                    type: string
+                    format: date-time
+        '422':
+          description: invalid key
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              - public_key
+              properties:
+                name:
+                  type: string
+                public_key:
+                  type: string
+  "/api/v1/ssh_keys/{id}":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    delete:
+      summary: Remove an SSH public key
+      operationId: ssh_keys.delete
+      tags:
+      - ssh_keys
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: removed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: key belongs to another user
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/teams/{team_id}/members":
+    parameters:
+    - name: team_id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    get:
+      summary: List team members
+      operationId: team_members.list
+      tags:
+      - team_members
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/TeamMember"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: team the caller does not belong to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    post:
+      summary: Add an existing user to the team (team admin only)
+      operationId: team_members.create
+      tags:
+      - team_members
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '201':
+          description: member added
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/TeamMember"
+        '404':
+          description: no user with that email
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: already a member
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - email
+              properties:
+                email:
+                  type: string
+                role:
+                  type: string
+                  enum:
+                  - viewer
+                  - member
+                  - admin
+                  default: member
+  "/api/v1/teams/{team_id}/members/{id}":
+    parameters:
+    - name: team_id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    delete:
+      summary: Remove a team member (membership id)
+      operationId: team_members.delete
+      tags:
+      - team_members
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: removed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: membership of a team the caller does not belong to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/teams":
+    get:
+      summary: List the caller's teams
+      operationId: teams.list
+      tags:
+      - teams
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: teams
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Team"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    post:
+      summary: Create a team (caller becomes admin)
+      operationId: teams.create
+      tags:
+      - teams
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '201':
+          description: team created
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Team"
+        '422':
+          description: invalid (blank or taken name)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              properties:
+                name:
+                  type: string
