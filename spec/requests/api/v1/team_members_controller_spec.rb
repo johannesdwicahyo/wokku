@@ -51,4 +51,21 @@ RSpec.describe "API::V1::TeamMembersController", type: :request do
     }.to change { team.team_memberships.count }.by(-1)
     expect(response).to have_http_status(:success)
   end
+
+  describe "foreign team" do
+    let(:owner) { User.create!(email: "tm-foreign@example.com", password: "password123456") }
+    let(:foreign_team) { Team.create!(name: "tm-foreign", owner: owner).tap { |t| TeamMembership.create!(user: owner, team: t, role: :admin) } }
+
+    it "index returns 404 for a team the caller is not in" do
+      get "/api/v1/teams/#{foreign_team.id}/members", headers: headers
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "destroy returns 404 and keeps the membership for a foreign team" do
+      tm = foreign_team.team_memberships.first
+      delete "/api/v1/teams/#{foreign_team.id}/members/#{tm.id}", headers: headers
+      expect(response).to have_http_status(:not_found)
+      expect(TeamMembership.exists?(tm.id)).to be(true)
+    end
+  end
 end

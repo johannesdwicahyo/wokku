@@ -155,6 +155,15 @@ RSpec.describe "API::V1 remaining controllers (smoke)", type: :request do
       expect(response).to have_http_status(:success)
       expect(Notification.exists?(notification.id)).to be(false)
     end
+
+    it "destroy returns 404 for another team's notification" do
+      owner = User.create!(email: "notif-foreign@example.com", password: "password123456")
+      other = Team.create!(name: "Notif Foreign", owner: owner)
+      foreign = Notification.create!(team: other, channel: :email, events: [ "deploy" ])
+      delete api_v1_notification_path(foreign), headers: headers
+      expect(response).to have_http_status(:not_found)
+      expect(Notification.exists?(foreign.id)).to be(true)
+    end
   end
 
   describe "PsController" do

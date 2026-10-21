@@ -17,11 +17,24 @@ RSpec.describe "API v1 ai", type: :request do
         type: :object, required: %w[deploy_id], properties: { deploy_id: { type: :string, format: :uuid } }
       }
 
-      response "200", "diagnosis (shape is AiDebugger's free-form result)" do
+      response "200", "diagnosis (Markdown)" do
         let(:payload) { { deploy_id: app_records(:one).deploys.create!(status: "failed", log: "err").id } }
         before { allow_any_instance_of(AiDebugger).to receive(:diagnose).and_return({ diagnosis: "Run bundle install" }) }
-        schema type: :object, properties: { diagnosis: { type: :string } }
+        schema type: :object, required: %w[diagnosis], properties: { diagnosis: { type: :string } }
         run_test!
+      end
+
+      {
+        "422" => [ "deploy has no log (no_deploy_log)", "No deploy log available" ],
+        "502" => [ "AI provider failed (ai_provider_failed)", "AI diagnosis failed: upstream" ],
+        "503" => [ "AI not configured on this server (ai_unavailable)", "No API key configured" ]
+      }.each do |status, (desc, err)|
+        response status, desc do
+          let(:payload) { { deploy_id: app_records(:one).deploys.create!(status: "failed", log: "err").id } }
+          before { allow_any_instance_of(AiDebugger).to receive(:diagnose).and_return({ error: err }) }
+          schema "$ref" => "#/components/schemas/Error"
+          run_test!
+        end
       end
 
       response "401", "missing or invalid token" do
