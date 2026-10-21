@@ -88,7 +88,7 @@ RSpec.describe "API v1 add-ons", type: :request do
 
   path "/api/v1/apps/{app_id}/addons/{id}" do
     parameter app_param
-    parameter name: :id, in: :path, schema: { type: :string, format: :uuid }, description: "Add-on (DatabaseService) id or name; must be linked to this app"
+    parameter name: :id, in: :path, schema: { type: :string }, description: "Add-on (database) UUID or name; must be linked to this app"
 
     delete "Destroy an add-on (farewell snapshot + teardown)" do
       operationId "addons.destroy"

@@ -32,6 +32,7 @@ module Api
       def destroy
         authorize @app, :update?
         db = @app.database_services.lookup!(params[:id])
+        authorize db, :destroy? # team admin only, same as DELETE /databases/:id
 
         # DatabaseProvisioner.destroy! takes the farewell snapshot, tears down
         # the underlying service (dokku or wokkud, dedicated or shared), and
@@ -79,9 +80,13 @@ module Api
         authorize @app, :update?
 
         engine = params[:engine].to_s
+        # Destroys the app's shared tenant databases, so it needs the same
+        # (team admin) right as destroying a database; check before mutating.
+        tenants = @app.database_services.where(service_type: engine, shared: true).to_a
+        tenants.each { |db| authorize db, :destroy? }
         @app.update!(enabled_shared_engines: @app.enabled_shared_engines.to_a - [ engine ])
 
-        @app.database_services.where(service_type: engine, shared: true).find_each do |db|
+        tenants.each do |db|
           DatabaseProvisioner.destroy!(database_service: db)
         rescue => e
           Rails.logger.warn("disable_shared: failed to destroy #{db.name}: #{e.message}")

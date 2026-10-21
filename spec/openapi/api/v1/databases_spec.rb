@@ -16,7 +16,7 @@ RSpec.describe "API v1 databases", type: :request do
   error = { "$ref" => "#/components/schemas/Error" }
   adhoc_error = { type: :object, required: %w[error], properties: { error: { type: :string } } }
   db_schema = { "$ref" => "#/components/schemas/Database" }
-  id_param = { name: :id, in: :path, schema: { type: :string, format: :uuid }, description: "Database UUID or name" }
+  id_param = { name: :id, in: :path, schema: { type: :string }, description: "Database UUID or name" }
   message_schema = { type: :object, required: %w[message], properties: { message: { type: :string } } }
   app_database = {
     type: :object, required: %w[id app_record_id database_service_id alias_name],

@@ -64,6 +64,7 @@ module Api
         database = policy_scope(DatabaseService).lookup!(params[:id])
         authorize database
         app_record = policy_scope(AppRecord).lookup!(params[:app_id])
+        authorize app_record, :update?
 
         # W7 Phase 2: linking is a control-plane write — AppDatabase row +
         # EnvWriter env write, the same stanza DatabaseProvisioner uses.
@@ -112,6 +113,7 @@ module Api
         database = policy_scope(DatabaseService).lookup!(params[:id])
         authorize database
         app_record = policy_scope(AppRecord).lookup!(params[:app_id])
+        authorize app_record, :update?
 
         # W7 Phase 2: mirror of #link — unset the alias'd URL env var and
         # drop the row (same naming DatabaseProvisioner's destroy path unsets).

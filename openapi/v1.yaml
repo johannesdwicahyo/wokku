@@ -604,8 +604,7 @@ paths:
       in: path
       schema:
         type: string
-        format: uuid
-      description: Add-on (DatabaseService) id or name; must be linked to this app
+      description: Add-on (database) UUID or name; must be linked to this app
       required: true
     delete:
       summary: Destroy an add-on (farewell snapshot + teardown)
@@ -2503,7 +2502,6 @@ paths:
       in: path
       schema:
         type: string
-        format: uuid
       description: Database UUID or name
       required: true
     get:
@@ -2615,7 +2613,6 @@ paths:
       in: path
       schema:
         type: string
-        format: uuid
       description: Database UUID or name
       required: true
     - name: id
@@ -2664,7 +2661,6 @@ paths:
       in: path
       schema:
         type: string
-        format: uuid
       description: Database UUID or name
       required: true
     - name: id
@@ -3092,7 +3088,6 @@ paths:
       in: path
       schema:
         type: string
-        format: uuid
       description: Database UUID or name
       required: true
     get:
@@ -3164,7 +3159,6 @@ paths:
       in: path
       schema:
         type: string
-        format: uuid
       description: Database UUID or name
       required: true
     get:
@@ -3226,7 +3220,6 @@ paths:
       in: path
       schema:
         type: string
-        format: uuid
       description: Database UUID or name
       required: true
     post:
@@ -3287,7 +3280,6 @@ paths:
       in: path
       schema:
         type: string
-        format: uuid
       description: Database UUID or name
       required: true
     post:
@@ -3367,7 +3359,6 @@ paths:
       in: path
       schema:
         type: string
-        format: uuid
       description: Database UUID or name
       required: true
     post:

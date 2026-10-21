@@ -18,7 +18,7 @@ RSpec.describe "API v1 database backups", type: :request do
   let(:backup) { database.backups.create!(backup_destination: destination, status: "completed", s3_key: "k/x.gz") }
   error = { "$ref" => "#/components/schemas/Error" }
   adhoc_error = { type: :object, required: %w[error], properties: { error: { type: :string } } }
-  db_param = { name: :database_id, in: :path, schema: { type: :string, format: :uuid }, description: "Database UUID or name" }
+  db_param = { name: :database_id, in: :path, schema: { type: :string }, description: "Database UUID or name" }
   backup_param = { name: :id, in: :path, schema: { type: :string, format: :uuid } }
 
   path "/api/v1/databases/{database_id}/backups" do
