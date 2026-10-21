@@ -19,9 +19,9 @@ en:
     headline_strike: "babysitting"
     headline_post: "servers."
     headline_b: "Your AI can deploy this for you."
-    body: "A managed PaaS for vibecoders, freelancers, and agencies. One flat price per month — no metering, no overage bills. Patching, SSL, backups, uptime: handled. Install Ghost, WordPress, n8n in one click. Pay with QRIS."
+    body: "Managed app hosting for vibecoders, freelancers, and agencies. Pay for the CPU & RAM you use, from Rp15K/month — clear prices in Rupiah. Patching, SSL, backups, uptime: handled. Install Ghost, WordPress, n8n in one click. Pay with QRIS."
     pill_qris: "QRIS · GoPay · OVO · DANA"
-    pill_price: "From Rp 75K / $5"
+    pill_price: "From Rp 15K / mo"
     pill_region: "Jakarta region · <20ms"
     pill_support: "WhatsApp support"
     pill_ai_native: "AI-native"
@@ -38,8 +38,8 @@ en:
     anchor_tail: " — git push instead."
   compare:
     eyebrow: "// what the rest cost"
-    headline: "Same stack. $5 flat."
-    body: "No metering. No overage. Real prices in Rp or $."
+    headline: "Same stack. From Rp 15K."
+    body: "Pay per CPU & RAM, in Rupiah. Pay with QRIS."
     you: "← that's you"
     pays_usd: "USD card only"
     pays_idr: "QRIS · IDR"
@@ -49,7 +49,7 @@ en:
       heroku:  { name: "Heroku Eco + addons", price: "~$15",     desc: "Eco dyno + Essential-1 Postgres" }
       vercel:  { name: "Vercel Pro",           price: "$20/user", desc: "Per-seat + metered overage" }
       railway: { name: "Railway Hobby",        price: "$5+",      desc: "$5 base + per-second metering" }
-      wokku:   { name: "Wokku Solo",           price: "$5",       desc: "Flat. Free Postgres + Redis · QRIS" }
+      wokku:   { name: "Wokku Nano",           price: "Rp 15K",   desc: "0.25 vCPU · 256 MB · free Postgres + Redis · QRIS" }
   features:
     eyebrow: "// the boring stuff, done right"
     headline: "Production-grade, built in."
@@ -77,7 +77,7 @@ en:
     eyebrow: "// ready when you are"
     headline_a: "Your weekend back. Your bill predictable."
     headline_b: "Your AI in the driver's seat."
-    body: "Free forever for hobby projects. $5/mo when you're ready. Pay with QRIS, GoPay, or card."
+    body: "3 free apps forever — they sleep when idle and wake on the next visit. From Rp15K/month when you're ready. Pay with QRIS, GoPay, or card."
     deploy: "> start_free()"
     docs: "> read_docs()"
     chat: "> chat_wa()"
@@ -119,7 +119,7 @@ en:
         links: ["Templates", "Pricing", "Changelog", "Status"]
       solutions:
         head: "Solutions"
-        links: ["Zero-ops PaaS", "AI-native deploys", "Flat pricing", "One-click apps"]
+        links: ["Zero-ops PaaS", "AI-native deploys", "Hosting from Rp15K", "One-click apps"]
       getting_started:
         head: "Getting started"
         links: ["Sign in", "Deploy a template", "Pick a plan", "FAQ"]
@@ -283,8 +283,8 @@ en:
     s5_retry: "back to templates"
   pricing_tiers:
     section_label: "// pricing"
-    headline: "One price. No metering. No surprises."
-    sub: "Flat monthly plans. Pick what fits — Free for hobby, Solo for serious work, Pro for production, Team for agencies."
+    headline: "Pay for what you use."
+    sub: "Priced per CPU, RAM and disk — from Rp15K/month per app. 3 free apps forever."
     compare_link: "See full comparison →"
     most_popular: "Most popular"
     cards:
@@ -464,14 +464,6 @@ en:
       headline_mark: "can deploy this for you."
       sub: "Wokku ships an MCP server and a CLI designed for Claude, Codex, and Cursor. Ask 'deploy this' — your agent does it. You stay in the editor."
       cta_primary: "> let_ai_deploy()"
-    flat_price:
-      eyebrow: "// no metering. no overage. ever."
-      headline_pre: "One price."
-      headline_strike: "No metering."
-      headline_post: ""
-      headline_mark: "No surprises."
-      sub: "From $5/month flat. Free Postgres. Free Redis. Pay with QRIS, GoPay, OVO, DANA, or card. Predictable bills, every month."
-      cta_primary: "> see_flat_pricing()"
     one_click_apps:
       eyebrow: "// cPanel apps, deployed via wokku"
       headline_pre: "Install"
