@@ -84,7 +84,7 @@ RSpec.describe "OpenAPI completeness" do
     "PUT /api/v1/apps/{app_id}/checks",
     "PUT /api/v1/apps/{app_id}/config",
     "PUT /api/v1/apps/{app_id}/dynos/{id}",
-    "PUT /api/v1/apps/{app_id}/ps",
+    "PUT /api/v1/apps/{app_id}/ps"
   ].freeze
 
   def routes
