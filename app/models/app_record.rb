@@ -153,8 +153,6 @@ class AppRecord < ApplicationRecord
 
   public
 
-  # Wake-on-request: unguessable, non-expiring token naming this app in the
-  # /__wake/<token> path its sleeping vhosts proxy to.
   # True when the web process runs on a free sleeping tier (unshaped) —
   # distinguishes an idle-slept free app from a billing-suspended paid one,
   # which shares status: sleeping.
@@ -162,6 +160,8 @@ class AppRecord < ApplicationRecord
     dyno_allocations.find { |a| a.process_type == "web" }&.sleeping? || false
   end
 
+  # Wake-on-request: unguessable, non-expiring token naming this app in the
+  # /__wake/<token> path its sleeping vhosts proxy to.
   def wake_token = Rails.application.message_verifier(:wake).generate(id, purpose: :wake)
 
   def self.find_by_wake_token(token)

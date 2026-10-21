@@ -11,13 +11,20 @@ class WakeController < ActionController::Base
     app = AppRecord.find_by_wake_token(params[:token])
     return head :not_found unless app
 
+    response.headers["Cache-Control"] = "no-store"
+    html = request.accepts.any? { |t| t.to_s == "text/html" } || request.format.html?
+    # A billing-suspended paid app shares status: sleeping; an old token must
+    # not promise it is waking (WakeAppJob would no-op anyway).
+    unless app.sleeping_tier?
+      return html ? render(html: paused_page(app.name), status: :service_unavailable) : render(plain: "app unavailable", status: :service_unavailable)
+    end
+
     if app.sleeping? && Rails.cache.write("wake:#{app.id}", 1, unless_exist: true, expires_in: 2.minutes)
       WakeAppJob.perform_later(app.id)
     end
 
     response.headers["Retry-After"] = RETRY_AFTER.to_s
-    response.headers["Cache-Control"] = "no-store"
-    if request.accepts.any? { |t| t.to_s == "text/html" } || request.format.html?
+    if html
       render html: waking_page(app.name), status: :service_unavailable
     else
       render plain: "waking up, retry in #{RETRY_AFTER}s", status: :service_unavailable
@@ -25,6 +32,17 @@ class WakeController < ActionController::Base
   end
 
   private
+
+  def paused_page(name)
+    <<~HTML.html_safe
+      <!doctype html><html lang="en"><head><meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>#{ERB::Util.h(name)} is paused</title>
+      <style>body{font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#F6F6F5;color:#171717}main{text-align:center;padding:2rem}h1{font-size:1.5rem}p{color:#3F3F3F}</style>
+      </head><body><main><h1>#{ERB::Util.h(name)} is paused</h1>
+      <p>This app is currently unavailable. If it’s yours, check your Wokku dashboard.</p></main></body></html>
+    HTML
+  end
 
   def waking_page(name)
     <<~HTML.html_safe

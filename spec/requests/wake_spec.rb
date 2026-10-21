@@ -2,7 +2,11 @@ require "rails_helper"
 
 RSpec.describe "Wake endpoint", type: :request do
   include ActiveJob::TestHelper
-  let(:sleeper) { create(:app_record, status: :sleeping) }
+  let(:sleeper) do
+    create(:app_record, status: :sleeping).tap do |app|
+      app.dyno_allocations.create!(process_type: "web", count: 1, dyno_tier: create(:dyno_tier, sleeps: true))
+    end
+  end
   let(:path) { "/__wake/#{sleeper.wake_token}" }
 
   # test env uses :null_store; the burst dedupe needs a real one
@@ -38,6 +42,19 @@ RSpec.describe "Wake endpoint", type: :request do
     sleeper.update!(status: :running)
     expect { get path }.not_to have_enqueued_job(WakeAppJob)
     expect(response).to have_http_status(:service_unavailable)
+  end
+
+  # A billing-suspended paid app also has status sleeping; an old token
+  # (route not yet re-rendered) must not promise it is waking.
+  it "answers a non-refreshing 'paused' page for a paid app, without enqueueing" do
+    sleeper.dyno_allocations.first.update!(dyno_tier: create(:dyno_tier, sleeps: false))
+    expect { get path, headers: { "Accept" => "text/html" } }.not_to have_enqueued_job(WakeAppJob)
+    expect(response).to have_http_status(:service_unavailable)
+    expect(response.body).to include("paused", sleeper.name)
+    expect(response.body).not_to include('http-equiv="refresh"')
+    expect(response.body).not_to include("free app")
+    get path, headers: { "Accept" => "application/json" }
+    expect(response.body).to eq("app unavailable")
   end
 
   it "404s a token for a deleted app" do
