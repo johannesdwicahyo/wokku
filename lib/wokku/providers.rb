@@ -25,7 +25,13 @@ module Wokku
     end
 
     attr_accessor :tls, :billing
-    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder, :host_ssh_user, :control_plane_host
+    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder, :host_ssh_user, :control_plane_host, :openapi_path
+
+    # The OpenAPI file GET /api/v1/openapi.yaml serves. Engine default: its
+    # own derived contract; the cloud points it at the cloud superset.
+    def openapi_path
+      @openapi_path || Wokku::Engine.root.join("openapi/v1.yaml")
+    end
 
     def plan_enforcer
       @plan_enforcer ||= NullPlanEnforcer.new

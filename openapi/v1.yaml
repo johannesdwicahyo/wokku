@@ -1,0 +1,64 @@
+---
+openapi: 3.0.3
+info:
+  title: Wokku API (engine)
+  version: v1
+servers:
+- url: https://wokku.cloud
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+  schemas:
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        hint:
+          type: string
+          nullable: true
+        details:
+          nullable: true
+security:
+- bearer: []
+paths:
+  "/api/v1/meta":
+    get:
+      summary: Version and client-compatibility probe
+      operationId: meta.show
+      tags:
+      - meta
+      security: []
+      responses:
+        '200':
+          description: versions
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - api_version
+                - min_cli_version
+                - min_mcp_version
+                - server_time
+                properties:
+                  api_version:
+                    type: string
+                    nullable: true
+                  min_cli_version:
+                    type: string
+                  min_mcp_version:
+                    type: string
+                  server_time:
+                    type: string
+                    format: date-time
+                  client:
+                    type: object
+                    nullable: true

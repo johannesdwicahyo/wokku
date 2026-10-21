@@ -217,6 +217,7 @@ Rails.application.routes.draw do
       # Unauthenticated version probe — CLI/MCP hit this to detect their own
       # staleness before making any authenticated call. See MetaController.
       get :meta, to: "meta#show"
+      get "openapi.yaml", to: "openapi#show", as: :openapi, format: false
 
       # Authenticated whole-chain self-diagnosis for agents ("why is my thing
       # broken"). DB-only (no SSH) so it stays fast and still answers when a
