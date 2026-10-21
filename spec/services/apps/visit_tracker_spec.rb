@@ -52,10 +52,10 @@ RSpec.describe Apps::VisitTracker do
 
   it "leaves apps without domains untouched, and ignores junk or empty payloads" do
     bare = create(:app_record, server: server, name: "bare")
-    described_class.call(server, { "other.wokku.app" => 1 })
-    expect(bare.reload.last_request_at).to be_nil
     described_class.call(server, {})
     expect(app.reload.last_request_at).to be_nil
+    described_class.call(server, { "other.wokku.app" => 1 })
+    expect(bare.reload.last_request_at).to be_nil
     expect { described_class.call(server, nil) }.not_to raise_error
     expect { described_class.call(server, "x") }.not_to raise_error
   end
