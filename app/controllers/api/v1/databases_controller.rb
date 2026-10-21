@@ -10,7 +10,7 @@ module Api
       end
 
       def show
-        database = DatabaseService.lookup!(params[:id])
+        database = policy_scope(DatabaseService).lookup!(params[:id])
         authorize database
         render json: database
       end
@@ -47,7 +47,7 @@ module Api
       end
 
       def destroy
-        database = DatabaseService.lookup!(params[:id])
+        database = policy_scope(DatabaseService).lookup!(params[:id])
         authorize database
 
         # DatabaseProvisioner.destroy! takes the farewell snapshot, tears down
@@ -61,9 +61,9 @@ module Api
       end
 
       def link
-        database = DatabaseService.lookup!(params[:id])
+        database = policy_scope(DatabaseService).lookup!(params[:id])
         authorize database
-        app_record = AppRecord.lookup!(params[:app_id])
+        app_record = policy_scope(AppRecord).lookup!(params[:app_id])
 
         # W7 Phase 2: linking is a control-plane write — AppDatabase row +
         # EnvWriter env write, the same stanza DatabaseProvisioner uses.
@@ -81,7 +81,7 @@ module Api
       end
 
       def import
-        database = DatabaseService.lookup!(params[:id])
+        database = policy_scope(DatabaseService).lookup!(params[:id])
         authorize database, :update?
 
         # Body is the raw dump in the format `dokku <type>:import` accepts
@@ -94,6 +94,8 @@ module Api
         ImportService.new(database_service: database, dump_io: dump_io).perform!
         track("database.imported", target: database)
         render json: { message: "Imported", database: database.name }
+      rescue ActiveRecord::RecordNotFound, Pundit::NotAuthorizedError
+        raise # handled by BaseController (404 / 403), not the generic 422 below
       rescue ImportService::UnsupportedTypeError => e
         render json: { error: e.message }, status: :unprocessable_entity
       rescue => e
@@ -101,15 +103,15 @@ module Api
       end
 
       def monitor
-        database = DatabaseService.lookup!(params[:id])
+        database = policy_scope(DatabaseService).lookup!(params[:id])
         authorize database, :show?
         render json: ::Api::V1::Serializers::DatabaseMonitor.new(database).call
       end
 
       def unlink
-        database = DatabaseService.lookup!(params[:id])
+        database = policy_scope(DatabaseService).lookup!(params[:id])
         authorize database
-        app_record = AppRecord.lookup!(params[:app_id])
+        app_record = policy_scope(AppRecord).lookup!(params[:app_id])
 
         # W7 Phase 2: mirror of #link — unset the alias'd URL env var and
         # drop the row (same naming DatabaseProvisioner's destroy path unsets).

@@ -31,7 +31,7 @@ module Api
 
       def destroy
         authorize @app, :update?
-        db = DatabaseService.lookup!(params[:id])
+        db = @app.database_services.lookup!(params[:id])
 
         # DatabaseProvisioner.destroy! takes the farewell snapshot, tears down
         # the underlying service (dokku or wokkud, dedicated or shared), and
@@ -116,7 +116,7 @@ module Api
       private
 
       def set_app
-        @app = AppRecord.lookup!(params[:app_id])
+        @app = policy_scope(AppRecord).lookup!(params[:app_id])
       end
     end
   end

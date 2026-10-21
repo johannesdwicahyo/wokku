@@ -278,6 +278,145 @@ components:
           type: object
           additionalProperties:
             type: string
+    Database:
+      type: object
+      required:
+      - id
+      - name
+      - service_type
+      - status
+      - server_id
+      - shared
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        service_type:
+          type: string
+          description: postgres, mariadb, mongodb, redis, memcached, ...
+        status:
+          type: string
+          enum:
+          - running
+          - stopped
+          - creating
+          - error
+          - upgrading_provisioning
+          - upgrading_migrating
+          - upgrading_cutover
+          - upgrading_failed
+          - pending_destroy
+        server_id:
+          type: string
+          format: uuid
+        tier_name:
+          type: string
+          nullable: true
+        shared:
+          type: boolean
+          description: true = per-tenant database on a shared engine
+        wokkud_managed:
+          type: boolean
+        dsn:
+          type: string
+          nullable: true
+          description: Connection URL including credentials (e.g. postgres://user:pass@host:5432/db)
+        parent_service_id:
+          type: string
+          format: uuid
+          nullable: true
+        upgrade_source_id:
+          type: string
+          format: uuid
+          nullable: true
+        creator_id:
+          type: string
+          format: uuid
+          nullable: true
+        over_quota_at:
+          type: string
+          format: date-time
+          nullable: true
+        pending_destroy_at:
+          type: string
+          format: date-time
+          nullable: true
+        connection_limit:
+          type: integer
+          nullable: true
+        storage_mb_quota:
+          type: integer
+          nullable: true
+        shared_role_name:
+          type: string
+          nullable: true
+        shared_db_name:
+          type: string
+          nullable: true
+        live_db_bytes:
+          type: integer
+          nullable: true
+        live_mem_used_mb:
+          type: integer
+          nullable: true
+        live_metrics_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_error:
+          type: string
+          nullable: true
+        cpu:
+          type: number
+          nullable: true
+        memory_mb:
+          type: integer
+          nullable: true
+        disk_gb:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Domain:
+      type: object
+      required:
+      - id
+      - hostname
+      - app_record_id
+      - ssl_enabled
+      - dns_verified
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        hostname:
+          type: string
+        app_record_id:
+          type: string
+          format: uuid
+        ssl_enabled:
+          type: boolean
+        dns_verified:
+          type: boolean
+        pending_action:
+          type: string
+          nullable: true
+          description: e.g. ssl_enable while certificate issuance is queued
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
     Device:
       type: object
       required:
@@ -350,6 +489,378 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{app_id}/addons":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    get:
+      summary: List the app's add-ons (databases)
+      operationId: addons.list
+      tags:
+      - addons
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: add-ons
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - id
+                  - name
+                  - service_type
+                  - status
+                  - server
+                  - shared
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    service_type:
+                      type: string
+                    status:
+                      type: string
+                    server:
+                      type: string
+                      description: server name
+                    shared:
+                      type: boolean
+                    tier_name:
+                      type: string
+                      nullable: true
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    post:
+      summary: 'Create an add-on (retired: use addons.enable_shared / addons.upgrade_dedicated)'
+      operationId: addons.create
+      tags:
+      - addons
+      deprecated: true
+      security:
+      - bearer: []
+      responses:
+        '410':
+          description: endpoint retired under Bundle v2
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                - deprecated
+                - replacements
+                properties:
+                  error:
+                    type: string
+                  deprecated:
+                    type: boolean
+                  replacements:
+                    type: object
+                    additionalProperties:
+                      type: string
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{app_id}/addons/{id}":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      description: Add-on (DatabaseService) id or name; must be linked to this app
+      required: true
+    delete:
+      summary: Destroy an add-on (farewell snapshot + teardown)
+      operationId: addons.destroy
+      tags:
+      - addons
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: add-on removed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is a viewer on the app's team
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown add-on, an add-on not linked to this app, or an app
+            of another team
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{app_id}/addons/shared":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    post:
+      summary: Enable a shared engine on the app (provisioning queued)
+      operationId: addons.enable_shared
+      tags:
+      - addons
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '202':
+          description: engine enabled, provisioning queued
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                - app_id
+                - engine
+                properties:
+                  message:
+                    type: string
+                  app_id:
+                    type: string
+                    format: uuid
+                  engine:
+                    type: string
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is a viewer on the app's team
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: unsupported engine, or the plan does not include it ({error})
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                properties:
+                  error:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - engine
+              properties:
+                engine:
+                  type: string
+                  example: redis
+  "/api/v1/apps/{app_id}/addons/shared/{engine}":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    - name: engine
+      in: path
+      schema:
+        type: string
+      description: Engine to remove (e.g. redis)
+      required: true
+    delete:
+      summary: Disable a shared engine and destroy its tenant databases
+      operationId: addons.disable_shared
+      tags:
+      - addons
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: engine removed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is a viewer on the app's team
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{app_id}/addons/dedicated":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    post:
+      summary: Upgrade a shared tenant to a dedicated container
+      operationId: addons.upgrade_dedicated
+      tags:
+      - addons
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '202':
+          description: upgrade queued
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                - dedicated_id
+                properties:
+                  message:
+                    type: string
+                  dedicated_id:
+                    type: string
+                    format: uuid
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: viewer on the team, or the plan has no dedicated slots ({error})
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - "$ref": "#/components/schemas/Error"
+                - type: object
+                  required:
+                  - error
+                  properties:
+                    error:
+                      type: string
+        '404':
+          description: unknown app / another team's app, or no shared tenant of that
+            engine to upgrade ({error})
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - "$ref": "#/components/schemas/Error"
+                - type: object
+                  required:
+                  - error
+                  properties:
+                    error:
+                      type: string
+        '422':
+          description: unsupported engine, no free slots, size cap exceeded or over
+            account limit ({error})
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                properties:
+                  error:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - engine
+              properties:
+                engine:
+                  type: string
+                  example: postgres
   "/api/v1/ai/diagnose":
     post:
       summary: Diagnose a failed deploy
@@ -1986,6 +2497,923 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
+  "/api/v1/databases/{database_id}/backups":
+    parameters:
+    - name: database_id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      description: Database UUID or name
+      required: true
+    get:
+      summary: List a database's backups (newest first)
+      operationId: backups.list
+      tags:
+      - backups
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: backups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - id
+                  - status
+                  - created_at
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    status:
+                      type: string
+                    size_bytes:
+                      type: integer
+                      nullable: true
+                    created_at:
+                      type: string
+                      format: date-time
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown database, or one the caller's teams cannot see
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    post:
+      summary: Start a backup (queued)
+      operationId: backups.create
+      tags:
+      - backups
+      security:
+      - bearer: []
+      responses:
+        '201':
+          description: backup started
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '402':
+          description: free-tier backup limit reached ({error})
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                properties:
+                  error:
+                    type: string
+        '403':
+          description: caller is not a system admin
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown database, or one the caller's teams cannot see
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: this engine cannot be backed up (e.g. shared Redis) ({error})
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                properties:
+                  error:
+                    type: string
+  "/api/v1/databases/{database_id}/backups/{id}/download":
+    parameters:
+    - name: database_id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      description: Database UUID or name
+      required: true
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    get:
+      summary: Get a short-lived presigned download URL for a backup
+      operationId: backups.download
+      tags:
+      - backups
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: presigned URL (valid for expires_in seconds)
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - url
+                - expires_in
+                properties:
+                  url:
+                    type: string
+                  expires_in:
+                    type: integer
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown backup, or a database the caller's teams cannot see
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/databases/{database_id}/backups/{id}/restore":
+    parameters:
+    - name: database_id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      description: Database UUID or name
+      required: true
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    post:
+      summary: Restore a backup into its database (overwrites current data)
+      operationId: backups.restore
+      tags:
+      - backups
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: restore completed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                - restored_to
+                - from_backup
+                properties:
+                  message:
+                    type: string
+                  restored_to:
+                    type: string
+                  from_backup:
+                    type: string
+                    format: uuid
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown backup, or a database the caller's teams cannot see
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: the restore failed ({error})
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                properties:
+                  error:
+                    type: string
+  "/api/v1/apps/{app_id}/config":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    get:
+      summary: Show the app's environment variables (values included)
+      operationId: config.show
+      tags:
+      - config
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: env var name => value
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - config
+                properties:
+                  config:
+                    type: object
+                    additionalProperties:
+                      type: string
+                    example:
+                      DATABASE_URL: postgres://user:pass@host/db
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    patch:
+      summary: Set environment variables (merge)
+      operationId: config.update
+      tags:
+      - config
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: vars written; restart the app to apply
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                - restart_required
+                properties:
+                  message:
+                    type: string
+                  restart_required:
+                    type: boolean
+                  vars:
+                    type: array
+                    items:
+                      type: string
+                    description: Names set (PATCH/PUT)
+                  keys:
+                    type: array
+                    items:
+                      type: string
+                    description: Names removed (DELETE)
+        '400':
+          description: vars missing or empty (invalid_params)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is a viewer on the app's team
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - vars
+              properties:
+                vars:
+                  type: object
+                  additionalProperties:
+                    type: string
+                  example:
+                    LOG_LEVEL: info
+    put:
+      summary: Set environment variables (same as PATCH)
+      operationId: config.replace
+      tags:
+      - config
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: vars written; restart the app to apply
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                - restart_required
+                properties:
+                  message:
+                    type: string
+                  restart_required:
+                    type: boolean
+                  vars:
+                    type: array
+                    items:
+                      type: string
+                    description: Names set (PATCH/PUT)
+                  keys:
+                    type: array
+                    items:
+                      type: string
+                    description: Names removed (DELETE)
+        '400':
+          description: vars missing or empty (invalid_params)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is a viewer on the app's team
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - vars
+              properties:
+                vars:
+                  type: object
+                  additionalProperties:
+                    type: string
+                  example:
+                    LOG_LEVEL: info
+    delete:
+      summary: Unset environment variables
+      operationId: config.destroy
+      tags:
+      - config
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: vars removed; restart the app to apply
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                - restart_required
+                properties:
+                  message:
+                    type: string
+                  restart_required:
+                    type: boolean
+                  vars:
+                    type: array
+                    items:
+                      type: string
+                    description: Names set (PATCH/PUT)
+                  keys:
+                    type: array
+                    items:
+                      type: string
+                    description: Names removed (DELETE)
+        '400':
+          description: keys missing or empty (invalid_params)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is a viewer on the app's team
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - keys
+              properties:
+                keys:
+                  type: array
+                  items:
+                    type: string
+  "/api/v1/databases":
+    get:
+      summary: List databases visible to the caller
+      operationId: databases.list
+      tags:
+      - databases
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: databases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Database"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    post:
+      summary: Provision a database
+      operationId: databases.create
+      tags:
+      - databases
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '201':
+          description: database provisioned
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Database"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '402':
+          description: deposit does not cover one day of usage ({error, url, current_balance,
+            required_one_day})
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                - url
+                properties:
+                  error:
+                    type: string
+                  url:
+                    type: string
+                  current_balance: {}
+                  required_one_day: {}
+        '404':
+          description: unknown server
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: engine not supported on this server (validation_failed)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '502':
+          description: the host agent failed to create the service (service_create_failed)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '503':
+          description: the host agent did not finish in time (service_op_timeout)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - server_id
+              - name
+              - service_type
+              properties:
+                server_id:
+                  type: string
+                  description: Server UUID or name
+                name:
+                  type: string
+                service_type:
+                  type: string
+                  example: postgres
+                tier_name:
+                  type: string
+                  description: Resource tier (default per engine)
+  "/api/v1/databases/{id}":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      description: Database UUID or name
+      required: true
+    get:
+      summary: Show a database
+      operationId: databases.show
+      tags:
+      - databases
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: database
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Database"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown database, or one the caller's teams cannot see
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      summary: Destroy a database (farewell snapshot, teardown, unlink)
+      operationId: databases.destroy
+      tags:
+      - databases
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: database destroyed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller can see the database but is not a team admin
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown database, or one the caller's teams cannot see
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/databases/{id}/monitor":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      description: Database UUID or name
+      required: true
+    get:
+      summary: Latest database stats snapshot
+      operationId: databases.monitor
+      tags:
+      - databases
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: stats (all values null until a snapshot has been collected)
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - database_id
+                - top_queries
+                properties:
+                  database_id:
+                    type: string
+                    format: uuid
+                  recorded_at:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  active_connections:
+                    type: integer
+                    nullable: true
+                  max_connections:
+                    type: integer
+                    nullable: true
+                  db_size_bytes:
+                    type: integer
+                    nullable: true
+                  cache_hit_ratio:
+                    type: number
+                    nullable: true
+                  top_queries:
+                    type: array
+                    items:
+                      type: object
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown database, or one the caller's teams cannot see
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/databases/{id}/import":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      description: Database UUID or name
+      required: true
+    post:
+      summary: Import a dump (raw request body, e.g. pg_dump -Fc)
+      operationId: databases.import
+      tags:
+      - databases
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: dump imported
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                - database
+                properties:
+                  message:
+                    type: string
+                  database:
+                    type: string
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown database, or one the caller's teams cannot see
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: empty body, unsupported engine, or the import failed ({error})
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                properties:
+                  error:
+                    type: string
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+  "/api/v1/databases/{id}/link":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      description: Database UUID or name
+      required: true
+    post:
+      summary: Link a database to an app (writes <ALIAS>_URL env, restarts)
+      operationId: databases.link
+      tags:
+      - databases
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '201':
+          description: linked
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - id
+                - app_record_id
+                - database_service_id
+                - alias_name
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  app_record_id:
+                    type: string
+                    format: uuid
+                  database_service_id:
+                    type: string
+                    format: uuid
+                  alias_name:
+                    type: string
+                    example: DATABASE
+                  created_at:
+                    type: string
+                    format: date-time
+                  updated_at:
+                    type: string
+                    format: date-time
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown database/app, or one the caller's teams cannot see
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: database already linked to this app (validation_failed)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - app_id
+              properties:
+                app_id:
+                  type: string
+                  description: App UUID or name
+                alias_name:
+                  type: string
+                  example: DATABASE
+  "/api/v1/databases/{id}/unlink":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      description: Database UUID or name
+      required: true
+    post:
+      summary: Unlink a database from an app (unsets <ALIAS>_URL, restarts)
+      operationId: databases.unlink
+      tags:
+      - databases
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: unlinked
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown database/app, no such link, or one the caller's teams
+            cannot see
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - app_id
+              properties:
+                app_id:
+                  type: string
+                  description: App UUID or name
   "/api/v1/apps/{app_id}/deploys":
     parameters:
     - name: app_id
@@ -2259,6 +3687,202 @@ paths:
                 properties:
                   unregistered:
                     type: boolean
+  "/api/v1/apps/{app_id}/domains":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    get:
+      summary: List the app's domains
+      operationId: domains.list
+      tags:
+      - domains
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: domains
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Domain"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    post:
+      summary: Add a custom domain
+      operationId: domains.create
+      tags:
+      - domains
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '201':
+          description: domain added
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Domain"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is a viewer on the app's team
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: blank or already-taken hostname (validation_failed)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - hostname
+              properties:
+                hostname:
+                  type: string
+                  example: www.example.com
+  "/api/v1/apps/{app_id}/domains/{id}":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    delete:
+      summary: Remove a domain
+      operationId: domains.destroy
+      tags:
+      - domains
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: domain removed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                properties:
+                  message:
+                    type: string
+                  domain:
+                    type: string
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is a viewer on the app's team
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown domain, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{app_id}/domains/{id}/ssl":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    post:
+      summary: Queue SSL certificate issuance for a domain
+      operationId: domains.ssl
+      tags:
+      - domains
+      security:
+      - bearer: []
+      responses:
+        '202':
+          description: issuance queued
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                properties:
+                  message:
+                    type: string
+                  domain:
+                    type: string
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is a viewer on the app's team
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown domain, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
   "/api/v1/meta":
     get:
       summary: Version and client-compatibility probe
@@ -2865,6 +4489,190 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{app_id}/storage":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name (not looked up; the endpoint is retired)
+      required: true
+    get:
+      summary: Show storage (retired)
+      operationId: storage.show
+      tags:
+      - storage
+      deprecated: true
+      security:
+      - bearer: []
+      responses:
+        '410':
+          description: retired (storage_retired)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    post:
+      summary: Create storage (retired)
+      operationId: storage.create
+      tags:
+      - storage
+      deprecated: true
+      security:
+      - bearer: []
+      responses:
+        '410':
+          description: retired (storage_retired)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      summary: Destroy storage (retired)
+      operationId: storage.destroy
+      tags:
+      - storage
+      deprecated: true
+      security:
+      - bearer: []
+      responses:
+        '410':
+          description: retired (storage_retired)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{app_id}/buildpacks":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name (not looked up; the endpoint is retired)
+      required: true
+    get:
+      summary: Show buildpacks (retired)
+      operationId: buildpacks.show
+      tags:
+      - buildpacks
+      deprecated: true
+      security:
+      - bearer: []
+      responses:
+        '410':
+          description: retired (buildpacks_retired)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    post:
+      summary: Create buildpacks (retired)
+      operationId: buildpacks.create
+      tags:
+      - buildpacks
+      deprecated: true
+      security:
+      - bearer: []
+      responses:
+        '410':
+          description: retired (buildpacks_retired)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    patch:
+      summary: Update buildpacks (retired)
+      operationId: buildpacks.update
+      tags:
+      - buildpacks
+      deprecated: true
+      security:
+      - bearer: []
+      responses:
+        '410':
+          description: retired (buildpacks_retired)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    put:
+      summary: Replace buildpacks (retired)
+      operationId: buildpacks.replace
+      tags:
+      - buildpacks
+      deprecated: true
+      security:
+      - bearer: []
+      responses:
+        '410':
+          description: retired (buildpacks_retired)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    delete:
+      summary: Destroy buildpacks (retired)
+      operationId: buildpacks.destroy
+      tags:
+      - buildpacks
+      deprecated: true
+      security:
+      - bearer: []
+      responses:
+        '410':
+          description: retired (buildpacks_retired)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
   "/api/v1/apps/{app_id}/ps":
     parameters:
     - name: app_id
@@ -3458,6 +5266,215 @@ paths:
                       type: string
         '401':
           description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{app_id}/scheduled_tasks":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    get:
+      summary: List the app's scheduled (cron) tasks
+      operationId: scheduled_tasks.list
+      tags:
+      - scheduled_tasks
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: tasks ordered by schedule
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - id
+                  - command
+                  - schedule
+                  - enabled
+                  - created_at
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    command:
+                      type: string
+                      example: bin/rails cleanup
+                    schedule:
+                      type: string
+                      description: cron expression
+                      example: "*/5 * * * *"
+                    description:
+                      type: string
+                      nullable: true
+                    enabled:
+                      type: boolean
+                    created_at:
+                      type: string
+                      format: date-time
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    post:
+      summary: Create a scheduled task (Pro plan feature)
+      operationId: scheduled_tasks.create
+      tags:
+      - scheduled_tasks
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '201':
+          description: task created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - id
+                - command
+                - schedule
+                - enabled
+                - created_at
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  command:
+                    type: string
+                    example: bin/rails cleanup
+                  schedule:
+                    type: string
+                    description: cron expression
+                    example: "*/5 * * * *"
+                  description:
+                    type: string
+                    nullable: true
+                  enabled:
+                    type: boolean
+                  created_at:
+                    type: string
+                    format: date-time
+        '400':
+          description: invalid schedule or command (invalid_params)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: plan lacks scheduled tasks ({error, upgrade_url}); a viewer
+            on the team gets the standard Error body
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - "$ref": "#/components/schemas/Error"
+                - type: object
+                  required:
+                  - error
+                  - upgrade_url
+                  properties:
+                    error:
+                      type: string
+                    upgrade_url:
+                      type: string
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '502':
+          description: the host failed to apply the cron change (dokku_command_failed)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - command
+              - schedule
+              properties:
+                command:
+                  type: string
+                schedule:
+                  type: string
+                  example: "*/5 * * * *"
+                description:
+                  type: string
+  "/api/v1/apps/{app_id}/scheduled_tasks/{id}":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    delete:
+      summary: Delete a scheduled task
+      operationId: scheduled_tasks.destroy
+      tags:
+      - scheduled_tasks
+      security:
+      - bearer: []
+      responses:
+        '204':
+          description: task deleted
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is a viewer on the app's team
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown task, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '502':
+          description: the host failed to remove the cron entry (dokku_command_failed)
           content:
             application/json:
               schema:

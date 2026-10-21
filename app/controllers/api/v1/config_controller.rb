@@ -44,11 +44,13 @@ module Api
       private
 
       def set_app_record
-        @app_record = AppRecord.lookup!(params[:app_id])
+        @app_record = policy_scope(AppRecord).lookup!(params[:app_id])
       end
 
       def authorize_app
-        authorize @app_record, :show?
+        # Reading config needs team membership; changing it needs member+ (a
+        # viewer must not be able to set/unset env vars).
+        authorize @app_record, action_name == "show" ? :show? : :update?
       end
     end
   end

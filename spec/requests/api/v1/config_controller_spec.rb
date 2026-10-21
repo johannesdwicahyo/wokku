@@ -37,6 +37,6 @@ RSpec.describe "API::V1::ConfigController", type: :request do
     other_user = User.create!(email: "other@example.com", password: "password123456")
     other_token = api_v1_token_for(other_user)
     get api_v1_app_config_path(app_record), headers: { "Authorization" => "Bearer #{other_token}" }
-    expect(response).to have_http_status(:forbidden)
+    expect(response).to have_http_status(:not_found)
   end
 end

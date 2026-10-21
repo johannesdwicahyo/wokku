@@ -133,6 +133,56 @@ RSpec.configure do |config|
               processes: { type: :object, additionalProperties: { type: :string } }
             }
           },
+          # Raw DatabaseService JSON. NOTE: `dsn` is the decrypted connection
+          # string (credentials) and is returned to any team member — see Task 6
+          # report; documented as-is.
+          Database: {
+            type: :object,
+            required: %w[id name service_type status server_id shared created_at updated_at],
+            properties: {
+              id: { type: :string, format: :uuid },
+              name: { type: :string },
+              service_type: { type: :string, description: "postgres, mariadb, mongodb, redis, memcached, ..." },
+              status: { type: :string, enum: %w[running stopped creating error upgrading_provisioning upgrading_migrating upgrading_cutover upgrading_failed pending_destroy] },
+              server_id: { type: :string, format: :uuid },
+              tier_name: { type: :string, nullable: true },
+              shared: { type: :boolean, description: "true = per-tenant database on a shared engine" },
+              wokkud_managed: { type: :boolean },
+              dsn: { type: :string, nullable: true, description: "Connection URL including credentials (e.g. postgres://user:pass@host:5432/db)" },
+              parent_service_id: { type: :string, format: :uuid, nullable: true },
+              upgrade_source_id: { type: :string, format: :uuid, nullable: true },
+              creator_id: { type: :string, format: :uuid, nullable: true },
+              over_quota_at: { type: :string, format: "date-time", nullable: true },
+              pending_destroy_at: { type: :string, format: "date-time", nullable: true },
+              connection_limit: { type: :integer, nullable: true },
+              storage_mb_quota: { type: :integer, nullable: true },
+              shared_role_name: { type: :string, nullable: true },
+              shared_db_name: { type: :string, nullable: true },
+              live_db_bytes: { type: :integer, nullable: true },
+              live_mem_used_mb: { type: :integer, nullable: true },
+              live_metrics_at: { type: :string, format: "date-time", nullable: true },
+              last_error: { type: :string, nullable: true },
+              cpu: { type: :number, nullable: true },
+              memory_mb: { type: :integer, nullable: true },
+              disk_gb: { type: :integer, nullable: true },
+              created_at: { type: :string, format: "date-time" },
+              updated_at: { type: :string, format: "date-time" }
+            }
+          },
+          Domain: {
+            type: :object,
+            required: %w[id hostname app_record_id ssl_enabled dns_verified created_at],
+            properties: {
+              id: { type: :string, format: :uuid },
+              hostname: { type: :string },
+              app_record_id: { type: :string, format: :uuid },
+              ssl_enabled: { type: :boolean },
+              dns_verified: { type: :boolean },
+              pending_action: { type: :string, nullable: true, description: "e.g. ssl_enable while certificate issuance is queued" },
+              created_at: { type: :string, format: "date-time" },
+              updated_at: { type: :string, format: "date-time" }
+            }
+          },
           Device: {
             type: :object,
             required: %w[token platform],
