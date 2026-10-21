@@ -185,7 +185,7 @@ RSpec.describe "API v1 runtime", type: :request do
       operationId "logs.list"
       tags "logs"
       security [ { bearer: [] } ]
-      produces "application/json", "text/plain"
+      produces "application/json" # errors are always JSON; the follow stream is added on the 200 below
       parameter name: :follow, in: :query, required: false, schema: { type: :string, enum: %w[1 true] },
                 description: "1/true switches to a chunked text/plain stream of live log output"
       parameter name: :since, in: :query, required: false, schema: { type: :string, format: "date-time" }
@@ -215,8 +215,23 @@ RSpec.describe "API v1 runtime", type: :request do
           Log.insert_all([ { server_id: app_record.server_id, app_record_id: app_record.id, container: "web.1",
                              ts: 1.hour.ago, level: "info", line: "GET / 200", ingested_at: Time.current } ])
         end
+        # rswag attaches `schema` to every `produces` type, so the follow
+        # stream's text/plain media type is declared here with its own schema.
+        metadata[:response][:content] = { "text/plain" => { schema: { type: :string } } }
         schema log_result
         run_test! { |response| expect(JSON.parse(response.body)["source"]).to eq("durable") }
+      end
+
+      response "502", "durable store empty and the live SSH tail failed (dokku_command_failed)" do
+        before { allow_any_instance_of(Hosts::Ssh).to receive(:run_raw).and_raise(Hosts::Ssh::CommandError.new("docker failed", exit_code: 1)) }
+        schema error
+        run_test!
+      end
+
+      response "503", "durable store empty and the host is unreachable (host_unreachable, retryable)" do
+        before { allow_any_instance_of(Hosts::Ssh).to receive(:run_raw).and_raise(Hosts::Ssh::ConnectionError, "ssh down") }
+        schema error
+        run_test!
       end
 
       response "400", "since/until not parseable (invalid_time)" do

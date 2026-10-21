@@ -2852,6 +2852,13 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
+        '503':
+          description: host unreachable while checking the rollback image (host_unreachable,
+            retryable)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
         '422':
           description: no artifact left to roll back to (rollback_artifact_missing)
           content:
@@ -3191,6 +3198,9 @@ paths:
         '200':
           description: log lines (JSON), or a text/plain stream when follow=1
           content:
+            text/plain:
+              schema:
+                type: string
             application/json:
               schema:
                 type: object
@@ -3225,47 +3235,23 @@ paths:
                     enum:
                     - durable
                     - live
-            text/plain:
-              schema:
-                type: object
-                required:
-                - logs
-                - source
-                properties:
-                  logs:
-                    oneOf:
-                    - type: array
-                      items:
-                        type: object
-                        required:
-                        - ts
-                        - container
-                        - level
-                        - line
-                        properties:
-                          ts:
-                            type: string
-                            format: date-time
-                          container:
-                            type: string
-                          level:
-                            type: string
-                          line:
-                            type: string
-                    - type: string
-                      description: Raw tail output when source is live
-                  source:
-                    type: string
-                    enum:
-                    - durable
-                    - live
-        '400':
-          description: since/until not parseable (invalid_time)
+        '502':
+          description: durable store empty and the live SSH tail failed (dokku_command_failed)
           content:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
-            text/plain:
+        '503':
+          description: durable store empty and the host is unreachable (host_unreachable,
+            retryable)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '400':
+          description: since/until not parseable (invalid_time)
+          content:
+            application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
         '401':
@@ -3274,17 +3260,11 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
-            text/plain:
-              schema:
-                "$ref": "#/components/schemas/Error"
         '404':
           description: unknown app, or an app of a team the caller does not belong
             to
           content:
             application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-            text/plain:
               schema:
                 "$ref": "#/components/schemas/Error"
   "/api/v1/apps/{app_id}/checks":

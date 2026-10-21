@@ -119,6 +119,16 @@ RSpec.describe "API v1 releases", type: :request do
         run_test!
       end
 
+      response "503", "host unreachable while checking the rollback image (host_unreachable, retryable)" do
+        before do
+          app_record.deploys.create!(release: release, status: :succeeded,
+                                     image_ref: "#{Hosts::Registry::HOST}/wokku-rollback/#{app_record.name}:t")
+          allow_any_instance_of(Hosts::Ssh).to receive(:run_raw).and_raise(Hosts::Ssh::ConnectionError, "ssh down")
+        end
+        schema error
+        run_test!
+      end
+
       response "422", "no artifact left to roll back to (rollback_artifact_missing)" do
         schema error
         run_test!
