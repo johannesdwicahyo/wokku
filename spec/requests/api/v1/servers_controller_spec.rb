@@ -39,6 +39,15 @@ RSpec.describe "API::V1::ServersController", type: :request do
     expect(JSON.parse(response.body)["name"]).to eq("prod-api-test")
   end
 
+  it "show gives non-admins only summary fields; admins get the full record" do
+    server.update_columns(ssh_user: "deploy", cloud_server_id: "srv-fake", monthly_cost_cents: 1234)
+    get api_v1_server_path(server), headers: user_headers
+    body = JSON.parse(response.body)
+    expect(body.keys).to match_array(%w[id name host port status heartbeat_status heartbeat_at created_at])
+    get api_v1_server_path(server), headers: admin_headers
+    expect(JSON.parse(response.body)).to include("ssh_user" => "deploy", "cloud_server_id" => "srv-fake", "monthly_cost_cents" => 1234)
+  end
+
   it "never returns host credentials (show, create, index)" do
     get api_v1_server_path(server), headers: user_headers
     show_body = JSON.parse(response.body)

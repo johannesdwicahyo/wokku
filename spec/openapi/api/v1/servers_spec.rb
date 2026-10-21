@@ -15,16 +15,7 @@ RSpec.describe "API v1 servers", type: :request do
   error = { "$ref" => "#/components/schemas/Error" }
   server_schema = { "$ref" => "#/components/schemas/Server" }
   id_param = { name: :id, in: :path, schema: { type: :string }, description: "Server UUID or name" }
-  server_summary = {
-    type: :object,
-    required: %w[id name host port status created_at heartbeat_status],
-    properties: {
-      id: { type: :string, format: :uuid }, name: { type: :string }, host: { type: :string },
-      port: { type: :integer }, status: { type: :string }, heartbeat_status: { type: :string },
-      heartbeat_at: { type: :string, format: "date-time", nullable: true },
-      created_at: { type: :string, format: "date-time" }
-    }
-  }
+  server_summary = { "$ref" => "#/components/schemas/ServerSummary" }
 
   path "/api/v1/servers" do
     get "List servers" do
@@ -96,9 +87,8 @@ RSpec.describe "API v1 servers", type: :request do
       produces "application/json"
       let(:id) { server.id }
 
-      response "200", "server (any signed-in user; secrets stripped)" do
-        let(:Authorization) { user_auth }
-        schema server_schema
+      response "200", "server: full Server record for system admins; ServerSummary fields only for everyone else (secrets never returned)" do
+        schema anyOf: [ server_schema, server_summary ]
         run_test!
       end
 

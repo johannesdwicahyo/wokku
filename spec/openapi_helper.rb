@@ -183,10 +183,25 @@ RSpec.configure do |config|
               updated_at: { type: :string, format: "date-time" }
             }
           },
-          # Server as rendered by servers.show/create (as_json minus
-          # ssh_private_key and ingest_token). servers.list returns only the
-          # first block of fields. Platform-shared: every signed-in user sees
-          # every server (ServerPolicy::Scope = all).
+          # Fields every signed-in user may see (servers.list, and servers.show
+          # for non-admins). Platform-shared: ServerPolicy::Scope = all.
+          ServerSummary: {
+            type: :object,
+            required: %w[id name host port status created_at heartbeat_status],
+            properties: {
+              id: { type: :string, format: :uuid },
+              name: { type: :string },
+              host: { type: :string },
+              port: { type: :integer },
+              status: { type: :string, enum: %w[connected unreachable auth_failed syncing] },
+              heartbeat_status: { type: :string, enum: %w[unknown ok degraded down] },
+              heartbeat_at: { type: :string, format: "date-time", nullable: true },
+              created_at: { type: :string, format: "date-time" }
+            }
+          },
+          # Full operator view, returned by servers.show/create to system admins
+          # only (as_json minus ssh_private_key and ingest_token). Superset of
+          # ServerSummary.
           Server: {
             type: :object,
             required: %w[id name host port status created_at heartbeat_status],

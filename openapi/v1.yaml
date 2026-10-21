@@ -417,6 +417,47 @@ components:
         updated_at:
           type: string
           format: date-time
+    ServerSummary:
+      type: object
+      required:
+      - id
+      - name
+      - host
+      - port
+      - status
+      - created_at
+      - heartbeat_status
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        host:
+          type: string
+        port:
+          type: integer
+        status:
+          type: string
+          enum:
+          - connected
+          - unreachable
+          - auth_failed
+          - syncing
+        heartbeat_status:
+          type: string
+          enum:
+          - unknown
+          - ok
+          - degraded
+          - down
+        heartbeat_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
     Server:
       type: object
       required:
@@ -5682,36 +5723,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  required:
-                  - id
-                  - name
-                  - host
-                  - port
-                  - status
-                  - created_at
-                  - heartbeat_status
-                  properties:
-                    id:
-                      type: string
-                      format: uuid
-                    name:
-                      type: string
-                    host:
-                      type: string
-                    port:
-                      type: integer
-                    status:
-                      type: string
-                    heartbeat_status:
-                      type: string
-                    heartbeat_at:
-                      type: string
-                      format: date-time
-                      nullable: true
-                    created_at:
-                      type: string
-                      format: date-time
+                  "$ref": "#/components/schemas/ServerSummary"
         '401':
           description: missing or invalid token
           content:
@@ -5792,11 +5804,14 @@ paths:
       - bearer: []
       responses:
         '200':
-          description: server (any signed-in user; secrets stripped)
+          description: 'server: full Server record for system admins; ServerSummary
+            fields only for everyone else (secrets never returned)'
           content:
             application/json:
               schema:
-                "$ref": "#/components/schemas/Server"
+                anyOf:
+                - "$ref": "#/components/schemas/Server"
+                - "$ref": "#/components/schemas/ServerSummary"
         '401':
           description: missing or invalid token
           content:
