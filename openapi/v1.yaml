@@ -188,14 +188,34 @@ paths:
       parameters: []
       responses:
         '200':
-          description: diagnosis (shape is AiDebugger's free-form result)
+          description: diagnosis (Markdown)
           content:
             application/json:
               schema:
                 type: object
+                required:
+                - diagnosis
                 properties:
                   diagnosis:
                     type: string
+        '422':
+          description: deploy has no log (no_deploy_log)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '502':
+          description: AI provider failed (ai_provider_failed)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '503':
+          description: AI not configured on this server (ai_unavailable)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
         '401':
           description: missing or invalid token
           content:
