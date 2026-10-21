@@ -12,9 +12,9 @@ module Api
       end
 
       def show
-        app = AppRecord.lookup!(params[:id])
+        app = find_app
         authorize app
-        render json: app.as_json.merge(
+        render json: app_json(app).merge(
           git_remote: app.git_remote_url,
           push_instructions: "git remote add wokku #{app.git_remote_url} && git push wokku #{app.deploy_branch || 'main'}",
           # wokkud host health — lets an agent distinguish "your app
@@ -27,7 +27,7 @@ module Api
       def create
         server = Server.lookup!(params[:server_id])
         team = current_user.teams.first
-        return render json: { error: "User has no team" }, status: :unprocessable_entity if team.nil?
+        return render_api_error(:validation_failed, message: "User has no team") if team.nil?
 
         # Per-resource billing (spec 2026-09-24 §5.3): callers send a
         # `resources` hash (processes[web][...] shape) instead of box_size.
@@ -44,7 +44,7 @@ module Api
           begin
             enforce_plan_quota!(current_user, size: box_size, additional: 1)
           rescue PlanEnforceable::PlanQuotaError => e
-            render json: { error: e.message }, status: :payment_required
+            render_api_error(:quota_exceeded, message: e.message, status: :payment_required)
             return
           end
         end
@@ -66,7 +66,7 @@ module Api
 
         limit = Wokku.config.plan_enforcer.quota(current_user, :apps)
         if AppRecord.joins(team: :team_memberships).where(team_memberships: { user_id: current_user.id }).distinct.count >= limit
-          render json: { error: "App limit reached for your plan (#{limit})" }, status: :payment_required
+          render_api_error(:quota_exceeded, message: "App limit reached for your plan (#{limit})", status: :payment_required)
           return
         end
 
@@ -112,7 +112,7 @@ module Api
           end
         end
 
-        render json: app.as_json.merge(
+        render json: app_json(app).merge(
           git_remote: app.git_remote_url,
           push_instructions: "git remote add wokku #{app.git_remote_url} && git push wokku #{app.deploy_branch || 'main'}",
           warnings: warnings.presence
@@ -120,7 +120,7 @@ module Api
       end
 
       def update
-        app = AppRecord.lookup!(params[:id])
+        app = find_app
         authorize app
 
         # Name changes route through the same canonical service as #rename
@@ -129,13 +129,13 @@ module Api
           ::Apps::Lifecycle::Renamer.new(app).call!(params[:name].to_s)
         end
         app.update!(app_params)
-        render json: app
+        render json: app_json(app)
       rescue ::Apps::Lifecycle::Error => e
         render_api_error(ApiErrors.from_service_code(e.code), message: e.message)
       end
 
       def destroy
-        app = AppRecord.lookup!(params[:id])
+        app = find_app
         authorize app
 
         # Same canonical teardown as the dashboard's destroy — tears down a
@@ -163,7 +163,7 @@ module Api
       end
 
       def deploy
-        app = AppRecord.lookup!(params[:id])
+        app = find_app
         authorize app, :update?
 
         if ::Apps::Lifecycle::DeployLock.new(app).locked?
@@ -182,7 +182,7 @@ module Api
       # (RunsController#show) — since a migration can outlive kamal-proxy's
       # 30s response window.
       def run
-        app = AppRecord.lookup!(params[:id])
+        app = find_app
         authorize app, :update?
         run_async(app, params[:command].to_s)
       end
@@ -190,19 +190,19 @@ module Api
       # W7 Phase 2: raw dokku passthrough retired — the fleet is dokku-free.
       # Route stays so old CLIs get a typed 410 instead of a routing 404.
       def dokku
-        app = AppRecord.lookup!(params[:id])
+        app = find_app
         authorize app, :update?
         render_api_error(:passthrough_retired)
       end
 
       def github_connect
-        app = AppRecord.lookup!(params[:id])
+        app = find_app
         authorize app, :update?
 
         repo = params[:repo]
         branch = params[:branch] || "main"
 
-        return render json: { error: "repo is required" }, status: :unprocessable_entity if repo.blank?
+        return render_api_error(:invalid_params, message: "repo is required", status: :unprocessable_entity) if repo.blank?
 
         app.update!(
           github_repo_full_name: repo,
@@ -215,7 +215,7 @@ module Api
       end
 
       def github_disconnect
-        app = AppRecord.lookup!(params[:id])
+        app = find_app
         authorize app, :update?
 
         app.update!(
@@ -227,25 +227,25 @@ module Api
       end
 
       def metrics
-        app = AppRecord.lookup!(params[:id])
+        app = find_app
         authorize app, :show?
         render json: ::Api::V1::Serializers::AppMetrics.new(app).call
       end
 
       def monitor
-        app = AppRecord.lookup!(params[:id])
+        app = find_app
         authorize app, :show?
         render json: ::Api::V1::Serializers::AppMonitor.new(app).call
       end
 
       def vitals
-        app = AppRecord.lookup!(params[:id])
+        app = find_app
         authorize app, :show?
         render json: ::Api::V1::Serializers::AppVitals.new(app).call
       end
 
       def rename
-        app = AppRecord.lookup!(params[:id])
+        app = find_app
         authorize app, :update?
         old_name = app.name
         new_app = ::Apps::Lifecycle::Renamer.new(app).call!(params[:name].to_s)
@@ -257,7 +257,7 @@ module Api
       end
 
       def clone
-        app = AppRecord.lookup!(params[:id])
+        app = find_app
         authorize app, :update?
         skip_deploy = params.key?(:skip_deploy) ? ActiveModel::Type::Boolean.new.cast(params[:skip_deploy]) : true
         new_app = ::Apps::Lifecycle::Cloner.new(app, user: current_user).call!(params[:name].to_s, skip_deploy: skip_deploy)
@@ -269,7 +269,7 @@ module Api
       end
 
       def lock
-        app = AppRecord.lookup!(params[:id])
+        app = find_app
         authorize app, :update?
         ::Apps::Lifecycle::DeployLock.new(app).lock!
         Activity.log(user: current_user, team: app.team, action: "app.locked", target: app)
@@ -279,7 +279,7 @@ module Api
       end
 
       def unlock
-        app = AppRecord.lookup!(params[:id])
+        app = find_app
         authorize app, :update?
         ::Apps::Lifecycle::DeployLock.new(app).unlock!
         Activity.log(user: current_user, team: app.team, action: "app.unlocked", target: app)
@@ -289,7 +289,7 @@ module Api
       end
 
       def transfer
-        app = AppRecord.lookup!(params[:id])
+        app = find_app
         authorize app, :destroy?
         transfer = ::Apps::Lifecycle::Transferrer.new(app, from_user: current_user).call!(params[:recipient_email].to_s)
         Activity.log(user: current_user, team: app.team, action: "app.transfer_requested", target: app,
@@ -313,6 +313,17 @@ module Api
 
       private
 
+      # Team-scoped lookup: another team's app is indistinguishable from a
+      # missing one (404), never a 403 that confirms it exists.
+      def find_app
+        policy_scope(AppRecord).lookup!(params[:id])
+      end
+
+      # Raw model JSON minus the webhook secrets (never readable over the API).
+      def app_json(app)
+        app.as_json(except: %w[git_webhook_secret github_webhook_secret])
+      end
+
       def run_async(app, command)
         return render_api_error(:invalid_params, message: "command required") if command.blank?
 
@@ -328,11 +339,11 @@ module Api
       end
 
       def toggle_endpoint(toggle_class, action_prefix:)
-        app = AppRecord.lookup!(params[:id])
+        app = find_app
         authorize app, :update?
 
         enabled = ActiveModel::Type::Boolean.new.cast(params[:enabled])
-        return render json: { error: "`enabled` must be true or false" }, status: :unprocessable_entity if enabled.nil?
+        return render_api_error(:invalid_params, message: "`enabled` must be true or false", status: :unprocessable_entity) if enabled.nil?
 
         toggle = toggle_class.new(app)
         if enabled
@@ -358,7 +369,7 @@ module Api
       # action-queued message; clients can poll GET /apps/:id to see
       # status flip when the job completes.
       def queue_process_action(action)
-        app = AppRecord.lookup!(params[:id])
+        app = find_app
         authorize app
         if action != "stop" && !app.run_allowed?
           return render_api_error(:account_suspended, message: AppRecord::RUN_BLOCKED_MESSAGE)

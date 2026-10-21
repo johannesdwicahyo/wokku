@@ -61,6 +61,43 @@ RSpec.configure do |config|
               role: { type: :string, enum: %w[viewer member admin] }
             }
           },
+          # Raw AppRecord JSON (webhook secrets are stripped). The list endpoint
+          # returns only the first block of fields; show/create add git_remote etc.
+          App: {
+            type: :object,
+            required: %w[id name server_id team_id status created_at],
+            properties: {
+              id: { type: :string, format: :uuid },
+              name: { type: :string },
+              server_id: { type: :string, format: :uuid },
+              team_id: { type: :string, format: :uuid },
+              status: { type: :string, enum: %w[running stopped crashed deploying sleeping created] },
+              is_preview: { type: :boolean },
+              pr_number: { type: :integer, nullable: true },
+              parent_app_id: { type: :string, format: :uuid, nullable: true },
+              created_at: { type: :string, format: "date-time" },
+              updated_at: { type: :string, format: "date-time" },
+              created_by_id: { type: :string, format: :uuid },
+              deploy_branch: { type: :string, nullable: true },
+              box_size: { type: :string, nullable: true },
+              git_repository_url: { type: :string, nullable: true },
+              github_repo_full_name: { type: :string, nullable: true },
+              pending_action: { type: :string, nullable: true },
+              container_port: { type: :integer },
+              cloudflare_proxied: { type: :boolean },
+              https_redirect: { type: :boolean },
+              maintenance_mode: { type: :boolean },
+              enabled_shared_engines: { type: :array, items: { type: :string } },
+              uptime_status: { type: :string },
+              deploy_locked_at: { type: :string, format: "date-time", nullable: true },
+              last_commit_sha: { type: :string, nullable: true },
+              git_remote: { type: :string },
+              push_instructions: { type: :string },
+              host_status: { type: :string, nullable: true },
+              host_heartbeat_at: { type: :string, format: "date-time", nullable: true },
+              warnings: { type: :array, items: { type: :string } }
+            }
+          },
           Device: {
             type: :object,
             required: %w[token platform],

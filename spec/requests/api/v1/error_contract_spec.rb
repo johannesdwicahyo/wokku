@@ -33,9 +33,10 @@ RSpec.describe "API error contract", type: :request do
     expect(body["error"]).to eq("Invalid or expired token")
   end
 
-  it "403s an authorized user reading someone else's app as not_authorized" do
-    other_user = create(:user)
-    get api_v1_app_path(app_record), headers: api_v1_headers(other_user)
+  it "403s a viewer-role team member updating the app as not_authorized" do
+    viewer = create(:user)
+    TeamMembership.create!(user: viewer, team: app_record.team, role: :viewer)
+    patch api_v1_app_path(app_record), params: { deploy_branch: "dev" }, headers: api_v1_headers(viewer)
     expect(response).to have_http_status(:forbidden)
     body = response.parsed_body
     expect(body["error_code"]).to eq("not_authorized")

@@ -105,6 +105,105 @@ components:
           - viewer
           - member
           - admin
+    App:
+      type: object
+      required:
+      - id
+      - name
+      - server_id
+      - team_id
+      - status
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        server_id:
+          type: string
+          format: uuid
+        team_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - running
+          - stopped
+          - crashed
+          - deploying
+          - sleeping
+          - created
+        is_preview:
+          type: boolean
+        pr_number:
+          type: integer
+          nullable: true
+        parent_app_id:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        created_by_id:
+          type: string
+          format: uuid
+        deploy_branch:
+          type: string
+          nullable: true
+        box_size:
+          type: string
+          nullable: true
+        git_repository_url:
+          type: string
+          nullable: true
+        github_repo_full_name:
+          type: string
+          nullable: true
+        pending_action:
+          type: string
+          nullable: true
+        container_port:
+          type: integer
+        cloudflare_proxied:
+          type: boolean
+        https_redirect:
+          type: boolean
+        maintenance_mode:
+          type: boolean
+        enabled_shared_engines:
+          type: array
+          items:
+            type: string
+        uptime_status:
+          type: string
+        deploy_locked_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_commit_sha:
+          type: string
+          nullable: true
+        git_remote:
+          type: string
+        push_instructions:
+          type: string
+        host_status:
+          type: string
+          nullable: true
+        host_heartbeat_at:
+          type: string
+          format: date-time
+          nullable: true
+        warnings:
+          type: array
+          items:
+            type: string
     Device:
       type: object
       required:
@@ -239,6 +338,1213 @@ paths:
                 deploy_id:
                   type: string
                   format: uuid
+  "/api/v1/apps/{id}/restart":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    post:
+      summary: Restart the app's processes (queued)
+      operationId: apps.restart
+      tags:
+      - apps
+      security:
+      - bearer: []
+      responses:
+        '202':
+          description: restart queued
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                - app_id
+                - action
+                properties:
+                  message:
+                    type: string
+                  app_id:
+                    type: string
+                    format: uuid
+                  action:
+                    type: string
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '402':
+          description: account suspended for an unpaid invoice
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{id}/stop":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    post:
+      summary: Stop the app's processes (queued)
+      operationId: apps.stop
+      tags:
+      - apps
+      security:
+      - bearer: []
+      responses:
+        '202':
+          description: stop queued
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                - app_id
+                - action
+                properties:
+                  message:
+                    type: string
+                  app_id:
+                    type: string
+                    format: uuid
+                  action:
+                    type: string
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{id}/start":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    post:
+      summary: Start the app's processes (queued)
+      operationId: apps.start
+      tags:
+      - apps
+      security:
+      - bearer: []
+      responses:
+        '202':
+          description: start queued
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                - app_id
+                - action
+                properties:
+                  message:
+                    type: string
+                  app_id:
+                    type: string
+                    format: uuid
+                  action:
+                    type: string
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '402':
+          description: account suspended for an unpaid invoice
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{id}/deploy":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    post:
+      summary: Trigger a deploy
+      operationId: apps.deploy
+      tags:
+      - apps
+      security:
+      - bearer: []
+      responses:
+        '202':
+          description: deploy queued
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                - deploy_id
+                - release_id
+                properties:
+                  message:
+                    type: string
+                  deploy_id:
+                    type: string
+                    format: uuid
+                  release_id:
+                    type: string
+                    format: uuid
+        '409':
+          description: app is locked
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{id}/run":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    post:
+      summary: Run a one-off command (async; poll GET /apps/{app_id}/runs/{id})
+      operationId: apps.run
+      tags:
+      - apps
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '202':
+          description: run queued
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - run_id
+                properties:
+                  run_id:
+                    type: string
+                    format: uuid
+        '400':
+          description: command missing
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '409':
+          description: another operation already holds the app's lane
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - command
+              properties:
+                command:
+                  type: string
+  "/api/v1/apps/{id}/dokku":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    post:
+      summary: Retired raw passthrough (always 410)
+      operationId: apps.dokku
+      tags:
+      - apps
+      deprecated: true
+      security:
+      - bearer: []
+      responses:
+        '410':
+          description: passthrough retired; use the typed commands
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{id}/github_connect":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    post:
+      summary: Connect a GitHub repo for deploy-on-push
+      operationId: apps.github_connect
+      tags:
+      - apps
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: connected
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                - app_id
+                - github_repo
+                - deploy_branch
+                properties:
+                  message:
+                    type: string
+                  app_id:
+                    type: string
+                    format: uuid
+                  github_repo:
+                    type: string
+                  deploy_branch:
+                    type: string
+        '422':
+          description: repo missing
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - repo
+              properties:
+                repo:
+                  type: string
+                  description: owner/name
+                branch:
+                  type: string
+                  default: main
+  "/api/v1/apps/{id}/github_disconnect":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    delete:
+      summary: Disconnect the GitHub repo
+      operationId: apps.github_disconnect
+      tags:
+      - apps
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: disconnected
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{id}/https":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    patch:
+      summary: Enable or disable HTTPS redirect
+      operationId: apps.https
+      tags:
+      - apps
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: new state
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - enabled
+                properties:
+                  enabled:
+                    type: boolean
+        '422':
+          description: enabled missing
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '502':
+          description: the host refused the change
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - enabled
+              properties:
+                enabled:
+                  type: boolean
+  "/api/v1/apps/{id}/cdn":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    patch:
+      summary: Enable or disable the Cloudflare CDN proxy
+      operationId: apps.cdn
+      tags:
+      - apps
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: new state
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - enabled
+                properties:
+                  enabled:
+                    type: boolean
+        '422':
+          description: enabled missing
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '502':
+          description: the host refused the change
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - enabled
+              properties:
+                enabled:
+                  type: boolean
+  "/api/v1/apps/{id}/maintenance":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    patch:
+      summary: Enable or disable maintenance mode
+      operationId: apps.maintenance
+      tags:
+      - apps
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: new state
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - enabled
+                properties:
+                  enabled:
+                    type: boolean
+        '422':
+          description: enabled missing
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '502':
+          description: the host refused the change
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - enabled
+              properties:
+                enabled:
+                  type: boolean
+  "/api/v1/apps/{id}/rename":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    patch:
+      summary: Rename the app
+      operationId: apps.rename
+      tags:
+      - apps
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: renamed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - id
+                - name
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  name:
+                    type: string
+        '400':
+          description: invalid name
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '409':
+          description: name taken
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              properties:
+                name:
+                  type: string
+  "/api/v1/apps/{id}/clone":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    post:
+      summary: Clone the app (config; deploy skipped by default)
+      operationId: apps.clone
+      tags:
+      - apps
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: cloned
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - id
+                - name
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  name:
+                    type: string
+        '409':
+          description: name taken
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              properties:
+                name:
+                  type: string
+                skip_deploy:
+                  type: boolean
+                  default: true
+  "/api/v1/apps/{id}/transfer":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    post:
+      summary: Start an ownership transfer (team admin only)
+      operationId: apps.transfer
+      tags:
+      - apps
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: transfer requested
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - transfer_id
+                - recipient_email
+                - expires_at
+                properties:
+                  transfer_id:
+                    type: string
+                    format: uuid
+                  recipient_email:
+                    type: string
+                  expires_at:
+                    type: string
+                    format: date-time
+        '400':
+          description: invalid recipient
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '409':
+          description: a transfer is already pending
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - recipient_email
+              properties:
+                recipient_email:
+                  type: string
+  "/api/v1/apps/{id}/lock":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    post:
+      summary: Lock deploys
+      operationId: apps.lock
+      tags:
+      - apps
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: locked
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - locked
+                properties:
+                  locked:
+                    type: boolean
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{id}/unlock":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    post:
+      summary: Unlock deploys
+      operationId: apps.unlock
+      tags:
+      - apps
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: unlocked
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - locked
+                properties:
+                  locked:
+                    type: boolean
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{id}/metrics":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    get:
+      summary: Recent CPU / memory samples
+      operationId: apps.metrics
+      tags:
+      - apps
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - app_id
+                - minute
+                - hourly
+                properties:
+                  app_id:
+                    type: string
+                    format: uuid
+                  minute:
+                    type: array
+                    items:
+                      type: object
+                  hourly:
+                    type: array
+                    items:
+                      type: object
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{id}/monitor":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    get:
+      summary: 24h request monitor (totals, buckets, slowest requests)
+      operationId: apps.monitor
+      tags:
+      - apps
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: monitor
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - app_id
+                - window_seconds
+                - totals
+                - buckets
+                - recent_slow
+                properties:
+                  app_id:
+                    type: string
+                    format: uuid
+                  window_seconds:
+                    type: integer
+                  totals:
+                    type: object
+                  buckets:
+                    type: array
+                    items:
+                      type: object
+                  recent_slow:
+                    type: array
+                    items:
+                      type: object
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{id}/vitals":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    get:
+      summary: 7-day web vitals rollups
+      operationId: apps.vitals
+      tags:
+      - apps
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: vitals
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - app_id
+                - window_days
+                - latest
+                - history
+                properties:
+                  app_id:
+                    type: string
+                    format: uuid
+                  window_days:
+                    type: integer
+                  latest:
+                    type: object
+                  history:
+                    type: object
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps":
+    get:
+      summary: List the apps visible to the caller
+      operationId: apps.list
+      tags:
+      - apps
+      security:
+      - bearer: []
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Name substring filter
+      - name: include_previews
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Any value includes PR preview apps
+      responses:
+        '200':
+          description: apps
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/App"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    post:
+      summary: Create an app
+      operationId: apps.create
+      tags:
+      - apps
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '201':
+          description: app created
+          content:
+            application/json:
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/App"
+                - type: object
+                  required:
+                  - git_remote
+                  - push_instructions
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '402':
+          description: app limit of the plan reached
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: invalid name
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              - server_id
+              properties:
+                name:
+                  type: string
+                server_id:
+                  type: string
+                  description: Server UUID or name
+                deploy_branch:
+                  type: string
+                  default: main
+                box_size:
+                  type: string
+                  description: Bundle v2 size; only when shared add-ons are enabled
+                resources:
+                  type: object
+                  description: Per-process resources (resource-builder mode)
+                enabled_shared_engines:
+                  type: array
+                  items:
+                    type: string
+                dedicated_db_engine:
+                  type: string
+                  enum:
+                  - postgres
+                  - mysql
+                  - mongodb
+                add_dedicated_redis:
+                  type: boolean
+  "/api/v1/apps/{id}":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    get:
+      summary: Show an app
+      operationId: apps.show
+      tags:
+      - apps
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: app
+          content:
+            application/json:
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/App"
+                - type: object
+                  required:
+                  - git_remote
+                  - push_instructions
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    patch:
+      summary: Update an app (deploy_branch; a changed name renames it)
+      operationId: apps.update
+      tags:
+      - apps
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: updated app
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/App"
+        '400':
+          description: rename refused
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                deploy_branch:
+                  type: string
+    put:
+      summary: Update an app (same as PATCH)
+      operationId: apps.replace
+      tags:
+      - apps
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: updated app
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/App"
+        '400':
+          description: rename refused
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                deploy_branch:
+                  type: string
+    delete:
+      summary: Destroy an app (team admin only)
+      operationId: apps.destroy
+      tags:
+      - apps
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: app destroyed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                - warnings
+                properties:
+                  message:
+                    type: string
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
   "/api/v1/auth/device/code":
     post:
       summary: Start the device authorization flow

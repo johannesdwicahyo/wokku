@@ -45,11 +45,11 @@ RSpec.describe "API::V1::AppsController", type: :request do
     expect(JSON.parse(response.body)["name"]).to eq("myapp")
   end
 
-  it "non-team member cannot show app" do
+  it "non-team member gets 404 for the app" do
     other_user = User.create!(email: "other@example.com", password: "password123456")
     other_token = api_v1_token_for(other_user)
     get api_v1_app_path(app_record), headers: { "Authorization" => "Bearer #{other_token}" }
-    expect(response).to have_http_status(:forbidden)
+    expect(response).to have_http_status(:not_found)
   end
 
   it "show returns 401 without token" do
@@ -350,12 +350,12 @@ RSpec.describe "API::V1::AppsController", type: :request do
     expect(body["error_code"]).to eq("passthrough_retired")
   end
 
-  it "POST dokku: 403 on cross-team app" do
+  it "POST dokku: 404 on cross-team app" do
     other = User.create!(email: "other-dokku@example.com", password: "password123456")
     other_token = api_v1_token_for(other, name: "other-dokku")
     post dokku_api_v1_app_url(app_record),
       params: { args: [ "ps:list" ] },
       headers: { "Authorization" => "Bearer #{other_token}" }, as: :json
-    expect(response).to have_http_status(:forbidden)
+    expect(response).to have_http_status(:not_found)
   end
 end
