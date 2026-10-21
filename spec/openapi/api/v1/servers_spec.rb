@@ -4,7 +4,7 @@ require "openapi_helper"
 
 # Servers are platform infrastructure shared by every tenant:
 # ServerPolicy::Scope is `scope.all`, so there is no "another team's server"
-# 404 — any signed-in user can list/show every server (deploy target picker).
+# 404 - any signed-in user can list/show every server (deploy target picker).
 # Mutations and status are admin-only (403 for everyone else).
 RSpec.describe "API v1 servers", type: :request do
   let(:admin) { users(:admin) }
@@ -214,7 +214,7 @@ RSpec.describe "API v1 servers", type: :request do
         run_test!
       end
 
-      response "410", "passthrough_retired — always returned for admins" do
+      response "410", "passthrough_retired - always returned for admins" do
         schema error
         run_test!
       end
