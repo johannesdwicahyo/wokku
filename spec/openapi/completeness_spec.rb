@@ -3,17 +3,17 @@
 require "rails_helper"
 require "yaml"
 
-# Every public /api/v1 route must be in the contract. UNDOCUMENTED shrinks
-# as batches land and must be empty at the end of sub-project 1.
+# Every public /api/v1 route must be in the contract.
 RSpec.describe "OpenAPI completeness" do
-  INTERNAL = %r{\A/api/v1/(agent/|logs/ingest|requests/ingest|openapi\.yaml)}
-  UNDOCUMENTED = [].freeze
+  def internal
+    %r{\A/api/v1/(agent/|logs/ingest|requests/ingest|openapi\.yaml)}
+  end
 
   def routes
     Rails.application.routes.routes.filter_map do |r|
       path = r.path.spec.to_s.sub("(.:format)", "")
       next unless path.start_with?("/api/v1/") || path == "/api/v1"
-      next if path.match?(INTERNAL)
+      next if path.match?(internal)
       verb = r.verb.to_s
       next if verb.empty?
       verb.split("|").map { |v| "#{v} #{path.gsub(/:(\w+)/, '{\1}')}" }
@@ -27,11 +27,7 @@ RSpec.describe "OpenAPI completeness" do
     end.sort
   end
 
-  it "documents every public route (except the shrinking UNDOCUMENTED list)" do
-    expect(routes - documented - UNDOCUMENTED).to eq([])
-  end
-
-  it "keeps UNDOCUMENTED honest (no entries that are now documented or gone)" do
-    expect(UNDOCUMENTED - (routes - documented)).to eq([])
+  it "documents every public route" do
+    expect(routes - documented).to eq([])
   end
 end

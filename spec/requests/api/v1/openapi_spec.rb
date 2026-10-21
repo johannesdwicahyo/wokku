@@ -7,7 +7,7 @@ RSpec.describe "GET /api/v1/openapi.yaml", type: :request do
     get "/api/v1/openapi.yaml"
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq("application/yaml")
-    expect(response.body).to eq(File.read(Wokku.config.openapi_path))
+    expect(response.body.b).to eq(File.binread(Wokku.config.openapi_path))
   end
 
   # Test env renders routing errors as 404 (show_exceptions :rescuable); if
