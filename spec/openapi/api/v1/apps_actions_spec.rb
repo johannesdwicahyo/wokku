@@ -116,6 +116,13 @@ RSpec.describe "API v1 app actions", type: :request do
         run_test!
       end
 
+      response "422", "the app has no deployable image yet (deploy first)" do
+        let(:id) { app_record.id }
+        let(:payload) { { command: "echo hi" } }
+        schema error
+        run_test!
+      end
+
       response "409", "another operation already holds the app's lane" do
         let(:id) { app_record.id }
         let(:payload) { { command: "echo hi" } }

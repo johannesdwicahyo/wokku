@@ -69,6 +69,13 @@ RSpec.describe "API::V1::AppsController contract", type: :request do
     expect(JSON.parse(response.body)).to include("error_code" => "invalid_params")
   end
 
+  it "run on a never-deployed app is a typed 422 (Ops.run! unstubbed)" do
+    post "/api/v1/apps/#{own_app.id}/run", params: { command: "echo hi" }.to_json, headers: headers
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(JSON.parse(response.body)).to include("error_code" => "invalid_params", "retryable" => false)
+    expect(JSON.parse(response.body)["error"]).to include("deploy first")
+  end
+
   it "create over the plan quota is a typed 402" do
     allow(Wokku.config.plan_enforcer).to receive(:quota).and_return(0)
     post "/api/v1/apps", params: { name: "overquota", server_id: servers(:one).id }.to_json, headers: headers

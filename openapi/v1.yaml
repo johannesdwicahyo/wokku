@@ -574,6 +574,12 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
+        '422':
+          description: the app has no deployable image yet (deploy first)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
         '409':
           description: another operation already holds the app's lane
           content:
