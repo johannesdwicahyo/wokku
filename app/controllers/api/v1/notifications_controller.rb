@@ -19,7 +19,7 @@ module Api
       end
 
       def destroy
-        notification = Notification.find(params[:id])
+        notification = policy_scope(Notification).find(params[:id])
         authorize notification
         notification.destroy!
         render json: { message: "Notification removed" }

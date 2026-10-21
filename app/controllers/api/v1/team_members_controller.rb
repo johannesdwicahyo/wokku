@@ -35,7 +35,7 @@ module Api
       private
 
       def set_team
-        @team = Team.find(params[:team_id])
+        @team = policy_scope(Team).find(params[:team_id])
       end
     end
   end
