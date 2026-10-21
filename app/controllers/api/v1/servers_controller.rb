@@ -1,16 +1,24 @@
 module Api
   module V1
     class ServersController < BaseController
+      SUMMARY_FIELDS = %i[id name host port status created_at heartbeat_status heartbeat_at].freeze
+
       def index
         authorize Server, :show?
         servers = policy_scope(Server)
-        render json: servers.select(:id, :name, :host, :port, :status, :created_at, :heartbeat_status, :heartbeat_at)
+        render json: servers.select(*SUMMARY_FIELDS)
       end
 
       def show
         server = Server.lookup!(params[:id])
         authorize server, :show?
-        render json: server.as_json(except: [ :ssh_private_key, :ingest_token ])
+        # Any signed-in user may show a server (deploy target / terminal), but
+        # operator details (cost, provider, ssh_user, vitals) are admin-only.
+        if policy(server).manage?
+          render json: server.as_json(except: [ :ssh_private_key, :ingest_token ])
+        else
+          render json: server.as_json(only: SUMMARY_FIELDS)
+        end
       end
 
       def create

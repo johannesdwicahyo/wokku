@@ -85,6 +85,9 @@ module ApiErrors
     buildpacks_retired:  { status: :gone, retryable: false,
                          message: "Buildpack configuration has been retired",
                          hint: "Builds are image-based (Dockerfile or nixpacks auto-detection); buildpack settings no longer apply." },
+    usage_retired:       { status: :gone, retryable: false,
+                         message: "Hourly usage reporting has been retired",
+                         hint: "Billing is invoiced from daily usage; see your usage and invoices at /dashboard/billing." },
     # datastore ops (Track B Phase B4) — wokkud ServiceOp executor errors
     service_create_failed: { status: :bad_gateway, retryable: true,
                          message: "Datastore provisioning failed on the host.",
