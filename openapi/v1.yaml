@@ -204,6 +204,80 @@ components:
           type: array
           items:
             type: string
+    Deploy:
+      type: object
+      required:
+      - id
+      - status
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - pending
+          - building
+          - succeeded
+          - failed
+          - timed_out
+        commit_sha:
+          type: string
+          nullable: true
+        log:
+          type: string
+          nullable: true
+          description: Only on deploys.show
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        finished_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+    Release:
+      type: object
+      required:
+      - id
+      - version
+      - app_record_id
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        version:
+          type: integer
+        description:
+          type: string
+          nullable: true
+        app_record_id:
+          type: string
+          format: uuid
+        deploy_id:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Process:
+      type: object
+      required:
+      - processes
+      properties:
+        processes:
+          type: object
+          additionalProperties:
+            type: string
     Device:
       type: object
       required:
@@ -1912,6 +1986,215 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{app_id}/deploys":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    get:
+      summary: List the app's 20 most recent deploys
+      operationId: deploys.list
+      tags:
+      - deploys
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: deploys, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Deploy"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    post:
+      summary: Deploy from an uploaded source tarball (see deploys.upload_url)
+      operationId: deploys.create
+      tags:
+      - deploys
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '202':
+          description: build queued
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - deploy_id
+                - status
+                properties:
+                  deploy_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+        '400':
+          description: archive_key missing or not this app's deploy-archives key
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is a viewer (needs member or admin)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '409':
+          description: app is locked (app_locked)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: archive was never uploaded (archive_missing)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - archive_key
+              properties:
+                archive_key:
+                  type: string
+                  description: deploy-archives/<app id>/<uuid>.tar.gz, as returned
+                    by deploys.upload_url
+  "/api/v1/apps/{app_id}/deploys/{id}":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    get:
+      summary: Show a deploy, including its log
+      operationId: deploys.show
+      tags:
+      - deploys
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: deploy
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Deploy"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown deploy, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{app_id}/deploys/uploads":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    post:
+      summary: Get a presigned URL to upload a source tarball (15 minutes)
+      operationId: deploys.upload_url
+      tags:
+      - deploys
+      security:
+      - bearer: []
+      responses:
+        '201':
+          description: upload slot
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - archive_key
+                - upload_url
+                - expires_in
+                properties:
+                  archive_key:
+                    type: string
+                  upload_url:
+                    type: string
+                  expires_in:
+                    type: integer
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is a viewer (needs member or admin)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '501':
+          description: no object store configured (upload_not_configured)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
   "/api/v1/devices":
     post:
       summary: Register a push device token
@@ -2189,6 +2472,1012 @@ paths:
                     type: string
         '404':
           description: notification of a team the caller does not belong to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{app_id}/previews":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    get:
+      summary: List the app's PR preview apps, highest PR first
+      operationId: previews.list
+      tags:
+      - previews
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: previews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - id
+                  - name
+                  - pr_number
+                  - status
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    pr_number:
+                      type: integer
+                    branch:
+                      type: string
+                      nullable: true
+                    status:
+                      type: string
+                    url:
+                      type: string
+                      nullable: true
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{app_id}/previews/{pr_number}":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    - name: pr_number
+      in: path
+      schema:
+        type: integer
+      required: true
+    delete:
+      summary: Destroy a PR preview (queued)
+      operationId: previews.destroy
+      tags:
+      - previews
+      security:
+      - bearer: []
+      responses:
+        '202':
+          description: destroy queued
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is a viewer (needs member or admin)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: no preview with that PR number, or an app of a team the caller
+            does not belong to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{app_id}/dev_sessions":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    post:
+      summary: Open a time-boxed dev session (SSH + DB tunnel target)
+      operationId: dev_sessions.create
+      tags:
+      - dev_sessions
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '201':
+          description: session created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - session_id
+                - ssh_host
+                - ssh_port
+                - ssh_user
+                - ssh_principal
+                - db_remote_host
+                - db_remote_port
+                - local_port_suggestion
+                - readonly
+                - expires_at
+                properties:
+                  session_id:
+                    type: string
+                    format: uuid
+                  ssh_host:
+                    type: string
+                  ssh_port:
+                    type: integer
+                  ssh_user:
+                    type: string
+                  ssh_principal:
+                    type: string
+                  db_remote_host:
+                    type: string
+                    nullable: true
+                  db_remote_port:
+                    type: integer
+                    nullable: true
+                  local_port_suggestion:
+                    type: integer
+                  readonly:
+                    type: boolean
+                  expires_at:
+                    type: string
+                    format: date-time
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is a viewer (needs member or admin)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '409':
+          description: app container not running (app_not_running)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: no database to tunnel to (validation_failed)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                duration_min:
+                  type: integer
+                  default: 30
+  "/api/v1/apps/{app_id}/dev_sessions/{id}":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    delete:
+      summary: Revoke a dev session (idempotent)
+      operationId: dev_sessions.destroy
+      tags:
+      - dev_sessions
+      security:
+      - bearer: []
+      responses:
+        '204':
+          description: revoked, or already gone
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is a viewer (needs member or admin)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{app_id}/releases":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    get:
+      summary: List releases, newest version first
+      operationId: releases.list
+      tags:
+      - releases
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: releases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Release"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{app_id}/releases/{id}":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    get:
+      summary: Show a release
+      operationId: releases.show
+      tags:
+      - releases
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: release
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Release"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown release, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{app_id}/releases/{id}/rollback":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    post:
+      summary: 'Roll back: redeploy a release''s recorded artifact as a new release'
+      operationId: releases.rollback
+      tags:
+      - releases
+      security:
+      - bearer: []
+      responses:
+        '201':
+          description: rollback deploy queued; the new release
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Release"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is a viewer (needs member or admin)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown release, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: no artifact left to roll back to (rollback_artifact_missing)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{app_id}/ps":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    get:
+      summary: Process (Swarm task) states from the latest host heartbeat
+      operationId: ps.show
+      tags:
+      - ps
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: process report
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Process"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    patch:
+      summary: Scale processes (counts and/or resources)
+      operationId: ps.update
+      tags:
+      - ps
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: scaling applied
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: scaling parameter missing (invalid_params)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '402':
+          description: account suspended for an unpaid invoice (account_suspended)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is a viewer (needs member or admin)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '409':
+          description: another operation holds the app (service_busy, retryable)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: formation_would_empty, or quota_exceeded for the plan
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '502':
+          description: the host failed to converge (dokku_command_failed)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scaling:
+                  type: object
+                  additionalProperties:
+                    type: integer
+                  description: process type => count
+                resources:
+                  type: object
+                  additionalProperties:
+                    type: object
+                  description: process type => shape (cpu/memory/count)
+    put:
+      summary: Scale processes (same as PATCH)
+      operationId: ps.replace
+      tags:
+      - ps
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: scaling applied
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: scaling parameter missing (invalid_params)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '402':
+          description: account suspended for an unpaid invoice (account_suspended)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is a viewer (needs member or admin)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '409':
+          description: another operation holds the app (service_busy, retryable)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: formation_would_empty, or quota_exceeded for the plan
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '502':
+          description: the host failed to converge (dokku_command_failed)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scaling:
+                  type: object
+                  additionalProperties:
+                    type: integer
+                  description: process type => count
+                resources:
+                  type: object
+                  additionalProperties:
+                    type: object
+                  description: process type => shape (cpu/memory/count)
+  "/api/v1/apps/{app_id}/runs/{id}":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      description: run_id from apps.run
+      required: true
+    get:
+      summary: Poll a one-off command started with apps.run
+      operationId: runs.show
+      tags:
+      - runs
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: run status and result
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - run_id
+                - status
+                properties:
+                  run_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum:
+                    - pending
+                    - claimed
+                    - succeeded
+                    - failed
+                  exit_code:
+                    type: integer
+                    nullable: true
+                  output:
+                    type: string
+                    nullable: true
+                  error:
+                    type: string
+                    nullable: true
+                  error_code:
+                    type: string
+                    nullable: true
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown run, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{app_id}/logs":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    get:
+      summary: Recent logs (JSON); with follow=1 a live text/plain stream
+      operationId: logs.list
+      tags:
+      - logs
+      security:
+      - bearer: []
+      parameters:
+      - name: follow
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - '1'
+          - 'true'
+        description: 1/true switches to a chunked text/plain stream of live log output
+      - name: since
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: until
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: lines
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+      - name: level
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Substring filter
+      responses:
+        '200':
+          description: log lines (JSON), or a text/plain stream when follow=1
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - logs
+                - source
+                properties:
+                  logs:
+                    oneOf:
+                    - type: array
+                      items:
+                        type: object
+                        required:
+                        - ts
+                        - container
+                        - level
+                        - line
+                        properties:
+                          ts:
+                            type: string
+                            format: date-time
+                          container:
+                            type: string
+                          level:
+                            type: string
+                          line:
+                            type: string
+                    - type: string
+                      description: Raw tail output when source is live
+                  source:
+                    type: string
+                    enum:
+                    - durable
+                    - live
+            text/plain:
+              schema:
+                type: object
+                required:
+                - logs
+                - source
+                properties:
+                  logs:
+                    oneOf:
+                    - type: array
+                      items:
+                        type: object
+                        required:
+                        - ts
+                        - container
+                        - level
+                        - line
+                        properties:
+                          ts:
+                            type: string
+                            format: date-time
+                          container:
+                            type: string
+                          level:
+                            type: string
+                          line:
+                            type: string
+                    - type: string
+                      description: Raw tail output when source is live
+                  source:
+                    type: string
+                    enum:
+                    - durable
+                    - live
+        '400':
+          description: since/until not parseable (invalid_time)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+            text/plain:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+            text/plain:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+            text/plain:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{app_id}/checks":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    get:
+      summary: Health-check status (platform-supervised on the Swarm runtime)
+      operationId: checks.show
+      tags:
+      - checks
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: supervised health
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - checks
+                properties:
+                  checks:
+                    type: object
+                    required:
+                    - supervised
+                    - runtime
+                    - message
+                    properties:
+                      supervised:
+                        type: boolean
+                      runtime:
+                        type: string
+                      message:
+                        type: string
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    patch:
+      summary: 'Change health checks (always refused: managed by the runtime)'
+      operationId: checks.update
+      tags:
+      - checks
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is a viewer (needs member or admin)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: 'refused: health checks are managed by the Swarm runtime'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+    put:
+      summary: Change health checks (same as PATCH)
+      operationId: checks.replace
+      tags:
+      - checks
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: caller is a viewer (needs member or admin)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: 'refused: health checks are managed by the Swarm runtime'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+  "/api/v1/doctor":
+    get:
+      summary: Self-diagnosis across auth, client version, hosts and apps
+      operationId: doctor.show
+      tags:
+      - doctor
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: report
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - checks
+                - hints
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - ok
+                    - issues
+                  checks:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - name
+                      - status
+                      properties:
+                        name:
+                          type: string
+                          enum:
+                          - auth
+                          - client
+                          - hosts
+                          - apps
+                        status:
+                          type: string
+                          enum:
+                          - ok
+                          - warn
+                          - error
+                        detail:
+                          type: string
+                        hosts:
+                          type: array
+                          items:
+                            type: object
+                        apps:
+                          type: array
+                          items:
+                            type: object
+                  hints:
+                    type: array
+                    items:
+                      type: string
+        '401':
+          description: missing or invalid token
           content:
             application/json:
               schema:

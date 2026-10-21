@@ -98,6 +98,41 @@ RSpec.configure do |config|
               warnings: { type: :array, items: { type: :string } }
             }
           },
+          Deploy: {
+            type: :object,
+            required: %w[id status created_at],
+            properties: {
+              id: { type: :string, format: :uuid },
+              status: { type: :string, enum: %w[pending building succeeded failed timed_out] },
+              commit_sha: { type: :string, nullable: true },
+              log: { type: :string, nullable: true, description: "Only on deploys.show" },
+              started_at: { type: :string, format: "date-time", nullable: true },
+              finished_at: { type: :string, format: "date-time", nullable: true },
+              created_at: { type: :string, format: "date-time" }
+            }
+          },
+          Release: {
+            type: :object,
+            required: %w[id version app_record_id created_at],
+            properties: {
+              id: { type: :string, format: :uuid },
+              version: { type: :integer },
+              description: { type: :string, nullable: true },
+              app_record_id: { type: :string, format: :uuid },
+              deploy_id: { type: :string, format: :uuid, nullable: true },
+              created_at: { type: :string, format: "date-time" },
+              updated_at: { type: :string, format: "date-time" }
+            }
+          },
+          # Process report for ps.show: one entry per running task, keyed
+          # status_<process>_<n> (e.g. status_web_1), value = task state.
+          Process: {
+            type: :object,
+            required: %w[processes],
+            properties: {
+              processes: { type: :object, additionalProperties: { type: :string } }
+            }
+          },
           Device: {
             type: :object,
             required: %w[token platform],
