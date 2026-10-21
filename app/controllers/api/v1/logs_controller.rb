@@ -9,7 +9,7 @@ module Api
       class InvalidTimeError < StandardError; end
 
       def index
-        app_record = AppRecord.lookup!(params[:app_id])
+        app_record = policy_scope(AppRecord).lookup!(params[:app_id])
         authorize app_record, :show?
 
         if [ "1", "true" ].include?(params[:follow].to_s)

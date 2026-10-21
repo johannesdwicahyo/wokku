@@ -24,7 +24,7 @@ module Api
       private
 
       def set_app
-        @app = AppRecord.lookup!(params[:app_id])
+        @app = policy_scope(AppRecord).lookup!(params[:app_id])
       end
     end
   end

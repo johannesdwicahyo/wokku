@@ -7,7 +7,7 @@ module Api
     # to *build from*, so it needs the same permission as triggering a build.
     class DeployUploadsController < BaseController
       def create
-        app = AppRecord.lookup!(params[:app_id])
+        app = policy_scope(AppRecord).lookup!(params[:app_id])
         authorize app, :update?
 
         store = Wokku.config.backup_store

@@ -8,7 +8,7 @@ module Api
     # controller is the GET-only follow-up clients poll for status.
     class RunsController < BaseController
       def show
-        app = AppRecord.lookup!(params[:app_id])
+        app = policy_scope(AppRecord).lookup!(params[:app_id])
         authorize app, :show?
         op = app.lifecycle_ops.find_by(id: params[:id], kind: "stack.run")
         return render_api_error(:not_found, message: "run not found") unless op

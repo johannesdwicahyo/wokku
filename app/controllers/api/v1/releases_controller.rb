@@ -49,7 +49,7 @@ module Api
       private
 
       def set_app_record
-        @app_record = AppRecord.lookup!(params[:app_id])
+        @app_record = policy_scope(AppRecord).lookup!(params[:app_id])
       end
     end
   end
