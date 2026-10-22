@@ -19,4 +19,12 @@ RSpec.describe DatabaseServicePolicy do
   it "M1: a team member can resize" do
     expect(described_class.new(member_with(:member), db).resize?).to be(true)
   end
+
+  it "a team viewer can't update (restore/retry)" do
+    expect(described_class.new(member_with(:viewer), db).update?).to be(false)
+  end
+
+  it "a team member can update" do
+    expect(described_class.new(member_with(:member), db).update?).to be(true)
+  end
 end

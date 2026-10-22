@@ -11,8 +11,9 @@ class DatabaseServicePolicy < ApplicationPolicy
     true
   end
 
+  # Restore overwrites live data; retry/tier spend money — viewers can't.
   def update?
-    user_in_team?
+    team_member_or_above?
   end
 
   def destroy?
