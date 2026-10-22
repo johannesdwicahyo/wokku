@@ -46,10 +46,6 @@ components:
         owner_id:
           type: string
           format: uuid
-        plan_id:
-          type: string
-          format: uuid
-          nullable: true
         kind:
           type: string
           enum:
@@ -58,24 +54,6 @@ components:
           nullable: true
         slug:
           type: string
-          nullable: true
-        trial_ends_at:
-          type: string
-          format: date-time
-          nullable: true
-        billing_anchor_date:
-          type: string
-          format: date
-          nullable: true
-        payment_method_type:
-          type: string
-        billing_model:
-          type: string
-        billing_credit_idr:
-          type: integer
-        billing_switched_on:
-          type: string
-          format: date
           nullable: true
         created_at:
           type: string
@@ -324,7 +302,8 @@ components:
         dsn:
           type: string
           nullable: true
-          description: Connection URL including credentials (e.g. postgres://user:pass@host:5432/db)
+          description: Connection URL including credentials (e.g. postgres://user:pass@host:5432/db).
+            Only on show, and only for team members/admins.
         parent_service_id:
           type: string
           format: uuid
@@ -2958,7 +2937,7 @@ paths:
       description: App UUID or name
       required: true
     get:
-      summary: Show the app's environment variables (values included)
+      summary: Show the app's environment variables (values hidden from viewers)
       operationId: config.show
       tags:
       - config
@@ -2973,13 +2952,18 @@ paths:
                 type: object
                 required:
                 - config
+                - masked
                 properties:
                   config:
                     type: object
                     additionalProperties:
                       type: string
+                      nullable: true
                     example:
                       DATABASE_URL: postgres://user:pass@host/db
+                  masked:
+                    type: boolean
+                    description: 'true for viewers: values are null'
         '401':
           description: missing or invalid token
           content:
