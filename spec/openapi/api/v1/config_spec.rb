@@ -2,7 +2,7 @@
 
 require "openapi_helper"
 
-# Env vars. NOTE: GET returns env VALUES (used by `config:export`) — see report.
+# Env vars. GET returns VALUES to member+ (used by `config:export`); viewers get keys with null values and masked: true.
 RSpec.describe "API v1 config", type: :request do
   let(:user) { users(:one) }
   let(:Authorization) { "Bearer #{api_v1_token_for(user)}" }
@@ -20,7 +20,7 @@ RSpec.describe "API v1 config", type: :request do
   path "/api/v1/apps/{app_id}/config" do
     parameter app_param
 
-    get "Show the app's environment variables (values included)" do
+    get "Show the app's environment variables (values hidden from viewers)" do
       operationId "config.show"
       tags "config"
       security [ { bearer: [] } ]
@@ -28,8 +28,11 @@ RSpec.describe "API v1 config", type: :request do
 
       response "200", "env var name => value" do
         let(:app_id) { app_record.id }
-        schema type: :object, required: %w[config],
-               properties: { config: { type: :object, additionalProperties: { type: :string }, example: { "DATABASE_URL" => "postgres://user:pass@host/db" } } }
+        schema type: :object, required: %w[config masked],
+               properties: {
+                 config: { type: :object, additionalProperties: { type: :string, nullable: true }, example: { "DATABASE_URL" => "postgres://user:pass@host/db" } },
+                 masked: { type: :boolean, description: "true for viewers: values are null" }
+               }
         run_test!
       end
 

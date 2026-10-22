@@ -4,6 +4,7 @@ module Dashboard
 
     def index
       authorize @app, :show?
+      @can_edit = policy(@app).update?
       # EnvVar rows ARE the truth (B6 W2 / W3 flip) — the control plane owns
       # runtime env for every app.
       @env_vars = @app.env_vars.order(:key)

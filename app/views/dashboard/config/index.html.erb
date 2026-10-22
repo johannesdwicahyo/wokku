@@ -19,6 +19,7 @@
         <h2 class="font-headline text-base font-bold text-ink">Config vars</h2>
         <p class="text-xs text-dim mt-1">Environment variables for <span class="text-ink font-medium"><%= @app.name %></span></p>
       </div>
+      <% if @can_edit %>
       <div class="flex items-center gap-2">
         <% if @env_vars.any? %>
           <button data-action="click->config-vars#toggleAll" data-config-vars-target="revealAllBtn"
@@ -28,6 +29,7 @@
         <% end %>
         <button data-action="click->slide-panel#open" class="<%= Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>">+ Add var</button>
       </div>
+      <% end %>
     </div>
 
     <% if @env_vars.any? %>
@@ -37,8 +39,9 @@
             <div class="flex items-center gap-4 flex-1 min-w-0 font-mono">
               <span class="text-sm font-semibold text-accent shrink-0"><%= var.key %></span>
               <span class="text-sm text-dim truncate" data-config-vars-target="maskedValue">••••••••</span>
-              <span class="text-sm text-ink-soft truncate hidden" data-config-vars-target="realValue"><%= var.value %></span>
+              <% if @can_edit %><span class="text-sm text-ink-soft truncate hidden" data-config-vars-target="realValue"><%= var.value %></span><% end %>
             </div>
+            <% if @can_edit %>
             <div class="flex items-center gap-2 shrink-0 opacity-0 group-hover:opacity-100 transition text-xs">
               <button data-action="click->config-vars#toggleOne"
                       class="px-2 py-1 text-dim hover:text-accent transition cursor-pointer" title="Reveal">Reveal</button>
@@ -47,6 +50,7 @@
                       class="px-2 py-1 text-dim hover:text-accent transition cursor-pointer" title="Edit">Edit</button>
               <%= link_to "Delete", dashboard_app_config_path(@app, var), data: { turbo_method: :delete, turbo_confirm: "Remove #{var.key}?" }, class: "px-2 py-1 text-dim hover:text-danger transition", title: "Delete" %>
             </div>
+            <% end %>
           </div>
         <% end %>
       </div>

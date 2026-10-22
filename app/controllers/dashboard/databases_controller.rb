@@ -28,7 +28,7 @@ module Dashboard
     def show
       @database = DatabaseService.lookup!(params[:id])
       authorize @database
-      @info = fetch_info
+      @info = policy(@database).update? ? fetch_info : {}
       @linked_apps = @database.app_records
       # Scope the "Connect an app" picker to the user's own apps —
       # `@database.server.app_records` returns every app on that

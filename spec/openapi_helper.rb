@@ -38,15 +38,8 @@ RSpec.configure do |config|
               id: { type: :string, format: :uuid },
               name: { type: :string },
               owner_id: { type: :string, format: :uuid },
-              plan_id: { type: :string, format: :uuid, nullable: true },
               kind: { type: :string, enum: %w[personal org], nullable: true },
               slug: { type: :string, nullable: true },
-              trial_ends_at: { type: :string, format: "date-time", nullable: true },
-              billing_anchor_date: { type: :string, format: :date, nullable: true },
-              payment_method_type: { type: :string },
-              billing_model: { type: :string },
-              billing_credit_idr: { type: :integer },
-              billing_switched_on: { type: :string, format: :date, nullable: true },
               created_at: { type: :string, format: "date-time" },
               updated_at: { type: :string, format: "date-time" }
             }
@@ -133,9 +126,8 @@ RSpec.configure do |config|
               processes: { type: :object, additionalProperties: { type: :string } }
             }
           },
-          # Raw DatabaseService JSON. NOTE: `dsn` is the decrypted connection
-          # string (credentials) and is returned to any team member — see Task 6
-          # report; documented as-is.
+          # Raw DatabaseService JSON. `dsn` (credentials) only on databases.show
+          # for member+; never on list/create or to viewers.
           Database: {
             type: :object,
             required: %w[id name service_type status server_id shared created_at updated_at],
@@ -148,7 +140,7 @@ RSpec.configure do |config|
               tier_name: { type: :string, nullable: true },
               shared: { type: :boolean, description: "true = per-tenant database on a shared engine" },
               wokkud_managed: { type: :boolean },
-              dsn: { type: :string, nullable: true, description: "Connection URL including credentials (e.g. postgres://user:pass@host:5432/db)" },
+              dsn: { type: :string, nullable: true, description: "Connection URL including credentials (e.g. postgres://user:pass@host:5432/db). Only on show, and only for team members/admins." },
               parent_service_id: { type: :string, format: :uuid, nullable: true },
               upgrade_source_id: { type: :string, format: :uuid, nullable: true },
               creator_id: { type: :string, format: :uuid, nullable: true },

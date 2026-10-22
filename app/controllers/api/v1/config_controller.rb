@@ -5,7 +5,11 @@ module Api
       before_action :authorize_app
 
       def show
-        render json: { config: @app_record.runtime_env }
+        env = @app_record.runtime_env
+        # Viewers see which keys exist, never the secrets in them.
+        return render json: { config: env.transform_values { nil }, masked: true } unless policy(@app_record).update?
+
+        render json: { config: env, masked: false }
       end
 
       def update

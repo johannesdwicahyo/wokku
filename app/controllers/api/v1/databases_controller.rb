@@ -6,13 +6,13 @@ module Api
 
       def index
         databases = policy_scope(DatabaseService)
-        render json: databases
+        render json: databases.as_json(except: :dsn)
       end
 
       def show
         database = policy_scope(DatabaseService).lookup!(params[:id])
         authorize database
-        render json: database
+        render json: policy(database).update? ? database : database.as_json(except: :dsn)
       end
 
       def create
@@ -36,7 +36,7 @@ module Api
         )
         database = provisioner.call
 
-        render json: database, status: :created
+        render json: database.as_json(except: :dsn), status: :created
       rescue Services::Ops::Failed => e
         render_api_error(:service_create_failed, message: e.message)
       rescue Services::Ops::Timeout => e
