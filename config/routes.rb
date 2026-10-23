@@ -331,6 +331,7 @@ Rails.application.routes.draw do
       end
 
       resources :notifications, only: [ :index, :create, :destroy ]
+      resources :incidents, only: [ :index, :show ]
 
       post "ai/diagnose", to: "ai#diagnose"
 
