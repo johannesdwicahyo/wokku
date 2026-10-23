@@ -109,7 +109,9 @@ RSpec.describe "API::V1::BackupsController", type: :request do
 
       post restore_api_v1_database_backup_path(db, backup), headers: headers
       expect(response).to have_http_status(:unprocessable_entity)
-      expect(JSON.parse(response.body)["error"]).to eq("restore failed")
+      body = JSON.parse(response.body)
+      expect(body["error_code"]).to eq("restore_failed")
+      expect(body["error"]).not_to include("restore failed:")
     end
   end
 

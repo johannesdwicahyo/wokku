@@ -66,6 +66,6 @@ RSpec.describe AiDebugger do
     ENV["ANTHROPIC_API_KEY"] = "sk-ant-fake"
     allow(Net::HTTP).to receive(:new).and_raise(SocketError.new("no dns"))
     result = described_class.new(deploy).diagnose
-    expect(result[:error]).to match(/AI diagnosis failed/)
+    expect(result).to eq(error: "AI diagnosis failed", error_code: :ai_provider_failed)
   end
 end

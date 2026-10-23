@@ -83,9 +83,9 @@ module Api
             response.stream.write(chunk)
           end
         rescue Hosts::Ssh::CommandError, Hosts::Ssh::ConnectionError => e
-          # Headers are already committed by ActionController::Live; we can't
-          # render JSON. Write the error inline and let the client see it.
-          response.stream.write("\n[wokku] log stream error: #{e.message}\n")
+          # Headers are committed; write the typed code inline, report the rest.
+          Sentry.capture_exception(e) if defined?(Sentry)
+          response.stream.write("\n[wokku] log stream error: #{Hosts::ErrorClassifier.classify(e)}\n")
         ensure
           response.stream.close
         end

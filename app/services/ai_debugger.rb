@@ -7,13 +7,14 @@ class AiDebugger
   end
 
   def diagnose
-    return { error: "No API key configured" } unless api_key_configured?
-    return { error: "No deploy log available" } unless @deploy.log.present?
+    return { error: "No API key configured", error_code: :ai_unavailable } unless api_key_configured?
+    return { error: "No deploy log available", error_code: :no_deploy_log } unless @deploy.log.present?
 
-    response = call_api(build_prompt)
-    { diagnosis: response }
+    { diagnosis: call_api(build_prompt) }
   rescue => e
-    { error: "AI diagnosis failed: #{e.message}" }
+    Sentry.capture_exception(e) if defined?(Sentry)
+    Rails.logger.warn("[ai] diagnose #{@deploy.id} failed: #{e.class}: #{e.message}")
+    { error: "AI diagnosis failed", error_code: :ai_provider_failed }
   end
 
   private

@@ -47,9 +47,14 @@ module Api
       end
 
       def render_internal_error(exception)
+        render_reported_error(:internal_error, exception)
+      end
+
+      # Report the real exception; answer with the typed generic message.
+      def render_reported_error(code, exception)
         Sentry.capture_exception(exception) if defined?(Sentry)
         Rails.logger.error("[api] #{exception.class}: #{exception.message}")
-        render_api_error(:internal_error)
+        render_api_error(code)
       end
     end
   end

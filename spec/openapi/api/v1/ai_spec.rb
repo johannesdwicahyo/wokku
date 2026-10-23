@@ -25,13 +25,13 @@ RSpec.describe "API v1 ai", type: :request do
       end
 
       {
-        "422" => [ "deploy has no log (no_deploy_log)", "No deploy log available" ],
-        "502" => [ "AI provider failed (ai_provider_failed)", "AI diagnosis failed: upstream" ],
-        "503" => [ "AI not configured on this server (ai_unavailable)", "No API key configured" ]
-      }.each do |status, (desc, err)|
+        "422" => [ "deploy has no log (no_deploy_log)", :no_deploy_log ],
+        "502" => [ "AI provider failed (ai_provider_failed)", :ai_provider_failed ],
+        "503" => [ "AI not configured on this server (ai_unavailable)", :ai_unavailable ]
+      }.each do |status, (desc, code)|
         response status, desc do
           let(:payload) { { deploy_id: app_records(:one).deploys.create!(status: "failed", log: "err").id } }
-          before { allow_any_instance_of(AiDebugger).to receive(:diagnose).and_return({ error: err }) }
+          before { allow_any_instance_of(AiDebugger).to receive(:diagnose).and_return({ error: "x", error_code: code }) }
           schema "$ref" => "#/components/schemas/Error"
           run_test!
         end

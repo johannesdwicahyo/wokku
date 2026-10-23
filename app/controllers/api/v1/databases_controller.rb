@@ -100,7 +100,7 @@ module Api
       rescue ImportService::UnsupportedTypeError => e
         render json: { error: e.message }, status: :unprocessable_entity
       rescue => e
-        render json: { error: e.message }, status: :unprocessable_entity
+        render_reported_error(:import_failed, e)
       end
 
       def monitor

@@ -155,9 +155,9 @@ RSpec.describe "API v1 database backups", type: :request do
         run_test!
       end
 
-      response "422", "the restore failed ({error})" do
+      response "422", "the restore failed (restore_failed)" do
         before { allow(RestoreService).to receive(:new).and_raise(StandardError, "restore failed") }
-        schema adhoc_error
+        schema error
         run_test!
       end
     end

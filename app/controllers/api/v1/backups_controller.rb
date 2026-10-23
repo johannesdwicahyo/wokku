@@ -28,10 +28,6 @@ module Api
 
         BackupJob.perform_later(db.id)
         render json: { message: "Backup started" }, status: :created
-      rescue ActiveRecord::RecordNotFound, Pundit::NotAuthorizedError
-        raise # handled by BaseController (404 / 403), not the generic 422 below
-      rescue => e
-        render json: { error: e.message }, status: :unprocessable_entity
       end
 
       def download
@@ -51,7 +47,7 @@ module Api
       rescue ActiveRecord::RecordNotFound, Pundit::NotAuthorizedError
         raise # handled by BaseController (404 / 403), not the generic 422 below
       rescue => e
-        render json: { error: e.message }, status: :unprocessable_entity
+        render_reported_error(:restore_failed, e)
       end
     end
   end

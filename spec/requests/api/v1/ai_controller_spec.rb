@@ -38,16 +38,17 @@ RSpec.describe "API::V1::AiController", type: :request do
   end
 
   {
-    "No API key configured" => [ 503, "ai_unavailable" ],
-    "No deploy log available" => [ 422, "no_deploy_log" ],
-    "AI diagnosis failed: boom secret-detail" => [ 502, "ai_provider_failed" ]
-  }.each do |err, (status, code)|
-    it "diagnose maps AiDebugger error #{err.inspect} to #{status} #{code}" do
-      allow_any_instance_of(AiDebugger).to receive(:diagnose).and_return({ error: err })
+    ai_unavailable: 503,
+    no_deploy_log: 422,
+    ai_provider_failed: 502
+  }.each do |code, status|
+    it "diagnose maps AiDebugger error_code #{code.inspect} to #{status}" do
+      allow_any_instance_of(AiDebugger).to receive(:diagnose)
+        .and_return({ error: "boom secret-detail", error_code: code })
       post "/api/v1/ai/diagnose", params: { deploy_id: deploy.id }, headers: headers
       expect(response).to have_http_status(status)
       body = JSON.parse(response.body)
-      expect(body["error_code"]).to eq(code)
+      expect(body["error_code"]).to eq(code.to_s)
       expect(body["error"]).not_to include("secret-detail")
     end
   end
