@@ -110,6 +110,21 @@ CREATE TABLE public.activity_digests (
 
 
 --
+-- Name: alert_mutes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.alert_mutes (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    app_record_id uuid,
+    event character varying,
+    expires_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: api_tokens; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1751,6 +1766,14 @@ ALTER TABLE ONLY public.activity_digests
 
 
 --
+-- Name: alert_mutes alert_mutes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.alert_mutes
+    ADD CONSTRAINT alert_mutes_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: api_tokens api_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2445,6 +2468,20 @@ CREATE INDEX index_activities_on_user_id ON public.activities USING btree (user_
 --
 
 CREATE UNIQUE INDEX index_activity_digests_on_date ON public.activity_digests USING btree (date);
+
+
+--
+-- Name: index_alert_mutes_on_app_record_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_alert_mutes_on_app_record_id ON public.alert_mutes USING btree (app_record_id);
+
+
+--
+-- Name: index_alert_mutes_on_scope; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_alert_mutes_on_scope ON public.alert_mutes USING btree (user_id, COALESCE(app_record_id, '00000000-0000-0000-0000-000000000000'::uuid), COALESCE(event, ''::character varying));
 
 
 --
@@ -4004,6 +4041,14 @@ ALTER TABLE ONLY public.lifecycle_ops
 
 
 --
+-- Name: alert_mutes fk_rails_6e706cd2c8; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.alert_mutes
+    ADD CONSTRAINT fk_rails_6e706cd2c8 FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
 -- Name: dev_sessions fk_rails_75f65a0854; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4212,6 +4257,14 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: alert_mutes fk_rails_b2df00d648; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.alert_mutes
+    ADD CONSTRAINT fk_rails_b2df00d648 FOREIGN KEY (app_record_id) REFERENCES public.app_records(id) ON DELETE CASCADE;
+
+
+--
 -- Name: database_services fk_rails_d34d450af6; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4370,6 +4423,7 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261023000001'),
 ('20261019000001'),
 ('20260925000001'),
 ('20260806050000'),
