@@ -37,6 +37,7 @@ gem "octokit"
 gem "faraday-retry"
 # PushNotificationService (mobile app push) — Expo server SDK.
 gem "expo-server-sdk"
+gem "apnotic"
 gem "bootsnap", require: false
 gem "ostruct"
 gem "csv"

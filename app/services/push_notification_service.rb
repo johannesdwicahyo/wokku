@@ -36,6 +36,12 @@ class PushNotificationService
     return if tokens.empty?
 
     deliver_expo(tokens.select { |dt| dt.provider == "expo" })
+
+    apns = tokens.select { |dt| dt.provider == "apns" }
+    if apns.any?
+      Push::Apns.new.deliver(apns, title: TITLES[@event] || @event.titleize, body: build_body(subject_app),
+                                   category: CATEGORIES[@event] || "default", data: push_data)
+    end
   rescue StandardError => e
     Rails.logger.warn("Push notification failed: #{e.message}")
   end

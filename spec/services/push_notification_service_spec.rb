@@ -155,4 +155,16 @@ RSpec.describe PushNotificationService, "recipient filtering" do
     service = described_class.new(notification, nil, "app_down", { "app_id" => app_record.id, "incident_id" => "inc-1" })
     expect(service.push_data).to include(event: "app_down", app_id: app_record.id, incident_id: "inc-1")
   end
+
+  it "routes apns tokens to Push::Apns and expo tokens to Expo" do
+    DeviceToken.find_by(user: bob).update!(provider: "apns")
+    apns = instance_double(Push::Apns, deliver: nil)
+    allow(Push::Apns).to receive(:new).and_return(apns)
+    tokens = sent_tokens { deliver("app_down", { "app_id" => app_record.id }) }
+    expect(tokens).to eq([ "tok-#{alice.id}" ])
+    expect(apns).to have_received(:deliver).with(
+      [ DeviceToken.find_by(user: bob) ], title: "App Down", body: a_string_including("DOWN"),
+      category: "alert", data: hash_including(event: "app_down", app_id: app_record.id)
+    )
+  end
 end
