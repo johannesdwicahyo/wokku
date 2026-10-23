@@ -4089,6 +4089,177 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
+  "/api/v1/incidents":
+    get:
+      summary: 'List outages of apps the caller can see (host outages: system admin
+        only)'
+      operationId: incidents.list
+      tags:
+      - incidents
+      security:
+      - bearer: []
+      parameters:
+      - name: state
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - open
+          - all
+          default: open
+      - name: app_id
+        in: query
+        required: false
+        schema:
+          type: string
+        description: App UUID or name
+      - name: before
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+        description: 'Cursor: only incidents that started before this time'
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+      responses:
+        '200':
+          description: incidents, newest started_at first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - id
+                  - subject_type
+                  - reason
+                  - started_at
+                  - open
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    subject_type:
+                      type: string
+                      enum:
+                      - app
+                      - server
+                    app_id:
+                      type: string
+                      format: uuid
+                      nullable: true
+                    app_name:
+                      type: string
+                      nullable: true
+                    server_id:
+                      type: string
+                      format: uuid
+                      nullable: true
+                    reason:
+                      type: string
+                    started_at:
+                      type: string
+                      format: date-time
+                    resolved_at:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    duration_seconds:
+                      type: integer
+                      nullable: true
+                      description: null while open
+                    open:
+                      type: boolean
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: invalid state, limit or before
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/incidents/{id}":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    get:
+      summary: Show one incident
+      operationId: incidents.show
+      tags:
+      - incidents
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: incident
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - id
+                - subject_type
+                - reason
+                - started_at
+                - open
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  subject_type:
+                    type: string
+                    enum:
+                    - app
+                    - server
+                  app_id:
+                    type: string
+                    format: uuid
+                    nullable: true
+                  app_name:
+                    type: string
+                    nullable: true
+                  server_id:
+                    type: string
+                    format: uuid
+                    nullable: true
+                  reason:
+                    type: string
+                  started_at:
+                    type: string
+                    format: date-time
+                  resolved_at:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  duration_seconds:
+                    type: integer
+                    nullable: true
+                    description: null while open
+                  open:
+                    type: boolean
+        '404':
+          description: unknown, or not visible to the caller
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
   "/api/v1/meta":
     get:
       summary: Version and client-compatibility probe
