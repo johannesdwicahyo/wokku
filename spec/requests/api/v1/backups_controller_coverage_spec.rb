@@ -61,12 +61,14 @@ RSpec.describe "API::V1::BackupsController", type: :request do
       expect(JSON.parse(response.body)["error"]).to match(/Free tier limit reached/)
     end
 
-    it "returns 422 with the error message when something blows up" do
+    it "returns a typed internal_error without the exception text when something blows up" do
       allow(DatabaseService).to receive(:lookup!).and_raise(StandardError, "kaboom")
 
       post api_v1_database_backups_path(db), headers: headers
-      expect(response).to have_http_status(:unprocessable_entity)
-      expect(JSON.parse(response.body)["error"]).to eq("kaboom")
+      expect(response).to have_http_status(:internal_server_error)
+      body = JSON.parse(response.body)
+      expect(body["error_code"]).to eq("internal_error")
+      expect(response.body).not_to include("kaboom")
     end
   end
 
