@@ -3087,16 +3087,11 @@ paths:
               schema:
                 "$ref": "#/components/schemas/Error"
         '422':
-          description: the restore failed ({error})
+          description: the restore failed (restore_failed)
           content:
             application/json:
               schema:
-                type: object
-                required:
-                - error
-                properties:
-                  error:
-                    type: string
+                "$ref": "#/components/schemas/Error"
   "/api/v1/apps/{app_id}/config":
     parameters:
     - name: app_id
