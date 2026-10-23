@@ -17,7 +17,13 @@ module Push
       # ponytail: one connection (one TLS handshake) per alert batch; switch to
       # a pooled long-lived connection if alert volume grows.
       connection = build_connection
-      tokens.each { |dt| push_one(connection, dt, title:, body:, category:, data:) }
+      tokens.each do |dt|
+        push_one(connection, dt, title:, body:, category:, data:)
+      rescue StandardError => e
+        # One bad token/key/socket must not abort the batch; never log the token value.
+        Rails.logger.warn("[push] APNs error #{e.class} device_token=#{dt.id}")
+        Sentry.capture_exception(e, extra: { device_token_id: dt.id }) if defined?(Sentry)
+      end
     ensure
       connection&.close
     end
