@@ -50,7 +50,7 @@ RSpec.describe Push::Apns do
   end
 
   it "reports an exception for one token to Sentry, keeps it, and still pushes the rest" do
-    sentry = class_double(Sentry, capture_exception: nil).as_stubbed_const
+    allow(Sentry).to receive(:capture_exception)
     allow(connection).to receive(:push) do |n|
       pushed << n
       raise SocketError, "boom" if n.token == "apns-good"
@@ -60,7 +60,7 @@ RSpec.describe Push::Apns do
     expect { deliver }.not_to raise_error
     expect(pushed.map(&:token)).to contain_exactly("apns-good", "apns-dead")
     expect(DeviceToken.exists?(good.id)).to be(true)
-    expect(sentry).to have_received(:capture_exception).with(instance_of(SocketError), extra: { device_token_id: good.id })
+    expect(Sentry).to have_received(:capture_exception).with(instance_of(SocketError), extra: { device_token_id: good.id })
     expect(connection).to have_received(:close)
   end
 
