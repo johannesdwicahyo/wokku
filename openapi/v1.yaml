@@ -1138,6 +1138,169 @@ paths:
                 deploy_id:
                   type: string
                   format: uuid
+  "/api/v1/alert_mutes":
+    get:
+      summary: List the caller's active push mutes
+      operationId: alert_mutes.list
+      tags:
+      - alert_mutes
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: active mutes (expired ones are omitted)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - id
+                  - created_at
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    app_id:
+                      type: string
+                      format: uuid
+                      nullable: true
+                      description: null = every app
+                    app_name:
+                      type: string
+                      nullable: true
+                    event:
+                      type: string
+                      nullable: true
+                      description: null = every push event
+                    until:
+                      type: string
+                      format: date-time
+                      nullable: true
+                      description: null = until removed
+                    created_at:
+                      type: string
+                      format: date-time
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    post:
+      summary: Mute push alerts for an app and/or an event (posting the same scope
+        again updates its expiry)
+      operationId: alert_mutes.create
+      tags:
+      - alert_mutes
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '201':
+          description: 'same scope again: expiry updated, no duplicate'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - id
+                - created_at
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  app_id:
+                    type: string
+                    format: uuid
+                    nullable: true
+                    description: null = every app
+                  app_name:
+                    type: string
+                    nullable: true
+                  event:
+                    type: string
+                    nullable: true
+                    description: null = every push event
+                  until:
+                    type: string
+                    format: date-time
+                    nullable: true
+                    description: null = until removed
+                  created_at:
+                    type: string
+                    format: date-time
+        '404':
+          description: app the caller cannot see
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: neither app_id nor event (mute everything), unknown event,
+            or bad until
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                app_id:
+                  type: string
+                  description: App UUID or name
+                event:
+                  type: string
+                  enum:
+                  - deploy_succeeded
+                  - deploy_failed
+                  - app_crashed
+                  - backup_completed
+                  - backup_failed
+                  - resource_high_cpu
+                  - resource_high_memory
+                  - app_down
+                  - app_recovered
+                until:
+                  type: string
+                  format: date-time
+  "/api/v1/alert_mutes/{id}":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    delete:
+      summary: Remove one of the caller's mutes
+      operationId: alert_mutes.destroy
+      tags:
+      - alert_mutes
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: removed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: another user's mute
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
   "/api/v1/apps/{id}/restart":
     parameters:
     - name: id
