@@ -35,15 +35,23 @@ class PushNotificationService
     tokens = recipient_tokens
     return if tokens.empty?
 
-    deliver_expo(tokens.select { |dt| dt.provider == "expo" })
+    begin
+      deliver_expo(tokens.select { |dt| dt.provider == "expo" })
+    rescue StandardError => e
+      Rails.logger.warn("Expo push failed: #{e.class}") # never e.message: may carry a token
+    end
 
     apns = tokens.select { |dt| dt.provider == "apns" }
-    if apns.any?
+    return if apns.empty?
+
+    begin
       Push::Apns.new.deliver(apns, title: TITLES[@event] || @event.titleize, body: build_body(subject_app),
                                    category: CATEGORIES[@event] || "default", data: push_data)
+    rescue StandardError => e
+      Rails.logger.warn("APNs push failed: #{e.class}")
     end
   rescue StandardError => e
-    Rails.logger.warn("Push notification failed: #{e.message}")
+    Rails.logger.warn("Push notification failed: #{e.class}")
   end
 
   # Custom keys the app uses to open the right screen.
@@ -55,6 +63,7 @@ class PushNotificationService
   private
 
   def deliver_expo(tokens)
+    tokens = tokens.select { |dt| Expo::Push.expo_push_token?(dt.token) }
     return if tokens.empty?
 
     notifications = tokens.map { |dt| build_notification(dt) }

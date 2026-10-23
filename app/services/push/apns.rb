@@ -17,6 +17,11 @@ module Push
       # ponytail: one connection (one TLS handshake) per alert batch; switch to
       # a pooled long-lived connection if alert volume grows.
       connection = build_connection
+      # net-http2 re-raises socket errors in the caller's thread unless handled.
+      connection.on(:error) do |e|
+        Rails.logger.warn("[push] APNs socket error #{e.class}")
+        Sentry.capture_exception(e) if defined?(Sentry)
+      end
       tokens.each do |dt|
         push_one(connection, dt, title:, body:, category:, data:)
       rescue StandardError => e
@@ -31,7 +36,8 @@ module Push
     private
 
     def build_connection
-      options = { auth_method: :token, cert_path: StringIO.new(ENV["APNS_KEY"]),
+      # Kamal env files escape newlines in multi-line values.
+      options = { auth_method: :token, cert_path: StringIO.new(ENV["APNS_KEY"].gsub("\\n", "\n")),
                   key_id: ENV["APNS_KEY_ID"], team_id: ENV["APNS_TEAM_ID"] }
       if ENV.fetch("APNS_ENVIRONMENT", "production") == "development"
         Apnotic::Connection.development(options)
@@ -47,7 +53,7 @@ module Push
       n.sound = "default"
       n.category = category
       n.custom_payload = data
-      response = connection.push(n) # nil on timeout
+      response = connection.push(n, timeout: 10) # nil on timeout
       return if response&.ok?
 
       payload = response&.body

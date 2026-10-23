@@ -6,7 +6,7 @@ RSpec.describe Push::Apns do
   let(:user) { create(:user) }
   let!(:good) { DeviceToken.create!(user: user, token: "apns-good", platform: "ios", provider: "apns") }
   let!(:dead) { DeviceToken.create!(user: user, token: "apns-dead", platform: "ios", provider: "apns") }
-  let(:connection) { double("Apnotic::Connection", close: nil) }
+  let(:connection) { double("Apnotic::Connection", close: nil, on: nil) }
   let(:env) do
     { "APNS_KEY" => OpenSSL::PKey::EC.generate("prime256v1").to_pem, "APNS_KEY_ID" => "KEY123",
       "APNS_TEAM_ID" => "TEAM123", "APNS_BUNDLE_ID" => "cloud.wokku.app" }
@@ -34,6 +34,12 @@ RSpec.describe Push::Apns do
     expect([ n.sound, n.category, n.topic ]).to eq([ "default", "alert", "cloud.wokku.app" ])
     expect(n.custom_payload).to eq(event: "app_down", app_id: "a1")
     expect(connection).to have_received(:close)
+  end
+
+  it "registers an :error handler and uses a 10s push timeout" do
+    deliver
+    expect(connection).to have_received(:on).with(:error)
+    expect(connection).to have_received(:push).with(anything, timeout: 10).twice
   end
 
   it "deletes tokens Apple reports as Unregistered or BadDeviceToken" do
@@ -65,6 +71,12 @@ RSpec.describe Push::Apns do
   end
 
   it "builds a real token-auth connection from the env without network" do
+    allow(Apnotic::Connection).to receive(:new).and_call_original
+    expect { described_class.new.send(:build_connection).close }.not_to raise_error
+  end
+
+  it "accepts a key whose newlines were escaped by a Kamal env file" do
+    stub_const("ENV", ENV.to_h.merge("APNS_KEY" => env["APNS_KEY"].gsub("\n", "\\n")))
     allow(Apnotic::Connection).to receive(:new).and_call_original
     expect { described_class.new.send(:build_connection).close }.not_to raise_error
   end

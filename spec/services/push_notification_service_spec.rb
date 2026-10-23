@@ -167,4 +167,24 @@ RSpec.describe PushNotificationService, "recipient filtering" do
       category: "alert", data: hash_including(event: "app_down", app_id: app_record.id)
     )
   end
+
+  it "still delivers APNs tokens when Expo raises, without logging the token" do
+    DeviceToken.find_by(user: bob).update!(provider: "apns")
+    apns = instance_double(Push::Apns, deliver: nil)
+    allow(Push::Apns).to receive(:new).and_return(apns)
+    allow_any_instance_of(described_class).to receive(:deliver_expo).and_raise(StandardError, "tok-secret")
+    allow(Rails.logger).to receive(:warn)
+    deliver("app_down", { "app_id" => app_record.id })
+    expect(apns).to have_received(:deliver)
+    expect(Rails.logger).not_to have_received(:warn).with(a_string_including("tok-secret"))
+  end
+
+  it "skips a malformed expo token instead of sending or logging it" do
+    allow(Rails.logger).to receive(:warn)
+    client = instance_double(Expo::Push::Client)
+    allow(Expo::Push::Client).to receive(:new).and_return(client)
+    expect(client).not_to receive(:send)
+    deliver("app_down", { "app_id" => app_record.id })
+    expect(Rails.logger).not_to have_received(:warn).with(a_string_including("tok-"))
+  end
 end

@@ -18,8 +18,11 @@ module Api
           return invalid("until must be a future ISO 8601 time") unless expires_at&.future?
         end
 
-        mute = current_user.alert_mutes.find_or_initialize_by(app_record: app, event: event)
-        mute.update!(expires_at: expires_at)
+        mute = begin
+          upsert_mute(app, event, expires_at)
+        rescue ActiveRecord::RecordNotUnique # concurrent identical POST: row exists now
+          upsert_mute(app, event, expires_at)
+        end
         render json: mute.as_api_json, status: :created
       end
 
@@ -29,6 +32,10 @@ module Api
       end
 
       private
+
+      def upsert_mute(app, event, expires_at)
+        current_user.alert_mutes.find_or_initialize_by(app_record: app, event: event).tap { |m| m.update!(expires_at: expires_at) }
+      end
 
       def parse_time(value)
         Time.iso8601(value.to_s)
