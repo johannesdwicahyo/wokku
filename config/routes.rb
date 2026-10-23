@@ -332,6 +332,7 @@ Rails.application.routes.draw do
 
       resources :notifications, only: [ :index, :create, :destroy ]
       resources :incidents, only: [ :index, :show ]
+      resources :alert_mutes, only: [ :index, :create, :destroy ]
 
       post "ai/diagnose", to: "ai#diagnose"
 

@@ -205,6 +205,7 @@ class User < ApplicationRecord
   end
 
   has_many :device_tokens, dependent: :destroy
+  has_many :alert_mutes, dependent: nil
   has_many :known_devices, dependent: :destroy
 
   def self.from_omniauth(auth)
