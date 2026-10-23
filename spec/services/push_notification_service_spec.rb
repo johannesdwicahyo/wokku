@@ -106,3 +106,53 @@ RSpec.describe PushNotificationService do
     expect { service.deliver! }.not_to raise_error
   end
 end
+
+RSpec.describe PushNotificationService, "recipient filtering" do
+  let(:team) { create(:team) }
+  let(:app_record) { create(:app_record, team: team) }
+  let(:alice) { create(:user) }
+  let(:bob) { create(:user) }
+  let(:notification) { create(:notification, team: team, channel: :push, events: %w[app_down backup_failed]) }
+
+  before do
+    [ alice, bob ].each do |u|
+      create(:team_membership, user: u, team: team, role: :member)
+      DeviceToken.create!(user: u, token: "tok-#{u.id}", platform: "ios")
+    end
+  end
+
+  # Observe the Expo hand-off at our own seam, not Expo's internals
+  # (its client method is literally named `send`, which doubles can't stub).
+  def sent_tokens
+    tokens = []
+    allow_any_instance_of(described_class).to receive(:deliver_expo) { |_, batch| tokens.concat(batch.map(&:token)) }
+    yield
+    tokens
+  end
+
+  def deliver(event, context) = described_class.new(notification, nil, event, context).deliver!
+
+  it "skips a user who muted the app, keeps the rest" do
+    AlertMute.create!(user: alice, app_record: app_record, event: nil)
+    tokens = sent_tokens { deliver("app_down", { "app_id" => app_record.id, "app_name" => app_record.name }) }
+    expect(tokens).to eq([ "tok-#{bob.id}" ])
+  end
+
+  it "ignores an expired mute" do
+    AlertMute.create!(user: alice, app_record: app_record, event: nil, expires_at: 1.minute.ago)
+    tokens = sent_tokens { deliver("app_down", { "app_id" => app_record.id }) }
+    expect(tokens).to contain_exactly("tok-#{alice.id}", "tok-#{bob.id}")
+  end
+
+  it "applies only app-wide mutes when the event has no app" do
+    AlertMute.create!(user: alice, app_record: app_record, event: nil)
+    AlertMute.create!(user: bob, app_record: nil, event: "backup_failed")
+    tokens = sent_tokens { deliver("backup_failed", {}) }
+    expect(tokens).to eq([ "tok-#{alice.id}" ])
+  end
+
+  it "puts app_id and incident_id in the push data" do
+    service = described_class.new(notification, nil, "app_down", { "app_id" => app_record.id, "incident_id" => "inc-1" })
+    expect(service.push_data).to include(event: "app_down", app_id: app_record.id, incident_id: "inc-1")
+  end
+end

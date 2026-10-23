@@ -32,15 +32,29 @@ class PushNotificationService
   end
 
   def deliver!
-    tokens = device_tokens
+    tokens = recipient_tokens
+    return if tokens.empty?
+
+    deliver_expo(tokens.select { |dt| dt.provider == "expo" })
+  rescue StandardError => e
+    Rails.logger.warn("Push notification failed: #{e.message}")
+  end
+
+  # Custom keys the app uses to open the right screen.
+  def push_data
+    { type: "deploy", event: @event, app_id: subject_app&.id,
+      deploy_id: @deploy&.id, incident_id: context_value("incident_id") }.compact
+  end
+
+  private
+
+  def deliver_expo(tokens)
     return if tokens.empty?
 
     notifications = tokens.map { |dt| build_notification(dt) }
     tickets = @client.send(notifications)
 
-    tokens_by_index = tokens.index_by.with_index { |dt, i| i }
     ticket_index = 0
-
     tickets.each do |ticket|
       dt = tokens[ticket_index]
       if dt
@@ -52,30 +66,32 @@ class PushNotificationService
       end
       ticket_index += 1
     end
-  rescue StandardError => e
-    Rails.logger.warn("Push notification failed: #{e.message}")
   end
 
-  private
-
-  def device_tokens
-    user_ids = @notification.team.users.pluck(:id)
-    DeviceToken.where(user_id: user_ids).to_a
+  # Team members with a device, minus anyone who muted this app/event.
+  # ponytail: one mute query per member; teams are small. Batch it if a
+  # team ever has hundreds of phones.
+  def recipient_tokens
+    app = subject_app
+    users = @notification.team.users.reject { |u| AlertMute.muted?(user: u, app_record: app, event: @event) }
+    DeviceToken.where(user_id: users.map(&:id)).to_a
   end
+
+  def subject_app
+    return @subject_app if defined?(@subject_app)
+    @subject_app = @deploy&.app_record || ((id = context_value("app_id")) && AppRecord.find_by(id: id))
+  end
+
+  def context_value(key) = @context[key] || @context[key.to_sym]
 
   def build_notification(device_token)
-    # ponytail: deploy-less events (app_down/app_recovered) carry no
-    # Deploy/AppRecord — only context. app_id is omitted from data so
-    # deep-linking degrades to the notification list instead of crashing.
-    app = @deploy&.app_record
-    data = { type: "deploy", deploy_id: @deploy&.id, event: @event }
-    data[:app_id] = app.id if app
+    app = subject_app
 
     Expo::Push::Notification.new
       .to(device_token.token)
       .title(TITLES[@event] || @event.titleize)
       .body(build_body(app))
-      .data(data)
+      .data(push_data)
       .sound("default")
       .category_id(CATEGORIES[@event] || "default")
   end

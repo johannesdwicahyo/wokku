@@ -8,4 +8,5 @@ class DeviceToken < ApplicationRecord
 
   validates :token, presence: true, uniqueness: true
   validates :platform, presence: true, inclusion: { in: %w[ios android] }
+  validates :provider, inclusion: { in: %w[expo apns] }
 end

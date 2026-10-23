@@ -6,4 +6,14 @@ class Notification < ApplicationRecord
 
   validates :channel, presence: true
   validates :events, presence: true
+
+  DEFAULT_PUSH_EVENTS = %w[app_down app_recovered app_crashed deploy_failed backup_failed].freeze
+
+  # First phone registered -> on-call push for each of the user's teams that
+  # has no push rule yet. Teams that configured (or deleted) their own keep it.
+  def self.ensure_default_push_for!(user)
+    user.teams.where.not(id: where(channel: :push).select(:team_id)).find_each do |team|
+      team.notifications.create!(channel: :push, events: DEFAULT_PUSH_EVENTS)
+    end
+  end
 end

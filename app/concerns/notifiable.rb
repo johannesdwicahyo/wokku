@@ -17,7 +17,8 @@ module Notifiable
     return unless team
     Notification.where(team: team).find_each do |notification|
       next unless notification.events.include?(event)
-      NotifyJob.perform_later(notification.id, event, app_record.deploys.last&.id || 0)
+      NotifyJob.perform_later(notification.id, event, app_record.deploys.last&.id || 0,
+                              { "app_id" => app_record.id, "app_name" => app_record.name })
     end
   rescue StandardError => e
     Rails.logger.warn("Failed to fire resource alert: #{e.message}")

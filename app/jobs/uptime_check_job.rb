@@ -42,6 +42,8 @@ class UptimeCheckJob < ApplicationJob
     incident&.resolve!
     fire_team_event(app.team, "app_recovered", {
       app_name: app.name,
+      app_id: app.id,
+      incident_id: incident&.id,
       reason: incident&.reason,
       since: incident&.started_at&.iso8601
     })
@@ -57,6 +59,8 @@ class UptimeCheckJob < ApplicationJob
       incident = Incident.open!(subject: app, reason: classified.reason)
       fire_team_event(app.team, "app_down", {
         app_name: app.name,
+        app_id: app.id,
+        incident_id: incident.id,
         reason: classified.reason,
         reason_message: classified.message,
         since: incident.started_at.iso8601
