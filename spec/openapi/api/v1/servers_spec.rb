@@ -178,6 +178,7 @@ RSpec.describe "API v1 servers", type: :request do
 
     post "Retired raw dokku passthrough" do
       operationId "servers.dokku"
+      deprecated true
       tags "servers"
       security [ { bearer: [] } ]
       consumes "application/json"
