@@ -532,7 +532,7 @@ RSpec.describe TemplateDeployer, "branch coverage" do
   end
 
   describe "rollback tears down a provisioned database" do
-    it "destroys DatabaseService rows and marks the app crashed when a later step fails" do
+    it "destroys DatabaseService rows and marks the never-deployed app created (Not deployed) when a later step fails" do
       template = { repo: "https://github.com/x/y", addons: [ { "type" => "postgres" } ] }
       # Let app create + db provision succeed, then blow up at the build handoff.
       allow_any_instance_of(Git::PushDeployer).to receive(:call)
@@ -544,7 +544,7 @@ RSpec.describe TemplateDeployer, "branch coverage" do
       expect(result[:error]).to match(/deploy exploded/)
       app = AppRecord.find_by(name: "rollback-db", server: server)
       expect(app).not_to be_nil
-      expect(app.status).to eq("crashed")
+      expect(app.status).to eq("created")
       expect(app.deploys.any? { |d| d.status == "failed" }).to be true
       expect(DatabaseService.find_by(name: "rollback-db-postgres", server: server)).to be_nil
     end

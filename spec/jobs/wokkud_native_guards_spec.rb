@@ -35,7 +35,7 @@ RSpec.describe "wokkud-native guards" do
 
       expect(deploy.reload.status).to eq("failed")
       expect(deploy.log).to include("builder unavailable")
-      expect(app.reload.status).to eq("crashed")
+      expect(app.reload.status).to eq("created")
     end
   end
 

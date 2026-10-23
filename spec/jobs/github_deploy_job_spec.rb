@@ -48,7 +48,7 @@ RSpec.describe GithubDeployJob, type: :job do
     described_class.perform_now(**base_args)
 
     expect(deploy.reload.status).to eq("failed")
-    expect(app.reload.status).to eq("crashed")
+    expect(app.reload.status).to eq("created")
     expect(deploy.reload.log).to include("could not archive")
   end
 
@@ -58,6 +58,6 @@ RSpec.describe GithubDeployJob, type: :job do
     described_class.perform_now(**base_args)
 
     expect(deploy.reload.status).to eq("failed")
-    expect(app.reload.status).to eq("crashed")
+    expect(app.reload.status).to eq("created")
   end
 end

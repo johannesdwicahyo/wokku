@@ -124,7 +124,7 @@ RSpec.describe TarballDeployJob, type: :job do
         .and_raise(Deploys::BuildAndConverge::Error, "wokkud build failed: boom")
       described_class.perform_now(**base_args)
       expect(deploy.reload.status).to eq("failed")
-      expect(app.reload.status).to eq("crashed")
+      expect(app.reload.status).to eq("created")
       expect(deploy.reload.log).to include("wokkud build failed: boom")
     end
 
@@ -132,7 +132,7 @@ RSpec.describe TarballDeployJob, type: :job do
       allow(Deploys::BuildAndConverge).to receive(:call).and_raise(Timeout::Error, "deploy timed out")
       described_class.perform_now(**base_args)
       expect(deploy.reload.status).to eq("timed_out")
-      expect(app.reload.status).to eq("crashed")
+      expect(app.reload.status).to eq("created")
       expect(deploy.reload.log).to include("timed out")
     end
 
@@ -140,7 +140,7 @@ RSpec.describe TarballDeployJob, type: :job do
       allow(Deploys::BuildAndConverge).to receive(:call).and_raise(Lifecycle::Ops::Busy.new(app))
       described_class.perform_now(**base_args)
       expect(deploy.reload.status).to eq("failed")
-      expect(app.reload.status).to eq("crashed")
+      expect(app.reload.status).to eq("created")
       expect(deploy.reload.log).to include("another operation is in flight for #{app.name} — retry shortly")
     end
   end
@@ -215,7 +215,7 @@ RSpec.describe TarballDeployJob, type: :job do
       deploy.reload
       expect(deploy.status).to eq("failed")
       expect(deploy.log).to include("streamed build output").and include("nixpacks: exit 1")
-      expect(app.reload.status).to eq("crashed")
+      expect(app.reload.status).to eq("created")
     end
 
     it "fails the deploy when nobody claims within CLAIM_WAIT — no dokku fallback" do
@@ -227,7 +227,7 @@ RSpec.describe TarballDeployJob, type: :job do
       deploy.reload
       expect(deploy.status).to eq("failed")
       expect(deploy.log).to include("did not pick up the build")
-      expect(app.reload.status).to eq("crashed")
+      expect(app.reload.status).to eq("created")
     end
 
     it "fails the deploy when the heartbeat is stale — builder unavailable, no dokku fallback" do
@@ -238,7 +238,7 @@ RSpec.describe TarballDeployJob, type: :job do
       deploy.reload
       expect(deploy.status).to eq("failed")
       expect(deploy.log).to include("builder unavailable")
-      expect(app.reload.status).to eq("crashed")
+      expect(app.reload.status).to eq("created")
     end
 
     it "fails the deploy when the registry is unreachable — builder unavailable, no dokku fallback" do
@@ -249,7 +249,7 @@ RSpec.describe TarballDeployJob, type: :job do
       deploy.reload
       expect(deploy.status).to eq("failed")
       expect(deploy.log).to include("builder unavailable")
-      expect(app.reload.status).to eq("crashed")
+      expect(app.reload.status).to eq("created")
     end
   end
 end

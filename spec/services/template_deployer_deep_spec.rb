@@ -225,7 +225,7 @@ RSpec.describe TemplateDeployer, "deep orchestration" do
     expect(result[:error]).to match(/build failed/)
     app = AppRecord.find_by(name: "rollback-me", server: server)
     expect(app).not_to be_nil
-    expect(app.status).to eq("crashed")
+    expect(app.status).to eq("created")
     expect(app.deploys.any? { |d| d.status == "failed" }).to be_truthy
     expect(DatabaseService.find_by(name: "rollback-me-postgres", server: server)).to be_nil
   end

@@ -59,7 +59,7 @@ RSpec.describe DeployJob, type: :job do
     expect(deploy.reload.status).to eq("failed")
     expect(deploy.log).to include("no code has been pushed")
     expect(deploy.finished_at).to be_present
-    expect(app.reload.status).to eq("crashed")
+    expect(app.reload.status).to eq("created")
     expect(DeployChannel).to have_received(:broadcast_to)
       .with(deploy, { type: "status", data: "failed" })
   end
@@ -73,7 +73,7 @@ RSpec.describe DeployJob, type: :job do
 
     expect(deploy.reload.status).to eq("failed")
     expect(deploy.log).to include("could not archive")
-    expect(app.reload.status).to eq("crashed")
+    expect(app.reload.status).to eq("created")
     expect(DeployChannel).to have_received(:broadcast_to)
       .with(deploy, { type: "status", data: "failed" })
   end
