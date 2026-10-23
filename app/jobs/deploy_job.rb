@@ -48,7 +48,7 @@ class DeployJob < ApplicationJob
 
   def fail_deploy(deploy, app, message)
     deploy.update!(status: :failed, log: message, finished_at: Time.current)
-    app.update!(status: :crashed)
+    app.mark_deploy_failed!
     DeployChannel.broadcast_to(deploy, { type: "log", data: message })
     DeployChannel.broadcast_to(deploy, { type: "status", data: "failed" })
     fire_notifications(app.team, "deploy_failed", deploy)

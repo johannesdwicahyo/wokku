@@ -17,7 +17,7 @@ class GithubDeployJob < ApplicationJob
       Git::PushDeployer.new(app, sha: commit_sha, ref: "refs/heads/#{branch}", deploy: deploy).call
     rescue StandardError => e
       deploy.update!(status: :failed, log: e.message, finished_at: Time.current)
-      app.update!(status: :crashed)
+      app.mark_deploy_failed!
       DeployChannel.broadcast_to(deploy, { type: "status", data: "failed" })
       fire_notifications(app.team, "deploy_failed", deploy)
     end

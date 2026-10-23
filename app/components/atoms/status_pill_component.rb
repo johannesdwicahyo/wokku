@@ -7,7 +7,8 @@ module Atoms
       "deploying" => { label: "Deploying", dot: "var(--color-deploying)" },
       "crashed"   => { label: "Crashed",   dot: "var(--color-danger)" },
       "stopped"   => { label: "Stopped",   dot: "var(--color-dim)" },
-      "sleeping"  => { label: "Sleeping",  dot: "var(--color-warn)" }
+      "sleeping"  => { label: "Sleeping",  dot: "var(--color-warn)" },
+      "created"   => { label: "Not deployed", dot: "var(--color-dim)" }
     }.freeze
 
     TONES = {

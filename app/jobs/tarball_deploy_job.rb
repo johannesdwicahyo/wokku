@@ -62,7 +62,7 @@ class TarballDeployJob < ApplicationJob
 
   rescue Timeout::Error
     deploy.update!(status: :timed_out, log: deploy.reload.log.to_s + "\nDeploy timed out", finished_at: Time.current)
-    app.update!(status: :crashed)
+    app.mark_deploy_failed!
     DeployChannel.broadcast_to(deploy, { type: "status", data: "timed_out" })
   rescue Deploys::BuildAndConverge::Error, ::Lifecycle::Ops::Failed, ::Lifecycle::Ops::Timeout, ::Lifecycle::Ops::Busy => e
     detail = e.message
@@ -70,7 +70,7 @@ class TarballDeployJob < ApplicationJob
       detail = "#{e.message}\n#{out}"
     end
     deploy.update!(status: :failed, log: deploy.reload.log.to_s + "\n#{detail}", finished_at: Time.current)
-    app.update!(status: :crashed)
+    app.mark_deploy_failed!
     DeployChannel.broadcast_to(deploy, { type: "status", data: "failed" })
     fire_notifications(app.team, "deploy_failed", deploy)
   end

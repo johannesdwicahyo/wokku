@@ -289,7 +289,7 @@ class TemplateDeployer
 
     # Write a failed Deploy record (or update the existing one) so the
     # user's deploy URL stays valid and shows the log + error.
-    app.update!(status: :crashed)
+    app.mark_deploy_failed!
     deploy = app.deploys.order(created_at: :desc).first
     log_payload = { error: original_error.message, steps: @log }.to_json
     if deploy

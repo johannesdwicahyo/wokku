@@ -18,6 +18,12 @@ class AppRecord < ApplicationRecord
     end
   end
 
+  # A failed deploy means "crashed" only if a release ever ran. An app whose
+  # deploys have all failed stays :created ("Not deployed") — nothing crashed.
+  def mark_deploy_failed!
+    update!(status: deploys.succeeded.exists? ? :crashed : :created)
+  end
+
   # B6 W2: standard creates birth apps wokkud-native (no dokku shell, all
   # wokkud flags on). Flipped 2026-07-19 after the §4 creation smoke passed
   # on prod (w2-smoke: no dokku app ever, EnvVar-only env, wokkud build →
