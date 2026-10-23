@@ -487,7 +487,8 @@ CREATE TABLE public.device_tokens (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     id uuid DEFAULT public.uuidv7() NOT NULL,
-    user_id uuid NOT NULL
+    user_id uuid NOT NULL,
+    provider character varying DEFAULT 'expo'::character varying NOT NULL
 );
 
 
@@ -4423,6 +4424,7 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261023000002'),
 ('20261023000001'),
 ('20261019000001'),
 ('20260925000001'),

@@ -646,6 +646,12 @@ components:
           enum:
           - ios
           - android
+        provider:
+          type: string
+          enum:
+          - expo
+          - apns
+          default: expo
     Activity:
       type: object
       required:
