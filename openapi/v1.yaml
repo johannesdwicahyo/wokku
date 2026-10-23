@@ -6238,6 +6238,7 @@ paths:
     post:
       summary: Retired raw dokku passthrough
       operationId: servers.dokku
+      deprecated: true
       tags:
       - servers
       security:
