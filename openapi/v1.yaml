@@ -2708,6 +2708,95 @@ paths:
                 name:
                   type: string
                   description: Label for the new token
+  "/api/v1/auth/apple":
+    post:
+      summary: Exchange an Apple identity token (iOS Sign in with Apple) for an API
+        token
+      operationId: auth.apple
+      tags:
+      - auth
+      security: []
+      parameters: []
+      responses:
+        '201':
+          description: token created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - token
+                - user
+                properties:
+                  token:
+                    type: string
+                  user:
+                    type: object
+                    required:
+                    - id
+                    - email
+                    - role
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      email:
+                        type: string
+                      role:
+                        type: string
+        '401':
+          description: identity token invalid, expired, wrong audience or nonce (invalid_token)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '403':
+          description: admin account, or no account may be created (not_authorized
+            | registration_closed)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: identity_token or nonce missing (invalid_params)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '503':
+          description: Apple not configured (apple_unavailable) or unreachable (apple_upstream_failed)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - identity_token
+              - nonce
+              properties:
+                identity_token:
+                  type: string
+                  description: Apple identity token (JWT)
+                nonce:
+                  type: string
+                  description: Raw nonce whose SHA-256 was sent in the Apple request
+                authorization_code:
+                  type: string
+                  description: One-time code; stored as a refresh token for revocation
+                name:
+                  type: object
+                  properties:
+                    given_name:
+                      type: string
+                    family_name:
+                      type: string
+                token_name:
+                  type: string
+                  description: Label for the new API token
   "/api/v1/auth/logout":
     delete:
       summary: Revoke the calling token
