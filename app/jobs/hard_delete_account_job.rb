@@ -22,6 +22,8 @@ class HardDeleteAccountJob < ApplicationJob
     return unless user
     return if user.deleted? # idempotent
 
+    revoke_apple(user)
+
     user.transaction do
       destroy_apps(user)
       destroy_databases(user)
@@ -37,6 +39,18 @@ class HardDeleteAccountJob < ApplicationJob
   end
 
   private
+
+  # App Store requirement: revoke Sign in with Apple at account deletion.
+  # Best effort — a failed revoke must not keep the account alive.
+  def revoke_apple(user)
+    return if user.apple_refresh_token.blank?
+
+    client_id = user.apple_token_client_id.presence || ::Apple::Config.bundle_id
+    return if ::Apple::Client.revoke(user.apple_refresh_token, client_id: client_id)
+
+    Rails.logger.warn("HardDeleteAccountJob: Apple revoke failed for user #{user.id}")
+    Sentry.capture_message("HardDeleteAccountJob: Apple revoke failed", extra: { user_id: user.id }) if defined?(Sentry)
+  end
 
   def destroy_apps(user)
     user.teams.flat_map(&:app_records).each do |app|
@@ -81,7 +95,10 @@ class HardDeleteAccountJob < ApplicationJob
       name: nil,
       provider: nil,
       uid: nil,
-      otp_secret: nil
+      otp_secret: nil,
+      apple_uid: nil,
+      apple_refresh_token: nil,
+      apple_token_client_id: nil
     )
     user.save!(validate: false)
   end

@@ -88,4 +88,40 @@ RSpec.describe HardDeleteAccountJob, type: :job do
     source = File.read(Wokku::Engine.root.join("app/jobs/hard_delete_account_job.rb"))
     expect(source).not_to match(/Dokku::/)
   end
+
+  describe "Apple" do
+    let(:apple_user) do
+      create(:user, apple_uid: "001.del", provider: "apple", uid: "001.del").tap do |u|
+        u.remember_apple_refresh_token!("r1", client_id: "cloud.wokku.signin")
+      end
+    end
+
+    it "revokes the Apple token and clears every Apple column" do
+      expect(Apple::Client).to receive(:revoke).with("r1", client_id: "cloud.wokku.signin").and_return(true)
+      described_class.perform_now(apple_user.id)
+      apple_user.reload
+      expect([ apple_user.apple_uid, apple_user.apple_refresh_token, apple_user.apple_token_client_id ]).to eq([ nil, nil, nil ])
+    end
+
+    it "finishes the deletion and reports when revoke fails" do
+      allow(Apple::Client).to receive(:revoke).and_return(false)
+      expect(Sentry).to receive(:capture_message).with(/Apple revoke failed/, hash_including(extra: { user_id: apple_user.id }))
+      described_class.perform_now(apple_user.id)
+      expect(apple_user.reload).to be_deleted
+    end
+
+    it "lets the same Apple ID sign up again as a new account" do
+      allow(Apple::Client).to receive(:revoke).and_return(true)
+      described_class.perform_now(apple_user.id)
+      fresh = User.from_apple({ "sub" => "001.del", "email" => "again@example.com", "email_verified" => true })
+      expect(fresh).to be_persisted
+      expect(fresh.id).not_to eq(apple_user.id)
+    end
+
+    it "does not call Apple for users without a token" do
+      plain = create(:user)
+      expect(Apple::Client).not_to receive(:revoke)
+      described_class.perform_now(plain.id)
+    end
+  end
 end
