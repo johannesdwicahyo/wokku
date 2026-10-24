@@ -72,6 +72,19 @@ RSpec.describe "User.from_apple" do
     end
   end
 
+  it "never re-links an account already linked to a different apple_uid" do
+    user = create(:user, email: "jane@example.com", apple_uid: "A")
+    expect(User.from_apple(claims(sub: "B"))).not_to be_persisted
+    expect(user.reload.apple_uid).to eq("A")
+  end
+
+  it "never re-links the admin already linked to a different apple_uid" do
+    admin = User.find_by(email: User::ADMIN_EMAIL) || create(:user, :admin, email: User::ADMIN_EMAIL)
+    admin.update_columns(apple_uid: "A")
+    expect(User.from_apple(claims(sub: "B", email: User::ADMIN_EMAIL))).not_to be_persisted
+    expect(admin.reload.apple_uid).to eq("A")
+  end
+
   it "stores the refresh token encrypted with its client id" do
     user = create(:user)
     user.remember_apple_refresh_token!("r1", client_id: "cloud.wokku.app")

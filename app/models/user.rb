@@ -290,12 +290,13 @@ class User < ApplicationRecord
 
     if email == ADMIN_EMAIL
       admin = find_by(email: ADMIN_EMAIL, role: :admin)
-      return new unless admin && verified
+      return new unless admin && verified && admin.apple_uid.blank?
       admin.update_columns(apple_uid: sub)
       return admin
     end
 
     if verified && (existing = find_by(email: email))
+      return new if existing.apple_uid.present? # already linked to another Apple ID
       existing.update_columns(apple_uid: sub)
       return existing
     end
