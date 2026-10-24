@@ -81,4 +81,14 @@ RSpec.describe "POST /api/v1/auth/apple", type: :request do
     expect(response).to have_http_status(:forbidden)
     expect(response.parsed_body["error_code"]).to eq("registration_closed")
   end
+
+  it "401s a malformed token through the real verifier, creating nothing" do
+    allow(Apple::IdentityToken).to receive(:verify!).and_call_original
+    stub_request(:get, "https://appleid.apple.com/auth/keys").to_return(status: 200, body: { keys: [] }.to_json)
+    expect do
+      post "/api/v1/auth/apple", params: { identity_token: "not-a-jwt", nonce: "n" }, as: :json
+    end.not_to change { [ User.count, ApiToken.count ] }
+    expect(response).to have_http_status(:unauthorized)
+    expect(response.parsed_body["error_code"]).to eq("invalid_token")
+  end
 end

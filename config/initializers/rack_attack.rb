@@ -40,6 +40,11 @@ class Rack::Attack
     end
   end
 
+  # Native Sign in with Apple — same per-IP budget as password login.
+  throttle("api_apple/ip", limit: 5, period: 1.minute) do |req|
+    req.ip if wokku_path(req) == "/api/v1/auth/apple" && req.post?
+  end
+
   # Fail2Ban: ban an IP for 1h after 20 failed API logins in 10m. The filter
   # is invoked manually from AuthController#login on failed auth.
   blocklist("fail2ban/api_login") do |req|
@@ -65,7 +70,7 @@ class Rack::Attack
 
   # Generic API catch-all for non-login endpoints.
   throttle("api/ip", limit: 60, period: 1.minute) do |req|
-    req.ip if req.path.start_with?("/api/") && wokku_path(req) != "/api/v1/auth/login"
+    req.ip if req.path.start_with?("/api/") && !%w[/api/v1/auth/login /api/v1/auth/apple].include?(wokku_path(req))
   end
 
   # Webhook endpoints.
