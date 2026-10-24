@@ -60,12 +60,14 @@ RSpec.describe Apple::IdentityToken do
   end
 
   it "refetches the key set once on an unknown kid" do
+    allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
     rotated = JWT::JWK.new(OpenSSL::PKey::RSA.generate(2048), kid: "k2")
-    allow(Rails.cache).to receive(:fetch).and_call_original
-    stub_request(:get, "https://appleid.apple.com/auth/keys")
+    keys = stub_request(:get, "https://appleid.apple.com/auth/keys")
       .to_return({ status: 200, body: { keys: [ jwk.export ] }.to_json },
                  { status: 200, body: { keys: [ rotated.export ] }.to_json })
+    described_class.verify!(token, nonce: nonce) # warms the cache with k1 only
     rotated_token = JWT.encode(claims, rotated.signing_key, "RS256", { kid: "k2" })
     expect(described_class.verify!(rotated_token, nonce: nonce)["sub"]).to eq("001.abc")
+    expect(keys).to have_been_requested.twice
   end
 end
