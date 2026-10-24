@@ -1,7 +1,7 @@
 class User < ApplicationRecord
   devise :two_factor_authenticatable, :rememberable, :validatable, :lockable,
          :timeoutable,
-         :omniauthable, omniauth_providers: [ :google_oauth2, :github, :gitlab, :bitbucket ],
+         :omniauthable, omniauth_providers: [ :google_oauth2, :github, :gitlab, :bitbucket, :apple ],
          otp_secret_encryption_key: Rails.application.credentials.secret_key_base
 
   encrypts :gitlab_access_token, :gitlab_refresh_token,
