@@ -5,7 +5,8 @@ class User < ApplicationRecord
          otp_secret_encryption_key: Rails.application.credentials.secret_key_base
 
   encrypts :gitlab_access_token, :gitlab_refresh_token,
-           :bitbucket_access_token, :bitbucket_refresh_token
+           :bitbucket_access_token, :bitbucket_refresh_token,
+           :apple_refresh_token
 
   def two_factor_enabled?
     otp_required_for_login?
@@ -269,6 +270,47 @@ class User < ApplicationRecord
     return ActiveModel::Type::Boolean.new.cast(flag) unless flag.nil?
 
     %w[github gitlab bitbucket].include?(auth.provider.to_s)
+  end
+
+  # Sign in with Apple (web callback and POST /api/v1/auth/apple share this).
+  # apple_uid is its own column, so linking never overwrites a GitHub/Google
+  # provider/uid. Verified email links to an existing account (founder
+  # decision 2026-10-24); relay addresses match nothing and create one.
+  def self.from_apple(claims, name: nil)
+    sub = claims["sub"].to_s
+    return new if sub.blank?
+
+    if (user = find_by(apple_uid: sub))
+      return user
+    end
+
+    email = claims["email"].to_s.downcase.presence
+    return new unless email
+    verified = ActiveModel::Type::Boolean.new.cast(claims["email_verified"]) == true
+
+    if email == ADMIN_EMAIL
+      admin = find_by(email: ADMIN_EMAIL, role: :admin)
+      return new unless admin && verified
+      admin.update_columns(apple_uid: sub)
+      return admin
+    end
+
+    if verified && (existing = find_by(email: email))
+      existing.update_columns(apple_uid: sub)
+      return existing
+    end
+
+    return new unless Wokku.config.open_registration
+
+    create(email: email, password: Devise.friendly_token[0, 20], name: name.presence,
+           apple_uid: sub, provider: "apple", uid: sub)
+  end
+
+  # The refresh token is kept only so it can be revoked at hard delete.
+  def remember_apple_refresh_token!(token, client_id:)
+    return if token.blank?
+    assign_attributes(apple_refresh_token: token, apple_token_client_id: client_id)
+    save!(validate: false)
   end
 
   def current_plan
