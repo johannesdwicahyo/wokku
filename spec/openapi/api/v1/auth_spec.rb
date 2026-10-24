@@ -50,6 +50,76 @@ RSpec.describe "API v1 auth", type: :request do
     end
   end
 
+  path "/api/v1/auth/apple" do
+    post "Exchange an Apple identity token (iOS Sign in with Apple) for an API token" do
+      operationId "auth.apple"
+      tags "auth"
+      security []
+      consumes "application/json"
+      produces "application/json"
+      parameter name: :payload, in: :body, schema: {
+        type: :object,
+        required: %w[identity_token nonce],
+        properties: {
+          identity_token: { type: :string, description: "Apple identity token (JWT)" },
+          nonce: { type: :string, description: "Raw nonce whose SHA-256 was sent in the Apple request" },
+          authorization_code: { type: :string, description: "One-time code; stored as a refresh token for revocation" },
+          name: { type: :object, properties: { given_name: { type: :string }, family_name: { type: :string } } },
+          token_name: { type: :string, description: "Label for the new API token" }
+        }
+      }
+
+      let(:apple_env) do
+        { "APPLE_TEAM_ID" => "TEAM123456", "APPLE_KEY_ID" => "KEY1234567", "APPLE_BUNDLE_ID" => "cloud.wokku.app",
+          "APPLE_PRIVATE_KEY" => OpenSSL::PKey::EC.generate("prime256v1").to_pem.gsub("\n", "\\n") }
+      end
+      let(:payload) { { identity_token: "t", nonce: "n" } }
+      before do
+        stub_const("ENV", ENV.to_h.merge(apple_env))
+        allow(Apple::IdentityToken).to receive(:verify!)
+          .and_return({ "sub" => "001.rswag", "email" => "apple-openapi@example.com", "email_verified" => true })
+      end
+
+      response "201", "token created" do
+        schema type: :object,
+               required: %w[token user],
+               properties: {
+                 token: { type: :string },
+                 user: {
+                   type: :object,
+                   required: %w[id email role],
+                   properties: { id: { type: :string, format: :uuid }, email: { type: :string }, role: { type: :string } }
+                 }
+               }
+        run_test!
+      end
+
+      response "401", "identity token invalid, expired, wrong audience or nonce (invalid_token)" do
+        before { allow(Apple::IdentityToken).to receive(:verify!).and_raise(Apple::IdentityToken::Invalid) }
+        schema "$ref" => "#/components/schemas/Error"
+        run_test!
+      end
+
+      response "403", "admin account, or no account may be created (not_authorized | registration_closed)" do
+        before { allow(Wokku.config).to receive(:open_registration).and_return(false) }
+        schema "$ref" => "#/components/schemas/Error"
+        run_test!
+      end
+
+      response "422", "identity_token or nonce missing (invalid_params)" do
+        let(:payload) { { identity_token: "t" } }
+        schema "$ref" => "#/components/schemas/Error"
+        run_test!
+      end
+
+      response "503", "Apple not configured (apple_unavailable) or unreachable (apple_upstream_failed)" do
+        before { allow(Apple::IdentityToken).to receive(:verify!).and_raise(Apple::IdentityToken::Unavailable) }
+        schema "$ref" => "#/components/schemas/Error"
+        run_test!
+      end
+    end
+  end
+
   path "/api/v1/auth/logout" do
     delete "Revoke the calling token" do
       operationId "auth.logout"

@@ -226,6 +226,7 @@ Rails.application.routes.draw do
 
       namespace :auth do
         post :login
+        post :apple
         delete :logout
         get :whoami
         resources :tokens, only: [ :index, :create, :destroy ]
