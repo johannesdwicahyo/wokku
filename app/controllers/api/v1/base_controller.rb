@@ -27,10 +27,13 @@ module Api
       # Hosts::Ssh command/connection failures → typed API errors.
       rescue_from Hosts::Ssh::CommandError, Hosts::Ssh::ConnectionError do |e|
         code = Hosts::ErrorClassifier.classify(e)
-        # Keep the raw output visible for unclassified failures — it is
-        # often the only clue (and what old clients displayed).
-        message = code == :dokku_command_failed ? e.message : nil
-        render_api_error(code, message: message)
+        # Unclassified failures carry raw host output (paths, stderr) — report
+        # it, answer with the typed generic message.
+        if code == :dokku_command_failed
+          render_reported_error(code, e)
+        else
+          render_api_error(code)
+        end
       end
 
       private

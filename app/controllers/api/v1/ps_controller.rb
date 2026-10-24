@@ -106,7 +106,7 @@ module Api
         render_api_error(:account_suspended, message: e.message)
       rescue ::Lifecycle::Ops::Failed, ::Lifecycle::Ops::Timeout => e
         render_api_error(:dokku_command_failed, message: e.message)
-      rescue ArgumentError => e
+      rescue ::Lifecycle::Ops::NotDeployed => e
         render_api_error(:invalid_params, message: e.message, status: :unprocessable_entity)
       end
 

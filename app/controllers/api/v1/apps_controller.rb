@@ -334,7 +334,7 @@ module Api
         # per app — another op already holds this app's lane. issue! converts
         # the RecordNotUnique into the typed Busy.
         render_api_error(:service_busy, message: "another operation is already in flight for this app")
-      rescue ArgumentError => e
+      rescue ::Lifecycle::Ops::NotDeployed => e
         render_api_error(:invalid_params, message: e.message, status: :unprocessable_entity)
       end
 

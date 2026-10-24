@@ -66,6 +66,52 @@ RSpec.describe "API error contract", type: :request do
     expect(body["retryable"]).to eq(true)
   end
 
+  it "502s an unclassified host failure with the generic message, never the raw host output" do
+    allow(::Apps::LogReader).to receive(:recent)
+      .and_raise(Hosts::Ssh::CommandError.new("cat: /var/lib/secret/path: Permission denied", exit_code: 1))
+    expect(Sentry).to receive(:capture_exception).with(kind_of(Hosts::Ssh::CommandError))
+
+    get api_v1_app_logs_path(app_record), headers: api_v1_headers(user)
+
+    expect(response).to have_http_status(:bad_gateway)
+    body = response.parsed_body
+    expect(body["error_code"]).to eq("dokku_command_failed")
+    expect(response.body).not_to include("/var/lib/secret/path")
+  end
+
+  it "500s a stray ArgumentError from ps update instead of echoing it as invalid_params" do
+    allow(::Lifecycle::Ops).to receive(:converge!).and_raise(ArgumentError, "internal: comparison of String with nil")
+    expect(Sentry).to receive(:capture_exception).with(kind_of(ArgumentError))
+
+    put "/api/v1/apps/#{app_record.id}/ps", params: { scaling: { "web" => 1 } }, headers: api_v1_headers(user)
+
+    expect(response).to have_http_status(:internal_server_error)
+    expect(response.body).not_to include("comparison of String")
+  end
+
+  it "422s ps update on a never-deployed app with the user-facing NotDeployed message" do
+    allow(::Lifecycle::Ops).to receive(:converge!)
+      .and_raise(::Lifecycle::Ops::NotDeployed, "no image for #{app_record.name} — deploy first")
+
+    put "/api/v1/apps/#{app_record.id}/ps", params: { scaling: { "web" => 1 } }, headers: api_v1_headers(user)
+
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response.parsed_body["error"]).to include("deploy first")
+  end
+
+  it "422s a database create for an unsupported engine with the UnsupportedEngine message" do
+    allow_any_instance_of(DatabaseProvisioner).to receive(:call)
+      .and_raise(DatabaseProvisioner::UnsupportedEngine, "dedicated elasticsearch is not supported on wokkud-managed servers yet")
+
+    post api_v1_databases_path, params: { service_type: "elasticsearch", server_id: server.id, name: "es1" },
+                                headers: api_v1_headers(user)
+
+    expect(response).to have_http_status(:unprocessable_entity)
+    body = response.parsed_body
+    expect(body["error_code"]).to eq("validation_failed")
+    expect(body["error"]).to include("not supported")
+  end
+
   it "422s an invalid app create as validation_failed, with details and legacy errors array" do
     # apps#update rename now routes through Apps::Lifecycle::Renamer, whose
     # invalid-name error maps to 400 invalid_params — create's save! still

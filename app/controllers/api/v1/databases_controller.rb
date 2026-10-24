@@ -41,7 +41,7 @@ module Api
         render_api_error(:service_create_failed, message: e.message)
       rescue Services::Ops::Timeout => e
         render_api_error(:service_op_timeout, message: e.message)
-      rescue ArgumentError => e
+      rescue DatabaseProvisioner::UnsupportedEngine => e
         # Engine not supported on wokkud-managed servers (DatabaseService::DEDICATED_ENGINES).
         render_api_error(:validation_failed, message: e.message)
       end

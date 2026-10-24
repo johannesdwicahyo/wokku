@@ -4,6 +4,8 @@
 # code path.
 class DatabaseProvisioner
   class Error < StandardError; end
+  # < ArgumentError so existing callers keep working; the API rescues this class only.
+  class UnsupportedEngine < ArgumentError; end
 
   SHARED_TIER = "shared_free".freeze
   DEFAULT_TIER = "basic".freeze
@@ -87,7 +89,7 @@ class DatabaseProvisioner
       "#{spec['image']}:#{spec['image_version'].presence || 'latest'}"
     else
       DEFAULT_IMAGES.fetch(db.service_type) {
-        raise ArgumentError, "dedicated #{db.service_type} is not supported on wokkud-managed servers yet"
+        raise UnsupportedEngine, "dedicated #{db.service_type} is not supported on wokkud-managed servers yet"
       }
     end
   end
@@ -271,7 +273,7 @@ class DatabaseProvisioner
     # row exists. DatabaseService::DEDICATED_ENGINES is the canonical supported-engine
     # list (mirrors DEFAULT_IMAGES.keys exactly).
     unless DatabaseService::DEDICATED_ENGINES.include?(@service_type)
-      raise ArgumentError, "dedicated #{@service_type} is not supported on wokkud-managed servers yet"
+      raise UnsupportedEngine, "dedicated #{@service_type} is not supported on wokkud-managed servers yet"
     end
 
     name = @name || default_name

@@ -8,6 +8,10 @@ module Lifecycle
       def initialize(op) = (@op = op; super("#{op.kind} failed: #{op.error} (#{op.error_code})"))
     end
     class Timeout < StandardError; end
+    # The app has no image to run yet. < ArgumentError so existing callers
+    # keep working; API controllers rescue this class only, never bare
+    # ArgumentError (whose message may be internal).
+    class NotDeployed < ArgumentError; end
     class EmptyFormation < StandardError; end
     # Billing seam: bringing any process UP for an app whose run is refused
     # (managed: billing-suspended team owner). < Failed so every existing
@@ -82,7 +86,7 @@ module Lifecycle
         image_ref, live_commands = live_web_spec(app)
         formation_commands ||= live_commands
       end
-      raise ArgumentError, "no image for #{app.name} — deploy first or pass tag_from_local" if image_ref.blank? && !tag_from_local
+      raise NotDeployed, "no image for #{app.name} — deploy first or pass tag_from_local" if image_ref.blank? && !tag_from_local
       # Adopt push target for the dokku-built local image (spec §3.6): same
       # registry/repo convention as Deploy#wokkud_image_ref, tagged with an
       # adopt timestamp instead of a deploy id since there's no Deploy row yet.
@@ -209,7 +213,7 @@ module Lifecycle
       image_ref = deploy&.wokkud_image_ref if deploy&.builder == "wokkud"
       prev_converge = app.lifecycle_ops.succeeded.where(kind: "stack.converge").order(:created_at).last
       image_ref ||= image_ref_from(prev_converge&.params)
-      raise ArgumentError, "no image for #{app.name} — deploy first" if image_ref.blank?
+      raise NotDeployed, "no image for #{app.name} — deploy first" if image_ref.blank?
 
       env = app.runtime_env.merge("PORT" => app.container_port.to_s)
       cmd = command.to_s
