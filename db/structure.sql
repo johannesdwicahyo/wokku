@@ -1601,7 +1601,10 @@ CREATE TABLE public.users (
     pending_plan_id uuid,
     plan_changes_at timestamp(6) without time zone,
     trial_ends_at timestamp(6) without time zone,
-    billing_anchor_date date
+    billing_anchor_date date,
+    apple_uid character varying,
+    apple_refresh_token text,
+    apple_token_client_id character varying
 );
 
 
@@ -3578,6 +3581,13 @@ CREATE INDEX index_usage_events_on_user_id ON public.usage_events USING btree (u
 
 
 --
+-- Name: index_users_on_apple_uid; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_users_on_apple_uid ON public.users USING btree (apple_uid);
+
+
+--
 -- Name: index_users_on_deleted_at; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4424,6 +4434,7 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261024000001'),
 ('20261023000002'),
 ('20261023000001'),
 ('20261019000001'),
