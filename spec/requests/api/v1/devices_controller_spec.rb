@@ -56,4 +56,24 @@ RSpec.describe "API::V1::DevicesController", type: :request do
     expect(response).to have_http_status(:success)
     expect(JSON.parse(response.body)["unregistered"]).to eq(true)
   end
+
+  describe "a token already registered by another user" do
+    let(:alice) { User.create!(email: "alice-dev@example.com", password: "password123456") }
+    let(:bob) { User.create!(email: "bob-dev@example.com", password: "password123456") }
+    let(:bob_headers) { { "Authorization" => "Bearer #{api_v1_token_for(bob)}" } }
+
+    before { DeviceToken.create!(user: alice, token: "apns-shared", platform: "ios", provider: "apns") }
+
+    it "moves the token to the account that registers it now" do
+      post api_v1_devices_path, params: { token: "apns-shared", platform: "ios", provider: "apns" }, headers: bob_headers, as: :json
+      expect(response).to have_http_status(:ok)
+      expect(DeviceToken.find_by(token: "apns-shared").user).to eq(bob)
+      expect(alice.device_tokens).to be_empty
+    end
+
+    it "creates bob's default push row when it is bob's first device" do
+      expect(Notification).to receive(:ensure_default_push_for!).with(bob)
+      post api_v1_devices_path, params: { token: "apns-shared", platform: "ios", provider: "apns" }, headers: bob_headers, as: :json
+    end
+  end
 end

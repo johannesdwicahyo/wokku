@@ -3,7 +3,9 @@ module Api
     class DevicesController < BaseController
       def create
         first_device = !current_user.device_tokens.exists?
-        token = current_user.device_tokens.find_or_initialize_by(token: params[:token])
+        # A phone's push token belongs to whoever signed in on it last.
+        token = DeviceToken.find_or_initialize_by(token: params[:token])
+        token.user = current_user
         token.platform = params[:platform]
         token.provider = params[:provider].presence || "expo"
 
