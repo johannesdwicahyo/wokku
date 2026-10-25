@@ -70,9 +70,10 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       redirect_to root_path, alert: "Could not sign in with Apple."
       return
     end
-    raw = (auth.extra&.raw_info || {}).to_h
-    claims = raw.merge("sub" => auth.uid, "email" => raw["email"] || auth.info&.email)
-    @user = User.from_apple(claims, name: auth.info&.name)
+    info = auth.info || {}
+    claims = { "sub" => auth.uid, "email" => info["email"], "email_verified" => info["email_verified"],
+               "is_private_email" => info["is_private_email"] }
+    @user = User.from_apple(claims, name: info["name"].presence)
 
     if @user.persisted?
       @user.remember_apple_refresh_token!(auth.dig("credentials", "refresh_token"), client_id: ::Apple::Config.services_id)

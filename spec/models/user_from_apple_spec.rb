@@ -11,14 +11,14 @@ RSpec.describe "User.from_apple" do
   end
 
   it "links an existing GitHub account by verified email without touching provider/uid" do
-    user = create(:user, email: "jane@example.com", provider: "github", uid: "42")
+    user = create(:user, email: "jane@example.com", provider: "github", uid: "42", email_provider_verified: true)
     expect(User.from_apple(claims)).to eq(user)
     user.reload
     expect([ user.apple_uid, user.provider, user.uid ]).to eq([ "001.apple", "github", "42" ])
   end
 
   it "treats the string \"true\" as verified (web id_token)" do
-    user = create(:user, email: "jane@example.com")
+    user = create(:user, email: "jane@example.com", email_provider_verified: true)
     expect(User.from_apple(claims(email_verified: "true"))).to eq(user)
   end
 
@@ -35,7 +35,7 @@ RSpec.describe "User.from_apple" do
   end
 
   it "downcases the email before matching" do
-    user = create(:user, email: "jane@example.com")
+    user = create(:user, email: "jane@example.com", email_provider_verified: true)
     expect(User.from_apple(claims(email: "Jane@Example.com"))).to eq(user)
   end
 
@@ -54,8 +54,30 @@ RSpec.describe "User.from_apple" do
 
   it "still links an existing account on closed registration" do
     allow(Wokku.config).to receive(:open_registration).and_return(false)
-    user = create(:user, email: "jane@example.com")
+    user = create(:user, email: "jane@example.com", email_provider_verified: true)
     expect(User.from_apple(claims)).to eq(user)
+  end
+
+  it "refuses to link a verified-email match whose email was never provider-verified" do
+    user = create(:user, email: "jane@example.com", email_provider_verified: false)
+    expect(User.from_apple(claims)).not_to be_persisted
+    expect(user.reload.apple_uid).to be_nil
+  end
+
+  it "marks accounts created from Apple as provider-verified" do
+    expect(User.from_apple(claims(email: "x1@privaterelay.appleid.com")).email_provider_verified).to be(true)
+  end
+
+  it "clears the flag when an existing user's email changes" do
+    user = create(:user, email_provider_verified: true)
+    user.update!(email: "changed@example.com")
+    expect(user.reload.email_provider_verified).to be(false)
+  end
+
+  it "keeps an explicit flag written in the same save as an email change" do
+    user = create(:user, email_provider_verified: false)
+    user.update!(email: "changed@example.com", email_provider_verified: true)
+    expect(user.reload.email_provider_verified).to be(true)
   end
 
   context "admin email" do
@@ -73,7 +95,7 @@ RSpec.describe "User.from_apple" do
   end
 
   it "never re-links an account already linked to a different apple_uid" do
-    user = create(:user, email: "jane@example.com", apple_uid: "A")
+    user = create(:user, email: "jane@example.com", apple_uid: "A", email_provider_verified: true)
     expect(User.from_apple(claims(sub: "B"))).not_to be_persisted
     expect(user.reload.apple_uid).to eq("A")
   end

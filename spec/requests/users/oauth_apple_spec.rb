@@ -1,12 +1,16 @@
 require "rails_helper"
 
 RSpec.describe "Users::OmniauthCallbacks#apple", type: :request do
-  def mock_apple(email: "jane@example.com", verified: "true", refresh: "r-web")
+  # Shape produced by omniauth-apple 1.4.0: claims live in info (email_verified
+  # already boolean-cast) and the decoded token under extra.raw_info.id_info.
+  def mock_apple(email: "jane@example.com", verified: true, refresh: "r-web")
+    id_info = { sub: "001.web", email: email, email_verified: verified.to_s, is_private_email: "false" }
     OmniAuth.config.mock_auth[:apple] = OmniAuth::AuthHash.new(
       provider: "apple", uid: "001.web",
-      info: { email: email, name: "Jane Doe" },
+      info: { sub: "001.web", email: email, email_verified: verified, is_private_email: false,
+              first_name: "Jane", last_name: "Doe", name: "Jane Doe" },
       credentials: { refresh_token: refresh },
-      extra: { raw_info: { "sub" => "001.web", "email" => email, "email_verified" => verified } }
+      extra: { raw_info: { id_info: id_info, user_info: {}, id_token: "x.y.z" } }
     )
     Rails.application.env_config["omniauth.auth"] = OmniAuth.config.mock_auth[:apple]
   end
@@ -31,7 +35,7 @@ RSpec.describe "Users::OmniauthCallbacks#apple", type: :request do
   end
 
   it "links an existing GitHub account by verified email" do
-    user = create(:user, email: "jane@example.com", provider: "github", uid: "42")
+    user = create(:user, email: "jane@example.com", provider: "github", uid: "42", email_provider_verified: true)
     mock_apple
     expect { get "/users/auth/apple/callback" }.not_to change(User, :count)
     expect(user.reload.apple_uid).to eq("001.web")
@@ -39,7 +43,7 @@ RSpec.describe "Users::OmniauthCallbacks#apple", type: :request do
 
   it "refuses an unverified email that belongs to someone else" do
     create(:user, email: "jane@example.com")
-    mock_apple(verified: "false")
+    mock_apple(verified: false)
     get "/users/auth/apple/callback"
     expect(response).to redirect_to(new_user_session_path)
   end

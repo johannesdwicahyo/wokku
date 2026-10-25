@@ -200,6 +200,10 @@ RSpec.describe User do
   end
 
   describe ".from_omniauth" do
+    it "marks accounts created from a provider as email_provider_verified" do
+      expect(User.from_omniauth(auth_hash(email: "fresh-oauth@example.com", uid: "fresh-1")).email_provider_verified).to be(true)
+    end
+
     def auth_hash(provider: "github", uid: "uid-1", email:, name: "Octo", raw_info: {})
       OmniAuth::AuthHash.new(
         provider: provider, uid: uid,

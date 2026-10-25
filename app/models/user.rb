@@ -159,6 +159,9 @@ class User < ApplicationRecord
   belongs_to :pending_plan, class_name: "Plan", optional: true
 
   before_validation :assign_default_plan, on: :create
+  # Any email change (profile page, admin, console) drops provider-verified
+  # status unless the same save sets the flag explicitly.
+  before_update { self.email_provider_verified = false if will_save_change_to_email? && !will_save_change_to_email_provider_verified? }
 
   has_many :api_tokens, dependent: :destroy
   has_many :ssh_public_keys, dependent: :destroy
@@ -243,7 +246,7 @@ class User < ApplicationRecord
         existing = candidate if candidate&.provider.blank?
       end
       if existing
-        existing.update_columns(provider: auth.provider, uid: auth.uid) if existing.provider.blank?
+        existing.update_columns(provider: auth.provider, uid: auth.uid, email_provider_verified: true) if existing.provider.blank?
         return existing
       end
       return new # unpersisted — triggers the failure redirect
@@ -251,6 +254,7 @@ class User < ApplicationRecord
 
     where(provider: auth.provider, uid: auth.uid).first_or_create do |user|
       user.email = email
+      user.email_provider_verified = true
       user.password = Devise.friendly_token[0, 20]
       user.name = auth.info.name
       user.avatar_url = auth.info.image
@@ -296,6 +300,9 @@ class User < ApplicationRecord
     end
 
     if verified && (existing = find_by(email: email))
+      # Only link when the stored email came from a provider; a self-edited
+      # email could be an attacker's pre-hijack of the victim's address.
+      return new unless existing.email_provider_verified
       return new if existing.apple_uid.present? # already linked to another Apple ID
       existing.update_columns(apple_uid: sub)
       return existing
@@ -304,7 +311,7 @@ class User < ApplicationRecord
     return new unless Wokku.config.open_registration
 
     create(email: email, password: Devise.friendly_token[0, 20], name: name.presence,
-           apple_uid: sub, provider: "apple", uid: sub)
+           apple_uid: sub, provider: "apple", uid: sub, email_provider_verified: true)
   end
 
   # The refresh token is kept only so it can be revoked at hard delete.
