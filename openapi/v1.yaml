@@ -251,11 +251,17 @@ components:
       type: object
       required:
       - processes
+      - formation
       properties:
         processes:
           type: object
           additionalProperties:
             type: string
+        formation:
+          type: object
+          additionalProperties:
+            type: integer
+          description: desired process type => count
     Database:
       type: object
       required:
