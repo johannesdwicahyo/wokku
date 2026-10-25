@@ -39,4 +39,26 @@ RSpec.describe "mobile rake tasks" do
     expect(user.reload.encrypted_password).not_to eq(first)
     expect(TeamMembership.where(user: user, team: team).count).to eq(1)
   end
+
+  describe "app_review_account takeover guard" do
+    def refuses(user, team)
+      before = user.encrypted_password
+      Rake::Task["mobile:app_review_account"].reenable
+      expect { Rake::Task["mobile:app_review_account"].invoke(team.id) }
+        .to raise_error(SystemExit).and output(/refusing to take it over/).to_stderr
+      expect(user.reload.encrypted_password).to eq(before)
+    end
+
+    it "refuses an existing admin with that email" do
+      user = create(:user, email: "appreview@wokku.cloud")
+      user.update_column(:role, 1)
+      refuses(user, create(:team))
+    end
+
+    it "refuses an existing user who belongs to another team" do
+      user = create(:user, email: "appreview@wokku.cloud")
+      TeamMembership.create!(user: user, team: create(:team), role: :member)
+      refuses(user, create(:team))
+    end
+  end
 end

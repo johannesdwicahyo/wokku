@@ -46,6 +46,9 @@ namespace :mobile do
     team = Team.find(args[:team_id])
     password = SecureRandom.base58(20)
     user = User.find_or_initialize_by(email: "appreview@wokku.cloud")
+    if user.persisted? && (user.admin? || user.teams.where.not(id: team.id).exists?)
+      abort "appreview@wokku.cloud already exists as a different account (admin or other teams) — refusing to take it over"
+    end
     user.password = password
     user.name = "App Review"
     user.save!
