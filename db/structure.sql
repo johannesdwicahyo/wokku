@@ -488,7 +488,8 @@ CREATE TABLE public.device_tokens (
     updated_at timestamp(6) without time zone NOT NULL,
     id uuid DEFAULT public.uuidv7() NOT NULL,
     user_id uuid NOT NULL,
-    provider character varying DEFAULT 'expo'::character varying NOT NULL
+    provider character varying DEFAULT 'expo'::character varying NOT NULL,
+    api_token_id uuid
 );
 
 
@@ -2871,6 +2872,13 @@ CREATE INDEX index_device_authorizations_on_user_id ON public.device_authorizati
 
 
 --
+-- Name: index_device_tokens_on_api_token_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_device_tokens_on_api_token_id ON public.device_tokens USING btree (api_token_id);
+
+
+--
 -- Name: index_device_tokens_on_token; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4147,6 +4155,14 @@ ALTER TABLE ONLY public.solid_queue_ready_executions
 
 
 --
+-- Name: device_tokens fk_rails_86292fb988; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.device_tokens
+    ADD CONSTRAINT fk_rails_86292fb988 FOREIGN KEY (api_token_id) REFERENCES public.api_tokens(id);
+
+
+--
 -- Name: process_scales fk_rails_8bdcd5b0da; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4481,6 +4497,7 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261025200001'),
 ('20261025100001'),
 ('20261025000001'),
 ('20261024000001'),
