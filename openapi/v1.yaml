@@ -679,6 +679,52 @@ components:
 security:
 - bearer: []
 paths:
+  "/api/v1/account/deletion":
+    post:
+      summary: Schedule deletion of the caller's account (3-day grace; signs out every
+        client)
+      operationId: account_deletion.create
+      tags:
+      - account
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '202':
+          description: deletion scheduled
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - purge_at
+                properties:
+                  purge_at:
+                    type: string
+                    format: date-time
+        '409':
+          description: deletion already scheduled (already_exists)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: confirm_email does not match (invalid_params)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - confirm_email
+              properties:
+                confirm_email:
+                  type: string
+                  description: Must equal the account email
   "/api/v1/activities":
     get:
       summary: Recent activity for the caller's first team
