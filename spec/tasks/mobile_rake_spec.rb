@@ -51,6 +51,7 @@ RSpec.describe "mobile rake tasks" do
 
     it "refuses an existing admin with that email" do
       user = create(:user, email: "appreview@wokku.cloud")
+      User.where(role: 1).update_all(role: 0) # single-admin index; rolled back with the example
       user.update_column(:role, 1)
       refuses(user, create(:team))
     end
