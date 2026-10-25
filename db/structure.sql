@@ -754,6 +754,22 @@ CREATE TABLE public.metrics (
 
 
 --
+-- Name: mobile_auth_codes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.mobile_auth_codes (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    code_digest character varying NOT NULL,
+    code_challenge character varying NOT NULL,
+    expires_at timestamp(6) without time zone NOT NULL,
+    used_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: notifications; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2019,6 +2035,14 @@ ALTER TABLE ONLY public.metrics
 
 
 --
+-- Name: mobile_auth_codes mobile_auth_codes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.mobile_auth_codes
+    ADD CONSTRAINT mobile_auth_codes_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3061,6 +3085,20 @@ CREATE INDEX index_metric_hourly_on_app_record_id ON public.metric_hourly USING 
 --
 
 CREATE INDEX index_metrics_on_app_record_id ON public.metrics USING btree (app_record_id);
+
+
+--
+-- Name: index_mobile_auth_codes_on_code_digest; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_mobile_auth_codes_on_code_digest ON public.mobile_auth_codes USING btree (code_digest);
+
+
+--
+-- Name: index_mobile_auth_codes_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_mobile_auth_codes_on_user_id ON public.mobile_auth_codes USING btree (user_id);
 
 
 --
@@ -4245,6 +4283,14 @@ ALTER TABLE ONLY public.lifecycle_ops
 
 
 --
+-- Name: mobile_auth_codes fk_rails_c34d3e8dcc; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.mobile_auth_codes
+    ADD CONSTRAINT fk_rails_c34d3e8dcc FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
 -- Name: solid_queue_scheduled_executions fk_rails_c4316f352d; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4435,6 +4481,7 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261025100001'),
 ('20261025000001'),
 ('20261024000001'),
 ('20261023000002'),
