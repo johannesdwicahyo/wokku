@@ -1604,7 +1604,8 @@ CREATE TABLE public.users (
     billing_anchor_date date,
     apple_uid character varying,
     apple_refresh_token text,
-    apple_token_client_id character varying
+    apple_token_client_id character varying,
+    email_provider_verified boolean DEFAULT false NOT NULL
 );
 
 
@@ -4434,6 +4435,7 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261025000001'),
 ('20261024000001'),
 ('20261023000002'),
 ('20261023000001'),
