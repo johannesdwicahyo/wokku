@@ -235,6 +235,7 @@ Rails.application.routes.draw do
         post "device/code", to: "devices#code"
         post "device/token", to: "devices#token"
       end
+      resource :account_deletion, only: :create, path: "account/deletion"
 
       resources :servers, only: [ :index, :show, :create, :destroy ] do
         member do
