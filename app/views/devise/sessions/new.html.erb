@@ -50,6 +50,14 @@
         <% end %>
       <% end %>
 
+      <% if providers.include?(:apple) %>
+        <%= button_to user_apple_omniauth_authorize_path, method: :post, data: { turbo: false },
+              onclick: "window.posthog && posthog.capture('signup_started', {provider: 'apple'})",
+              class: Atoms::ButtonComponent.new(variant: :outline, size: :md, class: "w-full").classes do %>
+          <%= t('signin.continue_with', provider: 'Apple') %>
+        <% end %>
+      <% end %>
+
       <% if providers.empty? %>
         <%# Self-host default: email + password (the installer seeds the
             admin's password; OAuth appears once its env creds are set).

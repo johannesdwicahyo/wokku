@@ -144,7 +144,10 @@ module ApplicationHelper
   }.freeze
 
   def configured_oauth_providers
-    OAUTH_PROVIDER_ENV.select { |_, env| ENV[env].present? }.keys
+    providers = OAUTH_PROVIDER_ENV.select { |_, env| ENV[env].present? }.keys
+    # Apple needs four values (Services ID, team, key id, key), not one client id.
+    providers << :apple if ::Apple::Config.web_configured?
+    providers
   end
 
   # Host-app hook point: render a partial only when some view path
