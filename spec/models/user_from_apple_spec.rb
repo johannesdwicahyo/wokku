@@ -109,10 +109,12 @@ RSpec.describe "User.from_apple" do
 
   it "stores the refresh token encrypted with its client id" do
     user = create(:user)
-    user.remember_apple_refresh_token!("r1", client_id: "cloud.wokku.app")
+    # Long token: a 2-char one can appear by chance inside the random ciphertext.
+    token = "apple-refresh-token-plaintext-marker"
+    user.remember_apple_refresh_token!(token, client_id: "cloud.wokku.app")
     user.reload
-    expect([ user.apple_refresh_token, user.apple_token_client_id ]).to eq([ "r1", "cloud.wokku.app" ])
+    expect([ user.apple_refresh_token, user.apple_token_client_id ]).to eq([ token, "cloud.wokku.app" ])
     raw = User.connection.select_value("SELECT apple_refresh_token FROM users WHERE id = #{User.connection.quote(user.id)}")
-    expect(raw).not_to include("r1")
+    expect(raw).not_to include(token)
   end
 end
