@@ -21,7 +21,7 @@ module Api
               report["status_#{type}_#{i + 1}"] = task["state"].to_s
             end
           end
-        render json: { processes: report }
+        render json: { processes: report, formation: @app_record.process_scales.pluck(:process_type, :count).to_h }
       end
 
       def update

@@ -121,9 +121,10 @@ RSpec.configure do |config|
           # status_<process>_<n> (e.g. status_web_1), value = task state.
           Process: {
             type: :object,
-            required: %w[processes],
+            required: %w[processes formation],
             properties: {
-              processes: { type: :object, additionalProperties: { type: :string } }
+              processes: { type: :object, additionalProperties: { type: :string } },
+              formation: { type: :object, additionalProperties: { type: :integer }, description: "desired process type => count" }
             }
           },
           # Raw DatabaseService JSON. `dsn` (credentials) only on databases.show

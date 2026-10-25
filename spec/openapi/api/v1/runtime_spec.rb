@@ -36,6 +36,22 @@ RSpec.describe "API v1 runtime", type: :request do
         run_test! { |response| expect(JSON.parse(response.body)["processes"]).to eq("status_web_1" => "running") }
       end
 
+      response "200", "desired formation, even with no live containers" do
+        let(:app_id) { app_record.id }
+        before do
+          app_record.update!(live_containers: [])
+          app_record.process_scales.destroy_all
+          app_record.process_scales.create!(process_type: "web", count: 2)
+          app_record.process_scales.create!(process_type: "worker", count: 1)
+        end
+        schema "$ref" => "#/components/schemas/Process"
+        run_test! do |response|
+          body = JSON.parse(response.body)
+          expect(body["formation"]).to eq("web" => 2, "worker" => 1)
+          expect(body["processes"]).to eq({})
+        end
+      end
+
       response "401", "missing or invalid token" do
         let(:app_id) { app_record.id }
         let(:Authorization) { nil }
