@@ -2797,6 +2797,72 @@ paths:
                 token_name:
                   type: string
                   description: Label for the new API token
+  "/api/v1/auth/mobile/token":
+    post:
+      summary: Redeem an iOS web sign-in handoff code (PKCE) for an API token
+      operationId: auth.mobile_token
+      tags:
+      - auth
+      security: []
+      parameters: []
+      responses:
+        '201':
+          description: token created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - token
+                - user
+                properties:
+                  token:
+                    type: string
+                  user:
+                    type: object
+                    required:
+                    - id
+                    - email
+                    - role
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      email:
+                        type: string
+                      role:
+                        type: string
+        '401':
+          description: code unknown, used, expired, or verifier mismatch (invalid_token)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: code missing or verifier not 43-128 chars (invalid_params)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - code
+              - code_verifier
+              properties:
+                code:
+                  type: string
+                  description: One-time code from wokku://auth
+                code_verifier:
+                  type: string
+                  description: PKCE verifier (43-128 chars) whose S256 hash started
+                    the flow
+                token_name:
+                  type: string
+                  description: Label for the new API token
   "/api/v1/auth/logout":
     delete:
       summary: Revoke the calling token
