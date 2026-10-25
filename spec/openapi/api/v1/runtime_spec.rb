@@ -52,6 +52,13 @@ RSpec.describe "API v1 runtime", type: :request do
         end
       end
 
+      response "200", "process report" do
+        let(:app_id) { app_record.id }
+        before { app_record.process_scales.destroy_all }
+        schema "$ref" => "#/components/schemas/Process"
+        run_test! { |response| expect(JSON.parse(response.body)["formation"]).to eq("web" => 1) }
+      end
+
       response "401", "missing or invalid token" do
         let(:app_id) { app_record.id }
         let(:Authorization) { nil }

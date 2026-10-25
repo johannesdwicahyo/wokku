@@ -21,7 +21,10 @@ module Api
               report["status_#{type}_#{i + 1}"] = task["state"].to_s
             end
           end
-        render json: { processes: report, formation: @app_record.process_scales.pluck(:process_type, :count).to_h }
+        # No process_scales rows = never explicitly scaled; the platform runs
+        # that as web=1 (Lifecycle::Ops.current_formation). Rows keep zeros.
+        formation = @app_record.process_scales.pluck(:process_type, :count).to_h.presence || { "web" => 1 }
+        render json: { processes: report, formation: formation }
       end
 
       def update
