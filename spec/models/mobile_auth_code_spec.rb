@@ -42,4 +42,31 @@ RSpec.describe MobileAuthCode do
     described_class.redeem(code: "anything", code_verifier: verifier)
     expect(described_class.find_by(code_digest: Digest::SHA256.hexdigest(old))).to be_nil
   end
+
+  describe "concurrent redemption" do
+    # Real commits are needed for the row lock to matter; transactional tests share one connection.
+    self.use_transactional_tests = false
+
+    it "makes a second redeemer wait on the row lock, then refuse the spent code" do
+      u = create(:user)
+      code = described_class.issue!(user: u, code_challenge: challenge)
+      second = nil
+      ActiveRecord::Base.connection_pool.with_connection do
+        described_class.transaction do
+          rec = described_class.lock.find_by!(code_digest: described_class.digest(code))
+          second = Thread.new do
+            ActiveRecord::Base.connection_pool.with_connection { described_class.redeem(code: code, code_verifier: verifier) }
+          end
+          # Without the row lock the second redeemer would finish (and succeed) right away.
+          expect(second.join(0.5)).to be_nil
+          rec.update!(used_at: Time.current)
+        end
+      end
+      expect(second.value).to be_nil
+    ensure
+      second&.kill
+      described_class.where(user_id: u.id).delete_all
+      u.destroy
+    end
+  end
 end
