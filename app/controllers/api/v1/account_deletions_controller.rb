@@ -15,11 +15,12 @@ module Api
           return render_api_error(:already_exists, message: "Deletion is already scheduled for #{current_user.deletion_scheduled_at.iso8601}")
         end
 
-        # Atomic: a failure mid-way must not leave the account scheduled with live tokens.
+        # Atomic. schedule_deletion! enqueues app-stop jobs that can commit outside
+        # this transaction (separate queue DB), so it must run LAST.
         current_user.transaction do
-          current_user.schedule_deletion!
           current_user.api_tokens.active.update_all(revoked_at: Time.current)
           current_user.device_tokens.delete_all
+          current_user.schedule_deletion!
         end
         AccountMailer.account_deletion_scheduled(current_user).deliver_later
 

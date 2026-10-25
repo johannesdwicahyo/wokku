@@ -39,11 +39,13 @@ RSpec.describe "POST /api/v1/account/deletion", type: :request do
     expect(admin.reload).not_to be_deletion_pending
   end
 
-  it "is atomic: a failure while signing out leaves the account unscheduled and sends no mail" do
+  it "is atomic: a failure while signing out schedules nothing, stops no apps and sends no mail" do
+    team_user = create(:user, :with_personal_team)
+    create(:app_record, team: team_user.teams.first)
     allow_any_instance_of(User).to receive(:device_tokens).and_raise(ActiveRecord::StatementInvalid, "boom")
     expect {
-      post "/api/v1/account/deletion", params: { confirm_email: user.email }, headers: api_v1_headers(user), as: :json
-    }.not_to have_enqueued_mail(AccountMailer, :account_deletion_scheduled)
-    expect(User.find(user.id)).not_to be_deletion_pending
+      post "/api/v1/account/deletion", params: { confirm_email: team_user.email }, headers: api_v1_headers(team_user), as: :json
+    }.not_to have_enqueued_job # neither the app-stop job nor the mail
+    expect(User.find(team_user.id)).not_to be_deletion_pending
   end
 end
