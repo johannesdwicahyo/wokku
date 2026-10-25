@@ -51,6 +51,7 @@ namespace :mobile do
     end
     user.password = password
     user.name = "App Review"
+    user.assign_attributes(failed_attempts: 0, locked_at: nil, deletion_scheduled_at: nil) # refresh = usable again
     user.save!
     TeamMembership.find_or_create_by!(user: user, team: team) { |m| m.role = :member }
     puts "email=#{user.email} password=#{password}"

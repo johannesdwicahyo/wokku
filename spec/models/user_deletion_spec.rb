@@ -111,6 +111,23 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "#schedule_deletion! with a team the user only belongs to" do
+    it "stops apps of owned teams only" do
+      user = create(:user)
+      owned = create(:team, owner: user)
+      create(:team_membership, user: user, team: owned, role: "admin")
+      org = create(:team)
+      create(:team_membership, user: user, team: org, role: "member")
+      mine = create(:app_record, team: owned, creator: user)
+      theirs = create(:app_record, team: org, creator: user)
+
+      user.schedule_deletion!
+
+      expect(DokkuAppActionJob).to have_been_enqueued.with(mine.id, "stop")
+      expect(DokkuAppActionJob).not_to have_been_enqueued.with(theirs.id, "stop")
+    end
+  end
+
   describe "#cancel_deletion!" do
     it "clears deletion_scheduled_at" do
       user = create(:user, :pending_deletion)

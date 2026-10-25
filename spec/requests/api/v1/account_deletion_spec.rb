@@ -17,6 +17,21 @@ RSpec.describe "POST /api/v1/account/deletion", type: :request do
     expect(user.device_tokens).to be_empty
   end
 
+  it "removes device tokens that have push tickets" do
+    device = DeviceToken.create!(user: user, token: "apns-2", platform: "ios", provider: "apns")
+    ticket = PushTicket.create!(device_token: device, ticket_id: "t-#{SecureRandom.hex(4)}")
+    post "/api/v1/account/deletion", params: { confirm_email: user.email }, headers: api_v1_headers(user), as: :json
+    expect(response).to have_http_status(:accepted)
+    expect(PushTicket.where(id: ticket.id)).not_to exist
+  end
+
+  it "still answers 202 when the mail enqueue fails" do
+    allow(AccountMailer).to receive(:account_deletion_scheduled).and_raise("queue down")
+    post "/api/v1/account/deletion", params: { confirm_email: user.email }, headers: api_v1_headers(user), as: :json
+    expect(response).to have_http_status(:accepted)
+    expect(user.reload).to be_deletion_pending
+  end
+
   it "422s a mismatched or blank confirm_email" do
     [ "other@example.com", "" ].each do |email|
       post "/api/v1/account/deletion", params: { confirm_email: email }, headers: api_v1_headers(user), as: :json

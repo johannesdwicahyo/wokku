@@ -16,6 +16,7 @@ Rails.application.routes.draw do
 
   devise_for :users, controllers: { omniauth_callbacks: "users/omniauth_callbacks" }
   get "mobile/auth/start", to: "mobile/auth#start", as: :mobile_auth_start
+  post "mobile/auth/confirm", to: "mobile/auth#confirm", as: :mobile_auth_confirm
   # Registrations are OAuth-only — redirect any lingering /users/sign_up links
   # to the sign-in page so they don't 404.
   get "/users/sign_up", to: redirect("/users/sign_in")

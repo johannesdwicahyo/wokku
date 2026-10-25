@@ -83,7 +83,8 @@ class User < ApplicationRecord
 
     transaction do
       update!(deletion_scheduled_at: GRACE_PERIOD.from_now)
-      teams.flat_map(&:app_records).each do |app|
+      # Only teams the user OWNS — apps of teams they merely belong to keep running.
+      owned_teams.flat_map(&:app_records).each do |app|
         DokkuAppActionJob.perform_later(app.id, "stop")
       rescue => e
         Rails.logger.warn("schedule_deletion!: failed to enqueue stop for app #{app.id}: #{e.message}")
@@ -209,6 +210,7 @@ class User < ApplicationRecord
   end
 
   has_many :device_tokens, dependent: :destroy
+  has_many :mobile_auth_codes, dependent: :delete_all
   has_many :alert_mutes, dependent: nil
   has_many :known_devices, dependent: :destroy
 

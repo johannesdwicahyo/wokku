@@ -4,8 +4,10 @@ require "shellwords"
 # grace period (or immediately on admin override).
 #
 # Cascade order:
-#   1. Destroy every app on every team via Apps::Destroyer (Swarm stack,
-#      DNS, bare git repo, the app row, and any exclusively-linked DB).
+#   1. Destroy every app on every team the user OWNS via Apps::Destroyer
+#      (Swarm stack, DNS, bare git repo, the app row, and any
+#      exclusively-linked DB). Teams the user is only a member of keep
+#      their apps; the user's membership row is removed.
 #   2. Sweep remaining creator-owned databases that Apps::Destroyer didn't
 #      already reach — ones never linked to an app, or whose only linking
 #      apps belonged to another team — via DatabaseProvisioner.destroy!.
@@ -26,6 +28,7 @@ class HardDeleteAccountJob < ApplicationJob
 
     user.transaction do
       destroy_apps(user)
+      leave_member_teams(user)
       destroy_databases(user)
       null_pii(user)
     end
@@ -53,7 +56,7 @@ class HardDeleteAccountJob < ApplicationJob
   end
 
   def destroy_apps(user)
-    user.teams.flat_map(&:app_records).each do |app|
+    user.owned_teams.flat_map(&:app_records).each do |app|
       # Apps::Destroyer.call handles the Swarm stack, DNS, bare git repo,
       # the app row, and any exclusively-linked database — every step but
       # the app row itself is best-effort internally (logs + swallows).
@@ -64,6 +67,10 @@ class HardDeleteAccountJob < ApplicationJob
     rescue => e
       Rails.logger.error("HardDeleteAccountJob: error processing app #{app.id}: #{e.message}")
     end
+  end
+
+  def leave_member_teams(user)
+    user.team_memberships.where.not(team_id: user.owned_teams.select(:id)).delete_all
   end
 
   def destroy_databases(user)

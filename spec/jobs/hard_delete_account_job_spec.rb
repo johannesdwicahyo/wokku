@@ -89,6 +89,34 @@ RSpec.describe HardDeleteAccountJob, type: :job do
     expect(source).not_to match(/Dokku::/)
   end
 
+  describe "teams the user only belongs to" do
+    let(:org) { create(:team) }
+    let!(:membership) { TeamMembership.create!(user: user, team: org, role: "member") }
+    let!(:org_app) { create(:app_record, team: org, creator: user) }
+    let!(:own_app) { create(:app_record, team: user.owned_teams.first, creator: user) }
+
+    before do
+      allow(Wokku.config.dns_provider).to receive(:delete_app_record)
+      allow(Git::BareRepo).to receive(:new).and_return(instance_double(Git::BareRepo, remove!: true))
+    end
+
+    it "destroys owned-team apps only and drops the membership" do
+      described_class.perform_now(user.id)
+      expect(AppRecord.where(id: own_app.id)).not_to exist
+      expect(AppRecord.where(id: org_app.id)).to exist
+      expect(Team.where(id: org.id)).to exist
+      expect(TeamMembership.where(id: membership.id)).not_to exist
+    end
+
+    it "keeps a user-created database linked to the other team's app" do
+      db = create(:database_service, creator_id: user.id)
+      create(:app_database, app_record: org_app, database_service: db)
+      expect(DatabaseProvisioner).not_to receive(:destroy!).with(database_service: db)
+      described_class.perform_now(user.id)
+      expect(DatabaseService.where(id: db.id)).to exist
+    end
+  end
+
   describe "Apple" do
     let(:apple_user) do
       create(:user, apple_uid: "001.del", provider: "apple", uid: "001.del").tap do |u|

@@ -23,7 +23,8 @@ class MobileAuthCode < ApplicationRecord
 
     transaction do
       rec = lock.find_by(code_digest: digest(code))
-      next nil unless rec && rec.used_at.nil? && rec.expires_at.future? && rec.verifier_matches?(code_verifier)
+      next nil unless rec && rec.used_at.nil? && rec.expires_at.future? && rec.verifier_matches?(code_verifier) &&
+                  rec.user.active_for_authentication?
 
       rec.update!(used_at: Time.current)
       rec.user

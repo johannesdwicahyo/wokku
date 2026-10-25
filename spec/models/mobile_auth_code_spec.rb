@@ -19,6 +19,12 @@ RSpec.describe MobileAuthCode do
     expect(described_class.redeem(code: code, code_verifier: verifier)).to be_nil
   end
 
+  it "refuses a locked user's code" do
+    code = described_class.issue!(user: user, code_challenge: challenge)
+    user.lock_access!(send_instructions: false)
+    expect(described_class.redeem(code: code, code_verifier: verifier)).to be_nil
+  end
+
   it "refuses the wrong verifier without burning the code" do
     code = described_class.issue!(user: user, code_challenge: challenge)
     expect(described_class.redeem(code: code, code_verifier: "x" * 43)).to be_nil

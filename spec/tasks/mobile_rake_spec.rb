@@ -40,6 +40,17 @@ RSpec.describe "mobile rake tasks" do
     expect(TeamMembership.where(user: user, team: team).count).to eq(1)
   end
 
+  it "app_review_account refresh unlocks and un-schedules deletion of the reviewer" do
+    team = create(:team)
+    run("mobile:app_review_account", team.id)
+    user = User.find_by!(email: "appreview@wokku.cloud")
+    user.update_columns(failed_attempts: 9, locked_at: Time.current, deletion_scheduled_at: 1.day.from_now)
+    run("mobile:app_review_account", team.id)
+    user.reload
+    expect([ user.failed_attempts, user.access_locked?, user.deletion_pending? ]).to eq([ 0, false, false ])
+    expect(user.teams).to eq([ team ])
+  end
+
   describe "app_review_account takeover guard" do
     def refuses(user, team)
       before = user.encrypted_password

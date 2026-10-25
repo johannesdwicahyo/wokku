@@ -1,7 +1,7 @@
 module Dashboard
   class AccountDeletionsController < BaseController
     def show
-      @apps      = policy_scope(AppRecord)
+      @apps      = AppRecord.where(team: current_user.owned_teams) # only owned teams are deleted
       @databases = DatabaseService.where(creator_id: current_user.id)
       @balance   = current_user.balance_formatted
       @has_balance = current_user.balance > 0

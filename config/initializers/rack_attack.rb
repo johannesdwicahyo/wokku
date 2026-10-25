@@ -49,6 +49,11 @@ class Rack::Attack
     req.ip if wokku_path(req) == "/api/v1/auth/mobile/token" && req.post?
   end
 
+  # Web side of the iOS handoff: each confirm mints a code.
+  throttle("mobile_auth_confirm/ip", limit: 10, period: 1.minute) do |req|
+    req.ip if wokku_path(req) == "/mobile/auth/confirm" && req.post?
+  end
+
   # Fail2Ban: ban an IP for 1h after 20 failed API logins in 10m. The filter
   # is invoked manually from AuthController#login on failed auth.
   blocklist("fail2ban/api_login") do |req|

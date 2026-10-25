@@ -19,10 +19,15 @@ module Api
         # this transaction (separate queue DB), so it must run LAST.
         current_user.transaction do
           current_user.api_tokens.active.update_all(revoked_at: Time.current)
-          current_user.device_tokens.delete_all
+          current_user.device_tokens.destroy_all # destroy: push_tickets FK has no cascade
           current_user.schedule_deletion!
         end
-        AccountMailer.account_deletion_scheduled(current_user).deliver_later
+        begin
+          AccountMailer.account_deletion_scheduled(current_user).deliver_later
+        rescue => e # deletion is committed — never 500 over the email
+          Rails.logger.warn("account deletion mail enqueue failed for user #{current_user.id}: #{e.message}")
+          Sentry.capture_exception(e) if defined?(Sentry)
+        end
 
         render json: { purge_at: current_user.deletion_scheduled_at.iso8601 }, status: :accepted
       end

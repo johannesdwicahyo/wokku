@@ -1,0 +1,18 @@
+<div class="min-h-screen flex items-center justify-center px-5 bg-bg text-ink font-sans">
+  <div class="w-full max-w-sm">
+    <div class="text-center mb-8">
+      <h1 class="font-headline text-2xl font-semibold tracking-tight text-ink">Sign in to the Wokku app</h1>
+      <p class="text-xs text-dim mt-2">Continue as <%= current_user.email %></p>
+    </div>
+    <div class="border-1.5 border-ink bg-paper rounded-md p-6 space-y-3">
+      <%= form_with url: mobile_auth_confirm_path, method: :post, data: { turbo: false } do %>
+        <%= hidden_field_tag :state, params[:state] %>
+        <%= hidden_field_tag :code_challenge, params[:code_challenge] %>
+        <%= hidden_field_tag :code_challenge_method, params[:code_challenge_method] %>
+        <%= button_tag "Continue", type: "submit",
+              class: Atoms::ButtonComponent.new(variant: :primary, size: :md, class: "w-full").classes %>
+      <% end %>
+      <p class="text-xs text-dim text-center">Not you? Sign out at wokku.cloud, then try again.</p>
+    </div>
+  </div>
+</div>

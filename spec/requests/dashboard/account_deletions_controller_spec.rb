@@ -32,6 +32,15 @@ RSpec.describe "Dashboard::AccountDeletions", type: :request do
       expect(response).to have_http_status(:success)
       expect(response.body).to include("/dashboard/account_deletion")
     end
+
+    it "lists only apps of teams the user owns" do
+      org = create(:team)
+      TeamMembership.create!(user: user, team: org, role: "member")
+      other = create(:app_record, team: org, name: "not-mine-#{SecureRandom.hex(3)}")
+      sign_in user
+      get "/dashboard/account_deletion"
+      expect(response.body).not_to include(other.name)
+    end
   end
 
   describe "POST create" do
