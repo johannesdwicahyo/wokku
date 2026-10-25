@@ -1,6 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "GET /mobile/auth/start", type: :request do
+  include Devise::Test::IntegrationHelpers
+
   let(:state) { "s" * 24 }
   let(:challenge) { "c" * 43 }
   let(:params) { { state: state, code_challenge: challenge, code_challenge_method: "S256" } }
@@ -9,7 +11,9 @@ RSpec.describe "GET /mobile/auth/start", type: :request do
   it "sends a signed-out user to sign in and remembers where to come back" do
     get "/mobile/auth/start", params: params
     expect(response).to redirect_to(new_user_session_path)
-    expect(session["user_return_to"]).to eq("/mobile/auth/start?#{params.to_query}")
+    back = URI(session["user_return_to"])
+    expect(back.path).to eq("/mobile/auth/start")
+    expect(Rack::Utils.parse_query(back.query)).to eq(params.stringify_keys)
   end
 
   it "completes the round trip after sign-in" do
