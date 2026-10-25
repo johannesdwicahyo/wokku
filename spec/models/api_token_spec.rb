@@ -57,8 +57,8 @@ RSpec.describe ApiToken do
       expired, = ApiToken.create_with_token!(user: user, name: "exp", expires_at: 1.hour.ago)
       mk = ->(tok) { DeviceToken.create!(user: user, token: "d-#{SecureRandom.hex(6)}", platform: "ios", api_token: tok) }
       a, b, c = mk.(live), mk.(expired), mk.(nil)
-      expect(DeviceToken.deliverable.pluck(:id)).to match_array([ a.id, c.id ])
-      expect(DeviceToken.deliverable.pluck(:id)).not_to include(b.id)
+      expect(user.device_tokens.deliverable.pluck(:id)).to match_array([ a.id, c.id ])
+      expect(user.device_tokens.deliverable.pluck(:id)).not_to include(b.id)
     end
   end
 end

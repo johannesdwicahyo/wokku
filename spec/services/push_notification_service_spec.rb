@@ -189,15 +189,19 @@ RSpec.describe PushNotificationService, "recipient filtering" do
   end
 
   describe "token-bound devices" do
-    it "does not push to a device whose api token expired" do
-      exp, = ApiToken.create_with_token!(user: user, name: "e", expires_at: 1.hour.ago)
-      device.update!(api_token: exp)
-      expect(described_class.new(notification, deploy, "deploy_succeeded").send(:recipient_tokens)).to be_empty
+    it "does not push to a device whose api token expired; nil-token devices still get pushed" do
+      expired, = ApiToken.create_with_token!(user: alice, name: "e", expires_at: 1.hour.ago)
+      DeviceToken.find_by(user: alice).update!(api_token: expired)
+      tokens = sent_tokens { deliver("app_down", { "app_id" => app_record.id }) }
+      expect(tokens).to eq([ "tok-#{bob.id}" ]) # bob's device has nil api_token_id
     end
 
-    it "still pushes to a device with a nil api_token_id" do
-      expect(device.api_token_id).to be_nil
-      expect(described_class.new(notification, deploy, "deploy_succeeded").send(:recipient_tokens)).to eq([ device ])
+    it "does not push to a device whose api token was revoked" do
+      live, = ApiToken.create_with_token!(user: alice, name: "l")
+      DeviceToken.find_by(user: alice).update!(api_token: live)
+      live.update_column(:revoked_at, Time.current) # bypass revoke! (which deletes the device)
+      tokens = sent_tokens { deliver("app_down", { "app_id" => app_record.id }) }
+      expect(tokens).to eq([ "tok-#{bob.id}" ])
     end
   end
 end
