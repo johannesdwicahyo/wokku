@@ -1,5 +1,6 @@
 class ApiToken < ApplicationRecord
   belongs_to :user
+  has_many :device_tokens, dependent: :nullify
 
   validates :token_digest, presence: true, uniqueness: true
   validates :name, presence: true
@@ -22,7 +23,11 @@ class ApiToken < ApplicationRecord
   end
 
   def revoke!
-    update!(revoked_at: Time.current)
+    transaction do
+      update!(revoked_at: Time.current)
+      # A revoked token must stop pushing to the phone it registered (destroy: push_tickets FK).
+      device_tokens.destroy_all
+    end
   end
 
   def revoked?

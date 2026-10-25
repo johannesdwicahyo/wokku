@@ -6,6 +6,7 @@ module Api
         # A phone's push token belongs to whoever signed in on it last.
         token = DeviceToken.find_or_initialize_by(token: params[:token])
         token.user = current_user
+        token.api_token = current_api_token
         token.platform = params[:platform]
         token.provider = params[:provider].presence || "expo"
 

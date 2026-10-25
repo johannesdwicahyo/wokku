@@ -76,4 +76,16 @@ RSpec.describe "API::V1::DevicesController", type: :request do
       post api_v1_devices_path, params: { token: "apns-shared", platform: "ios", provider: "apns" }, headers: bob_headers, as: :json
     end
   end
+
+  it "create binds the device to the registering api token; revoking/logout deletes it and its tickets" do
+    api_token = ApiToken.find_by_token(plain_token)
+    t = "device-token-bind-#{SecureRandom.hex(8)}"
+    post api_v1_devices_path, params: { token: t, platform: "ios" }, headers: headers
+    device = DeviceToken.find_by!(token: t)
+    expect(device.api_token_id).to eq(api_token.id)
+    PushTicket.create!(device_token: device, ticket_id: "tk-1")
+    delete api_v1_auth_logout_path, headers: headers
+    expect(response).to have_http_status(:success)
+    expect(DeviceToken.find_by(token: t)).to be_nil
+  end
 end

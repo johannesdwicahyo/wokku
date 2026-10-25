@@ -38,6 +38,17 @@ namespace :mobile do
     end
     AlertMute.find_or_create_by!(user: user, app_record: apps.third, event: "deploy_failed")
 
+    # Durable log lines for the Logs screen (read by /api/v1/apps/:id/logs, last 24h).
+    Log.where(app_record_id: web.id).delete_all
+    samples = [ "GET / 200 12ms", "GET /health 200 2ms", "POST /api/deploy 202", "GET /api/apps 200 31ms",
+                "INFO worker started", "WARN slow query 480ms", "GET /assets/app.css 304 1ms",
+                "POST /login 302 88ms", "ERROR worker timeout" ]
+    30.times do |i|
+      line = samples[i % samples.size]
+      Log.create!(server: server, app_record: web, container: "ios-ui-running.web.1",
+                  ts: (30 - i).minutes.ago, line: line, level: Log.detect_level(line))
+    end
+
     puts "email=#{user.email} password=#{password}"
   end
 

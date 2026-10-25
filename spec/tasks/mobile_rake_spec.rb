@@ -73,4 +73,12 @@ RSpec.describe "mobile rake tasks" do
       refuses(user, create(:team))
     end
   end
+
+  it "ui_fixture seeds ~30 endpoint-visible durable logs for the running app, idempotently" do
+    2.times { run("mobile:ui_fixture") }
+    web = AppRecord.find_by!(name: "ios-ui-running")
+    expect(Log.for_app(web).count).to eq(30)
+    expect(Log.for_app(web).since(24.hours.ago).until_(Time.current).count).to eq(30)
+    expect(Log.for_app(web).at_level("error").pluck(:line)).to include("ERROR worker timeout")
+  end
 end

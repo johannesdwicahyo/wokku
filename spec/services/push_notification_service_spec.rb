@@ -187,4 +187,17 @@ RSpec.describe PushNotificationService, "recipient filtering" do
     deliver("app_down", { "app_id" => app_record.id })
     expect(Rails.logger).not_to have_received(:warn).with(a_string_including("tok-"))
   end
+
+  describe "token-bound devices" do
+    it "does not push to a device whose api token expired" do
+      exp, = ApiToken.create_with_token!(user: user, name: "e", expires_at: 1.hour.ago)
+      device.update!(api_token: exp)
+      expect(described_class.new(notification, deploy, "deploy_succeeded").send(:recipient_tokens)).to be_empty
+    end
+
+    it "still pushes to a device with a nil api_token_id" do
+      expect(device.api_token_id).to be_nil
+      expect(described_class.new(notification, deploy, "deploy_succeeded").send(:recipient_tokens)).to eq([ device ])
+    end
+  end
 end

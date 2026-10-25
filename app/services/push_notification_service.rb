@@ -89,7 +89,7 @@ class PushNotificationService
   def recipient_tokens
     app = subject_app
     users = @notification.team.users.reject { |u| AlertMute.muted?(user: u, app_record: app, event: @event) }
-    DeviceToken.where(user_id: users.map(&:id)).to_a
+    DeviceToken.deliverable.where(user_id: users.map(&:id)).to_a
   end
 
   def subject_app
