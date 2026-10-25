@@ -227,6 +227,7 @@ Rails.application.routes.draw do
       namespace :auth do
         post :login
         post :apple
+        post "mobile/token", to: "/api/v1/auth#mobile_token"
         delete :logout
         get :whoami
         resources :tokens, only: [ :index, :create, :destroy ]

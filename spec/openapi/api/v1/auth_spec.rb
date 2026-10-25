@@ -120,6 +120,58 @@ RSpec.describe "API v1 auth", type: :request do
     end
   end
 
+  path "/api/v1/auth/mobile/token" do
+    post "Redeem an iOS web sign-in handoff code (PKCE) for an API token" do
+      operationId "auth.mobile_token"
+      tags "auth"
+      security []
+      consumes "application/json"
+      produces "application/json"
+      parameter name: :payload, in: :body, schema: {
+        type: :object,
+        required: %w[code code_verifier],
+        properties: {
+          code: { type: :string, description: "One-time code from wokku://auth" },
+          code_verifier: { type: :string, description: "PKCE verifier (43-128 chars) whose S256 hash started the flow" },
+          token_name: { type: :string, description: "Label for the new API token" }
+        }
+      }
+
+      let(:mobile_user) { User.create!(email: "mobile-openapi@example.com", password: "password123456") }
+      let(:verifier) { "v" * 64 }
+      let(:mobile_code) do
+        MobileAuthCode.issue!(user: mobile_user, code_challenge: Base64.urlsafe_encode64(Digest::SHA256.digest(verifier), padding: false))
+      end
+      let(:payload) { { code: mobile_code, code_verifier: verifier } }
+
+      response "201", "token created" do
+        schema type: :object,
+               required: %w[token user],
+               properties: {
+                 token: { type: :string },
+                 user: {
+                   type: :object,
+                   required: %w[id email role],
+                   properties: { id: { type: :string, format: :uuid }, email: { type: :string }, role: { type: :string } }
+                 }
+               }
+        run_test!
+      end
+
+      response "401", "code unknown, used, expired, or verifier mismatch (invalid_token)" do
+        let(:payload) { { code: "unknown", code_verifier: verifier } }
+        schema "$ref" => "#/components/schemas/Error"
+        run_test!
+      end
+
+      response "422", "code missing or verifier not 43-128 chars (invalid_params)" do
+        let(:payload) { { code: "x" } }
+        schema "$ref" => "#/components/schemas/Error"
+        run_test!
+      end
+    end
+  end
+
   path "/api/v1/auth/logout" do
     delete "Revoke the calling token" do
       operationId "auth.logout"

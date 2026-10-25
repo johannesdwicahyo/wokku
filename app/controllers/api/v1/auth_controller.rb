@@ -3,7 +3,7 @@ module Api
     class AuthController < ActionController::API
       include ApiAuthenticatable
 
-      skip_before_action :authenticate_api_token!, only: [ :login, :apple ]
+      skip_before_action :authenticate_api_token!, only: [ :login, :apple, :mobile_token ]
 
       def login
         user = User.find_by(email: params[:email])
@@ -37,20 +37,20 @@ module Api
       # the raw nonce it hashed into the request, and optionally the one-time
       # authorization code + name (Apple gives the name only on first sign-in).
       def apple
-        return apple_error(:apple_unavailable) unless ::Apple::Config.native_configured?
+        return auth_error(:apple_unavailable) unless ::Apple::Config.native_configured?
         if params[:identity_token].blank? || params[:nonce].blank?
-          return apple_error(:invalid_params, "identity_token and nonce are required", status: :unprocessable_entity)
+          return auth_error(:invalid_params, "identity_token and nonce are required", status: :unprocessable_entity)
         end
 
         claims = ::Apple::IdentityToken.verify!(params[:identity_token].to_s, nonce: params[:nonce].to_s)
         user = User.from_apple(claims, name: apple_name)
         unless user.persisted?
           track_failed_login!
-          return apple_error(:registration_closed)
+          return auth_error(:registration_closed)
         end
         if user.admin?
           track_failed_login!
-          return apple_error(:not_authorized, "Admin accounts sign in with password + 2FA.")
+          return auth_error(:not_authorized, "Admin accounts sign in with password + 2FA.")
         end
 
         user.ensure_personal_team!
@@ -63,9 +63,28 @@ module Api
         render json: { token: plain_token, user: { id: user.id, email: user.email, role: user.role } }, status: :created
       rescue ::Apple::IdentityToken::Invalid
         track_failed_login!
-        apple_error(:invalid_token, "Apple identity token is invalid")
+        auth_error(:invalid_token, "Apple identity token is invalid")
       rescue ::Apple::IdentityToken::Unavailable
-        apple_error(:apple_upstream_failed)
+        auth_error(:apple_upstream_failed)
+      end
+
+      # iOS web sign-in handoff: the app redeems the one-time code from
+      # wokku://auth with the PKCE verifier it kept.
+      def mobile_token
+        code = params[:code].to_s
+        verifier = params[:code_verifier].to_s
+        if code.blank? || !verifier.length.between?(43, 128)
+          return auth_error(:invalid_params, "code and a 43-128 character code_verifier are required", status: :unprocessable_entity)
+        end
+
+        user = MobileAuthCode.redeem(code: code, code_verifier: verifier)
+        unless user
+          track_failed_login!
+          return auth_error(:invalid_token, "Sign-in code is invalid or expired")
+        end
+
+        _token, plain_token = ApiToken.create_with_token!(user: user, name: params[:token_name].to_s.first(100).presence || "ios-#{Time.current.to_i}")
+        render json: { token: plain_token, user: { id: user.id, email: user.email, role: user.role } }, status: :created
       end
 
       private
@@ -82,7 +101,7 @@ module Api
       end
 
       # AuthController is not a BaseController (no render_api_error).
-      def apple_error(code, message = nil, status: nil)
+      def auth_error(code, message = nil, status: nil)
         render json: ApiErrors.payload(code, message: message), status: status || ApiErrors.status(code)
       end
 
