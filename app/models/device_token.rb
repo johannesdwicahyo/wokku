@@ -11,6 +11,6 @@ class DeviceToken < ApplicationRecord
   scope :deliverable, -> { where(api_token_id: nil).or(where(api_token_id: ApiToken.active.select(:id))) }
 
   validates :token, presence: true, uniqueness: true
-  validates :platform, presence: true, inclusion: { in: %w[ios android] }
+  validates :platform, presence: true, inclusion: { in: %w[ios android macos] }
   validates :provider, inclusion: { in: %w[expo apns] }
 end

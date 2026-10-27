@@ -41,6 +41,11 @@ RSpec.describe DeviceToken do
       dt = DeviceToken.new(token: "android-token-test", platform: "android", user: users(:two))
       expect(dt).to be_valid
     end
+
+    it "is valid for macos platform" do
+      dt = DeviceToken.new(token: "macos-token-test", platform: "macos", user: users(:two))
+      expect(dt).to be_valid
+    end
   end
 
   describe "associations" do

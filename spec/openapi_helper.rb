@@ -270,7 +270,7 @@ RSpec.configure do |config|
             required: %w[token platform],
             properties: {
               token: { type: :string },
-              platform: { type: :string, enum: %w[ios android] },
+              platform: { type: :string, enum: %w[ios android macos] },
               provider: { type: :string, enum: %w[expo apns], default: "expo" }
             }
           },
