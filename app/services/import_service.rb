@@ -1,11 +1,14 @@
+require "zlib"
+
+# Imports a user-supplied dump (plain SQL or pg_dump -Fc for postgres,
+# mysqldump for mysql/mariadb, mongodump --archive for mongodb) into a
+# wokkud-managed database: gzip it to a temporary object in the server's
+# backup bucket and run the same service.import op backup restores use.
+# The agent pulls it over a presigned URL; the object is deleted afterwards.
 class ImportService
-  IMPORT_COMMANDS = {
-    "postgres" => "postgres:import",
-    "mysql"    => "mysql:import",
-    "mariadb"  => "mariadb:import",
-    "mongodb"  => "mongo:import",
-    "redis"    => "redis:import"
-  }.freeze
+  include DatabaseImportTarget
+
+  SUPPORTED_TYPES = %w[postgres mysql mariadb mongodb].freeze
 
   class UnsupportedTypeError < StandardError; end
 
@@ -15,38 +18,45 @@ class ImportService
     @server = database_service.server
   end
 
-  # Streams a user-supplied dump file (the Heroku/pg_dump -Fc format
-  # that `dokku <type>:import` accepts as stdin) into the Dokku service
-  # over SSH. We never land the dump on the Rails container's disk —
-  # straight stdin pipe.
   def perform!
-    raise UnsupportedTypeError, "No import command for #{@db.service_type}" unless cmd = IMPORT_COMMANDS[@db.service_type]
+    unless SUPPORTED_TYPES.include?(@db.service_type)
+      raise UnsupportedTypeError, "Import isn't supported for #{@db.service_type}" \
+        "#{" (restore an RDB file manually)" if @db.service_type == "redis"}"
+    end
+    raise UnsupportedTypeError, "Import needs a wokkud-managed database" unless @db.wokkud_managed?
 
-    ssh_user = @server.ssh_user || "dokku"
-    safe_name = Shellwords.escape(@db.name)
-    import_cmd = ssh_user == "dokku" ? "#{cmd} #{safe_name}" : "dokku #{cmd} #{safe_name}"
+    destination = @server.backup_destination
+    raise "No backup destination configured for #{@server.name}" unless destination
 
-    ssh_options = {
-      port: @server.port || 22,
-      non_interactive: true,
-      timeout: 10
-    }
-    ssh_options[:key_data] = [ @server.ssh_private_key ] if @server.ssh_private_key.present?
-
-    Net::SSH.start(@server.host, ssh_user, ssh_options) do |ssh|
-      channel = ssh.open_channel do |ch|
-        ch.exec(import_cmd) do |_ch, success|
-          raise "Failed to execute import command" unless success
-
-          while (chunk = @dump_io.read(64 * 1024))
-            ch.send_data(chunk)
-          end
-          ch.eof!
-
-          ch.on_extended_data { |_, _, data| Rails.logger.warn("ImportService stderr: #{data}") }
+    key = "imports/#{@db.id}/#{SecureRandom.hex(8)}.gz"
+    gz = Tempfile.new([ "import", ".gz" ], binmode: true)
+    begin
+      Zlib::GzipWriter.wrap(gz) do |w|
+        while (chunk = @dump_io.read(64 * 1024))
+          w.write(chunk)
         end
+        w.finish
       end
-      channel.wait
+      gz.flush
+      File.open(gz.path, "rb") { |f| destination.s3_client.put_object(bucket: destination.bucket, key: key, body: f) }
+      Services::Ops.issue_and_wait!(
+        service: managed_op_service,
+        kind: "service.import",
+        params: {
+          service_type: @db.service_type,
+          database: managed_op_database,
+          password: dsn_password,
+          presigned_get_url: destination.s3_presigned_url(key)
+        }.compact
+      )
+      true
+    ensure
+      gz.close!
+      begin
+        destination.s3_client.delete_object(bucket: destination.bucket, key: key)
+      rescue StandardError => e
+        Rails.logger.warn("ImportService: temp object #{key} not deleted: #{e.message}")
+      end
     end
   end
 end

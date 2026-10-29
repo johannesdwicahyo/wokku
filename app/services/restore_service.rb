@@ -1,4 +1,6 @@
 class RestoreService
+  include DatabaseImportTarget
+
   IMPORT_COMMANDS = {
     "postgres" => "postgres:import",
     "mysql" => "mysql:import",
@@ -85,14 +87,6 @@ class RestoreService
     true
   end
 
-  def managed_op_service
-    @db.shared? ? @db.parent_service : @db
-  end
-
-  def managed_op_database
-    @db.shared? ? @db.shared_db_name : @db.dedicated_db_name
-  end
-
   def managed_op_params(url)
     {
       service_type: @db.service_type,
@@ -118,11 +112,4 @@ class RestoreService
     )
   end
 
-  # A shared tenant's DSN holds the TENANT's password, not the parent's
-  # root one — send none: postgres dumps as the local superuser, mariadb
-  # reads the root password from the parent container's env (wokkud).
-  def dsn_password
-    return nil if @db.shared?
-    @db.dsn.present? ? URI.parse(@db.dsn).password : nil
-  end
 end
