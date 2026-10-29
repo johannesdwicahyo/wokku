@@ -6,6 +6,7 @@ RSpec.describe "agent cron config" do
 
   it "returns the builder payload" do
     app = create(:app_record, server: server)
+    create(:deploy, :succeeded, :wokkud, app_record: app) # never-deployed apps have nothing to run
     task = create(:scheduled_task, app_record: app, enabled: true)
     get "/api/v1/agent/cron/config", headers: headers
     expect(response).to have_http_status(:ok)
