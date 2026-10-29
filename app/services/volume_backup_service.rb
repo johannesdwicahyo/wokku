@@ -14,6 +14,9 @@ class VolumeBackupService
   class UnsafeMountPath < StandardError; end
 
   STORAGE_ROOT = "/var/lib/dokku/data/storage/".freeze
+  # wokkud Swarm services mount named volumes wokku-<app>-<slug>
+  # (AppRecord#mounts_for_converge); docker inspect reports their host path.
+  SWARM_VOLUME = %r{\A/var/lib/docker/volumes/wokku-[A-Za-z0-9-]+/_data\z}
 
   # Go template printing one "host:container" line per mount of a container —
   # same spec shape the old dokku storage:list emitted.
@@ -26,12 +29,12 @@ class VolumeBackupService
   TAR_TIMEOUT = 3600
 
   # A mount host path is safe to hand to a root shell only if it lives under
-  # the storage root, has no `..` traversal, and carries no newline/NUL
+  # the storage root (or is a wokku Swarm named volume), has no `..` traversal, and carries no newline/NUL
   # (Shellwords escapes those, but the anchor must never be bypassable by a
   # crafted mount line).
   def self.safe_mount?(path)
     path.is_a?(String) &&
-      path.start_with?(STORAGE_ROOT) &&
+      (path.start_with?(STORAGE_ROOT) || path.match?(SWARM_VOLUME)) &&
       !path.include?("..") &&
       !path.match?(/[\n\r\0]/)
   end

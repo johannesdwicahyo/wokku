@@ -33,6 +33,19 @@ RSpec.describe VolumeBackupService do
         .to eq([ "/var/lib/dokku/data/storage/#{app.name}/uploads" ])
     end
 
+    it "keeps wokku Swarm named volumes (the only mounts since the Swarm move)" do
+      allow(ssh).to receive(:run_raw).with("docker ps --format '{{.Names}}'", timeout: 30).and_return("#{container}\n")
+      allow(ssh).to receive(:run_raw)
+        .with("docker inspect -f #{Shellwords.escape(described_class::MOUNTS_FORMAT)} #{container}", timeout: 30)
+        .and_return([
+          "/var/lib/docker/volumes/wokku-#{app.name}-opt-data/_data:/opt/data",
+          "/var/lib/docker/volumes/other-volume/_data:/x",                    # not ours — skip
+          "/var/lib/docker/volumes/wokku-#{app.name}-a/_data/../../../etc:/y"  # traversal — skip
+        ].join("\n"))
+      expect(described_class.mount_host_paths(app))
+        .to eq([ "/var/lib/docker/volumes/wokku-#{app.name}-opt-data/_data" ])
+    end
+
     it "returns [] with a warning when the app has no running web task" do
       allow(ssh).to receive(:run_raw).with("docker ps --format '{{.Names}}'", timeout: 30)
         .and_return("wokku-other-web.1.zzz\n")

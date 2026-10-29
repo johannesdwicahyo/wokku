@@ -197,9 +197,29 @@ class RestoreDrillJob < ApplicationJob
         Rails.logger.error("[RestoreDrillJob] volume: secondary failure: #{e2.class}: #{e2.message}")
       end
     end
+
+    check_volume_backup_freshness
   end
 
+  # Volume backups run nightly. Restoring one old tarball proves nothing about
+  # whether they still run (they silently stopped for 3 months after the Swarm
+  # move), so every app with a volume needs a backup newer than this.
+  VOLUME_BACKUP_MAX_AGE = 48.hours
+
   private
+
+  def check_volume_backup_freshness
+    AppRecord.where("jsonb_array_length(storage_mounts) > 0").find_each do |app|
+      last = Backup.kind_volume.where(app_record_id: app.id, status: "completed").order(created_at: :desc).first
+      next if last && last.created_at > VOLUME_BACKUP_MAX_AGE.ago
+
+      msg = last ? "newest volume backup is from #{last.created_at.utc.iso8601}" : "app has a volume but no completed volume backup"
+      RestoreDrill.create!(engine: "volume", backup: last, status: :failed, error_message: "#{app.name}: #{msg}")
+      Sentry.capture_message("restore drill failed: volume/#{app.name}: #{msg}", level: :error)
+    end
+  rescue => e
+    Rails.logger.error("[RestoreDrillJob] volume freshness: #{e.class}: #{e.message}")
+  end
 
   # Post-sweep, DB backups are WKB1 envelopes; volume backups (and any
   # not-yet-swept blob) remain legacy fleet-key format — route by magic.

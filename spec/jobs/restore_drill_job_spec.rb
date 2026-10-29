@@ -233,6 +233,30 @@ RSpec.describe RestoreDrillJob do
       expect(RestoreDrill.failed.where(engine: "volume").count).to eq(1)
     end
 
+    it "fails the drill for an app whose newest volume backup is stale or missing" do
+      stale = create(:app_record, storage_mounts: [ "/opt/data" ])
+      create(:backup, :volume, app_record: stale, status: "completed", created_at: 90.days.ago,
+             mount_path: "/var/lib/docker/volumes/wokku-#{stale.name}-opt-data/_data")
+      never = create(:app_record, storage_mounts: [ "/srv" ])
+      fresh = create(:app_record, storage_mounts: [ "/data" ])
+      create(:backup, :volume, app_record: fresh, status: "completed", created_at: 2.hours.ago,
+             mount_path: "/var/lib/docker/volumes/wokku-#{fresh.name}-data/_data")
+      job = described_class.new
+      allow(job).to receive(:representative_db).and_return(nil)
+      allow(job).to receive(:run_volume_drill).and_return(
+        { live_tables: 1, restored_tables: 1, live_rows: 1, restored_rows: 1, rto_ms: 1 }
+      )
+      allow(job).to receive(:destroy_volume_throwaway)
+      allow(Sentry).to receive(:capture_message)
+
+      job.perform
+
+      failed = RestoreDrill.failed.where(engine: "volume").pluck(:error_message)
+      expect(failed).to contain_exactly(a_string_starting_with("#{stale.name}: newest volume backup is from"),
+                                        "#{never.name}: app has a volume but no completed volume backup")
+      expect(Sentry).to have_received(:capture_message).with(/volume\/#{stale.name}/, level: :error)
+    end
+
     it "skips the volume drill when no volume backups exist" do
       job = described_class.new
       allow(job).to receive(:representative_db).and_return(nil)
