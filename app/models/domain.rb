@@ -2,6 +2,9 @@ class Domain < ApplicationRecord
   belongs_to :app_record
   has_one :certificate, dependent: :destroy
 
+  # DNS is case-insensitive but Caddy's on-demand TLS gate and route lookups
+  # compare lowercase — a mixed-case row would never get a certificate.
+  normalizes :hostname, with: ->(h) { h.strip.downcase.delete_suffix(".") }
   validates :hostname, presence: true, uniqueness: true
 
   # Platform subdomains are born verified: the platform owns their zone

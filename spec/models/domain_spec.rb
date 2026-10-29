@@ -8,6 +8,13 @@ RSpec.describe Domain do
     expect(duplicate.errors[:hostname]).to include("has already been taken")
   end
 
+  it "stores hostnames lowercase (so Caddy's TLS gate matches) and catches case-only duplicates" do
+    domain = Domain.create!(app_record: app_records(:one), hostname: " Shop.Example.COM. ")
+    expect(domain.hostname).to eq("shop.example.com")
+    expect(Domain.new(app_record: app_records(:one), hostname: "SHOP.example.com")).not_to be_valid
+    expect(Domain.find_by(hostname: "SHOP.EXAMPLE.COM")).to eq(domain)
+  end
+
   it "hostname is required" do
     domain = Domain.new(app_record: app_records(:one))
     expect(domain).not_to be_valid
