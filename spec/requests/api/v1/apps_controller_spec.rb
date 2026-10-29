@@ -33,6 +33,27 @@ RSpec.describe "API::V1::AppsController", type: :request do
     expect(apps.first["name"]).to eq("myapp")
   end
 
+  it "index includes stats: fresh CPU/memory and 24h requests" do
+    app_record.update_columns(live_cpu_pct: 12.5, live_mem_used_mb: 180, live_mem_limit_mb: 512, live_metrics_at: 2.minutes.ago)
+    RequestAggregate.create!(app_record: app_record, bucket_start: 1.hour.ago, req_count: 40)
+    RequestAggregate.create!(app_record: app_record, bucket_start: 25.hours.ago, req_count: 999)
+
+    get api_v1_apps_path, headers: headers
+
+    app = JSON.parse(response.body).first
+    expect(app["stats"]).to include("cpu_pct" => 12.5, "mem_mb" => 180, "mem_limit_mb" => 512, "requests_24h" => 40)
+    expect(app.keys).not_to include("live_cpu_pct", "live_metrics_at")
+  end
+
+  it "index nulls stale CPU/memory instead of showing old numbers" do
+    app_record.update_columns(live_cpu_pct: 50.0, live_mem_used_mb: 300, live_metrics_at: 3.months.ago)
+
+    get api_v1_apps_path, headers: headers
+
+    expect(JSON.parse(response.body).first["stats"])
+      .to eq("cpu_pct" => nil, "mem_mb" => nil, "mem_limit_mb" => nil, "requests_24h" => 0, "as_of" => nil)
+  end
+
   it "index returns 401 without token" do
     get api_v1_apps_path
     expect(response).to have_http_status(:unauthorized)

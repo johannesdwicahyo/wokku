@@ -88,6 +88,18 @@ RSpec.configure do |config|
               push_instructions: { type: :string },
               host_status: { type: :string, nullable: true },
               host_heartbeat_at: { type: :string, format: "date-time", nullable: true },
+              stats: {
+                type: :object,
+                description: "List endpoint only. CPU/memory are null when the last sample is over 10 minutes old.",
+                required: %w[requests_24h],
+                properties: {
+                  cpu_pct: { type: :number, nullable: true },
+                  mem_mb: { type: :integer, nullable: true },
+                  mem_limit_mb: { type: :integer, nullable: true },
+                  requests_24h: { type: :integer },
+                  as_of: { type: :string, format: "date-time", nullable: true }
+                }
+              },
               warnings: { type: :array, items: { type: :string } }
             }
           },

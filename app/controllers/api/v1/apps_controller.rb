@@ -4,11 +4,16 @@ module Api
       include PlanEnforceable
       before_action :enforce_free_container_limit!, only: [ :create ]
 
+      LIVE_COLUMNS = %w[live_cpu_pct live_mem_used_mb live_mem_limit_mb live_metrics_at].freeze
+
       def index
         apps = policy_scope(AppRecord)
         apps = apps.main_apps unless params[:include_previews].present?
         apps = apps.where("name ILIKE ?", "%#{params[:q]}%") if params[:q].present?
-        render json: apps.select(:id, :name, :server_id, :team_id, :status, :is_preview, :pr_number, :parent_app_id, :created_at)
+        apps = apps.select(:id, :name, :server_id, :team_id, :status, :is_preview, :pr_number, :parent_app_id, :created_at,
+                           :live_cpu_pct, :live_mem_used_mb, :live_mem_limit_mb, :live_metrics_at).to_a
+        stats = ::Apps::ListStats.for(apps)
+        render json: apps.map { |app| app.as_json(except: LIVE_COLUMNS).merge(stats: stats[app.id]) }
       end
 
       def show

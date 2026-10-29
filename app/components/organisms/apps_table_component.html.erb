@@ -28,6 +28,9 @@
               <span class="w-[22px] h-[22px] border-1.5 border-ink rounded grid place-items-center font-extrabold text-[11px] bg-paper flex-shrink-0"><%= app_mark(app) %></span>
               <%= app.name %>
             <% end %>
+            <% if (stats = stats_line(app)) %>
+              <div class="pl-8 mt-0.5 text-[11.5px] text-dim font-mono"><%= stats %></div>
+            <% end %>
           </td>
           <td class="px-3.5 py-2.5"><%= status_pill.render_in(self) %></td>
           <td class="px-3.5 py-2.5 text-[12.5px] text-dim"><%= box_label(app) %></td>

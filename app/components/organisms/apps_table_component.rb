@@ -37,6 +37,12 @@ module Organisms
       box_label_for(app)
     end
 
+    # "18% · 410 MB · 4.2k req/24h" under the app name, or nil.
+    def stats_line(app)
+      @stats ||= ::Apps::ListStats.for(apps)
+      ::Apps::ListStats.summary(@stats[app.id])
+    end
+
     # First letter of the app name, uppercased — the schdl avatar mark.
     def app_mark(app)
       app.name.to_s[0].to_s.upcase

@@ -125,6 +125,29 @@ RSpec.describe MetricsPollJob, type: :job do
     expect(app.live_metrics_at).not_to be_nil
   end
 
+  describe "wokkud Swarm container names (wokku-<app>-<proc>.<slot>.<task>)" do
+    def stats_line(name, cpu, mem)
+      { "Name" => name, "CPUPerc" => "#{cpu}%", "MemUsage" => "#{mem}MiB / 512MiB",
+        "MemPerc" => "1%", "NetIO" => "0B / 0B", "BlockIO" => "0B / 0B", "PIDs" => "1" }.to_json
+    end
+
+    it "attributes each process to its app, preferring the longest matching app name" do
+      app = app_records(:one)
+      longer = AppRecord.create!(name: "#{app.name}-api", server: server, team: app.team, creator: app.creator)
+      stub_ssh([
+        stats_line("wokku-#{app.name}-web.1.abc123", "10.00", 100),
+        stats_line("wokku-#{app.name}-worker.1.def456", "5.00", 50),
+        stats_line("wokku-#{app.name}-api-web.1.ghi789", "2.00", 30),
+        stats_line("wokku-run-#{app.name}-0a1b2c3d.1.jkl012", "90.00", 400)
+      ].join("\n"))
+
+      described_class.perform_now(server.id)
+
+      expect(app.reload).to have_attributes(live_cpu_pct: 15.0, live_mem_used_mb: 150, live_container_count: 2)
+      expect(longer.reload).to have_attributes(live_cpu_pct: 2.0, live_mem_used_mb: 30, live_container_count: 1)
+    end
+  end
+
   describe "host capacity from /proc/meminfo" do
     let(:app) { app_records(:one) }
 

@@ -60,6 +60,27 @@ RSpec.describe Apps::VisitTracker do
     expect { described_class.call(server, "x") }.not_to raise_error
   end
 
+  describe "request counts (RequestAggregate buckets)" do
+    def bucket_total = RequestAggregate.where(app_record_id: app.id).sum(:req_count)
+
+    it "adds the delta since the last heartbeat to the current 5-minute bucket" do
+      app.update_columns(request_count_seen: 10)
+      freeze_time do
+        described_class.call(server, { "shop.wokku.app" => 13 })
+        described_class.call(server, { "shop.wokku.app" => 15 })
+      end
+      expect(bucket_total).to eq(5)
+      expect(RequestAggregate.where(app_record_id: app.id).count).to eq(1)
+    end
+
+    it "counts nothing on the first observation (no baseline) and the new total after a counter reset" do
+      described_class.call(server, { "shop.wokku.app" => 500 })
+      expect(bucket_total).to eq(0)
+      described_class.call(server, { "shop.wokku.app" => 3 })
+      expect(bucket_total).to eq(3)
+    end
+  end
+
   it "is wired into the heartbeat" do
     server.record_heartbeat!(vitals: { "docker" => "ok", "host_requests" => { "shop.wokku.app" => 4 } })
     expect(app.reload.request_count_seen).to eq(4)

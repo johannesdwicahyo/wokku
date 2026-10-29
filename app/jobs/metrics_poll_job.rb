@@ -62,9 +62,7 @@ class MetricsPollJob < ApplicationJob
         _, type, *name_parts = container_name.split(".")
         service_ram_used[[ type, name_parts.join(".") ]] = mem_used
       else
-        app_name = container_name.split(".").first
-        next unless app_name
-        if (app = apps_by_name[app_name])
+        if (app = app_for_container(container_name, apps_by_name))
           b = app_buckets[app]
           b[:cpu]       += cpu_pct
           b[:mem_used]  += mem_used
@@ -125,6 +123,21 @@ class MetricsPollJob < ApplicationJob
   end
 
   private
+
+  # Dokku-era containers are <app>.<proc>.<n>; wokkud Swarm tasks are
+  # wokku-<app>-<proc>.<slot>.<task>. App names may contain '-', so the
+  # longest app name that prefixes the service wins. One-off run containers
+  # (wokku-run-<app>-<op>) are skipped.
+  # ponytail: name parsing; switch to the wokku.app label if stats ever come from the Docker API.
+  def app_for_container(container_name, apps_by_name)
+    base = container_name.split(".").first.to_s
+    return apps_by_name[base] if apps_by_name.key?(base)
+    return unless base.start_with?("wokku-") && !base.start_with?("wokku-run-")
+
+    rest = base.delete_prefix("wokku-")
+    name = apps_by_name.keys.select { |n| rest.start_with?("#{n}-") }.max_by(&:length)
+    apps_by_name[name] if name
+  end
 
   # For each dedicated DatabaseService on the server, persist live RAM (from
   # docker stats) and live DB size (from inline psql per postgres svc).

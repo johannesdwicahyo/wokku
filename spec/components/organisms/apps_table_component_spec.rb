@@ -24,6 +24,13 @@ RSpec.describe Organisms::AppsTableComponent, type: :component do
     expect(row["aria-label"]).to eq("alpha, Running")
   end
 
+  it "renders the stats line under the name when stats are known" do
+    app.update_columns(live_cpu_pct: 18.4, live_mem_used_mb: 410, live_metrics_at: 1.minute.ago)
+    RequestAggregate.create!(app_record: app, bucket_start: 1.hour.ago, req_count: 4210)
+    render_inline(described_class.new(apps: [ app ]))
+    expect(page).to have_css("td div", text: "18% · 410 MB · 4.2k req/24h")
+  end
+
   it "renders an em dash when an app has no web dyno tier" do
     render_inline(described_class.new(apps: [ app ]))
     expect(page).to have_css("td", text: "—")
