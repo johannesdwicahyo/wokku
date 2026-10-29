@@ -19,7 +19,8 @@
          data-id="<%= tab[:id] %>"
          <%= 'hidden' unless tab[:id] == tabs.first[:id] %>>
       <% if tab[:partial] %>
-        <%= render partial: tab[:partial] %>
+        <%# helpers.render: a receiverless render of a dynamic path makes view_component log a bogus digest dependency at boot %>
+        <%= helpers.render partial: tab[:partial] %>
       <% elsif tab[:html] %>
         <%== tab[:html] %>
       <% end %>
