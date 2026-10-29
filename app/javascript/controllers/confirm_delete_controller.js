@@ -52,7 +52,7 @@ export default class extends Controller {
 
         <div class="px-6 py-5">
           <label class="block font-mono text-[11px] uppercase tracking-widest text-ink-soft mb-2">
-            Type <code class="font-mono text-danger bg-danger-soft border-1.5 border-danger px-1.5 py-0.5">${escapeHtml(name)}</code> to confirm
+            Type <code class="font-mono normal-case tracking-normal text-danger bg-danger-soft border-1.5 border-danger px-1.5 py-0.5">${escapeHtml(name)}</code> to confirm
           </label>
           <input type="text"
                  data-confirm-input
@@ -80,9 +80,11 @@ export default class extends Controller {
     const confirmBtn = overlay.querySelector("[data-action='confirm']")
     const cancelBtn = overlay.querySelector("[data-action='cancel']")
 
-    // Enable confirm button only when typed name matches exactly
+    // Enable confirm button only when typed name matches exactly. The label
+    // is uppercased by CSS, so the name itself must opt out (normal-case) or
+    // users type what they see and can never match.
     input.addEventListener("input", () => {
-      confirmBtn.disabled = input.value !== name
+      confirmBtn.disabled = input.value.trim() !== name
     })
 
     // Confirm: mark as confirmed and submit the original form
