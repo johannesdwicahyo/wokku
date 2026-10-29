@@ -28,9 +28,10 @@ class GithubApp
     @client ||= Octokit::Client.new(access_token: installation_token)
   end
 
+  # GET /installation/repositories: authenticates as the installation (its
+  # token picks the installation), so it takes no installation id.
   def repos(per_page: 30, page: 1)
-    app_client = Octokit::Client.new(bearer_token: jwt)
-    app_client.list_app_installation_repositories(@installation_id, per_page: per_page, page: page)
+    client.list_app_installation_repositories(per_page: per_page, page: page)
   end
 
   def branches(repo_full_name)

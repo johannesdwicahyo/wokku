@@ -88,6 +88,20 @@ RSpec.describe GithubApp do
     end
   end
 
+  describe "#repos" do
+    it "lists the installation's repositories with the installation token" do
+      stub = stub_request(:get, "https://api.github.com/installation/repositories?per_page=50&page=1")
+        .with(headers: { "Authorization" => "token inst-token" })
+        .to_return(status: 200, headers: { "Content-Type" => "application/json" },
+                   body: { total_count: 1, repositories: [ { full_name: "acme/api" } ] }.to_json)
+      github = described_class.new(123)
+      github.define_singleton_method(:installation_token) { "inst-token" }
+
+      expect(github.repos(per_page: 50).repositories.map(&:full_name)).to eq([ "acme/api" ])
+      expect(stub).to have_been_requested
+    end
+  end
+
   describe "#repo" do
     it "returns nil when Octokit raises NotFound" do
       github = described_class.new(123)
