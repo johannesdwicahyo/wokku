@@ -197,6 +197,13 @@ module Lifecycle
 
     # One-off command in a fresh container from the app's image (stack.run):
     # dokku-`run` semantics on Swarm — post_deploy migrations + the future
+    # Image a one-off (`wokku run`, scheduled tasks) runs: the deploy's
+    # registry image when wokkud built it, else the last converge's.
+    def self.run_image_ref(app, deploy)
+      ref = deploy&.wokkud_image_ref if deploy&.builder == "wokkud"
+      ref || image_ref_from(app.lifecycle_ops.succeeded.where(kind: "stack.converge").order(:created_at).last&.params)
+    end
+
     # `wokku run`. Assembly mirrors converge!: same image fallback chain, same
     # env, same bash -l wrap rule for wokkud-built (nixpacks) images, same
     # $VAR baking (job commands exec without a shell). Not interactive —
@@ -210,9 +217,7 @@ module Lifecycle
       # applied and post_deploy died with `env: ruby not found`). Same rule
       # as converge!.
       deploy ||= app.deploys.where(status: :succeeded).order(created_at: :desc).first
-      image_ref = deploy&.wokkud_image_ref if deploy&.builder == "wokkud"
-      prev_converge = app.lifecycle_ops.succeeded.where(kind: "stack.converge").order(:created_at).last
-      image_ref ||= image_ref_from(prev_converge&.params)
+      image_ref = run_image_ref(app, deploy)
       raise NotDeployed, "no image for #{app.name} — deploy first" if image_ref.blank?
 
       env = app.runtime_env.merge("PORT" => app.container_port.to_s)
