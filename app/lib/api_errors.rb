@@ -48,7 +48,7 @@ module ApiErrors
                          hint: "Not your code — the platform host stopped heartbeating. The operator has been paged. Retry later." },
     deploy_lock_held:  { status: :conflict, retryable: true,
                          message: "A deploy is already in progress for this app",
-                         hint: "Wait for the current deploy to finish; if it is stuck >15 min, StaleDeployLockJob clears it automatically, or run wokku doctor." },
+                         hint: "Wait for the current deploy to finish, then retry. If it never finishes, run wokku doctor." },
     app_not_running:   { status: :conflict, retryable: false,
                          message: "The app has no running container",
                          hint: "The container exited. GET /apps/:id/logs (durable) and the recent CrashEvents show why; redeploy or wokku_restart_app." },
