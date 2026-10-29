@@ -21,8 +21,24 @@ module Apps
         app.update_columns(last_request_at: Time.current, request_count_seen: total)
         # First observation has no baseline (the counter covers all of
         # Caddy's uptime), so it counts nothing; a reset counts from zero.
-        record_requests(app, seen.nil? ? 0 : (total > seen ? total - seen : total))
+        delta = seen.nil? ? 0 : (total > seen ? total - seen : total)
+        record_requests(app, delta - take_probes(app))
       end
+    end
+
+    # UptimeCheckJob probes each always-on app once a minute through Caddy —
+    # ~1,440 requests/day that aren't traffic. Probes are tallied in the
+    # shared cache and subtracted here.
+    def self.probe_key(app) = "uptime_probes:#{app.id}"
+
+    def self.note_probe(app)
+      Rails.cache.increment(probe_key(app), 1, expires_in: 1.day)
+    end
+
+    def self.take_probes(app)
+      probes = Rails.cache.read(probe_key(app), raw: true).to_i
+      Rails.cache.decrement(probe_key(app), probes) if probes.positive?
+      probes
     end
 
     # Adds to the app's 5-minute request bucket, which feeds 24h totals.

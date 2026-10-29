@@ -21,6 +21,7 @@ class UptimeCheckJob < ApplicationJob
     return unless domain
 
     result = Uptime::Probe.call("https://#{domain.hostname}/")
+    Apps::VisitTracker.note_probe(app)
     # Serialize per-app transitions: with_lock reloads, so a racing tick
     # (at-least-once delivery, overlapping slow probe) sees the winner's
     # write and its was_down/already_down guard no-ops instead of

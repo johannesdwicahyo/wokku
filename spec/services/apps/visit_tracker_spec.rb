@@ -73,6 +73,17 @@ RSpec.describe Apps::VisitTracker do
       expect(RequestAggregate.where(app_record_id: app.id).count).to eq(1)
     end
 
+    it "subtracts our own uptime probes, which hit the app through Caddy too" do
+      allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
+      app.update_columns(request_count_seen: 100)
+      3.times { described_class.note_probe(app) }
+      described_class.call(server, { "shop.wokku.app" => 105 })
+      expect(bucket_total).to eq(2)
+      described_class.note_probe(app)
+      described_class.call(server, { "shop.wokku.app" => 106 })
+      expect(bucket_total).to eq(2) # the only new request was a probe
+    end
+
     it "counts nothing on the first observation (no baseline) and the new total after a counter reset" do
       described_class.call(server, { "shop.wokku.app" => 500 })
       expect(bucket_total).to eq(0)
