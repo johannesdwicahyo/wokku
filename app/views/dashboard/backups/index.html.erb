@@ -82,6 +82,11 @@
                       (Phase 3 motion--drawer controller). Ghost recipe with the
                       warn tone in place of ButtonComponent's ink-soft default —
                       there's no warn variant on the component. %>
+                  <%# wokkud can't stream-restore Redis (an RDB restore replaces the data
+                      file under a stopped server) — don't offer what will only fail. %>
+                  <% if @database.service_type == "redis" %>
+                    <span class="text-[11.5px] text-dim">Restore: manual (RDB)</span>
+                  <% else %>
                   <div data-controller="motion--drawer" class="inline-block">
                     <button data-action="motion--drawer#open"
                             type="button"
@@ -113,6 +118,7 @@
                       </div>
                     </template>
                   </div>
+                  <% end %>
                 </div>
               <% end %>
             </td>

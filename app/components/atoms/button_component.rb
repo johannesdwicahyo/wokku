@@ -21,6 +21,9 @@ module Atoms
       @href = href
       @type = type
       @mono = mono
+      # A link can't send POST/DELETE on its own: `method:` becomes Turbo's
+      # data-turbo-method (a bare method="post" attribute was ignored -> GET 404).
+      @method = opts.delete(:method)
       @opts = opts
     end
 
@@ -37,6 +40,7 @@ module Atoms
     def attrs
       a = { class: classes }
       a[:href] = @href if @href
+      a[:"data-turbo-method"] = @method.to_s if @href && @method && @method.to_s != "get"
       a[:type] = @type unless @href
       a.merge(@opts.except(:class))
     end
