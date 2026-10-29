@@ -46,7 +46,7 @@
               <button data-action="click->config-vars#toggleOne"
                       class="px-2 py-1 text-dim hover:text-accent transition cursor-pointer" title="Reveal">Reveal</button>
               <button data-action="click->config-vars#edit"
-                      data-var-id="<%= var.id %>" data-var-key="<%= var.key %>" data-var-value="<%= var.value %>"
+                      data-var-id="<%= var.id %>" data-var-url="<%= dashboard_app_config_path(@app, var) %>" data-var-key="<%= var.key %>" data-var-value="<%= var.value %>"
                       class="px-2 py-1 text-dim hover:text-accent transition cursor-pointer" title="Edit">Edit</button>
               <%= link_to "Delete", dashboard_app_config_path(@app, var), data: { turbo_method: :delete, turbo_confirm: "Remove #{var.key}?" }, class: "px-2 py-1 text-dim hover:text-danger transition", title: "Delete" %>
             </div>

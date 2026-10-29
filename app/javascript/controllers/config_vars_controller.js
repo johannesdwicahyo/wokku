@@ -25,16 +25,15 @@ export default class extends Controller {
 
   edit(event) {
     const btn = event.target.closest("[data-var-id]")
-    const id = btn.dataset.varId
     const key = btn.dataset.varKey
     const value = btn.dataset.varValue
 
     this.editKeyTarget.value = key
     this.editValueTarget.value = value
 
-    // Update form action to the correct URL
-    const baseUrl = window.location.pathname.replace(/\/config.*/, `/config/${id}`)
-    this.editFormTarget.action = baseUrl
+    // The server renders the var's URL: window.location isn't the config page
+    // when this tab was reached inside the app-tab frame.
+    this.editFormTarget.action = btn.dataset.varUrl
 
     this.editModalTarget.classList.remove("hidden")
     document.body.style.overflow = "hidden"

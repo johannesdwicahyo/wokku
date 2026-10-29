@@ -13,4 +13,9 @@ RSpec.describe Organisms::AppTabsComponent, type: :component do
     runtime_link = page.find("a", text: "Runtime")
     expect(runtime_link[:class]).to include("bg-ink text-paper")
   end
+
+  it "makes in-tab links and forms navigate the whole page (URL, flash, frameless targets)" do
+    render_inline(described_class.new(app: app)) { "body" }
+    expect(page).to have_css("turbo-frame#app_tab_content[target='_top']")
+  end
 end

@@ -14,6 +14,10 @@
   </div>
 </div>
 
-<%= helpers.turbo_frame_tag "app_tab_content", class: "block", style: "animation: wk-tab-in var(--t-default) var(--ease);" do %>
+<%# target: "_top" — links and forms in a tab navigate the whole page, so the
+    URL updates, flash messages (rendered outside this frame) show, and pages
+    without this frame don't render "Content missing". Nested frames keep
+    their own targets. %>
+<%= helpers.turbo_frame_tag "app_tab_content", target: "_top", class: "block", style: "animation: wk-tab-in var(--t-default) var(--ease);" do %>
   <%= content %>
 <% end %>

@@ -23,6 +23,14 @@ RSpec.describe "Dashboard::Apps#panel", type: :request do
   context "when signed in as a team member" do
     before { sign_in user }
 
+    it "breaks every page link out of the panel frame" do
+      get panel_dashboard_app_path(target_app)
+      doc = Nokogiri::HTML(response.body)
+      links = doc.css("turbo-frame#app_record_panel a[href^='/dashboard/apps/']")
+      expect(links).not_to be_empty
+      expect(links.map { |a| [ a["href"], a["data-turbo-frame"] ] }).to all(satisfy { |_href, frame| frame == "_top" })
+    end
+
     it "renders the panel with the record-panel turbo-frame and the app name" do
       get panel_dashboard_app_path(target_app)
 

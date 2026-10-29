@@ -22,6 +22,12 @@ RSpec.describe "Dashboard::Config", type: :request do
     allow_any_instance_of(Hosts::Ssh).to receive(:run_raw_streaming).and_return("")
   end
 
+  it "renders each var's own update URL on its Edit button (not derived from window.location)" do
+    sign_in user
+    get "/dashboard/apps/#{app_record.id}/config"
+    expect(response.body).to include(%(data-var-url="/dashboard/apps/#{app_record.id}/config/#{env_var.id}"))
+  end
+
   describe "auth guard" do
     it "redirects to login when not authenticated on index" do
       get "/dashboard/apps/#{app_record.id}/config"
