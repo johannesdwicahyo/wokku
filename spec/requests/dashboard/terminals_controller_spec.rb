@@ -14,10 +14,23 @@ RSpec.describe "Dashboard::Terminals", type: :request do
     expect(response).to have_http_status(:redirect)
   end
 
-  it "shows app terminal when authenticated as admin" do
-    sign_in user
+  it "shows the app console to an admin of the app's team" do
+    sign_in users(:two)
     get "/dashboard/apps/#{app_record.id}/terminal"
     expect(response).to have_http_status(:success)
+  end
+
+  it "keeps outsiders and team viewers out of the app console" do
+    outsider = User.create!(email: "outsider-console@example.com", password: "password123456")
+    viewer = User.create!(email: "viewer-console@example.com", password: "password123456")
+    TeamMembership.create!(user: viewer, team: app_record.team, role: :viewer)
+
+    [ outsider, viewer ].each do |u|
+      sign_in u
+      get "/dashboard/apps/#{app_record.id}/terminal"
+      expect(response).to redirect_to("/dashboard/apps")
+      sign_out u
+    end
   end
 
   it "redirects to login when not authenticated on server terminal" do

@@ -69,11 +69,16 @@ class TerminalChannel < ApplicationCable::Channel
     when "enter", "exec"
       return emit({ type: "error", message: "target required" }) if target.empty?
       app = policy_scope(AppRecord).find_by(name: target, server_id: @server.id)
-      return emit({ type: "error", message: "app not found or access denied" }) unless app
+      # A container shell reads every secret: viewers can see the app, not enter it.
+      unless app && AppRecordPolicy.new(current_user, app).update?
+        return emit({ type: "error", message: "app not found or access denied" })
+      end
     when "db_connect"
       return emit({ type: "error", message: "target required" }) if target.empty?
       db = policy_scope(DatabaseService).find_by(name: target, server_id: @server.id)
-      return emit({ type: "error", message: "database not found or access denied" }) unless db
+      unless db && DatabaseServicePolicy.new(current_user, db).update?
+        return emit({ type: "error", message: "database not found or access denied" })
+      end
       db_kind = db.service_type
     end
 

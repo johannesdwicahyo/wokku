@@ -80,6 +80,34 @@ RSpec.describe TerminalChannel, type: :channel do
     end
   end
 
+  describe "viewer role (read-only) on app and database consoles" do
+    let(:viewer) do
+      create(:user).tap { |u| TeamMembership.create!(user: u, team: server.team, role: :viewer) }
+    end
+    let!(:app) { create(:app_record, server: server, team: server.team, name: "viewer-target") }
+    let!(:db)  { create(:database_service, server: server, name: "viewer-db", service_type: "postgres") }
+
+    before do
+      allow(TerminalSession).to receive(:new)
+      stub_connection current_user: viewer
+      subscribe(server_id: server.id)
+    end
+
+    %w[enter exec].each do |mode|
+      it "refuses #{mode} into an app container (it exposes every secret)" do
+        perform :receive, { "type" => "start", "mode" => mode, "target" => app.name }
+        expect(broadcasts).to include(hash_including(type: "error", message: "app not found or access denied"))
+        expect(TerminalSession).not_to have_received(:new)
+      end
+    end
+
+    it "refuses db_connect" do
+      perform :receive, { "type" => "start", "mode" => "db_connect", "target" => db.name }
+      expect(broadcasts).to include(hash_including(type: "error", message: "database not found or access denied"))
+      expect(TerminalSession).not_to have_received(:new)
+    end
+  end
+
   describe "#receive start (session lifecycle)" do
     let(:session) do
       instance_double(TerminalSession, connect!: nil, connected?: false, disconnect!: nil)

@@ -5,7 +5,8 @@ module Dashboard
         # App console — enters the app's web container
         @app = AppRecord.find(params[:app_id])
         @server = @app.server
-        authorize @server, :show?
+        # A container shell exposes every secret: members and admins only.
+        authorize @app, :update?
         @console_type = :app
       else
         # Server terminal — team admin only, full Dokku shell
@@ -15,7 +16,7 @@ module Dashboard
       end
     rescue Pundit::NotAuthorizedError
       redirect_to dashboard_apps_path,
-        alert: "Server terminal is only available to team admins."
+        alert: @console_type == :server || params[:app_id].blank? ? "Server terminal is only available to team admins." : "The app console needs the member or admin role."
     end
   end
 end
