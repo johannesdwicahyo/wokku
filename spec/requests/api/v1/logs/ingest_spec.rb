@@ -38,6 +38,18 @@ RSpec.describe "API::V1::Logs::Ingest", type: :request do
       expect(Log.where(container: "#{app_record.name}.web.1").pluck(:line)).to include("binary out")
     end
 
+    it "maps wokkud Swarm task names to the app; datastores and infra stay unattributed" do
+      body = [
+        { ts: "2026-05-25T12:00:00Z", container: "wokku-#{app_record.name}-web.1.xi5r7cqjod", message: "web" },
+        { ts: "2026-05-25T12:00:01Z", container: "wokku-#{app_record.name}-worker.1.ab12cd34", message: "worker" },
+        { ts: "2026-05-25T12:00:02Z", container: "wokku-registry", message: "infra" },
+        { ts: "2026-05-25T12:00:03Z", container: "dokku.postgres.some-db", message: "db" }
+      ].map(&:to_json).join("\n")
+      post "/api/v1/logs/ingest", params: body, headers: headers
+      by_line = Log.where(line: %w[web worker infra db]).pluck(:line, :app_record_id).to_h
+      expect(by_line).to eq("web" => app_record.id, "worker" => app_record.id, "infra" => nil, "db" => nil)
+    end
+
     it "maps container name to the app record" do
       post "/api/v1/logs/ingest", params: ndjson, headers: headers
       log = Log.where(container: "#{app_record.name}.web.1").order(:ts).first

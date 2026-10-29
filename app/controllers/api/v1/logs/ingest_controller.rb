@@ -81,12 +81,11 @@ module Api
           nil
         end
 
+        # Swarm tasks (wokku-<app>-<proc>.<slot>.<task>) and legacy Dokku
+        # names (<app>.<proc>.<n>). Datastore/infra containers return nil.
         def lookup_app_id(container)
-          # dokku container names: `<app>.<process>.<n>` or `<app>.upcoming-XXX`
-          # Service containers (`dokku-postgres.svc`) won't match — return nil.
-          app_name = container.split(".").first
-          return nil if app_name.blank?
-          @server.app_records.where(name: app_name).pick(:id)
+          @apps_by_name ||= @server.app_records.select(:id, :name).index_by(&:name)
+          Hosts::ContainerNames.app_for(container, @apps_by_name)&.id
         end
 
         def parse_ts(raw)
