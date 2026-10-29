@@ -39,7 +39,17 @@ class PostDeploySetupJob < ApplicationJob
       return
     end
 
-    release = app.releases.create!(description: "Deploy via git push")
+    # Link the release to the deploy that produced it — rollback finds its
+    # image through release.deploy. A deploy that already has a release
+    # (rollback, template deploys create their own) needs no second one.
+    deploy = app.deploys.where(status: :succeeded).order(created_at: :desc).first
+    if deploy&.release_id
+      app.update!(status: :running)
+      return
+    end
+
+    release = app.releases.create!(description: "Deploy via git push", deploy: deploy)
+    deploy&.update_columns(release_id: release.id)
     app.update!(status: :running)
 
     creator = app.creator

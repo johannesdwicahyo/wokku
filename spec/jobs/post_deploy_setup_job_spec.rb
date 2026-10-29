@@ -42,6 +42,25 @@ RSpec.describe PostDeploySetupJob, type: :job do
     expect(app.reload.status).to eq("running")
   end
 
+  it "links the release to the deploy that produced it, so it can be rolled back" do
+    app.releases.update_all(created_at: 1.hour.ago)
+    app.deploys.update_all(status: Deploy.statuses[:failed])
+    deploy = app.deploys.create!(status: :succeeded, builder: "wokkud")
+    described_class.perform_now(app.id)
+    release = app.releases.order(:created_at).last
+    expect(release.deploy).to eq(deploy)
+    expect(deploy.reload.release).to eq(release)
+  end
+
+  it "records no second release when the deploy already has one (rollback / template deploys)" do
+    app.releases.update_all(created_at: 1.hour.ago)
+    app.deploys.update_all(status: Deploy.statuses[:failed])
+    own = app.releases.create!(description: "Rollback to v1", created_at: 1.hour.ago)
+    app.deploys.create!(status: :succeeded, release: own)
+    expect { described_class.perform_now(app.id) }.not_to change { app.releases.count }
+    expect(app.reload.status).to eq("running")
+  end
+
   it "creates a Domain record for the default wokku.cloud subdomain" do
     expect { described_class.perform_now(app.id) }.to change { app.domains.count }.by(1)
     expect(app.domains.exists?(hostname: "#{app.name}.wokku.cloud")).to be true
