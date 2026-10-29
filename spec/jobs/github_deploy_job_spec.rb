@@ -25,10 +25,27 @@ RSpec.describe GithubDeployJob, type: :job do
     deployer = instance_double(Git::PushDeployer, call: deploy)
     fake_repo = instance_double(Git::BareRepo, ensure!: nil, path: "/tmp/x.git")
     allow(Git::BareRepo).to receive(:new).with(app.name).and_return(fake_repo)
-    expect(described_class).to receive(:system_fetch).with(fake_repo, "https://github.com/o/r.git", "main")
+    expect(described_class).to receive(:system_fetch).with(fake_repo, "https://github.com/o/r.git", "main", token: nil)
     expect(Git::PushDeployer).to receive(:new)
       .with(app, sha: "abc123", ref: "refs/heads/main", deploy: deploy).and_return(deployer)
     described_class.perform_now(**base_args)
+  end
+
+  it "fetches a private repo with the GitHub App installation token, passed via env (not argv)" do
+    fake_repo = instance_double(Git::BareRepo, ensure!: nil, path: "/tmp/x.git")
+    allow(Git::BareRepo).to receive(:new).and_return(fake_repo)
+    allow(Git::PushDeployer).to receive(:new).and_return(instance_double(Git::PushDeployer, call: deploy))
+    allow(GithubApp).to receive(:configured?).and_return(true)
+    allow(GithubApp).to receive(:new).with(42).and_return(instance_double(GithubApp, access_token: "inst-tok"))
+    calls = []
+    allow(described_class).to receive(:system) { |*args, **kw| calls << [ args, kw ]; true }
+
+    described_class.perform_now(**base_args, installation_id: 42)
+
+    (env, *argv), _kw = calls.first
+    expect(argv).not_to include(a_string_including("inst-tok"))
+    expect(env["GIT_CONFIG_KEY_0"]).to eq("http.https://github.com/.extraheader")
+    expect(Base64.decode64(env["GIT_CONFIG_VALUE_0"].delete_prefix("Authorization: Basic "))).to eq("x-access-token:inst-tok")
   end
 
   it "never touches Dokku::Client — deploys are wokkud-only" do

@@ -56,7 +56,8 @@ module Webhooks
           deploy_id: deploy.id,
           repo_full_name: repo_full_name,
           branch: branch,
-          commit_sha: commit_sha
+          commit_sha: commit_sha,
+          installation_id: payload.dig("installation", "id")
         )
       end
 

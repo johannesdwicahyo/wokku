@@ -40,6 +40,11 @@ class GithubApp
     []
   end
 
+  # Short-lived installation token (1h) — e.g. for `git fetch` of a private repo.
+  def access_token
+    installation_token
+  end
+
   def repo(repo_full_name)
     client.repository(repo_full_name)
   rescue Octokit::NotFound
