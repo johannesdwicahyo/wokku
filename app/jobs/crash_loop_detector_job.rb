@@ -2,9 +2,11 @@ require "net/ssh"
 require "time"
 require "shellwords"
 
-# Detects crash-looping apps by counting their recently-exited web
-# containers (dokku-event-listener spawns a fresh <app>.web.1.<ts> on
-# every rebuild, so a stream of recent non-zero exits == a loop).
+# Detects crash-looping apps by counting their recently-exited containers
+# (Swarm keeps exited task containers wokku-<app>-<proc>.<slot>.<task> as
+# task history, so a stream of recent non-zero exits == a loop). Every
+# process type counts: a looping worker is a loop too, and the alert
+# debounce this job resets is shared with the wokkud die-event path.
 # Tier 1: mark :crashed + alert once per episode.
 class CrashLoopDetectorJob < ApplicationJob
   queue_as :health
@@ -128,8 +130,8 @@ class CrashLoopDetectorJob < ApplicationJob
   def alerted_key(app) = "crashloop:alerted:#{app.id}"
   def stopped_key(app) = "crashloop:stopped:#{app.id}"
 
-  # Returns [{ app:, crashed: bool, age_seconds: int }, ...] for web
-  # containers, or nil if the host/docker is unreachable.
+  # Returns [{ app:, crashed: bool, age_seconds: int, name: }, ...] for
+  # exited app containers, or nil if the host/docker is unreachable.
   def fetch_container_rows(server)
     raw = Net::SSH.start(server.host, Hosts::Ssh.user,
                          port: server.port || 22, non_interactive: true, timeout: 5,
@@ -139,15 +141,17 @@ class CrashLoopDetectorJob < ApplicationJob
     return nil if raw.include?("Cannot connect to the Docker daemon")
 
     now = Time.now
+    apps_by_name = server.app_records.index_by(&:name)
     raw.lines.filter_map do |line|
       name, status, created = line.strip.split("|", 3)
       next unless name && status && created
-      app_name = name.split(".").first
-      next if app_name.blank? || IGNORED_CONTAINERS.include?(app_name)
-      next unless name.include?(".web.")
+      next if IGNORED_CONTAINERS.include?(name.split(".").first)
+      app = Hosts::ContainerNames.app_for(name, apps_by_name)
+      next unless app
       m = status.match(/\AExited \((\d+)\)/)
       next unless m
-      { app: app_name, crashed: m[1].to_i != 0, age_seconds: (now - Time.parse(created)).to_i, name: name }
+      # 143 = SIGTERM from a stop/rollout, same as the die-event path's BENIGN_EXIT_CODES.
+      { app: app.name, crashed: !m[1].to_i.in?([ 0, 143 ]), age_seconds: (now - Time.parse(created)).to_i, name: name }
     rescue ArgumentError
       next
     end

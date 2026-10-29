@@ -110,23 +110,31 @@ RSpec.describe CrashLoopDetectorJob do
       allow(Net::SSH).to receive(:start).and_return(raw)
     end
 
-    it "parses exited web containers and skips infra, workers, and junk lines" do
+    it "parses exited app containers (Dokku and Swarm names, every process) and skips infra, one-off runs, and junk" do
+      create(:app_record, server: server, name: "loopy-api")
       raw = <<~OUT
         loopy.web.1.aaa|Exited (1) 2 minutes ago|#{two_min_ago}
         loopy.web.1.bbb|Exited (0) 2 minutes ago|#{two_min_ago}
         loopy.web.1.ccc|Up 2 minutes|#{two_min_ago}
         loopy.web.1.ddd|Exited (1) 2 minutes ago|not-a-timestamp
         loopy.worker.1.eee|Exited (1) 2 minutes ago|#{two_min_ago}
+        wokku-loopy-worker.1.s1|Exited (1) 2 minutes ago|#{two_min_ago}
+        wokku-loopy-web.1.s2|Exited (143) 2 minutes ago|#{two_min_ago}
+        wokku-loopy-api-web.1.s3|Exited (137) 2 minutes ago|#{two_min_ago}
+        wokku-run-loopy-0a1b2c3d.1.s4|Exited (1) 2 minutes ago|#{two_min_ago}
         dokku.web.1.fff|Exited (1) 2 minutes ago|#{two_min_ago}
         garbage-line
       OUT
       stub_docker_ps(raw)
-      rows = job.send(:fetch_container_rows, server)
-      expect(rows.map { |r| r[:name] }).to contain_exactly("loopy.web.1.aaa", "loopy.web.1.bbb")
-      aaa = rows.find { |r| r[:name] == "loopy.web.1.aaa" }
-      expect(aaa[:crashed]).to be(true)
-      expect(aaa[:age_seconds]).to be_within(5).of(120)
-      expect(rows.find { |r| r[:name] == "loopy.web.1.bbb" }[:crashed]).to be(false)
+      rows = job.send(:fetch_container_rows, server).index_by { |r| r[:name] }
+      expect(rows.keys).to contain_exactly("loopy.web.1.aaa", "loopy.web.1.bbb", "loopy.worker.1.eee",
+                                           "wokku-loopy-worker.1.s1", "wokku-loopy-web.1.s2", "wokku-loopy-api-web.1.s3")
+      expect(rows["loopy.web.1.aaa"]).to include(app: "loopy", crashed: true)
+      expect(rows["loopy.web.1.aaa"][:age_seconds]).to be_within(5).of(120)
+      expect(rows["loopy.web.1.bbb"][:crashed]).to be(false)
+      expect(rows["wokku-loopy-worker.1.s1"]).to include(app: "loopy", crashed: true)
+      expect(rows["wokku-loopy-web.1.s2"][:crashed]).to be(false) # SIGTERM from a rollout
+      expect(rows["wokku-loopy-api-web.1.s3"]).to include(app: "loopy-api", crashed: true)
     end
 
     it "returns nil when docker is down on the host" do
