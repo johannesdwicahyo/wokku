@@ -115,6 +115,14 @@ RSpec.describe Apps::Lifecycle::Renamer do
       expect(app.reload.name).to eq("renamed-app")
     end
 
+    it "keeps a stopped app stopped under its new name" do
+      app.update!(status: :stopped)
+      described_class.new(app).call!("renamed-app")
+      expect(::Lifecycle::Ops).to have_received(:converge!)
+        .with(app, image_ref: image, formation: { "web" => 0 }, allow_empty: true)
+      expect(app.reload).to be_stopped
+    end
+
     it "rolls back rows and swarm_port and raises loud when the new stack fails to start — old stack never touched" do
       old_name = app.name
       zone = Wokku.config.canonical_domain

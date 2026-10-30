@@ -51,7 +51,10 @@ module Apps
             # Fresh port for the new-name web service; the old one still
             # holds old_port until it's removed below.
             @app.update!(swarm_port: nil)
-            ::Lifecycle::Ops.converge!(@app, image_ref: image_ref)
+            # A stopped/sleeping app keeps its process_scales, so a plain
+            # converge would boot it under the new name.
+            idle = (@app.stopped? || @app.sleeping?) ? { formation: ::Lifecycle::Ops.stop_formation(@app), allow_empty: true } : {}
+            ::Lifecycle::Ops.converge!(@app, image_ref: image_ref, **idle)
           rescue StandardError => e
             # Abort loud: roll the rows back — the old services never
             # stopped, so the app is still serving under the old name.
