@@ -3286,8 +3286,9 @@ paths:
       security:
       - bearer: []
       responses:
-        '200':
-          description: restore completed
+        '202':
+          description: restore started in the background; the outcome is logged to
+            the activity feed
           content:
             application/json:
               schema:
@@ -3312,12 +3313,6 @@ paths:
                 "$ref": "#/components/schemas/Error"
         '404':
           description: unknown backup, or a database the caller's teams cannot see
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Error"
-        '422':
-          description: the restore failed (restore_failed)
           content:
             application/json:
               schema:
