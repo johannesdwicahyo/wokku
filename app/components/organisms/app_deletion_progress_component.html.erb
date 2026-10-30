@@ -1,0 +1,35 @@
+<div id="<%= dom_id %>" class="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 backdrop-blur-sm px-4">
+  <div class="w-full max-w-md bg-paper border-1.5 border-ink rounded-md shadow-brutal-lg p-6" role="status" aria-live="polite">
+    <h2 class="font-headline text-lg font-extrabold text-ink mb-1"><%= title %></h2>
+    <p class="text-xs text-dim mb-4">
+      <% if failed? %>
+        Something went wrong. The steps marked ! need a retry; nothing else was lost.
+      <% elsif finished? %>
+        <%= warnings? ? "Done, with some cleanup steps to retry (marked !)." : "Everything was removed." %>
+      <% else %>
+        This usually takes under a minute. You can leave this page; it keeps going.
+      <% end %>
+    </p>
+
+    <ol class="space-y-2 text-sm">
+      <% steps.each do |s| %>
+        <li class="flex items-center gap-2.5">
+          <% if s[:state] == "running" %>
+            <span class="inline-block w-3.5 h-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin" aria-hidden="true"></span>
+          <% else %>
+            <span class="w-3.5 text-center font-bold <%= icon_classes(s[:state]) %>" aria-hidden="true"><%= ICONS.fetch(s[:state], "·") %></span>
+          <% end %>
+          <span class="<%= s[:state] == 'running' ? 'text-ink font-medium' : 'text-ink-soft' %>"><%= s[:label] %></span>
+          <span class="sr-only">(<%= s[:state] %>)</span>
+        </li>
+      <% end %>
+    </ol>
+
+    <% if finished? %>
+      <div class="mt-5 flex justify-end">
+        <%= link_to "Close", dashboard_apps_path, data: { turbo_frame: "_top" },
+              class: Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>
+      </div>
+    <% end %>
+  </div>
+</div>

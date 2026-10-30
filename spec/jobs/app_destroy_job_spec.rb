@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe AppDestroyJob, type: :job do
   it "destroys the app through Apps::Destroyer" do
     app = create(:app_record)
-    expect(Apps::Destroyer).to receive(:call).with(app).and_call_original
+    expect(Apps::Destroyer).to receive(:call).with(app, progress: an_instance_of(Apps::DeletionProgress)).and_call_original
     allow(Wokku.config.dns_provider).to receive(:delete_app_record)
     allow(Git::BareRepo).to receive(:new).and_return(instance_double(Git::BareRepo, remove!: true))
     described_class.perform_now(app.id)

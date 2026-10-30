@@ -1,4 +1,8 @@
 <% content_for :title, "Apps" %>
+<% if @deletion %>
+  <%= turbo_stream_from ::Apps::DeletionProgress.stream(@deleting_id) %>
+  <%= render Organisms::AppDeletionProgressComponent.new(app_id: @deleting_id, progress: @deletion) %>
+<% end %>
 <%# record-panel scope wraps the whole page: row clicks anywhere inside
     (including inside the lazy "apps_list" frame) reach record-panel#show,
     which opens the drawer below. Its own slide-panel scope is placed

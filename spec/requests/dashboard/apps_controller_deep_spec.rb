@@ -51,10 +51,15 @@ RSpec.describe "Dashboard::Apps (deep coverage)", type: :request do
         deploy_branch: "main"
       )
 
+      allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
       perform_enqueued_jobs { delete "/dashboard/apps/#{throwaway.id}" }
-      expect(response).to redirect_to(dashboard_apps_path)
-      expect(flash[:notice]).to match("Deleting throwaway-app")
+      expect(response).to redirect_to(dashboard_apps_path(deleting: throwaway.id))
       expect(AppRecord.find_by(id: throwaway.id)).to be_nil
+
+      # The apps page renders the live overlay, finished, with every step.
+      get dashboard_apps_path(deleting: throwaway.id)
+      expect(response.body).to include("throwaway-app deleted")
+      expect(response.body).to include("Removing git repository")
     end
 
     it "refuses while a deploy is building, without enqueueing" do

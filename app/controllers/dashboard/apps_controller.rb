@@ -28,6 +28,8 @@ module Dashboard
       # Shares one source of truth with enforce_plan_quota! so the form never
       # offers a size that `create` would reject.
       @box_quota = box_picker_state(current_user)
+      @deleting_id = params[:deleting].presence
+      @deletion = ::Apps::DeletionProgress.for(@deleting_id, current_user) if @deleting_id
     end
 
     def show
@@ -224,11 +226,13 @@ module Dashboard
       # ::-prefixed: app/controllers/dashboard/apps/ (Dashboard::Apps) shadows
       # the top-level Apps module from inside Dashboard::AppsController.
       ::Apps::Destroyer.ensure_idle!(@app)
+      ::Apps::DeletionProgress.start!(@app)
       AppDestroyJob.perform_later(@app.id)
 
       track("app.destroyed", target: @app)
       fire_team_event(@app.team, "app_deleted", app_name: @app.name)
-      redirect_to dashboard_apps_path, notice: "Deleting #{@app.name}. It disappears from your apps within a minute."
+      # The apps page shows the live progress overlay for ?deleting=.
+      redirect_to dashboard_apps_path(deleting: @app.id)
     rescue ::Lifecycle::Ops::Busy
       redirect_to dashboard_app_path(@app), alert: "A deploy is in progress. Wait for it to finish, then delete the app."
     end
