@@ -92,33 +92,19 @@
     <% end %>
   </div>
 
-  <%# Bundle v2: plans are flat-priced — no per-addon or per-container
-      line items. Show the plan + its monthly Rp/USD, no breakdown.
-      Container resize doesn't change the bill; add-on shape doesn't
-      change the bill. The plan IS the bill. %>
-  <%
-    user_plan = current_user.current_plan
-    plan_label = user_plan&.name || "Free"
-    plan_price_idr = user_plan&.price_idr.to_i
-  %>
-  <div class="bg-paper border-1.5 border-ink rounded-md mb-6 overflow-hidden">
-    <div class="px-6 py-4">
-      <p class="text-[10px] text-dim uppercase tracking-widest font-bold mb-3">Plan cost</p>
-      <div class="flex items-baseline justify-between">
-        <div>
-          <span class="text-sm font-semibold text-ink"><%= plan_label %></span>
-          <span class="text-xs text-dim ml-1">Flat · no metering</span>
+  <%# Monthly cost comes from the host app's billing (none on a self-host). %>
+  <% if respond_to?(:app_monthly_cost) %>
+    <% amount, caption = app_monthly_cost(@app) %>
+    <div class="bg-paper border-1.5 border-ink rounded-md mb-6 overflow-hidden">
+      <div class="px-6 py-4">
+        <p class="text-[10px] text-dim uppercase tracking-widest font-bold mb-3">Monthly cost</p>
+        <div class="flex items-baseline justify-between">
+          <span class="text-xs text-dim"><%= caption %></span>
+          <span class="text-lg font-bold text-accent"><%= amount %></span>
         </div>
-        <span class="text-lg font-bold text-accent">
-          <% if user_plan&.free? %>
-            Free
-          <% else %>
-            Rp<%= ActiveSupport::NumberHelper.number_to_delimited(plan_price_idr, delimiter: '.') %><span class="text-sm text-dim font-normal">/bln</span>
-          <% end %>
-        </span>
       </div>
     </div>
-  </div>
+  <% end %>
 
   <%# Add-on Slide Panel %>
   <%= render layout: "dashboard/shared/slide_panel", locals: { title: "New add-on", subtitle: "Provision a database or service for #{@app.name}" } do %>

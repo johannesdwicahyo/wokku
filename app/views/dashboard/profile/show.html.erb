@@ -116,25 +116,23 @@
         <div class="flex items-center justify-between">
           <h3 class="<%= card_title %>"><%= t("dashboard.profile.resource_overview") %></h3>
           <%
-            # Bundle v2 REVISED 2026-05-31: flat plan price replaces the old
-            # per-resource sum. The plan price is the price — no metering.
-            # Tile counts (apps, addons, dynos) are informational only.
+            # Tile counts (apps, addons, dynos) are informational only; the
+            # monthly cost comes from the host app's billing (none on a self-host).
             user_apps = policy_scope(AppRecord).includes(dyno_allocations: :dyno_tier)
             user_dbs  = policy_scope(DatabaseService) rescue DatabaseService.none
-
-            plan = current_user.current_plan
-            estimated_monthly_usd = plan ? (plan.price_usd_cents / 100.0) : 0
 
             running_app_count = user_apps.select(&:running?).size
             total_app_count   = user_apps.size
             addon_count       = user_dbs.size
             dyno_count        = user_apps.flat_map(&:dyno_allocations).sum { |a| a.count.to_i }
           %>
-          <div class="text-right">
-            <%# Cloud pricing display; a self-host has no billing/currency helper. %>
-            <% if respond_to?(:format_usd_for_user) %><span class="text-lg font-bold text-accent"><%= format_usd_for_user(estimated_monthly_usd) %></span><% end %>
-            <p class="text-[10.5px] text-dim uppercase tracking-widest"><%= plan&.name || t("dashboard.profile.estimated_monthly") %> · flat plan price</p>
-          </div>
+          <% if respond_to?(:team_monthly_cost) && current_team %>
+            <% amount, caption = team_monthly_cost(current_team) %>
+            <div class="text-right">
+              <span class="text-lg font-bold text-accent"><%= amount %></span>
+              <p class="text-[10.5px] text-dim uppercase tracking-widest"><%= caption %></p>
+            </div>
+          <% end %>
         </div>
       </div>
       <div class="p-6">
