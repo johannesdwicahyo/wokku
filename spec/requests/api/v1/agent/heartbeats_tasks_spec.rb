@@ -57,6 +57,13 @@ RSpec.describe "Api::V1::Agent::Heartbeats tasks fan-out" do
     expect(blog.reload.live_containers).to eq([ { "process" => "web" } ])
   end
 
+  it "empties live_containers for an app missing from a beat that carried tasks (stopped)" do
+    blog.update_columns(live_containers: [ { "process" => "web", "state" => "running" } ], live_containers_at: 1.hour.ago)
+    beat([ { app: "shop", process: "web", state: "running" } ])
+    expect(blog.reload.live_containers).to eq([])
+    expect(blog.live_containers_at).to be_within(5.seconds).of(Time.current)
+  end
+
   it "survives a malformed tasks payload (string instead of array)" do
     post "/api/v1/agent/heartbeat",
          params: { vitals: { docker: "ok" }, tasks: "garbage" }.to_json,

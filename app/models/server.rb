@@ -124,6 +124,14 @@ class Server < ApplicationRecord
           live_containers_at: Time.current
         )
       end
+      # wokkud reports only live tasks, so an app missing from a beat that
+      # carried a task list has none (stopped / scaled to 0). Without this,
+      # ps kept showing the last running tasks forever.
+      if tasks.is_a?(Array)
+        reported = tasks.filter_map { |t| t["app"] if t.is_a?(Hash) }
+        app_records.where.not(name: reported).where("jsonb_array_length(COALESCE(live_containers, '[]'::jsonb)) > 0")
+                   .update_all([ "live_containers = '[]'::jsonb, live_containers_at = ?", Time.current ])
+      end
     rescue StandardError => e
       Rails.logger.warn("record_heartbeat! task fan-out: #{e.class}: #{e.message}")
     end
