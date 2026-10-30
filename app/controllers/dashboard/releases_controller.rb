@@ -12,6 +12,9 @@ module Dashboard
 
     def deploy
       authorize @app, :update?
+      if @app.deploy_locked_at?
+        return redirect_to dashboard_app_releases_path(@app), alert: "Deploys are locked. Unlock the app to deploy."
+      end
 
       release = @app.releases.create!(description: "Manual deploy via dashboard")
       deploy = @app.deploys.create!(release: release, status: :pending)

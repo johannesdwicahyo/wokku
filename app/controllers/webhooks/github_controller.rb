@@ -32,6 +32,7 @@ module Webhooks
                       .includes(:server)
 
       apps.find_each do |app|
+        next if app.deploy_locked_at? # `wokku lock` blocks every deploy path
         # Skip apps whose server is unreachable to avoid creating orphaned
         # "pending" deploys that never resolve.
         unless app.server && app.server.connected?

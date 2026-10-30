@@ -46,6 +46,13 @@ RSpec.describe Git::PushDeployer do
       .to raise_error(described_class::Error) { |e| expect(e.error_code).to eq(:deploy_in_progress) }
   end
 
+  it "refuses a push while deploys are locked" do
+    app.update!(deploy_locked_at: Time.current)
+    expect { described_class.new(app, sha: sha, ref: "refs/heads/main").call }
+      .to raise_error(described_class::Error) { |e| expect(e.error_code).to eq(:app_locked) }
+    expect(app.deploys).to be_empty
+  end
+
   it "reuses a provided deploy row and skips the gates" do
     create(:deploy, app_record: app, status: :building) # would trip the guard
     row = create(:deploy, app_record: app, status: :pending)

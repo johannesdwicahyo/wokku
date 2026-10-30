@@ -36,6 +36,13 @@ RSpec.describe "Dashboard::Releases", type: :request do
     expect(flash[:notice]).to match("Deploy triggered")
   end
 
+  it "refuses to deploy a locked app" do
+    sign_in user
+    app_record.update!(deploy_locked_at: Time.current)
+    expect { post "/dashboard/apps/#{app_record.id}/releases/deploy" }.not_to change { app_record.deploys.count }
+    expect(flash[:alert]).to match("locked")
+  end
+
   describe "POST rollback — real rollback (Track A Phase 4a Task 4, dashboard rider)" do
     it "rolls back to a release with a still-live rollback image, enqueues RollbackDeployJob, creates records, and redirects" do
       sign_in user

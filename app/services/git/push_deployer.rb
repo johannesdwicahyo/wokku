@@ -70,6 +70,9 @@ module Git
         unless DEPLOYABLE_REFS.include?(@ref)
           raise Error.new(:ref_not_deployable, "only main/master deploys; #{@ref} was stored but not deployed")
         end
+        if @app.deploy_locked_at?
+          raise Error.new(:app_locked, "deploys are locked for #{@app.name} — run `wokku unlock` to deploy")
+        end
         if @app.deploys.where(status: [ :pending, :building ]).exists?
           raise Error.new(:deploy_in_progress, "a deploy is already in progress — wait for it or check `wokku deploys`")
         end

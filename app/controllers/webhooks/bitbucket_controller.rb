@@ -32,6 +32,7 @@ module Webhooks
         apps = AppRecord.where(git_provider: "bitbucket", git_repo_full_name: repo_full_name, deploy_branch: branch)
 
         apps.find_each do |app|
+          next if app.deploy_locked_at? # `wokku lock` blocks every deploy path
           deploy = app.deploys.create!(
             status: :pending,
             commit_sha: commit_sha

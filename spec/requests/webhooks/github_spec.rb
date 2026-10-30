@@ -71,6 +71,15 @@ RSpec.describe "Webhooks::GithubController", type: :request do
       }.to change(Deploy, :count).by(1).and change(Release, :count).by(1)
     end
 
+    it "skips an app whose deploys are locked" do
+      deploy_app.update!(deploy_locked_at: Time.current)
+      payload = { ref: "refs/heads/main",
+                  repository: { full_name: "owner/matching-repo" },
+                  head_commit: { id: "deadbeef1234", message: "x" } }.to_json
+      expect { signed_post(payload, event: "push") }.not_to change(Deploy, :count)
+      expect(response).to have_http_status(:ok)
+    end
+
     it "does not trigger for non-matching branch" do
       payload = { ref: "refs/heads/feature-branch",
                   repository: { full_name: "owner/matching-repo" },
