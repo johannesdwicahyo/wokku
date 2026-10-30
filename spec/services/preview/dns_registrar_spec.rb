@@ -15,6 +15,8 @@ RSpec.describe Preview::DnsRegistrar do
       record = PreviewDnsRecord.last
       expect(record.hostname).to eq("myapp-pr-7.wokku.cloud")
       expect(record.app_record_id).to eq(preview.id)
+      # Caddy routes only apps with Domain rows.
+      expect(preview.domains.pluck(:hostname)).to eq([ preview.preview_hostname ])
     end
 
     it "is idempotent — does not create a duplicate PreviewDnsRecord on retry" do

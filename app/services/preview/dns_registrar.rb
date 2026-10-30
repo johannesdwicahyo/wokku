@@ -8,6 +8,9 @@ module Preview
       subdomain = @preview_app.preview_subdomain
       hostname  = @preview_app.preview_hostname
       Wokku.config.dns_provider.create_app_record(subdomain, @preview_app.server.host)
+      # Caddy routes only apps with Domain rows (Routers::ConfigBuilder), and
+      # previews skip PostDeploySetupJob, which mints them for normal apps.
+      @preview_app.domains.find_or_create_by!(hostname: hostname)
 
       PreviewDnsRecord.find_or_create_by!(app_record: @preview_app) do |record|
         record.hostname = hostname

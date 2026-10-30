@@ -59,7 +59,9 @@ module Preview
       repo = Git::BareRepo.new(preview.name)
       repo.ensure!
       begin
-        GithubDeployJob.system_fetch(repo, "https://github.com/#{@event.repo_full_name}.git", @event.branch)
+        # Private repos need the installation token (same as GithubDeployJob).
+        token = GithubApp.new(@event.installation_id).access_token if @event.installation_id && GithubApp.configured?
+        GithubDeployJob.system_fetch(repo, "https://github.com/#{@event.repo_full_name}.git", @event.branch, token: token)
       rescue RuntimeError => e
         # system(..., exception: true) raises a raw RuntimeError on a failed
         # fetch (network error, auth failure, private/nonexistent repo) —

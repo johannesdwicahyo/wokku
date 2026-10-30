@@ -33,6 +33,14 @@ RSpec.describe Preview::Deployer do
     allow_any_instance_of(described_class).to receive(:resolve_sha).and_return("a" * 40)
   end
 
+  it "fetches a private repo with the GitHub App installation token" do
+    allow(GithubApp).to receive(:configured?).and_return(true)
+    allow(GithubApp).to receive(:new).with(42).and_return(instance_double(GithubApp, access_token: "ghs_tok"))
+    described_class.new(parent: parent, event: event).call
+    expect(GithubDeployJob).to have_received(:system_fetch)
+      .with(bare_repo, "https://github.com/octo/repo.git", "feat/x", token: "ghs_tok")
+  end
+
   it "creates the preview natively and never calls dokku" do
     expect(Hosts::Ssh).not_to receive(:new)
 
