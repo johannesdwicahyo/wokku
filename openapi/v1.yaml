@@ -2572,8 +2572,8 @@ paths:
       security:
       - bearer: []
       responses:
-        '200':
-          description: app destroyed
+        '202':
+          description: deletion started; AppDestroyJob tears the app down in the background
           content:
             application/json:
               schema:
@@ -2588,6 +2588,13 @@ paths:
                     type: array
                     items:
                       type: string
+        '409':
+          description: a deploy is in progress (deploy_in_progress); retry once it
+            finishes
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
         '404':
           description: unknown app, or an app of a team the caller does not belong
             to

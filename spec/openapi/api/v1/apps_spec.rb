@@ -163,6 +163,7 @@ RSpec.describe "API v1 apps", type: :request do
       produces "application/json"
       response "202", "deletion started; AppDestroyJob tears the app down in the background" do
         let(:id) { app_record.id }
+        before { app_record.deploys.where(status: %i[pending building]).update_all(status: Deploy.statuses[:failed]) }
         schema type: :object, required: %w[message warnings],
                properties: { message: { type: :string }, warnings: { type: :array, items: { type: :string } } }
         run_test!
