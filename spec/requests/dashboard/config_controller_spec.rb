@@ -58,6 +58,8 @@ RSpec.describe "Dashboard::Config", type: :request do
       post "/dashboard/apps/#{app_record.id}/config",
            params: { env_var: { key: "", value: "" } }
       expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include("Couldn&#39;t add config var")
+      expect(response.body).to include("data-slide-panel-auto-open-value=true")
     end
   end
 

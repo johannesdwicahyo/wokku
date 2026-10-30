@@ -1,3 +1,5 @@
+require "public_suffix"
+
 class Domain < ApplicationRecord
   belongs_to :app_record
   has_one :certificate, dependent: :destroy
@@ -30,6 +32,15 @@ class Domain < ApplicationRecord
   # stay on per-domain Let's Encrypt.
   def managed_subdomain?
     Wokku.config.owned_domains.any? { |zone| hostname.to_s.end_with?(".#{zone}") }
+  end
+
+  # Registrable apex (shop.co.id, example.com) can't hold a CNAME, so the
+  # DNS hint offers an A record. Counting dots got 2-label TLDs wrong.
+  # ponytail: public_suffix arrives via octokit → addressable.
+  def apex?
+    PublicSuffix.domain(hostname, ignore_private: true) == hostname
+  rescue PublicSuffix::Error
+    !hostname.to_s.include?(".")
   end
 
   def stream_name

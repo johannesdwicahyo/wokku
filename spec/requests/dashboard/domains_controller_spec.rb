@@ -38,6 +38,15 @@ RSpec.describe "Dashboard::Domains", type: :request do
       }.to change { app_record.domains.count }.by(1)
       expect(response).to redirect_to("/dashboard/apps/#{app_record.id}/domains")
     end
+
+    it "shows the validation error and reopens the panel on a duplicate" do
+      sign_in user
+      create(:domain, app_record: app_record, hostname: "dup.example.com")
+      post "/dashboard/apps/#{app_record.id}/domains", params: { domain: { hostname: "dup.example.com" } }
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include("Hostname has already been taken")
+      expect(response.body).to include("data-slide-panel-auto-open-value=true")
+    end
   end
 
   describe "POST ssl" do

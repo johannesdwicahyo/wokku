@@ -8,7 +8,7 @@
 <%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :settings) do %>
   <%= render Organisms::AppSettingsComponent.new(app: @app, active: :scheduled_tasks) do %>
 
-<div data-controller="slide-panel">
+<div data-controller="slide-panel"<%= " data-slide-panel-auto-open-value=true" if @new_task&.errors&.any? %>>
 <div class="flex items-center justify-between mb-6">
   <h2 class="text-base font-bold"><%= t("dashboard.scheduled_tasks.heading", default: "Scheduled tasks") %></h2>
   <% if Wokku.config.plan_enforcer.allowed?(current_user, :feature, slug: :scheduled_tasks) %>

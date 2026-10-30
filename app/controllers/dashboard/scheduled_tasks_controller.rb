@@ -32,7 +32,6 @@ module Dashboard
       @new_task = @app.scheduled_tasks.new(task_params)
       @new_task.errors.add(:base, e.message)
       @tasks = @app.scheduled_tasks.order(:schedule)
-      flash.now[:alert] = e.message
       render :index, status: :unprocessable_entity
     end
 

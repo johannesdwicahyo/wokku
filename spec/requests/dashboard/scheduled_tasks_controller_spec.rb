@@ -106,6 +106,7 @@ RSpec.describe "Dashboard::ScheduledTasks", type: :request do
            params: { scheduled_task: { command: "ls", schedule: "nope" } }
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response.body).to include("bad schedule")
+      expect(response.body).to include("data-slide-panel-auto-open-value=true")
     end
 
     it "DELETE destroy removes the task and redirects" do

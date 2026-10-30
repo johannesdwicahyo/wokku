@@ -44,4 +44,13 @@ RSpec.describe Domain do
       expect(d.dns_verified).to be(false)
     end
   end
+
+  describe "#apex?" do
+    it "knows 2-label public suffixes" do
+      expect(Domain.new(hostname: "shop.co.id").apex?).to be true
+      expect(Domain.new(hostname: "example.com").apex?).to be true
+      expect(Domain.new(hostname: "www.shop.co.id").apex?).to be false
+      expect(Domain.new(hostname: "app.example.com").apex?).to be false
+    end
+  end
 end

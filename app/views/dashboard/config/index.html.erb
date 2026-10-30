@@ -5,7 +5,9 @@
 %>
 <%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :deploy) do %>
 <%= render Organisms::AppDeployComponent.new(app: @app, active: :config) do %>
-<div data-controller="config-vars slide-panel">
+<% new_var = @env_var if @env_var&.new_record? %>
+<div data-controller="config-vars slide-panel"<%= " data-slide-panel-auto-open-value=true" if new_var&.errors&.any? %>>
+  <%= render "dashboard/shared/form_errors", record: (@env_var unless new_var), title: "Couldn't update #{@env_var&.key}" %>
   <%# Backlog 1.4 — app.json env schema panel. Renders only when the
       user's app.json declares an env block (most don't, so the panel
       stays hidden by default). Shows missing required (red) +
@@ -85,7 +87,8 @@
   </div>
 
   <%= render layout: "dashboard/shared/slide_panel", locals: { title: "Add config var", subtitle: "New environment variable for #{@app.name}" } do %>
-    <%= form_with(model: EnvVar.new, url: dashboard_app_config_index_path(@app), class: "space-y-4") do |f| %>
+    <%= render "dashboard/shared/form_errors", record: new_var, title: "Couldn't add config var" %>
+    <%= form_with(model: new_var || EnvVar.new, url: dashboard_app_config_index_path(@app), class: "space-y-4") do |f| %>
       <div>
         <%= f.label :key, class: "block text-xs font-semibold text-ink-soft mb-1" %>
         <%= f.text_field :key, class: "w-full bg-paper border-1.5 border-ink text-ink font-mono text-sm rounded-md px-3 py-2 focus:outline-none focus:shadow-brutal-sm", placeholder: "SECRET_KEY", autofocus: true %>

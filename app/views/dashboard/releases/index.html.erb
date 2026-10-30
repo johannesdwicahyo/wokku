@@ -37,7 +37,7 @@
         </div>
         <div class="flex items-center gap-2">
           <code class="flex-1 bg-bg border-1.5 border-ink rounded-md px-3 py-2 font-mono text-sm text-ink-soft overflow-x-auto">git push wokku <%= branch %></code>
-          <button type="button" data-clipboard-text-value="git push wokku <%= branch %>" data-action="click->clipboard#copy" class="px-3 py-2 border-1.5 border-ink rounded-md bg-paper text-dim hover:text-ink transition-colors cursor-pointer" title="Copy">
+          <button type="button" data-controller="clipboard" data-clipboard-text-value="git push wokku <%= branch %>" data-action="click->clipboard#copy" class="px-3 py-2 border-1.5 border-ink rounded-md bg-paper text-dim hover:text-ink transition-colors cursor-pointer" title="Copy">
             <span data-clipboard-target="label" class="text-xs">Copy</span>
           </button>
         </div>

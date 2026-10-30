@@ -29,8 +29,10 @@
       trip back to the add-domain panel to re-read the CNAME/A guidance. %>
   <% unless domain.dns_verified? %>
     <%
-      apex = !domain.hostname.include?(".") || domain.hostname.count(".") <= 1
-      wokku_target = "#{app.name}.#{Wokku.config.canonical_domain}"
+      apex = domain.apex?
+      owned = app.domains.select(&:managed_subdomain?)
+      wokku_target = (owned.find { |d| d.hostname.end_with?(".#{Wokku.config.canonical_domain}") } || owned.first)&.hostname ||
+        "#{app.name}.#{Wokku.config.canonical_domain}"
     %>
     <div class="mt-3 border-1.5 border-warn bg-warn-soft rounded-md px-4 py-3 text-xs">
       <p class="text-[10px] uppercase tracking-widest text-warn font-bold mb-2">Add this DNS record at your registrar</p>
