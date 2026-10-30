@@ -9,6 +9,11 @@ RSpec.describe "Dashboard::PreviewManagement", type: :request do
 
   before { sign_in user }
 
+  it "renders the previews index (the view lived under the wrong path → 406)" do
+    get "/dashboard/apps/#{parent.id}/previews"
+    expect(response).to have_http_status(:ok)
+  end
+
   it "enqueues CleanupJob with parent.id and pr_number" do
     preview = AppRecord.create!(
       name: "myapp-pr-7", team: team, server: parent.server, creator: user,

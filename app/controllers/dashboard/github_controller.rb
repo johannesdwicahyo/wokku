@@ -4,8 +4,12 @@ module Dashboard
       @app = policy_scope(AppRecord).find(params[:app_id])
       authorize @app, :update?
 
+      # A cross-origin redirect from inside the tab frame is blocked by CORS
+      # and Turbo bails to a full visit; render the install prompt instead.
       unless current_user.github_installation_id
-        return redirect_to GithubApp.installation_url, allow_other_host: true
+        @repos = []
+        @not_installed = true
+        return
       end
 
       github = GithubApp.new(current_user.github_installation_id)

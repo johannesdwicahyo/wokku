@@ -55,8 +55,13 @@
       <% end %>
     <% else %>
       <div class="text-center py-8">
-        <p class="font-mono text-dim text-sm">// no repositories found — make sure the Wokku GitHub App has access to your repositories</p>
-        <a href="<%= GithubApp.installation_url %>" class="mt-4 inline-flex items-center font-mono text-sm text-accent hover:underline">Manage GitHub App permissions →</a>
+        <% if @not_installed %>
+          <p class="font-mono text-dim text-sm">// install the Wokku GitHub App to pick a repository</p>
+          <a href="<%= GithubApp.installation_url %>" target="_top" class="mt-4 inline-flex items-center font-mono text-sm text-accent hover:underline">Install the GitHub App →</a>
+        <% else %>
+          <p class="font-mono text-dim text-sm">// no repositories found — make sure the Wokku GitHub App has access to your repositories</p>
+          <a href="<%= GithubApp.installation_url %>" target="_top" class="mt-4 inline-flex items-center font-mono text-sm text-accent hover:underline">Manage GitHub App permissions →</a>
+        <% end %>
       </div>
     <% end %>
   </div>

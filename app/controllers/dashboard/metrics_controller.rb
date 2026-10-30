@@ -62,11 +62,12 @@ module Dashboard
       end
 
       stats = []
+      # Every app on the host, so "shop" doesn't claim "shop-api"'s tasks.
+      names = server.app_records.pluck(:name).index_with(&:itself)
       output.to_s.each_line do |line|
         data = JSON.parse(line)
         container_name = data["Name"]
-        # Match containers belonging to this app (e.g. "myapp.web.1")
-        next unless container_name.start_with?("#{@app.name}.")
+        next unless Hosts::ContainerNames.app_for(container_name, names) == @app.name
 
         stats << {
           name: container_name,

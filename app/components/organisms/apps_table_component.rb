@@ -26,8 +26,12 @@ module Organisms
       (custom || wokku)&.hostname
     end
 
+    # last_commit_at is only set for previews; the column showed "never"
+    # for every normal app. One grouped query for the whole table.
     def last_deployed_at(app)
-      app.respond_to?(:last_commit_at) ? app.last_commit_at : nil
+      @deployed_at ||= Deploy.where(app_record_id: apps.map(&:id), status: :succeeded)
+                             .group(:app_record_id).maximum(:finished_at)
+      @deployed_at[app.id] || (app.last_commit_at if app.respond_to?(:last_commit_at))
     end
 
     # The SIZE column shows the user-facing box vocabulary — delegates to

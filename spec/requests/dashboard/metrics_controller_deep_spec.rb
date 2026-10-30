@@ -47,6 +47,18 @@ RSpec.describe "Dashboard::Metrics (deep)", type: :request do
       expect(response.body).to include("Failed")
     end
 
+    it "shows docker stats for the app's Swarm tasks only (not a longer-named sibling)" do
+      create(:app_record, server: app_record.server, team: app_record.team, name: "#{app_record.name}-api")
+      line = ->(n) { { "Name" => n, "CPUPerc" => "1.5%", "MemUsage" => "10MiB / 1GiB", "MemPerc" => "1%", "NetIO" => "0B", "BlockIO" => "0B", "PIDs" => "3" }.to_json }
+      allow(Net::SSH).to receive(:start).and_return([
+        line.call("wokku-#{app_record.name}-web.1.abc"),
+        line.call("wokku-#{app_record.name}-api-web.1.def")
+      ].join("\n"))
+      get "/dashboard/apps/#{app_record.id}/metrics", params: { deferred: 1 }
+      expect(response.body).to include("wokku-#{app_record.name}-web.1.abc")
+      expect(response.body).not_to include("wokku-#{app_record.name}-api-web.1.def")
+    end
+
     it "SSHes as root for docker stats (via deferred fragment)" do
       captured = {}
       allow(Net::SSH).to receive(:start) do |host, ssh_user, **opts|

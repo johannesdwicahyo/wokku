@@ -13,11 +13,12 @@ RSpec.describe "Dashboard::Github", type: :request do
     expect(response).to have_http_status(:redirect)
   end
 
-  it "repos redirects when no github installation_id" do
+  it "repos renders an install prompt in the tab when no github installation_id" do
     sign_in user
     user.update!(github_installation_id: nil)
     get "/dashboard/apps/#{app_record.id}/github/repos"
-    expect(response).to have_http_status(:redirect)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Install the GitHub App")
   end
 
   it "redirects to login when not authenticated on connect" do

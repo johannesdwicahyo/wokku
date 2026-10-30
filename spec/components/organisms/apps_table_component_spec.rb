@@ -24,6 +24,13 @@ RSpec.describe Organisms::AppsTableComponent, type: :component do
     expect(row["aria-label"]).to eq("alpha, Running")
   end
 
+  it "uses the latest succeeded deploy as last deploy" do
+    create(:deploy, app_record: app, status: :succeeded, finished_at: 2.hours.ago)
+    create(:deploy, app_record: app, status: :failed, finished_at: 1.minute.ago)
+    component = described_class.new(apps: [ app ])
+    expect(component.last_deployed_at(app)).to be_within(1.second).of(2.hours.ago)
+  end
+
   it "renders the stats line under the name when stats are known" do
     app.update_columns(live_cpu_pct: 18.4, live_mem_used_mb: 410, live_metrics_at: 1.minute.ago)
     RequestAggregate.create!(app_record: app, bucket_start: 1.hour.ago, req_count: 4210)
