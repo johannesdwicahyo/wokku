@@ -271,23 +271,15 @@ RSpec.describe "API::V1::AppsController", type: :request do
     expect(response).to have_http_status(:unauthorized)
   end
 
-  it "destroy routes through Apps::Destroyer and removes the AppRecord" do
+  it "destroy answers 202 and AppDestroyJob removes the AppRecord via Apps::Destroyer" do
     expect {
       delete api_v1_app_path(app_record), headers: headers
-    }.to change { AppRecord.count }.by(-1)
-    expect(response).to have_http_status(:success)
-    expect(JSON.parse(response.body)["message"]).to eq("App destroyed")
-  end
+    }.to have_enqueued_job(AppDestroyJob).with(app_record.id)
+    expect(response).to have_http_status(:accepted)
+    expect(JSON.parse(response.body)).to include("message" => "App deletion started", "warnings" => [])
+    expect(AppRecord.where(id: app_record.id)).to exist # the request itself never waits on the host
 
-  it "destroy still cleans up the AppRecord when a best-effort step raises, and reports the warning" do
-    allow_any_instance_of(Git::BareRepo).to receive(:remove!).and_raise("no repo")
-    expect {
-      delete api_v1_app_path(app_record), headers: headers
-    }.to change { AppRecord.count }.by(-1)
-    expect(response).to have_http_status(:success)
-    body = JSON.parse(response.body)
-    expect(body["message"]).to eq("App destroyed")
-    expect(body["warnings"].join).to include("no repo")
+    expect { perform_enqueued_jobs }.to change { AppRecord.count }.by(-1)
   end
 
   # THE load-bearing pin: without this, the API path orphans running Swarm
@@ -295,10 +287,8 @@ RSpec.describe "API::V1::AppsController", type: :request do
   it "destroy on a flagged app tears down its Swarm stack via Lifecycle::Ops.remove!" do
     app_record.update!(wokkud_lifecycle: true)
     expect(Lifecycle::Ops).to receive(:remove!).with(app_record, wait: true)
-    expect {
-      delete api_v1_app_path(app_record), headers: headers
-    }.to change { AppRecord.count }.by(-1)
-    expect(response).to have_http_status(:success)
+    perform_enqueued_jobs { delete api_v1_app_path(app_record), headers: headers }
+    expect(AppRecord.where(id: app_record.id)).not_to exist
   end
 
   it "destroy refuses with deploy_in_progress while a deploy is building" do
@@ -315,8 +305,8 @@ RSpec.describe "API::V1::AppsController", type: :request do
     db = create(:database_service, server: server)
     create(:app_database, app_record: app_record, database_service: db, alias_name: "POSTGRES")
     expect(DatabaseProvisioner).to receive(:destroy!).with(database_service: db)
-    delete api_v1_app_path(app_record), headers: headers
-    expect(response).to have_http_status(:success)
+    perform_enqueued_jobs { delete api_v1_app_path(app_record), headers: headers }
+    expect(response).to have_http_status(:accepted)
   end
 
   it "destroy returns 403 for non-admin team member" do

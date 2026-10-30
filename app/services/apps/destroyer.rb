@@ -14,6 +14,12 @@ module Apps
       new(app).call
     end
 
+    # Cheap synchronous pre-check for callers that enqueue AppDestroyJob,
+    # so "a deploy is running" is answered in the request.
+    def self.ensure_idle!(app)
+      new(app).send(:ensure_idle!)
+    end
+
     def initialize(app)
       @app = app
       @warnings = []
@@ -27,7 +33,7 @@ module Apps
       # Deleting mid-deploy orphaned the Swarm services: stack.remove hit the
       # live op (Busy), the row went away, then the converge created services
       # nothing can name any more. Refuse instead; callers say "retry".
-      raise ::Lifecycle::Ops::Busy, @app if deploy_in_flight?
+      ensure_idle!
 
       # Exclusive-DB snapshot FIRST, before any row mutation: a DB is
       # exclusive when no OTHER app links it. Computed up front so the
@@ -70,8 +76,9 @@ module Apps
 
     private
 
-    def deploy_in_flight?
-      @app.deploys.where(status: [ :pending, :building ]).where(created_at: IN_FLIGHT_WINDOW.ago..).exists?
+    def ensure_idle!
+      in_flight = @app.deploys.where(status: [ :pending, :building ]).where(created_at: IN_FLIGHT_WINDOW.ago..).exists?
+      raise ::Lifecycle::Ops::Busy, @app if in_flight
     end
 
     def best_effort(description)

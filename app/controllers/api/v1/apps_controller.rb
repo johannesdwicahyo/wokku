@@ -150,9 +150,11 @@ module Api
         # destroys any exclusively-linked database. ::-prefixed: no
         # Api::V1::Apps namespace exists today, but stay consistent with
         # the shadowing guard Task 1 established.
-        result = ::Apps::Destroyer.call(app)
+        # Async (AppDestroyJob): teardown outlives the proxy's ~30 s window.
+        ::Apps::Destroyer.ensure_idle!(app)
+        AppDestroyJob.perform_later(app.id)
         track("app.destroyed", target: app)
-        render json: { message: "App destroyed", warnings: result.warnings }
+        render json: { message: "App deletion started", warnings: [] }, status: :accepted
       rescue ::Lifecycle::Ops::Busy
         render_api_error(:deploy_in_progress, message: "A deploy is in progress for this app; delete it once the deploy finishes")
       end

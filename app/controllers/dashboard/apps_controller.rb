@@ -221,23 +221,14 @@ module Dashboard
     def destroy
       authorize @app
 
-      app_name = @app.name
-      app_team = @app.team
       # ::-prefixed: app/controllers/dashboard/apps/ (Dashboard::Apps) shadows
       # the top-level Apps module from inside Dashboard::AppsController.
-      result = ::Apps::Destroyer.call(@app)
-      result.warnings.each { |w| Rails.logger.warn(w) }
+      ::Apps::Destroyer.ensure_idle!(@app)
+      AppDestroyJob.perform_later(@app.id)
 
       track("app.destroyed", target: @app)
-      fire_team_event(app_team, "app_deleted", app_name: app_name)
-
-      destroyed_db_names = result.destroyed_db_names
-      notice = if destroyed_db_names.any?
-        "App deleted. Also removed #{destroyed_db_names.size} linked #{'database'.pluralize(destroyed_db_names.size)}: #{destroyed_db_names.join(', ')}."
-      else
-        "App deleted successfully."
-      end
-      redirect_to dashboard_apps_path, notice: notice
+      fire_team_event(@app.team, "app_deleted", app_name: @app.name)
+      redirect_to dashboard_apps_path, notice: "Deleting #{@app.name}. It disappears from your apps within a minute."
     rescue ::Lifecycle::Ops::Busy
       redirect_to dashboard_app_path(@app), alert: "A deploy is in progress. Wait for it to finish, then delete the app."
     end

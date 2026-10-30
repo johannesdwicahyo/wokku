@@ -51,10 +51,17 @@ RSpec.describe "Dashboard::Apps (deep coverage)", type: :request do
         deploy_branch: "main"
       )
 
-      delete "/dashboard/apps/#{throwaway.id}"
+      perform_enqueued_jobs { delete "/dashboard/apps/#{throwaway.id}" }
       expect(response).to redirect_to(dashboard_apps_path)
-      expect(flash[:notice]).to match("deleted")
+      expect(flash[:notice]).to match("Deleting throwaway-app")
       expect(AppRecord.find_by(id: throwaway.id)).to be_nil
+    end
+
+    it "refuses while a deploy is building, without enqueueing" do
+      app = AppRecord.create!(name: "busy-app", server: servers(:two), team: user.teams.first, creator: user, deploy_branch: "main")
+      app.deploys.create!(status: :building)
+      expect { delete "/dashboard/apps/#{app.id}" }.not_to have_enqueued_job(AppDestroyJob)
+      expect(flash[:alert]).to match("deploy is in progress")
     end
   end
 

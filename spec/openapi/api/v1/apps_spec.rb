@@ -161,12 +161,17 @@ RSpec.describe "API v1 apps", type: :request do
       tags "apps"
       security [ { bearer: [] } ]
       produces "application/json"
-      before { allow(::Apps::Destroyer).to receive(:call).and_return(double(warnings: [])) }
-
-      response "200", "app destroyed" do
+      response "202", "deletion started; AppDestroyJob tears the app down in the background" do
         let(:id) { app_record.id }
         schema type: :object, required: %w[message warnings],
                properties: { message: { type: :string }, warnings: { type: :array, items: { type: :string } } }
+        run_test!
+      end
+
+      response "409", "a deploy is in progress (deploy_in_progress); retry once it finishes" do
+        let(:id) { app_record.id }
+        before { app_record.deploys.create!(status: :building) }
+        schema error
         run_test!
       end
 
