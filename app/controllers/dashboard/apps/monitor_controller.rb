@@ -2,7 +2,7 @@ module Dashboard
   module Apps
     # Per-app HTTP-request monitor page at /dashboard/apps/:app_id/monitor.
     # Reads RequestAggregate rows (5-min buckets) populated by
-    # RequestAggregateRollupJob from Vector-shipped RequestSample rows.
+    # Apps::VisitTracker from the host heartbeat.
     class MonitorController < BaseController
       before_action :set_app
 

@@ -1,9 +1,9 @@
-# 5-minute roll-up of RequestSample for one app. Built by
-# RequestAggregateRollupJob every 5 min, then queried by the per-app
-# monitor page for charts (req-rate, p50/p95, error %).
+# Per-app 5-minute request buckets. req_count is written by
+# Apps::VisitTracker from Caddy's per-host counters in the heartbeat and
+# read by the monitor page and 24h request stats. Latency/error columns
+# came from the retired nginx-proxy sample rollup and stay empty.
 #
-# Unique on (app_record_id, bucket_start) so the rollup is idempotent
-# — re-running the job for the same bucket is a no-op via upsert.
+# Unique on (app_record_id, bucket_start); VisitTracker upserts into it.
 class RequestAggregate < ApplicationRecord
   belongs_to :app_record
 

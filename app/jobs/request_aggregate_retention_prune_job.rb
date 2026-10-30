@@ -1,5 +1,4 @@
-# Nightly per-plan prune of the request_aggregates table. Companion to
-# RequestAggregateRollupJob (which prunes raw samples). Each app retains
+# Nightly per-plan prune of the request_aggregates table. Each app retains
 # its bucketed monitor history for `plan.metric_aggregate_retention_days`
 # days — the same window we use for metric_hourly.
 #
