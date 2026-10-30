@@ -71,10 +71,12 @@ class AppRecord < ApplicationRecord
   has_many :releases, dependent: :destroy
   has_many :deploys, dependent: :destroy
   has_many :domains, dependent: :destroy
-  has_many :logs, dependent: :destroy
-  has_many :request_samples, dependent: :destroy
-  has_many :request_aggregates, dependent: :destroy
-  has_many :metric_hourly, dependent: :destroy
+  # Telemetry tables: no callbacks or children, and an app holds thousands
+  # of rows. :destroy deleted them one by one (18k queries, 53 s → 504).
+  has_many :logs, dependent: :delete_all
+  has_many :request_samples, dependent: :delete_all
+  has_many :request_aggregates, dependent: :delete_all
+  has_many :metric_hourly, dependent: :delete_all
   has_many :env_vars, dependent: :destroy
   has_many :process_scales, dependent: :destroy
   has_many :app_databases, dependent: :destroy
@@ -96,13 +98,13 @@ class AppRecord < ApplicationRecord
     return nil if db.nil?
     db.backups.order(created_at: :desc).first
   end
-  has_many :metrics, dependent: :destroy
+  has_many :metrics, dependent: :delete_all
   has_many :notifications, dependent: :destroy
   has_many :dyno_allocations, dependent: :destroy
   has_many :scheduled_tasks, dependent: :destroy
   has_many :vitals_events,         dependent: :delete_all
   has_many :vitals_hourly_rollups, dependent: :delete_all
-  has_many :crash_events,          dependent: :destroy
+  has_many :crash_events,          dependent: :delete_all
   has_many :incidents,             dependent: :destroy
   has_many :lifecycle_ops,         dependent: :destroy
   has_one :preview_dns_record, dependent: :destroy

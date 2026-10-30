@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe Apps::Settings::HttpsToggle do
   let(:app) { app_records(:one) }
 
-  it "defaults to enabled (Caddy always redirects today — recorded intent)" do
+  it "defaults to enabled (Caddy always redirects)" do
     expect(described_class.new(app).enabled?).to be true
   end
 
@@ -16,9 +16,10 @@ RSpec.describe Apps::Settings::HttpsToggle do
   end
 
   describe "#disable!" do
-    it "persists https_redirect false and returns false" do
-      expect(described_class.new(app).disable!).to be false
-      expect(app.reload.https_redirect).to be false
+    it "refuses with not_supported (Caddy always redirects) and changes nothing" do
+      expect { described_class.new(app).disable! }
+        .to raise_error(Apps::Settings::Error) { |e| expect(e.code).to eq(:not_supported) }
+      expect(app.reload.https_redirect).to be true
     end
   end
 
@@ -33,7 +34,6 @@ RSpec.describe Apps::Settings::HttpsToggle do
     expect(Hosts::Ssh).not_to receive(:new)
     toggle = described_class.new(app)
     toggle.enable!
-    toggle.disable!
     toggle.enabled?
   end
 end

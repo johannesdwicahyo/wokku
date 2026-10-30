@@ -153,7 +153,6 @@ RSpec.describe "API v1 database backups", type: :request do
         schema error
         run_test!
       end
-
     end
   end
 end

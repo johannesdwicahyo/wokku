@@ -9,7 +9,7 @@
 <% shared_tenants = app.database_services.shared_tenants.order(:service_type) %>
 <% if Addons::SharedProvisioner.feature_enabled? && shared_tenants.any? %>
   <section class="app-settings__addons mt-8">
-    <%= turbo_stream_from "user_#{app.created_by_id}_addons" %>
+    <%= helpers.turbo_stream_from "user_#{app.created_by_id}_addons" %>
     <h2 class="font-mono text-[13px] font-bold uppercase mb-4">Add-ons</h2>
     <% shared_tenants.each do |db| %>
       <%= render Organisms::App::SharedAddonCardComponent.new(app: app, database_service: db) %>
