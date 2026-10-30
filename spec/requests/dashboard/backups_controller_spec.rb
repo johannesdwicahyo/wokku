@@ -53,23 +53,13 @@ RSpec.describe "Dashboard::Backups", type: :request do
       expect(response).to redirect_to("https://r2.example/get")
     end
 
-    it "restore runs the RestoreService and reports success" do
+    it "restore enqueues RestoreJob and says it started" do
       backup = create(:backup, database_service: database)
-      restorer = instance_double(RestoreService)
-      allow(RestoreService).to receive(:new).with(backup).and_return(restorer)
-      expect(restorer).to receive(:perform!)
-      post "/dashboard/addons/#{database.id}/backups/#{backup.id}/restore"
+      expect {
+        post "/dashboard/addons/#{database.id}/backups/#{backup.id}/restore"
+      }.to have_enqueued_job(RestoreJob).with(backup.id, user.id)
       expect(response).to redirect_to("/dashboard/addons/#{database.id}/backups")
-      expect(flash[:notice]).to eq("Restore completed")
-    end
-
-    it "restore surfaces a failure as an alert" do
-      backup = create(:backup, database_service: database)
-      restorer = instance_double(RestoreService)
-      allow(RestoreService).to receive(:new).and_return(restorer)
-      allow(restorer).to receive(:perform!).and_raise(StandardError, "op timed out")
-      post "/dashboard/addons/#{database.id}/backups/#{backup.id}/restore"
-      expect(flash[:alert]).to eq("Restore failed: op timed out")
+      expect(flash[:notice]).to match(/Restore started/)
     end
   end
 end

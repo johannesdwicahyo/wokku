@@ -37,12 +37,9 @@ module Dashboard
       backup = Backup.find(params[:id])
       authorize backup.database_service, :update?
 
-      begin
-        RestoreService.new(backup).perform!
-        redirect_to dashboard_addon_backups_path(backup.database_service), notice: "Restore completed"
-      rescue => e
-        redirect_to dashboard_addon_backups_path(backup.database_service), alert: "Restore failed: #{e.message}"
-      end
+      RestoreJob.perform_later(backup.id, current_user.id)
+      redirect_to dashboard_addon_backups_path(backup.database_service),
+        notice: "Restore started. It runs in the background; the result shows in Activity."
     end
   end
 end

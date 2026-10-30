@@ -136,11 +136,10 @@ RSpec.describe "API v1 database backups", type: :request do
       let(:database_id) { database.id }
       let(:id) { backup.id }
 
-      response "200", "restore completed" do
-        before { allow(RestoreService).to receive(:new).and_return(instance_double(RestoreService, perform!: true)) }
+      response "202", "restore started in the background; the outcome is logged to the activity feed" do
         schema type: :object, required: %w[message restored_to from_backup],
                properties: { message: { type: :string }, restored_to: { type: :string }, from_backup: { type: :string, format: :uuid } }
-        run_test!
+        run_test! { expect(RestoreJob).to have_been_enqueued.with(backup.id, member.id) }
       end
 
       response "401", "missing or invalid token" do
@@ -155,11 +154,6 @@ RSpec.describe "API v1 database backups", type: :request do
         run_test!
       end
 
-      response "422", "the restore failed (restore_failed)" do
-        before { allow(RestoreService).to receive(:new).and_raise(StandardError, "restore failed") }
-        schema error
-        run_test!
-      end
     end
   end
 end

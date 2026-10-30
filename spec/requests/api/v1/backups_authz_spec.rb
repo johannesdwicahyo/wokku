@@ -26,8 +26,7 @@ RSpec.describe "API::V1 backups authorization", type: :request do
   it "lets a team member restore" do
     destination = database.server.create_backup_destination!(enabled: true, provider: "r2", bucket: "b", access_key_id: "AK", secret_access_key: "SK")
     backup = database.backups.create!(backup_destination: destination, status: "completed", s3_key: "k/x.gz")
-    allow(RestoreService).to receive(:new).and_return(instance_double(RestoreService, perform!: true))
     post "/api/v1/databases/#{database.id}/backups/#{backup.id}/restore", headers: headers
-    expect(response).to have_http_status(:ok)
+    expect(response).to have_http_status(:accepted)
   end
 end

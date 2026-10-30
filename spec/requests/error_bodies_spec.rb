@@ -11,9 +11,9 @@ RSpec.describe "API error bodies", type: :request do
   let(:database) { database_services(:one) }
   let(:leak) { "PGPASSWORD=hunter2 pg_restore failed on 10.0.0.5" }
 
-  it "restore failure → restore_failed without the exception text" do
+  it "restore enqueue failure → restore_failed without the exception text" do
     backup = create(:backup, database_service: database)
-    allow_any_instance_of(RestoreService).to receive(:perform!).and_raise(RuntimeError, leak)
+    allow(RestoreJob).to receive(:perform_later).and_raise(RuntimeError, leak)
     post "/api/v1/databases/#{database.id}/backups/#{backup.id}/restore", headers: headers
     expect(response).to have_http_status(:unprocessable_entity)
     expect(response.parsed_body["error_code"]).to eq("restore_failed")

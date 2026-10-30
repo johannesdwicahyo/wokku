@@ -92,28 +92,16 @@ RSpec.describe "API::V1::BackupsController", type: :request do
   end
 
   describe "POST restore" do
-    it "runs RestoreService and returns the restore summary" do
+    it "enqueues RestoreJob and answers 202 (restores outlive the proxy timeout)" do
       backup = make_backup
-      fake = instance_double("RestoreService", perform!: true)
-      allow(RestoreService).to receive(:new).with(an_instance_of(Backup)).and_return(fake)
-
-      post restore_api_v1_database_backup_path(db, backup), headers: headers
-      expect(response).to have_http_status(:success)
+      expect {
+        post restore_api_v1_database_backup_path(db, backup), headers: headers
+      }.to have_enqueued_job(RestoreJob).with(backup.id, user.id)
+      expect(response).to have_http_status(:accepted)
       body = JSON.parse(response.body)
-      expect(body["message"]).to eq("Restore completed")
+      expect(body["message"]).to eq("Restore started")
       expect(body["restored_to"]).to eq("covdb")
       expect(body["from_backup"]).to eq(backup.id)
-    end
-
-    it "returns 422 when RestoreService raises" do
-      backup = make_backup
-      allow(RestoreService).to receive(:new).and_raise(StandardError, "restore failed")
-
-      post restore_api_v1_database_backup_path(db, backup), headers: headers
-      expect(response).to have_http_status(:unprocessable_entity)
-      body = JSON.parse(response.body)
-      expect(body["error_code"]).to eq("restore_failed")
-      expect(body["error"]).not_to include("restore failed:")
     end
   end
 

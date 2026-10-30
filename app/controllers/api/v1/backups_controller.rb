@@ -42,10 +42,11 @@ module Api
         authorize db, :update?
         backup = db.backups.find(params[:id])
 
-        RestoreService.new(backup).perform!
-        render json: { message: "Restore completed", restored_to: db.name, from_backup: backup.id }
+        # Async: a restore outlives the proxy's ~30 s response window.
+        RestoreJob.perform_later(backup.id, current_user.id)
+        render json: { message: "Restore started", restored_to: db.name, from_backup: backup.id }, status: :accepted
       rescue ActiveRecord::RecordNotFound, Pundit::NotAuthorizedError
-        raise # handled by BaseController (404 / 403), not the generic 422 below
+        raise # handled by BaseController (404 / 403)
       rescue => e
         render_reported_error(:restore_failed, e)
       end
