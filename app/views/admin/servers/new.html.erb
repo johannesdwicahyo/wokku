@@ -13,62 +13,6 @@
     <p class="mt-0.5 text-sm text-dim">// register it, then connect with one command</p>
   </div>
 
-  <%# Cloud Provisioning %>
-  <% if current_team&.cloud_credentials&.any? %>
-    <div class="border-1.5 border-ink bg-paper p-6 mb-6">
-      <h2 class="font-mono text-sm font-semibold text-ink uppercase tracking-widest mb-4">Create with Cloud Provider</h2>
-
-      <%= form_with url: provision_admin_servers_path, method: :post, class: "space-y-4" do |f| %>
-        <div>
-          <label class="<%= lbl %>">Provider</label>
-          <%= combobox_tag "cloud_credential_id", current_team.cloud_credentials.map { |c| ["#{c.provider.capitalize}#{c.name.present? ? " (#{c.name})" : ""}", c.id] }, placeholder: "Select provider" %>
-        </div>
-
-        <div>
-          <%= f.label :name, "Server Name", class: lbl %>
-          <%= f.text_field :name, class: inp, placeholder: "production" %>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="<%= lbl %>">Region</label>
-            <%= combobox_tag "region", [["US East (Ashburn)", "ash"], ["EU Central (Falkenstein)", "fsn1"], ["EU West (Helsinki)", "hel1"], ["Singapore", "sgp"]], placeholder: "Select region" %>
-          </div>
-          <div>
-            <label class="<%= lbl %>">Size</label>
-            <%= combobox_tag "size", [["2 vCPU / 4 GB — $4/mo", "cx22"], ["4 vCPU / 8 GB — $8/mo", "cx32"], ["8 vCPU / 16 GB — $16/mo", "cx42"]], placeholder: "Select size" %>
-          </div>
-        </div>
-
-        <div class="pt-2">
-          <%= f.submit "Create Server", class: "px-4 py-2.5 bg-ink text-bg font-mono text-sm font-semibold border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer" %>
-        </div>
-      <% end %>
-    </div>
-  <% else %>
-    <div class="border-1.5 border-ink bg-paper p-6 mb-6">
-      <h2 class="font-mono text-sm font-semibold text-ink uppercase tracking-widest mb-2">Auto-Provision a Server</h2>
-      <p class="font-mono text-xs text-dim mb-3">Connect a cloud provider API key to create servers with one click.</p>
-      <%= form_with url: admin_cloud_credentials_path, method: :post, class: "flex items-end gap-2" do |f| %>
-        <%# after: "server" — tells Admin::CloudCredentialsController#create to
-            redirect back to this page (not the index slide-panel form, the
-            OTHER caller — see app/views/admin/cloud_credentials/_form.html.erb). %>
-        <%= hidden_field_tag :after, "server" %>
-        <div class="w-44">
-          <%= combobox_tag "cloud_credential[provider]", [["Hetzner", "hetzner"], ["Vultr", "vultr"], ["DigitalOcean", "digitalocean"], ["Linode", "linode"]], placeholder: "Provider" %>
-        </div>
-        <%= f.text_field :api_key, placeholder: "API Key", class: "flex-1 #{inp}" %>
-        <%= f.submit "Connect", class: "px-4 py-2.5 bg-ink text-bg font-mono text-sm font-semibold border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer" %>
-      <% end %>
-    </div>
-  <% end %>
-
-  <div class="flex items-center gap-3 mb-6">
-    <div class="h-px flex-1 bg-rule-soft"></div>
-    <span class="font-mono text-xs text-dim uppercase tracking-widest">or add existing server manually</span>
-    <div class="h-px flex-1 bg-rule-soft"></div>
-  </div>
-
   <div class="border-1.5 border-ink bg-paper p-6">
     <%= render "form", server: @server %>
   </div>

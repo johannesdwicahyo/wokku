@@ -176,9 +176,6 @@ Rails.application.routes.draw do
   authenticate :user, ->(u) { u.admin? } do
     namespace :admin do
       resources :servers do
-        collection do
-          post :provision
-        end
         member do
           post :sync
         end

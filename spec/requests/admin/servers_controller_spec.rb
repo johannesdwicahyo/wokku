@@ -2,8 +2,8 @@
 
 require "rails_helper"
 
-# Admin::ServersController create/provision/destroy route through
-# Wokku.config.dns_provider (create on add/provision, delete on destroy).
+# Admin::ServersController create/destroy route through
+# Wokku.config.dns_provider (create on add, delete on destroy).
 # Which zone(s) that provider actually writes to is Cloudflare::DnsProvider's
 # job — see spec/services/cloudflare/dns_provider_spec.rb.
 RSpec.describe "Admin::Servers — DNS provider calls", type: :request do
