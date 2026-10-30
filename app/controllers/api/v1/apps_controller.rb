@@ -153,6 +153,8 @@ module Api
         result = ::Apps::Destroyer.call(app)
         track("app.destroyed", target: app)
         render json: { message: "App destroyed", warnings: result.warnings }
+      rescue ::Lifecycle::Ops::Busy
+        render_api_error(:deploy_in_progress, message: "A deploy is in progress for this app; delete it once the deploy finishes")
       end
 
       def restart

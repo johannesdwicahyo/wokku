@@ -292,13 +292,20 @@ RSpec.describe "API::V1::AppsController", type: :request do
 
   # THE load-bearing pin: without this, the API path orphans running Swarm
   # services for wokkud_lifecycle apps (see Apps::Destroyer / Task 1).
-  it "destroy on a flagged app tears down its Swarm stack via Lifecycle::Ops.remove_if_flagged!" do
+  it "destroy on a flagged app tears down its Swarm stack via Lifecycle::Ops.remove!" do
     app_record.update!(wokkud_lifecycle: true)
     expect(Lifecycle::Ops).to receive(:remove!).with(app_record, wait: true)
     expect {
       delete api_v1_app_path(app_record), headers: headers
     }.to change { AppRecord.count }.by(-1)
     expect(response).to have_http_status(:success)
+  end
+
+  it "destroy refuses with deploy_in_progress while a deploy is building" do
+    create(:deploy, app_record: app_record, status: :building)
+    expect { delete api_v1_app_path(app_record), headers: headers }.not_to change(AppRecord, :count)
+    expect(response).to have_http_status(:conflict)
+    expect(JSON.parse(response.body)["error_code"]).to eq("deploy_in_progress")
   end
 
   # Behavior change (deliberate): the old API destroy never touched linked

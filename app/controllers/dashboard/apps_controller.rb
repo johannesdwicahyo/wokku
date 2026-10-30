@@ -238,6 +238,8 @@ module Dashboard
         "App deleted successfully."
       end
       redirect_to dashboard_apps_path, notice: notice
+    rescue ::Lifecycle::Ops::Busy
+      redirect_to dashboard_app_path(@app), alert: "A deploy is in progress. Wait for it to finish, then delete the app."
     end
 
     # restart/stop/start used to be synchronous SSH calls that took up

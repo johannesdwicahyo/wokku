@@ -19,7 +19,16 @@ module Apps
       @warnings = []
     end
 
+    # A deploy younger than this blocks deletion; an older one is wedged and
+    # must not make the app undeletable forever.
+    IN_FLIGHT_WINDOW = 1.hour
+
     def call
+      # Deleting mid-deploy orphaned the Swarm services: stack.remove hit the
+      # live op (Busy), the row went away, then the converge created services
+      # nothing can name any more. Refuse instead; callers say "retry".
+      raise ::Lifecycle::Ops::Busy, @app if deploy_in_flight?
+
       # Exclusive-DB snapshot FIRST, before any row mutation: a DB is
       # exclusive when no OTHER app links it. Computed up front so the
       # decision is immune to the app-row cascade that happens below.
@@ -32,7 +41,11 @@ module Apps
       # so an unexpected error still doesn't block the destroy.
       # ::-prefixed: app/services/apps/lifecycle/ (Apps::Lifecycle) shadows the
       # top-level Lifecycle module from inside this Apps namespace.
-      best_effort("tear down Swarm stack for #{@app.name}") { ::Lifecycle::Ops.remove_if_flagged!(@app) }
+      # Busy propagates (row kept, caller retries); other failures are
+      # best-effort like every step but the row.
+      if @app.wokkud_lifecycle?
+        best_effort("tear down Swarm stack for #{@app.name}") { ::Lifecycle::Ops.remove!(@app, wait: true) }
+      end
 
       best_effort("remove DNS records for #{@app.name}") do
         Wokku.config.dns_provider.delete_app_record(@app.name)
@@ -57,8 +70,14 @@ module Apps
 
     private
 
+    def deploy_in_flight?
+      @app.deploys.where(status: [ :pending, :building ]).where(created_at: IN_FLIGHT_WINDOW.ago..).exists?
+    end
+
     def best_effort(description)
       yield
+    rescue ::Lifecycle::Ops::Busy
+      raise
     rescue => e
       message = "Apps::Destroyer: failed to #{description}: #{e.message}"
       Rails.logger.warn(message)

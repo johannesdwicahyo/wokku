@@ -18,6 +18,9 @@ require "shellwords"
 # Idempotent: re-running for an already-deleted user is a no-op.
 class HardDeleteAccountJob < ApplicationJob
   queue_as :default
+  # An app mid-deploy refuses deletion (Apps::Destroyer); the job is
+  # idempotent, so re-run it once the deploy has finished.
+  retry_on ::Lifecycle::Ops::Busy, wait: 2.minutes, attempts: 15
 
   def perform(user_id, admin_email: nil)
     user = User.find_by(id: user_id)
@@ -64,6 +67,8 @@ class HardDeleteAccountJob < ApplicationJob
       # `Apps::Destroyer` would resolve fine today, but stay consistent
       # with the shadowing guard Task 1 established for namespaced callers.
       ::Apps::Destroyer.call(app)
+    rescue ::Lifecycle::Ops::Busy
+      raise
     rescue => e
       Rails.logger.error("HardDeleteAccountJob: error processing app #{app.id}: #{e.message}")
     end

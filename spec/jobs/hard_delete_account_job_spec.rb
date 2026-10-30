@@ -55,7 +55,7 @@ RSpec.describe HardDeleteAccountJob, type: :job do
   end
 
   # C2: flagged apps must issue stack.remove before the record cascade —
-  # Apps::Destroyer's remove_if_flagged! call carries this through unchanged.
+  # Apps::Destroyer's remove! call carries this through unchanged.
   it "issues Lifecycle::Ops.remove! for a flagged app before destroying it" do
     app = create(:app_record, creator: user, team: user.teams.first, wokkud_lifecycle: true)
     allow(Wokku.config.dns_provider).to receive(:delete_app_record)
