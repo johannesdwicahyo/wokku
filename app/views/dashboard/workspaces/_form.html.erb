@@ -3,7 +3,7 @@
   *  /dashboard/workspaces slide-panel modal (default flow)
 Both pass `workspace` + `paid_plans` locals. %>
 <%= form_with url: dashboard_workspaces_path, method: :post, local: true,
-              data: { controller: "form-submit" }, class: "space-y-5 font-mono text-sm" do |f| %>
+              class: "space-y-5 font-mono text-sm" do |f| %>
   <% if flash[:alert] %>
     <div class="border-1.5 border-danger bg-danger-soft px-4 py-2 text-danger text-xs">
       <%= flash[:alert] %>
@@ -33,10 +33,10 @@ Both pass `workspace` + `paid_plans` locals. %>
   </fieldset>
 
   <div class="flex justify-between gap-3 pt-2">
-    <button type="button" data-action="click->slide-panel#close"
-            class="px-4 py-2 border border-rule-soft text-dim font-mono text-[11px] uppercase tracking-widest hover:text-ink cursor-pointer">
-      cancel
-    </button>
+    <%# Plain link: works both in the slide panel and on standalone /new. %>
+    <%= link_to "cancel", dashboard_workspaces_path,
+          data: { action: "slide-panel#close:prevent", turbo_frame: "_top" },
+          class: "px-4 py-2 border border-rule-soft text-dim font-mono text-[11px] uppercase tracking-widest hover:text-ink" %>
     <button type="submit" class="px-4 py-2 border-1.5 border-ink bg-ink text-paper font-mono text-[11px] uppercase tracking-widest">
       create workspace
     </button>

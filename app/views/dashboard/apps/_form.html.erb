@@ -221,8 +221,10 @@
   </details>
 
   <div class="flex justify-end gap-2 pt-2">
-    <button type="button" data-action="click->slide-panel#close"
-            class="<%= Atoms::ButtonComponent.new(variant: :ghost).classes %>">Cancel</button>
+    <%# Plain link: works both in the slide panel and on standalone /new. %>
+    <%= link_to "Cancel", dashboard_apps_path,
+          data: { action: "slide-panel#close:prevent", turbo_frame: "_top" },
+          class: Atoms::ButtonComponent.new(variant: :ghost).classes %>
     <%# raw button (not the ViewComponent) so app-name-check's `submit` Stimulus target
         attaches directly to the DOM node it disables/re-enables during the availability
         check — class recipe copied from ButtonComponent(:primary) for pixel parity. %>

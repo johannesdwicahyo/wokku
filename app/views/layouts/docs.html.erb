@@ -51,13 +51,14 @@
     </div>
   </div>
 
-  <%# Mobile sidebar toggle %>
-  <button class="lg:hidden fixed bottom-4 right-4 z-40 bg-ink text-bg rounded-full w-12 h-12 flex items-center justify-center shadow-brutal text-lg"
-          data-action="click->docs-sidebar#toggleMobile"
-          aria-label="Toggle sidebar">≡</button>
-
-  <div class="max-w-[1440px] mx-auto px-8 grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_220px] gap-12">
-    <%= render Organisms::DocsSidebarComponent.new(sidebar: @sidebar, active_path: @path) %>
+  <div class="max-w-[1440px] mx-auto px-8 grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_220px] gap-12" data-controller="dropdown">
+    <%# Mobile sidebar toggle: the sidebar is hidden below lg until opened. %>
+    <button class="lg:hidden fixed bottom-4 right-4 z-40 bg-ink text-bg rounded-full w-12 h-12 flex items-center justify-center shadow-brutal text-lg"
+            data-action="click->dropdown#toggle"
+            aria-label="Toggle sidebar">≡</button>
+    <div class="hidden lg:block" data-dropdown-target="menu">
+      <%= render Organisms::DocsSidebarComponent.new(sidebar: @sidebar, active_path: @path) %>
+    </div>
 
     <main class="py-10 max-w-[760px] mx-auto w-full lg:mx-0">
       <%= yield %>
