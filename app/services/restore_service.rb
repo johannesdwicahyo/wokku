@@ -93,7 +93,8 @@ class RestoreService
       database: managed_op_database,
       password: dsn_password,
       presigned_get_url: url,
-      dek: managed_dek
+      dek: managed_dek,
+      replace: true # wokkud empties the target in the same transaction
     }.compact
   end
 

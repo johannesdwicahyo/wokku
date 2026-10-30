@@ -49,6 +49,11 @@ type ImportParams struct { // "service.import"
 	Password        string `json:"password,omitempty"`
 	PresignedGetURL string `json:"presigned_get_url"`
 	DEK             string `json:"dek,omitempty"` // B4: base64 per-backup DEK, unwrapped by the control plane; empty = plaintext object
+	// Replace = restore of one of our own backups: the data is replaced
+	// atomically and any error fails the op. Without it (a user's dump
+	// import) statements stream into the existing data as before, since
+	// foreign dumps often carry harmless errors (unknown owner roles).
+	Replace bool `json:"replace,omitempty"`
 }
 
 // streamExecer is the slice of dockerAPI transfer needs — the concurrent
@@ -139,7 +144,7 @@ func runExport(ctx context.Context, x streamExecer, container string, p ExportPa
 // engine's restore command on stdin. Returns the number of (decompressed)
 // bytes fed to the engine.
 func runImport(ctx context.Context, x streamExecer, container string, p ImportParams) (int64, error) {
-	cmd, err := restoreCmd(p.ServiceType, p.Database, p.Password)
+	cmd, err := restoreCmd(p.ServiceType, p.Database, p.Password, p.Replace)
 	if err != nil {
 		return 0, err
 	}
@@ -182,6 +187,9 @@ func runImport(ctx context.Context, x streamExecer, container string, p ImportPa
 		br := bufio.NewReader(gr)
 		if head, _ := br.Peek(5); string(head) == "PGDMP" {
 			cmd = []string{"pg_restore", "-U", "postgres", "-d", p.Database}
+			if p.Replace {
+				cmd = append(cmd, "--clean", "--if-exists", "--single-transaction", "--exit-on-error")
+			}
 		}
 		src = br
 	}
@@ -237,12 +245,25 @@ func dumpCmd(serviceType, database, password string) ([]string, error) {
 	}
 }
 
-func restoreCmd(serviceType, database, password string) ([]string, error) {
+// pgReplacePreamble empties the public schema inside the restore's single
+// transaction (a failed restore rolls the drop back too), then hands the
+// schema back to the database owner — a shared tenant's role must keep
+// CREATE on it. Dumps don't carry DROPs, so without this a restore onto a
+// live DB errored on every existing table and duplicated non-PK rows.
+const pgReplacePreamble = `DROP SCHEMA IF EXISTS public CASCADE;
+CREATE SCHEMA public;
+DO $$ BEGIN EXECUTE format('ALTER SCHEMA public OWNER TO %I', (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = current_database())); END $$;
+`
+
+func restoreCmd(serviceType, database, password string, replace bool) ([]string, error) {
 	if err := validateIdent(database); err != nil {
 		return nil, err
 	}
 	switch serviceType {
 	case "postgres":
+		if replace {
+			return []string{"sh", "-c", `{ printf '%s' "$2"; cat; } | psql -U postgres -d "$1" -v ON_ERROR_STOP=1 --single-transaction`, "psql", database, pgReplacePreamble}, nil
+		}
 		return []string{"psql", "-U", "postgres", "-d", database}, nil
 	case "mariadb":
 		// mariadb:11.x dropped the mysql compat symlink; use the mariadb client.
@@ -254,7 +275,11 @@ func restoreCmd(serviceType, database, password string) ([]string, error) {
 		return []string{"mysql", "-uroot", "-p" + password, database}, nil
 	case "mongodb":
 		// --archive carries the db name; auth against admin (where root lives).
-		return []string{"mongorestore", "--archive", "-u", "root", "-p", password, "--authenticationDatabase", "admin"}, nil
+		cmd := []string{"mongorestore", "--archive", "-u", "root", "-p", password, "--authenticationDatabase", "admin"}
+		if replace {
+			cmd = append(cmd, "--drop") // replace collections instead of merging into them
+		}
+		return cmd, nil
 	case "redis":
 		// An RDB restore means replacing the data file under a stopped server —
 		// there is no stdin-stream restore. Refuse with the manual runbook

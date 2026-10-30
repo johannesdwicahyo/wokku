@@ -247,7 +247,7 @@ RSpec.describe RestoreService do
         op = build_stubbed(:service_op, status: :succeeded)
         expect(Services::Ops).to receive(:issue_and_wait!)
           .with(service: db, kind: "service.import",
-                params: hash_including(service_type: "postgres", database: "pg_main", presigned_get_url: "https://r2.example/get"))
+                params: hash_including(service_type: "postgres", database: "pg_main", presigned_get_url: "https://r2.example/get", replace: true))
           .and_return(op)
         expect(Net::SSH).not_to receive(:start)
 
@@ -315,7 +315,7 @@ RSpec.describe RestoreService do
         allow(destination).to receive(:s3_presigned_url).and_return("https://r2.example/get")
         expect(Services::Ops).to receive(:issue_and_wait!)
           .with(service: parent, kind: "service.import",
-                params: { service_type: "mariadb", database: "shop", presigned_get_url: "https://r2.example/get" })
+                params: { service_type: "mariadb", database: "shop", presigned_get_url: "https://r2.example/get", replace: true })
           .and_return(build_stubbed(:service_op, status: :succeeded))
 
         expect(described_class.new(backup).perform!).to eq(true)

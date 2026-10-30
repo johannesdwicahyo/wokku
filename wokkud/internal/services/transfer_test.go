@@ -226,7 +226,7 @@ func TestMariadbDumpRestoreUseMariadbBinaries(t *testing.T) {
 	if err != nil || dc[0] != "mariadb-dump" {
 		t.Errorf("dump: want mariadb-dump, got %v (err %v)", dc, err)
 	}
-	rc, err := restoreCmd("mariadb", "appdb", "pw")
+	rc, err := restoreCmd("mariadb", "appdb", "pw", false)
 	if err != nil || rc[0] != "mariadb" {
 		t.Errorf("restore: want mariadb client, got %v (err %v)", rc, err)
 	}
@@ -298,7 +298,7 @@ func TestDumpCmdRedisNoPasswordDiscoversAdminAuth(t *testing.T) {
 }
 
 func TestRestoreCmdRedisRefusesWithRunbook(t *testing.T) {
-	if _, err := restoreCmd("redis", "ignored", "x"); err == nil || !strings.Contains(err.Error(), "manual restore") {
+	if _, err := restoreCmd("redis", "ignored", "x", false); err == nil || !strings.Contains(err.Error(), "manual restore") {
 		t.Fatalf("redis restore must refuse with the manual runbook, got %v", err)
 	}
 }
@@ -502,8 +502,50 @@ func TestTransferMariadbEnvFallbackAndSingleTransaction(t *testing.T) {
 	if !strings.Contains(strings.Join(cmd, " "), "-ppw --single-transaction --routines --events app1") {
 		t.Fatalf("dedicated dump: %v", cmd)
 	}
-	cmd, _ = restoreCmd("mariadb", "app1", "")
+	cmd, _ = restoreCmd("mariadb", "app1", "", false)
 	if !strings.Contains(strings.Join(cmd, " "), `MYSQL_PWD="$MARIADB_ROOT_PASSWORD"`) || cmd[len(cmd)-1] != "app1" {
 		t.Fatalf("shared restore: %v", cmd)
+	}
+}
+
+func TestRestoreCmdReplaceModes(t *testing.T) {
+	pg, _ := restoreCmd("postgres", "mydb", "", true)
+	joined := strings.Join(pg, " ")
+	if pg[0] != "sh" || !strings.Contains(joined, "ON_ERROR_STOP=1") || !strings.Contains(joined, "--single-transaction") {
+		t.Errorf("postgres replace cmd = %v", pg)
+	}
+	if pg[len(pg)-2] != "mydb" || !strings.Contains(pg[len(pg)-1], "DROP SCHEMA IF EXISTS public CASCADE") ||
+		!strings.Contains(pg[len(pg)-1], "OWNER TO") {
+		t.Errorf("postgres replace args = %v", pg[len(pg)-2:])
+	}
+	if plain, _ := restoreCmd("postgres", "mydb", "", false); plain[0] != "psql" || strings.Contains(strings.Join(plain, " "), "ON_ERROR_STOP") {
+		t.Errorf("postgres import cmd must stay lenient: %v", plain)
+	}
+	mongo, _ := restoreCmd("mongodb", "mydb", "pw", true)
+	if mongo[len(mongo)-1] != "--drop" {
+		t.Errorf("mongodb replace cmd = %v, want --drop", mongo)
+	}
+	if m, _ := restoreCmd("mongodb", "mydb", "pw", false); m[len(m)-1] == "--drop" {
+		t.Errorf("mongodb import must not drop: %v", m)
+	}
+}
+
+func TestImportReplaceLegacyCustomFormatCleans(t *testing.T) {
+	var gzbuf bytes.Buffer
+	gw := gzip.NewWriter(&gzbuf)
+	gw.Write([]byte("PGDMP-archive"))
+	_ = gw.Close()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write(gzbuf.Bytes()) }))
+	defer srv.Close()
+
+	rec := &streamRec{}
+	if _, err := runImport(context.Background(), rec, "dokku.postgres.mydb", ImportParams{
+		ServiceType: "postgres", Database: "mydb", PresignedGetURL: srv.URL, Replace: true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	got := strings.Join(rec.lastCmd, " ")
+	if !strings.HasPrefix(got, "pg_restore") || !strings.Contains(got, "--clean --if-exists --single-transaction --exit-on-error") {
+		t.Errorf("cmd = %q", got)
 	}
 }
