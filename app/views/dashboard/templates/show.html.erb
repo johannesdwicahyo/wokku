@@ -94,7 +94,7 @@
           You're at your <%= flash[:box_addon_size] %> box limit. Buy an extra box to deploy this template.
         </p>
         <% if respond_to?(:dashboard_box_addons_path) %>
-        <%= button_to "Buy a #{flash[:box_addon_size]} box — Rp #{ActiveSupport::NumberHelper.number_to_delimited(flash[:box_addon_price], delimiter: '.')}/mo",
+        <%= button_to "Buy a #{flash[:box_addon_size]} box — Rp#{ActiveSupport::NumberHelper.number_to_delimited(flash[:box_addon_price], delimiter: '.')}/mo",
               dashboard_box_addons_path(size: flash[:box_addon_size]),
               method: :post,
               class: "w-full py-2.5 px-4 bg-ink text-bg font-mono text-sm font-bold border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer text-center" %>

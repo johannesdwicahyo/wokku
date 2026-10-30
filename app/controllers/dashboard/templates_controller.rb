@@ -65,7 +65,7 @@ module Dashboard
             flash[:box_addon_size]  = box_size
             flash[:box_addon_price] = price
             return redirect_to dashboard_template_path(params[:template_slug]),
-                               alert: "You're at your #{box_size} limit. Buy a #{box_size} box (Rp #{ActiveSupport::NumberHelper.number_to_delimited(price, delimiter: '.')}/mo) to deploy this."
+                               alert: "You're at your #{box_size} limit. Buy a #{box_size} box (Rp#{ActiveSupport::NumberHelper.number_to_delimited(price, delimiter: '.')}/mo) to deploy this."
           end
           return redirect_to dashboard_template_path(params[:template_slug]),
                              alert: "Your plan allows #{e.allowed} #{box_size} boxes — you're at the limit. Upgrade your plan to deploy this template."

@@ -1,4 +1,4 @@
-<% fmt_idr = ->(n) { "Rp #{ActiveSupport::NumberHelper.number_to_delimited(n.to_i, delimiter: '.')}" } %>
+<% fmt_idr = ->(n) { "Rp#{ActiveSupport::NumberHelper.number_to_delimited(n.to_i, delimiter: '.')}" } %>
 
 <div class="flex flex-col gap-6">
   <div class="flex flex-wrap items-baseline justify-between gap-4">

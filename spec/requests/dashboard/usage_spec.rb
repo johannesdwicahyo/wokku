@@ -25,9 +25,9 @@ RSpec.describe "Dashboard::Usage", type: :request do
       expect(response.body).to match(/Trial days left|trial/i)
     end
 
-    it "shows Rp 0 as next invoice for free users" do
+    it "shows Rp0 as next invoice for free users" do
       get dashboard_usage_path
-      expect(response.body).to match(/Rp 0|Next invoice/)
+      expect(response.body).to match(/Rp0|Next invoice/)
     end
 
     it "shows the no-apps empty state when user has no apps" do

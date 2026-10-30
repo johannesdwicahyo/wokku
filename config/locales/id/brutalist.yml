@@ -21,7 +21,7 @@ id:
     headline_b: "AI kamu bisa deploy ini."
     body: "Hosting app managed untuk vibecoder, freelancer, dan agensi. Bayar sesuai CPU & RAM yang dipakai, mulai Rp15rb/bulan — harga jelas dalam Rupiah. Patching, SSL, backup, uptime: beres. Install Ghost, WordPress, n8n satu klik. Bayar pakai QRIS."
     pill_qris: "QRIS · GoPay · OVO · DANA"
-    pill_price: "Mulai Rp 15K / bulan"
+    pill_price: "Mulai Rp15K / bulan"
     pill_region: "Server Jakarta · <20ms"
     pill_support: "Support via WhatsApp"
     pill_ai_native: "AI-native"
@@ -38,7 +38,7 @@ id:
     anchor_tail: " — git push aja."
   compare:
     eyebrow: "// harga yang lain"
-    headline: "Stack sama. Mulai Rp 15K."
+    headline: "Stack sama. Mulai Rp15K."
     body: "Bayar per CPU & RAM, dalam Rupiah. Bayar pakai QRIS."
     you: "← kamu di sini"
     pays_usd: "Kartu USD"
@@ -49,7 +49,7 @@ id:
       heroku:  { name: "Heroku Eco + addons", price: "~$15",     desc: "Eco dyno + Essential-1 Postgres" }
       vercel:  { name: "Vercel Pro",           price: "$20/user", desc: "Per-seat + overage metering" }
       railway: { name: "Railway Hobby",        price: "$5+",      desc: "Base $5 + metering per-detik" }
-      wokku:   { name: "Wokku Nano",           price: "Rp 15K",   desc: "0.25 vCPU · 256 MB · Postgres + Redis gratis · QRIS" }
+      wokku:   { name: "Wokku Nano",           price: "Rp15K",   desc: "0.25 vCPU · 256 MB · Postgres + Redis gratis · QRIS" }
   features:
     eyebrow: "// hal kecil, dikerjain bener"
     headline: "Production-grade, sudah include."
@@ -235,16 +235,16 @@ id:
       kicker: "// berbasis deposit · ditarik harian dari pemakaian per jam kemarin"
       balance: "saldo_deposit"
       last_settled: "// last_settled: 6 jam lalu · qris"
-      buffer: "/ Rp 75.000 target buffer"
+      buffer: "/ Rp75.000 target buffer"
       auto_topup: "> set_auto_topup()"
       low_warn: "runway menipis · warn"
-      next_debit: "// Rp 7.500/hari · debit berikutnya: 01:00 WIB"
+      next_debit: "// Rp7.500/hari · debit berikutnya: 01:00 WIB"
       top_up_now: "> top_up_now()"
       pending: "payment_in_progress"
-      pending_body: "// 5 top-up nunggu konfirmasi gateway · terbaru: Rp 50.000 via IPAYMU"
+      pending_body: "// 5 top-up nunggu konfirmasi gateway · terbaru: Rp50.000 via IPAYMU"
       pending_link: "> view_pending(5) →"
       topup: "$ wokku billing:topup"
-      topup_note: "// bayar via qris · gopay · ovo · dana · transfer bank · kartu kredit · minimal Rp 25.000"
+      topup_note: "// bayar via qris · gopay · ovo · dana · transfer bank · kartu kredit · minimal Rp25.000"
       quick: "// nominal_cepat"
       custom: "// nominal_lain"
       runway_at: "// ~%{days} hari runway dengan rate sekarang"
@@ -514,7 +514,7 @@ id:
       help: "Dedicated upgrade ngasih container sendiri dengan RAM + storage lebih besar. Pro buka 3 slot masing-masing."
     q3:
       label: "Ukuran tim"
-      help: "Sendirian? Pilih 1. Plan Team include 3 seat, lebih dari itu $3 / Rp 45.000 per seat."
+      help: "Sendirian? Pilih 1. Plan Team include 3 seat, lebih dari itu $3 / Rp45.000 per seat."
     result:
       label: "Pilihan kami"
       default_rationale: "1 app always-on muat di 3 box Small Solo (plus 3 sleeping)."

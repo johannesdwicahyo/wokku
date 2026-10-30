@@ -25,15 +25,15 @@
       </div>
       <% if @plan.extra_seat_idr.to_i > 0 %>
         <div class="text-[11px] text-dim">
-          // extra: Rp <%= ActiveSupport::NumberHelper.number_to_delimited(@plan.extra_seat_idr.to_i, delimiter: ".") %>/seat/mo
+          // extra: Rp<%= ActiveSupport::NumberHelper.number_to_delimited(@plan.extra_seat_idr.to_i, delimiter: ".") %>/seat/mo
         </div>
       <% end %>
     </div>
     <% if @overage_seats.positive? %>
       <p class="mt-2 text-[11px] text-dim">
         // <%= @overage_seats %> extra seat<%= "s" unless @overage_seats == 1 %>
-        × Rp <%= ActiveSupport::NumberHelper.number_to_delimited(@plan.extra_seat_idr.to_i, delimiter: ".") %>
-        = Rp <%= ActiveSupport::NumberHelper.number_to_delimited(@plan.extra_seat_idr.to_i * @overage_seats, delimiter: ".") %>
+        × Rp<%= ActiveSupport::NumberHelper.number_to_delimited(@plan.extra_seat_idr.to_i, delimiter: ".") %>
+        = Rp<%= ActiveSupport::NumberHelper.number_to_delimited(@plan.extra_seat_idr.to_i * @overage_seats, delimiter: ".") %>
         added to next invoice
       </p>
     <% end %>
@@ -46,7 +46,7 @@
       <% @box_addons.each do |addon| %>
         <div class="flex items-center justify-between gap-3 border-b border-rule-soft pb-2 last:border-b-0 last:pb-0">
           <span class="text-ink">
-            <%= addon.size.capitalize %> box — Rp <%= ActiveSupport::NumberHelper.number_to_delimited(addon.price_idr, delimiter: ".") %>/mo<%= " (cancels #{addon.ends_at.to_date})" if addon.canceled? %>
+            <%= addon.size.capitalize %> box — Rp<%= ActiveSupport::NumberHelper.number_to_delimited(addon.price_idr, delimiter: ".") %>/mo<%= " (cancels #{addon.ends_at.to_date})" if addon.canceled? %>
           </span>
           <% if !addon.canceled? && respond_to?(:dashboard_box_addon_path) %>
             <%= button_to "Cancel", dashboard_box_addon_path(addon), method: :delete,

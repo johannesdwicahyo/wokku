@@ -25,6 +25,13 @@ export default class extends Controller {
     this.scrollToBottom()
   }
 
+  // The log lines arrive later in a lazy turbo-frame, after connect() has
+  // already counted zero lines; recount and scroll once they land.
+  outputTargetConnected() {
+    this.applyFilter()
+    this.scrollToBottom()
+  }
+
   disconnect() {
     this.stopFollowing()
   }

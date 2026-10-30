@@ -116,7 +116,7 @@ RSpec.describe NotifyJob, type: :job do
 
     it "formats daily_debit_summary in rupiah" do
       msg = job.send(:build_message, nil, "daily_debit_summary", { "amount" => 15000, "currency" => "idr" })
-      expect(msg).to include("Rp 15.000")
+      expect(msg).to include("Rp15.000")
     end
 
     it "formats daily_debit_summary in dollars" do

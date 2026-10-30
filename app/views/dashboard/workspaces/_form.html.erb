@@ -24,7 +24,7 @@ Both pass `workspace` + `paid_plans` locals. %>
         <div class="flex-1">
           <div class="text-ink font-semibold"><%= plan.name %></div>
           <div class="text-[11px] text-dim mt-0.5">
-            Rp <%= ActiveSupport::NumberHelper.number_to_delimited(plan.price_idr.to_i, delimiter: ".") %>/mo
+            Rp<%= ActiveSupport::NumberHelper.number_to_delimited(plan.price_idr.to_i, delimiter: ".") %>/mo
             · <%= plan.seats_included %> seat<%= "s" unless plan.seats_included == 1 %> included
           </div>
         </div>

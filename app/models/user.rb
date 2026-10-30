@@ -342,7 +342,7 @@ class User < ApplicationRecord
   # work lives in backlog 0.12 — brutalist refactor + dashboard rewrite),
   # return safe zero/empty values so the views render without crashing.
   def balance                       = 0
-  def balance_formatted             = "Rp 0"
+  def balance_formatted             = "Rp0"
   def has_deposit_balance?          = false
   def days_of_balance_remaining     = Float::INFINITY
   def deposit_user?                 = payment_method_type == "deposit"

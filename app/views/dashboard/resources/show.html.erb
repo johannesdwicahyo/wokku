@@ -113,7 +113,7 @@
           <% if user_plan&.free? %>
             Free
           <% else %>
-            Rp <%= ActiveSupport::NumberHelper.number_to_delimited(plan_price_idr, delimiter: '.') %><span class="text-sm text-dim font-normal">/bln</span>
+            Rp<%= ActiveSupport::NumberHelper.number_to_delimited(plan_price_idr, delimiter: '.') %><span class="text-sm text-dim font-normal">/bln</span>
           <% end %>
         </span>
       </div>

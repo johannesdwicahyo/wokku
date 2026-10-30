@@ -1,13 +1,13 @@
 <%# app/components/organisms/apps_table_component.html.erb %>
-<div class="bg-paper border-1.5 border-ink rounded-md shadow-brutal overflow-hidden">
+<div class="bg-paper border-1.5 border-ink rounded-md shadow-brutal overflow-x-auto">
   <table class="w-full text-[13.5px]">
     <thead>
       <tr class="bg-bg border-b-1.5 border-ink text-[10.5px] font-bold uppercase tracking-[.06em] text-dim text-left">
         <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.apps.columns.app", default: "App") %></th>
         <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.apps.columns.status", default: "Status") %></th>
-        <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.apps.columns.size", default: "Size") %></th>
-        <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.apps.columns.domain", default: "Domain") %></th>
-        <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.apps.columns.last_deploy", default: "Last deploy") %></th>
+        <th scope="col" class="hidden sm:table-cell px-3.5 py-2.5 font-bold"><%= t("dashboard.apps.columns.size", default: "Size") %></th>
+        <th scope="col" class="hidden md:table-cell px-3.5 py-2.5 font-bold"><%= t("dashboard.apps.columns.domain", default: "Domain") %></th>
+        <th scope="col" class="hidden md:table-cell px-3.5 py-2.5 font-bold"><%= t("dashboard.apps.columns.last_deploy", default: "Last deploy") %></th>
       </tr>
     </thead>
     <tbody data-controller="grid-nav" data-action="keydown->grid-nav#keydown">
@@ -33,9 +33,9 @@
             <% end %>
           </td>
           <td class="px-3.5 py-2.5"><%= status_pill.render_in(self) %></td>
-          <td class="px-3.5 py-2.5 text-[12.5px] text-dim"><%= box_label(app) %></td>
-          <td class="px-3.5 py-2.5 text-[12.5px] text-dim"><%= primary_domain(app) || "—" %></td>
-          <td class="px-3.5 py-2.5 text-[12.5px] text-dim"><%= deployed_at ? "#{time_ago_in_words(deployed_at)} ago" : "never" %></td>
+          <td class="hidden sm:table-cell px-3.5 py-2.5 text-[12.5px] text-dim"><%= box_label(app) %></td>
+          <td class="hidden md:table-cell px-3.5 py-2.5 text-[12.5px] text-dim"><%= primary_domain(app) || "—" %></td>
+          <td class="hidden md:table-cell px-3.5 py-2.5 text-[12.5px] text-dim"><%= deployed_at ? "#{time_ago_in_words(deployed_at)} ago" : "never" %></td>
         </tr>
       <% end %>
       <tr class="border-t border-dashed border-faint hover:bg-bg-deep transition-colors">

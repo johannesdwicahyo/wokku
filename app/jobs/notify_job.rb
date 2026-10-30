@@ -66,7 +66,7 @@ class NotifyJob < ApplicationJob
     when "daily_debit_summary"
       amount = context&.dig("amount") || context&.dig(:amount)
       currency = context&.dig("currency") || context&.dig(:currency) || "idr"
-      formatted = currency == "idr" ? "Rp #{ActiveSupport::NumberHelper.number_to_delimited(amount.to_i, delimiter: '.')}" : "$#{'%.2f' % (amount.to_i / 100.0)}"
+      formatted = currency == "idr" ? "Rp#{ActiveSupport::NumberHelper.number_to_delimited(amount.to_i, delimiter: '.')}" : "$#{'%.2f' % (amount.to_i / 100.0)}"
       "Wokku daily usage: #{formatted} debited for yesterday"
     when "app_down"
       reason = context&.dig("reason") || context&.dig(:reason)

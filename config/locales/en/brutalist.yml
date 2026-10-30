@@ -21,7 +21,7 @@ en:
     headline_b: "Your AI can deploy this for you."
     body: "Managed app hosting for vibecoders, freelancers, and agencies. Pay for the CPU & RAM you use, from Rp15K/month — clear prices in Rupiah. Patching, SSL, backups, uptime: handled. Install Ghost, WordPress, n8n in one click. Pay with QRIS."
     pill_qris: "QRIS · GoPay · OVO · DANA"
-    pill_price: "From Rp 15K / mo"
+    pill_price: "From Rp15K / mo"
     pill_region: "Jakarta region · <20ms"
     pill_support: "WhatsApp support"
     pill_ai_native: "AI-native"
@@ -38,7 +38,7 @@ en:
     anchor_tail: " — git push instead."
   compare:
     eyebrow: "// what the rest cost"
-    headline: "Same stack. From Rp 15K."
+    headline: "Same stack. From Rp15K."
     body: "Pay per CPU & RAM, in Rupiah. Pay with QRIS."
     you: "← that's you"
     pays_usd: "USD card only"
@@ -49,7 +49,7 @@ en:
       heroku:  { name: "Heroku Eco + addons", price: "~$15",     desc: "Eco dyno + Essential-1 Postgres" }
       vercel:  { name: "Vercel Pro",           price: "$20/user", desc: "Per-seat + metered overage" }
       railway: { name: "Railway Hobby",        price: "$5+",      desc: "$5 base + per-second metering" }
-      wokku:   { name: "Wokku Nano",           price: "Rp 15K",   desc: "0.25 vCPU · 256 MB · free Postgres + Redis · QRIS" }
+      wokku:   { name: "Wokku Nano",           price: "Rp15K",   desc: "0.25 vCPU · 256 MB · free Postgres + Redis · QRIS" }
   features:
     eyebrow: "// the boring stuff, done right"
     headline: "Production-grade, built in."
@@ -235,16 +235,16 @@ en:
       kicker: "// deposit-based · debited daily for the prior day's hourly usage"
       balance: "deposit_balance"
       last_settled: "// last_settled: 6h ago · qris"
-      buffer: "/ Rp 75.000 target buffer"
+      buffer: "/ Rp75.000 target buffer"
       auto_topup: "> set_auto_topup()"
       low_warn: "low_runway · warn"
-      next_debit: "// at Rp 7.500/day · next_debit: 01:00 WIB"
+      next_debit: "// at Rp7.500/day · next_debit: 01:00 WIB"
       top_up_now: "> top_up_now()"
       pending: "payment_in_progress"
-      pending_body: "// 5 top-ups awaiting gateway confirmation · latest: Rp 50.000 via IPAYMU"
+      pending_body: "// 5 top-ups awaiting gateway confirmation · latest: Rp50.000 via IPAYMU"
       pending_link: "> view_pending(5) →"
       topup: "$ wokku billing:topup"
-      topup_note: "// pay via qris · gopay · ovo · dana · bank transfer · credit card · minimum Rp 25.000"
+      topup_note: "// pay via qris · gopay · ovo · dana · bank transfer · credit card · minimum Rp25.000"
       quick: "// quick_amounts"
       custom: "// custom_amount"
       runway_at: "// ~%{days}d runway @ current rate"
@@ -514,7 +514,7 @@ en:
       help: "Dedicated upgrades give a private container with more RAM + storage. Pro unlocks 3 slots each."
     q3:
       label: "Team size"
-      help: "Just you? Pick 1. Team plan includes 3 seats, then $3 / Rp 45.000 each extra."
+      help: "Just you? Pick 1. Team plan includes 3 seats, then $3 / Rp45.000 each extra."
     result:
       label: "We'd pick"
       default_rationale: "1 always-on app fits in Solo's 3 Small boxes (plus 3 sleeping)."
