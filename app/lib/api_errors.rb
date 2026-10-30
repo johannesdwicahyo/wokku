@@ -79,6 +79,9 @@ module ApiErrors
     passthrough_retired: { status: :gone, retryable: false,
                          message: "Raw dokku passthrough has been retired",
                          hint: "use the typed command for this operation — run `wokku help`" },
+    not_supported:       { status: :unprocessable_entity, retryable: false,
+                         message: "This setting is not supported",
+                         hint: "The platform doesn't offer this option; nothing was changed." },
     storage_retired:     { status: :gone, retryable: false,
                          message: "Volume mount management has been retired",
                          hint: "Persistent volumes are platform-managed; contact support if your app needs a new mount." },
@@ -186,7 +189,8 @@ module ApiErrors
     invalid:             :invalid_params,
     no_ssh_key:          :validation_failed,
     no_postgres:         :validation_failed,
-    transfer_pending:    :already_exists
+    transfer_pending:    :already_exists,
+    not_supported:       :not_supported
   }.freeze
 
   def self.from_service_code(code) = SERVICE_CODE_MAP.fetch(code, :invalid_params)

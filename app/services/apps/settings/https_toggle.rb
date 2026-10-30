@@ -1,10 +1,8 @@
 module Apps
   module Settings
-    # W7 Phase 3: pure control-plane bookkeeping (was dokku redirect:set/
-    # unset/report over SSH). Caddy — rendered by wokkud from
-    # Routers::ConfigBuilder — auto-redirects HTTP→HTTPS for every vhost
-    # today, so `https_redirect` is recorded intent: it ships dark until the
-    # router honors opt-out.
+    # Caddy (rendered by wokkud from Routers::ConfigBuilder) redirects
+    # HTTP→HTTPS for every vhost and has no opt-out, so disabling is refused
+    # instead of recording a setting nothing reads.
     class HttpsToggle
       def initialize(app)
         @app = app
@@ -16,8 +14,7 @@ module Apps
       end
 
       def disable!
-        @app.update!(https_redirect: false)
-        false
+        raise Error.new("HTTPS redirect can't be turned off: every app is served over HTTPS.", code: :not_supported)
       end
 
       def enabled?

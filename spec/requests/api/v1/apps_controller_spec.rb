@@ -362,6 +362,14 @@ RSpec.describe "API::V1::AppsController", type: :request do
   # The async stack.run live leg (202 + run_id, blank-command 400, Busy 409)
   # is pinned in spec/requests/api/v1/runs_spec.rb.
 
+  # --- https redirect (Caddy always redirects; no opt-out) ---
+  it "PATCH https enabled:false: refuses with not_supported and changes nothing" do
+    patch "/api/v1/apps/#{app_record.id}/https", params: { enabled: false }, headers: headers, as: :json
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(JSON.parse(response.body)["error_code"]).to eq("not_supported")
+    expect(app_record.reload.https_redirect).to be(true)
+  end
+
   # --- dokku passthrough (retired W7 Phase 2) ---
   it "POST dokku: returns 410 passthrough_retired" do
     post dokku_api_v1_app_url(app_record),
