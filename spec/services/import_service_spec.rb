@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "rails_helper"
+require "aws-sdk-s3" # instance_double(Aws::S3::Client) needs the constant loaded
 
 RSpec.describe ImportService do
   let(:destination) { BackupDestination.new(bucket: "wokku-backups", region: "us-east-1", access_key_id: "AKID", secret_access_key: "SECRET") }
