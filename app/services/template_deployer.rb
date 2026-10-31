@@ -488,7 +488,9 @@ class TemplateDeployer
   def apply_generate_secrets!(app, keys:)
     vars = keys.each_with_object({}) do |key, h|
       next if app.env_vars.exists?(key: key)
-      h[key] = SecureRandom.urlsafe_base64(32)
+      # APP_KEY is Laravel's (laravel, bookstack): it must be "base64:" + 32
+      # bytes, or every encrypted cookie/session 500s "Unsupported cipher".
+      h[key] = key == "APP_KEY" ? "base64:#{SecureRandom.base64(32)}" : SecureRandom.urlsafe_base64(32)
     end
     return if vars.empty?
     Apps::EnvWriter.set(app, vars)

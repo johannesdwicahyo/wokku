@@ -284,6 +284,16 @@ RSpec.describe TemplateDeployer, "deep orchestration" do
     expect(env["JWT_SECRET"]).not_to eq(env["CREDS_KEY"])
   end
 
+  it "generates a Laravel-format APP_KEY (base64: + 32 bytes)" do
+    template = { repo: "https://github.com/x/y", generate_secrets: %w[APP_KEY] }
+
+    described_class.new(template: template, app_name: "laravelapp", server: server, user: user).deploy!
+
+    key = AppRecord.find_by!(name: "laravelapp").env_vars.find_by!(key: "APP_KEY").value
+    expect(key).to start_with("base64:")
+    expect(Base64.strict_decode64(key.delete_prefix("base64:")).bytesize).to eq(32)
+  end
+
   it "alias_env reads source env from the control plane and sets target to same value" do
     template = {
       repo: "https://github.com/x/y",
