@@ -13,4 +13,18 @@ RSpec.describe Release do
     expect(duplicate).not_to be_valid
     expect(duplicate.errors[:version]).to include("has already been taken")
   end
+
+  it "links both ways when a webhook creates the release for an existing deploy" do
+    app = app_records(:one)
+    deploy = app.deploys.create!(status: :pending)
+    release = app.releases.create!(deploy: deploy, description: "commit msg")
+    expect(deploy.reload.release_id).to eq(release.id)
+  end
+
+  it "links both ways when the dashboard creates the deploy for an existing release" do
+    app = app_records(:one)
+    release = app.releases.create!(description: "Manual deploy via dashboard")
+    deploy = app.deploys.create!(release: release, status: :pending)
+    expect(release.reload.deploy_id).to eq(deploy.id)
+  end
 end

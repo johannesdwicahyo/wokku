@@ -5,6 +5,9 @@ class Deploy < ApplicationRecord
   enum :status, { pending: 0, building: 1, succeeded: 2, failed: 3, timed_out: 4 }
 
   validates :status, presence: true
+  # Dashboard/API/rollback create the deploy pointing at its release; fill
+  # in release.deploy_id (rollback finds the image through it).
+  after_create { release.update_columns(deploy_id: id) if release && release.deploy_id.nil? }
 
   scope :recent, -> { order(created_at: :desc).limit(20) }
 
