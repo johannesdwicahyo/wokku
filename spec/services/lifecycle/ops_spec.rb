@@ -460,6 +460,14 @@ RSpec.describe Lifecycle::Ops do
       expect(port).to be_between(20_000, 29_999)
     end
 
+    it "never hands a deleted app's port to the next app (its service may outlive the row)" do
+      gone = create(:app_record, server: server)
+      gone_port = described_class.allocate_swarm_port!(gone)
+      gone.delete
+
+      expect(described_class.allocate_swarm_port!(app)).to be > gone_port
+    end
+
     it "re-raises after exhausting retry attempts" do
       allow_any_instance_of(AppRecord).to receive(:update!).and_raise(ActiveRecord::RecordNotUnique, "duplicate key")
 

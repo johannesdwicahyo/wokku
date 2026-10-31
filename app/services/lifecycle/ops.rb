@@ -260,19 +260,29 @@ module Lifecycle
       begin
         app.with_lock do
           next app.swarm_port if app.reload.swarm_port.present?
-          taken = AppRecord.where.not(swarm_port: nil).maximum(:swarm_port) || (PORT_RANGE.first - 1)
-          raise "swarm_port range exhausted" if taken >= PORT_RANGE.last
-          app.update!(swarm_port: taken + 1)
+          app.update!(swarm_port: next_swarm_port)
           app.swarm_port
         end
       rescue ActiveRecord::RecordNotUnique
-        # ponytail: the maximum(:swarm_port) read isn't locked across apps, so two
-        # concurrent first-time allocations can race onto the same port; the unique
-        # index catches it and we just retry the read+write a few times.
+        # ponytail: the MAX(swarm_port) inside next_swarm_port isn't locked across
+        # apps, so two concurrent first-time allocations can land on the same
+        # port; the unique index catches it and we retry a few times.
         attempts += 1
         raise if attempts >= SWARM_PORT_ALLOCATION_ATTEMPTS
         retry
       end
+    end
+
+    # Never hands out a port twice: swarm_port_seq only moves forward, so a
+    # deleted app's port isn't reused (its service may have outlived the row).
+    # It also jumps past any port already on a row, so it can't lag behind
+    # ports written by hand or by fixtures.
+    def self.next_swarm_port
+      port = AppRecord.connection.select_value(<<~SQL).to_i
+        SELECT setval('swarm_port_seq', GREATEST(nextval('swarm_port_seq'), (SELECT COALESCE(MAX(swarm_port), 0) + 1 FROM app_records)))
+      SQL
+      raise "swarm_port range exhausted" if port > PORT_RANGE.last
+      port
     end
 
     # process_scales' quantity column is named `count` in the schema

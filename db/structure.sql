@@ -1502,6 +1502,18 @@ CREATE TABLE public.subscriptions (
 
 
 --
+-- Name: swarm_port_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.swarm_port_seq
+    START WITH 20000
+    INCREMENT BY 1
+    MINVALUE 20000
+    MAXVALUE 29999
+    CACHE 1;
+
+
+--
 -- Name: team_memberships; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -4497,6 +4509,7 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261031000001'),
 ('20261025200001'),
 ('20261025100001'),
 ('20261025000001'),
