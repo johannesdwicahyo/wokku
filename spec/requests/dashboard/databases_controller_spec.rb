@@ -99,6 +99,8 @@ RSpec.describe "Dashboard::Databases", type: :request do
     end
 
     it "rescues SSH error and redirects" do
+      # Raise at the provisioner instead of polling a host op to its 300 s timeout.
+      allow(DatabaseProvisioner).to receive(:destroy!).and_raise(StandardError, "host unreachable")
       sign_in user
       delete "/dashboard/addons/#{database.id}"
       expect(response).to have_http_status(:redirect)
