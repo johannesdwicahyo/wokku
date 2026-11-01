@@ -263,6 +263,8 @@ Rails.application.routes.draw do
           get :metrics, to: "apps#metrics"
           get :monitor, to: "apps#monitor"
           get :vitals,  to: "apps#vitals"
+          post "vitals/rotate_token", to: "apps#rotate_vitals_token"
+          patch :preview_settings, to: "apps#preview_settings"
         end
         resource :config, only: [ :show, :update, :destroy ], controller: "config"
         resources :domains, only: [ :index, :create, :destroy ] do
@@ -348,6 +350,7 @@ Rails.application.routes.draw do
       resources :alert_mutes, only: [ :index, :create, :destroy ]
 
       post "ai/diagnose", to: "ai#diagnose"
+      get "github/repos", to: "github#repos"
 
       # Vector log ingest — per-server bearer token auth, no user session.
       # Lives outside the user-API auth chain because the caller is a

@@ -253,6 +253,21 @@ module Api
         render json: ::Api::V1::Serializers::AppVitals.new(app).call
       end
 
+      # PR previews: on/off and which database each preview gets.
+      def preview_settings
+        app = find_app
+        authorize app, :update?
+        app.update!(params.permit(:preview_enabled, :database_strategy))
+        render json: { preview_enabled: app.preview_enabled, database_strategy: app.database_strategy }
+      end
+
+      # New web-vitals ingest token; the old one stops working at once.
+      def rotate_vitals_token
+        app = find_app
+        authorize app, :update?
+        render json: { vitals_ingest_token: app.rotate_vitals_ingest_token! }
+      end
+
       def rename
         app = find_app
         authorize app, :update?

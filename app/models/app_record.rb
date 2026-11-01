@@ -212,6 +212,9 @@ class AppRecord < ApplicationRecord
     uniqueness: { scope: :server_id },
     format: { with: /\A[a-z][a-z0-9-]*\z/, message: "must be lowercase alphanumeric with hyphens" }
   validates :git_provider, inclusion: { in: SUPPORTED_GIT_PROVIDERS }, allow_nil: true
+  # PR preview database: empty, snapshot of prod, or shared with prod.
+  PREVIEW_DATABASE_STRATEGIES = %w[empty snapshot shared].freeze
+  validates :database_strategy, inclusion: { in: PREVIEW_DATABASE_STRATEGIES }
   validates :git_repo_full_name, presence: true, if: -> { git_provider.present? }
   validates :pr_number, uniqueness: { scope: :parent_app_id }, if: :is_preview?
 
