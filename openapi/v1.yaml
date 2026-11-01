@@ -2604,6 +2604,99 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{id}/vitals/rotate_token":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    post:
+      summary: Issue a new web-vitals ingest token (the old one stops working)
+      operationId: apps.rotate_vitals_token
+      tags:
+      - apps
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: new token
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - vitals_ingest_token
+                properties:
+                  vitals_ingest_token:
+                    type: string
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{id}/preview_settings":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    patch:
+      summary: 'PR preview apps: on/off and each preview''s database'
+      operationId: apps.preview_settings
+      tags:
+      - apps
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: settings
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - preview_enabled
+                - database_strategy
+                properties:
+                  preview_enabled:
+                    type: boolean
+                  database_strategy:
+                    type: string
+                    example: snapshot
+        '422':
+          description: unknown database_strategy
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown app, or an app of a team the caller does not belong
+            to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                preview_enabled:
+                  type: boolean
+                database_strategy:
+                  type: string
+                  enum:
+                  - empty
+                  - snapshot
+                  - shared
   "/api/v1/apps":
     get:
       summary: List the apps visible to the caller
@@ -4848,6 +4941,71 @@ paths:
         '404':
           description: unknown domain, or an app of a team the caller does not belong
             to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/github/repos":
+    get:
+      summary: Repos the Wokku GitHub App can see, or one repo's branches
+      operationId: github.repos
+      tags:
+      - github
+      security:
+      - bearer: []
+      parameters:
+      - name: repo
+        in: query
+        required: false
+        schema:
+          type: string
+        description: owner/name — return this repo's branches instead
+      responses:
+        '200':
+          description: repos (or {repo, branches} when ?repo= is given)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - type: array
+                  items:
+                    type: object
+                    required:
+                    - full_name
+                    - private
+                    - default_branch
+                    properties:
+                      full_name:
+                        type: string
+                      private:
+                        type: boolean
+                      default_branch:
+                        type: string
+                - type: object
+                  required:
+                  - repo
+                  - branches
+                  properties:
+                    repo:
+                      type: string
+                    branches:
+                      type: array
+                      items:
+                        type: string
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '422':
+          description: github_not_installed - install the Wokku GitHub App first
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '502':
+          description: github_failed - GitHub errored (retryable)
           content:
             application/json:
               schema:
