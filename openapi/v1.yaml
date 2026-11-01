@@ -1382,6 +1382,271 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
+  "/api/v1/app_transfers":
+    get:
+      summary: Pending transfers addressed to the caller (incoming) and started by
+        the caller (outgoing)
+      operationId: app_transfers.list
+      tags:
+      - apps
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: transfers
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - incoming
+                - outgoing
+                properties:
+                  incoming:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - id
+                      - app_id
+                      - app_name
+                      - status
+                      - from_email
+                      - to_email
+                      - expires_at
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        app_id:
+                          type: string
+                          format: uuid
+                        app_name:
+                          type: string
+                        status:
+                          type: string
+                          example: pending
+                        from_email:
+                          type: string
+                        to_email:
+                          type: string
+                        expires_at:
+                          type: string
+                          format: date-time
+                  outgoing:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - id
+                      - app_id
+                      - app_name
+                      - status
+                      - from_email
+                      - to_email
+                      - expires_at
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        app_id:
+                          type: string
+                          format: uuid
+                        app_name:
+                          type: string
+                        status:
+                          type: string
+                          example: pending
+                        from_email:
+                          type: string
+                        to_email:
+                          type: string
+                        expires_at:
+                          type: string
+                          format: date-time
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/app_transfers/{id}/accept":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    post:
+      summary: Accept an app transferred to the caller (moves the app and its billing)
+      operationId: app_transfers.accept
+      tags:
+      - apps
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - id
+                - app_id
+                - app_name
+                - status
+                - from_email
+                - to_email
+                - expires_at
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  app_id:
+                    type: string
+                    format: uuid
+                  app_name:
+                    type: string
+                  status:
+                    type: string
+                    example: pending
+                  from_email:
+                    type: string
+                  to_email:
+                    type: string
+                  expires_at:
+                    type: string
+                    format: date-time
+        '403':
+          description: the caller is the sender, not the recipient
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: not a transfer the caller sent or received
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '409':
+          description: transfer_not_pending - already answered, cancelled or expired
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/app_transfers/{id}/decline":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    post:
+      summary: Decline an app transferred to the caller
+      operationId: app_transfers.decline
+      tags:
+      - apps
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: declined
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - id
+                - app_id
+                - app_name
+                - status
+                - from_email
+                - to_email
+                - expires_at
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  app_id:
+                    type: string
+                    format: uuid
+                  app_name:
+                    type: string
+                  status:
+                    type: string
+                    example: pending
+                  from_email:
+                    type: string
+                  to_email:
+                    type: string
+                  expires_at:
+                    type: string
+                    format: date-time
+        '409':
+          description: transfer_not_pending
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/app_transfers/{id}":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    delete:
+      summary: Cancel a transfer the caller started
+      operationId: app_transfers.cancel
+      tags:
+      - apps
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - id
+                - app_id
+                - app_name
+                - status
+                - from_email
+                - to_email
+                - expires_at
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  app_id:
+                    type: string
+                    format: uuid
+                  app_name:
+                    type: string
+                  status:
+                    type: string
+                    example: pending
+                  from_email:
+                    type: string
+                  to_email:
+                    type: string
+                  expires_at:
+                    type: string
+                    format: date-time
+        '403':
+          description: the caller is the recipient, not the sender
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
   "/api/v1/apps/{id}/restart":
     parameters:
     - name: id
@@ -3825,6 +4090,108 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
+  "/api/v1/databases/{id}/resize":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: Database UUID or name
+      required: true
+    patch:
+      summary: Resize a dedicated database (CPU, memory, disk); disk only grows
+      operationId: databases.resize
+      tags:
+      - databases
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '202':
+          description: resize applied by a background job (brief restart)
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                properties:
+                  message:
+                    type: string
+                  cpu:
+                    type: string
+                    nullable: true
+                  memory_mb:
+                    type: integer
+                    nullable: true
+                  disk_gb:
+                    type: integer
+                    nullable: true
+        '422':
+          description: 'refused: shared add-on, invalid shape, disk shrink, account
+            limit or host capacity'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: unknown database, or one the caller's teams cannot see
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - cpu
+              - memory_mb
+              - disk_gb
+              properties:
+                cpu:
+                  type: string
+                  example: '0.5'
+                memory_mb:
+                  type: integer
+                  example: 1024
+                disk_gb:
+                  type: integer
+                  example: 10
+  "/api/v1/databases/{id}/retry":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      description: Database UUID or name
+      required: true
+    post:
+      summary: Retry provisioning a database stuck in error
+      operationId: databases.retry
+      tags:
+      - databases
+      security:
+      - bearer: []
+      responses:
+        '202':
+          description: provisioning re-queued
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: unknown database, or one the caller's teams cannot see
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
   "/api/v1/databases/{id}/import":
     parameters:
     - name: id
@@ -4858,6 +5225,39 @@ paths:
       responses:
         '200':
           description: deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: notification of a team the caller does not belong to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/notifications/{id}/test":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    post:
+      summary: Send a sample message to the channel now
+      operationId: notifications.test
+      tags:
+      - notifications
+      security:
+      - bearer: []
+      responses:
+        '202':
+          description: test message queued
           content:
             application/json:
               schema:
@@ -6727,6 +7127,65 @@ paths:
         type: string
         format: uuid
       required: true
+    patch:
+      summary: Change a member's role (team admin only; a team keeps at least one
+        admin)
+      operationId: team_members.update
+      tags:
+      - team_members
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: role changed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - id
+                - user_id
+                - email
+                - role
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  user_id:
+                    type: string
+                    format: uuid
+                  email:
+                    type: string
+                  role:
+                    type: string
+                    example: viewer
+        '422':
+          description: invalid role, or the last admin demoting themselves
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '404':
+          description: membership of a team the caller does not belong to
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - role
+              properties:
+                role:
+                  type: string
+                  enum:
+                  - viewer
+                  - member
+                  - admin
     delete:
       summary: Remove a team member (membership id)
       operationId: team_members.delete
