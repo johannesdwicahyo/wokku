@@ -26,16 +26,10 @@ module Dashboard
 
     def update
       membership = @workspace.team_memberships.find(params[:id])
-      role = params.dig(:team_membership, :role)
-      return redirect_with(:alert, "Invalid role.") unless TeamMembership.roles.key?(role)
-
-      # Don't let an admin demote themselves if they're the last admin.
-      if membership.user_id == current_user.id && role != "admin" && last_admin?(membership)
-        return redirect_with(:alert, "You're the last admin — promote someone else first.")
-      end
-
-      membership.update!(role: role)
-      redirect_with(:notice, "Role updated to #{role}.")
+      membership.change_role!(params.dig(:team_membership, :role).to_s, by: current_user)
+      redirect_with(:notice, "Role updated to #{membership.role}.")
+    rescue TeamMembership::RoleError => e
+      redirect_with(:alert, e.message.start_with?("Invalid role") ? "Invalid role." : e.message)
     end
 
     def destroy
@@ -74,10 +68,6 @@ module Dashboard
       "Plan includes #{@workspace.current_plan.seats_included} seat" \
       "#{'s' unless @workspace.current_plan.seats_included == 1}. " \
       "Upgrade to the Team plan to add more members (extra seats billed)."
-    end
-
-    def last_admin?(membership)
-      @workspace.team_memberships.where(role: :admin).where.not(id: membership.id).empty?
     end
 
     def redirect_with(level, message)

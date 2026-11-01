@@ -25,6 +25,16 @@ module Api
         render json: { message: "Notification removed" }
       end
 
+      # Send a sample message now so the channel config can be checked
+      # without waiting for a real event (deploy_id 0 = no deploy context).
+      def test
+        notification = policy_scope(Notification).find(params[:id])
+        authorize notification, :create?
+        event = notification.events.first || "deploy_succeeded"
+        NotifyJob.perform_later(notification.id, event, 0)
+        render json: { message: "Test #{notification.channel} notification queued" }, status: :accepted
+      end
+
       private
 
       def notification_params

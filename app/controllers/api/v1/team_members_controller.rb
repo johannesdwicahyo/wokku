@@ -25,6 +25,15 @@ module Api
         render_api_error(:not_found, message: "User not found")
       end
 
+      def update
+        membership = @team.team_memberships.find(params[:id])
+        authorize membership
+        membership.change_role!(params[:role].to_s, by: current_user)
+        render json: { id: membership.id, user_id: membership.user_id, email: membership.user.email, role: membership.role }
+      rescue TeamMembership::RoleError => e
+        render_api_error(:validation_failed, message: e.message)
+      end
+
       def destroy
         membership = @team.team_memberships.find(params[:id])
         authorize membership

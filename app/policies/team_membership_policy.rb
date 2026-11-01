@@ -7,6 +7,10 @@ class TeamMembershipPolicy < ApplicationPolicy
     team_admin?
   end
 
+  def update?
+    team_admin?
+  end
+
   def destroy?
     team_admin? || record.user_id == user.id
   end

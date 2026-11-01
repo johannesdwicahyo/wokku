@@ -315,6 +315,8 @@ Rails.application.routes.draw do
           post :unlink
           post :import
           get :monitor
+          patch :resize
+          post :retry
         end
         resources :backups, only: [ :index, :create ] do
           member do
@@ -329,10 +331,18 @@ Rails.application.routes.draw do
       resources :ssh_keys, only: [ :index, :create, :destroy ]
 
       resources :teams, only: [ :index, :create ] do
-        resources :members, only: [ :index, :create, :destroy ], controller: "team_members"
+        resources :members, only: [ :index, :create, :update, :destroy ], controller: "team_members"
       end
 
-      resources :notifications, only: [ :index, :create, :destroy ]
+      resources :notifications, only: [ :index, :create, :destroy ] do
+        member { post :test }
+      end
+      resources :app_transfers, only: [ :index, :destroy ] do
+        member do
+          post :accept
+          post :decline
+        end
+      end
       resources :incidents, only: [ :index, :show ]
       resources :alert_mutes, only: [ :index, :create, :destroy ]
 

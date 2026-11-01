@@ -127,6 +127,9 @@ module ApiErrors
     archive_failed:     { status: :bad_gateway, retryable: true,
                          message: "Could not archive the pushed commit",
                          hint: "Retry the push; if it persists contact support." },
+    transfer_not_pending: { status: :conflict, retryable: false,
+                         message: "Transfer is no longer pending",
+                         hint: "It was already accepted, declined, cancelled or has expired. List transfers (wokku_list_transfers) to see current ones." },
     app_not_on_server: { status: :not_found, retryable: false,
                          message: "That app is not on this server",
                          hint: "The agent asked about an app this server doesn't host — check server assignment." },
@@ -190,6 +193,10 @@ module ApiErrors
     no_ssh_key:          :validation_failed,
     no_postgres:         :validation_failed,
     transfer_pending:    :already_exists,
+    transfer_not_pending: :transfer_not_pending,
+    not_recipient:       :not_authorized,
+    not_sender:          :not_authorized,
+    transfer_failed:     :validation_failed,
     not_supported:       :not_supported
   }.freeze
 

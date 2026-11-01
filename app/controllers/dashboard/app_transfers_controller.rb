@@ -16,39 +16,30 @@ module Dashboard
 
     def accept
       return unless ensure_target!
-      return redirect_to dashboard_app_transfer_path(@transfer), alert: "Transfer is no longer pending." unless @transfer.pending?
 
-      result = AppOwnershipTransfer.call(app: @transfer.app_record, target_user: current_user)
-      unless result.ok?
-        return redirect_to dashboard_app_transfer_path(@transfer), alert: "Accept failed: #{result.error}"
-      end
-
-      @transfer.update!(status: "accepted", accepted_at: Time.current)
-
+      ::Apps::Lifecycle::TransferResponder.new(@transfer, user: current_user).accept!
       track("app.transfer_accepted", target: @transfer.app_record, metadata: { from: @transfer.from_user.email })
-      Activity.log(user: current_user, team: current_user.teams.first, action: "app.received_transfer",
-                   target: @transfer.app_record, metadata: { from: @transfer.from_user.email })
-      AppTransferMailer.with(transfer: @transfer).accepted_email.deliver_later
-
       redirect_to dashboard_app_path(@transfer.app_record), notice: "#{@transfer.app_record.name} is now yours. Future hourly billing will go to your account."
+    rescue ::Apps::Lifecycle::Error => e
+      redirect_to dashboard_app_transfer_path(@transfer), alert: e.message
     end
 
     def decline
       return unless ensure_target!
-      return redirect_to dashboard_app_transfer_path(@transfer), alert: "Transfer is no longer pending." unless @transfer.pending?
 
-      @transfer.update!(status: "declined", declined_at: Time.current)
-      AppTransferMailer.with(transfer: @transfer).declined_email.deliver_later
+      ::Apps::Lifecycle::TransferResponder.new(@transfer, user: current_user).decline!
       redirect_to dashboard_app_transfers_path, notice: "Transfer declined."
+    rescue ::Apps::Lifecycle::Error => e
+      redirect_to dashboard_app_transfer_path(@transfer), alert: e.message
     end
 
     # Source-owner cancel.
     def destroy
-      return redirect_to dashboard_app_transfers_path, alert: "Not your transfer to cancel." unless @transfer.from_user_id == current_user.id
-      return redirect_to dashboard_app_transfers_path, alert: "Transfer is no longer pending." unless @transfer.pending?
-
-      @transfer.update!(status: "cancelled", cancelled_at: Time.current)
+      ::Apps::Lifecycle::TransferResponder.new(@transfer, user: current_user).cancel!
       redirect_to dashboard_app_path(@transfer.app_record), notice: "Transfer cancelled."
+    rescue ::Apps::Lifecycle::Error => e
+      alert = e.code == :not_sender ? "Not your transfer to cancel." : e.message
+      redirect_to dashboard_app_transfers_path, alert: alert
     end
 
     private

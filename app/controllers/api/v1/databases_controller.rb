@@ -125,6 +125,31 @@ module Api
         render json: { message: "Database unlinked" }
       end
 
+      # Resize a dedicated database (resource builder). Applied by a job;
+      # disk only grows, and the account limit and host capacity are checked.
+      def resize
+        database = policy_scope(DatabaseService).lookup!(params[:id])
+        authorize database, :resize?
+        shape = Resources::Shape.new(cpu: params[:cpu], memory_mb: params[:memory_mb], disk_gb: params[:disk_gb])
+        result = Resources::ResizeService.call(db: database, user: current_user, shape: shape)
+        return render_api_error(:validation_failed, message: result.error) unless result.ok
+
+        render json: { message: "Resizing #{database.name}", cpu: database.cpu, memory_mb: database.memory_mb, disk_gb: database.disk_gb },
+               status: :accepted
+      end
+
+      # Re-run provisioning for a database stuck in "error".
+      def retry
+        database = policy_scope(DatabaseService).lookup!(params[:id])
+        authorize database, :update?
+        app = database.app_records.first || database.creator&.app_records&.first
+        return render_api_error(:validation_failed, message: "Link the database to an app first, then retry.") unless app
+
+        database.update!(status: :creating, last_error: nil)
+        CreateAddonJob.perform_later(database.id, app.id)
+        render json: { message: "Retrying provisioning for #{database.name}" }, status: :accepted
+      end
+
       private
 
       # Best-effort converge so a running app picks the env change up —
