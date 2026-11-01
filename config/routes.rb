@@ -331,7 +331,8 @@ Rails.application.routes.draw do
       resources :ssh_keys, only: [ :index, :create, :destroy ]
 
       resources :teams, only: [ :index, :create ] do
-        resources :members, only: [ :index, :create, :update, :destroy ], controller: "team_members"
+        resources :members, only: [ :index, :create, :destroy ], controller: "team_members"
+        patch "members/:id", to: "team_members#update"
       end
 
       resources :notifications, only: [ :index, :create, :destroy ] do
