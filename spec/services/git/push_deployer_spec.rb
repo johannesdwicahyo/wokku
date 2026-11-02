@@ -40,6 +40,18 @@ RSpec.describe Git::PushDeployer do
       .to raise_error(described_class::Error) { |e| expect(e.error_code).to eq(:ref_not_deployable) }
   end
 
+  it "deploys the app's own deploy branch and refuses main for it" do
+    app.update!(deploy_branch: "dev")
+    expect(described_class.new(app, sha: sha, ref: "refs/heads/dev").call).to be_pending
+    app.deploys.destroy_all
+    expect { described_class.new(app, sha: sha, ref: "refs/heads/main").call }
+      .to raise_error(described_class::Error) { |e| expect(e.message).to start_with("only dev deploys") }
+  end
+
+  it "still accepts master when the deploy branch is the default main" do
+    expect(described_class.new(app, sha: sha, ref: "refs/heads/master").call).to be_pending
+  end
+
   it "refuses when a deploy is in flight" do
     create(:deploy, app_record: app, status: :building)
     expect { described_class.new(app, sha: sha, ref: "refs/heads/main").call }
@@ -49,7 +61,10 @@ RSpec.describe Git::PushDeployer do
   it "refuses a push while deploys are locked" do
     app.update!(deploy_locked_at: Time.current)
     expect { described_class.new(app, sha: sha, ref: "refs/heads/main").call }
-      .to raise_error(described_class::Error) { |e| expect(e.error_code).to eq(:app_locked) }
+      .to raise_error(described_class::Error) { |e|
+        expect(e.error_code).to eq(:app_locked)
+        expect(e.message).to include("wokku apps:unlock #{app.name}")
+      }
     expect(app.deploys).to be_empty
   end
 

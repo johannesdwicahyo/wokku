@@ -7,6 +7,10 @@ module Api
       end
 
       def create
+        if params[:team_id].blank?
+          return render_api_error(:invalid_params, message: "team_id is required", hint: "List your teams with GET /api/v1/teams.")
+        end
+
         team = current_user.teams.find(params[:team_id])
         notification = team.notifications.build(notification_params)
         authorize notification

@@ -67,11 +67,12 @@ module Git
       end
 
       unless @deploy
-        unless DEPLOYABLE_REFS.include?(@ref)
-          raise Error.new(:ref_not_deployable, "only main/master deploys; #{@ref} was stored but not deployed")
+        unless deployable_refs.include?(@ref)
+          branches = deployable_refs.map { |r| r.delete_prefix("refs/heads/") }.join("/")
+          raise Error.new(:ref_not_deployable, "only #{branches} deploys; #{@ref} was stored but not deployed")
         end
         if @app.deploy_locked_at?
-          raise Error.new(:app_locked, "deploys are locked for #{@app.name} — run `wokku unlock` to deploy")
+          raise Error.new(:app_locked, "deploys are locked for #{@app.name} — run `wokku apps:unlock #{@app.name}` to deploy")
         end
         if @app.deploys.where(status: [ :pending, :building ]).exists?
           raise Error.new(:deploy_in_progress, "a deploy is already in progress — wait for it or check `wokku deploys`")
@@ -84,6 +85,17 @@ module Git
       deploy.update!(commit_sha: @sha, archive_key: key)
       TarballDeployJob.perform_later(app_id: @app.id, deploy_id: deploy.id)
       deploy
+    end
+
+    private
+
+    # The app's deploy branch, as the git-provider webhooks already honour;
+    # the default "main" keeps accepting master too.
+    def deployable_refs
+      branch = @app.deploy_branch.presence
+      return DEPLOYABLE_REFS if branch.nil? || DEPLOYABLE_REFS.include?("refs/heads/#{branch}")
+
+      [ "refs/heads/#{branch}" ]
     end
   end
 end
