@@ -26,6 +26,14 @@ RSpec.describe OpsMailer do
     end
   end
 
+  describe "#starter_check_failed" do
+    it "lists each failed starter with its reason" do
+      mail = described_class.starter_check_failed({ "go" => "build failed: toolchain not available" }, 14)
+      expect(mail.subject).to include("1 of 14 starters failed")
+      expect(mail.body.encoded).to include("- go: build failed: toolchain not available")
+    end
+  end
+
   describe "#host_recovered" do
     it "sends the all-clear" do
       server.update_columns(heartbeat_status: "ok")

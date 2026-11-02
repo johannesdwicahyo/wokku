@@ -19,6 +19,13 @@ class OpsMailer < ApplicationMailer
     mail(to: ENV["ADMIN_EMAIL"], subject: subject)
   end
 
+  def starter_check_failed(failures, total)
+    return if ENV["ADMIN_EMAIL"].blank?
+    @failures = failures
+    @total = total
+    mail(to: ENV["ADMIN_EMAIL"], subject: "[Wokku OPS] #{failures.size} of #{total} starters failed the weekly deploy check")
+  end
+
   def capacity_full(server)
     return if ENV["ADMIN_EMAIL"].blank?
     @server = server

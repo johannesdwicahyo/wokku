@@ -1,0 +1,8 @@
+The weekly starter check deployed <%= @total %> framework starters to throwaway apps. These failed:
+
+<% @failures.each do |slug, reason| -%>
+- <%= slug %>: <%= reason %>
+<% end -%>
+
+Each starter's repo is the `documentation:` URL in app/templates/<slug>/docker-compose.yml.
+Re-run by hand: StarterCheckJob.perform_later
