@@ -5334,6 +5334,12 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
+        '400':
+          description: team_id missing
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
       requestBody:
         content:
           application/json:
