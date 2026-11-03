@@ -2,6 +2,7 @@
 # documentation: https://github.com/hoppscotch/hoppscotch
 # slogan: Open-source API development ecosystem
 # category: devtools
+# hidden: true
 # tags: api-testing, http, node
 # icon: api
 # port: 3000

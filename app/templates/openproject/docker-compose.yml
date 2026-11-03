@@ -2,6 +2,7 @@
 # documentation: https://github.com/opf/openproject
 # slogan: Open-source project management software with Gantt charts and agile boards
 # category: productivity
+# hidden: true
 # tags: project-management, gantt, agile, scrum
 # icon: productivity
 # port: 8080

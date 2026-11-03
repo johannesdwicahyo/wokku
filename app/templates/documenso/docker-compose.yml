@@ -2,6 +2,7 @@
 # documentation: https://github.com/documenso/documenso
 # slogan: Digital document signing platform
 # category: productivity
+# hidden: true
 # tags: e-signature, documents, node
 # icon: form
 # port: 3000

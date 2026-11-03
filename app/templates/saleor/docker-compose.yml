@@ -2,6 +2,7 @@
 # documentation: https://github.com/saleor/saleor
 # slogan: GraphQL-first e-commerce platform
 # category: ecommerce
+# hidden: true
 # tags: ecommerce, graphql, python
 # icon: ecommerce
 # port: 8000

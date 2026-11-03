@@ -2,6 +2,7 @@
 # documentation: https://github.com/baserow/baserow
 # slogan: Open-source no-code database platform
 # category: databases
+# hidden: true
 # tags: no-code, database, python
 # icon: db
 # port: 80

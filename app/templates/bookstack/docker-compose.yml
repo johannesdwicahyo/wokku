@@ -2,6 +2,7 @@
 # documentation: https://github.com/BookStackApp/BookStack
 # slogan: Simple wiki and documentation platform
 # category: cms
+# hidden: true
 # tags: wiki, docs, php
 # icon: wiki
 # port: 80

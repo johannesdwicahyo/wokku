@@ -64,7 +64,7 @@ RSpec.describe TemplateRegistry do
   it "hides retired-engine templates" do
     stub_const("DatabaseService::RETIRED_TYPES", %w[mysql])
     slugs = described_class.new.all.map { |t| t[:slug] }
-    expect(slugs).to include("wordpress", "matomo", "bookstack") # re-engined to mariadb
+    expect(slugs).to include("wordpress", "matomo") # re-engined to mariadb
     expect(slugs).not_to include("ghost")                        # mysql-only
     expect(TemplateRegistry.new.find("ghost")).to be_nil
   end

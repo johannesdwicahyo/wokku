@@ -2,6 +2,7 @@
 # documentation: https://github.com/baptisteArno/typebot.io
 # slogan: Conversational form and chatbot builder
 # category: communication
+# hidden: true
 # tags: chatbot, forms, node
 # icon: chat
 # port: 3000
