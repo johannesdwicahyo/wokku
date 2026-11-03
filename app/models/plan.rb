@@ -78,7 +78,7 @@ class Plan < ApplicationRecord
   def dedicated_slot_cap(engine)
     case engine.to_s
     when "postgres" then dedicated_pg_slots.to_i
-    when "mariadb"  then dedicated_pg_slots.to_i
+    when "mariadb", "mysql" then dedicated_pg_slots.to_i
     when "redis"    then dedicated_redis_slots.to_i
     else 0
     end
