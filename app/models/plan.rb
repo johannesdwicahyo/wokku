@@ -69,7 +69,8 @@ class Plan < ApplicationRecord
   end
 
   # Whether this plan offers any dedicated upgrade for the given engine.
-  # Free returns false on both; paid plans return true on postgres + redis.
+  # Free returns false; paid plans offer the database pool (postgres, mysql,
+  # mariadb, mongodb — one shared slot count) and redis.
   def offers_dedicated?(engine)
     dedicated_slot_cap(engine).positive?
   end
@@ -78,7 +79,7 @@ class Plan < ApplicationRecord
   def dedicated_slot_cap(engine)
     case engine.to_s
     when "postgres" then dedicated_pg_slots.to_i
-    when "mariadb", "mysql" then dedicated_pg_slots.to_i
+    when "mariadb", "mysql", "mongodb" then dedicated_pg_slots.to_i
     when "redis"    then dedicated_redis_slots.to_i
     else 0
     end
