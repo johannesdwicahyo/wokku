@@ -64,8 +64,7 @@ class CreateDedicatedDatabaseJob < ApplicationJob
 
   # Per-engine image for a fresh service.create op — control-plane side now
   # that wokkud (not the dokku plugin) provisions the container. Only the
-  # ENGINE_CONFIG engines land here (mysql is retired, grandfathered rows
-  # never re-enter #provision! since they're already :running).
+  # ENGINE_CONFIG engines land here.
   DEFAULT_IMAGES = {
     "mysql" => "mysql:8.4", "mariadb" => "mariadb:11.4", "mongodb" => "mongo:7"
   }.freeze

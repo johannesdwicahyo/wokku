@@ -19,13 +19,14 @@ module Addons
   # dedicated path. Every shared mode is free on every plan (2026-10-05):
   # postgres, mariadb, redis. rabbitmq + meilisearch left the offering
   # 2026-10-05 (zero tenants in prod); memcached 2026-10-06 (no isolation).
-  # mysql retired 2026-07-09 (dedicated MySQL retired, see
-  # DatabaseService::RETIRED_TYPES) — not offered here for new services.
+  # mysql is dedicated-only: the free shared SQL tier stays MariaDB (Laravel
+  # runs on either). Retired 07-09, back 2026-11-03.
   class PickerOptions
     ENGINES = [
       { key: "postgres",      label: "PostgreSQL",   modes: %w[shared dedicated] },
       { key: "redis",         label: "Redis",        modes: %w[shared dedicated] },
       { key: "mariadb",       label: "MariaDB",      modes: %w[shared dedicated] },
+      { key: "mysql",         label: "MySQL",        modes: %w[dedicated] },
       { key: "mongodb",       label: "MongoDB",      modes: %w[dedicated] }
       # elasticsearch pulled 2026-07-15: dokku-elasticsearch has no
       # export/import, so an ES service would be unbackable (needs ES

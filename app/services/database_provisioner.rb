@@ -28,10 +28,9 @@ class DatabaseProvisioner
 
   # Phase B4: per-engine default image for a fresh service.create op —
   # control-plane side now that wokkud (not the dokku plugin) provisions the
-  # container. Mirrors DatabaseService::DEDICATED_ENGINES (mysql is retired/grandfathered
-  # only — a fresh dedicated create never sees it).
+  # container. Mirrors DatabaseService::DEDICATED_ENGINES.
   DEFAULT_IMAGES = {
-    "postgres" => "postgres:16", "mariadb" => "mariadb:11.4",
+    "postgres" => "postgres:16", "mysql" => "mysql:8.4", "mariadb" => "mariadb:11.4",
     "mongodb" => "mongo:7", "redis" => "redis:7"
   }.freeze
 

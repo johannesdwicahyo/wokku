@@ -78,9 +78,9 @@ RSpec.describe Plan, "bundle v2 REVISED" do
     end
   end
 
-  describe "DEDICATED_ENGINES (mariadb replaced retired mysql, 2026-07-09)" do
-    it "lists postgres, mariadb, mongodb, redis" do
-      expect(Plan::DEDICATED_ENGINES).to contain_exactly("postgres", "mariadb", "mongodb", "redis")
+  describe "DEDICATED_ENGINES (mysql back 2026-11-03)" do
+    it "lists postgres, mysql, mariadb, mongodb, redis" do
+      expect(Plan::DEDICATED_ENGINES).to contain_exactly("postgres", "mysql", "mariadb", "mongodb", "redis")
     end
   end
 end

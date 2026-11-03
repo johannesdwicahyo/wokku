@@ -166,7 +166,7 @@
             chrome) — a fieldset's disabled attribute disables every
             descendant input, so an inactive block never posts its
             cpu/memory_mb/disk_gb even if JS hasn't run yet. %>
-        <fieldset disabled data-addon-tier-picker-target="shapeBuilder" data-shape-engines="postgres mariadb mongodb" class="hidden border-0 p-0 m-0">
+        <fieldset disabled data-addon-tier-picker-target="shapeBuilder" data-shape-engines="postgres mysql mariadb mongodb" class="hidden border-0 p-0 m-0">
           <%= render Organisms::ResourceBuilderComponent.new(
                 name: "", shape: Resources::Shape.new(**Resources::Shape::SERVICE_PRESETS.fetch("postgres")["small"]),
                 presets: Resources::Shape::SERVICE_PRESETS.fetch("postgres"), disk: true) %>

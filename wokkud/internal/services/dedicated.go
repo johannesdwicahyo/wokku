@@ -80,6 +80,36 @@ var dedicatedEngines = map[string]dedicatedEngineSpec{
 		},
 		restartAfterSetConns: true,
 	},
+	"mysql": {
+		dataPath: "/var/lib/mysql",
+		env: func(pw, db string) []string {
+			e := []string{"MYSQL_ROOT_PASSWORD=" + pw}
+			if db != "" {
+				e = append(e, "MYSQL_DATABASE="+db)
+			}
+			return e
+		},
+		// Same persisted conf.d file as mariadb (the official mysql image
+		// includes /etc/mysql/conf.d from /etc/my.cnf).
+		setConnsCmd: func(n int) []string {
+			return []string{"sh", "-c", fmt.Sprintf(
+				"printf '[mysqld]\\nmax_connections=%d\\n' > /etc/mysql/conf.d/zz-wokku-limits.cnf", n)}
+		},
+		restartAfterSetConns: true,
+		// MySQL 8 defaults idle at ~400 MB+, mostly performance_schema — the
+		// reason it was retired 2026-07-09. These flags fit a small box.
+		cmd: []string{
+			"mysqld",
+			"--performance-schema=OFF",
+			"--innodb-buffer-pool-size=64M",
+			"--innodb-log-buffer-size=8M",
+			"--table-open-cache=400",
+			"--table-definition-cache=400",
+			"--temptable-max-ram=32M",
+		},
+		// Matches Resources::Shape::ENGINE_MIN_MEMORY_MB (the 512 MB smallest SQL preset).
+		minMemoryMB: 512,
+	},
 	"redis": {
 		dataPath: "/data",
 		env:      func(pw, db string) []string { return nil }, // redis has no application-database concept; db ignored

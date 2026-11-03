@@ -61,10 +61,16 @@ RSpec.describe TemplateRegistry do
     expect(registry.featured.map { |f| f[:slug] }).to include("hermes-agent")
   end
 
-  it "hides retired-engine templates but restores re-engined ones" do
+  it "hides retired-engine templates" do
+    stub_const("DatabaseService::RETIRED_TYPES", %w[mysql])
     slugs = described_class.new.all.map { |t| t[:slug] }
     expect(slugs).to include("wordpress", "matomo", "bookstack") # re-engined to mariadb
-    expect(slugs).not_to include("ghost")                        # still mysql → still pulled
+    expect(slugs).not_to include("ghost")                        # mysql-only
+    expect(TemplateRegistry.new.find("ghost")).to be_nil
+  end
+
+  it "offers ghost now that mysql is back" do
+    expect(described_class.new.find("ghost")).to be_present
   end
 
   it "hides templates marked `# hidden: true`" do

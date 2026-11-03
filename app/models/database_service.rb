@@ -9,7 +9,7 @@ class DatabaseService < ApplicationRecord
   SHARED_ENGINES      = %w[postgres mariadb redis].freeze
   # Every shared engine is free on every plan (founder, 2026-10-05).
   SHARED_ENGINES_FREE = SHARED_ENGINES
-  DEDICATED_ENGINES   = %w[postgres mariadb mongodb redis].freeze
+  DEDICATED_ENGINES   = %w[postgres mysql mariadb mongodb redis].freeze
   belongs_to :server
   belongs_to :creator, class_name: "User", foreign_key: :creator_id, optional: true
   belongs_to :parent_service, class_name: "DatabaseService", optional: true
@@ -62,12 +62,11 @@ class DatabaseService < ApplicationRecord
   scope :shared_tenants, -> { where(shared: true) }
   scope :dedicated, -> { where(shared: false) }
 
-  # Retired engines (founder decision 2026-07-09): no NEW dedicated
-  # services, but existing ones are grandfathered — they keep running,
-  # billing, and backing up (the two live Ghost MySQLs can't migrate:
-  # Ghost supports MySQL only). Guarded on :create so every entry point
-  # (dashboard, API, MCP) is covered in one place.
-  RETIRED_TYPES = %w[mysql].freeze
+  # Retired engines: no NEW dedicated services; existing ones keep running,
+  # billing, and backing up. Guarded on :create so every entry point
+  # (dashboard, API, MCP) is covered in one place. Empty since MySQL came back
+  # 2026-11-03 (retired 07-09 for memory; wokkud now boots it trimmed).
+  RETIRED_TYPES = %w[].freeze
 
   # Free / infra tiers never get a per-resource shape (mirrors the cloud's
   # Billing::ShapeBackfill::EXCLUDED_SERVICE_TIERS).

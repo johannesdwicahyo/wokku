@@ -329,6 +329,7 @@ func TestServiceCreateSetsDBCreationEnv(t *testing.T) {
 		{"postgres", "postgres:16", "POSTGRES_DB=mtx_wp"},
 		{"mariadb", "mariadb:11.4", "MARIADB_DATABASE=mtx_wp_mariadb"},
 		{"mongodb", "mongo:7", "MONGO_INITDB_DATABASE=mtx_wp_mongo"},
+		{"mysql", "mysql:8.4", "MYSQL_DATABASE=mtx_wp_mysql"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.serviceType, func(t *testing.T) {
@@ -948,5 +949,21 @@ func TestSetLimitsClampsMongoToMemoryFloor(t *testing.T) {
 	}
 	if got := strings.Join(f.calls, " "); !strings.Contains(got, "ContainerUpdate(dokku.postgres.x,128") {
 		t.Fatalf("postgres keeps 128: %v", f.calls)
+	}
+}
+
+// MySQL 8 at defaults idles at ~400 MB+ (performance_schema) — why it was
+// retired 2026-07-09. It boots trimmed, and small boxes clamp to its floor.
+func TestMysqlBootsTrimmedAndClampsToFloor(t *testing.T) {
+	cmd := strings.Join(dedicatedEngines["mysql"].cmd, " ")
+	if !strings.Contains(cmd, "--performance-schema=OFF") || !strings.Contains(cmd, "--innodb-buffer-pool-size=64M") {
+		t.Fatalf("mysql must boot trimmed, got %q", cmd)
+	}
+	f := &fakeDocker{}
+	if err := serviceSetLimits(context.Background(), f, "dokku.mysql.x", "mysql", 128, 0, 0); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Join(f.calls, " "); !strings.Contains(got, "ContainerUpdate(dokku.mysql.x,512") {
+		t.Fatalf("mysql 128 MB must clamp to 512: %v", f.calls)
 	}
 }

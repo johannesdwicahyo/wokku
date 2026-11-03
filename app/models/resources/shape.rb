@@ -23,7 +23,7 @@ module Resources
       "large"  => { cpu: 1.0,  memory_mb: 2048, disk_gb: 50 }
     }.freeze
     SERVICE_PRESETS = {
-      "postgres" => sql_presets, "mariadb" => sql_presets, "mongodb" => sql_presets,
+      "postgres" => sql_presets, "mysql" => sql_presets, "mariadb" => sql_presets, "mongodb" => sql_presets,
       "redis" => {
         "small"  => { cpu: 0.25, memory_mb: 256,  disk_gb: 1 },
         "medium" => { cpu: 0.25, memory_mb: 1024, disk_gb: 2 },
@@ -59,7 +59,9 @@ module Resources
     # init runs mongosh beside it; at 128 MB init is OOM-killed before the
     # root user exists (prod smoke 2026-10-07). wokkud clamps to the same
     # floor (dedicatedEngineSpec.minMemoryMB) for legacy-tier paths.
-    ENGINE_MIN_MEMORY_MB = { "mongodb" => 512 }.freeze
+    # MySQL 8: performance_schema is off and the buffer pool trimmed (wokkud), but
+    # it still wants headroom — matches wokkud's mysql floor.
+    ENGINE_MIN_MEMORY_MB = { "mongodb" => 512, "mysql" => 512 }.freeze
 
     def errors(engine: nil)
       grid = GRID.filter_map do |key, g|

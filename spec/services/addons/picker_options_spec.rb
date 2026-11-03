@@ -22,9 +22,9 @@ RSpec.describe Addons::PickerOptions do
       expect(result.keys).to eq(%w[postgres redis memcached mariadb mongodb])
     end
 
-    it "does not expose mysql — dedicated MySQL is retired" do
+    it "offers mysql as dedicated-only — the free shared SQL tier stays MariaDB" do
       result = described_class.for_user(free_user)
-      expect(result.keys).not_to include("mysql")
+      expect(result["mysql"][:modes].map { |m| m[:mode] }).to eq(%w[dedicated])
     end
 
     it "does not expose elasticsearch — unbackable (dokku plugin has no export), pulled 2026-07-15" do
