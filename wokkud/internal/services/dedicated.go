@@ -73,10 +73,9 @@ var dedicatedEngines = map[string]dedicatedEngineSpec{
 			// `SET GLOBAL max_connections` is runtime-only and is lost when the
 			// entrypoint restarts mysqld after bootstrap (op reports success,
 			// value stays at the 151 default — prod bug 2026-07-17). Persist it
-			// in a conf.d file instead: no DB auth needed (dodges the password
-			// race too), and restartAfterSetConns below makes mysqld read it.
-			return []string{"sh", "-c", fmt.Sprintf(
-				"printf '[mysqld]\\nmax_connections=%d\\n' > /etc/mysql/conf.d/zz-wokku-limits.cnf", n)}
+			// in a conf.d file instead, and restartAfterSetConns below makes
+			// mysqld read it.
+			return mysqlLimitsCmd("mariadb-admin", n)
 		},
 		restartAfterSetConns: true,
 	},
@@ -91,10 +90,7 @@ var dedicatedEngines = map[string]dedicatedEngineSpec{
 		},
 		// Same persisted conf.d file as mariadb (the official mysql image
 		// includes /etc/mysql/conf.d from /etc/my.cnf).
-		setConnsCmd: func(n int) []string {
-			return []string{"sh", "-c", fmt.Sprintf(
-				"printf '[mysqld]\\nmax_connections=%d\\n' > /etc/mysql/conf.d/zz-wokku-limits.cnf", n)}
-		},
+		setConnsCmd: func(n int) []string { return mysqlLimitsCmd("mysqladmin", n) },
 		restartAfterSetConns: true,
 		// MySQL 8/9 defaults idle at ~400 MB+, mostly performance_schema — the
 		// reason it was retired 2026-07-09. These flags fit a small box.
@@ -157,6 +153,20 @@ var dedicatedEngines = map[string]dedicatedEngineSpec{
 const setConnsRetryAttempts = 30
 
 var setConnsRetryInterval = 2 * time.Second
+
+// mysqlLimitsCmd writes the max_connections conf.d file, but only once the
+// server answers on TCP. First boot runs init on a --skip-networking temp
+// server and creates root@'%' last; writing + restarting before then (as
+// serviceSetLimits does right after start) killed init midway, leaving only
+// root@localhost — every app got "Host ... is not allowed to connect"
+// (wordpress/bookstack/ghost test deploys, 2026-11-03). `admin ping` exits 0
+// even on access denied, so it needs no credentials.
+func mysqlLimitsCmd(admin string, n int) []string {
+	return []string{"sh", "-c", fmt.Sprintf(
+		"for i in $(seq 1 120); do %s --protocol=tcp -h127.0.0.1 ping >/dev/null 2>&1 && break; sleep 1; done; "+
+			"%s --protocol=tcp -h127.0.0.1 ping >/dev/null 2>&1 || exit 1; "+
+			"printf '[mysqld]\\nmax_connections=%d\\n' > /etc/mysql/conf.d/zz-wokku-limits.cnf", admin, admin, n)}
+}
 
 // dedicatedAliases: the container name, plus the hyphenated
 // `dokku-<type>-<name>` alias the dokku plugins gave their services. Apps

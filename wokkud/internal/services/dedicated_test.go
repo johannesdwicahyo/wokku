@@ -985,3 +985,18 @@ func TestRecreateKeepsDokkuHyphenAlias(t *testing.T) {
 		t.Fatalf("non-dokku. names get only themselves, got %v", got)
 	}
 }
+
+// First-boot init only opens TCP once root@'%' exists; the limits write (and
+// its restart) must wait for that, or init is cut short (2026-11-03).
+func TestMysqlFamilyLimitsWaitForTCPBeforeWriting(t *testing.T) {
+	for engine, admin := range map[string]string{"mariadb": "mariadb-admin", "mysql": "mysqladmin"} {
+		got := strings.Join(dedicatedEngines[engine].setConnsCmd(20), " ")
+		ping := admin + " --protocol=tcp -h127.0.0.1 ping"
+		if !strings.Contains(got, ping) || strings.Index(got, ping) > strings.Index(got, "zz-wokku-limits.cnf") {
+			t.Fatalf("%s must ping over TCP before writing the conf, got %q", engine, got)
+		}
+		if !strings.Contains(got, "|| exit 1") {
+			t.Fatalf("%s must fail (and be retried) if the server never comes up, got %q", engine, got)
+		}
+	}
+}
