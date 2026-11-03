@@ -2,6 +2,7 @@
 # documentation: https://github.com/outline/outline
 # slogan: Team wiki and knowledge base
 # category: databases
+# hidden: true
 # tags: wiki, knowledge-base, node
 # icon: wiki
 # port: 3000

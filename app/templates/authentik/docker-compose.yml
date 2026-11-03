@@ -2,6 +2,7 @@
 # documentation: https://github.com/goauthentik/authentik
 # slogan: Open-source identity provider with SSO, OAuth2, SAML, and LDAP support
 # category: security
+# hidden: true
 # tags: auth, sso, oauth, identity, ldap
 # icon: security
 # port: 9000
