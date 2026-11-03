@@ -66,7 +66,7 @@ class CreateDedicatedDatabaseJob < ApplicationJob
   # that wokkud (not the dokku plugin) provisions the container. Only the
   # ENGINE_CONFIG engines land here.
   DEFAULT_IMAGES = {
-    "mysql" => "mysql:8.4", "mariadb" => "mariadb:11.4", "mongodb" => "mongo:7"
+    "mysql" => "mysql:9.6.0", "mariadb" => "mariadb:11.4", "mongodb" => "mongo:7"
   }.freeze
 
   def provision!(dedicated)

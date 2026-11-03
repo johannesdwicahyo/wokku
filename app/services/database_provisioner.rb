@@ -28,9 +28,11 @@ class DatabaseProvisioner
 
   # Phase B4: per-engine default image for a fresh service.create op —
   # control-plane side now that wokkud (not the dokku plugin) provisions the
-  # container. Mirrors DatabaseService::DEDICATED_ENGINES.
+  # container. Mirrors DatabaseService::DEDICATED_ENGINES. mysql stays on the
+  # 9.6 the live Ghost DBs run: DatastoreReconcileJob recreates with this
+  # image, and MySQL refuses to start on data from a newer version.
   DEFAULT_IMAGES = {
-    "postgres" => "postgres:16", "mysql" => "mysql:8.4", "mariadb" => "mariadb:11.4",
+    "postgres" => "postgres:16", "mysql" => "mysql:9.6.0", "mariadb" => "mariadb:11.4",
     "mongodb" => "mongo:7", "redis" => "redis:7"
   }.freeze
 

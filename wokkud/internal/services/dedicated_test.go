@@ -329,7 +329,7 @@ func TestServiceCreateSetsDBCreationEnv(t *testing.T) {
 		{"postgres", "postgres:16", "POSTGRES_DB=mtx_wp"},
 		{"mariadb", "mariadb:11.4", "MARIADB_DATABASE=mtx_wp_mariadb"},
 		{"mongodb", "mongo:7", "MONGO_INITDB_DATABASE=mtx_wp_mongo"},
-		{"mysql", "mysql:8.4", "MYSQL_DATABASE=mtx_wp_mysql"},
+		{"mysql", "mysql:9.6.0", "MYSQL_DATABASE=mtx_wp_mysql"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.serviceType, func(t *testing.T) {

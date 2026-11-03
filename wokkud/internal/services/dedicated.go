@@ -96,7 +96,7 @@ var dedicatedEngines = map[string]dedicatedEngineSpec{
 				"printf '[mysqld]\\nmax_connections=%d\\n' > /etc/mysql/conf.d/zz-wokku-limits.cnf", n)}
 		},
 		restartAfterSetConns: true,
-		// MySQL 8 defaults idle at ~400 MB+, mostly performance_schema — the
+		// MySQL 8/9 defaults idle at ~400 MB+, mostly performance_schema — the
 		// reason it was retired 2026-07-09. These flags fit a small box.
 		cmd: []string{
 			"mysqld",
