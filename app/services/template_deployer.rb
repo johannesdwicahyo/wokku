@@ -488,9 +488,17 @@ class TemplateDeployer
   def apply_generate_secrets!(app, keys:)
     vars = keys.each_with_object({}) do |key, h|
       next if app.env_vars.exists?(key: key)
-      # APP_KEY is Laravel's (laravel, bookstack): it must be "base64:" + 32
-      # bytes, or every encrypted cookie/session 500s "Unsupported cipher".
-      h[key] = key == "APP_KEY" ? "base64:#{SecureRandom.base64(32)}" : SecureRandom.urlsafe_base64(32)
+      h[key] =
+        case key
+        # Laravel's (laravel, bookstack): "base64:" + 32 bytes, or every
+        # encrypted cookie/session 500s "Unsupported cipher".
+        when "APP_KEY" then "base64:#{SecureRandom.base64(32)}"
+        # LibreChat: a 16-byte IV as hex.
+        when "CREDS_IV" then SecureRandom.hex(16)
+        # 64 hex chars: outline requires exactly that for SECRET_KEY/UTILS_SECRET,
+        # librechat for CREDS_KEY, and hex suits every other app's secret.
+        else SecureRandom.hex(32)
+        end
     end
     return if vars.empty?
     Apps::EnvWriter.set(app, vars)
