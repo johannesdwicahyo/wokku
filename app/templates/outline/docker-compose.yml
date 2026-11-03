@@ -12,6 +12,9 @@
 services:
   outline:
     image: outlinewiki/outline:1.12.0
+    environment:
+      # Wokku databases speak plain TCP on the private overlay.
+      - PGSSLMODE=disable
     depends_on:
       - postgres
       - redis
