@@ -8,7 +8,7 @@
 
 services:
   zitadel:
-    image: ghcr.io/zitadel/zitadel:latest
+    image: ghcr.io/zitadel/zitadel:v4.20.0
     command: start-from-init --masterkey "MasterkeyNeedsToHave32Characters" --tlsMode disabled
     environment:
       - ZITADEL_DATABASE_COCKROACH_HOST=cockroachdb

@@ -15,7 +15,7 @@
 
 services:
   nextcloud:
-    image: nextcloud:latest
+    image: nextcloud:35.0.2
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=nextcloud

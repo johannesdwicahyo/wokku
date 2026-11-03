@@ -8,7 +8,7 @@
 
 services:
   gitness:
-    image: harness/gitness:latest
+    image: harness/gitness:3.0.0-beta.11
     environment:
       - GITNESS_HTTP_BIND=:3000
       - GITNESS_URL_BASE=http://localhost:3000

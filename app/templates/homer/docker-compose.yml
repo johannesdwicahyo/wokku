@@ -8,7 +8,7 @@
 
 services:
   homer:
-    image: b4bz/homer:latest
+    image: b4bz/homer:v26.08.3
     environment:
       - UID=1000
       - GID=1000

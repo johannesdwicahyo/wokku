@@ -10,7 +10,7 @@
 
 services:
   pocketbase:
-    image: ghcr.io/muchobien/pocketbase:latest
+    image: ghcr.io/muchobien/pocketbase:0.40.6
     ports:
       - "8090:8090"
     volumes:

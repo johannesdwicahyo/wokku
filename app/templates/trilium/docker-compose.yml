@@ -9,7 +9,7 @@
 
 services:
   trilium:
-    image: zadam/trilium:latest
+    image: zadam/trilium:0.63.7
     environment:
       - TRILIUM_DATA_DIR=/home/node/trilium-data
     ports:

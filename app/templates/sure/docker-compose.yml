@@ -10,7 +10,7 @@
 
 services:
   sure:
-    image: ghcr.io/we-promise/sure:latest
+    image: ghcr.io/we-promise/sure:0.7.6
     environment:
       - SELF_HOSTED=true
       - RAILS_FORCE_SSL=false

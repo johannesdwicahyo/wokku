@@ -8,6 +8,6 @@
 
 services:
   filebrowser:
-    image: filebrowser/filebrowser:latest
+    image: filebrowser/filebrowser:v2.63.23
     ports:
       - "80:80"

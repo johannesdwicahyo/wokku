@@ -11,7 +11,7 @@
 
 services:
   dify:
-    image: langgenius/dify-web:latest
+    image: langgenius/dify-web:1.18.0
     environment:
       - EDITION=SELF_HOSTED
     depends_on:

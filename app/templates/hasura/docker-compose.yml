@@ -10,7 +10,7 @@
 
 services:
   hasura:
-    image: hasura/graphql-engine:latest
+    image: hasura/graphql-engine:v2.51.4
     environment:
       - HASURA_GRAPHQL_ENABLE_CONSOLE=true
       - HASURA_GRAPHQL_DEV_MODE=false

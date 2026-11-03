@@ -8,7 +8,7 @@
 
 services:
   netdata:
-    image: netdata/netdata:latest
+    image: netdata/netdata:v2.12.2
     environment:
       - NETDATA_CLAIM_TOKEN=
       - NETDATA_CLAIM_URL=https://app.netdata.cloud

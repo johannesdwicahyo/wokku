@@ -12,7 +12,7 @@
 
 services:
   matomo:
-    image: matomo:latest
+    image: matomo:5.14.2
     environment:
       - MATOMO_DATABASE_HOST=mysql
       - MATOMO_DATABASE_DBNAME=matomo

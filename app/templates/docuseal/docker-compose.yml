@@ -9,7 +9,7 @@
 
 services:
   docuseal:
-    image: docuseal/docuseal:latest
+    image: docuseal/docuseal:3.3.5
     environment:
       - RAILS_ENV=production
     volumes:

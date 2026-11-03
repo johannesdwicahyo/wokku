@@ -8,7 +8,7 @@
 
 services:
   hedgedoc:
-    image: quay.io/hedgedoc/hedgedoc:latest
+    image: quay.io/hedgedoc/hedgedoc:1.12.0
     environment:
       - CMD_DB_URL=postgres://hedgedoc:hedgedoc@postgres:5432/hedgedoc
       - CMD_DOMAIN=localhost

@@ -8,7 +8,7 @@
 
 services:
   crowdsec:
-    image: crowdsecurity/crowdsec:latest
+    image: crowdsecurity/crowdsec:v1.8.2
     environment:
       - GID=1000
       - COLLECTIONS=crowdsecurity/linux crowdsecurity/traefik

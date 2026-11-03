@@ -9,7 +9,7 @@
 
 services:
   rallly:
-    image: lukevella/rallly:latest
+    image: lukevella/rallly:4.16.4
     environment:
       - NODE_ENV=production
     depends_on:

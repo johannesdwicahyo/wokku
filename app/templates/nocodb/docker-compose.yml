@@ -12,7 +12,7 @@
 
 services:
   nocodb:
-    image: nocodb/nocodb:latest
+    image: nocodb/nocodb:2026.10.1
     ports:
       - "8080:8080"
     depends_on:

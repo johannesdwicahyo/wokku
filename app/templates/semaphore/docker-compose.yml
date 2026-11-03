@@ -8,7 +8,7 @@
 
 services:
   semaphore:
-    image: semaphoreui/semaphore:latest
+    image: semaphoreui/semaphore:v2.19.17
     environment:
       - SEMAPHORE_DB_USER=semaphore
       - SEMAPHORE_DB_PASS=semaphore

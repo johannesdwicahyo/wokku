@@ -9,7 +9,7 @@
 
 services:
   twenty:
-    image: twentycrm/twenty:latest
+    image: twentycrm/twenty:v2.54.0
     environment:
       - NODE_ENV=production
     depends_on:

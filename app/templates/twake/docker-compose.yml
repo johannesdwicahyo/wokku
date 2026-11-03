@@ -8,7 +8,7 @@
 
 services:
   twake:
-    image: linagora/twake-web:latest
+    image: linagora/twake-web:v2.26.1
     environment:
       - NODE_ENV=production
     ports:

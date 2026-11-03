@@ -9,6 +9,6 @@
 
 services:
   lobechat:
-    image: lobehub/lobe-chat:latest
+    image: lobehub/lobe-chat:1.143.3
     environment:
       - NODE_ENV=production

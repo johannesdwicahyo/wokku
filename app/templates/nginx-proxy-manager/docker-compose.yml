@@ -8,7 +8,7 @@
 
 services:
   nginx-proxy-manager:
-    image: jc21/nginx-proxy-manager:latest
+    image: jc21/nginx-proxy-manager:2.16.0
     environment:
       - DB_SQLITE_FILE=/data/database.sqlite
     ports:

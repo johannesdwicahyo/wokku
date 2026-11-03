@@ -11,7 +11,7 @@
 
 services:
   uptime_kuma:
-    image: louislam/uptime-kuma:latest
+    image: louislam/uptime-kuma:1
     ports:
       - "3001:3001"
     volumes:

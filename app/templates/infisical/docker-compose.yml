@@ -9,7 +9,7 @@
 
 services:
   infisical:
-    image: infisical/infisical:latest
+    image: infisical/infisical:v0.167.5
     environment:
       - NODE_ENV=production
     depends_on:

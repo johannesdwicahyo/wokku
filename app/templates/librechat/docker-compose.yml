@@ -11,7 +11,7 @@
 
 services:
   librechat:
-    image: ghcr.io/danny-avila/librechat:latest
+    image: ghcr.io/danny-avila/librechat:v0.8.7
     environment:
       - HOST=0.0.0.0
       - PORT=3080

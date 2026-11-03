@@ -8,7 +8,7 @@
 
 services:
   leantime:
-    image: leantime/leantime:latest
+    image: leantime/leantime:3.13.2
     environment:
       - LEAN_DB_HOST=mysql
       - LEAN_DB_USER=leantime

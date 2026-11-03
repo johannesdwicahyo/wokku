@@ -8,7 +8,7 @@
 
 services:
   hbbs:
-    image: rustdesk/rustdesk-server:latest
+    image: rustdesk/rustdesk-server:1.1.16
     command: hbbs
     ports:
       - "21115:21115"
@@ -19,7 +19,7 @@ services:
       - rustdesk-data:/root
 
   hbbr:
-    image: rustdesk/rustdesk-server:latest
+    image: rustdesk/rustdesk-server:1.1.16
     command: hbbr
     ports:
       - "21117:21117"

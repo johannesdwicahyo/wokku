@@ -10,7 +10,7 @@
 
 services:
   penpot-frontend:
-    image: penpotapp/frontend:latest
+    image: penpotapp/frontend:2.18.5
     ports:
       - "9001:80"
     environment:

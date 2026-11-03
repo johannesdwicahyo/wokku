@@ -10,7 +10,7 @@
 
 services:
   jellyfin:
-    image: jellyfin/jellyfin:latest
+    image: jellyfin/jellyfin:12.4
     environment:
       - JELLYFIN_PublishedServerUrl=http://localhost:8096
     ports:
