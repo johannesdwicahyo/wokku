@@ -8,7 +8,7 @@
 
 services:
   openproject:
-    image: openproject/openproject:latest
+    image: openproject/openproject:17.9.6
     environment:
       - OPENPROJECT_SECRET_KEY_BASE=changeme-secret-key
       - OPENPROJECT_HOST__NAME=localhost:8080

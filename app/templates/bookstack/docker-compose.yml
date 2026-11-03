@@ -14,7 +14,7 @@
 
 services:
   bookstack:
-    image: bookstack:latest
+    image: lscr.io/linuxserver/bookstack:26.09.2
     depends_on:
       - mysql
 

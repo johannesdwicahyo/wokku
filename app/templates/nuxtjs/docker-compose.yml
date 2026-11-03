@@ -2,6 +2,7 @@
 # documentation: https://github.com/nuxt/nuxt
 # slogan: Intuitive Vue.js framework with SSR and static generation
 # category: frameworks
+# hidden: true
 # tags: node, vue, nuxt, frontend, ssr
 # icon: node
 # deploy_method: git

@@ -10,7 +10,7 @@
 
 services:
   gitea:
-    image: gitea:latest
+    image: gitea/gitea:28.3.0
     depends_on:
       - postgres
 

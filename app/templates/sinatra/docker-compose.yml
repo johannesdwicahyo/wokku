@@ -2,6 +2,7 @@
 # documentation: https://github.com/sinatra/sinatra
 # slogan: Lightweight Ruby web framework for building APIs and apps
 # category: frameworks
+# hidden: true
 # tags: ruby, sinatra, api
 # icon: ruby
 # deploy_method: git

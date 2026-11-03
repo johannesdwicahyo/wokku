@@ -2,6 +2,7 @@
 # documentation: https://github.com/sveltejs/kit
 # slogan: Svelte full-stack framework with file-based routing and SSR
 # category: frameworks
+# hidden: true
 # tags: node, svelte, sveltekit, frontend, fullstack
 # icon: node
 # deploy_method: git

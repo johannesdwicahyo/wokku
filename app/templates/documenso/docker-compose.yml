@@ -8,7 +8,7 @@
 
 services:
   documenso:
-    image: documenso:latest
+    image: documenso/documenso:v2.21.1
     depends_on:
       - postgres
 

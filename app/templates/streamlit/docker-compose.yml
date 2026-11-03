@@ -2,6 +2,7 @@
 # documentation: https://github.com/streamlit/streamlit
 # slogan: Python framework for building interactive data apps in minutes
 # category: frameworks
+# hidden: true
 # tags: python, streamlit, data, dashboard
 # icon: python
 # deploy_method: docker_image

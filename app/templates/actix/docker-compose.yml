@@ -2,6 +2,7 @@
 # documentation: https://github.com/actix/actix-web
 # slogan: Powerful and fast Rust web framework built on Actix actor system
 # category: frameworks
+# hidden: true
 # tags: rust, actix, api, performance
 # icon: rust
 # deploy_method: git

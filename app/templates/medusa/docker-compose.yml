@@ -2,6 +2,7 @@
 # documentation: https://github.com/medusajs/medusa
 # slogan: Headless commerce engine for digital products
 # category: ecommerce
+# hidden: true
 # tags: ecommerce, headless, node
 # icon: ecommerce
 # port: 9000

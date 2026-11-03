@@ -74,6 +74,7 @@ class TemplateRegistry
     # the engine leaves RETIRED_TYPES. Templates bundling their own DB
     # container inside the compose are unaffected.
     templates.reject! { |t| DatabaseService::RETIRED_TYPES.include?(t[:dedicated_db_engine].to_s) }
+    templates.reject! { |t| t[:hidden] }
 
     templates.sort_by { |t| t[:name] }
   end

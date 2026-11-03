@@ -2,6 +2,7 @@
 # documentation: https://github.com/socketry/whoosh
 # slogan: Async Ruby web framework with Falcon server
 # category: frameworks
+# hidden: true
 # tags: ruby, whoosh, falcon, async
 # icon: ruby
 # port: 9292

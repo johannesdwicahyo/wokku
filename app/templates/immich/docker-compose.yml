@@ -12,7 +12,7 @@
 
 services:
   immich:
-    image: immich:latest
+    image: ghcr.io/immich-app/immich-server:v2.5.6
     depends_on:
       - postgres
       - redis

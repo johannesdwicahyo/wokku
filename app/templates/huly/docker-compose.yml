@@ -2,6 +2,7 @@
 # documentation: https://github.com/hcengineering/huly-selfhost
 # slogan: All-in-one project management platform — issues, docs, chat, HR
 # category: productivity
+# hidden: true
 # tags: project-management, issues, docs, chat, collaboration
 # icon: productivity
 # deploy_method: docker_image

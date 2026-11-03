@@ -2,6 +2,7 @@
 # documentation: https://github.com/elysiajs/elysia
 # slogan: Ergonomic Bun web framework with end-to-end type safety
 # category: frameworks
+# hidden: true
 # tags: bun, elysia, typescript, api
 # icon: node
 # deploy_method: git

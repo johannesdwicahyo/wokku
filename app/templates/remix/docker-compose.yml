@@ -2,6 +2,7 @@
 # documentation: https://github.com/remix-run/remix
 # slogan: Full-stack React framework focused on web fundamentals and UX
 # category: frameworks
+# hidden: true
 # tags: node, react, remix, fullstack
 # icon: node
 # deploy_method: git

@@ -2,6 +2,7 @@
 # documentation: https://github.com/honojs/hono
 # slogan: Ultra-fast lightweight web framework for edge and serverless runtimes
 # category: frameworks
+# hidden: true
 # tags: node, hono, edge, api, bun
 # icon: node
 # deploy_method: git

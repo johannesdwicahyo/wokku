@@ -66,4 +66,9 @@ RSpec.describe TemplateRegistry do
     expect(slugs).to include("wordpress", "matomo", "bookstack") # re-engined to mariadb
     expect(slugs).not_to include("ghost")                        # still mysql → still pulled
   end
+
+  it "hides templates marked `# hidden: true`" do
+    expect(described_class.new.find("sinatra")).to be_nil
+    expect(TemplateParser.parse("# name: X\n# hidden: true\nservices: {}\n", slug: "x")[:hidden]).to be(true)
+  end
 end

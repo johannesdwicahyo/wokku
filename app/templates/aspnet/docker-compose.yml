@@ -2,6 +2,7 @@
 # documentation: https://github.com/dotnet/aspnetcore
 # slogan: Cross-platform .NET framework for building modern web apps and APIs
 # category: frameworks
+# hidden: true
 # tags: dotnet, csharp, aspnet, api
 # icon: dotnet
 # deploy_method: git

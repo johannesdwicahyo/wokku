@@ -2,6 +2,7 @@
 # documentation: https://github.com/prisma/prisma-examples
 # slogan: Node.js REST API with Prisma ORM
 # category: frameworks
+# hidden: true
 # tags: node, express, prisma, api
 # icon: node
 # port: 3000

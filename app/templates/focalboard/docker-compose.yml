@@ -2,6 +2,7 @@
 # documentation: https://github.com/mattermost/focalboard
 # slogan: Project management and kanban boards
 # category: productivity
+# hidden: true
 # tags: project-management, kanban, go
 # icon: form
 # port: 8000

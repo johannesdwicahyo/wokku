@@ -50,6 +50,8 @@ class TemplateParser
       repo: metadata["documentation"] || "",
       branch: "main",
       tags: (metadata["tags"] || "").split(",").map(&:strip),
+      # `# hidden: true` keeps a template out of the gallery and API until it can deploy.
+      hidden: metadata["hidden"].to_s.strip == "true",
       deploy_method: image ? "docker_image" : "git",
       docker_image: image,
       container_port: port,

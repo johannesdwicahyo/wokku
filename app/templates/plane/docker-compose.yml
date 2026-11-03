@@ -2,6 +2,7 @@
 # documentation: https://github.com/makeplane/plane
 # slogan: Open-source project management tool — the Jira alternative
 # category: productivity
+# hidden: true
 # tags: project-management, issues, roadmap, agile
 # icon: productivity
 # deploy_method: docker_image

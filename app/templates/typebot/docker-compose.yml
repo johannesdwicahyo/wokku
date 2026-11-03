@@ -8,7 +8,7 @@
 
 services:
   typebot:
-    image: typebot:latest
+    image: baptistearno/typebot-builder:3.19.1
     depends_on:
       - postgres
 

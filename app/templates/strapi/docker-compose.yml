@@ -2,6 +2,7 @@
 # documentation: https://github.com/strapi/strapi
 # slogan: Leading open-source headless CMS
 # category: cms
+# hidden: true
 # tags: headless-cms, api, node
 # icon: cms
 # icon_slug: strapi

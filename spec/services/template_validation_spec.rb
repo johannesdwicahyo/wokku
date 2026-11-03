@@ -33,18 +33,10 @@ RSpec.describe "Template validation" do
     end
   end
 
-  # Their image does not exist on its registry (2026-11-03 audit) — fix the
-  # image or retire the template, then drop it from this list.
-  BROKEN_IMAGE = %w[
-    actix aspnet authentik baserow bookstack calcom documenso elysia express-prisma focalboard
-    formbricks gitea go-fiber hono hoppscotch huly immich medusa minio nuxtjs openproject outline
-    plane remix saleor sinatra spring-boot strapi streamlit supabase sveltekit typebot wallabag whoosh-falcon
-  ].freeze
-
   it "pins every deployed image to a version, never :latest" do
     registry.all.each do |template|
       image = template[:docker_image].to_s
-      next if image.empty? || BROKEN_IMAGE.include?(template[:slug])
+      next if image.empty?
       pinned = image.include?("@sha256:") || image.split("/").last.match?(/:(?!latest\z)\S+\z/)
       expect(pinned).to be(true), "#{template[:slug]} deploys unpinned image #{image}"
     end
