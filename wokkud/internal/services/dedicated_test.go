@@ -229,7 +229,7 @@ func TestServiceCreatePostgresCallSequence(t *testing.T) {
 		"VolumeCreate(/var/lib/dokku/services/postgres/mydb/data)",
 		"ContainerCreate(name=dokku.postgres.mydb image=postgres:16-alpine env=[POSTGRES_PASSWORD=pw PGDATA=/var/lib/postgresql/data] bind=/var/lib/dokku/services/postgres/mydb/data:/var/lib/postgresql/data cmd=[])",
 		"NetworkEnsure(dokku-net)",
-		"NetworkConnect(dokku-net,dokku.postgres.mydb,aliases=)",
+		"NetworkConnect(dokku-net,dokku.postgres.mydb,aliases=dokku.postgres.mydb,dokku-postgres-mydb)",
 		"ContainerStart(dokku.postgres.mydb)",
 		"ContainerUpdate(dokku.postgres.mydb,256)",
 	}
@@ -965,5 +965,23 @@ func TestMysqlBootsTrimmedAndClampsToFloor(t *testing.T) {
 	}
 	if got := strings.Join(f.calls, " "); !strings.Contains(got, "ContainerUpdate(dokku.mysql.x,512") {
 		t.Fatalf("mysql 128 MB must clamp to 512: %v", f.calls)
+	}
+}
+
+// Apps adopted from dokku dial `dokku-<type>-<name>`; a recreate must keep
+// answering to it or they crash-loop with ENOTFOUND (ghost-uoes, 2026-11-03).
+func TestRecreateKeepsDokkuHyphenAlias(t *testing.T) {
+	f := &fakeDocker{}
+	err := serviceCreate(context.Background(), f, "dokku.mysql.ghost-x", CreateParams{
+		ServiceType: "mysql", Image: "mysql:9.6.0", Network: "wokku-services",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Join(f.calls, " | "); !strings.Contains(got, "NetworkConnect(wokku-services,dokku.mysql.ghost-x,aliases=dokku.mysql.ghost-x,dokku-mysql-ghost-x)") {
+		t.Fatalf("want both aliases on the overlay, got %v", f.calls)
+	}
+	if got := dedicatedAliases("dokku-shared-redis"); len(got) != 1 {
+		t.Fatalf("non-dokku. names get only themselves, got %v", got)
 	}
 }

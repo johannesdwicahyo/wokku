@@ -201,7 +201,7 @@ func ensureOverlayAttachment(ctx context.Context, d dockerAPI, name string) (boo
 	if err := d.NetworkEnsure(ctx, "wokku-services"); err != nil {
 		return false, err
 	}
-	if err := d.NetworkConnect(ctx, "wokku-services", name, name); err != nil {
+	if err := d.NetworkConnect(ctx, "wokku-services", name, dedicatedAliases(name)...); err != nil {
 		return false, err
 	}
 	return true, nil

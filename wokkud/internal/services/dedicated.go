@@ -158,6 +158,18 @@ const setConnsRetryAttempts = 30
 
 var setConnsRetryInterval = 2 * time.Second
 
+// dedicatedAliases: the container name, plus the hyphenated
+// `dokku-<type>-<name>` alias the dokku plugins gave their services. Apps
+// adopted from dokku still dial that host; without it a recreate (ensure)
+// strands them with ENOTFOUND (ghost-uoes, 2026-11-03).
+func dedicatedAliases(containerName string) []string {
+	aliases := []string{containerName}
+	if strings.HasPrefix(containerName, "dokku.") {
+		aliases = append(aliases, strings.ReplaceAll(containerName, ".", "-"))
+	}
+	return aliases
+}
+
 func serviceCreate(ctx context.Context, d dockerAPI, containerName string, p CreateParams) error {
 	spec, ok := dedicatedEngines[p.ServiceType]
 	if !ok {
@@ -199,7 +211,7 @@ func serviceCreate(ctx context.Context, d dockerAPI, containerName string, p Cre
 				return fmt.Errorf("network ensure: %w", err)
 			}
 		}
-		if err := d.NetworkConnect(ctx, p.Network, containerName); err != nil {
+		if err := d.NetworkConnect(ctx, p.Network, containerName, dedicatedAliases(containerName)...); err != nil {
 			return fmt.Errorf("network connect: %w", err)
 		}
 	}
