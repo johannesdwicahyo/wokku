@@ -33,7 +33,8 @@ module Api
         return render_api_error(:not_found, message: "Template not found") unless template
 
         server = Server.lookup!(params[:server_id])
-        app_name = params[:app_name].to_s.parameterize
+        # The CLI and MCP send `name`; the documented param is `app_name`.
+        app_name = (params[:app_name].presence || params[:name]).to_s.parameterize
 
         return render json: { error: "App name required" }, status: :unprocessable_entity if app_name.blank?
 
