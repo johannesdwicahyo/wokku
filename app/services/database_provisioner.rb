@@ -231,6 +231,15 @@ class DatabaseProvisioner
     db.app_records.each { |app_record| app_record.env_vars.select { |e| values.include?(e.value) }.each(&:destroy) }
   end
 
+  # Env a dedicated DB writes on an app: <TYPE>_URL, plus DATABASE_URL for
+  # postgres (what Rails/Django/Prisma read) unless the app already has one —
+  # a shared tenant or another DB keeps it. release_dedicated_env! drops both.
+  def self.dedicated_env(app, db)
+    env = { "#{db.service_type.upcase}_URL" => db.dsn }
+    env["DATABASE_URL"] = db.dsn if db.service_type == "postgres" && app.runtime_env["DATABASE_URL"].blank?
+    env
+  end
+
   # Rails' mysql2 adapter wants the mysql2:// scheme in DATABASE_URL.
   def self.mysql2_url(dsn) = dsn.sub(/\Amysql:/, "mysql2:")
 
@@ -345,7 +354,7 @@ class DatabaseProvisioner
     db.update!(wokkud_managed: true, dsn: dsn)
     return unless @app
 
-    Apps::EnvWriter.set(@app, { "#{@service_type.upcase}_URL" => dsn })
+    Apps::EnvWriter.set(@app, self.class.dedicated_env(@app, db))
     # The DSN host is the container NAME, which resolves via Docker DNS on
     # the wokku-services overlay — the service joins it at create
     # (network: DEDICATED_NETWORK above) and every app's Swarm tasks already
