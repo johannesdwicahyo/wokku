@@ -10,6 +10,9 @@
 services:
   metabase:
     image: metabase/metabase:v0.65.2.6
+    environment:
+      # JVM defaults to 25% of the box (256 MB) and dies with OutOfMemoryError.
+      - JAVA_OPTS=-XX:MaxRAMPercentage=75
     depends_on:
       - postgres
 
