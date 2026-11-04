@@ -501,6 +501,8 @@ class TemplateDeployer
         when "APP_KEY" then "base64:#{SecureRandom.base64(32)}"
         # LibreChat: a 16-byte IV as hex.
         when "CREDS_IV" then SecureRandom.hex(16)
+        # Plausible refuses to boot unless this is base64 of exactly 32 bytes.
+        when "TOTP_VAULT_KEY" then SecureRandom.base64(32)
         # 64 hex chars: outline requires exactly that for SECRET_KEY/UTILS_SECRET,
         # librechat for CREDS_KEY, and hex suits every other app's secret.
         else SecureRandom.hex(32)
