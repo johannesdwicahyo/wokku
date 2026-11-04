@@ -2,6 +2,7 @@
 # documentation: https://github.com/plausible/analytics
 # slogan: Privacy-friendly Google Analytics alternative
 # category: analytics
+# hidden: true
 # tags: analytics, privacy, elixir
 # icon: analytics
 # icon_slug: plausibleanalytics

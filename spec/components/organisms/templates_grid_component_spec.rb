@@ -4,7 +4,7 @@ RSpec.describe Organisms::TemplatesGridComponent, type: :component do
   describe "default (en)" do
     it "features all 6 vibecoder/agency picks in row 1" do
       render_inline(described_class.new)
-      %w[Ghost n8n WordPress NocoDB Plausible].each do |name|
+      %w[Ghost n8n WordPress NocoDB Umami].each do |name|
         expect(page).to have_text(name)
       end
       expect(page).to have_text("Uptime Kuma")
@@ -17,7 +17,7 @@ RSpec.describe Organisms::TemplatesGridComponent, type: :component do
 
     it "exposes the new templates as the leading six" do
       lead_six = described_class::TEMPLATES.first(6).map { |t| t[:name] }
-      expect(lead_six).to eq([ "Ghost", "n8n", "WordPress", "NocoDB", "Plausible", "Uptime Kuma" ])
+      expect(lead_six).to eq([ "Ghost", "n8n", "WordPress", "NocoDB", "Umami", "Uptime Kuma" ])
     end
 
     it "renders a 12-card grid (no template count regression)" do

@@ -10,7 +10,7 @@ module Organisms
       { name: "n8n",         cat_en: "Automation",   cat_id: "Otomasi",        icon: "n8n" },
       { name: "WordPress",   cat_en: "CMS",          cat_id: "CMS",            icon: "wordpress" },
       { name: "NocoDB",      cat_en: "Airtable alt", cat_id: "Alt. Airtable",  icon: "nocodb" },
-      { name: "Plausible",   cat_en: "Analytics",    cat_id: "Analitik",       icon: "plausibleanalytics" },
+      { name: "Umami",       cat_en: "Analytics",    cat_id: "Analitik",       icon: "umami" },
       { name: "Uptime Kuma", cat_en: "Monitoring",   cat_id: "Monitoring",     icon: "uptimekuma" },
       # Row 2 — tier-2 picks, kept for grid balance and breadth signal
       { name: "Gitea",       cat_en: "Git hosting",  cat_id: "Git hosting",    icon: "gitea" },
