@@ -132,6 +132,10 @@ module Dashboard
         return
       end
 
+      # Record-first: link now so deleting the app while the job is queued or
+      # mid-provision tears this row down too, instead of orphaning it.
+      DatabaseProvisioner.link!(app, @database)
+
       # Provisioning happens async — the agent may need to pull a multi-MB
       # docker image, which can blow past kamal-proxy's 30s response
       # timeout. The DB row stays in status=:creating; CreateAddonJob
@@ -139,11 +143,8 @@ module Dashboard
       CreateAddonJob.perform_later(@database.id, app.id)
       track("database.create_queued", target: @database, metadata: { tier: @database.tier_name, app: app.name })
 
-      # Send the user back to the app's resources page rather than the
-      # addon's show page. Linking happens async via CreateAddonJob, so
-      # the addon has no app_records yet — DatabaseServicePolicy#show?
-      # requires that link and would 403 here. Resources page also
-      # gives them context (they just added an addon to this app).
+      # Send the user back to the app's resources page — it gives them
+      # context (they just added an addon to this app).
       redirect_to dashboard_app_resources_path(app),
         notice: "#{@database.service_type.capitalize} #{@database.name} is provisioning — this can take a minute or two for image pulls."
     rescue ActiveRecord::RecordNotFound

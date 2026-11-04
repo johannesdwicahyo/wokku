@@ -245,6 +245,16 @@ class DatabaseProvisioner
       db.name.to_s.sub(/-(?:pg|#{Regexp.escape(db.service_type)})-shared-\h+\z/, "")
   end
 
+  # Idempotent app↔DB link (retries and record-first callers both land here).
+  def self.link!(app, db)
+    alias_name = if db.shared?
+      db.service_type == "postgres" ? "DATABASE" : db.service_type.upcase
+    else
+      db.service_type.upcase
+    end
+    app.app_databases.find_or_create_by!(database_service: db) { |ad| ad.alias_name = alias_name }
+  end
+
   # Public entry for provisioning a row someone else already created
   # (CreateAddonJob) — same ops stanza as the fresh-create path.
   def provision_existing!(db)
@@ -288,7 +298,9 @@ class DatabaseProvisioner
       creator: @creator
     }
     attrs.merge!(cpu: @shape.cpu, memory_mb: @shape.memory_mb, disk_gb: @shape.disk_gb) if @shape
-    db = DatabaseService.create!(attrs)
+    db = DatabaseService.transaction do
+      DatabaseService.create!(attrs).tap { |row| self.class.link!(@app, row) if @app }
+    end
 
     provision_dedicated_via_ops!(db, name)
 
@@ -302,6 +314,10 @@ class DatabaseProvisioner
   # wokkud_managed so tier changes / .destroy! route future operations on it
   # back through ops too.
   def provision_dedicated_via_ops!(db, name)
+    # Record-first: linked BEFORE the (minutes-long) op, so a failed or
+    # interrupted create stays reachable via app.database_services and app
+    # deletion cleans it up instead of orphaning it (2026-11-04).
+    self.class.link!(@app, db) if @app
     admin_pass = SecureRandom.hex(16)
     spec = db.service_tier&.spec || {}
     Services::Ops.issue_and_wait!(
@@ -335,7 +351,6 @@ class DatabaseProvisioner
     # (network: DEDICATED_NETWORK above) and every app's Swarm tasks already
     # run on it (Lifecycle::Ops converge networks). The old dokku bridge
     # attach for non-native apps died with the dokku runtime.
-    @app.app_databases.create!(database_service: db, alias_name: @service_type.upcase)
   end
 
   # HOST is the hyphenated container name (`dokku.<type>.<name>`, resolves via
@@ -369,23 +384,32 @@ class DatabaseProvisioner
     # The mariadb parent is born by wokkud on its first service.ensure — it
     # must be up before a tenant can exist on it (no-op once it runs).
     ensure_shared_parent!(parent) if @service_type == "mariadb"
-    tenant = provision_tenant_via_ops!(parent: parent, slug: slug, quota_mb: quota_mb)
 
-    db = DatabaseService.create!(
-      name: "#{slug}-#{@service_type == 'postgres' ? 'pg' : @service_type}-shared-#{SecureRandom.hex(3)}",
-      service_type: @service_type,
-      server: @server,
-      status: :running,
-      tier_name: SHARED_TIER,
-      shared: true,
-      parent_service: parent,
-      shared_role_name: tenant[:role],
-      shared_db_name: tenant[:db],
-      storage_mb_quota: quota_mb,
-      creator: @creator,
-      wokkud_managed: parent.wokkud_managed?,
-      dsn: tenant[:connection_url]
-    )
+    # Record-first (2026-11-04): row + app link exist BEFORE the tenant op, so
+    # an app deleted mid-provision takes this row down with it (Apps::Destroyer
+    # walks app.database_services) instead of leaving an unlinked orphan.
+    db = DatabaseService.transaction do
+      DatabaseService.create!(
+        name: "#{slug}-#{@service_type == 'postgres' ? 'pg' : @service_type}-shared-#{SecureRandom.hex(3)}",
+        service_type: @service_type,
+        server: @server,
+        status: :creating,
+        tier_name: SHARED_TIER,
+        shared: true,
+        parent_service: parent,
+        storage_mb_quota: quota_mb,
+        creator: @creator,
+        wokkud_managed: parent.wokkud_managed?
+      ).tap { |row| self.class.link!(@app, row) if @app }
+    end
+
+    begin
+      tenant = provision_tenant_via_ops!(parent: parent, slug: slug, quota_mb: quota_mb)
+    rescue => e
+      db.update(status: :error, last_error: e.message.to_s.first(500))
+      raise
+    end
+    db.update!(status: :running, shared_role_name: tenant[:role], shared_db_name: tenant[:db], dsn: tenant[:connection_url])
 
     if @app
       Apps::EnvWriter.set(@app, shared_envs(tenant[:connection_url]))
@@ -395,7 +419,6 @@ class DatabaseProvisioner
       # the parent idempotently (agent-side, exists-path). The old dokku
       # bridge attach for non-native apps died with the dokku runtime.
       ensure_shared_parent!(parent)
-      @app.app_databases.create!(database_service: db, alias_name: @service_type == "postgres" ? "DATABASE" : "MARIADB")
     end
 
     db
