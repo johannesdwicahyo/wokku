@@ -13,7 +13,7 @@ module Organisms
       { name: "Plausible",   cat_en: "Analytics",    cat_id: "Analitik",       icon: "plausibleanalytics" },
       { name: "Uptime Kuma", cat_en: "Monitoring",   cat_id: "Monitoring",     icon: "uptimekuma" },
       # Row 2 — tier-2 picks, kept for grid balance and breadth signal
-      { name: "Appwrite",    cat_en: "Backend",      cat_id: "Backend",        icon: "appwrite" },
+      { name: "Gitea",       cat_en: "Git hosting",  cat_id: "Git hosting",    icon: "gitea" },
       { name: "Vaultwarden", cat_en: "Passwords",    cat_id: "Kata Sandi",     icon: "vaultwarden" },
       { name: "Metabase",    cat_en: "Analytics",    cat_id: "Analitik",       icon: "metabase" },
       { name: "Nextcloud",   cat_en: "Storage",      cat_id: "Storage",        icon: "nextcloud" },

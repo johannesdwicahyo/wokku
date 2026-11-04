@@ -5,6 +5,7 @@
 # tags: no-code, spreadsheet, node
 # icon: db
 # port: 8080
+# min_tier: standard
 # shared_engines: postgres
 # set_url: NC_PUBLIC_URL
 # generate_secrets: NC_AUTH_JWT_SECRET

@@ -5,6 +5,7 @@
 # tags: backend, baas, api, database, storage
 # icon: developer-tools
 # port: 80
+# hidden: true
 
 services:
   appwrite:

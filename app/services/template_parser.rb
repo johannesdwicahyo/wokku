@@ -88,6 +88,8 @@ class TemplateParser
       mysql_components:    parse_components_prefix(metadata["mysql_components"],    default: nil),
       mongo_components:    parse_components_prefix(metadata["mongo_components"],    default: nil),
       set_url:             metadata["set_url"].to_s.split(",").map(&:strip).reject(&:blank?),
+      # set_host: like set_url but the bare host (Nextcloud's NEXTCLOUD_TRUSTED_DOMAINS).
+      set_host:            metadata["set_host"].to_s.split(",").map(&:strip).reject(&:blank?),
       # Comma-separated list of env keys that should be populated with
       # freshly generated random strings. Used for app-specific secrets
       # (APP_KEYS, JWT_SECRET, WEBUI_SECRET_KEY, HASURA_GRAPHQL_ADMIN_SECRET).

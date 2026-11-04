@@ -159,6 +159,12 @@ class TemplateDeployer
       end
     end
 
+    if template[:set_host].present?
+      step("Setting public host env vars: #{template[:set_host].join(', ')}...") do
+        Apps::EnvWriter.set(app, template[:set_host].index_with { "#{app_name}.#{Wokku.config.canonical_domain}" })
+      end
+    end
+
     if template[:generate_secrets].present?
       step("Generating random secrets: #{template[:generate_secrets].join(', ')}...") do
         apply_generate_secrets!(app, keys: template[:generate_secrets])
