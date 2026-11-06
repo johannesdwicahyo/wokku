@@ -7032,7 +7032,7 @@ paths:
       description: Server UUID or name
       required: true
     post:
-      summary: Retired raw dokku passthrough
+      summary: Retired raw host-command passthrough
       operationId: servers.dokku
       deprecated: true
       tags:
