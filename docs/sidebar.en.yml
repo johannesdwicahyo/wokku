@@ -179,6 +179,8 @@
       path: api/authentication
     - title: Endpoints Reference
       path: api/endpoints
+    - title: Every Surface
+      path: api/surfaces
 
 - title: Claude Code
   icon: smart_toy
