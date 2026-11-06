@@ -79,7 +79,7 @@ bin/setup
 bin/dev
 ```
 
-README punya setup lengkap termasuk PostgreSQL, Redis, setup host Dokku, dan Cloudflare DNS (kalau perlu). Buat production, liat [docs/infra/](https://github.com/johannesdwicahyo/wokku/tree/main/docs/infra) di repo.
+README punya setup lengkap termasuk PostgreSQL, Redis, setup runtime host (Docker Swarm, Caddy, wokkud), dan Cloudflare DNS (kalau perlu). Buat production, liat [docs/infra/](https://github.com/johannesdwicahyo/wokku/tree/main/docs/infra) di repo.
 
 ## Kalau butuh API atau CLI sekarang?
 

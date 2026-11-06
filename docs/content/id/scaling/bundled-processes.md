@@ -7,11 +7,11 @@ last_updated: 2026-05-29
 
 # Bundling Process dalam Satu Container
 
-Hemat box dengan ngejalanin banyak process di dalam satu container Dokku.
+Hemat box dengan ngejalanin banyak process di dalam satu container.
 
 ## Kapan ini penting
 
-Wokku ngitung **box per container**: 1 container Dokku = 1 box, terlepas dari berapa process di dalamnya. Pattern Procfile default spawn satu container per process type:
+Wokku ngitung **box per container**: 1 container = 1 box, terlepas dari berapa process di dalamnya. Pattern Procfile default spawn satu container per process type:
 
 ```
 web: bundle exec rails server
@@ -34,7 +34,7 @@ gem "foreman"
 gem "sidekiq"
 ```
 
-`Procfile` (yang dibaca Dokku):
+`Procfile` (yang dibaca Wokku):
 ```
 web: foreman start -f Procfile.bundled
 ```
@@ -45,7 +45,7 @@ rails: bundle exec rails server -p $PORT
 sidekiq: bundle exec sidekiq
 ```
 
-Deploy. Dokku liat satu process type (`web`), jalanin satu container. Di dalamnya, foreman supervise Rails + Sidekiq berdampingan.
+Deploy. Wokku liat satu process type (`web`), jalanin satu container. Di dalamnya, foreman supervise Rails + Sidekiq berdampingan.
 
 ### Contoh Django + Celery
 
@@ -126,7 +126,7 @@ rails: bundle exec rails server -p 3000
 api: uvicorn api.main:app --port 5001 --host 127.0.0.1
 ```
 
-Dokku tetap liat satu container `web`.
+Wokku tetap liat satu container `web`.
 
 ## Starter template
 

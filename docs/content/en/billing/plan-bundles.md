@@ -88,7 +88,7 @@ The right fix is usually upgrading to a dedicated engine (frees the shared slot)
 
 ## Self-hosted
 
-Community Edition has no bundle system — you manage Postgres, Redis, and other engines directly via your Dokku setup. No caps, no quotas.
+Community Edition has no bundle system — you manage Postgres, Redis, and other engines directly on your own servers. No caps, no quotas.
 
 ## See also
 

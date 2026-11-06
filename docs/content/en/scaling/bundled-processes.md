@@ -7,11 +7,11 @@ last_updated: 2026-05-29
 
 # Bundling Processes in One Container
 
-Save a box by running multiple processes inside a single Dokku container.
+Save a box by running multiple processes inside a single container.
 
 ## When this matters
 
-Wokku bills by **container boxs**: 1 Dokku container = 1 box, regardless of how many processes run inside it. The default Procfile pattern spawns one container per process type:
+Wokku bills by **container boxs**: 1 container = 1 box, regardless of how many processes run inside it. The default Procfile pattern spawns one container per process type:
 
 ```
 web: bundle exec rails server
@@ -34,7 +34,7 @@ gem "foreman"
 gem "sidekiq"
 ```
 
-`Procfile` (what Dokku reads):
+`Procfile` (what Wokku reads):
 ```
 web: foreman start -f Procfile.bundled
 ```
@@ -45,7 +45,7 @@ rails: bundle exec rails server -p $PORT
 sidekiq: bundle exec sidekiq
 ```
 
-Deploy. Dokku sees one process type (`web`), runs one container. Inside, foreman supervises Rails + Sidekiq side-by-side.
+Deploy. Wokku sees one process type (`web`), runs one container. Inside, foreman supervises Rails + Sidekiq side-by-side.
 
 ### Django + Celery example
 
@@ -126,7 +126,7 @@ rails: bundle exec rails server -p 3000
 api: uvicorn api.main:app --port 5001 --host 127.0.0.1
 ```
 
-Dokku still sees one `web` container.
+Wokku still sees one `web` container.
 
 ## Starter templates
 

@@ -1,17 +1,17 @@
 ---
 title: Logs
-summary: "Every container log line, persisted and searchable. Shipped from your Dokku host by Vector and stored on the control plane. Retention scales with your plan."
+summary: "Every container log line, persisted and searchable. Shipped from your host by Vector and stored on the control plane. Retention scales with your plan."
 eyebrow: monitoring
 last_updated: 2026-05-29
 ---
 
 # Logs
 
-Wokku captures **every line** of stdout/stderr from every container — your apps, the addons, the Dokku internals — and stores them on the control plane. You can scroll back in time, search by container, and filter by level.
+Wokku captures **every line** of stdout/stderr from every container — your apps, the addons, the platform's own containers — and stores them on the control plane. You can scroll back in time, search by container, and filter by level.
 
 ## How it works
 
-On every Dokku host, a **Vector** agent tails Docker container logs and ships them in NDJSON batches to `POST /api/v1/logs/ingest`. The control plane writes one row per line to the `logs` table.
+On every host, a **Vector** agent tails Docker container logs and ships them in NDJSON batches to `POST /api/v1/logs/ingest`. The control plane writes one row per line to the `logs` table.
 
 The whole pipeline:
 
@@ -90,7 +90,7 @@ Supported targets:
 
 — Log lines emitted before Vector started on the host (extremely rare; happens during initial provisioning)
 — Lines longer than 16 KB — trimmed to 16 KB at ingest
-— Build-time logs from the Dokku builder (those live on the deploy page, not the runtime log)
+— Build-time logs from the builder (those live on the deploy page, not the runtime log)
 
 ## Self-hosted
 

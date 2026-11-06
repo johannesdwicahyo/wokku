@@ -87,4 +87,4 @@ Tap your app → Config → swipe to delete.
 | `REDIS_URL` | Auto-set when you link Redis |
 | `SECRET_KEY_BASE` | Rails secret key |
 | `NODE_ENV` | Node.js environment |
-| `PORT` | Set automatically by Dokku |
+| `PORT` | Set automatically by Wokku |

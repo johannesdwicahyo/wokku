@@ -6,7 +6,7 @@ For why checks matter, the full list of tunables and defaults, and how they inte
 
 ## How It Works
 
-During a deploy, Dokku starts the new container and runs health checks. If checks pass, traffic switches to the new container. If they fail, the deploy is rolled back.
+During a deploy, Wokku starts the new container and runs health checks. If checks pass, traffic switches to the new container. If they fail, the deploy is rolled back.
 
 ## Configure
 

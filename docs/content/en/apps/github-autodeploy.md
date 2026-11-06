@@ -31,7 +31,7 @@ Tap your app → **GitHub** to connect a repository.
 
 1. You push code to the connected branch
 2. GitHub sends a webhook to Wokku
-3. Wokku triggers a deploy on your Dokku server
+3. Wokku triggers a deploy on your app's server
 4. Build output streams in real-time
 
 ## Change Deploy Branch

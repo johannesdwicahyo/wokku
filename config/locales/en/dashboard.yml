@@ -34,7 +34,6 @@ en:
       welcome_desc: "Get started by completing these steps"
       tagline: "Let's get you deploying in under 5 minutes."
       add_server: "Add a Server"
-      add_server_desc: "Wokku manages apps on Dokku servers via SSH. You need at least one server to deploy anything. Need a server? Any VPS with Dokku installed works — DigitalOcean, Hetzner, Contabo, even a Raspberry Pi."
       add_server_btn: "Add Server"
       read_guide: "Read the guide"
       deploy_app: "Deploy an App"

@@ -34,7 +34,6 @@ id:
       welcome_desc: "Mulai dengan menyelesaikan langkah berikut"
       tagline: "Mari deploy aplikasi pertamamu dalam 5 menit."
       add_server: "Tambah Server"
-      add_server_desc: "Wokku mengelola aplikasi di server Dokku via SSH. Kamu butuh minimal satu server untuk bisa deploy. Butuh server? VPS manapun yang sudah terpasang Dokku bisa dipakai — DigitalOcean, Hetzner, Contabo, bahkan Raspberry Pi."
       add_server_btn: "Tambah Server"
       read_guide: "Baca panduan"
       deploy_app: "Deploy Aplikasi"

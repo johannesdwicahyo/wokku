@@ -176,7 +176,7 @@ RSpec.describe "API v1 servers", type: :request do
   path "/api/v1/servers/{id}/dokku" do
     parameter id_param
 
-    post "Retired raw dokku passthrough" do
+    post "Retired raw host-command passthrough" do
       operationId "servers.dokku"
       deprecated true
       tags "servers"

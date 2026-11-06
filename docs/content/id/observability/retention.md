@@ -39,7 +39,7 @@ Dashboard nampilin angka saat ini di page Usage; file seed (`db/seeds/plans.rb`)
 — **Apa** — row `Log`: satu per baris stdout/stderr container yang dikirim dari Vector
 — **Job prune** — `LogRetentionPruneJob`, nightly 3:45 pagi
 - Buat tiap plan, delete `Log.where(app_record_id: ids_on_plan).where("ts < cutoff")` dimana `cutoff = plan.log_retention_days.days.ago`
-- Row orphan (nggak ada app_record_id — mis. container system dokku-postgres) fallback ke cap 30 hari supaya admin tetap bisa debug
+- Row orphan (nggak ada app_record_id — mis. container database platform) fallback ke cap 30 hari supaya admin tetap bisa debug
 
 ## Sample request + aggregate
 

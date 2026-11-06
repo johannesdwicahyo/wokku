@@ -39,7 +39,7 @@ The dashboard shows the current numbers on the Usage page; the seed file (`db/se
 — **What** — `Log` rows: one per container stdout/stderr line shipped from Vector
 — **Prune job** — `LogRetentionPruneJob`, nightly at 3:45 am
 - For each plan, deletes `Log.where(app_record_id: ids_on_plan).where("ts < cutoff")` where `cutoff = plan.log_retention_days.days.ago`
-- Orphan rows (no app_record_id — e.g. dokku-postgres system containers) fall back to a 30-day cap so admins can still debug
+- Orphan rows (no app_record_id — e.g. platform database containers) fall back to a 30-day cap so admins can still debug
 
 ## Request samples + aggregates
 

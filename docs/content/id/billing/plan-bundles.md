@@ -88,7 +88,7 @@ Fix yang bener biasanya upgrade ke dedicated engine (bebas shared slot) atau pin
 
 ## Self-hosted
 
-Community Edition nggak punya sistem bundle — kamu manage Postgres, Redis, dan engine lain langsung via setup Dokku kamu. Nggak ada cap, nggak ada kuota.
+Community Edition nggak punya sistem bundle — kamu manage Postgres, Redis, dan engine lain langsung di server kamu sendiri. Nggak ada cap, nggak ada kuota.
 
 ## Lihat juga
 

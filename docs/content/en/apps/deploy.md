@@ -6,7 +6,7 @@ Deploy your code to Wokku using git push, GitHub, or Docker images.
 
 Push code to Wokku's SSH git gateway — it authenticates you by your
 registered SSH key, authorizes against your team's access to the app,
-and proxies the push to the underlying Dokku host. You don't need to
+and proxies the push to the host running your app. You don't need to
 know which server your app is running on.
 
 Register your public key under **Profile → SSH Keys** before pushing for
@@ -48,9 +48,9 @@ Then push with git from your terminal.
 View deploy status and logs from the app detail screen. Deploys are triggered via git push.
 :::
 
-## Buildpack Detection
+## Language Detection
 
-Dokku automatically detects your app's language:
+Wokku automatically detects your app's language:
 
 | Language | Detection |
 |----------|-----------|
@@ -66,6 +66,6 @@ You can also use a `Dockerfile` for full control over the build.
 
 ## Zero-Downtime Deploys
 
-Dokku performs zero-downtime deploys by default. The new container starts, health checks pass, then traffic switches over.
+Wokku performs zero-downtime deploys by default. The new container starts, health checks pass, then traffic switches over.
 
 See [Health Checks](/docs/monitoring/health-checks) to configure deploy checks.

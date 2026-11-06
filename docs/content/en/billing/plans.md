@@ -30,7 +30,7 @@ Plans are **batteries-included**: the resources below ship with the plan price, 
 
 ### Boxes (containers)
 
-A *box* is one Dokku container. Multi-process apps (Rails + Sidekiq, web + cron) can share one box via `foreman`/`supervisor` — see [bundled processes](/docs/scaling/bundled-processes).
+A *box* is one container. Multi-process apps (Rails + Sidekiq, web + cron) can share one box via `foreman`/`supervisor` — see [bundled processes](/docs/scaling/bundled-processes).
 
 | | **Free** | **Solo** | **Pro** | **Team** |
 |---|---|---|---|---|

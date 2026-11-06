@@ -7,7 +7,7 @@ last_updated: 2026-05-29
 
 # Box Tiers
 
-A *box* is one Dokku container — what the rest of the industry calls a "dyno". Wokku has five box sizes; the number you can run is decided by your [plan](/docs/billing/plans), the size by the workload.
+A *box* is one container — what the rest of the industry calls a "dyno". Wokku has five box sizes; the number you can run is decided by your [plan](/docs/billing/plans), the size by the workload.
 
 ## The five sizes
 
@@ -67,4 +67,4 @@ Pick bundled for small apps; pick split for production where you want web and wo
 
 ## Self-hosted
 
-Wokku Community Edition has no tier system. You manage resources directly on your servers — pick container memory limits in your Dokku setup as you like.
+Wokku Community Edition has no tier system. You manage resources directly on your servers — pick container memory limits as you like.

@@ -79,7 +79,7 @@ Tap **+** on the Apps screen, enter a name, select server. GitHub connection is 
 
 ## Deploy with Git Push
 
-Push to Wokku's SSH git gateway — it routes your push to the right Dokku
+Push to Wokku's SSH git gateway — it routes your push to the right
 host automatically. First, register your SSH public key under
 **Profile → SSH Keys** so the gateway recognizes you.
 

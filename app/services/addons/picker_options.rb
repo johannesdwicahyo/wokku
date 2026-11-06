@@ -42,7 +42,7 @@ module Addons
       "dedicated" => {
         label:       "Dedicated",
         kicker:      "Paid plan",
-        description: "Its own Dokku container, sized by your plan's box. Consumes 1 of 3 dedicated slots."
+        description: "Its own container, sized by your plan's box. Consumes 1 of 3 dedicated slots."
       }
     }.freeze
 

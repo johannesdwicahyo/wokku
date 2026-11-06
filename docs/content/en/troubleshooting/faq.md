@@ -1,23 +1,23 @@
 ---
 title: FAQ
-summary: "Most-asked questions about Wokku, Dokku, supported languages, backups, the open-source split, Heroku migration, and the free tier."
+summary: "Most-asked questions about Wokku, supported languages, backups, the open-source split, Heroku migration, and the free tier."
 eyebrow: troubleshooting
 last_updated: 2026-05-29
 ---
 
 # FAQ
 
-## What is Dokku?
+## What is Wokku built on?
 
-[Dokku](https://dokku.com) is an open-source Platform-as-a-Service (PaaS) — basically a self-hostable Heroku. Wokku is the managed cloud + dashboard + CLI + mobile app that runs on top of it.
+Wokku is inspired by [Dokku](https://dokku.com) and Heroku-style workflows, but runs on its own runtime (the wokkud host agent, Docker Swarm, and Caddy).
 
 ## Is Wokku self-hosted or managed?
 
-Wokku Cloud (this site, `wokku.cloud`) is fully **managed** — we run the Dokku hosts for you. If you want to self-host, use the open-source **Community Edition** at [github.com/johannesdwicahyo/wokku](https://github.com/johannesdwicahyo/wokku), which is the same Rails app you can run on your own VPS.
+Wokku Cloud (this site, `wokku.cloud`) is fully **managed** — we run the hosts for you. If you want to self-host, use the open-source **Community Edition** at [github.com/johannesdwicahyo/wokku](https://github.com/johannesdwicahyo/wokku), which is the same Rails app you can run on your own VPS.
 
 ## What languages are supported?
 
-Any language. Dokku supports Heroku buildpacks (Node.js, Python, Ruby, Go, PHP, Java, Elixir, and more) plus Dockerfiles for full flexibility. See the [framework recipes gallery](/docs/templates/browse) for one-click starters.
+Any language. Wokku detects and builds Node.js, Python, Ruby, Go, PHP, Java and more automatically, and supports Dockerfiles for full flexibility. See the [framework recipes gallery](/docs/templates/browse) for one-click starters.
 
 ## How do backups work?
 

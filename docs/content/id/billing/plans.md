@@ -30,7 +30,7 @@ Plan-nya **batteries-included**: resource di bawah udah jadi satu paket sama har
 
 ### Box (container)
 
-*Box* itu satu container Dokku. App yang multi-process (Rails + Sidekiq, web + cron) bisa share satu box pakai `foreman`/`supervisor` — lihat [bundling process](/docs/scaling/bundled-processes).
+*Box* itu satu container. App yang multi-process (Rails + Sidekiq, web + cron) bisa share satu box pakai `foreman`/`supervisor` — lihat [bundling process](/docs/scaling/bundled-processes).
 
 | | **Free** | **Solo** | **Pro** | **Team** |
 |---|---|---|---|---|

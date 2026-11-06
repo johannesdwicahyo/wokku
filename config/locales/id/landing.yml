@@ -23,7 +23,6 @@ id:
     step3_title: "Live dengan SSL"
     open_source: "Dibangun secara terbuka."
     run_anywhere: "Jalankan di mana saja."
-    open_source_desc: "Wokku adalah open-source, dibangun di atas Dokku. Gunakan cloud kami di wokku.cloud, atau self-host di server sendiri. Tanpa vendor lock-in."
     ready_to_deploy: "Siap deploy?"
     start_free: "Mulai gratis. Deploy aplikasi pertama dalam hitungan menit."
     save_vs_heroku: "Hemat 70-97% dibanding PaaS populer"

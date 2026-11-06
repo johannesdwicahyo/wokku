@@ -23,7 +23,6 @@ en:
     step3_title: "Live with SSL"
     open_source: "Built in the open."
     run_anywhere: "Run it anywhere."
-    open_source_desc: "Wokku is open-source, built on Dokku. Use our managed cloud at wokku.cloud, or self-host on your own servers. No vendor lock-in, ever."
     ready_to_deploy: "Ready to deploy?"
     start_free: "Start for free. Deploy your first app in minutes."
     save_vs_heroku: "Save 70-97% vs popular PaaS"

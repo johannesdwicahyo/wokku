@@ -1,17 +1,17 @@
 ---
 title: Log
-summary: "Tiap baris log container, persisted dan searchable. Dikirim dari host Dokku kamu sama Vector dan disimpan di control plane. Retensi nyesuain plan."
+summary: "Tiap baris log container, persisted dan searchable. Dikirim dari host kamu sama Vector dan disimpan di control plane. Retensi nyesuain plan."
 eyebrow: monitoring
 last_updated: 2026-05-29
 ---
 
 # Log
 
-Wokku capture **tiap baris** stdout/stderr dari tiap container — app kamu, addon, internal Dokku — dan simpan di control plane. Kamu bisa scroll mundur, search by container, dan filter by level.
+Wokku capture **tiap baris** stdout/stderr dari tiap container — app kamu, addon, container internal platform — dan simpan di control plane. Kamu bisa scroll mundur, search by container, dan filter by level.
 
 ## Cara kerjanya
 
-Di tiap host Dokku, agent **Vector** nge-tail log container Docker dan ngirim batch NDJSON ke `POST /api/v1/logs/ingest`. Control plane nulis satu row per baris ke tabel `logs`.
+Di tiap host, agent **Vector** nge-tail log container Docker dan ngirim batch NDJSON ke `POST /api/v1/logs/ingest`. Control plane nulis satu row per baris ke tabel `logs`.
 
 Full pipeline:
 
@@ -90,7 +90,7 @@ Target yang didukung:
 
 — Baris log yang di-emit sebelum Vector start di host (jarang banget; terjadi pas provisioning awal)
 — Baris lebih dari 16 KB — di-trim ke 16 KB pas ingest
-— Log build-time dari builder Dokku (itu di page deploy, bukan log runtime)
+— Log build-time dari builder (itu di page deploy, bukan log runtime)
 
 ## Self-hosted
 

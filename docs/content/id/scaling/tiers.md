@@ -7,7 +7,7 @@ last_updated: 2026-05-29
 
 # Box Tier
 
-*Box* itu satu container Dokku — yang di industri lain disebut "dyno". Wokku punya lima ukuran box; jumlah yang bisa kamu jalanin ditentuin [plan](/docs/billing/plans) kamu, ukurannya nyesuain workload.
+*Box* itu satu container — yang di industri lain disebut "dyno". Wokku punya lima ukuran box; jumlah yang bisa kamu jalanin ditentuin [plan](/docs/billing/plans) kamu, ukurannya nyesuain workload.
 
 ## Lima ukurannya
 
@@ -67,4 +67,4 @@ Pilih bundled buat app kecil; pilih split buat production yang web dan worker-ny
 
 ## Self-hosted
 
-Wokku Community Edition nggak punya sistem tier. Kamu manage resource langsung di server — pilih batas memory container di Dokku setup sesuai mau kamu.
+Wokku Community Edition nggak punya sistem tier. Kamu manage resource langsung di server — pilih batas memory container sesuai mau kamu.

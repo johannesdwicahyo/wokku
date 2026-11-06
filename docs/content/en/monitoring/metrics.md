@@ -44,7 +44,7 @@ How it works:
 
 How it works:
 
-— Vector adds a `parse_nginx_requests` transform that filters Dokku's `nginx-proxy` container log + parses each access-log line with a regex
+— Vector adds a `parse_nginx_requests` transform that parses the proxy's access-log lines on each host with a regex
 — Parsed entries get POSTed to `/api/v1/requests/ingest` (per-server bearer token, same auth as logs)
 — `RequestSample` rows hold individual requests (retained `plan.sample_retention_hours` hours)
 — Every 5 minutes, `RequestAggregateRollupJob` builds `RequestAggregate` buckets (PERCENTILE_DISC p50/p95, count, error counts, bytes) and prunes source samples per plan

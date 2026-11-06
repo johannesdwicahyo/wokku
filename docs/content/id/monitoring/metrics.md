@@ -44,7 +44,7 @@ Cara kerjanya:
 
 Cara kerjanya:
 
-— Vector tambah transform `parse_nginx_requests` yang filter log container `nginx-proxy` Dokku + parse tiap baris access-log dengan regex
+— Vector tambah transform `parse_nginx_requests` yang parse tiap baris access-log proxy di tiap host dengan regex
 — Entri parsed di-POST ke `/api/v1/requests/ingest` (bearer token per-server, auth sama kayak log)
 — Row `RequestSample` nyimpan request individual (retensi `plan.sample_retention_hours` jam)
 — Tiap 5 menit, `RequestAggregateRollupJob` bangun bucket `RequestAggregate` (PERCENTILE_DISC p50/p95, count, error count, bytes) dan prune sample sumber per plan

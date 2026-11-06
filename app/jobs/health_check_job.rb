@@ -29,7 +29,7 @@ class HealthCheckJob < ApplicationJob
     return if was_unreachable
 
     Sentry.capture_message(
-      "Dokku host unreachable: #{server.name} (#{server.host})",
+      "Host unreachable: #{server.name} (#{server.host})",
       level: :error,
       extra: { server_id: server.id, host: server.host }
     )

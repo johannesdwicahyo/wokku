@@ -39,6 +39,6 @@ Certificates auto-renew before expiration. No action needed.
 
 ## Requirements
 
-- Domain DNS must point to your Dokku server
+- Domain DNS must point to your app's server
 - Port 80 must be accessible for the HTTP challenge
 - Domain must be added to the app first

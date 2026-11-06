@@ -29,7 +29,7 @@ Tap your app → **Domains** → **+** → enter domain.
 
 ## DNS Setup
 
-Point your domain to your Dokku server:
+Point your domain to your app's server:
 
 | Record Type | Name | Value |
 |-------------|------|-------|
