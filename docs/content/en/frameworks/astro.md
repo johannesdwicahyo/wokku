@@ -1,28 +1,14 @@
-# Deploy Astro
+---
+title: Astro
+summary: Run an Astro site on Wokku, server-rendered with the Node adapter or as static output.
+last_updated: 2026-11-07
+---
 
-Deploy an Astro site to Wokku — static output or server-rendered (SSR).
+Set up the Node adapter (or a static server), push, and your site is live. Want a working repo first? Deploy the `astro` starter from [Templates](/docs/templates/browse).
 
-## Prerequisites
+## Server-rendered (SSR)
 
-- A [Wokku account](/docs/getting-started/sign-up) and a [connected server](/docs/getting-started/connect-server)
-- An [SSH key registered](/docs/apps/ssh-keys) for `git push`
-- An Astro project (`npm create astro@latest` if starting fresh)
-
-## 1. Create the app
-
-:::tabs
-::web-ui
-**Apps → New App** → server, name `my-astro-site`, box size, **Create**.
-
-::cli
-```bash
-wokku apps:create my-astro-site --server my-server
-```
-:::
-
-## 2a. Server-rendered (SSR)
-
-Add the Node adapter so Astro builds a server you can run:
+Add the Node adapter in standalone mode:
 
 ```bash
 npx astro add node
@@ -30,74 +16,53 @@ npx astro add node
 
 ```js
 // astro.config.mjs
+import { defineConfig } from "astro/config";
 import node from "@astrojs/node";
+
 export default defineConfig({ output: "server", adapter: node({ mode: "standalone" }) });
 ```
 
-`Procfile`:
-
 ```procfile
-web: HOST=0.0.0.0 PORT=$PORT node ./dist/server/entry.mjs
+web: env HOST=0.0.0.0 node ./dist/server/entry.mjs
 ```
 
-## 2b. Static output
+The standalone server reads `PORT` itself. Use `env HOST=…`; a bare `HOST=… node …` prefix fails in a Procfile.
 
-For a fully static site (`output: "static"`, the default), `astro build`
-produces `dist/`. Serve it with a tiny static server:
+## Static output
 
-```text
-# package.json
-"scripts": { "build": "astro build", "start": "npx serve dist -l $PORT" }
+With the default `output: "static"`, `astro build` writes `dist/`. Serve it with a small static server:
+
+```bash
+npm install serve
+```
+
+```json
+"scripts": { "build": "astro build", "start": "serve dist -l $PORT" }
 ```
 
 ```procfile
 web: npm start
 ```
 
-:::callout note
-For high-traffic static sites, a CDN/static-hosting path is coming as a
-dedicated recipe. The `serve` approach above works today on any box.
-:::
+## Environment variables
 
-## 3. Environment variables
+`PUBLIC_*` variables are inlined at build time, and Wokku config vars are not available during the build. Commit them in `.env.production`. Server-side secrets go in [config vars](/docs/apps/config):
 
 ```bash
-wokku config:set my-astro-site NODE_ENV=production
+wokku config:set my-app NODE_ENV=production
 ```
 
-`PUBLIC_*` env vars are inlined at build time — set them before deploying.
+## Deploy
 
-## 4. Deploy
-
-:::tabs
-::web-ui
 ```bash
-git remote add wokku git@git.wokku.cloud:my-astro-site
+wokku apps:create my-app
+git remote add wokku git@git.wokku.cloud:my-app
 git push wokku main
 ```
 
-::github
-Connect under **Apps → Connect GitHub** for push-to-deploy —
-see [GitHub Auto-Deploy](/docs/apps/github-autodeploy).
-
-::cli
-```bash
-git remote add wokku git@git.wokku.cloud:my-astro-site
-git push wokku main
-```
-:::
-
-Live at `https://my-astro-site.wokku.app`.
-
-## Custom domain
-
-[Custom Domains](/docs/domains-ssl/custom-domains) — SSL is automatic.
+Live at `https://my-app.wokku.app`. First deploy? See the [Quickstart](/docs/getting-started/first-deploy).
 
 ## Troubleshooting
 
-- **Blank page / crash** — for SSR, bind to `HOST=0.0.0.0 PORT=$PORT`.
-- **`PUBLIC_*` not applied** — build-time; redeploy after changing it.
-
-## Next steps
-
-- [Logs](/docs/apps/logs) · [Production Readiness](/docs/apps/best-practices)
+- **App crashes or never responds** — for SSR, start `dist/server/entry.mjs` with `HOST=0.0.0.0`; for static output, serve on `$PORT`.
+- **A `PUBLIC_*` value is missing** — it's build-time; commit it and redeploy.

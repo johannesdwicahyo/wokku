@@ -1,102 +1,56 @@
 ---
 title: Audit Log
-summary: "Siapa ngapain, dari mana, kapan. Tiap plan dapat audit log — Free pun include. Filter, export CSV, tamper-evidence via chain digest harian."
-eyebrow: monitoring
-last_updated: 2026-05-29
+summary: Lihat siapa melakukan apa di workspace kamu, dari mana dan kapan — filter, export ke CSV, atau baca lewat CLI dan API.
+last_updated: 2026-11-07
 ---
 
-# Audit Log
+Di sini kamu bisa melihat aksi yang terjadi di workspace kamu — deploy, perubahan config, domain, database, member, billing. Buka **Activity** di sidebar.
 
-Audit log record **tiap action penting** yang dilakuin di workspace — app dibikin, config diubah, deploy dimulai, member ditambah, plan di-switch — dengan actor, target, dan channel (Dashboard / CLI / API / MCP / git push / webhook).
+## Isi tiap entri
 
-Tersedia di **tiap plan, termasuk Free**. Bisa diakses di `/dashboard/activities` atau via sidebar workspace.
+| Field | Contoh |
+|---|---|
+| **When** | Timestamp sampai detik |
+| **Who** | Member yang melakukan, atau sistem untuk aksi otomatis |
+| **Action** | `app.deployed`, `config.updated`, `app.renamed` |
+| **Target** | App, database, atau member yang dikenai aksi |
+| **Channel** | Dashboard, CLI, API, MCP, git push, atau Webhook |
 
-## Apa yang di-record
+## Filter dan export
 
-Tiap record punya:
+Di halaman **Activity**, filter berdasarkan **Action**, **Channel**, **User**, **Since**, dan **Until**. Filter bisa digabung, dan URL menyimpannya, jadi kamu bisa membagikan tampilan yang sudah difilter.
 
-— **Actor** — user yang ngelakuin (atau system, buat job kayak daily-debit)
-— **Action** — di-namespace kayak `app.deployed`, `config.updated`, `team.member_added`
-— **Target** — apa yang di-aksi (nama app, nama database, dll.)
-— **Channel** — Dashboard / CLI / API / MCP / git_push / webhook
-— **Timestamp** — sampai detik
-— **Metadata** — JSON blob dengan context spesifik action
-
-List lengkap action code ada di `Activity::ACTIONS` — cover lifecycle app, config, domain, SSH key, database, server, backup, integrasi GitHub, template, notification, membership team, dan event billing.
-
-## Filter
-
-Page nerima lima dropdown filter:
-
-— **Action** — tiap namespace action distinct, alphabetical
-— **Channel** — Dashboard / CLI / API / MCP / git push / Webhook
-— **User** — tiap member workspace
-— **Since** — input tanggal (awal hari)
-— **Until** — input tanggal (akhir hari)
-
-Semua filter AND. URL param survive refresh jadi view yang di-filter bisa di-share.
-
-## Export CSV
-
-Pakai link **export CSV** di kanan-atas audit log buat download set yang di-filter. Kolom:
+Klik **Export CSV** untuk mengunduh entri yang sudah difilter. Kolomnya:
 
 ```text
 created_at, user_email, action, target_type, target_name, channel, metadata_json
 ```
 
-Berguna buat report compliance, attach ke postmortem incident security, atau workflow bulk-grep.
+## Bukti anti-manipulasi
 
-## Tamper evidence
+Setiap malam Wokku menyegel entri hari itu ke dalam hash chain. Banner **verified** di halaman menampilkan hari terakhir yang disegel, jumlah entrinya, dan awal hash chain-nya. Ini membuktikan entri yang kamu lihat belum diubah sejak disegel.
 
-Tiap malam, job `ActivityDigest` hash activity hari itu jadi chain (`chain_hash = SHA256(prev_hash || min_id || max_id || row_count || row_hashes)`) dan persist satu row per hari. Page audit log nampilin banner **verified** hijau dengan tanggal digest terbaru, row count, dan 16 char awal chain hash:
+## CLI dan API
 
-```text
-[verified] // chain hash verified through 2026-05-28 · 1.247 rows · hash a3f4b8…
-```
-
-Kalau job digest belum jalan (install baru), kamu dapat banner pending:
-
-```text
-// digest chain not yet built — ActivityDigestJob runs nightly
-```
-
-Chain nggak ngebuktiin row nggak *hilang* dari digest sebelumnya; dia ngebuktiin **row yang kamu liat nggak diubah** sejak digest landed. Buat audit row hilang, compare total `row_count` digest berturut sama baseline yang kamu expect.
-
-## Pill channel
-
-Tiap record nampilin pill kecil yang nunjukin action datang dari mana:
-
-— **Dashboard** — session browser
-— **API** — call dengan REST API token
-— **CLI** — command `wokku <cmd>`
-— **MCP** — invocation plugin Claude Code
-— **git push** — hook deploy-via-push
-— **Webhook** — auto-deploy GitHub atau webhook lain
-
-Berguna buat narrow "apa yang `terraform-bot` API token lakuin hari ini" atau "apa yang siapa aja lakuin via CLI minggu lalu".
-
-## API
-
+:::tabs
+::cli
 ```bash
-curl https://wokku.cloud/api/v1/activities \
-  -H "Authorization: Bearer $TOKEN" \
-  -G --data-urlencode "action_eq=app.deployed" \
-     --data-urlencode "since=2026-05-01"
+wokku activity   # last 20 entries
 ```
 
-Return shape JSON yang sama dengan yang dashboard render.
+::api
+```bash
+curl "https://wokku.cloud/api/v1/activities?limit=100" \
+  -H "Authorization: Bearer $TOKEN"
+```
 
-## Retensi
+Mengembalikan entri terbaru lebih dulu. `limit` bernilai 1–200 (default 50); tidak ada filter lain — pakai dashboard untuk memfilter.
 
-Retensi audit log **unlimited** — kita nggak pernah auto-delete record. Audit log kecil (puluhan KB per workspace per bulan), dan value audit retroaktif jauh lebih besar dari biaya storage.
-
-Kalau butuh purge buat alasan compliance (GDPR right-to-be-forgotten di member yang di-remove), email [support@wokku.cloud](mailto:support@wokku.cloud).
-
-## Self-hosted
-
-Community Edition include tabel + page audit log. `ActivityDigestJob` butuh config recurring-jobs di `config/recurring.yml`; tanpa itu chain nggak ke-bangun otomatis.
+::mcp
+Tanya Claude: *"Apa saja yang berubah di workspace saya hari ini?"*
+:::
 
 ## Lihat juga
 
-— [Log](/docs/monitoring/logs) — log container runtime (surface beda)
-— [Member & Role](/docs/teams/members) — event membership workspace muncul di sini
+- [Log](/docs/monitoring/logs) — output app kamu sendiri
+- [Member & Role](/docs/teams/members)

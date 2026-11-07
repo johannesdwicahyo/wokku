@@ -1,44 +1,106 @@
 - title: Getting Started
   icon: rocket_launch
   items:
-    - title: Beta Notice
-      path: beta
+    - title: Quickstart
+      path: getting-started/first-deploy
     - title: Sign Up
       path: getting-started/sign-up
-    - title: Your First Deploy
-      path: getting-started/first-deploy
-    - title: Connect a Server
-      path: getting-started/connect-server
+    - title: SSH Keys
+      path: apps/ssh-keys
+    - title: Beta Notice
+      path: beta
+
+- title: One-Click Apps
+  icon: dashboard_customize
+  items:
+    - title: Browse & Deploy
+      path: templates/browse
 
 - title: Frameworks
   icon: code
   items:
     - title: Overview
       path: frameworks/index
+    - title: Astro
+      path: frameworks/astro
+    - title: Django
+      path: frameworks/django
+    - title: FastAPI
+      path: frameworks/fastapi
+    - title: Flask
+      path: frameworks/flask
+    - title: Go
+      path: frameworks/go
     - title: Laravel
       path: frameworks/laravel
     - title: Next.js
       path: frameworks/nextjs
-    - title: Django
-      path: frameworks/django
     - title: Node.js / Express
       path: frameworks/nodejs
-    - title: Ruby on Rails
-      path: frameworks/rails
-    - title: Flask
-      path: frameworks/flask
-    - title: FastAPI
-      path: frameworks/fastapi
-    - title: Go
-      path: frameworks/go
-    - title: Astro
-      path: frameworks/astro
     - title: Nuxt
       path: frameworks/nuxt
     - title: Phoenix
       path: frameworks/phoenix
+    - title: Ruby on Rails
+      path: frameworks/rails
     - title: Static Site
       path: frameworks/static
+
+- title: Apps
+  icon: deployed_code
+  items:
+    - title: Create & Deploy
+      path: apps/deploy
+    - title: GitHub Auto-Deploy
+      path: apps/github-autodeploy
+    - title: Environment Variables
+      path: apps/config
+    - title: Restart / Stop / Start
+      path: apps/lifecycle
+    - title: Production Readiness
+      path: apps/best-practices
+
+- title: Databases
+  icon: database
+  items:
+    - title: Supported Engines
+      path: databases/engines
+    - title: Add & Link a Database
+      path: databases/create-link
+    - title: Backups & Restore
+      path: databases/backups
+
+- title: Domains & HTTPS
+  icon: language
+  items:
+    - title: Custom Domains & HTTPS
+      path: domains-ssl/custom-domains
+
+- title: Resources & Scaling
+  icon: speed
+  items:
+    - title: CPU & Memory
+      path: scaling/resources
+    - title: Scaling Processes
+      path: scaling/dynos
+    - title: Bundling Processes
+      path: scaling/bundled-processes
+
+- title: Monitoring
+  icon: monitoring
+  items:
+    - title: Logs
+      path: monitoring/logs
+    - title: Metrics
+      path: monitoring/metrics
+    - title: Health Checks
+      path: monitoring/health-checks
+    - title: Uptime & Incidents
+      path: monitoring/uptime
+    - title: Notifications
+      path: monitoring/notifications
+    - title: Audit Log
+      path: monitoring/audit-log
 
 - title: How-To Guides
   icon: lightbulb
@@ -49,8 +111,6 @@
       path: guides/background-workers
     - title: Scheduled Tasks (Cron)
       path: guides/scheduled-tasks
-    - title: Add Postgres + Redis
-      path: guides/postgres-redis
     - title: Deploy with a Dockerfile
       path: guides/dockerfile
     - title: Deploy from a Monorepo
@@ -75,152 +135,44 @@
       path: migrate/netlify
     - title: From Render
       path: migrate/render
-    - title: From a Bare VPS
+    - title: From a VPS
       path: migrate/vps
-
-- title: Apps
-  icon: deployed_code
-  items:
-    - title: Create an App
-      path: apps/create
-    - title: Deploy
-      path: apps/deploy
-    - title: GitHub Auto-Deploy
-      path: apps/github-autodeploy
-    - title: SSH Keys & Multiple Accounts
-      path: apps/ssh-keys
-    - title: Environment Variables
-      path: apps/config
-    - title: Logs
-      path: apps/logs
-    - title: Restart / Stop / Start
-      path: apps/lifecycle
-    - title: Production Readiness
-      path: apps/best-practices
-
-- title: Templates
-  icon: dashboard_customize
-  items:
-    - title: Browse Templates
-      path: templates/browse
-    - title: Deploy a Template
-      path: templates/deploy
-
-- title: Domains & SSL
-  icon: language
-  items:
-    - title: Custom Domains
-      path: domains-ssl/custom-domains
-    - title: SSL Certificates
-      path: domains-ssl/ssl
-
-- title: Databases
-  icon: database
-  items:
-    - title: Supported Engines
-      path: databases/engines
-    - title: Create & Link
-      path: databases/create-link
-    - title: Backups
-      path: databases/backups
-
-- title: Scaling
-  icon: speed
-  items:
-    - title: Process Types & Dynos
-      path: scaling/dynos
-    - title: Dyno Tiers
-      path: scaling/tiers
-    - title: Bundling Processes (Save Slots)
-      path: scaling/bundled-processes
-
-- title: Monitoring
-  icon: monitoring
-  items:
-    - title: Logs
-      path: monitoring/logs
-    - title: Metrics
-      path: monitoring/metrics
-    - title: Audit Log
-      path: monitoring/audit-log
-    - title: Health Checks
-      path: monitoring/health-checks
-    - title: Notifications
-      path: monitoring/notifications
-
-- title: Workspaces
-  icon: workspaces
-  items:
-    - title: Personal vs Org
-      path: workspaces/personal-vs-org
-    - title: Switching Workspaces
-      path: workspaces/switching
-
-- title: Teams
-  icon: group
-  items:
-    - title: Members & Roles
-      path: teams/members
-    - title: Permissions
-      path: teams/permissions
-
-- title: CLI
-  icon: terminal
-  items:
-    - title: Installation
-      path: cli/install
-    - title: Commands Reference
-      path: cli/commands
-
-- title: API
-  icon: api
-  items:
-    - title: Authentication
-      path: api/authentication
-    - title: Endpoints Reference
-      path: api/endpoints
-    - title: Every Surface
-      path: api/surfaces
-
-- title: Claude Code
-  icon: smart_toy
-  items:
-    - title: Setup
-      path: mcp/setup
-    - title: Available Tools
-      path: mcp/tools
-
-- title: Mobile App
-  icon: phone_iphone
-  items:
-    - title: Download
-      path: mobile/download
-    - title: Push Notifications
-      path: mobile/notifications
 
 - title: Billing
   icon: payments
   items:
-    - title: Plans & Pricing
-      path: billing/plans
-    - title: Usage
-      path: billing/usage
-    - title: Invoices
+    - title: Pricing
+      path: billing/pricing
+    - title: Invoices & Payment
       path: billing/invoices
-    - title: Plan Bundles
-      path: billing/plan-bundles
 
-- title: Observability
-  icon: insights
+- title: Teams
+  icon: group
   items:
-    - title: Retention Windows
-      path: observability/retention
+    - title: Workspaces
+      path: workspaces/personal-vs-org
+    - title: Members & Roles
+      path: teams/members
 
-- title: Open Source
-  icon: code
+- title: Tools
+  icon: terminal
   items:
-    - title: Overview
-      path: oss/overview
+    - title: CLI Install
+      path: cli/install
+    - title: CLI Commands
+      path: cli/commands
+    - title: Claude Code Setup
+      path: mcp/setup
+    - title: Claude Code Tools
+      path: mcp/tools
+    - title: iOS & Mac App
+      path: mobile/download
+    - title: Every Surface
+      path: api/surfaces
+    - title: API Authentication
+      path: api/authentication
+    - title: API Reference
+      path: api/endpoints
 
 - title: Troubleshooting
   icon: help
@@ -229,3 +181,11 @@
       path: troubleshooting/common
     - title: FAQ
       path: troubleshooting/faq
+
+- title: Self-Hosting
+  icon: dns
+  items:
+    - title: Open Source Overview
+      path: oss/overview
+    - title: Connect a Server
+      path: oss/connect-server

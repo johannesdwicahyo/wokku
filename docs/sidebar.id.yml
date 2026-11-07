@@ -1,44 +1,106 @@
 - title: Mulai
   icon: rocket_launch
   items:
-    - title: Catatan Beta
-      path: beta
+    - title: Mulai Cepat
+      path: getting-started/first-deploy
     - title: Sign Up
       path: getting-started/sign-up
-    - title: Deploy Pertama
-      path: getting-started/first-deploy
-    - title: Connect Server
-      path: getting-started/connect-server
+    - title: SSH Key
+      path: apps/ssh-keys
+    - title: Catatan Beta
+      path: beta
+
+- title: Aplikasi Sekali Klik
+  icon: dashboard_customize
+  items:
+    - title: Jelajahi & Deploy
+      path: templates/browse
 
 - title: Frameworks
   icon: code
   items:
     - title: Ringkasan
       path: frameworks/index
+    - title: Astro
+      path: frameworks/astro
+    - title: Django
+      path: frameworks/django
+    - title: FastAPI
+      path: frameworks/fastapi
+    - title: Flask
+      path: frameworks/flask
+    - title: Go
+      path: frameworks/go
     - title: Laravel
       path: frameworks/laravel
     - title: Next.js
       path: frameworks/nextjs
-    - title: Django
-      path: frameworks/django
     - title: Node.js / Express
       path: frameworks/nodejs
-    - title: Ruby on Rails
-      path: frameworks/rails
-    - title: Flask
-      path: frameworks/flask
-    - title: FastAPI
-      path: frameworks/fastapi
-    - title: Go
-      path: frameworks/go
-    - title: Astro
-      path: frameworks/astro
     - title: Nuxt
       path: frameworks/nuxt
     - title: Phoenix
       path: frameworks/phoenix
+    - title: Ruby on Rails
+      path: frameworks/rails
     - title: Situs Statis
       path: frameworks/static
+
+- title: Apps
+  icon: deployed_code
+  items:
+    - title: Buat & Deploy
+      path: apps/deploy
+    - title: GitHub Auto-Deploy
+      path: apps/github-autodeploy
+    - title: Variabel Environment
+      path: apps/config
+    - title: Restart / Stop / Start
+      path: apps/lifecycle
+    - title: Siap Produksi
+      path: apps/best-practices
+
+- title: Database
+  icon: database
+  items:
+    - title: Engine yang Didukung
+      path: databases/engines
+    - title: Tambah & Tautkan Database
+      path: databases/create-link
+    - title: Backup & Restore
+      path: databases/backups
+
+- title: Domains & HTTPS
+  icon: language
+  items:
+    - title: Domain Kustom & HTTPS
+      path: domains-ssl/custom-domains
+
+- title: Resource & Scaling
+  icon: speed
+  items:
+    - title: CPU & Memori
+      path: scaling/resources
+    - title: Scaling Proses
+      path: scaling/dynos
+    - title: Menggabungkan Proses
+      path: scaling/bundled-processes
+
+- title: Monitoring
+  icon: monitoring
+  items:
+    - title: Logs
+      path: monitoring/logs
+    - title: Metrik
+      path: monitoring/metrics
+    - title: Health Checks
+      path: monitoring/health-checks
+    - title: Uptime & Insiden
+      path: monitoring/uptime
+    - title: Notifikasi
+      path: monitoring/notifications
+    - title: Log Audit
+      path: monitoring/audit-log
 
 - title: Panduan How-To
   icon: lightbulb
@@ -49,8 +111,6 @@
       path: guides/background-workers
     - title: Scheduled Task (Cron)
       path: guides/scheduled-tasks
-    - title: Tambah Postgres + Redis
-      path: guides/postgres-redis
     - title: Deploy dengan Dockerfile
       path: guides/dockerfile
     - title: Deploy dari Monorepo
@@ -75,153 +135,57 @@
       path: migrate/netlify
     - title: Dari Render
       path: migrate/render
-    - title: Dari VPS Biasa
+    - title: Dari VPS
       path: migrate/vps
 
-- title: Apps
-  icon: deployed_code
-  items:
-    - title: Buat App
-      path: apps/create
-    - title: Deploy
-      path: apps/deploy
-    - title: GitHub Auto-Deploy
-      path: apps/github-autodeploy
-    - title: SSH Keys & Akun Multi
-      path: apps/ssh-keys
-    - title: Environment Variables
-      path: apps/config
-    - title: Logs
-      path: apps/logs
-    - title: Restart / Stop / Start
-      path: apps/lifecycle
-
-- title: Templates
-  icon: dashboard_customize
-  items:
-    - title: Browse Templates
-      path: templates/browse
-    - title: Deploy Template
-      path: templates/deploy
-
-- title: Domains & SSL
-  icon: language
-  items:
-    - title: Custom Domain
-      path: domains-ssl/custom-domains
-    - title: SSL
-      path: domains-ssl/ssl
-
-- title: Database
-  icon: database
-  items:
-    - title: Engine yang Didukung
-      path: databases/engines
-    - title: Buat & Link
-      path: databases/create-link
-    - title: Backup
-      path: databases/backups
-
-- title: Scaling
-  icon: speed
-  items:
-    - title: Process Types & Box
-      path: scaling/dynos
-    - title: Box Tiers
-      path: scaling/tiers
-    - title: Bundling Processes (Hemat Box)
-      path: scaling/bundled-processes
-
-- title: Monitoring
-  icon: monitoring
-  items:
-    - title: Logs
-      path: monitoring/logs
-    - title: Metrics
-      path: monitoring/metrics
-    - title: Audit Log
-      path: monitoring/audit-log
-    - title: Health Checks
-      path: monitoring/health-checks
-    - title: Notifications
-      path: monitoring/notifications
-
-- title: Workspaces
-  icon: workspaces
-  items:
-    - title: Personal vs Org
-      path: workspaces/personal-vs-org
-    - title: Switch Workspace
-      path: workspaces/switching
-
-- title: Teams
-  icon: group
-  items:
-    - title: Members & Role
-      path: teams/members
-    - title: Permissions
-      path: teams/permissions
-
-- title: CLI
-  icon: terminal
-  items:
-    - title: Instalasi
-      path: cli/install
-    - title: Daftar Command
-      path: cli/commands
-
-- title: API
-  icon: api
-  items:
-    - title: Authentication
-      path: api/authentication
-    - title: Endpoint Reference
-      path: api/endpoints
-
-- title: Claude Code
-  icon: smart_toy
-  items:
-    - title: Setup
-      path: mcp/setup
-    - title: Tool yang Tersedia
-      path: mcp/tools
-
-- title: Mobile App
-  icon: phone_iphone
-  items:
-    - title: Download
-      path: mobile/download
-    - title: Push Notifications
-      path: mobile/notifications
-
-- title: Billing
+- title: Tagihan
   icon: payments
   items:
-    - title: Plan & Harga
-      path: billing/plans
-    - title: Usage
-      path: billing/usage
-    - title: Invoice
+    - title: Harga
+      path: billing/pricing
+    - title: Invoice & Pembayaran
       path: billing/invoices
-    - title: Plan Bundles
-      path: billing/plan-bundles
 
-- title: Observability
-  icon: insights
+- title: Tim
+  icon: group
   items:
-    - title: Window Retensi
-      path: observability/retention
+    - title: Workspace
+      path: workspaces/personal-vs-org
+    - title: Anggota & Peran
+      path: teams/members
 
-- title: Open Source
-  icon: code
+- title: Tools
+  icon: terminal
   items:
-    - title: Overview
-      path: oss/overview
+    - title: Instal CLI
+      path: cli/install
+    - title: Perintah CLI
+      path: cli/commands
+    - title: Setup Claude Code
+      path: mcp/setup
+    - title: Tool Claude Code
+      path: mcp/tools
+    - title: Aplikasi iOS & Mac
+      path: mobile/download
+    - title: Semua Klien
+      path: api/surfaces
+    - title: Autentikasi API
+      path: api/authentication
+    - title: Referensi API
+      path: api/endpoints
 
-- title: Troubleshooting
+- title: Pemecahan Masalah
   icon: help
   items:
     - title: Masalah Umum
       path: troubleshooting/common
     - title: FAQ
       path: troubleshooting/faq
+
+- title: Self-Hosting
+  icon: dns
+  items:
+    - title: Ringkasan Open Source
+      path: oss/overview
+    - title: Hubungkan Server
+      path: oss/connect-server

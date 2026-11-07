@@ -1,72 +1,66 @@
-# Migrate from Render
+---
+title: Migrate from Render
+summary: Move Render web services, workers, cron jobs and Postgres to Wokku.
+last_updated: 2026-11-07
+---
 
-Render and Wokku are close cousins — web services from a Git repo, managed
-Postgres/Redis, background workers, and cron. The move is mostly re-creating the
-service and pointing it at a Wokku database.
+Render and Wokku work alike: services from a Git repo, managed databases, workers and cron. Translate your `render.yaml` into a Procfile, then move config and data.
 
 ## Concept map
 
 | Render | Wokku |
 |---|---|
-| Web Service | App / `web` process |
-| Background Worker | `worker` process ([guide](/docs/guides/background-workers)) |
+| Web Service | The `web` process |
+| Background Worker | Another process type ([Background Workers](/docs/guides/background-workers)) |
 | Cron Job | [Scheduled Tasks](/docs/guides/scheduled-tasks) |
-| `render.yaml` (blueprint) | `Procfile` + config vars |
-| Render Postgres | Postgres add-on ([guide](/docs/guides/postgres-redis)) |
-| Render Key Value (Redis) | Redis add-on |
-| Environment Groups | Config vars ([config](/docs/apps/config)) |
-| Start Command | `web:` line in `Procfile` |
+| Build / Start Command | Your `Dockerfile` or Nixpacks / Procfile `web:` line |
+| Pre-Deploy Command | None. Run `wokku run my-app -- <command>` after deploys |
+| Instance type | [Resources](/docs/scaling/resources) (CPU and RAM) |
+| Render Postgres | [Postgres add-on](/docs/databases/create-link) |
+| Render Key Value | Redis add-on |
+| Environment Groups | [Environment Variables](/docs/apps/config) |
 
-## 1. Translate `render.yaml` → Procfile
-
-Take your service's **start command** and put it in a `Procfile`; add `worker`
-and `release` lines for any background workers or pre-deploy commands:
+## 1. Write a Procfile
 
 ```procfile
-web: <your render start command, binding to $PORT>
+web: <your start command, listening on $PORT>
 worker: <your worker command>
-release: <your migrate command>
 ```
 
-Render injects `PORT`; so does Wokku — keep binding to `$PORT`.
+Render sets `PORT` and so does Wokku, so keep listening on it. Run your pre-deploy command (usually migrations) after each deploy, for example `wokku run my-app -- npm run migrate`.
 
-## 2. Re-create the app + env
+## 2. Create the app and copy config
 
 ```bash
-wokku apps:create my-app --server my-server
+wokku apps:create my-app
+wokku config:set my-app KEY1=value1 KEY2=value2
 ```
 
-Copy each variable from your Render **Environment** / Environment Group into
-[config vars](/docs/apps/config) (`wokku config:set my-app KEY=VALUE`).
+Copy each variable from the service's **Environment** and any Environment Groups. Skip `DATABASE_URL` and `REDIS_URL`; Wokku's add-ons set them.
 
 ## 3. Move the database
 
 ```bash
-# Render gives you an external connection string in the dashboard
+# Use the External Database URL from the Render dashboard
 pg_dump "$RENDER_EXTERNAL_DATABASE_URL" --no-owner --no-acl -Fc -f dump.bin
-wokku addons:create postgres my-app
-wokku config my-app | grep DATABASE_URL
-pg_restore --no-owner --no-acl -d "$WOKKU_DATABASE_URL" dump.bin
+
+wokku addons:dedicated:upgrade my-app postgres
+wokku addons my-app                          # note the database name
+wokku databases:import <database-name> dump.bin
 ```
 
-Add a Redis add-on if you used Render Key Value, and re-point `REDIS_URL`.
+Used Key Value? `wokku addons:shared:enable my-app redis` sets `REDIS_URL`. More in [Move a database](/docs/migrate/index).
 
-## 4. Deploy + domain
+## 4. Deploy and switch the domain
 
 ```bash
 git remote add wokku git@git.wokku.cloud:my-app
 git push wokku main
 ```
 
-Verify on `my-app.wokku.app`, then move your domain — see
-[Custom Domains](/docs/domains-ssl/custom-domains).
+Check `https://my-app.wokku.app`, then move your domain. See [Custom Domains](/docs/domains-ssl/custom-domains).
 
 ## Gotchas
 
-- **Disk** — Render persistent disks have no direct equivalent; use object storage or a dedicated DB.
-- **Health checks** — Wokku checks the web process; see [Health Checks](/docs/monitoring/health-checks).
-- **Cron timezone** — Wokku scheduled tasks run in UTC.
-
-## Next steps
-
-- [Background Workers](/docs/guides/background-workers) · [Scheduled Tasks](/docs/guides/scheduled-tasks)
+- **Persistent disks** — there's no attached disk. Keep files in object storage or a database.
+- **Health check path** — set it under [Health Checks](/docs/monitoring/health-checks).

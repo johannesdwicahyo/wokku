@@ -1,111 +1,50 @@
-# Deploy Ruby on Rails
+---
+title: Ruby on Rails
+summary: Run a Rails app on Wokku with Puma, Postgres and migrations via wokku run.
+last_updated: 2026-11-07
+---
 
-Deploy a Rails app to Wokku with Postgres, migrations on release, and asset
-precompilation handled automatically.
+Add a Puma start command, set your master key, push, then run migrations. Want a working repo first? Deploy the `rails`, `rails-api`, `rails-sidekiq` or `rails-tailwind` starter from [Templates](/docs/templates/browse).
 
-## Prerequisites
-
-- A [Wokku account](/docs/getting-started/sign-up) and a [connected server](/docs/getting-started/connect-server)
-- An [SSH key registered](/docs/apps/ssh-keys) for `git push`
-- A Rails app with a `Gemfile`
-
-## 1. Create the app
-
-:::tabs
-::web-ui
-**Apps → New App** → server, name `my-rails-app`, box size, **Create**.
-
-::cli
-```bash
-wokku apps:create my-rails-app --server my-server
-```
-:::
-
-## 2. Prepare your Rails app
-
-The Ruby buildpack detects Rails from your `Gemfile` and precompiles assets
-automatically. Add a `Procfile`:
+## Start command
 
 ```procfile
-web: bin/rails server -p $PORT -e $RAILS_ENV
-release: bin/rails db:migrate
+web: bin/rails server -b 0.0.0.0 -p $PORT
 ```
 
-The `release` process runs migrations after a successful build, before traffic
-shifts — zero-downtime deploys.
+Nixpacks detects Rails from your `Gemfile` and installs your gems.
 
-## 3. Set environment variables
+:::callout warning
+Rails 7.1+ apps ship a `Dockerfile`, and Wokku builds it when present. On Rails 8 its default command runs Thruster on port 80, which doesn't receive traffic. Keep the Procfile line above (it replaces the image's command), or delete the Dockerfile to build with Nixpacks.
+:::
 
-:::tabs
-::web-ui
-App → **Config**:
+## Config and database
 
-| Key | Value |
-|---|---|
-| `RAILS_MASTER_KEY` | contents of `config/master.key` |
-| `RAILS_ENV` | `production` |
-| `RAILS_SERVE_STATIC_FILES` | `true` |
-| `RAILS_LOG_TO_STDOUT` | `true` |
-
-::cli
 ```bash
-wokku config:set my-rails-app \
+wokku apps:create my-app --shared postgres
+wokku config:set my-app \
   RAILS_MASTER_KEY="$(cat config/master.key)" \
-  RAILS_ENV=production RAILS_SERVE_STATIC_FILES=true RAILS_LOG_TO_STDOUT=true
-```
-:::
-
-:::callout warn
-Never commit `config/master.key`. Set it as a config var (above) — Wokku stores
-it encrypted.
-:::
-
-## 4. Add a database
-
-```bash
-wokku addons:create postgres my-rails-app
+  RAILS_ENV=production RAILS_LOG_TO_STDOUT=true RAILS_SERVE_STATIC_FILES=true
 ```
 
-Wokku injects `DATABASE_URL`, which Rails reads natively in production. See
-[Create & Link a Database](/docs/databases/create-link).
+Never commit `config/master.key`. The Postgres add-on sets `DATABASE_URL`, which Rails reads in production. See [Create & Link a Database](/docs/databases/create-link).
 
-## 5. Deploy
+## Deploy and migrate
 
-:::tabs
-::web-ui
 ```bash
-git remote add wokku git@git.wokku.cloud:my-rails-app
+git remote add wokku git@git.wokku.cloud:my-app
 git push wokku main
+wokku run my-app -- bin/rails db:migrate
 ```
 
-::github
-Connect under **Apps → Connect GitHub** for push-to-deploy —
-see [GitHub Auto-Deploy](/docs/apps/github-autodeploy).
-
-::cli
-```bash
-git remote add wokku git@git.wokku.cloud:my-rails-app
-git push wokku main
-```
-:::
-
-Live at `https://my-rails-app.wokku.app`.
+Run the migrate command after every deploy that adds migrations. Live at `https://my-app.wokku.app`. First deploy? See the [Quickstart](/docs/getting-started/first-deploy).
 
 ## Background jobs
 
-Run Sidekiq/Solid Queue as a second process — add `worker:` to your `Procfile`
-and scale it. See [Bundled Processes](/docs/scaling/bundled-processes).
-
-## Custom domain
-
-[Custom Domains](/docs/domains-ssl/custom-domains) — SSL is automatic.
+Add `worker: bundle exec sidekiq` (or `bin/jobs` for Solid Queue) to the Procfile and scale it. Sidekiq also needs Redis (`wokku addons:shared:enable my-app redis`, which sets `REDIS_URL`). See [Background Workers](/docs/guides/background-workers).
 
 ## Troubleshooting
 
-- **`ActiveSupport::MessageEncryptor::InvalidMessage`** — wrong/missing `RAILS_MASTER_KEY`.
-- **Assets 404** — set `RAILS_SERVE_STATIC_FILES=true` (or use a CDN).
-- **Migrations didn't run** — confirm the `release:` line and check deploy logs.
-
-## Next steps
-
-- [Logs](/docs/apps/logs) · [Production Readiness](/docs/apps/best-practices)
+- **`ActiveSupport::MessageEncryptor::InvalidMessage`** — `RAILS_MASTER_KEY` is wrong or missing.
+- **Assets 404** — set `RAILS_SERVE_STATIC_FILES=true` and check the build [logs](/docs/monitoring/logs) for `assets:precompile`. If it didn't run, build with a [Dockerfile](/docs/guides/dockerfile).
+- **Blocked host errors** — add your domain to `config.hosts`, or leave `config.hosts` empty in production.

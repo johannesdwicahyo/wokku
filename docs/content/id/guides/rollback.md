@@ -1,67 +1,71 @@
-# Rollback Deploy yang Gagal
+---
+title: Rollback Deploy yang Bermasalah
+summary: Kembali ke release sebelumnya saat sebuah deploy merusak app kamu.
+last_updated: 2026-11-07
+---
 
-Mengirim sesuatu yang rusak? Rollback ke release sebelumnya dalam hitungan detik.
-Wokku menyimpan setiap release, jadi revert bersifat instan — tanpa rebuild.
+Kamu akan mencari release terakhir yang masih bagus lalu rollback ke sana.
 
-## Lihat release-mu
+## 1. Cari release-nya
 
 :::tabs
 ::web-ui
-Aplikasi → **Activity / Releases** menampilkan tiap deploy dengan versi dan commit-nya.
+App → tab **Deploy** → **Releases** menampilkan setiap release beserta versi dan commit-nya.
 
 ::cli
 ```bash
-wokku releases my-app
+wokku releases my-app            # versions and descriptions
+wokku releases my-app --json     # includes each release's ID
+wokku releases:info my-app RELEASE_ID
+```
+
+::api
+```bash
+curl https://wokku.cloud/api/v1/apps/my-app/releases \
+  -H "Authorization: Bearer $TOKEN"
 ```
 :::
 
-Tiap release adalah snapshot immutable dari image yang dibuild + config saat deploy.
-
-## Rollback
+## 2. Rollback
 
 :::tabs
 ::web-ui
-Di daftar **Releases**, klik **Roll back** pada release yang ingin dikembalikan.
+Klik **Rollback** pada release yang kamu mau.
 
 ::cli
 ```bash
-# rollback ke release tepat sebelumnya
-wokku rollback my-app
+wokku rollback my-app RELEASE_ID
+```
 
-# atau ke versi spesifik
-wokku rollback my-app --version 42
+::api
+```bash
+curl -X POST https://wokku.cloud/api/v1/apps/my-app/releases/RELEASE_ID/rollback \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ::mcp
-Tanya Claude: *"Rollback my-app ke release sebelumnya"*
+Minta ke Claude: *"Rollback my-app ke release sebelumnya."*
 :::
 
-Rollback menjalankan ulang image release terpilih — **tanpa rebuild**, jadi cepat.
+Rollback muncul sebagai release baru ("Rollback to vN").
 
-## Yang dilakukan & tidak oleh rollback
+## Apa yang dilakukan rollback
 
-- ✅ Mengembalikan **kode aplikasi** dari release terpilih.
-- ⚠️ **Tidak membatalkan migration database.** Jika deploy yang rusak menjalankan
-  migration destruktif, rollback kode tidak mengembalikan skema/data — restore
-  dari [backup](/docs/databases/backups) bila perlu.
-- ✅ Mengembalikan config yang dikirim bersama release itu.
+- **Memulihkan kode** dari release itu. Prosesnya cepat kalau image release itu masih tersimpan; kalau tidak, Wokku build ulang dari source yang tersimpan.
+- **Mempertahankan environment variable yang sekarang.** Rollback tidak memulihkan config lama. Ubah lewat [Environment Variables](/docs/apps/config) kalau perlu.
+- **Tidak membatalkan migration database.** Pulihkan dari [backup](/docs/databases/backups) kalau sebuah migration merusak data.
 
-:::callout warn
-Tulis migration agar **backward-compatible** (aditif dulu, destruktif belakangan)
-supaya rollback kode tetap aman. Ini satu hal terbesar yang membuat rollback
-tanpa rasa sakit.
+Release yang sudah sangat lama mungkin tidak lagi punya image atau source yang tersimpan. Rollback-nya akan gagal dengan pesan, dan kamu perlu deploy baru.
+
+:::callout tip
+Tulis migration yang backward-compatible (tambah dulu, hapus belakangan) supaya rollback kode tetap aman.
 :::
 
 ## Roll forward
 
-Sudah menemukan dan memperbaiki bug? Tinggal deploy lagi — perbaikan jadi release
-terbaru. Tidak ada langkah "un-rollback" khusus.
+Bug-nya sudah diperbaiki? Deploy lagi. Perbaikannya jadi release terbaru.
 
-## Troubleshooting
+## Langkah selanjutnya
 
-- **Rollback tidak memperbaiki** — masalahnya mungkin data/migration, bukan kode. Cek restore backup.
-- **Tidak menemukan release yang baik** — `wokku releases my-app` menampilkannya dengan versi; pilih yang terakhir baik.
-
-## Langkah berikutnya
-
-- [Backup](/docs/databases/backups) · [Kesiapan Production](/docs/apps/best-practices)
+- [Backups](/docs/databases/backups)
+- [Production Readiness](/docs/apps/best-practices)

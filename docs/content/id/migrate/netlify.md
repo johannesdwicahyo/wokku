@@ -1,63 +1,52 @@
-# Migrasi dari Netlify
+---
+title: Migrasi dari Netlify
+summary: Pindahkan situs statis Netlify, beserta function-nya, ke Wokku.
+last_updated: 2026-11-07
+---
 
-Netlify hebat untuk situs statis + sedikit function. Di Wokku, build statis
-di-deploy via static buildpack, dan Netlify Functions jadi route di server kecil.
+Situs yang murni statis bisa pindah dalam beberapa menit. Netlify Functions jadi route di sebuah server Node kecil.
 
 ## Peta konsep
 
 | Netlify | Wokku |
 |---|---|
-| Direktori publish statis | [Situs Statis](/docs/frameworks/static) (`Staticfile` / sajikan `dist`) |
-| Netlify Functions | Route di server Node ([panduan Node](/docs/frameworks/nodejs)) |
-| Build command | Script `build` (Node buildpack) |
-| Environment variables | Config vars ([config](/docs/apps/config)) |
-| `_redirects` / `_headers` | Routing level-aplikasi / config server |
-| Domain kustom + SSL | [Domain Kustom](/docs/domains-ssl/custom-domains) |
+| Publish directory | [Static Site](/docs/frameworks/static) (`Staticfile`, atau serve `dist`) |
+| Build command | Script `build` di `package.json` |
+| Netlify Functions | Route di [server Node](/docs/frameworks/nodejs) |
+| Environment variables | [Environment Variables](/docs/apps/config) (hanya saat runtime) |
+| `_redirects` / `_headers` | Routing dan middleware di server kamu |
+| Domain dan HTTPS | [Custom Domains](/docs/domains-ssl/custom-domains) |
 
-## Situs statis murni
+## Situs statis
 
-Jika tanpa function, ini seluruh migrasinya:
-
-1. Pastikan build-mu menghasilkan folder (mis. `dist`).
-2. Sajikan — commit `Staticfile` (`root: dist`) atau tambah script `start` yang
-   menyajikan folder itu. Lihat [panduan Situs Statis](/docs/frameworks/static).
-3. Deploy:
+1. Tanpa build step: tambahkan `Staticfile`. Dengan build step: serve folder output-nya pakai `serve`. Lihat [Static Site](/docs/frameworks/static).
+2. Deploy:
 
 ```bash
-wokku apps:create my-site --server my-server
-git remote add wokku git@git.wokku.cloud:my-site
+wokku apps:create my-app
+git remote add wokku git@git.wokku.cloud:my-app
 git push wokku main
 ```
 
-## Situs + function
+## Situs dengan function
 
-Netlify Functions adalah handler HTTP kecil. Pindahkan ke satu server (mis.
-Express) yang menyajikan build statis sekaligus route `/api/*`:
+Pindahkan setiap function ke satu server (Express, Hono, dll.) yang men-serve situs hasil build dan memasang tiap function di bawah `/api/...`:
 
 ```procfile
 web: node server.js
 ```
 
-Di dalam `server.js`, sajikan folder statis dan mount tiap mantan function
-sebagai route. Set secret yang dipakai function sebagai [config var](/docs/apps/config).
+Set secret yang dipakai function sebagai [config vars](/docs/apps/config).
 
-## Redirect & header
+## Redirect dan header
 
-Terjemahkan aturan `_redirects` / `_headers` ke routing/middleware server-mu
-(atau config framework). Fallback SPA (`/* /index.html 200`) jadi route catch-all
-yang mengembalikan `index.html`.
+Buat ulang aturan `_redirects` dan `_headers` sebagai route dan middleware di server kamu. Aturan SPA `/* /index.html 200` jadi route catch-all, atau `serve -s` untuk situs statis.
 
-## Domain
+## Pindahkan domain
 
-Tambahkan domainmu (SSL otomatis), verifikasi di `my-site.wokku.app`, lalu
-alihkan DNS — lihat [Domain Kustom](/docs/domains-ssl/custom-domains).
+Cek `https://my-app.wokku.app`, lalu tambahkan domain kamu (HTTPS otomatis) dan perbarui DNS. Lihat [Custom Domains](/docs/domains-ssl/custom-domains).
 
-## Gotcha
+## Hal yang perlu diperhatikan
 
-- **Env build** — set `NODE_ENV` dan var `*_PUBLIC`/build-time sebelum deploy.
-- **Form handling / identity** — fitur khusus Netlify (Forms, Identity) butuh pengganti level-aplikasi.
-- **Media besar** — taruh CDN di depan aplikasi statis untuk traffic tinggi.
-
-## Langkah berikutnya
-
-- [Panduan Situs Statis](/docs/frameworks/static) · [Panduan Node.js](/docs/frameworks/nodejs)
+- **Variabel saat build** — config vars Wokku tidak tersedia saat build. Commit nilai build yang publik (misalnya di `.env.production`).
+- **Netlify Forms dan Identity** — keduanya tidak punya padanan di Wokku; ganti di app kamu.

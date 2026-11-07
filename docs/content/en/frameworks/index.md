@@ -1,46 +1,58 @@
-# Deploy by Framework
+---
+title: Frameworks
+summary: What each framework needs to run on Wokku — start command, port, settings and migrations.
+last_updated: 2026-11-07
+---
 
-Step-by-step guides to deploy your favorite framework to Wokku. Each guide
-takes you from an empty project to a live URL — including the database,
-environment variables, and custom domain.
-
-Every guide assumes you have a [Wokku account](/docs/getting-started/sign-up),
-a [connected server](/docs/getting-started/connect-server), and an
-[SSH key registered](/docs/apps/ssh-keys) for `git push`.
+Every framework deploys the same way (`git push`); these pages cover only what differs. New to Wokku? Start with the [Quickstart](/docs/getting-started/first-deploy).
 
 ## Pick your framework
 
-**JavaScript / TypeScript**
-- **[Next.js](/docs/frameworks/nextjs)** — React, server-rendered or static
-- **[Nuxt](/docs/frameworks/nuxt)** — Vue, Nitro server
-- **[Astro](/docs/frameworks/astro)** — static or SSR
-- **[Node.js / Express](/docs/frameworks/nodejs)** — any Node HTTP server
+| Framework | Guide | One-click starter |
+|---|---|---|
+| Astro | [Astro](/docs/frameworks/astro) | `astro` |
+| Django | [Django](/docs/frameworks/django) | `django` |
+| FastAPI | [FastAPI](/docs/frameworks/fastapi) | `fastapi` |
+| Flask | [Flask](/docs/frameworks/flask) | `flask` |
+| Go | [Go](/docs/frameworks/go) | `go` |
+| Laravel | [Laravel](/docs/frameworks/laravel) | `laravel` |
+| Next.js | [Next.js](/docs/frameworks/nextjs) | `nextjs` |
+| Node.js / Express | [Node.js](/docs/frameworks/nodejs) | `express` |
+| Nuxt | [Nuxt](/docs/frameworks/nuxt) | — |
+| Phoenix | [Phoenix](/docs/frameworks/phoenix) | `phoenix` |
+| Ruby on Rails | [Rails](/docs/frameworks/rails) | `rails`, `rails-api`, `rails-sidekiq`, `rails-tailwind` |
+| Static sites | [Static Site](/docs/frameworks/static) | — |
 
-**Python**
-- **[Django](/docs/frameworks/django)** — with `migrate` + `collectstatic`
-- **[Flask](/docs/frameworks/flask)** — Gunicorn
-- **[FastAPI](/docs/frameworks/fastapi)** — Uvicorn workers
+A starter is a working repo you deploy in one click from [Templates](/docs/templates/browse), or with `wokku deploy <starter> --name my-app`.
 
-**Other**
-- **[Laravel](/docs/frameworks/laravel)** — PHP, with `artisan migrate` on release
-- **[Ruby on Rails](/docs/frameworks/rails)** — with migrations + asset precompile
-- **[Go](/docs/frameworks/go)** — compiled to a single binary
-- **[Phoenix](/docs/frameworks/phoenix)** — Elixir, with Ecto migrations
-- **[Static Site](/docs/frameworks/static)** — HTML/CSS/JS or any build output
+## How Wokku builds your app
 
-Don't see yours? Almost any app deploys the same way: push a repo with a
-`Procfile` (or a `Dockerfile`) and Wokku builds it. See
-[Deploy](/docs/apps/deploy) for the generic flow.
+1. If your repo has a `Dockerfile`, Wokku builds it.
+2. Otherwise **Nixpacks** detects the language from `package.json`, `requirements.txt`, `Gemfile`, `composer.json`, `go.mod`, `mix.exs` and so on, and builds an image.
 
-## How deployment works
+The `web:` line of a `Procfile` becomes the start command. Every other line becomes a process type you can [scale](/docs/scaling/dynos) (for example `worker:`).
 
-Wokku builds your app on your server the moment you `git push`, using
-[Cloud Native Buildpacks](https://buildpacks.io) for most languages (auto-detected
-from `composer.json`, `package.json`, `requirements.txt`, `go.mod`, etc.) or your
-own `Dockerfile` if you provide one. No build config required for the common case.
+## Rules every app follows
 
-:::callout note
-Prefer not to wire anything by hand? The one-click
-[template gallery](/docs/templates/browse) deploys 130+ apps, and the framework
-**starters** give you a repo that's already Wokku-ready — clone, push, done.
-:::
+- **Listen on `$PORT`, on `0.0.0.0`.** Wokku sets `PORT` and sends traffic only there. A fixed port, or a Dockerfile `EXPOSE`, is ignored.
+- **There is no release phase.** A `release:` line does not run before deploys. Run migrations after each deploy with `wokku run`:
+
+  ```bash
+  wokku run my-app -- bin/rails db:migrate
+  ```
+
+- **Keep Procfile commands simple.** A command that contains `'`, `|`, `;` or `&` runs without a shell. Put compound commands (`a && b`) in a script and call the script. To set an env var inline, write `env HOST=0.0.0.0 node server.js`, not `HOST=0.0.0.0 node server.js`.
+- **The disk is temporary.** Files written at runtime disappear on the next deploy or restart. Keep uploads in object storage and data in a [database](/docs/databases/create-link).
+- **Config vars apply at runtime, not at build time.** Values a framework inlines during the build (`NEXT_PUBLIC_*`, `PUBLIC_*`) must be in your repo, for example in a committed `.env.production`.
+
+## The deploy snippet
+
+Each guide ends with the same three commands:
+
+```bash
+wokku apps:create my-app
+git remote add wokku git@git.wokku.cloud:my-app
+git push wokku main
+```
+
+The app is live at `https://my-app.wokku.app`. For the dashboard flow, GitHub auto-deploy and SSH keys, see [Create & Deploy](/docs/apps/deploy).

@@ -1,16 +1,26 @@
-# Environment Variables
+---
+title: Environment Variables
+summary: Set, view and remove your app's environment variables, then restart to apply them.
+last_updated: 2026-11-07
+---
 
-Set, view, and remove environment variables for your apps.
+You'll set config vars for your app and restart it so they take effect.
 
-## View Config
+:::callout note
+Changes apply on the next restart or deploy. Restart with `wokku ps:restart my-app` or the **restart** button. See [Restart / Stop / Start](/docs/apps/lifecycle).
+:::
+
+## View
 
 :::tabs
 ::web-ui
-Go to your app → **Config** tab.
+Open your app → **Deploy** tab → **Config**.
 
 ::cli
 ```bash
-wokku config my-app
+wokku config my-app                  # all vars
+wokku config:get my-app SECRET_KEY   # one var
+wokku config:export my-app > .env    # as a .env file
 ```
 
 ::api
@@ -20,45 +30,39 @@ curl https://wokku.cloud/api/v1/apps/my-app/config \
 ```
 
 ::mcp
-Ask Claude: *"Show environment variables for my-app"*
-
-::mobile
-Tap your app → **Config** tab.
+Ask Claude: *"Show the environment variables for my-app."*
 :::
 
-## Set Variables
+Team members with the viewer role see variable names but not values.
 
-Setting a variable triggers an app restart.
+## Set
 
 :::tabs
 ::web-ui
-Go to **Config → Add Variable**. Enter the key and value, click **Save**.
+**Deploy** tab → **Config** → add the key and value → save.
 
 ::cli
 ```bash
-wokku config:set my-app DATABASE_URL=postgres://user:pass@host/db
-wokku config:set my-app REDIS_URL=redis://host:6379 SECRET_KEY=abc123
+wokku config:set my-app SECRET_KEY=abc123 LOG_LEVEL=info
 ```
 
 ::api
 ```bash
 curl -X PUT https://wokku.cloud/api/v1/apps/my-app/config \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"DATABASE_URL": "postgres://user:pass@host/db"}'
+  -H "Content-Type: application/json" \
+  -d '{"vars": {"SECRET_KEY": "abc123", "LOG_LEVEL": "info"}}'
 ```
 
 ::mcp
-Ask Claude: *"Set DATABASE_URL on my-app to postgres://user:pass@host/db"*
-
-::mobile
-Tap your app → Config → **+** to add a variable.
+Ask Claude: *"Set LOG_LEVEL=info on my-app."*
 :::
 
-## Remove Variables
+## Remove
 
 :::tabs
 ::web-ui
-Go to **Config**, click the delete icon next to the variable.
+**Deploy** tab → **Config** → delete icon next to the variable.
 
 ::cli
 ```bash
@@ -69,22 +73,20 @@ wokku config:unset my-app LEGACY_KEY OLD_SECRET
 ```bash
 curl -X DELETE https://wokku.cloud/api/v1/apps/my-app/config \
   -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
   -d '{"keys": ["LEGACY_KEY"]}'
 ```
 
 ::mcp
-Ask Claude: *"Remove the LEGACY_KEY env var from my-app"*
-
-::mobile
-Tap your app → Config → swipe to delete.
+Ask Claude: *"Remove LEGACY_KEY from my-app."*
 :::
 
-## Common Variables
+## Set for you
 
-| Variable | Description |
-|----------|-------------|
-| `DATABASE_URL` | Auto-set when you link a database |
-| `REDIS_URL` | Auto-set when you link Redis |
-| `SECRET_KEY_BASE` | Rails secret key |
-| `NODE_ENV` | Node.js environment |
-| `PORT` | Set automatically by Wokku |
+| Variable | When |
+|----------|------|
+| `PORT` | Always. Your app must listen on it. |
+| `DATABASE_URL` | When you add or link a Postgres, MySQL or MariaDB database |
+| `REDIS_URL` | When you add or link Redis |
+
+All process types (`web`, `worker`, …) share the same variables.

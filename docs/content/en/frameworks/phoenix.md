@@ -1,105 +1,50 @@
-# Deploy Phoenix (Elixir)
+---
+title: Phoenix
+summary: Run a Phoenix (Elixir) app on Wokku as a Mix release built from a Dockerfile.
+last_updated: 2026-11-07
+---
 
-Deploy a Phoenix app to Wokku with Postgres and Ecto migrations on release.
+Generate a release Dockerfile, set your secrets, push, then run migrations. Want a working repo first? Deploy the `phoenix` starter from [Templates](/docs/templates/browse).
 
-## Prerequisites
+## Build with a Dockerfile
 
-- A [Wokku account](/docs/getting-started/sign-up) and a [connected server](/docs/getting-started/connect-server)
-- An [SSH key registered](/docs/apps/ssh-keys) for `git push`
-- A Phoenix app with `mix.exs`
-
-## 1. Create the app
-
-:::tabs
-::web-ui
-**Apps → New App** → server, name `my-phoenix-app`, box size, **Create**.
-
-::cli
-```bash
-wokku apps:create my-phoenix-app --server my-server
-```
-:::
-
-## 2. Prepare your Phoenix app
-
-The Elixir buildpack detects `mix.exs`, fetches deps, and builds assets. Add a
-`Procfile`:
-
-```procfile
-web: mix phx.server
-release: mix ecto.migrate
-```
-
-In `config/runtime.exs`, read the port and database from the environment:
-
-```elixir
-config :my_app, MyAppWeb.Endpoint,
-  http: [ip: {0, 0, 0, 0}, port: String.to_integer(System.get_env("PORT") || "4000")],
-  server: true
-config :my_app, MyApp.Repo, url: System.get_env("DATABASE_URL")
-```
-
-## 3. Set environment variables
-
-:::tabs
-::web-ui
-App → **Config**:
-
-| Key | Value |
-|---|---|
-| `SECRET_KEY_BASE` | `mix phx.gen.secret` output |
-| `MIX_ENV` | `prod` |
-| `PHX_HOST` | `my-phoenix-app.wokku.app` |
-
-::cli
-```bash
-wokku config:set my-phoenix-app \
-  SECRET_KEY_BASE="$(mix phx.gen.secret)" MIX_ENV=prod \
-  PHX_HOST=my-phoenix-app.wokku.app
-```
-:::
-
-## 4. Add a database
+Phoenix generates a production Dockerfile, a release, and `bin/server` / `bin/migrate` scripts:
 
 ```bash
-wokku addons:create postgres my-phoenix-app
+mix phx.gen.release --docker
 ```
 
-Wokku injects `DATABASE_URL`; wire it in `runtime.exs` (above). See
-[Create & Link a Database](/docs/databases/create-link).
+Commit the generated files. Wokku builds the `Dockerfile` and runs its `CMD` (`/app/bin/server`). You don't need a Procfile.
 
-## 5. Deploy
+## Runtime config
 
-:::tabs
-::web-ui
+The generated `config/runtime.exs` already reads `PORT`, `DATABASE_URL`, `SECRET_KEY_BASE` and `PHX_HOST`. `bin/server` sets `PHX_SERVER=true`, so the endpoint starts.
+
 ```bash
-git remote add wokku git@git.wokku.cloud:my-phoenix-app
+wokku apps:create my-app --shared postgres
+wokku config:set my-app \
+  SECRET_KEY_BASE="$(mix phx.gen.secret)" \
+  PHX_HOST=my-app.wokku.app
+```
+
+The Postgres add-on sets `DATABASE_URL`. See [Create & Link a Database](/docs/databases/create-link).
+
+## Deploy and migrate
+
+```bash
+git remote add wokku git@git.wokku.cloud:my-app
 git push wokku main
+wokku run my-app -- /app/bin/migrate
 ```
 
-::github
-Connect under **Apps → Connect GitHub** for push-to-deploy —
-see [GitHub Auto-Deploy](/docs/apps/github-autodeploy).
-
-::cli
-```bash
-git remote add wokku git@git.wokku.cloud:my-phoenix-app
-git push wokku main
-```
-:::
-
-Live at `https://my-phoenix-app.wokku.app`.
+Run the migrate command after every deploy that adds migrations. Live at `https://my-app.wokku.app`. First deploy? See the [Quickstart](/docs/getting-started/first-deploy).
 
 ## Custom domain
 
-[Custom Domains](/docs/domains-ssl/custom-domains) — update `PHX_HOST` to match, then redeploy.
+After you add a [custom domain](/docs/domains-ssl/custom-domains), set `PHX_HOST` to it and restart: `wokku ps:restart my-app`.
 
 ## Troubleshooting
 
-- **Endpoint not serving** — set `server: true` in `runtime.exs` and bind to `{0,0,0,0}` + `$PORT`.
-- **`SECRET_KEY_BASE` missing** — generate with `mix phx.gen.secret` and set it.
-- **Migrations didn't run** — confirm the `release:` line; check deploy logs.
-
-## Next steps
-
-- [Logs](/docs/apps/logs) · [Production Readiness](/docs/apps/best-practices)
+- **App boots but never responds** — check `runtime.exs` binds `PORT` on all interfaces and that `PHX_SERVER=true` is set (start with `bin/server`).
+- **`SECRET_KEY_BASE` missing** — generate one with `mix phx.gen.secret` and set it.
+- **WebSocket/LiveView origin errors** — `PHX_HOST` must match the hostname you're visiting.

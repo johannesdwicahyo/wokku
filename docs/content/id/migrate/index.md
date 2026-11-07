@@ -1,46 +1,44 @@
-# Migrasi ke Wokku
+---
+title: Migrasi ke Wokku
+summary: Pindahkan app dari platform lain ke Wokku beserta config, database, dan domain-nya.
+last_updated: 2026-11-07
+---
 
-Pindah dari platform lain? Panduan ini memetakan konsep tiap platform ke Wokku
-dan memandumu melakukan perpindahan — aplikasi, environment, database, dan
-domain — dengan downtime sesedikit mungkin.
+Buat ulang app-nya, salin config-nya, pindahkan database-nya, lalu alihkan DNS. Pilih platform kamu saat ini untuk detailnya.
 
-## Pilih sumbermu
+## Pilih asal kamu
 
-- **[Dari Heroku](/docs/migrate/heroku)** — paling mirip: Procfile, buildpack, add-on, `git push`
-- **[Dari Vercel](/docs/migrate/vercel)** — Next.js dan serverless → container jangka panjang
-- **[Dari Netlify](/docs/migrate/netlify)** — situs statis + functions
-- **[Dari Render](/docs/migrate/render)** — web service, DB terkelola, cron job
-- **[Dari VPS biasa](/docs/migrate/vps)** — gantikan nginx + systemd + deploy manual + certbot
+- **[Heroku](/docs/migrate/heroku)** — app dengan Procfile, config vars, Heroku Postgres
+- **[Vercel](/docs/migrate/vercel)** — Next.js dan serverless function
+- **[Netlify](/docs/migrate/netlify)** — situs statis dan function
+- **[Render](/docs/migrate/render)** — web service, worker, managed Postgres
+- **[VPS](/docs/migrate/vps)** — nginx, systemd atau pm2, certbot
 
-## Bentuk umum sebuah migrasi
+## Empat langkahnya
 
-Apa pun asalmu, perpindahannya sama — empat langkah:
+1. **Pastikan app jalan di Wokku.** App harus listen di `$PORT`. Ikuti [panduan framework](/docs/frameworks/index) kamu, lalu buat app-nya ([Create & Deploy](/docs/apps/deploy)).
+2. **Salin environment variable** dengan `wokku config:set my-app KEY=VALUE ...` ([Environment Variables](/docs/apps/config)).
+3. **Pindahkan database** (lihat di bawah).
+4. **Arahkan domain kamu.** Cek semuanya dulu di `https://my-app.wokku.app`, lalu tambahkan domain kamu dan alihkan DNS ([Custom Domains](/docs/domains-ssl/custom-domains)). Downtime hanya selama propagasi DNS.
 
-1. **Buat ulang aplikasi** di Wokku ([buat aplikasi](/docs/apps/create))
-2. **Salin environment variable** ([config](/docs/apps/config))
-3. **Pindahkan database** — `pg_dump` dari provider lama, restore ke add-on
-   [Postgres Wokku](/docs/guides/postgres-redis)
-4. **Arahkan domain** — tambahkan dengan SSL otomatis, lalu alihkan DNS
-   ([domain kustom](/docs/domains-ssl/custom-domains))
+## Memindahkan database
 
-:::callout note
-Deploy ke URL sementara `*.wokku.app` dulu dan verifikasi semuanya berjalan.
-Baru alihkan DNS domain aslimu setelah puas — itu menjaga downtime hanya seputar
-jendela propagasi DNS.
-:::
-
-## Pindah database, ringkas
+Import bisa dilakukan di database **dedicated** (Postgres, MySQL, MariaDB, MongoDB). Add-on shared tidak bisa import dump, jadi tambahkan database dedicated untuk proses pindahan ini:
 
 ```bash
-# 1. Dump dari provider-mu saat ini (format custom)
+# 1. Dump from your current provider (Postgres custom format)
 pg_dump "$OLD_DATABASE_URL" --no-owner --no-acl -Fc -f dump.bin
 
-# 2. Buat database Wokku dan baca URL-nya
-wokku addons:create postgres my-app
-wokku config my-app | grep DATABASE_URL
+# 2. Add a dedicated Postgres to the app and find its name
+wokku addons:dedicated:upgrade my-app postgres
+wokku addons my-app
 
-# 3. Restore ke Wokku
-pg_restore --no-owner --no-acl -d "$WOKKU_DATABASE_URL" dump.bin
+# 3. Import (this overwrites the database)
+wokku databases:import <database-name> dump.bin
 ```
 
-Tiap panduan di bawah mengulang ini dengan catatan spesifik per provider.
+Add-on akan men-set `DATABASE_URL` di app. Hapus `DATABASE_URL` yang kamu salin dari platform lama. Import menerima SQL biasa atau `pg_dump -Fc` untuk Postgres, output `mysqldump` untuk MySQL/MariaDB, dan `mongodump --archive` untuk MongoDB. Lihat [Create & Link a Database](/docs/databases/create-link).
+
+:::callout note
+Hentikan penulisan data ke app lama (maintenance mode, atau scale ke nol) sebelum dump terakhir, supaya tidak ada data yang hilang antara dump dan peralihan.
+:::

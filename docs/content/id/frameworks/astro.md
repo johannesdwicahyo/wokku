@@ -1,28 +1,14 @@
-# Deploy Astro
+---
+title: Astro
+summary: Jalankan situs Astro di Wokku, server-rendered dengan Node adapter atau sebagai output statis.
+last_updated: 2026-11-07
+---
 
-Deploy situs Astro ke Wokku — output statis atau server-rendered (SSR).
+Pasang Node adapter (atau static server), push, dan situsmu langsung live. Mau repo yang sudah jalan dulu? Deploy starter `astro` dari [Templates](/docs/templates/browse).
 
-## Prasyarat
+## Server-rendered (SSR)
 
-- [Akun Wokku](/docs/getting-started/sign-up) dan [server yang terhubung](/docs/getting-started/connect-server)
-- [SSH key terdaftar](/docs/apps/ssh-keys) untuk `git push`
-- Proyek Astro (`npm create astro@latest` jika mulai dari nol)
-
-## 1. Buat aplikasi
-
-:::tabs
-::web-ui
-**Apps → New App** → server, nama `my-astro-site`, ukuran box, **Create**.
-
-::cli
-```bash
-wokku apps:create my-astro-site --server my-server
-```
-:::
-
-## 2a. Server-rendered (SSR)
-
-Tambahkan adapter Node supaya Astro mem-build server yang bisa dijalankan:
+Tambahkan Node adapter dalam mode standalone:
 
 ```bash
 npx astro add node
@@ -30,74 +16,53 @@ npx astro add node
 
 ```js
 // astro.config.mjs
+import { defineConfig } from "astro/config";
 import node from "@astrojs/node";
+
 export default defineConfig({ output: "server", adapter: node({ mode: "standalone" }) });
 ```
 
-`Procfile`:
-
 ```procfile
-web: HOST=0.0.0.0 PORT=$PORT node ./dist/server/entry.mjs
+web: env HOST=0.0.0.0 node ./dist/server/entry.mjs
 ```
 
-## 2b. Output statis
+Server standalone membaca `PORT` sendiri. Pakai `env HOST=…`; prefix `HOST=… node …` tanpa `env` akan gagal di Procfile.
 
-Untuk situs sepenuhnya statis (`output: "static"`, default), `astro build`
-menghasilkan `dist/`. Sajikan dengan static server kecil:
+## Output statis
 
-```text
-# package.json
-"scripts": { "build": "astro build", "start": "npx serve dist -l $PORT" }
+Dengan `output: "static"` default, `astro build` menulis ke `dist/`. Sajikan dengan static server kecil:
+
+```bash
+npm install serve
+```
+
+```json
+"scripts": { "build": "astro build", "start": "serve dist -l $PORT" }
 ```
 
 ```procfile
 web: npm start
 ```
 
-:::callout note
-Untuk situs statis ber-traffic tinggi, jalur CDN/static-hosting segera hadir
-sebagai recipe khusus. Pendekatan `serve` di atas bekerja hari ini di box mana pun.
-:::
+## Environment variable
 
-## 3. Environment variable
+Variabel `PUBLIC_*` di-inline saat build, dan config var Wokku tidak tersedia selama build. Commit nilainya di `.env.production`. Secret sisi server taruh di [config var](/docs/apps/config):
 
 ```bash
-wokku config:set my-astro-site NODE_ENV=production
+wokku config:set my-app NODE_ENV=production
 ```
 
-Env var `PUBLIC_*` di-inline saat build time — set sebelum deploy.
+## Deploy
 
-## 4. Deploy
-
-:::tabs
-::web-ui
 ```bash
-git remote add wokku git@git.wokku.cloud:my-astro-site
+wokku apps:create my-app
+git remote add wokku git@git.wokku.cloud:my-app
 git push wokku main
 ```
 
-::github
-Hubungkan di **Apps → Connect GitHub** untuk push-to-deploy —
-lihat [GitHub Auto-Deploy](/docs/apps/github-autodeploy).
-
-::cli
-```bash
-git remote add wokku git@git.wokku.cloud:my-astro-site
-git push wokku main
-```
-:::
-
-Live di `https://my-astro-site.wokku.app`.
-
-## Domain kustom
-
-[Domain Kustom](/docs/domains-ssl/custom-domains) — SSL otomatis.
+Live di `https://my-app.wokku.app`. Baru pertama deploy? Lihat [Quickstart](/docs/getting-started/first-deploy).
 
 ## Troubleshooting
 
-- **Halaman kosong / crash** — untuk SSR, bind ke `HOST=0.0.0.0 PORT=$PORT`.
-- **`PUBLIC_*` tidak diterapkan** — build-time; deploy ulang setelah mengubahnya.
-
-## Langkah berikutnya
-
-- [Logs](/docs/apps/logs) · [Kesiapan Production](/docs/apps/best-practices)
+- **App crash atau tidak pernah merespons** — untuk SSR, jalankan `dist/server/entry.mjs` dengan `HOST=0.0.0.0`; untuk output statis, sajikan di `$PORT`.
+- **Nilai `PUBLIC_*` hilang** — nilainya dipakai saat build; commit lalu deploy ulang.

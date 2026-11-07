@@ -1,60 +1,67 @@
-# Deploy dengan Claude (MCP)
+---
+title: Deploy dengan Claude (MCP)
+summary: Biarkan Claude membuat, men-deploy, dan menjalankan app Wokku kamu lewat permintaan dalam bahasa sehari-hari.
+last_updated: 2026-11-07
+---
 
-Wokku menyediakan server Model Context Protocol (MCP), jadi agen AI seperti
-Claude bisa provisioning dan mengoperasikan aplikasimu dalam bahasa biasa —
-buat aplikasi, tambah database, deploy, cek logs dan vitals — tanpa kamu keluar
-dari editor.
+Kamu akan menghubungkan Claude Code ke Wokku, lalu memintanya deploy dengan bahasa sehari-hari.
 
-## 1. Setup server MCP
+## 1. Hubungkan Claude Code
 
-Install ke Claude Code dengan token CLI Wokku-mu:
+Pilih salah satu:
+
+**Dengan Wokku CLI** (memakai token CLI yang sedang login):
 
 ```bash
+gem install wokku-cli
+wokku auth:login
 wokku mcp:install
 ```
 
-Ini mendaftarkan server MCP Wokku ke Claude Code memakai token aktifmu. Detail
-lengkap di [MCP Setup](/docs/mcp/setup); tool yang tersedia ada di
-[MCP Tools](/docs/mcp/tools).
+**Dengan plugin marketplace Claude Code:**
 
-## 2. Minta Claude men-deploy
+```text
+/plugin marketplace add johannesdwicahyo/wokku-plugin
+/plugin install wokku@wokku
+```
 
-Setelah terhubung, cukup jelaskan keinginanmu:
+Kamu akan diminta `WOKKU_API_TOKEN`. Restart Claude Code setelah memakai salah satu cara. Detailnya di [MCP Setup](/docs/mcp/setup).
 
-> *"Buat aplikasi bernama `my-api` di server-ku, tambah database Postgres, set
-> `RAILS_ENV=production`, lalu deploy."*
+## 2. Minta Claude untuk deploy
 
-Claude memanggil tool Wokku secara berurutan — `create_app`, `create_database`,
-`set_config`, `deploy_app` — dan melaporkan tiap hasilnya.
+> *"Buat app bernama my-app dengan Postgres shared, set `RAILS_ENV=production`, lalu deploy project ini."*
 
-## Yang bisa Claude lakukan
+Claude memanggil tool Wokku satu per satu dan melaporkan setiap hasilnya.
 
-| Tugas | Contoh prompt |
+## Apa saja yang bisa kamu minta
+
+| Tugas | Contoh |
 |---|---|
-| Buat & deploy | *"Deploy blog Ghost bernama my-blog di server 1"* |
-| Database | *"Tambah instance Redis ke my-api dan link"* |
-| Config | *"Set `LOG_LEVEL=debug` di my-api"* |
-| Observasi | *"Tampilkan 100 baris log terakhir my-api"* · *"Bagaimana vitals my-api?"* |
-| Scale | *"Scale my-api jadi 2 web dan 1 worker"* |
-| Operasi | *"Rollback my-api ke release sebelumnya"* |
-| Domain | *"Tambah domain api.example.com ke my-api dengan SSL"* |
+| Buat dan deploy | *"Deploy template Ghost sebagai my-blog"* |
+| Database | *"Tambahkan Redis shared ke my-app"* |
+| Config | *"Set `LOG_LEVEL=debug` di my-app"* |
+| Pantau | *"Tampilkan 100 baris log terakhir my-app"* |
+| Scale | *"Scale my-app ke 2 web dan 1 worker"* |
+| Operasikan | *"Rollback my-app ke release sebelumnya"* |
+| Domain | *"Tambahkan api.example.com ke my-app"* |
 
-Permukaan MCP mencerminkan [CLI](/docs/cli/commands) dan
-[API](/docs/api/endpoints) — apa pun yang bisa kamu script, Claude bisa jalankan.
+Daftar lengkapnya ada di [MCP Tools](/docs/mcp/tools).
 
-## Ganti atau sign out
+## Ganti atau hapus
 
 ```bash
-wokku mcp:switch     # arahkan ulang ke token / endpoint aktif
-wokku mcp:logout     # hapus server MCP
+wokku mcp:switch     # push your current CLI token after a new auth:login
+wokku mcp:logout     # remove the Wokku MCP server from Claude Code
 ```
 
 ## Troubleshooting
 
-- **"install Claude Code first"** — CLI `claude` harus ada di PATH-mu; install Claude Code, lalu jalankan ulang `wokku mcp:install`.
-- **Error auth** — token CLI-mu mungkin kedaluwarsa; autentikasi ulang via CLI dan jalankan `wokku mcp:switch`.
-- **Tool tidak ketemu** — update plugin: jalankan ulang `wokku mcp:install` untuk refresh server terdaftar.
+- **"install Claude Code first"**: perintah `claude` harus ada di PATH kamu.
+- **Error autentikasi**: jalankan `wokku auth:login`, lalu `wokku mcp:switch`, lalu restart Claude Code.
+- **Tool tidak ditemukan**: update plugin-nya (`/plugin` di Claude Code), atau jalankan ulang `wokku mcp:install`.
 
-## Langkah berikutnya
+## Langkah selanjutnya
 
-- [MCP Setup](/docs/mcp/setup) · [MCP Tools](/docs/mcp/tools) · [CLI](/docs/cli/commands)
+- [MCP Setup](/docs/mcp/setup)
+- [MCP Tools](/docs/mcp/tools)
+- [Perintah CLI](/docs/cli/commands)

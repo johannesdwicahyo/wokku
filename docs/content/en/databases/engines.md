@@ -1,67 +1,65 @@
 ---
 title: Supported Engines
-summary: "Five free shared engines (Postgres, Redis, Memcached, RabbitMQ, Meilisearch) available on every box, plus four dedicated engines (Postgres, MySQL, MongoDB, Redis) as paid upgrades. Connection URL injected automatically."
-eyebrow: database
-last_updated: 2026-05-31
+summary: Which databases and caches Wokku runs, free shared or paid dedicated, and the env vars your app gets.
+last_updated: 2026-11-07
 ---
 
-# Supported Engines
+Pick an engine and a mode. Wokku creates it, links it to your app and sets the connection URL as an environment variable.
 
-Wokku provides two categories of engines: **shared** (free, multi-tenant, enabled per box) and **dedicated** (paid upgrade, single-tenant container). Workspace-level object storage (MinIO) is separate from both.
+## Engines
 
-## Shared engines
-
-Five engines run on shared host containers. You pick which ones to enable when you create a box — or add/remove them later from the box's **Settings → Add-ons** tab. No separate provisioning, no waiting; the tenant is created instantly.
-
-| Engine | Type | URL env var |
+| Engine | Shared (free) | Dedicated (paid) |
 |---|---|---|
-| **PostgreSQL** | Relational | `DATABASE_URL` |
-| **Redis** | Key-value / Cache | `REDIS_URL` |
-| **Memcached** | Cache | `MEMCACHED_URL` |
-| **RabbitMQ** | Message Queue | `RABBITMQ_URL` |
-| **Meilisearch** | Full-text Search | `MEILISEARCH_URL` |
+| PostgreSQL | ✓ | ✓ |
+| MariaDB | ✓ | ✓ |
+| Redis | ✓ | ✓ |
+| MySQL | — | ✓ |
+| MongoDB | — | ✓ |
 
-> **Free plan restriction** — Free plan boxes only see Postgres and Redis in the addon picker. Memcached, RabbitMQ, and Meilisearch are available from Solo plan upward.
+## Shared vs dedicated
 
-### How shared tenancy works
+| | Shared | Dedicated |
+|---|---|---|
+| Cost | Free with every app | Billed per resource (CPU, RAM, disk), see [Pricing](/docs/billing/pricing) |
+| What you get | Your own database (or Redis tenant) on a shared server | Its own container |
+| Size | 100 MB for Postgres/MariaDB, 10 MB for Redis | You choose: Small, Medium, Large presets or sliders |
+| Automatic backups | No | Nightly, see [Backups](/docs/databases/backups) |
+| Good for | Side projects, prototypes, getting started | Production data |
 
-Each shared engine hosts one container per server. When you enable an engine on a box, Wokku provisions a per-box role + namespace (a role + database for Postgres, a key prefix for Redis and Memcached, a virtual host for RabbitMQ, an index namespace for Meilisearch). Tenants are isolated; one box cannot read another's data.
+Start on shared. When you outgrow it, [upgrade to dedicated](/docs/databases/create-link#upgrade-to-dedicated). Your data moves with you.
 
-The `DATABASE_URL` (and sibling vars) are injected as app environment variables and updated automatically if the shared tenant is ever migrated. Your app code sees the same env var name whether the addon is shared or dedicated.
+:::callout note
+Shared Redis is never backed up. Use it as a cache, or upgrade to a dedicated Redis if it holds data you need to keep.
+:::
 
-## Dedicated engines
+## Dedicated sizes
 
-Four engines can be provisioned as single-tenant dedicated containers. Dedicated engines are a paid upgrade — they consume one slot from your plan's quota (3 DB slots + 3 Redis slots per paid workspace). See [Dedicated upgrade](/docs/databases/dedicated-upgrade) for the full flow.
+| Preset | Postgres, MySQL, MariaDB, MongoDB | Redis |
+|---|---|---|
+| Small | 0.25 vCPU · 512 MB RAM · 5 GB disk | 0.25 vCPU · 256 MB RAM · 1 GB disk |
+| Medium | 0.5 vCPU · 1 GB RAM · 20 GB disk | 0.25 vCPU · 1 GB RAM · 2 GB disk |
+| Large | 1 vCPU · 2 GB RAM · 50 GB disk | 0.5 vCPU · 2 GB RAM · 4 GB disk |
 
-| Engine | Type | URL env var | Notes |
-|---|---|---|---|
-| **PostgreSQL** | Relational | `DATABASE_URL` | Migrates data from shared Pg on upgrade |
-| **MySQL** | Relational | `DATABASE_URL` | Fresh-create only (no shared MySQL) |
-| **MongoDB** | Document | `MONGO_URL` | Fresh-create only (no shared MongoDB) |
-| **Redis** | Key-value / Cache | `REDIS_URL` | Migrates data from shared Redis on upgrade |
+You can also set CPU, RAM and disk with sliders, and resize later. Disk can only grow.
 
-> All three DB engines (Postgres, MySQL, MongoDB) share **one pool of 3 dedicated DB slots** per workspace. Redis has its own pool of 3 slots. Size follows the box: a medium box gets a medium-sized dedicated engine.
+## Environment variables
 
-### Connection limits (dedicated Postgres)
+Wokku sets these on the linked app. It doesn't overwrite a `DATABASE_URL` your app already has.
 
-| Plan | Max connections |
+| Add-on | Env vars set |
 |---|---|
-| Solo | 20 |
-| Pro | 80 |
-| Team | 160 |
+| Shared Postgres | `DATABASE_URL` |
+| Shared MariaDB | `MARIADB_URL`, plus `DATABASE_URL` (in the `mysql2://` form Rails expects) |
+| Shared Redis | `REDIS_URL` |
+| Dedicated Postgres | `POSTGRES_URL`, plus `DATABASE_URL` |
+| Dedicated MySQL | `MYSQL_URL` |
+| Dedicated MariaDB | `MARIADB_URL` |
+| Dedicated MongoDB | `MONGODB_URL` |
+| Dedicated Redis | `REDIS_URL` |
 
-Need more headroom? Put [PgBouncer](https://www.pgbouncer.org/) in front of Postgres — it multiplexes connections without changing your `DATABASE_URL`.
+Read them like any other variable: `process.env.DATABASE_URL`, `os.environ["DATABASE_URL"]`, `ENV["DATABASE_URL"]`. Most frameworks (Rails, Django with `dj-database-url`, Laravel, Prisma) read `DATABASE_URL` on their own. See your [framework guide](/docs/frameworks/index).
 
-## Workspace MinIO (object storage)
+## Next
 
-MinIO is not a per-box addon — it is workspace-level object storage shared across all your boxes. Every paid plan includes a MinIO bucket; the size depends on your plan (Solo 2 GB / Pro 10 GB / Team 20 GB). Access credentials are available from **Workspace → Storage**.
-
-Use cases: user uploads (avatars, attachments), generated PDFs, image and video assets, deploy artefacts, log archives.
-
-> MinIO support is in early access — bucket creation and the S3-compatible API are stable, but the dashboard object browser ships in a later release.
-
-## See also
-
-- [Create & Link add-ons](/docs/databases/create-link) — enable shared add-ons, CLI + API + MCP reference
-- [Dedicated upgrade](/docs/databases/dedicated-upgrade) — when and how to upgrade to a dedicated engine
-- [Plan Bundles](/docs/billing/plan-bundles) — what each plan includes
+- [Add & link a database](/docs/databases/create-link)
+- [Backups & restore](/docs/databases/backups)

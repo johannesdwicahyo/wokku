@@ -1,68 +1,54 @@
 ---
-title: CLI Installation
-summary: "Install the Wokku CLI to drive apps from the terminal. Cloud-only — the OSS edition ships the web UI only."
+title: Install the CLI
+summary: Install the wokku command-line tool, sign in, and check it works.
 eyebrow: cli
-last_updated: 2026-05-29
+last_updated: 2026-11-07
 ---
 
-# Installation
+Install the CLI with RubyGems, sign in through your browser, and run your first command.
 
-Install the Wokku CLI to manage apps from your terminal.
+## Install
 
-:::callout warn
-The CLI is a **Wokku Cloud** feature. The open-source edition is web UI only — see [Open Source Edition](/docs/oss/overview) for the full surface comparison.
-:::
-
-## Homebrew (recommended — macOS / Linux)
+The CLI is a Ruby gem. You need Ruby 3.2 or newer.
 
 ```bash
-brew install johannesdwicahyo/tap/wokku
+gem install wokku-cli
 ```
 
-Homebrew handles `brew upgrade wokku` and `brew uninstall wokku` out of
-the box, including Ruby as a dependency. This is the recommended path.
-
-## Shell script (fallback)
-
-For minimal environments without Homebrew:
-
-```bash
-curl -sL https://wokku.cloud/cli/install.sh | bash
-```
-
-Downloads the standalone CLI to `/usr/local/bin/wokku`. Requires Ruby
-3.1+ already installed on the system.
-
-## Login
+## Sign in
 
 ```bash
 wokku auth:login
 ```
 
-Opens your browser for authentication. Session is saved locally.
+This opens your browser. Approve the code shown in your terminal and the CLI saves your session locally.
 
-## Verify
+## Check it works
 
 ```bash
+wokku version      # prints the CLI version
+wokku auth:whoami  # shows who you are signed in as
+wokku doctor       # checks your sign-in, CLI version and your apps
+```
+
+## Use it in CI
+
+In CI there is no browser, so use an API token instead. Create one under **Profile → API Tokens** in the dashboard (or with `wokku tokens:create ci`) and set it as an environment variable:
+
+```bash
+export WOKKU_API_TOKEN=your-token
 wokku apps
 ```
 
-## Update
+## Update and uninstall
 
 ```bash
-# Homebrew
-brew upgrade wokku
-
-# Shell script
-curl -sL https://wokku.cloud/cli/install.sh | bash
+gem update wokku-cli
+gem uninstall wokku-cli
 ```
 
-## Uninstall
+## Next
 
-```bash
-# Homebrew
-brew uninstall wokku
-
-# Shell script
-sudo rm /usr/local/bin/wokku
-```
+- [All commands](/docs/cli/commands) — or run `wokku help`
+- [Claude Code setup](/docs/mcp/setup)
+- Add `--json` to read commands for machine-readable output, or `--quiet` to hide status messages.

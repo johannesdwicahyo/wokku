@@ -1,165 +1,142 @@
 ---
-title: Create & Link Add-ons
-summary: "Enable shared add-ons on a box at creation or later; upgrade to dedicated from the box settings tab. Full CLI, API, and MCP reference."
-eyebrow: database
-last_updated: 2026-05-31
+title: Add & Link a Database
+summary: Add a free shared database to your app, upgrade it to dedicated, or share one database between apps.
+last_updated: 2026-11-07
 ---
 
-# Create & Link Add-ons
+Add Postgres, MariaDB or Redis to `my-app` in one step. Wokku links it and sets the connection URL, so your app can use it on the next restart.
 
-Wokku add-ons work at the **box** level, not as standalone resources. You pick which shared engines to enable per box at creation, and you can add or remove them later from the box settings.
-
-## Enable shared add-ons at box creation
+## Add a shared (free) database
 
 :::tabs
 ::web-ui
-Go to **Boxes → New Box**. Under **Add-ons**, check the engines you want. Free plan boxes only show Postgres and Redis; paid plans show all five.
+Open the app → **Runtime → Scaling** → **Add-ons** → **+ Add**. Pick the engine, choose **Shared**, and confirm.
 
 ::cli
 ```bash
-# Enable Postgres and Redis when creating the box
+wokku addons:shared:enable my-app postgres   # or mariadb, redis
+```
+
+Or add them when you create the app:
+
+```bash
 wokku apps:create my-app --shared postgres,redis
-
-# Enable all five (Solo+ only)
-wokku apps:create my-app --shared postgres,redis,memcached,rabbitmq,meilisearch
 ```
 
 ::api
 ```bash
-curl -X POST https://wokku.cloud/api/v1/apps \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "my-app",
-    "server_id": "SERVER_ID",
-    "shared_addons": ["postgres", "redis"]
-  }'
-```
-
-::mcp
-Ask Claude: *"Create a box called my-app with Postgres and Redis shared add-ons"*
-
-::mobile
-Tap **Boxes → +** → name the box → toggle the engines you want → **Create**.
-:::
-
-## Enable a shared add-on later
-
-:::tabs
-::web-ui
-Go to the box → **Settings → Add-ons** → toggle the engine on.
-
-::cli
-```bash
-wokku addons:shared:enable my-app postgres
-wokku addons:shared:enable my-app redis
-wokku addons:shared:enable my-app memcached
-wokku addons:shared:enable my-app rabbitmq
-wokku addons:shared:enable my-app meilisearch
-```
-
-::api
-```bash
-curl -X POST https://wokku.cloud/api/v1/apps/APP_ID/addons/shared \
+curl -X POST https://wokku.cloud/api/v1/apps/my-app/addons/shared \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"engine": "postgres"}'
 ```
 
 ::mcp
-```
-Tool: wokku_enable_shared_addon
-Arguments: { "app_id": "APP_ID", "engine": "postgres" }
-```
-
-::mobile
-Tap box → **Settings → Add-ons** → toggle the engine on.
+Ask Claude: *"Add a free shared Postgres to my-app"* (tool `wokku_enable_shared_addon`).
 :::
 
-## Disable a shared add-on
+Provisioning takes a few seconds. Then check the URL is set:
 
-Disabling removes the tenant and injects `null` into the env var. Your data is kept for 24 hours; re-enabling within that window restores it.
+```bash
+wokku config my-app
+```
+
+Look for `DATABASE_URL` (Postgres, MariaDB) or `REDIS_URL` (Redis). The full list is in [Supported Engines](/docs/databases/engines#environment-variables).
+
+## Add a dedicated database
+
+A dedicated database runs in its own container, gets nightly backups and is billed per resource. In the dashboard, choose **Dedicated** instead of **Shared** in the **+ Add** panel, then pick a size preset or set the sliders.
+
+MySQL and MongoDB are dedicated only and start empty:
+
+```bash
+wokku addons:dedicated:upgrade my-app mysql    # or mongodb
+```
+
+## Upgrade to dedicated
+
+Moves an existing shared Postgres, MariaDB or Redis to its own container. Wokku copies your data, points the app's URL at the new database and restarts the app.
 
 :::tabs
 ::web-ui
-Go to box → **Settings → Add-ons** → toggle the engine off → confirm.
+Open the app → **Settings**. Under **Add-ons**, click **Upgrade to dedicated** on the shared Postgres or Redis card. For MariaDB, use the CLI or API.
 
 ::cli
 ```bash
-wokku addons:shared:disable my-app postgres
+wokku addons:dedicated:upgrade my-app postgres   # or mariadb, redis
 ```
 
 ::api
 ```bash
-curl -X DELETE https://wokku.cloud/api/v1/apps/APP_ID/addons/shared/postgres \
+curl -X POST https://wokku.cloud/api/v1/apps/my-app/addons/dedicated \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"engine": "postgres"}'
+```
+
+::mcp
+Ask Claude: *"Upgrade my-app's Postgres to dedicated"* (tool `wokku_upgrade_dedicated_addon`).
+:::
+
+### Resize a dedicated database
+
+Open **Databases** in the sidebar → your database → **Settings**, or:
+
+```bash
+wokku databases:resize my-app-postgres-dedicated --cpu 0.5 --memory 1024 --disk 20
+```
+
+Pass all three flags. Disk can only grow. Run `wokku databases` to see your database names.
+
+## Share one database between apps
+
+Link an existing database to another app:
+
+```bash
+wokku databases:link my-db other-app --alias DATABASE
+```
+
+The app gets `<ALIAS>_URL`, here `DATABASE_URL`. Without `--alias` it's named after the engine, for example `POSTGRES_URL`. Unlink with `wokku databases:unlink my-db other-app`.
+
+## Remove a database
+
+:::callout warning
+Removing an add-on deletes its data. Wokku takes a final snapshot first, but don't rely on it as your only copy.
+:::
+
+:::tabs
+::web-ui
+Open the app → **Runtime → Scaling** → **Add-ons**, and click **Remove** on the add-on.
+
+::cli
+```bash
+wokku addons:shared:disable my-app postgres   # shared
+wokku addons my-app                           # find a dedicated add-on's ID
+wokku addons:remove my-app ADDON_ID           # dedicated
+```
+
+::api
+```bash
+curl -X DELETE https://wokku.cloud/api/v1/apps/my-app/addons/shared/postgres \
   -H "Authorization: Bearer $TOKEN"
 ```
-
-::mcp
-```
-Tool: wokku_disable_shared_addon
-Arguments: { "app_id": "APP_ID", "engine": "postgres" }
-```
-
-::mobile
-Tap box → **Settings → Add-ons** → toggle the engine off.
 :::
 
-## Upgrade a shared add-on to dedicated
+## Run migrations
 
-Upgrading provisions a single-tenant container, migrates data (for Postgres and Redis), flips the connection URL, and restarts the box. Uses one slot from your plan's dedicated quota. See [Dedicated upgrade](/docs/databases/dedicated-upgrade) for the full flow.
+Wokku doesn't run migrations for you. After a deploy, run them as a one-off command:
 
-:::tabs
-::web-ui
-Go to box → **Settings → Add-ons** → click **Upgrade to dedicated** next to the engine.
-
-::cli
 ```bash
-# Upgrade shared Postgres to dedicated
-wokku addons:dedicated:upgrade my-app postgres
-
-# Upgrade shared Redis to dedicated
-wokku addons:dedicated:upgrade my-app redis
-
-# Add MySQL or MongoDB (fresh-create; no shared equivalent)
-wokku addons:dedicated:upgrade my-app mysql
-wokku addons:dedicated:upgrade my-app mongodb
+wokku run my-app -- bin/rails db:migrate
 ```
 
-::api
-```bash
-curl -X POST https://wokku.cloud/api/v1/apps/APP_ID/addons/dedicated \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"engine": "postgres"}'
-```
+## Troubleshooting
 
-::mcp
-```
-Tool: wokku_upgrade_dedicated_addon
-Arguments: { "app_id": "APP_ID", "engine": "postgres" }
-```
+- **`DATABASE_URL` is missing:** the add-on is still provisioning, or the app already had its own `DATABASE_URL`. Check `wokku addons my-app` and `wokku config my-app`.
+- **Shared database is full:** upgrade to dedicated (above).
+- **A database is stuck in error:** `wokku databases:retry DB`.
 
-::mobile
-Tap box → **Settings → Add-ons** → **Upgrade to dedicated** → confirm.
-:::
+## Next
 
-## Connection URL env vars
-
-When an add-on is enabled, Wokku injects the connection URL into the box's environment. The same var name is used whether the engine is shared or dedicated.
-
-| Engine | Env var |
-|---|---|
-| PostgreSQL | `DATABASE_URL` |
-| MySQL | `DATABASE_URL` |
-| MongoDB | `MONGO_URL` |
-| Redis | `REDIS_URL` |
-| Memcached | `MEMCACHED_URL` |
-| RabbitMQ | `RABBITMQ_URL` |
-| Meilisearch | `MEILISEARCH_URL` |
-
-## See also
-
-- [Supported engines](/docs/databases/engines) — engine types, shared vs dedicated
-- [Dedicated upgrade](/docs/databases/dedicated-upgrade) — the full upgrade flow, quotas, and rollback behavior
-- [Plan Bundles](/docs/billing/plan-bundles) — which engines are available on each plan
+- [Backups & restore](/docs/databases/backups)
+- [Environment variables](/docs/apps/config)

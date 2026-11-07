@@ -1,83 +1,51 @@
-# Deploy Situs Statis
+---
+title: Situs Statis
+summary: Sajikan HTML/CSS/JS biasa atau output build tool (Vite, Hugo, Eleventy) di Wokku.
+last_updated: 2026-11-07
+---
 
-Deploy HTML/CSS/JS biasa atau output build tool apa pun (Vite, SPA biasa, Hugo,
-Eleventy) ke Wokku.
+Beri tahu Nixpacks bahwa situsnya statis, atau sajikan output build dengan Node server kecil, lalu push.
 
-## Prasyarat
+## File biasa (tanpa langkah build)
 
-- [Akun Wokku](/docs/getting-started/sign-up) dan [server yang terhubung](/docs/getting-started/connect-server)
-- [SSH key terdaftar](/docs/apps/ssh-keys) untuk `git push`
-- Folder berisi file statis (atau build yang menghasilkannya)
-
-## 1. Buat aplikasi
-
-:::tabs
-::web-ui
-**Apps → New App** → server, nama `my-site`, ukuran box, **Create**.
-
-::cli
-```bash
-wokku apps:create my-site --server my-server
-```
-:::
-
-## 2. Beri tahu Wokku bahwa ini statis
-
-Tambahkan `Staticfile` kosong di root dari yang ingin disajikan. Secara default
-root repo yang disajikan; set `root:` jika file-mu ada di subfolder:
+Tambahkan `Staticfile` di root repo. Nixpacks lalu menyajikan file-filenya dengan nginx. Kalau file-filenya ada di subfolder, sebutkan nama foldernya:
 
 ```yaml
 # Staticfile
-root: public        # hilangkan jika file ada di root repo
+root: public    # omit if the files are at the repo root
 ```
 
-Selesai — static buildpack menyajikan file-mu lewat HTTP, dengan clean URL dan gzip.
+Ini hanya berlaku kalau repo tidak punya `package.json`. Kalau ada, Nixpacks mem-build-nya sebagai app Node.
 
-## 3. Dengan langkah build (Vite, dll.)
+## Dengan langkah build (Vite, dll.)
 
-Jika build dulu, pakai Node buildpack dan sajikan output-nya:
+Build, lalu sajikan folder output-nya di `$PORT`:
 
-```text
-# package.json
-"scripts": { "build": "vite build", "start": "npx serve dist -l $PORT" }
+```bash
+npm install serve
+```
+
+```json
+"scripts": { "build": "vite build", "start": "serve -s dist -l $PORT" }
 ```
 
 ```procfile
 web: npm start
 ```
 
-## 4. Deploy
+`-s` mengembalikan `index.html` untuk path yang tidak dikenal, yang dibutuhkan single-page app untuk deep link. Hilangkan untuk situs multi-halaman.
 
-:::tabs
-::web-ui
+## Deploy
+
 ```bash
-git remote add wokku git@git.wokku.cloud:my-site
+wokku apps:create my-app
+git remote add wokku git@git.wokku.cloud:my-app
 git push wokku main
 ```
 
-::github
-Hubungkan di **Apps → Connect GitHub** untuk push-to-deploy —
-lihat [GitHub Auto-Deploy](/docs/apps/github-autodeploy).
-
-::cli
-```bash
-git remote add wokku git@git.wokku.cloud:my-site
-git push wokku main
-```
-:::
-
-Live di `https://my-site.wokku.app`.
-
-## Domain kustom
-
-[Domain Kustom](/docs/domains-ssl/custom-domains) — SSL otomatis.
+Live di `https://my-app.wokku.app`. Baru pertama deploy? Lihat [Quickstart](/docs/getting-started/first-deploy).
 
 ## Troubleshooting
 
-- **404 di mana-mana** — cek `root:` di `Staticfile` menunjuk ke file-mu.
-- **Deep link SPA 404** — tambahkan fallback agar route tak dikenal menyajikan `index.html` (mode SPA).
-- **Output build tidak disajikan** — dengan langkah build, sajikan folder output (`dist`/`build`), bukan source.
-
-## Langkah berikutnya
-
-- [Domain Kustom](/docs/domains-ssl/custom-domains) · [Logs](/docs/apps/logs)
+- **404 di semua halaman** — `root:` di `Staticfile` harus mengarah ke folder yang berisi `index.html`. Dengan langkah build, sajikan folder output (`dist`, `build`), bukan source-nya.
+- **Deep link SPA 404** — tambahkan `-s` ke `serve`.

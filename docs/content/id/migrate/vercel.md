@@ -1,73 +1,55 @@
-# Migrasi dari Vercel
+---
+title: Migrasi dari Vercel
+summary: Pindahkan app Next.js dari Vercel ke app Wokku yang berjalan terus-menerus.
+last_updated: 2026-11-07
+---
 
-Vercel menjalankan aplikasimu sebagai serverless/edge function. Wokku
-menjalankannya sebagai **container jangka panjang** biasa — artinya tanpa cold
-start, tanpa timeout function, dan server sungguhan tempat kamu bisa menaruh
-worker dan cron di sebelahnya. Untuk Next.js, perpindahannya mudah.
+Di Wokku, app kamu berjalan sebagai satu server yang hidup terus, jadi tidak ada cold start atau function timeout. Untuk Next.js, pindahannya kebanyakan soal config dan DNS.
 
 ## Peta konsep
 
 | Vercel | Wokku |
 |---|---|
-| Serverless / Edge Functions | Satu proses server jangka panjang (`web`) |
-| `next start` (terkelola) | `next start -p $PORT` ([panduan Next.js](/docs/frameworks/nextjs)) |
-| Environment Variables | Config vars ([config](/docs/apps/config)) |
-| Vercel Postgres | Add-on Postgres ([panduan](/docs/guides/postgres-redis)) |
-| Vercel KV (Redis) | Add-on Redis |
+| Serverless / Edge Functions | Route di dalam satu server `next start` |
+| Environment Variables | [Environment Variables](/docs/apps/config) |
+| Vercel Postgres / Neon | [Add-on Postgres](/docs/databases/create-link) |
+| Vercel KV / Upstash Redis | Add-on Redis |
 | Cron Jobs | [Scheduled Tasks](/docs/guides/scheduled-tasks) |
-| Preview Deployments | [PR Previews](/docs/guides/preview-deploys) |
-| Custom Domains | [Domain Kustom](/docs/domains-ssl/custom-domains) |
+| Preview Deployments | [Preview Deploys](/docs/guides/preview-deploys) |
+| Domains | [Custom Domains](/docs/domains-ssl/custom-domains) |
 
-## 1. Jalankan aplikasi sebagai server
+## 1. Jalankan sebagai server
 
-Ikuti [panduan Next.js](/docs/frameworks/nextjs): pastikan ada script `build` +
-`start` dan `start` bind ke `$PORT`:
-
-```json
-{ "scripts": { "build": "next build", "start": "next start -p $PORT" } }
-```
-
-API route / server action tetap bekerja — mereka jalan di dalam server ini, bukan
-sebagai function terisolasi. Kode khusus **Edge runtime** mungkin perlu pindah ke
-Node runtime (`export const runtime = "nodejs"`).
+Ikuti [panduan Next.js](/docs/frameworks/nextjs): pertahankan `"build": "next build"` dan `"start": "next start"`. API route dan server action tetap jalan di dalam server itu. Kode yang dikunci ke Edge runtime mungkin perlu `export const runtime = "nodejs"`.
 
 ## 2. Salin environment variable
 
-Ekspor dari dashboard Vercel (atau `vercel env pull .env`), lalu:
-
 ```bash
-wokku apps:create my-app --server my-server
-# dari file .env:
-while IFS= read -r line; do [ -n "$line" ] && wokku config:set my-app "$line"; done < .env
+wokku apps:create my-app
+vercel env pull .env.vercel --environment=production
+grep -v '^#' .env.vercel | grep -v '^NEXT_PUBLIC_' | grep '=' \
+  | sed 's/="\(.*\)"$/=\1/' \
+  | while IFS= read -r pair; do wokku config:set my-app "$pair"; done
 ```
 
-:::callout warn
-Nilai `NEXT_PUBLIC_*` ditanam saat **build time** — set di Wokku sebelum deploy
-pertama, dan deploy ulang setelah mengubahnya.
-:::
+Nilai `NEXT_PUBLIC_*` disisipkan saat build, dan config vars Wokku tidak tersedia saat build. Commit nilai-nilai itu di `.env.production` saja.
 
 ## 3. Pindahkan data
 
-- **Vercel Postgres** → `pg_dump` connection string-nya, restore ke add-on
-  Postgres Wokku (lihat [ringkasan migrasi](/docs/migrate/index)).
-- **Vercel KV** → tambah add-on Redis Wokku dan arahkan ulang `REDIS_URL`.
+- **Postgres** — dump lalu import ke database dedicated di Wokku. Lihat [Memindahkan database](/docs/migrate/index).
+- **Redis/KV** — `wokku addons:shared:enable my-app redis` akan men-set `REDIS_URL`. Salin datanya hanya kalau itu bukan cache.
 
-## 4. Deploy + domain
+## 4. Deploy dan pindahkan domain
 
 ```bash
 git remote add wokku git@git.wokku.cloud:my-app
 git push wokku main
 ```
 
-Verifikasi di `my-app.wokku.app`, lalu pindahkan domainmu — lihat
-[Domain Kustom](/docs/domains-ssl/custom-domains).
+Cek `https://my-app.wokku.app`, lalu pindahkan domain kamu. Lihat [Custom Domains](/docs/domains-ssl/custom-domains).
 
-## Gotcha
+## Hal yang perlu diperhatikan
 
-- **API khusus edge** — `@vercel/edge` / middleware di edge runtime mungkin butuh padanan Node.
-- **`/api` sebagai function** — mereka jadi route biasa di satu server; perilaku sama, scaling per-box bukan per-request.
-- **Optimasi gambar** — `next/image` bekerja; untuk traffic berat, taruh CDN di depan.
-
-## Langkah berikutnya
-
-- [Panduan Next.js](/docs/frameworks/nextjs) · [Scheduled Tasks](/docs/guides/scheduled-tasks)
+- **Edge middleware dan package `@vercel/*`** — API yang khusus Vercel perlu padanan di Node.
+- **Scaling** — yang kamu scale adalah process dan [resources](/docs/scaling/resources), bukan function per request.
+- **Vercel Cron** — buat ulang setiap cron di `vercel.json` sebagai [scheduled task](/docs/guides/scheduled-tasks).

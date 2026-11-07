@@ -1,98 +1,51 @@
-# Deploy Go
+---
+title: Go
+summary: Jalankan web service Go di Wokku, di-build oleh Nixpacks jadi satu binary.
+last_updated: 2026-11-07
+---
 
-Deploy layanan web Go ke Wokku. Buildpack meng-compile modulmu jadi satu binary
-— build cepat, runtime mungil.
+Listen di `$PORT`, push, dan service-mu langsung live. Mau repo yang sudah jalan dulu? Deploy starter `go` dari [Templates](/docs/templates/browse).
 
-## Prasyarat
-
-- [Akun Wokku](/docs/getting-started/sign-up) dan [server yang terhubung](/docs/getting-started/connect-server)
-- [SSH key terdaftar](/docs/apps/ssh-keys) untuk `git push`
-- Aplikasi Go dengan `go.mod`
-
-## 1. Buat aplikasi
-
-:::tabs
-::web-ui
-**Apps → New App** → server, nama `my-go-app`, ukuran box, **Create**.
-
-::cli
-```bash
-wokku apps:create my-go-app --server my-server
-```
-:::
-
-## 2. Siapkan aplikasi Go-mu
-
-Go buildpack mendeteksi `go.mod` dan mem-build package main. Listen di `$PORT`:
+## Listen di `$PORT`
 
 ```go
 port := os.Getenv("PORT")
-if port == "" { port = "8080" }
+if port == "" {
+	port = "8080" // local dev
+}
 log.Fatal(http.ListenAndServe(":"+port, nil))
 ```
 
-Jika package `main`-mu tidak di root repo, deklarasikan dengan `Procfile`:
+## Build dan start
+
+Nixpacks mendeteksi `go.mod`, mem-build package `main`-mu jadi binary bernama `out`, lalu menjalankannya. Kamu tidak perlu Procfile. Kalau mau menambahkannya, arahkan ke binary itu:
 
 ```procfile
-web: bin/my-go-app
+web: ./out
 ```
 
-Buildpack memberi nama binary sesuai segmen path terakhir modulmu. Kamu juga
-bisa commit `Dockerfile` untuk kontrol penuh — Wokku memakainya otomatis bila ada.
+Kalau package `main`-mu tidak ada di root repo (misalnya `cmd/server`), atau kamu butuh cgo atau library sistem, commit sebuah [Dockerfile](/docs/guides/dockerfile) saja. Wokku otomatis memakainya.
 
-## 3. Set environment variable
-
-:::tabs
-::web-ui
-Aplikasi → **Config** → tambahkan config yang dibaca layananmu dari env.
-
-::cli
-```bash
-wokku config:set my-go-app ENV=production
-```
-:::
-
-## 4. Tambahkan database (opsional)
+## Database (opsional)
 
 ```bash
-wokku addons:create postgres my-go-app
+wokku addons:shared:enable my-app postgres
 ```
 
-Baca `os.Getenv("DATABASE_URL")` di setup `database/sql` / `pgx`-mu. Lihat
-[Buat & Link Database](/docs/databases/create-link).
+Baca `os.Getenv("DATABASE_URL")` dengan `pgx` atau `database/sql`. Lihat [Membuat & Menautkan Database](/docs/databases/create-link).
 
-## 5. Deploy
+## Deploy
 
-:::tabs
-::web-ui
 ```bash
-git remote add wokku git@git.wokku.cloud:my-go-app
+wokku apps:create my-app
+git remote add wokku git@git.wokku.cloud:my-app
 git push wokku main
 ```
 
-::github
-Hubungkan di **Apps → Connect GitHub** untuk push-to-deploy —
-lihat [GitHub Auto-Deploy](/docs/apps/github-autodeploy).
-
-::cli
-```bash
-git remote add wokku git@git.wokku.cloud:my-go-app
-git push wokku main
-```
-:::
-
-Live di `https://my-go-app.wokku.app`.
-
-## Domain kustom
-
-[Domain Kustom](/docs/domains-ssl/custom-domains) — SSL otomatis.
+Live di `https://my-app.wokku.app`. Baru pertama deploy? Lihat [Quickstart](/docs/getting-started/first-deploy).
 
 ## Troubleshooting
 
-- **Crash saat boot** — listen di `os.Getenv("PORT")`, bukan port tetap.
-- **Binary salah yang jalan** — tambahkan `Procfile` yang menunjuk `bin/<name>` yang benar.
-- **Build tidak ketemu main** — pastikan `package main` + `func main()` terjangkau dari `go.mod`.
-
-## Langkah berikutnya
-
-- [Logs](/docs/apps/logs) · [Kesiapan Production](/docs/apps/best-practices)
+- **Crash atau tidak pernah merespons** — listen di `os.Getenv("PORT")`, bukan port tetap.
+- **Build tidak menemukan `main`** — `package main` dengan `func main()` harus ada di root repo, atau pakai Dockerfile.
+- **`bin/<name>: not found`** — binary dari Nixpacks adalah `./out`; perbaiki Procfile-nya.

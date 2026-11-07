@@ -1,32 +1,27 @@
 ---
 title: Bundling Processes
-summary: "Run web + worker + scheduler in one container and use only one box. Same plan price, more headroom."
-eyebrow: scaling
-last_updated: 2026-05-29
+summary: Run web and worker in one container, so you pay for one size instead of two.
+last_updated: 2026-11-07
 ---
 
-# Bundling Processes in One Container
+You'll run several processes inside one container with a process manager.
 
-Save a box by running multiple processes inside a single container.
+## Why bundle
 
-## When this matters
-
-Wokku bills by **container boxs**: 1 container = 1 box, regardless of how many processes run inside it. The default Procfile pattern spawns one container per process type:
+Each process type in your `Procfile` runs in its own container, and each container is billed for its CPU and RAM. This runs two containers:
 
 ```
 web: bundle exec rails server
 worker: bundle exec sidekiq
 ```
 
-That's two containers, **two boxs used.** On Pro (3 small + 2 medium) you'd burn 2-of-5 boxs before scaling at all.
-
-For small apps where a process crash isn't critical, you can **bundle** the processes into one container and use **one box total**. Same plan price, more headroom.
+Two Starter containers (0.25 vCPU, 512 MB each) cost Rp32.000/month. One container with 0.25 vCPU and 1 GB holds both processes for Rp28.000/month, because they share the CPU. You save more with each extra process.
 
 ## The pattern
 
-Use a process manager (`foreman`, `honcho`, `supervisor`, `s6-overlay`) inside the container.
+Make `web` start a process manager (`foreman`, `honcho`, `concurrently`, `supervisor`) that starts everything else.
 
-### Rails + Sidekiq example
+### Rails + Sidekiq
 
 `Gemfile`:
 ```ruby
@@ -36,7 +31,7 @@ gem "sidekiq"
 
 `Procfile` (what Wokku reads):
 ```
-web: foreman start -f Procfile.bundled
+web: bundle exec foreman start -f Procfile.bundled
 ```
 
 `Procfile.bundled` (what foreman reads):
@@ -45,10 +40,11 @@ rails: bundle exec rails server -p $PORT
 sidekiq: bundle exec sidekiq
 ```
 
-Deploy. Wokku sees one process type (`web`), runs one container. Inside, foreman supervises Rails + Sidekiq side-by-side.
+Wokku sees one process type (`web`) and runs one container. Foreman runs Rails and Sidekiq side by side inside it.
 
-### Django + Celery example
+### Django + Celery
 
+`Procfile`:
 ```
 web: honcho start -f Procfile.bundled
 ```
@@ -59,80 +55,37 @@ django: gunicorn myproject.wsgi --bind 0.0.0.0:$PORT
 celery: celery -A myproject worker --loglevel=info
 ```
 
-### Node + worker example
+### Node + worker
 
 ```
 web: npx concurrently "npm:start" "npm:worker"
 ```
 
-## When to bundle vs split
+## Bundle or split?
 
-| | Bundled (1 container) | Split (N containers) |
+| | Bundled (1 container) | Split (one per process) |
 |---|---|---|
-| **Box cost** | 1 | N |
-| **Process isolation** | ✗ — crash in one kills the container | ✓ — each restarts independently |
-| **Scaling** | All-or-nothing — `ps:scale web=2` doubles every process | ✓ — `web=3 worker=1` independently |
-| **Deploys** | All restart together | ✓ — rolling per process type |
-| **Logs** | Interleaved (use prefixed loggers) | ✓ — clean per-process streams |
-| **Memory** | Shared cap — size for sum of peaks + 20% | Each gets the full tier allowance |
+| **Cost** | One size | One size per process |
+| **Crash isolation** | A crash restarts everything | Each restarts on its own |
+| **Scaling** | `web=2` doubles every process | Scale each one separately |
+| **Logs** | Interleaved | One stream per process |
+| **Memory** | Shared | Each has its own |
 
-### Use bundled when
+Bundle for hobby, staging and low-traffic apps. Split when you need to scale web and workers separately, or when a worker is memory-heavy (image processing, PDFs, ML).
 
-- Small / hobby / side-project app
-- Background worker that handles low traffic (Sidekiq on a mostly-cron workload)
-- You can size the container for the combined RAM peak comfortably
-- Crash-isolation isn't a hard requirement
+## Sizing a bundled container
 
-### Use split when
+Give the container enough RAM for every process at its peak, plus about 20%:
 
-- Production scale — uneven scaling matters (3× web, 1× worker)
-- One process being slow or crashing shouldn't affect the other's SLO
-- You want clean log streams per process
-- The worker is memory-heavy (image processing, ML inference) and can spike independently
-
-## Memory sizing for bundled
-
-Pick the container tier where:
-
-```
-container_memory >= sum(per-process peak RSS) + 20% headroom
-```
-
-Rough Rails + Sidekiq sizing on small ↔ medium tiers:
-
-| Workload | Recommended tier |
+| Workload | Suggested preset |
 |---|---|
-| Rails dev/staging + low-volume Sidekiq | **Small** (512 MB) |
-| Production Rails (~50-200 req/s) + Sidekiq with light jobs | **Medium** (2 GB) |
-| Heavy Sidekiq jobs (image processing, PDF generation) | Split — give Sidekiq its own box |
+| Staging Rails + light Sidekiq | Starter (512 MB) or Standard (1 GB) |
+| Production Rails + Sidekiq with light jobs | Large (2 GB) |
+| Heavy jobs (images, PDFs) | Split — give the worker its own container |
 
-## Internal routing (if you need multiple HTTP servers)
-
-If your bundled processes both speak HTTP (e.g. Rails on `$PORT` + a FastAPI sidecar on `5001`), add an internal nginx that routes by path:
-
-`nginx.conf`:
-```
-server {
-  listen $PORT;
-  location /api/ { proxy_pass http://127.0.0.1:5001; }
-  location /     { proxy_pass http://127.0.0.1:3000; }
-}
-```
-
-Then `Procfile.bundled`:
-```
-nginx: nginx -g "daemon off;"
-rails: bundle exec rails server -p 3000
-api: uvicorn api.main:app --port 5001 --host 127.0.0.1
-```
-
-Wokku still sees one `web` container.
-
-## Starter templates
-
-- [Rails + Sidekiq bundled starter](/templates) — production Rails 8 with Sidekiq supervised by foreman in one container. Deploy directly with one click.
+Change the size on **Runtime** → **Scaling**. See [Resources & Sizing](/docs/scaling/resources).
 
 ## See also
 
-- [Process Types & Dynos](/docs/scaling/dynos) — the default split-process model
-- [Dyno Tiers](/docs/scaling/tiers) — pick the right size for your bundled container
+- [Scaling Processes](/docs/scaling/dynos)
+- [Background workers](/docs/guides/background-workers)

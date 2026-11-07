@@ -1,103 +1,70 @@
 ---
 title: Log
-summary: "Tiap baris log container, persisted dan searchable. Dikirim dari host kamu sama Vector dan disimpan di control plane. Retensi nyesuain plan."
-eyebrow: monitoring
-last_updated: 2026-05-29
+summary: Baca, cari, dan live-tail stdout dan stderr app kamu dari dashboard, CLI, API, atau Claude.
+last_updated: 2026-11-07
 ---
 
-# Log
+Di sini kamu akan membaca log app kamu. Wokku mengumpulkan semua yang ditulis container kamu ke stdout dan stderr — print ke stdout dan hasilnya muncul di sini.
 
-Wokku capture **tiap baris** stdout/stderr dari tiap container — app kamu, addon, container internal platform — dan simpan di control plane. Kamu bisa scroll mundur, search by container, dan filter by level.
+## Melihat log
 
-## Cara kerjanya
+:::tabs
+::web-ui
+Buka app kamu → **Runtime** → **Logs**.
 
-Di tiap host, agent **Vector** nge-tail log container Docker dan ngirim batch NDJSON ke `POST /api/v1/logs/ingest`. Control plane nulis satu row per baris ke tabel `logs`.
+- **Search** dan dropdown **level** mencari di riwayat yang tersimpan.
+- **Live tail** mengalirkan baris baru begitu masuk; **follow** me-refresh tampilan secara otomatis.
+- **Filter visible logs** dan pill Errors / Warnings mempersempit yang sudah tampil di layar.
 
-Full pipeline:
-
-```text
-stdout container → file JSON Docker → Vector docker_logs source → HTTP POST → tabel logs
+::cli
+```bash
+wokku logs my-app              # last 100 lines
+wokku logs my-app --lines 500  # last 500 lines
+wokku logs my-app -f           # live tail (also --follow)
 ```
 
-Vector authenticate pakai bearer token per-server (`Server#ingest_token`). Token-nya bisa di-rotate dari dashboard kapan aja.
-
-## Lihat log
-
-### Dashboard
-
-Buka app → tab **Logs**. Kamu dapat:
-
-— **Live tail** — baris baru stream lewat WebSocket pas dia datang
-— **History scroll** — tiap baris disimpan selama window retensi plan
-— **Search** — case-insensitive substring match terhadap isi baris
-— **Filter level** — info / warn / error / debug (auto-detect dari isi baris kalau Vector nggak set level)
-— **Filter container** — narrow ke satu process type (mis. `web` vs `worker` vs `sidekiq`)
-
-### CLI
-
+::api
 ```bash
-wokku logs                       # live tail
-wokku logs --tail 500            # 500 baris terakhir
-wokku logs --since 2h            # 2 jam terakhir
-wokku logs --search "ERROR 500"  # filter by substring
-wokku logs --level error         # filter by level
-wokku logs --container web       # satu process type
-```
-
-### API
-
-```bash
-curl https://wokku.cloud/api/v1/apps/myapp/logs \
+curl -G https://wokku.cloud/api/v1/apps/my-app/logs \
   -H "Authorization: Bearer $TOKEN" \
-  -G --data-urlencode "lines=500" --data-urlencode "level=error"
+  --data-urlencode "lines=200" \
+  --data-urlencode "level=error" \
+  --data-urlencode "q=timeout"
 ```
 
-## Retensi
-
-Seberapa jauh log bisa di-scroll tergantung plan kamu:
-
-| Plan | Retensi log |
+| Param | Arti |
 |---|---|
-| Free | 1 hari |
-| Solo | 3 hari |
-| Pro | 7 hari |
-| Team | 30 hari |
+| `lines` | Jumlah baris, 1–1000 (default 100) |
+| `since`, `until` | Waktu ISO 8601 (default: 24 jam terakhir) |
+| `level` | `error`, `warn`, `info`, atau `debug` |
+| `q` | Teks yang dicari |
+| `follow=1` | Stream baris live sebagai plain text |
 
-`LogRetentionPruneJob` nightly nge-delete baris yang lebih lama dari window plan kamu. Butuh lebih? Lihat [window retensi](/docs/observability/retention) buat schedule cleanup dan gimana window per-plan di-wire.
+::mcp
+Tanya Claude: *"Tampilkan 200 baris error terakhir untuk my-app."*
+:::
 
 ## Level log
 
-Vector best-effort deteksi level dari isi baris (cari `ERROR`, `WARN`, `INFO`, `DEBUG`, `FATAL`, `TRACE`, plus marker framework umum kayak `exception`, `panic`, `traceback`). Baris yang nggak match apa-apa default ke `info`.
+Setiap baris mendapat level berdasarkan kata di dalamnya:
 
-Kalau app kamu emit log structured (JSON line), set field level explicit:
+| Level | Cocok dengan |
+|---|---|
+| error | `ERROR`, `FATAL`, `CRITICAL`, `exception`, `panic`, `traceback` |
+| warn | `WARN`, `WARNING` |
+| info | `INFO`, `NOTICE`, dan apa pun yang tidak cocok dengan yang lain |
+| debug | `DEBUG`, `TRACE`, `VERBOSE` |
 
-```json
-{"level":"error","msg":"db connect failed","attempt":3}
-```
+Pencocokan tidak peduli huruf besar/kecil, jadi baris JSON seperti `{"level":"error",...}` dihitung sebagai error.
 
-Ingest controller ambil itu instead of regex fallback.
+## Batasan
 
-## Log drain (forwarding eksternal)
-
-Kalau kamu mau forward log ke Datadog, Logtail, Papertrail, atau endpoint HTTP/syslog mana aja, add log drain di page **app → Settings → Log drains**. Drain jalan di samping Vector ingest (history dashboard tetap; drain dapat salinan).
-
-Target yang didukung:
-
-— Endpoint HTTPS (Datadog, Logtail, custom)
-— Syslog over TLS (Papertrail, custom)
-
-## Yang TIDAK di-capture
-
-— Baris log yang di-emit sebelum Vector start di host (jarang banget; terjadi pas provisioning awal)
-— Baris lebih dari 16 KB — di-trim ke 16 KB pas ingest
-— Log build-time dari builder (itu di page deploy, bukan log runtime)
-
-## Self-hosted
-
-Community Edition ship setup Vector sebagai Rake task (`rake vector:install[<host>]`). Tanpa itu, dashboard cuma nampilin live tail (via SSH) dan nggak ada history.
+- Baris di atas 16 KB dipotong jadi 16 KB.
+- Output build tidak ada di sini — baca di deploy-nya pada tab **Deploy**.
+- Log disimpan dalam jangka waktu terbatas. Kirim apa pun yang harus kamu simpan jangka panjang dari app kamu ke layanan log milikmu sendiri.
+- Tidak ada log drain. Untuk meneruskan log, kirim dari app kamu.
 
 ## Lihat juga
 
-— [Metrics](/docs/monitoring/metrics) — CPU + memory buat container yang sama
-— [Audit log](/docs/monitoring/audit-log) — record siapa-ngapain (terpisah dari log app)
-— [Window retensi](/docs/observability/retention) — matrix retensi per-plan lengkap
+- [Metrics](/docs/monitoring/metrics) — CPU, memory, request, dan Web Vitals
+- [Audit log](/docs/monitoring/audit-log) — siapa mengubah apa di workspace kamu

@@ -1,59 +1,67 @@
-# Deploy with Claude (MCP)
+---
+title: Deploy with Claude (MCP)
+summary: Let Claude create, deploy and run your Wokku apps from plain-language requests.
+last_updated: 2026-11-07
+---
 
-Wokku ships a Model Context Protocol (MCP) server, so an AI agent like Claude
-can provision and operate your apps in plain language — create an app, add a
-database, deploy, check logs and vitals — without you leaving your editor.
+You'll connect Claude Code to Wokku, then ask it to deploy in plain language.
 
-## 1. Set up the MCP server
+## 1. Connect Claude Code
 
-Install it into Claude Code with your Wokku CLI token:
+Pick one:
+
+**With the Wokku CLI** (uses your logged-in CLI token):
 
 ```bash
+gem install wokku-cli
+wokku auth:login
 wokku mcp:install
 ```
 
-This registers the Wokku MCP server with Claude Code using your active token.
-Full details in [MCP Setup](/docs/mcp/setup); the available tools are listed in
-[MCP Tools](/docs/mcp/tools).
+**With the Claude Code plugin marketplace:**
+
+```text
+/plugin marketplace add johannesdwicahyo/wokku-plugin
+/plugin install wokku@wokku
+```
+
+You'll be asked for a `WOKKU_API_TOKEN`. Restart Claude Code after either method. Details in [MCP Setup](/docs/mcp/setup).
 
 ## 2. Ask Claude to deploy
 
-Once connected, just describe what you want:
+> *"Create an app called my-app with a shared Postgres, set `RAILS_ENV=production`, and deploy this project."*
 
-> *"Create an app called `my-api` on my server, add a Postgres database, set
-> `RAILS_ENV=production`, and deploy it."*
+Claude calls the Wokku tools one by one and reports each result.
 
-Claude calls the Wokku tools in order — `create_app`, `create_database`,
-`set_config`, `deploy_app` — and reports back each result.
+## What you can ask
 
-## What Claude can do
-
-| Task | Example prompt |
+| Task | Example |
 |---|---|
-| Create & deploy | *"Deploy a Ghost blog called my-blog on server 1"* |
-| Databases | *"Add a Redis instance to my-api and link it"* |
-| Config | *"Set `LOG_LEVEL=debug` on my-api"* |
-| Observe | *"Show me the last 100 log lines for my-api"* · *"What are my-api's vitals?"* |
-| Scale | *"Scale my-api to 2 web and 1 worker"* |
-| Operate | *"Roll back my-api to the previous release"* |
-| Domains | *"Add the domain api.example.com to my-api with SSL"* |
+| Create and deploy | *"Deploy the Ghost template as my-blog"* |
+| Databases | *"Add a shared Redis to my-app"* |
+| Config | *"Set `LOG_LEVEL=debug` on my-app"* |
+| Observe | *"Show the last 100 log lines for my-app"* |
+| Scale | *"Scale my-app to 2 web and 1 worker"* |
+| Operate | *"Roll back my-app to the previous release"* |
+| Domains | *"Add api.example.com to my-app"* |
 
-The MCP surface mirrors the [CLI](/docs/cli/commands) and
-[API](/docs/api/endpoints) — anything you can script, Claude can drive.
+The full list is in [MCP Tools](/docs/mcp/tools).
 
-## Switch or sign out
+## Switch or remove
 
 ```bash
-wokku mcp:switch     # re-point at the active token / endpoint
-wokku mcp:logout     # remove the MCP server
+wokku mcp:switch     # push your current CLI token after a new auth:login
+wokku mcp:logout     # remove the Wokku MCP server from Claude Code
 ```
 
 ## Troubleshooting
 
-- **"install Claude Code first"** — the `claude` CLI must be on your PATH; install Claude Code, then re-run `wokku mcp:install`.
-- **Auth errors** — your CLI token may have expired; re-authenticate with the CLI and run `wokku mcp:switch`.
-- **Tool not found** — update the plugin: re-run `wokku mcp:install` to refresh the registered server.
+- **"install Claude Code first"**: the `claude` command must be on your PATH.
+- **Auth errors**: run `wokku auth:login`, then `wokku mcp:switch`, then restart Claude Code.
+- **Tool not found**: update the plugin (`/plugin` in Claude Code), or re-run `wokku mcp:install`.
 
 ## Next steps
 
-- [MCP Setup](/docs/mcp/setup) · [MCP Tools](/docs/mcp/tools) · [CLI](/docs/cli/commands)
+- [MCP Setup](/docs/mcp/setup)
+- [MCP Tools](/docs/mcp/tools)
+- [CLI commands](/docs/cli/commands)

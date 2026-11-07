@@ -1,72 +1,66 @@
-# Migrasi dari Render
+---
+title: Migrasi dari Render
+summary: Pindahkan web service, worker, cron job, dan Postgres dari Render ke Wokku.
+last_updated: 2026-11-07
+---
 
-Render dan Wokku sepupu dekat — web service dari repo Git, Postgres/Redis
-terkelola, background worker, dan cron. Perpindahannya sebagian besar membuat
-ulang service dan mengarahkannya ke database Wokku.
+Render dan Wokku bekerja dengan cara yang mirip: service dari repo Git, managed database, worker, dan cron. Terjemahkan `render.yaml` kamu ke Procfile, lalu pindahkan config dan data.
 
 ## Peta konsep
 
 | Render | Wokku |
 |---|---|
-| Web Service | Aplikasi / proses `web` |
-| Background Worker | Proses `worker` ([panduan](/docs/guides/background-workers)) |
+| Web Service | Process `web` |
+| Background Worker | Process type lain ([Background Workers](/docs/guides/background-workers)) |
 | Cron Job | [Scheduled Tasks](/docs/guides/scheduled-tasks) |
-| `render.yaml` (blueprint) | `Procfile` + config var |
-| Render Postgres | Add-on Postgres ([panduan](/docs/guides/postgres-redis)) |
-| Render Key Value (Redis) | Add-on Redis |
-| Environment Groups | Config vars ([config](/docs/apps/config)) |
-| Start Command | Baris `web:` di `Procfile` |
+| Build / Start Command | `Dockerfile` kamu atau Nixpacks / baris `web:` di Procfile |
+| Pre-Deploy Command | Tidak ada. Jalankan `wokku run my-app -- <command>` setelah deploy |
+| Instance type | [Resources](/docs/scaling/resources) (CPU dan RAM) |
+| Render Postgres | [Add-on Postgres](/docs/databases/create-link) |
+| Render Key Value | Add-on Redis |
+| Environment Groups | [Environment Variables](/docs/apps/config) |
 
-## 1. Terjemahkan `render.yaml` → Procfile
-
-Ambil **start command** service-mu dan taruh di `Procfile`; tambahkan baris
-`worker` dan `release` untuk worker atau perintah pra-deploy:
+## 1. Tulis Procfile
 
 ```procfile
-web: <start command Render-mu, bind ke $PORT>
-worker: <perintah worker-mu>
-release: <perintah migrate-mu>
+web: <your start command, listening on $PORT>
+worker: <your worker command>
 ```
 
-Render menyuntikkan `PORT`; Wokku juga — tetap bind ke `$PORT`.
+Render men-set `PORT`, begitu juga Wokku, jadi tetap listen di situ. Jalankan pre-deploy command kamu (biasanya migration) setelah setiap deploy, misalnya `wokku run my-app -- npm run migrate`.
 
-## 2. Buat ulang aplikasi + env
+## 2. Buat app dan salin config
 
 ```bash
-wokku apps:create my-app --server my-server
+wokku apps:create my-app
+wokku config:set my-app KEY1=value1 KEY2=value2
 ```
 
-Salin tiap variabel dari **Environment** / Environment Group Render ke
-[config var](/docs/apps/config) (`wokku config:set my-app KEY=VALUE`).
+Salin setiap variabel dari **Environment** milik service dan dari Environment Groups yang ada. Lewati `DATABASE_URL` dan `REDIS_URL`; keduanya di-set oleh add-on Wokku.
 
 ## 3. Pindahkan database
 
 ```bash
-# Render memberi connection string eksternal di dashboard
+# Use the External Database URL from the Render dashboard
 pg_dump "$RENDER_EXTERNAL_DATABASE_URL" --no-owner --no-acl -Fc -f dump.bin
-wokku addons:create postgres my-app
-wokku config my-app | grep DATABASE_URL
-pg_restore --no-owner --no-acl -d "$WOKKU_DATABASE_URL" dump.bin
+
+wokku addons:dedicated:upgrade my-app postgres
+wokku addons my-app                          # note the database name
+wokku databases:import <database-name> dump.bin
 ```
 
-Tambah add-on Redis jika kamu memakai Render Key Value, lalu arahkan ulang `REDIS_URL`.
+Pakai Key Value? `wokku addons:shared:enable my-app redis` akan men-set `REDIS_URL`. Selengkapnya di [Memindahkan database](/docs/migrate/index).
 
-## 4. Deploy + domain
+## 4. Deploy dan pindahkan domain
 
 ```bash
 git remote add wokku git@git.wokku.cloud:my-app
 git push wokku main
 ```
 
-Verifikasi di `my-app.wokku.app`, lalu pindahkan domainmu — lihat
-[Domain Kustom](/docs/domains-ssl/custom-domains).
+Cek `https://my-app.wokku.app`, lalu pindahkan domain kamu. Lihat [Custom Domains](/docs/domains-ssl/custom-domains).
 
-## Gotcha
+## Hal yang perlu diperhatikan
 
-- **Disk** — persistent disk Render tak ada padanan langsung; pakai object storage atau DB dedicated.
-- **Health check** — Wokku mengecek proses web; lihat [Health Checks](/docs/monitoring/health-checks).
-- **Timezone cron** — scheduled task Wokku berjalan dalam UTC.
-
-## Langkah berikutnya
-
-- [Background Worker](/docs/guides/background-workers) · [Scheduled Tasks](/docs/guides/scheduled-tasks)
+- **Persistent disk** — tidak ada disk yang terpasang. Simpan file di object storage atau database.
+- **Path health check** — atur di [Health Checks](/docs/monitoring/health-checks).

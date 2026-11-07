@@ -1,77 +1,67 @@
-# Migrasi dari Heroku
+---
+title: Migrasi dari Heroku
+summary: Pindahkan app Heroku ke Wokku beserta config vars, data Postgres, dan domain-nya.
+last_updated: 2026-11-07
+---
 
-Wokku adalah hal paling mirip Heroku yang bisa kamu jalankan di server sendiri —
-`Procfile` sama, buildpack sama, deploy `git push` sama, config var dan add-on
-sama. Sebagian besar aplikasi pindah **tanpa perubahan kode**.
+Kebanyakan app Heroku sudah listen di `$PORT` dan punya Procfile, jadi pindahannya cuma soal config, data, dan DNS. Ada dua perbedaan penting: Wokku build pakai Dockerfile kamu atau Nixpacks (bukan buildpack), dan tidak ada release phase.
 
 ## Peta konsep
 
 | Heroku | Wokku |
 |---|---|
-| Dyno | Box |
-| CLI `heroku` | CLI `wokku` |
-| Config vars | Config vars ([config](/docs/apps/config)) |
-| `Procfile` | `Procfile` (identik) |
-| Buildpack | Buildpack (terdeteksi otomatis) |
-| Heroku Postgres | Add-on Postgres ([panduan](/docs/guides/postgres-redis)) |
-| Heroku Data for Redis | Add-on Redis |
+| `heroku` CLI | `wokku` CLI ([install](/docs/cli/install)) |
+| Buildpack | `Dockerfile` kamu, atau deteksi otomatis Nixpacks |
+| `Procfile` | `Procfile` (`web:` dan process type lain) |
+| `release:` phase | Tidak ada. Jalankan `wokku run my-app -- <migrate>` setelah deploy |
+| Dyno formation | [Scaling Processes](/docs/scaling/dynos) (`wokku ps:scale`) |
+| Ukuran dyno | [Resources](/docs/scaling/resources) (CPU dan RAM) |
+| Config vars | [Environment Variables](/docs/apps/config) |
+| Heroku Postgres / Redis | [Add-on database](/docs/databases/create-link) |
 | Heroku Scheduler | [Scheduled Tasks](/docs/guides/scheduled-tasks) |
-| Review Apps | [PR Previews](/docs/guides/preview-deploys) |
-| `heroku releases` / rollback | [Releases / rollback](/docs/guides/rollback) |
-| `heroku run` | `wokku run` |
+| Review Apps | [Preview Deploys](/docs/guides/preview-deploys) |
+| `heroku rollback` | [Rollback](/docs/guides/rollback) |
+| `heroku run` | `wokku run my-app -- <command>` |
 
-## 1. Ekspor config Heroku-mu
+## 1. Buat app dan salin config
 
 ```bash
-heroku config -s -a my-heroku-app > heroku.env
+wokku apps:create my-app
+heroku config --json -a my-heroku-app \
+  | jq -r 'to_entries[] | select(.key != "DATABASE_URL" and .key != "REDIS_URL") | "\(.key)=\(.value)"' \
+  | while IFS= read -r pair; do wokku config:set my-app "$pair"; done
 ```
 
-## 2. Buat aplikasi Wokku + impor config
+Perintah ini melewati `DATABASE_URL` dan `REDIS_URL`, karena keduanya di-set oleh add-on Wokku. Hapus juga variabel untuk add-on Heroku yang tidak akan kamu pakai.
+
+## 2. Pindahkan database
 
 ```bash
-wokku apps:create my-app --server my-server
-# impor tiap baris KEY=VALUE:
-while IFS= read -r line; do wokku config:set my-app "$line"; done < heroku.env
-```
-
-Buang var internal Heroku yang tak perlu (mis. `DATABASE_URL` lama — Wokku
-men-set miliknya sendiri saat kamu menambah database di bawah).
-
-## 3. Pindahkan database
-
-```bash
-# ambil dump dari Heroku
 heroku pg:backups:capture -a my-heroku-app
-heroku pg:backups:download -a my-heroku-app   # -> latest.dump
+heroku pg:backups:download -a my-heroku-app        # writes latest.dump
 
-# buat Postgres Wokku + restore
-wokku addons:create postgres my-app
-wokku config my-app | grep DATABASE_URL
-pg_restore --no-owner --no-acl -d "$WOKKU_DATABASE_URL" latest.dump
+wokku addons:dedicated:upgrade my-app postgres
+wokku addons my-app                                # note the database name
+wokku databases:import <database-name> latest.dump
 ```
 
-## 4. Deploy
+Pakai Heroku Redis? `wokku addons:shared:enable my-app redis` akan men-set `REDIS_URL`. Selengkapnya di [Memindahkan database](/docs/migrate/index).
 
-`Procfile`-mu sudah bekerja. Tinggal tambahkan remote dan push:
+## 3. Deploy
 
 ```bash
 git remote add wokku git@git.wokku.cloud:my-app
 git push wokku main
 ```
 
-Jika kamu memakai fase `release:` di Heroku untuk migration, ia berjalan sama di Wokku.
+Kalau Procfile kamu punya baris `release:`, hapus baris itu dan jalankan perintahnya setelah setiap deploy, misalnya `wokku run my-app -- bin/rails db:migrate`.
 
-## 5. Alihkan domain
+## 4. Pindahkan domain
 
-Tambahkan domainmu di Wokku (SSL otomatis), verifikasi aplikasi di
-`my-app.wokku.app`, lalu arahkan ulang DNS. Lihat [Domain Kustom](/docs/domains-ssl/custom-domains).
+Cek app di `https://my-app.wokku.app`, lalu tambahkan domain kamu (HTTPS otomatis) dan perbarui DNS. Lihat [Custom Domains](/docs/domains-ssl/custom-domains).
 
-## Gotcha
+## Hal yang perlu diperhatikan
 
-- **Filesystem ephemeral** — sama seperti Heroku; jangan simpan upload di disk. Pakai object storage.
-- **`DATABASE_URL`** — biarkan add-on Wokku men-set-nya; hapus yang diimpor dari Heroku.
-- **Nama env var add-on** — add-on Heroku menyuntikkan nama var-nya sendiri; arahkan aplikasimu ke `DATABASE_URL` / `REDIS_URL` Wokku.
-
-## Langkah berikutnya
-
-- [Background Worker](/docs/guides/background-workers) · [Scheduled Tasks](/docs/guides/scheduled-tasks)
+- **Perintah khusus buildpack** — baris Procfile seperti `heroku-php-apache2` tidak ada di sini. Lihat [panduan framework](/docs/frameworks/index) kamu.
+- **Disk sementara** — sama seperti Heroku. Simpan upload di object storage.
+- **Nama variabel add-on** — arahkan app kamu ke `DATABASE_URL` / `REDIS_URL`, bukan nama add-on Heroku seperti `HEROKU_POSTGRESQL_*`.

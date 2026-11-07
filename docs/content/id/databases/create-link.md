@@ -1,165 +1,142 @@
 ---
-title: Create & Link Add-on
-summary: "Enable shared add-on di box saat creation atau belakangan; upgrade ke dedicated dari tab settings box. Referensi CLI, API, dan MCP lengkap."
-eyebrow: database
-last_updated: 2026-05-31
+title: Tambah & Hubungkan Database
+summary: Tambahkan shared database gratis ke app kamu, upgrade ke dedicated, atau pakai satu database bersama untuk beberapa app.
+last_updated: 2026-11-07
 ---
 
-# Create & Link Add-on
+Tambahkan Postgres, MariaDB, atau Redis ke `my-app` dalam satu langkah. Wokku menghubungkannya dan mengatur URL koneksinya, jadi app kamu bisa langsung memakainya setelah restart berikutnya.
 
-Add-on Wokku bekerja di level **box**, bukan sebagai resource standalone. Kamu pilih shared engine mana yang mau di-enable per box saat creation, dan bisa tambah atau hapus belakangan dari settings box.
-
-## Enable shared add-on saat bikin box
+## Tambah shared database (gratis)
 
 :::tabs
 ::web-ui
-Pergi ke **Boxes → New Box**. Di bagian **Add-ons**, centang engine yang kamu mau. Box Free plan cuma tampilkan Postgres dan Redis; paid plan tampilkan semua lima.
+Buka app → **Runtime → Scaling** → **Add-ons** → **+ Add**. Pilih engine, pilih **Shared**, lalu konfirmasi.
 
 ::cli
 ```bash
-# Enable Postgres dan Redis saat bikin box
+wokku addons:shared:enable my-app postgres   # or mariadb, redis
+```
+
+Atau tambahkan sekalian saat membuat app:
+
+```bash
 wokku apps:create my-app --shared postgres,redis
-
-# Enable semua lima (Solo+ only)
-wokku apps:create my-app --shared postgres,redis,memcached,rabbitmq,meilisearch
 ```
 
 ::api
 ```bash
-curl -X POST https://wokku.cloud/api/v1/apps \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "my-app",
-    "server_id": "SERVER_ID",
-    "shared_addons": ["postgres", "redis"]
-  }'
-```
-
-::mcp
-Tanya Claude: *"Buat box namanya my-app dengan shared add-on Postgres dan Redis"*
-
-::mobile
-Tap **Boxes → +** → namai box → toggle engine yang kamu mau → **Create**.
-:::
-
-## Enable shared add-on setelah box jalan
-
-:::tabs
-::web-ui
-Pergi ke box → **Settings → Add-ons** → toggle engine-nya on.
-
-::cli
-```bash
-wokku addons:shared:enable my-app postgres
-wokku addons:shared:enable my-app redis
-wokku addons:shared:enable my-app memcached
-wokku addons:shared:enable my-app rabbitmq
-wokku addons:shared:enable my-app meilisearch
-```
-
-::api
-```bash
-curl -X POST https://wokku.cloud/api/v1/apps/APP_ID/addons/shared \
+curl -X POST https://wokku.cloud/api/v1/apps/my-app/addons/shared \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"engine": "postgres"}'
 ```
 
 ::mcp
-```
-Tool: wokku_enable_shared_addon
-Arguments: { "app_id": "APP_ID", "engine": "postgres" }
-```
-
-::mobile
-Tap box → **Settings → Add-ons** → toggle engine-nya on.
+Minta ke Claude: *"Tambahkan shared Postgres gratis ke my-app"* (tool `wokku_enable_shared_addon`).
 :::
 
-## Disable shared add-on
+Provisioning butuh beberapa detik. Setelah itu, cek apakah URL-nya sudah di-set:
 
-Disable menghapus tenant dan mengisi env var dengan `null`. Data kamu disimpan selama 24 jam; re-enable dalam window itu akan restore data.
+```bash
+wokku config my-app
+```
+
+Cari `DATABASE_URL` (Postgres, MariaDB) atau `REDIS_URL` (Redis). Daftar lengkapnya ada di [Engine yang Didukung](/docs/databases/engines#environment-variables).
+
+## Tambah dedicated database
+
+Dedicated database berjalan di container sendiri, mendapat backup setiap malam, dan ditagih per resource. Di dashboard, pilih **Dedicated** alih-alih **Shared** di panel **+ Add**, lalu pilih preset ukuran atau atur slider-nya.
+
+MySQL dan MongoDB hanya tersedia sebagai dedicated dan dimulai dalam keadaan kosong:
+
+```bash
+wokku addons:dedicated:upgrade my-app mysql    # or mongodb
+```
+
+## Upgrade ke dedicated
+
+Memindahkan shared Postgres, MariaDB, atau Redis yang sudah ada ke container sendiri. Wokku menyalin data kamu, mengarahkan URL app ke database baru, lalu me-restart app.
 
 :::tabs
 ::web-ui
-Pergi ke box → **Settings → Add-ons** → toggle engine-nya off → konfirmasi.
+Buka app → **Settings**. Di bagian **Add-ons**, klik **Upgrade to dedicated** pada kartu shared Postgres atau Redis. Untuk MariaDB, pakai CLI atau API.
 
 ::cli
 ```bash
-wokku addons:shared:disable my-app postgres
+wokku addons:dedicated:upgrade my-app postgres   # or mariadb, redis
 ```
 
 ::api
 ```bash
-curl -X DELETE https://wokku.cloud/api/v1/apps/APP_ID/addons/shared/postgres \
+curl -X POST https://wokku.cloud/api/v1/apps/my-app/addons/dedicated \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"engine": "postgres"}'
+```
+
+::mcp
+Minta ke Claude: *"Upgrade Postgres my-app ke dedicated"* (tool `wokku_upgrade_dedicated_addon`).
+:::
+
+### Ubah ukuran dedicated database
+
+Buka **Databases** di sidebar → database kamu → **Settings**, atau:
+
+```bash
+wokku databases:resize my-app-postgres-dedicated --cpu 0.5 --memory 1024 --disk 20
+```
+
+Isi ketiga flag tersebut. Disk hanya bisa diperbesar. Jalankan `wokku databases` untuk melihat nama-nama database kamu.
+
+## Pakai satu database untuk beberapa app
+
+Hubungkan database yang sudah ada ke app lain:
+
+```bash
+wokku databases:link my-db other-app --alias DATABASE
+```
+
+App tersebut mendapat `<ALIAS>_URL`, dalam contoh ini `DATABASE_URL`. Tanpa `--alias`, namanya mengikuti engine, misalnya `POSTGRES_URL`. Untuk melepasnya, jalankan `wokku databases:unlink my-db other-app`.
+
+## Hapus database
+
+:::callout warning
+Menghapus add-on berarti menghapus datanya. Wokku membuat snapshot terakhir lebih dulu, tapi jangan jadikan itu satu-satunya salinan kamu.
+:::
+
+:::tabs
+::web-ui
+Buka app → **Runtime → Scaling** → **Add-ons**, lalu klik **Remove** pada add-on tersebut.
+
+::cli
+```bash
+wokku addons:shared:disable my-app postgres   # shared
+wokku addons my-app                           # find a dedicated add-on's ID
+wokku addons:remove my-app ADDON_ID           # dedicated
+```
+
+::api
+```bash
+curl -X DELETE https://wokku.cloud/api/v1/apps/my-app/addons/shared/postgres \
   -H "Authorization: Bearer $TOKEN"
 ```
-
-::mcp
-```
-Tool: wokku_disable_shared_addon
-Arguments: { "app_id": "APP_ID", "engine": "postgres" }
-```
-
-::mobile
-Tap box → **Settings → Add-ons** → toggle engine-nya off.
 :::
 
-## Upgrade shared add-on ke dedicated
+## Jalankan migration
 
-Upgrade provision container single-tenant, migrasi data (untuk Postgres dan Redis), flip connection URL, dan restart box. Mengonsumsi satu slot dari kuota dedicated plan kamu. Lihat [Dedicated upgrade](/docs/databases/dedicated-upgrade) untuk flow lengkapnya.
+Wokku tidak menjalankan migration untuk kamu. Setelah deploy, jalankan sebagai perintah one-off:
 
-:::tabs
-::web-ui
-Pergi ke box → **Settings → Add-ons** → klik **Upgrade to dedicated** di sebelah engine.
-
-::cli
 ```bash
-# Upgrade shared Postgres ke dedicated
-wokku addons:dedicated:upgrade my-app postgres
-
-# Upgrade shared Redis ke dedicated
-wokku addons:dedicated:upgrade my-app redis
-
-# Tambah MySQL atau MongoDB (fresh-create; nggak ada shared-nya)
-wokku addons:dedicated:upgrade my-app mysql
-wokku addons:dedicated:upgrade my-app mongodb
+wokku run my-app -- bin/rails db:migrate
 ```
 
-::api
-```bash
-curl -X POST https://wokku.cloud/api/v1/apps/APP_ID/addons/dedicated \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"engine": "postgres"}'
-```
+## Troubleshooting
 
-::mcp
-```
-Tool: wokku_upgrade_dedicated_addon
-Arguments: { "app_id": "APP_ID", "engine": "postgres" }
-```
+- **`DATABASE_URL` tidak ada:** add-on masih dalam proses provisioning, atau app sudah punya `DATABASE_URL` sendiri. Cek `wokku addons my-app` dan `wokku config my-app`.
+- **Shared database penuh:** upgrade ke dedicated (lihat di atas).
+- **Database tertahan di status error:** `wokku databases:retry DB`.
 
-::mobile
-Tap box → **Settings → Add-ons** → **Upgrade to dedicated** → konfirmasi.
-:::
+## Selanjutnya
 
-## Env var connection URL
-
-Saat add-on di-enable, Wokku inject connection URL ke environment box. Nama var yang sama dipakai baik engine-nya shared maupun dedicated.
-
-| Engine | Env var |
-|---|---|
-| PostgreSQL | `DATABASE_URL` |
-| MySQL | `DATABASE_URL` |
-| MongoDB | `MONGO_URL` |
-| Redis | `REDIS_URL` |
-| Memcached | `MEMCACHED_URL` |
-| RabbitMQ | `RABBITMQ_URL` |
-| Meilisearch | `MEILISEARCH_URL` |
-
-## Lihat juga
-
-- [Engine yang didukung](/docs/databases/engines) — tipe engine, shared vs dedicated
-- [Dedicated upgrade](/docs/databases/dedicated-upgrade) — flow upgrade lengkap, kuota, dan rollback
-- [Plan Bundle](/docs/billing/plan-bundles) — engine mana yang tersedia di tiap plan
+- [Backup & restore](/docs/databases/backups)
+- [Environment variable](/docs/apps/config)

@@ -1,105 +1,58 @@
 ---
-title: Personal vs Org Workspace
-summary: "Tiap akun Wokku dimulai dengan satu personal workspace. Org workspace buat kerja bareng — cuma plan paid, ditagih ke owner workspace."
-eyebrow: workspaces
-last_updated: 2026-05-29
+title: Workspace
+summary: Workspace personal kamu, workspace org untuk kerja bersama, dan cara berpindah di antaranya.
+last_updated: 2026-11-07
 ---
 
-# Personal vs Org Workspace
+Semua yang kamu buat di Wokku — app, database, domain, audit log — dimiliki oleh sebuah **workspace**. Halaman ini menjelaskan dua jenisnya dan cara berpindah di antaranya.
 
-Wokku nge-scope semua hal (app, resource, billing, audit log) ke **workspace**. Ada dua jenis:
+## Workspace personal dan org
 
-— **Personal** — tiap akun dapat satu pas signup. Gratis selamanya, jalan bareng membership org mana aja.
-— **Org** — dibuat on-demand buat kerja bareng orang lain. Butuh plan paid; yang bikin jadi owner-nya.
+| | Personal | Org |
+|---|---|---|
+| Siapa yang dapat | Setiap akun, saat sign-up | Kamu buat sendiri saat butuh |
+| Member | Hanya kamu | Kamu plus siapa pun yang kamu tambahkan |
+| Bisa ditinggalkan atau dihapus | Tidak — terikat ke akun kamu | Kamu pemiliknya; pemilik tidak bisa dikeluarkan |
+| Berapa banyak | Satu | Sebanyak yang kamu mau |
 
-Kamu selalu di dalam *satu* workspace pada satu waktu. [Switcher](/docs/workspaces/switching) di topbar nampilin kamu lagi di mana dan kasih kamu ganti workspace.
+Pakai workspace personal untuk project kamu sendiri. Buat workspace org untuk kerja bersama — startup, klien, co-founder.
 
-## Personal workspace
+## Berpindah workspace
 
-Tiap signup dapat personal workspace, gratis. Itu punya kamu, nggak bisa di-leave atau dihapus — terikat ke akun kamu.
+Workspace switcher ada di bagian atas sidebar.
 
-Yang ada di sini:
+1. Klik nama workspace.
+2. Pilih workspace lain dari daftar.
 
-— App yang kamu deploy tanpa explicitly switch workspace
-— Resource free-tier kamu (1 box ukuran apa aja, 1 Postgres, 1 Redis, 1 bucket MinIO)
-— Billing dan invoice personal kamu (kalau upgrade)
-— Seat personal kamu — nggak ada orang lain yang bisa gabung personal workspace kamu
+Dashboard akan reload dengan app, database, billing, dan audit log workspace tersebut. Pilihan ini tetap tersimpan sampai kamu pindah lagi. Login, 2FA, profil, SSH key, dan API token kamu sama di setiap workspace.
 
-Yang nggak ada:
+**Manage →** di switcher membuka daftar lengkap workspace yang kamu ikuti.
 
-— Nggak bisa add member
-— Nggak bisa undang kolaborator
-— Nggak bisa transfer app dari org workspace masuk ke sini (pakai [app transfer](/docs/apps/lifecycle) buat itu)
+## Membuat workspace org
 
-Anggap aja dev sandbox kamu: side project, prototype, demo yang kamu ship buat client sebelum mereka bayar.
+1. Buka switcher di sidebar → **+ New workspace**.
+2. Masukkan nama (nama harus unik di seluruh Wokku).
+3. Pilih plan dan konfirmasi.
 
-## Org workspace
+Kamu langsung dipindahkan ke workspace baru, sebagai pemilik sekaligus admin.
 
-Buat semua hal lain — kerja agency buat client, app startup kamu, kolaborasi co-founder — kamu bikin **org workspace**.
+:::callout note
+Form pembuatan hanya menawarkan **Solo**, **Pro**, atau **Team**. Plan yang kamu pilih menentukan berapa banyak member yang bisa ditampung workspace: Team tidak punya batas member, Solo dan Pro menampung satu. Halaman workspace menampilkan seat yang terpakai dan yang termasuk.
+:::
 
-Syarat:
+## Siapa yang bayar
 
-— Plan paid (Solo, Pro, atau Team — lihat [Plan](/docs/billing/plans))
-— Kamu jadi **owner** workspace; owner nggak bisa di-remove
-— Kamu bisa add member (cuma plan Team — Solo dan Pro hard-cap di 1 seat)
+Setiap workspace punya batas billing sendiri. Resource yang dibuat di dalam workspace org ditagihkan ke workspace tersebut, bukan ke member yang membuatnya. Lihat [Harga](/docs/billing/pricing).
 
-Buat bikin: buka [switcher workspace](/docs/workspaces/switching) → **+ new workspace** → kasih nama, pilih plan, konfirmasi. Switcher langsung lompat ke workspace baru.
+## CLI, API, dan MCP
 
-Yang ada di org workspace:
+Token milik kamu, bukan milik workspace. Perintah listing (`wokku apps`, `GET /api/v1/apps`) mengembalikan semua yang bisa kamu akses di semua workspace kamu.
 
-— App, database, cache, bucket object storage — di-scope ke workspace
-— Plan + billing + invoice workspace itu sendiri (dibayar owner)
-— Audit log buat semua yang dilakuin di dalamnya
-— Member list dan role assignment
+Membuat app dari CLI, API, atau MCP akan menaruhnya di workspace default kamu — kamu belum bisa memilih workspace org dari sana. Untuk membuat app di workspace org, pindah ke workspace itu di dashboard dan buat app-nya di sana.
 
-## Workspace mana yang bayar?
-
-Workspace yang **own** resource yang bayar. Owner workspace itu yang dapat invoice.
-
-— Resource dibikin di dalam personal workspace kamu → ditagih ke akun Wokku personal kamu
-— Resource dibikin di dalam org workspace → ditagih ke akun **owner org workspace**
-— Member yang deploy app ke org → owner org yang bayar, bukan member-nya
-
-Billing personal workspace member nggak tersentuh. Member bisa punya personal workspace Free dan tetap jadi admin di Team org paid — keduanya independen.
-
-## Switch context
-
-Switcher topbar (kiri atas, setelah logo) nampilin kamu lagi di workspace mana. Klik buat:
-
-— Switch ke workspace lain yang kamu ikut
-— Bikin org workspace baru (`+ new workspace`)
-— Manage member workspace yang kamu own (`manage →`)
-
-Lihat [Switch workspace](/docs/workspaces/switching) buat mekanika lengkapnya.
-
-## Yang TIDAK di-share antar workspace
-
-Tiap workspace adalah boundary billing + resource terpisah. Nggak ada yang bocor:
-
-— **App** — kamu nggak bisa liat app workspace lain kecuali kamu member
-— **Plan dan billing** — tiap workspace punya subscription sendiri
-— **Audit log** — di-scope ke workspace; owner liat action admin di workspace-nya, member liat action mereka sendiri
-— **API token** — token-nya punya kamu, tapi dia beroperasi di workspace mana yang lagi aktif
-
-Yang DI-share (karena ke akun, bukan workspace):
-
-— Auth kamu (login, 2FA, OAuth)
-— Email / nama / avatar personal kamu
-— Install `wokku CLI` kamu
-— Notifikasi dan page `/dashboard/profile` personal
-
-## Pattern umum
-
-| Skenario | Setup |
-|---|---|
-| Solo dev dengan plan paid | Personal workspace di-upgrade ke Solo. Selesai. |
-| Solo dev + side gig | Personal workspace (Free) buat hobby; bikin org workspace per client paid. |
-| Agency | Satu org workspace per client, di Pro atau Team. Undang client sebagai viewer. Tagih agency, invoice client terpisah. |
-| Startup dengan co-founder | Satu org workspace di Team, dua-duanya jadi admin. Personal workspace tetap terpisah. |
-| Tim internal 5 orang | Plan Team org workspace, 3 seat termasuk + 2 extra @ Rp 45.000. |
+`wokku teams` menampilkan daftar workspace yang kamu ikuti, beserta ID-nya.
 
 ## Lihat juga
 
-— [Switch workspace](/docs/workspaces/switching) — mekanika topbar switcher
-— [Member & Role](/docs/teams/members) — manage siapa di workspace
-— [Plan & Harga](/docs/billing/plans) — plan mana yang dukung ukuran workspace apa
+- [Member & Role](/docs/teams/members) — tambahkan orang dan atur apa yang bisa mereka lakukan
+- [Audit log](/docs/monitoring/audit-log) — apa yang terjadi di sebuah workspace

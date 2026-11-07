@@ -1,130 +1,75 @@
 ---
 title: Claude Code Setup
-summary: "Wire Claude Code into your Wokku account. Cloud-only — the OSS edition ships the web UI only."
+summary: Install the Wokku plugin so Claude Code can deploy and manage your apps.
 eyebrow: claude code
-last_updated: 2026-05-29
+last_updated: 2026-11-07
 ---
 
-# Claude Code (Plugin) Setup
+Install the Wokku plugin in Claude Code, give it an API token, and ask it to work on your apps in plain language.
 
-Manage your Wokku apps directly from [Claude Code](https://docs.anthropic.com/en/docs/claude-code) using natural language. **57 tools + 4 guided skills** for common workflows.
+## Before you start
 
-:::callout warn
-The MCP server is a **Wokku Cloud** feature. The open-source edition is web UI only — see [Open Source Edition](/docs/oss/overview).
-:::
+- A Wokku account
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
+- Ruby 3.0 or newer (the plugin uses only the standard library, no gems)
+- An API token from **Profile → API Tokens** in the dashboard
 
-## Prerequisites
+## Install
 
-- A Wokku account with an API token
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed
-- Ruby 3.0+ (no gems required)
+In Claude Code, run:
 
-## Install (Recommended: Plugin)
+```text
+/plugin marketplace add johannesdwicahyo/wokku-plugin
+/plugin install wokku@wokku
+```
 
-### 1. Add the marketplace
+Or from your terminal:
 
 ```bash
 claude plugin marketplace add johannesdwicahyo/wokku-plugin
-```
-
-### 2. Install the plugin
-
-```bash
 claude plugin install wokku@wokku
 ```
 
-You'll be prompted for two values:
+When asked for **Wokku API Token**, paste your token. Then restart Claude Code.
 
-- **Wokku API URL** — press Enter to use `https://wokku.cloud/api/v1` (or enter your self-hosted URL)
-- **Wokku API Token** — paste your token (create one at [wokku.cloud/dashboard/profile](https://wokku.cloud/dashboard/profile))
+:::callout tip
+When no token is set, the plugin falls back to your [CLI](/docs/cli/install) login (`wokku auth:login`).
+:::
 
-### 3. Restart Claude Code
+## Try it
 
-The plugin loads on next startup. Verify with:
+Open Claude Code in your project and ask:
 
-```bash
-claude plugin list | grep wokku
-```
+- *"List my Wokku apps"*
+- *"Deploy this project to Wokku as my-app"*
+- *"Add a free Postgres to my-app"*
+- *"Show the logs for my-app"*
+- *"Why did my last deploy of my-app fail?"*
+- *"Add blog.example.com to my-app and enable SSL"*
+- *"Scale my-app to 2 web processes"*
+- *"Roll back my-app to the previous release"*
+- *"Is anything down right now?"*
 
-You should see `wokku@wokku` listed as enabled.
+Claude asks you to confirm before anything destructive, such as deleting an app or restoring a backup.
 
-### 4. Start using it
+## What's included
 
-Open Claude Code in any project and try:
-
-```
-List my Wokku apps
-```
-
-## What's Included
-
-### 57 Tools
-Full coverage of the Wokku API — apps, servers, databases, domains, SSL, backups, releases, scaling, teams, notifications, and more. See [Available Tools](/docs/mcp/tools) for the full list.
-
-### 4 Guided Skills
-Pre-built workflows that Claude can invoke for common tasks:
+- **109 tools** covering apps, deploys, config, domains, databases, backups, scaling, monitoring, incidents, teams and billing. See [Available tools](/docs/mcp/tools).
+- **4 guided skills** for common workflows:
 
 | Skill | What it does |
-|-------|-------------|
-| `/wokku:deploy-new-app` | Complete walkthrough — create app, set config, link database, git push |
-| `/wokku:troubleshoot` | Systematic debugging — check status, logs, health, deploys, suggest fixes |
-| `/wokku:setup-github-deploy` | Connect a GitHub repo for automatic deploys on push |
-| `/wokku:add-database` | Create a database and link it to an app with proper env vars |
-
-## Example Prompts
-
-- *"Deploy this project to Wokku as my-app"*
-- *"List my servers and their status"*
-- *"Show me the logs for my-app"*
-- *"Troubleshoot why my-app is crashing"*
-- *"Set DATABASE_URL on my-app to postgres://..."*
-- *"Add the domain blog.example.com to my-app and enable SSL"*
-- *"Scale my-app to 2 web dynos"*
-- *"Rollback my-app to the previous release"*
-- *"Create a backup of my production database"*
-- *"Invite alice@example.com to the engineering team"*
-
-## Self-Hosted Wokku
-
-When installing, set the API URL to your instance:
-
-```
-Wokku API URL: https://paas.mycompany.com/api/v1
-```
-
-Everything else works the same.
-
-## Alternative: Manual MCP Setup
-
-If you prefer not to use the plugin system, you can install the MCP server manually:
-
-### 1. Download the server
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/johannesdwicahyo/wokku/main/mcp/server.rb -o wokku-mcp.rb
-```
-
-### 2. Add to Claude Code
-
-```bash
-claude mcp add wokku \
-  -e WOKKU_API_URL=https://wokku.cloud/api/v1 \
-  -e WOKKU_API_TOKEN=your-token-here \
-  -- ruby wokku-mcp.rb
-```
-
-Note: This method gives you the 57 MCP tools but **not** the guided skills. Use the plugin install for the full experience.
+|---|---|
+| `/wokku:deploy-new-app` | Create an app, set config, add a database and walk you through `git push` |
+| `/wokku:troubleshoot` | Check status, logs, health and deploys, then suggest fixes |
+| `/wokku:setup-github-deploy` | Connect a GitHub repo for deploys on every push |
+| `/wokku:add-database` | Add a database to an app and set its URL variable |
 
 ## Troubleshooting
 
-**"Plugin not found"** — Make sure you ran `claude plugin marketplace add johannesdwicahyo/wokku-plugin` first.
-
-**"Cannot connect"** — Check that `WOKKU_API_URL` is correct and reachable. For self-hosted, make sure it includes `/api/v1`.
-
-**"Invalid or expired token"** — Generate a new API token at [wokku.cloud/dashboard/profile](https://wokku.cloud/dashboard/profile).
-
-**Tools not showing up** — Restart Claude Code. Run `claude plugin list` to verify the plugin is enabled.
-
-**Skills not invoked** — Ask Claude directly: *"Use the wokku deploy-new-app skill to deploy this project"*.
-
-See [Available Tools](/docs/mcp/tools) for the full tool reference.
+| Problem | Fix |
+|---|---|
+| "Plugin not found" | Run the `marketplace add` command first. |
+| "Invalid or expired token" | Create a new token under **Profile → API Tokens** and reinstall the plugin. |
+| Tools don't show up | Restart Claude Code, then check `claude plugin list` shows `wokku@wokku` enabled. |
+| A skill isn't used | Name it: *"Use the wokku deploy-new-app skill"*. |
+| Something else is wrong | Ask *"Run wokku doctor"* — it checks your token, plugin version and app health. |

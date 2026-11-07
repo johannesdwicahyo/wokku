@@ -1,84 +1,51 @@
-# Deploy a Static Site
+---
+title: Static Site
+summary: Serve plain HTML/CSS/JS or a build tool's output (Vite, Hugo, Eleventy) on Wokku.
+last_updated: 2026-11-07
+---
 
-Deploy plain HTML/CSS/JS or any build-tool output (Vite, plain SPA, Hugo,
-Eleventy) to Wokku.
+Tell Nixpacks the site is static, or serve the build output with a small Node server, then push.
 
-## Prerequisites
+## Plain files (no build step)
 
-- A [Wokku account](/docs/getting-started/sign-up) and a [connected server](/docs/getting-started/connect-server)
-- An [SSH key registered](/docs/apps/ssh-keys) for `git push`
-- A folder of static files (or a build that produces one)
-
-## 1. Create the app
-
-:::tabs
-::web-ui
-**Apps → New App** → server, name `my-site`, box size, **Create**.
-
-::cli
-```bash
-wokku apps:create my-site --server my-server
-```
-:::
-
-## 2. Tell Wokku it's static
-
-Add an empty `Staticfile` to the root of what you want served. By default the
-repo root is served; set `root:` if your files live in a subfolder:
+Add a `Staticfile` to the repo root. Nixpacks then serves the files with nginx. If the files live in a subfolder, name it:
 
 ```yaml
 # Staticfile
-root: public        # omit if files are at the repo root
+root: public    # omit if the files are at the repo root
 ```
 
-That's it — the static buildpack serves your files over HTTP, with clean URLs
-and gzip.
+This only applies when the repo has no `package.json`. With one, Nixpacks builds it as a Node app.
 
-## 3. With a build step (Vite, etc.)
+## With a build step (Vite, etc.)
 
-If you build first, use the Node buildpack and serve the output instead:
+Build, then serve the output folder on `$PORT`:
 
-```text
-# package.json
-"scripts": { "build": "vite build", "start": "npx serve dist -l $PORT" }
+```bash
+npm install serve
+```
+
+```json
+"scripts": { "build": "vite build", "start": "serve -s dist -l $PORT" }
 ```
 
 ```procfile
 web: npm start
 ```
 
-## 4. Deploy
+`-s` returns `index.html` for unknown paths, which single-page apps need for deep links. Leave it out for multi-page sites.
 
-:::tabs
-::web-ui
+## Deploy
+
 ```bash
-git remote add wokku git@git.wokku.cloud:my-site
+wokku apps:create my-app
+git remote add wokku git@git.wokku.cloud:my-app
 git push wokku main
 ```
 
-::github
-Connect under **Apps → Connect GitHub** for push-to-deploy —
-see [GitHub Auto-Deploy](/docs/apps/github-autodeploy).
-
-::cli
-```bash
-git remote add wokku git@git.wokku.cloud:my-site
-git push wokku main
-```
-:::
-
-Live at `https://my-site.wokku.app`.
-
-## Custom domain
-
-[Custom Domains](/docs/domains-ssl/custom-domains) — SSL is automatic.
+Live at `https://my-app.wokku.app`. First deploy? See the [Quickstart](/docs/getting-started/first-deploy).
 
 ## Troubleshooting
 
-- **404s everywhere** — check `root:` in `Staticfile` points at your files.
-- **SPA deep links 404** — add a fallback so unknown routes serve `index.html` (SPA mode).
-- **Build output not served** — with a build step, serve the output dir (`dist`/`build`), not the source.
-
-## Next steps
-
-- [Custom Domains](/docs/domains-ssl/custom-domains) · [Logs](/docs/apps/logs)
+- **404 everywhere** — `root:` in `Staticfile` must point at the folder with `index.html`. With a build step, serve the output folder (`dist`, `build`), not the source.
+- **SPA deep links 404** — add `-s` to `serve`.

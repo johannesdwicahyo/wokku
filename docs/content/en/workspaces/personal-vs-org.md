@@ -1,105 +1,58 @@
 ---
-title: Personal vs Org Workspaces
-summary: "Every Wokku account starts with one personal workspace. Org workspaces are for shared work — paid plans only, billed to the workspace owner."
-eyebrow: workspaces
-last_updated: 2026-05-29
+title: Workspaces
+summary: Your personal workspace, org workspaces for shared work, and how to switch between them.
+last_updated: 2026-11-07
 ---
 
-# Personal vs Org Workspaces
+Everything you create on Wokku — apps, databases, domains, the audit log — belongs to a **workspace**. This page shows the two kinds and how to move between them.
 
-Wokku scopes everything (apps, resources, billing, audit log) to a **workspace**. There are two kinds:
+## Personal and org workspaces
 
-— **Personal** — every account gets one at signup. Free forever, lives alongside any org membership.
-— **Org** — created on demand for shared work with other people. Requires a paid plan; the creator becomes its owner.
+| | Personal | Org |
+|---|---|---|
+| Who gets one | Every account, at sign-up | Created by you when you need it |
+| Members | Only you | You plus anyone you add |
+| Can be left or deleted | No — it's tied to your account | You're the owner; the owner can't be removed |
+| How many | One | As many as you like |
 
-You're always inside *one* workspace at a time. The [switcher](/docs/workspaces/switching) in the topbar tells you which one and lets you change it.
+Use your personal workspace for your own projects. Create an org workspace for work you share — a startup, a client, a co-founder.
 
-## Personal workspace
+## Switch workspaces
 
-Every signup gets a personal workspace, free. It's yours, you can't leave or delete it — it's tied to your account.
+The workspace switcher is at the top of the sidebar.
 
-What lives here:
+1. Click the workspace name.
+2. Pick another workspace from the list.
 
-— Apps you deploy without explicitly switching workspaces
-— Your free-tier resources (1 box of any size, 1 Postgres, 1 Redis, 1 MinIO bucket)
-— Your personal billing and invoices (when you upgrade)
-— Your personal seat — no one else can join your personal workspace
+The dashboard reloads with that workspace's apps, databases, billing and audit log. The choice sticks until you switch again. Your login, 2FA, profile, SSH keys and API tokens stay the same in every workspace.
 
-What's not here:
+**Manage →** in the switcher opens the full list of workspaces you belong to.
 
-— You can't add members
-— You can't invite collaborators
-— You can't transfer apps in from an org workspace (use [app transfer](/docs/apps/lifecycle) for that)
+## Create an org workspace
 
-Think of it as your dev sandbox: side projects, prototypes, the demo you're shipping for a client before they pay you.
+1. Open the sidebar switcher → **+ New workspace**.
+2. Enter a name (names are unique across Wokku).
+3. Pick a plan and confirm.
 
-## Org workspace
+You're switched into the new workspace straight away, as its owner and an admin.
 
-For everything else — agency client work, your startup's apps, a co-founder collaboration — you create an **org workspace**.
+:::callout note
+The create form only offers **Solo**, **Pro** or **Team**. The plan you pick sets how many members the workspace can hold: Team has no member cap, Solo and Pro hold one. The workspace page shows seats used and included.
+:::
 
-Requirements:
+## Who pays
 
-— A paid plan (Solo, Pro, or Team — see [Plans](/docs/billing/plans))
-— You become the workspace **owner**; the owner can never be removed
-— You can add members (Team plan only — Solo and Pro hard-cap at 1 seat)
+Each workspace is its own billing boundary. Resources created inside an org workspace are billed to that workspace, not to the member who created them. See [Pricing](/docs/billing/pricing).
 
-To create one: open the [workspace switcher](/docs/workspaces/switching) → **+ new workspace** → name, pick a plan, confirm. The switcher jumps you straight into the new workspace.
+## CLI, API and MCP
 
-What lives in an org workspace:
+Tokens belong to you, not to a workspace. Listing commands (`wokku apps`, `GET /api/v1/apps`) return everything you can access across all your workspaces.
 
-— Apps, databases, caches, object storage buckets — scoped to the workspace
-— The workspace's own plan + billing + invoices (paid by the owner)
-— Audit log for everything done inside it
-— The member list and role assignments
+Creating an app from the CLI, API or MCP puts it in your default workspace — you can't pick an org workspace from them yet. To create an app in an org workspace, switch to it in the dashboard and create the app there.
 
-## Which workspace pays?
-
-Whichever workspace **owns** a resource pays for it. The owner of the workspace is the person who gets the invoice.
-
-— Resource created inside your personal workspace → billed to your personal Wokku account
-— Resource created inside an org workspace → billed to the **org workspace owner's** account
-— A member who deploys an app to the org → the org owner pays, not the member
-
-The member's own personal workspace billing is untouched. Members can have a Free personal workspace and still be admins on a paid Team org — the two are independent.
-
-## Switching contexts
-
-The topbar switcher (top-left, after the logo) shows which workspace you're in. Click to:
-
-— Switch to a different workspace you belong to
-— Create a new org workspace (`+ new workspace`)
-— Manage memberships of the workspaces you own (`manage →`)
-
-See [Switching workspaces](/docs/workspaces/switching) for the full mechanics.
-
-## What's NOT shared across workspaces
-
-Each workspace is a separate billing + resource boundary. Nothing leaks:
-
-— **Apps** — you can't see another workspace's apps unless you're a member
-— **Plans and billing** — every workspace has its own subscription
-— **Audit log** — scoped to the workspace; the owner sees admin actions across their workspace, members see their own actions
-— **API tokens** — the token is yours, but it operates on whichever workspace is active when you call
-
-What IS shared (because it's tied to the account, not the workspace):
-
-— Your auth (login, 2FA, OAuth)
-— Your personal email / name / avatar
-— Your `wokku CLI` install
-— Notifications and the personal `/dashboard/profile` page
-
-## Common patterns
-
-| Scenario | Setup |
-|---|---|
-| Solo dev with a paid plan | Personal workspace upgraded to Solo. Done. |
-| Solo dev + side gigs | Personal workspace (Free) for hobby; create an org workspace per paid client. |
-| Agency | One org workspace per client, on Pro or Team. Invite the client as a viewer. Bill the agency, invoice the client separately. |
-| Startup with a co-founder | One org workspace on Team, both co-founders as admins. Personal workspaces stay separate. |
-| Internal team of 5 | Team plan org workspace, 3 included seats + 2 extras at Rp 45.000 each. |
+`wokku teams` lists the workspaces you belong to, with their IDs.
 
 ## See also
 
-— [Switching workspaces](/docs/workspaces/switching) — the topbar switcher mechanics
-— [Members & Roles](/docs/teams/members) — managing who's in a workspace
-— [Plans & Pricing](/docs/billing/plans) — which plans support which workspace size
+- [Members & Roles](/docs/teams/members) — add people and set what they can do
+- [Audit log](/docs/monitoring/audit-log) — what happened in a workspace

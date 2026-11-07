@@ -1,47 +1,74 @@
-# SSH Keys & Multiple Accounts
+---
+title: SSH Keys
+summary: Add your SSH public key so git push can deploy, and use separate keys when you push to more than one Wokku account.
+last_updated: 2026-11-07
+---
 
-Wokku identifies you at `git push` time by the SSH key you authenticate with. Add your public key under **Dashboard → Settings → SSH Keys**, then clone/push using:
+You'll add your public key so `git push wokku main` reaches your apps. You need it once per machine, before your first push.
+
+## Add a key
+
+No key yet? Create one with `ssh-keygen -t ed25519`. That makes `~/.ssh/id_ed25519` (private) and `~/.ssh/id_ed25519.pub` (public).
+
+:::tabs
+::web-ui
+Go to **Settings → SSH Keys** and paste the contents of `~/.ssh/id_ed25519.pub`.
+
+::cli
+```bash
+wokku ssh-keys:add --name laptop                       # uploads ~/.ssh/id_ed25519.pub
+wokku ssh-keys:add ~/.ssh/work.pub --name work-laptop  # or pass another public key
+wokku ssh-keys                                         # list your keys
+```
+
+::api
+```bash
+curl -X POST https://wokku.cloud/api/v1/ssh_keys \
+  -H "Authorization: Bearer $WOKKU_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"name\": \"laptop\", \"public_key\": \"$(cat ~/.ssh/id_ed25519.pub)\"}"
+```
+
+::mcp
+Ask Claude: *"Add my SSH public key from ~/.ssh/id_ed25519.pub to Wokku as laptop."*
+:::
+
+Then push as usual:
 
 ```bash
-git remote add wokku git@git.wokku.cloud:myapp.git
+git remote add wokku git@git.wokku.cloud:my-app
 git push wokku main
 ```
 
-## One key = one account
+## One key, one account
 
-Each SSH key can belong to exactly one Wokku account. This is a safety property: the git gateway maps the presenting key to one account and sends the push there. If two accounts tried to share a key, pushes would silently land in the wrong tenant.
+Each SSH key can belong to only one Wokku account. The git server uses the key to decide whose apps you're pushing to. If a key is already registered to any account, uploading it again is refused.
 
-If you try to add a key that's already registered anywhere on wokku.cloud, the key upload is refused.
+## Push to several accounts from one machine
 
-## Managing multiple accounts from one machine
+Say you have a main account and a test account. Give the second account its own key and tell SSH which key to use for which account.
 
-Common case: you have a personal account and a test/team account and want to push to both from the same laptop. Instead of juggling one key, generate a second keypair and use SSH host aliasing.
-
-### 1. Generate a second keypair
+### 1. Make a second key
 
 ```bash
 ssh-keygen -t ed25519 -f ~/.ssh/wokku_test -N "" -C "wokku-test"
 ```
 
-This creates `~/.ssh/wokku_test` (private) and `~/.ssh/wokku_test.pub` (public).
+### 2. Add it to the second account
 
-### 2. Upload the new `.pub` to the second account
+Sign in to the second account, go to **Settings → SSH Keys**, and paste the contents of `~/.ssh/wokku_test.pub`.
 
-Sign in to your second account → **Settings → SSH Keys** → paste the contents of `~/.ssh/wokku_test.pub`.
-
-### 3. Teach SSH which key goes with which account
-
-Add this to `~/.ssh/config` (create the file if it doesn't exist):
+### 3. Add host aliases to `~/.ssh/config`
 
 ```sshconfig
-# Default (main) account — whatever key you normally use
+# Main account
 Host wokku-main
   HostName git.wokku.cloud
   User git
   IdentityFile ~/.ssh/id_ed25519
   IdentitiesOnly yes
 
-# Second account
+# Test account
 Host wokku-test
   HostName git.wokku.cloud
   User git
@@ -49,33 +76,26 @@ Host wokku-test
   IdentitiesOnly yes
 ```
 
-`IdentitiesOnly yes` is important — without it, SSH will offer every key in your agent, and the gateway will accept the first one it recognises (usually your main account's key).
+Don't skip `IdentitiesOnly yes`. Without it, SSH offers every key in your agent, and the first one Wokku recognises wins. That's usually your main account's key.
 
-### 4. Point each repo's git remote at the matching alias
-
-For an app on your main account:
+### 4. Point each repo at its alias
 
 ```bash
-git remote set-url wokku git@wokku-main:myapp.git
+# in a repo whose app belongs to the main account
+git remote set-url wokku git@wokku-main:my-app
+
+# in a repo whose app belongs to the test account
+git remote set-url wokku git@wokku-test:my-app
 ```
 
-For an app on the test account:
+### Check it
 
 ```bash
-git remote set-url wokku git@wokku-test:myapp.git
+git ls-remote wokku
 ```
 
-Now `git push wokku main` routes to the right tenant based on the host alias, and each account uses its own key.
+If it runs without an error, the key is accepted for that app. If you get `access denied`, the remote is using the other account's key. Check `IdentitiesOnly yes` and the `IdentityFile` paths.
 
-### Verify
+## Remove a key
 
-```bash
-ssh -T git@wokku-main    # should greet you as your main-account user
-ssh -T git@wokku-test    # should greet you as your test-account user
-```
-
-If both greet you as the same user, double-check `IdentitiesOnly yes` and the `IdentityFile` paths.
-
-## Rotating or removing a key
-
-Remove keys you no longer use from **Settings → SSH Keys**. A removed key stops working on new git pushes immediately; already-connected SSH sessions are not killed.
+Delete it under **Settings → SSH Keys**, or run `wokku ssh-keys:remove laptop`. A removed key stops working for new pushes right away.

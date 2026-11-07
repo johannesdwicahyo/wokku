@@ -1,98 +1,51 @@
-# Deploy Go
+---
+title: Go
+summary: Run a Go web service on Wokku, built by Nixpacks into a single binary.
+last_updated: 2026-11-07
+---
 
-Deploy a Go web service to Wokku. The buildpack compiles your module into a
-single binary — fast builds, tiny runtime.
+Listen on `$PORT`, push, and the service is live. Want a working repo first? Deploy the `go` starter from [Templates](/docs/templates/browse).
 
-## Prerequisites
-
-- A [Wokku account](/docs/getting-started/sign-up) and a [connected server](/docs/getting-started/connect-server)
-- An [SSH key registered](/docs/apps/ssh-keys) for `git push`
-- A Go app with `go.mod`
-
-## 1. Create the app
-
-:::tabs
-::web-ui
-**Apps → New App** → server, name `my-go-app`, box size, **Create**.
-
-::cli
-```bash
-wokku apps:create my-go-app --server my-server
-```
-:::
-
-## 2. Prepare your Go app
-
-The Go buildpack detects `go.mod` and builds the main package. Listen on `$PORT`:
+## Listen on `$PORT`
 
 ```go
 port := os.Getenv("PORT")
-if port == "" { port = "8080" }
+if port == "" {
+	port = "8080" // local dev
+}
 log.Fatal(http.ListenAndServe(":"+port, nil))
 ```
 
-If your `main` package isn't at the repo root, declare it with a `Procfile`:
+## Build and start
+
+Nixpacks detects `go.mod`, builds your `main` package into a binary named `out`, and runs it. You don't need a Procfile. If you add one, point it at that binary:
 
 ```procfile
-web: bin/my-go-app
+web: ./out
 ```
 
-The buildpack names the binary after your module's last path segment. You can
-also commit a `Dockerfile` for full control — Wokku uses it automatically when present.
+If your `main` package isn't at the repo root (for example `cmd/server`), or you need cgo or system libraries, commit a [Dockerfile](/docs/guides/dockerfile) instead. Wokku uses it automatically.
 
-## 3. Set environment variables
-
-:::tabs
-::web-ui
-App → **Config** → add any config your service reads from the env.
-
-::cli
-```bash
-wokku config:set my-go-app ENV=production
-```
-:::
-
-## 4. Add a database (optional)
+## Database (optional)
 
 ```bash
-wokku addons:create postgres my-go-app
+wokku addons:shared:enable my-app postgres
 ```
 
-Read `os.Getenv("DATABASE_URL")` in your `database/sql` / `pgx` setup. See
-[Create & Link a Database](/docs/databases/create-link).
+Read `os.Getenv("DATABASE_URL")` with `pgx` or `database/sql`. See [Create & Link a Database](/docs/databases/create-link).
 
-## 5. Deploy
+## Deploy
 
-:::tabs
-::web-ui
 ```bash
-git remote add wokku git@git.wokku.cloud:my-go-app
+wokku apps:create my-app
+git remote add wokku git@git.wokku.cloud:my-app
 git push wokku main
 ```
 
-::github
-Connect under **Apps → Connect GitHub** for push-to-deploy —
-see [GitHub Auto-Deploy](/docs/apps/github-autodeploy).
-
-::cli
-```bash
-git remote add wokku git@git.wokku.cloud:my-go-app
-git push wokku main
-```
-:::
-
-Live at `https://my-go-app.wokku.app`.
-
-## Custom domain
-
-[Custom Domains](/docs/domains-ssl/custom-domains) — SSL is automatic.
+Live at `https://my-app.wokku.app`. First deploy? See the [Quickstart](/docs/getting-started/first-deploy).
 
 ## Troubleshooting
 
-- **Crashes on boot** — listen on `os.Getenv("PORT")`, not a fixed port.
-- **Wrong binary started** — add a `Procfile` pointing at the right `bin/<name>`.
-- **Build can't find main** — ensure `package main` + `func main()` are reachable from `go.mod`.
-
-## Next steps
-
-- [Logs](/docs/apps/logs) · [Production Readiness](/docs/apps/best-practices)
+- **Crashes or never responds** — listen on `os.Getenv("PORT")`, not a fixed port.
+- **Build can't find `main`** — `package main` with `func main()` must be at the repo root, or use a Dockerfile.
+- **`bin/<name>: not found`** — the Nixpacks binary is `./out`; fix the Procfile.

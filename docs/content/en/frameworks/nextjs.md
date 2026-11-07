@@ -1,119 +1,57 @@
-# Deploy Next.js
+---
+title: Next.js
+summary: Run a server-rendered Next.js app on Wokku with next start.
+last_updated: 2026-11-07
+---
 
-Deploy a server-rendered Next.js app to Wokku, with environment variables, a
-database, and HTTPS.
+Keep the standard `build` and `start` scripts, push, and the app is live. Want a working repo first? Deploy the `nextjs` starter from [Templates](/docs/templates/browse).
 
-## Prerequisites
+## Build and start
 
-- A [Wokku account](/docs/getting-started/sign-up) and a [connected server](/docs/getting-started/connect-server)
-- An [SSH key registered](/docs/apps/ssh-keys) for `git push`
-- A Next.js app locally (`npx create-next-app@latest my-app` if starting fresh)
-
-## 1. Create the app
-
-:::tabs
-::web-ui
-**Apps → New App** → pick a server, name it `my-next-app`, choose a box size, **Create**.
-
-::cli
-```bash
-wokku apps:create my-next-app --server my-server
-```
-:::
-
-## 2. Prepare your Next.js app
-
-The Node buildpack auto-detects Next.js from `package.json`. Make sure you have
-`build` and `start` scripts (create-next-app adds these):
+Nixpacks detects Next.js from `package.json`, runs `npm run build`, then `npm start`. `create-next-app` already includes both scripts:
 
 ```json
 {
   "scripts": {
     "build": "next build",
-    "start": "next start -p $PORT"
+    "start": "next start"
   }
 }
 ```
 
-:::callout note
-Bind to `$PORT`, not a hardcoded `3000` — Wokku assigns the port at runtime.
-`next start -p $PORT` handles this.
-:::
+`next start` reads `PORT` from the environment, so you don't need `-p`. A Procfile is optional (`web: npm start`).
 
-Add a `Procfile` (optional but explicit):
+## Environment variables
 
-```procfile
-web: npm run start
-```
-
-For a smaller image, enable standalone output in `next.config.js`
-(`output: "standalone"`).
-
-## 3. Set environment variables
-
-:::tabs
-::web-ui
-App → **Config**. Add `NODE_ENV=production` and any `NEXT_PUBLIC_*` /
-server-side secrets your app needs.
-
-::cli
-```bash
-wokku config:set my-next-app NODE_ENV=production
-```
-:::
-
-:::callout warn
-`NEXT_PUBLIC_*` values are baked in **at build time**. Set them before you
-deploy, and redeploy after changing them.
-:::
-
-## 4. Add a database (optional)
+`NEXT_PUBLIC_*` values are inlined by `next build`, and Wokku config vars aren't available during the build. Commit public values in `.env.production`. Server-only secrets go in [config vars](/docs/apps/config) and are read at runtime:
 
 ```bash
-wokku addons:create postgres my-next-app
+wokku config:set my-app NODE_ENV=production
 ```
 
-Wokku injects `DATABASE_URL`; read it from `process.env.DATABASE_URL` in your
-Prisma/Drizzle/pg config. See [Create & Link a Database](/docs/databases/create-link).
+## Database (optional)
 
-## 5. Deploy
-
-:::tabs
-::web-ui
 ```bash
-git remote add wokku git@git.wokku.cloud:my-next-app
+wokku addons:shared:enable my-app postgres
+```
+
+Read `process.env.DATABASE_URL` in Prisma, Drizzle or `pg`. For Prisma migrations, run `wokku run my-app -- npx prisma migrate deploy` after deploys. See [Create & Link a Database](/docs/databases/create-link).
+
+## Deploy
+
+```bash
+wokku apps:create my-app
+git remote add wokku git@git.wokku.cloud:my-app
 git push wokku main
 ```
 
-::github
-Connect the repo under **Apps → Connect GitHub** for auto-deploy on push —
-see [GitHub Auto-Deploy](/docs/apps/github-autodeploy).
+Live at `https://my-app.wokku.app`. First deploy? See the [Quickstart](/docs/getting-started/first-deploy).
 
-::cli
-```bash
-git remote add wokku git@git.wokku.cloud:my-next-app
-git push wokku main
-```
-:::
+## Static export
 
-Live at `https://my-next-app.wokku.app` when the build finishes.
-
-## Static export?
-
-If your site has no server code, build a static export (`output: "export"`) and
-deploy it as a static site — that path is coming in a dedicated guide. For now,
-`next start` (above) works for both SSR and static-with-server apps.
-
-## Add a custom domain
-
-See [Custom Domains](/docs/domains-ssl/custom-domains) — SSL is automatic.
+A site with no server code (`output: "export"`) builds to `out/`. Serve it as described in [Static Site](/docs/frameworks/static).
 
 ## Troubleshooting
 
-- **App crashes on boot** — almost always a hardcoded port. Use `-p $PORT`.
-- **Env var not applied** — `NEXT_PUBLIC_*` is build-time; redeploy after changing it.
-- **Build runs out of memory** — pick a larger box size for the build, or set `NODE_OPTIONS=--max-old-space-size`.
-
-## Next steps
-
-- [Logs](/docs/apps/logs) · [Environment Variables](/docs/apps/config) · [Production Readiness](/docs/apps/best-practices)
+- **Crashes on boot** — a hardcoded `-p 3000`. Remove it, or use `-p $PORT`.
+- **A `NEXT_PUBLIC_*` value is missing** — it's build-time; commit it and redeploy.

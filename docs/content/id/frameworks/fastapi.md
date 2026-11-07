@@ -1,99 +1,50 @@
-# Deploy FastAPI
+---
+title: FastAPI
+summary: Jalankan app FastAPI di Wokku dengan Gunicorn dan worker Uvicorn.
+last_updated: 2026-11-07
+---
 
-Deploy aplikasi FastAPI ke Wokku dengan worker Uvicorn dan Postgres.
+Tambahkan perintah start Gunicorn yang bind ke `$PORT`, push, dan API-mu langsung live. Mau repo yang sudah jalan dulu? Deploy starter `fastapi` dari [Templates](/docs/templates/browse).
 
-## Prasyarat
-
-- [Akun Wokku](/docs/getting-started/sign-up) dan [server yang terhubung](/docs/getting-started/connect-server)
-- [SSH key terdaftar](/docs/apps/ssh-keys) untuk `git push`
-- Aplikasi FastAPI dengan `requirements.txt`
-
-## 1. Buat aplikasi
-
-:::tabs
-::web-ui
-**Apps → New App** → server, nama `my-fastapi-app`, ukuran box, **Create**.
-
-::cli
-```bash
-wokku apps:create my-fastapi-app --server my-server
-```
-:::
-
-## 2. Siapkan aplikasi FastAPI-mu
+## Dependency
 
 ```text
 # requirements.txt
 fastapi
 uvicorn[standard]
 gunicorn
-psycopg[binary]
 ```
 
-Tambahkan `Procfile` (asumsi `app` adalah instance FastAPI di `main.py`):
+## Perintah start
+
+Dengan asumsi objek app-mu bernama `app` di `main.py`:
 
 ```procfile
 web: gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
 ```
 
-:::callout note
-Gunicorn + worker Uvicorn memberimu banyak proses untuk production. Untuk satu
-worker, `uvicorn main:app --host 0.0.0.0 --port $PORT` juga bisa.
-:::
+Untuk satu proses saja, `web: uvicorn main:app --host 0.0.0.0 --port $PORT` juga bisa.
 
-## 3. Set environment variable
-
-:::tabs
-::web-ui
-Aplikasi → **Config** → tambahkan secret/config yang dibaca aplikasimu dari env.
-
-::cli
-```bash
-wokku config:set my-fastapi-app ENV=production
-```
-:::
-
-## 4. Tambahkan database (opsional)
+## Database (opsional)
 
 ```bash
-wokku addons:create postgres my-fastapi-app
+wokku addons:shared:enable my-app postgres
 ```
 
-Baca `os.environ["DATABASE_URL"]` (SQLAlchemy/SQLModel/asyncpg). Lihat
-[Buat & Link Database](/docs/databases/create-link).
+Baca `os.environ["DATABASE_URL"]` di SQLAlchemy atau SQLModel. Driver async butuh skema URL yang diganti (`postgresql+asyncpg://`). Lihat [Membuat & Menautkan Database](/docs/databases/create-link).
 
-## 5. Deploy
+## Deploy
 
-:::tabs
-::web-ui
 ```bash
-git remote add wokku git@git.wokku.cloud:my-fastapi-app
+wokku apps:create my-app
+git remote add wokku git@git.wokku.cloud:my-app
 git push wokku main
 ```
 
-::github
-Hubungkan di **Apps → Connect GitHub** untuk push-to-deploy —
-lihat [GitHub Auto-Deploy](/docs/apps/github-autodeploy).
-
-::cli
-```bash
-git remote add wokku git@git.wokku.cloud:my-fastapi-app
-git push wokku main
-```
-:::
-
-Live di `https://my-fastapi-app.wokku.app` — dokumentasi di `/docs` (Swagger UI).
-
-## Domain kustom
-
-[Domain Kustom](/docs/domains-ssl/custom-domains) — SSL otomatis.
+Live di `https://my-app.wokku.app`, dengan dokumentasi API interaktif di `/docs`. Baru pertama deploy? Lihat [Quickstart](/docs/getting-started/first-deploy).
 
 ## Troubleshooting
 
-- **502 / tidak ada respons** — pastikan bind pakai `$PORT`, bukan port tetap.
-- **`UvicornWorker` tidak ketemu** — tambahkan `uvicorn[standard]` ke `requirements.txt`.
-- **Driver DB async** — pakai `asyncpg` (bukan `psycopg`) untuk SQLAlchemy async.
-
-## Langkah berikutnya
-
-- [Logs](/docs/apps/logs) · [Kesiapan Production](/docs/apps/best-practices)
+- **502 / tidak ada respons** — bind harus memakai `$PORT`, bukan port tetap.
+- **`UvicornWorker` tidak ditemukan** — tambahkan `uvicorn[standard]` ke `requirements.txt`.
+- **Migration (Alembic)** — jalankan setelah deploy: `wokku run my-app -- alembic upgrade head`.

@@ -1,105 +1,50 @@
-# Deploy Phoenix (Elixir)
+---
+title: Phoenix
+summary: Jalankan app Phoenix (Elixir) di Wokku sebagai Mix release yang di-build dari Dockerfile.
+last_updated: 2026-11-07
+---
 
-Deploy aplikasi Phoenix ke Wokku dengan Postgres dan migration Ecto saat release.
+Generate Dockerfile release, isi secret-mu, push, lalu jalankan migration. Mau repo yang sudah jalan dulu? Deploy starter `phoenix` dari [Templates](/docs/templates/browse).
 
-## Prasyarat
+## Build dengan Dockerfile
 
-- [Akun Wokku](/docs/getting-started/sign-up) dan [server yang terhubung](/docs/getting-started/connect-server)
-- [SSH key terdaftar](/docs/apps/ssh-keys) untuk `git push`
-- Aplikasi Phoenix dengan `mix.exs`
-
-## 1. Buat aplikasi
-
-:::tabs
-::web-ui
-**Apps → New App** → server, nama `my-phoenix-app`, ukuran box, **Create**.
-
-::cli
-```bash
-wokku apps:create my-phoenix-app --server my-server
-```
-:::
-
-## 2. Siapkan aplikasi Phoenix-mu
-
-Elixir buildpack mendeteksi `mix.exs`, mengambil deps, dan mem-build aset.
-Tambahkan `Procfile`:
-
-```procfile
-web: mix phx.server
-release: mix ecto.migrate
-```
-
-Di `config/runtime.exs`, baca port dan database dari environment:
-
-```elixir
-config :my_app, MyAppWeb.Endpoint,
-  http: [ip: {0, 0, 0, 0}, port: String.to_integer(System.get_env("PORT") || "4000")],
-  server: true
-config :my_app, MyApp.Repo, url: System.get_env("DATABASE_URL")
-```
-
-## 3. Set environment variable
-
-:::tabs
-::web-ui
-Aplikasi → **Config**:
-
-| Key | Value |
-|---|---|
-| `SECRET_KEY_BASE` | output `mix phx.gen.secret` |
-| `MIX_ENV` | `prod` |
-| `PHX_HOST` | `my-phoenix-app.wokku.app` |
-
-::cli
-```bash
-wokku config:set my-phoenix-app \
-  SECRET_KEY_BASE="$(mix phx.gen.secret)" MIX_ENV=prod \
-  PHX_HOST=my-phoenix-app.wokku.app
-```
-:::
-
-## 4. Tambahkan database
+Phoenix meng-generate Dockerfile production, sebuah release, dan script `bin/server` / `bin/migrate`:
 
 ```bash
-wokku addons:create postgres my-phoenix-app
+mix phx.gen.release --docker
 ```
 
-Wokku menyuntikkan `DATABASE_URL`; wire di `runtime.exs` (di atas). Lihat
-[Buat & Link Database](/docs/databases/create-link).
+Commit file-file hasil generate. Wokku mem-build `Dockerfile` dan menjalankan `CMD`-nya (`/app/bin/server`). Kamu tidak perlu Procfile.
 
-## 5. Deploy
+## Config runtime
 
-:::tabs
-::web-ui
+`config/runtime.exs` hasil generate sudah membaca `PORT`, `DATABASE_URL`, `SECRET_KEY_BASE` dan `PHX_HOST`. `bin/server` mengisi `PHX_SERVER=true`, jadi endpoint-nya ikut start.
+
 ```bash
-git remote add wokku git@git.wokku.cloud:my-phoenix-app
+wokku apps:create my-app --shared postgres
+wokku config:set my-app \
+  SECRET_KEY_BASE="$(mix phx.gen.secret)" \
+  PHX_HOST=my-app.wokku.app
+```
+
+Add-on Postgres mengisi `DATABASE_URL`. Lihat [Membuat & Menautkan Database](/docs/databases/create-link).
+
+## Deploy dan migrate
+
+```bash
+git remote add wokku git@git.wokku.cloud:my-app
 git push wokku main
+wokku run my-app -- /app/bin/migrate
 ```
 
-::github
-Hubungkan di **Apps → Connect GitHub** untuk push-to-deploy —
-lihat [GitHub Auto-Deploy](/docs/apps/github-autodeploy).
-
-::cli
-```bash
-git remote add wokku git@git.wokku.cloud:my-phoenix-app
-git push wokku main
-```
-:::
-
-Live di `https://my-phoenix-app.wokku.app`.
+Jalankan perintah migrate setiap kali deploy yang menambahkan migration. Live di `https://my-app.wokku.app`. Baru pertama deploy? Lihat [Quickstart](/docs/getting-started/first-deploy).
 
 ## Domain kustom
 
-[Domain Kustom](/docs/domains-ssl/custom-domains) — sesuaikan `PHX_HOST` lalu deploy ulang.
+Setelah kamu menambahkan [domain kustom](/docs/domains-ssl/custom-domains), isi `PHX_HOST` dengan domain itu lalu restart: `wokku ps:restart my-app`.
 
 ## Troubleshooting
 
-- **Endpoint tidak menyajikan** — set `server: true` di `runtime.exs` dan bind ke `{0,0,0,0}` + `$PORT`.
-- **`SECRET_KEY_BASE` kosong** — generate dengan `mix phx.gen.secret` lalu set.
-- **Migration tidak jalan** — pastikan baris `release:`; cek deploy logs.
-
-## Langkah berikutnya
-
-- [Logs](/docs/apps/logs) · [Kesiapan Production](/docs/apps/best-practices)
+- **App boot tapi tidak pernah merespons** — cek apakah `runtime.exs` bind `PORT` di semua interface dan `PHX_SERVER=true` sudah diisi (start dengan `bin/server`).
+- **`SECRET_KEY_BASE` tidak ada** — generate dengan `mix phx.gen.secret` lalu isi.
+- **Error origin WebSocket/LiveView** — `PHX_HOST` harus sama dengan hostname yang kamu buka.

@@ -1,57 +1,78 @@
-# Preview Deploy untuk Pull Request
+---
+title: Preview Deploy untuk Pull Request
+summary: Dapatkan URL live untuk setiap pull request, dibuat saat PR dibuka dan dihapus saat PR ditutup.
+last_updated: 2026-11-07
+---
 
-Dapatkan URL live yang terisolasi untuk tiap pull request — review kode yang
-benar-benar berjalan sebelum di-merge. Wokku membuatnya saat PR dibuka dan
-menghancurkannya saat ditutup.
+Kamu akan mengaktifkan PR preview untuk app yang terhubung ke GitHub, lalu membuka pull request untuk mendapatkan URL-nya sendiri.
 
-:::callout note
-PR preview adalah fitur **Pro** dan butuh [GitHub Auto-Deploy](/docs/apps/github-autodeploy)
-terhubung ke aplikasimu. Lihat [Plan](/docs/billing/plans).
-:::
+## Sebelum mulai
 
-## Cara kerja
-
-Saat kamu membuka PR terhadap deploy branch-mu, Wokku mem-build branch itu jadi
-**aplikasi preview sementara** di URL-nya sendiri (mis. `my-app-pr-42.wokku.app`).
-Wokku meng-comment URL-nya di PR. Saat PR di-merge atau ditutup, preview
-dihancurkan otomatis.
+App harus terhubung lewat [GitHub Auto-Deploy](/docs/apps/github-autodeploy).
 
 ## Aktifkan preview
 
-1. Hubungkan repo via [GitHub Auto-Deploy](/docs/apps/github-autodeploy)
-2. Aplikasi → **Settings** → aktifkan **PR Previews**
-3. Buka pull request — Wokku build dan comment URL live-nya
-
-## Yang didapat preview
-
-- Container-nya sendiri yang dibuild dari branch PR
-- Salinan **config var** aplikasi induk (supaya boot dengan cara sama)
-- Subdomain-nya sendiri dengan SSL otomatis
-
-:::callout warn
-Preview berbagi **add-on** dengan aplikasi induk secara default (sama `DATABASE_URL`).
-Jangan jalankan migration destruktif atau seed script dari preview terhadap
-database production — arahkan preview ke database sekali-pakai jika alurmu menulis data.
-:::
-
-## Bersih-bersih
-
-Preview menghancurkan diri saat PR ditutup. Untuk menghapus manual:
-
 :::tabs
+::web-ui
+App → tab **Deploy** → **Previews** → centang **Enable PR previews**, simpan.
+
 ::cli
 ```bash
-wokku previews my-app                       # list preview aktif
-wokku previews:destroy my-app --pr 42       # hancurkan satu
+wokku previews:settings my-app --on
 ```
+
+::api
+```bash
+curl -X PATCH https://wokku.cloud/api/v1/apps/my-app/preview_settings \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"preview_enabled": true}'
+```
+:::
+
+Lalu buka pull request. Wokku build branch PR itu di `https://my-app-pr-42.wokku.app` (42 adalah nomor PR) dan mengomentari URL-nya di PR.
+
+## Data
+
+Preview mendapat salinan environment variable app, **termasuk `DATABASE_URL`**, jadi preview terhubung ke database yang sama dengan app kamu. Pengaturan **Database strategy** tersimpan, tapi preview belum mendapat database sendiri.
+
+:::callout warning
+Jangan jalankan migration atau script seed di preview, dan jangan klik alur yang menulis data penting. Kalau itu berisiko untuk app kamu, biarkan preview mati.
+:::
+
+## Batasan dan pembersihan
+
+- Maksimal 3 preview berjalan bersamaan per team. Lebih dari itu, Wokku memberi komentar di PR alih-alih build.
+- Preview dihapus saat PR-nya di-merge atau ditutup. Preview yang idle akan sleep setelah 7 hari dan dihapus setelah 30 hari.
+
+Hapus secara manual:
+
+:::tabs
+::web-ui
+Tab **Deploy** → **Previews** → **Destroy** di samping preview-nya.
+
+::cli
+```bash
+wokku previews my-app              # list
+wokku previews:destroy my-app 42   # tear down PR #42
+```
+
+::api
+```bash
+curl -X DELETE https://wokku.cloud/api/v1/apps/my-app/previews/42 \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+::mcp
+Minta ke Claude: *"Hapus preview PR 42 milik my-app."*
 :::
 
 ## Troubleshooting
 
-- **Tidak ada preview muncul** — pastikan aplikasi Pro, GitHub terhubung, dan preview aktif.
-- **Tidak ada comment PR** — Wokku butuh izin meng-comment; cek ulang koneksi GitHub.
-- **Preview tidak bisa akses data** — ia mewarisi config/add-on induk; verifikasi itu ter-set.
+- **Preview tidak muncul**: pastikan preview aktif, PR ada di repo yang terhubung, dan team kamu punya kurang dari 3 preview.
+- **Tidak ada komentar di PR**: cek ulang apakah GitHub App masih punya akses ke repo.
 
-## Langkah berikutnya
+## Langkah selanjutnya
 
-- [GitHub Auto-Deploy](/docs/apps/github-autodeploy) · [Rollback deploy yang gagal](/docs/guides/rollback)
+- [GitHub Auto-Deploy](/docs/apps/github-autodeploy)
+- [Rollback deploy yang bermasalah](/docs/guides/rollback)

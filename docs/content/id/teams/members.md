@@ -1,101 +1,92 @@
 ---
 title: Member & Role
-summary: "Undang orang ke workspace, kasih role, dan tagih seat over-quota dengan benar di plan Team."
-eyebrow: teams
-last_updated: 2026-05-29
+summary: Tambahkan orang ke workspace org, pilih role-nya, dan lihat persis apa yang bisa dilakukan tiap role.
+last_updated: 2026-11-07
 ---
 
-# Member & Role
+Tambahkan rekan tim ke [workspace](/docs/workspaces/personal-vs-org) org, beri mereka role, lalu ubah atau hapus nanti. Hanya admin yang bisa mengelola member.
 
-Wokku ngatur app dan resource ke dalam [workspace](/docs/workspaces/personal-vs-org). Tiap user punya satu **personal workspace** (akun gratis kamu) dan bisa jadi member di workspace **org** sebanyak yang dia mau (plan Team).
+## Menambahkan member
 
-Halaman ini bahas cara manage member workspace — invite, kasih role, hapus, dan gimana seat billing Team jalan.
+Orang tersebut harus punya akun Wokku dulu — undangan tidak dikirim lewat email. Kalau email-nya tidak cocok dengan akun mana pun, kamu akan melihat *"No user with that email — ask them to sign up first."*
 
-## Undang member
+:::tabs
+::web-ui
+1. Pindah ke workspace org, lalu buka switcher → **Manage →** dan pilih workspace-nya.
+2. Di bagian **add by email**, masukkan email mereka.
+3. Pilih role — viewer, member, atau admin — lalu klik **add member**.
 
-Buka workspace di `/dashboard/workspaces/<id>` (atau pakai [switcher](/docs/workspaces/switching) buat lompat ke sana dulu). Admin liat form **+ add member**:
-
-1. Ketik email orangnya.
-2. Pilih role: viewer / member / admin.
-3. Submit.
-
-**Orangnya harus udah punya akun Wokku** — kita belum email invite signup. Suruh dia signup di [wokku.cloud](https://wokku.cloud) pakai email yang sama, terus retry add-nya.
-
-```text
-> No user with that email — ask them to sign up first.
+::cli
+```bash
+wokku teams                       # find the workspace (team) ID
+wokku teams:members:add TEAM_ID --email alice@example.com --role member
 ```
 
-Itu error yang muncul kalau email-nya nggak match akun yang ada.
-
-## Role
-
-| Role | Apa yang bisa dilakuin |
-|---|---|
-| **Viewer** | Akses read-only ke app, log, metrics, dan audit log. Cocok buat stakeholder, designer, BizOps. |
-| **Member** | Semua yang Viewer bisa, plus deploy, env var, custom domain, database management, dan CRUD addon. |
-| **Admin** | Semua yang Member bisa, plus invite / remove member, ganti role, dan switch plan. **Owner** workspace selalu admin dan nggak bisa di-demote. |
-
-Perubahan role berlaku di request berikutnya — nggak perlu reauth.
-
-## Hapus member
-
-Di tabel member workspace, klik **remove** di barisnya. Orangnya langsung kehilangan akses ke workspace:
-
-— App yang dia deploy tetap (workspace yang punya app, bukan member-nya)
-— API token yang dia bikin terhadap workspace di-revoke di call berikutnya
-— Personal workspace dia nggak ke-affect
-
-**Owner** workspace nggak bisa di-remove — buat transfer workspace ke orang lain, hubungi support.
-
-## Seat billing (cuma plan Team)
-
-Plan Team include **3 seat** di harganya (Rp 750.000 / bulan). Seat tambahan ditagih **Rp 45.000 per seat / bulan**.
-
-Cara kerjanya:
-
-— Kamu bisa add member sebanyak yang kamu mau — nggak ada cap keras di Team
-— Dashboard nampilin banner kalau jumlah member lewat seat yang termasuk
-— Di invoice berikutnya, overage-nya otomatis ditambah: `extra_seats × Rp 45.000`
-— Remove member sebelum tanggal billing nge-drop dia dari invoice berikutnya — proration-nya by *count pas invoice time*, bukan by jam-di-workspace
-
-> Plan paid lain (Solo, Pro) hard-cap di 1 seat — kamu nggak bisa undang member kedua tanpa upgrade ke Team.
-
-## Apa yang member liat
-
-Member di org workspace dapat [switcher workspace](/docs/workspaces/switching) di atas dashboard. Mereka bisa switch antara personal workspace dan org mana aja yang mereka ikut; data di-scope per workspace.
-
-Saat switch workspace:
-
-— Ganti app dan resource yang tampil di dashboard
-— Ganti yang bayar resource baru (owner workspace, bukan member-nya)
-— Nggak ngubah auth / 2FA / API token member-nya sendiri
-
-## CLI
-
+::api
 ```bash
-wokku members:add alice@example.com --workspace acme-co --role member
-wokku members:remove alice@example.com --workspace acme-co
-wokku members:list --workspace acme-co
-```
-
-CLI pakai aturan email-harus-ada yang sama.
-
-## API
-
-```bash
-curl -X POST https://wokku.cloud/api/v1/workspaces/WORKSPACE_ID/members \
-  -H "Authorization: Bearer $TOKEN" \
+curl -X POST https://wokku.cloud/api/v1/teams/TEAM_ID/members \
+  -H "Authorization: Bearer $WOKKU_API_TOKEN" \
+  -H "Content-Type: application/json" \
   -d '{"email": "alice@example.com", "role": "member"}'
 ```
 
-Lihat [API reference](/docs/api/endpoints) buat skema lengkapnya.
+Dapatkan `TEAM_ID` dari `GET /api/v1/teams`.
 
-## Audit log
+::mcp
+Tanya Claude: *"Tambahkan alice@example.com ke tim saya sebagai member."* (memakai `wokku_add_team_member`)
+:::
 
-Tiap add / remove / ganti role muncul di [audit log](/docs/monitoring/audit-log) workspace dengan actor, target, dan role-nya. Berguna buat compliance dan buat mastiin pertanyaan "siapa yang remove Alice?" pas lagi telusur.
+Kalau workspace sudah memakai semua seat-nya, penambahan gagal dengan pesan yang meminta kamu pindah ke plan Team.
 
-## Lihat juga
+## Mengubah role atau menghapus member
 
-— [Permission](/docs/teams/permissions) — apa yang tiap role bisa, detail
-— [Personal vs Org workspace](/docs/workspaces/personal-vs-org) — kapan bikin org workspace
-— [Switch workspace](/docs/workspaces/switching) — gimana topbar switcher kerja
+:::tabs
+::web-ui
+Di tabel member, ubah role dari dropdown, atau klik **remove**.
+
+::cli
+```bash
+wokku teams:members TEAM_ID                                  # shows membership IDs
+wokku teams:members:role TEAM_ID MEMBERSHIP_ID admin
+wokku teams:members:remove TEAM_ID MEMBERSHIP_ID
+```
+
+::api
+```bash
+# change role
+curl -X PATCH https://wokku.cloud/api/v1/teams/TEAM_ID/members/MEMBERSHIP_ID \
+  -H "Authorization: Bearer $WOKKU_API_TOKEN" \
+  -H "Content-Type: application/json" -d '{"role": "admin"}'
+
+# remove
+curl -X DELETE https://wokku.cloud/api/v1/teams/TEAM_ID/members/MEMBERSHIP_ID \
+  -H "Authorization: Bearer $WOKKU_API_TOKEN"
+```
+
+::mcp
+Tanya Claude: *"Jadikan alice admin"* atau *"Keluarkan alice dari tim saya."* (memakai `wokku_update_team_member` / `wokku_remove_team_member`)
+:::
+
+Aturan:
+
+- **Pemilik** workspace tidak bisa dikeluarkan.
+- Workspace selalu punya minimal satu admin — admin terakhir tidak bisa menurunkan role-nya sendiri.
+- Mengeluarkan seseorang tidak menghapus app-nya: app dimiliki workspace.
+- Workspace personal mereka tidak terpengaruh.
+
+## Apa yang bisa dilakukan tiap role
+
+| Aksi | Viewer | Member | Admin |
+|---|:-:|:-:|:-:|
+| Melihat app, log, metrics, config var | ✓ | ✓ | ✓ |
+| Membuat dan deploy app | — | ✓ | ✓ |
+| Mengubah config var, domain, scaling | — | ✓ | ✓ |
+| Restart, stop, start, rollback | — | ✓ | ✓ |
+| Resize, restore, atau retry database | — | ✓ | ✓ |
+| Menghapus app | — | — | ✓ |
+| Menghapus database | — | — | ✓ |
+| Menambah, menghapus, dan mengubah member | — | — | ✓ |
+
+Orang yang membuat database selalu bisa mengelola dan menghapusnya, apa pun role-nya.
+
+Member yang ditambahkan atau dihapus dari dashboard tercatat di [audit log](/docs/monitoring/audit-log).

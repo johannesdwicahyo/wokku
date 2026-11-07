@@ -1,67 +1,71 @@
-# Roll Back a Bad Deploy
+---
+title: Roll Back a Bad Deploy
+summary: Go back to a previous release when a deploy breaks your app.
+last_updated: 2026-11-07
+---
 
-Shipped something broken? Roll back to a previous release in seconds. Wokku keeps
-every release, so reverting is instant — no rebuild.
+You'll find the last good release and roll back to it.
 
-## See your releases
+## 1. Find the release
 
 :::tabs
 ::web-ui
-App → **Activity / Releases** shows each deploy with its version and commit.
+App → **Deploy** tab → **Releases** lists each release with its version and commit.
 
 ::cli
 ```bash
-wokku releases my-app
+wokku releases my-app            # versions and descriptions
+wokku releases my-app --json     # includes each release's ID
+wokku releases:info my-app RELEASE_ID
+```
+
+::api
+```bash
+curl https://wokku.cloud/api/v1/apps/my-app/releases \
+  -H "Authorization: Bearer $TOKEN"
 ```
 :::
 
-Each release is an immutable snapshot of the built image + config at deploy time.
-
-## Roll back
+## 2. Roll back
 
 :::tabs
 ::web-ui
-On the **Releases** list, click **Roll back** on the release you want to restore.
+Click **Rollback** on the release you want.
 
 ::cli
 ```bash
-# roll back to the immediately previous release
-wokku rollback my-app
+wokku rollback my-app RELEASE_ID
+```
 
-# or to a specific version
-wokku rollback my-app --version 42
+::api
+```bash
+curl -X POST https://wokku.cloud/api/v1/apps/my-app/releases/RELEASE_ID/rollback \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ::mcp
-Ask Claude: *"Roll back my-app to the previous release"*
+Ask Claude: *"Roll back my-app to the previous release."*
 :::
 
-A rollback re-runs the chosen release's image — **no rebuild**, so it's fast.
+The rollback shows up as a new release ("Rollback to vN").
 
-## What a rollback does and doesn't do
+## What a rollback does
 
-- ✅ Restores the **application code** of the chosen release.
-- ⚠️ **Does not undo database migrations.** If the bad deploy ran a destructive
-  migration, rolling back the code won't restore the schema/data — restore from
-  a [backup](/docs/databases/backups) if needed.
-- ✅ Restores the config that shipped with that release.
+- **Restores the code** of that release. It's fast when the release's image is still stored; otherwise Wokku rebuilds from the stored source.
+- **Keeps your current environment variables.** It doesn't restore old config. Change it with [Environment Variables](/docs/apps/config) if needed.
+- **Doesn't undo database migrations.** Restore from a [backup](/docs/databases/backups) if a migration damaged data.
 
-:::callout warn
-Write migrations to be **backward-compatible** (additive first, destructive
-later) so a code rollback stays safe. This is the single biggest thing that
-makes rollbacks painless.
+Very old releases may no longer have a stored image or source. The rollback then fails with a message, and you'll need a fresh deploy.
+
+:::callout tip
+Write migrations to be backward-compatible (add first, remove later) so rolling back the code stays safe.
 :::
 
 ## Roll forward
 
-Found and fixed the bug? Just deploy again — the fix becomes the newest release.
-There's no special "un-rollback" step.
-
-## Troubleshooting
-
-- **Rollback didn't fix it** — the issue may be data/migration, not code. Check a backup restore.
-- **Can't find the good release** — `wokku releases my-app` lists them with versions; pick the last known-good.
+Fixed the bug? Deploy again. The fix becomes the newest release.
 
 ## Next steps
 
-- [Backups](/docs/databases/backups) · [Production Readiness](/docs/apps/best-practices)
+- [Backups](/docs/databases/backups)
+- [Production Readiness](/docs/apps/best-practices)

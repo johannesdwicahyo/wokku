@@ -1,46 +1,44 @@
-# Health Checks
+---
+title: Health Checks
+summary: How Wokku keeps your app healthy during deploys and restarts, and where configurable checks stand.
+last_updated: 2026-11-07
+---
 
-Configure health checks for zero-downtime deploys.
+You'll learn what Wokku does to keep your app up. There's nothing to set up — health is supervised by the platform.
 
-For why checks matter, the full list of tunables and defaults, and how they interact with restarts and box resizes, see [Production Readiness](/docs/apps/best-practices#health-checks-reference).
+## What happens on every deploy
 
-## How It Works
+- **New before old.** Wokku starts the new container first and only then stops the old one, so a deploy doesn't drop traffic.
+- **Automatic restarts.** If a container exits, the platform restarts it.
+- **Crash detection.** Crashes show up on the app and can [notify you](/docs/monitoring/notifications) (`app_crashed`).
 
-During a deploy, Wokku starts the new container and runs health checks. If checks pass, traffic switches to the new container. If they fail, the deploy is rolled back.
+Make sure your app listens on `$PORT` and answers HTTP quickly once it boots.
 
-## Configure
+## Configurable checks
+
+Custom check paths, timeouts and retry counts are **coming soon**. Until then, the dashboard's **Settings** → **Checks** form and `wokku checks:set` won't save changes — you'll get "configurable healthchecks are coming soon".
+
+To see the current state:
 
 :::tabs
 ::web-ui
-Go to your app → **Health Checks** tab. Set the path, timeout, and attempts.
+Open your app → **Settings** → **Checks**.
 
 ::cli
 ```bash
-wokku checks:set my-app --path /up --timeout 30 --attempts 5
+wokku checks my-app
 ```
 
 ::api
 ```bash
-curl -X PUT https://wokku.cloud/api/v1/apps/my-app/checks \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{"path": "/up", "timeout": 30, "attempts": 5}'
+curl https://wokku.cloud/api/v1/apps/my-app/checks \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ::mcp
-Ask Claude: *"Set health check path to /up with 30s timeout on my-app"*
-
-::mobile
-Tap your app → Health Checks → configure settings.
+Ask Claude: *"What are the health check settings for my-app?"*
 :::
 
-## Settings
+## Know when your app is down
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| **Path** | `/` | HTTP path to check |
-| **Timeout** | `30` | Seconds to wait for each check |
-| **Attempts** | `5` | Number of retries before failing |
-
-## Disabling Checks
-
-You can disable health checks for apps that take a long time to boot, but this removes zero-downtime deploy protection.
+Health checks keep a deploy safe. To be told when a running app stops answering, use [uptime checks](/docs/monitoring/uptime).

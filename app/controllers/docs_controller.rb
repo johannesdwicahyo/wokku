@@ -4,9 +4,33 @@ class DocsController < ApplicationController
   SUPPORTED_LOCALES = %w[en id].freeze
   DEFAULT_LOCALE    = "en".freeze
 
+  # Pages merged or retired in the 2026-11 docs refresh → where their
+  # content lives now. Keeps old links and search results working.
+  MOVED = {
+    "templates/deploy" => "templates/browse",
+    "apps/create" => "apps/deploy",
+    "apps/logs" => "monitoring/logs",
+    "guides/postgres-redis" => "databases/create-link",
+    "databases/dedicated-upgrade" => "databases/create-link",
+    "domains-ssl/ssl" => "domains-ssl/custom-domains",
+    "scaling/tiers" => "scaling/resources",
+    "billing/plans" => "billing/pricing",
+    "billing/plan-bundles" => "billing/pricing",
+    "billing/usage" => "billing/invoices",
+    "observability/retention" => "monitoring/logs",
+    "workspaces/switching" => "workspaces/personal-vs-org",
+    "teams/permissions" => "teams/members",
+    "mobile/notifications" => "mobile/download",
+    "getting-started/connect-server" => "oss/connect-server"
+  }.freeze
+
   def show
+    if (target = MOVED[params[:path]])
+      return redirect_to docs_page_path(target, lang: params[:lang].presence), status: :moved_permanently
+    end
+
     @docs_locale = resolve_locale
-    @path = params[:path] || "getting-started/sign-up"
+    @path = params[:path] || "getting-started/first-deploy"
     @sidebar = load_sidebar(@docs_locale)
 
     rendered = render_doc(@path, @docs_locale)

@@ -50,9 +50,24 @@ RSpec.describe "DocsController", type: :request do
   end
 
   it "renders prev/next links" do
-    get "/docs/getting-started/first-deploy"
-    expect(response.body).to include("/docs/getting-started/sign-up")
-    expect(response.body).to include("/docs/getting-started/connect-server")
+    get "/docs/getting-started/sign-up"
+    expect(response.body).to include("/docs/getting-started/first-deploy")
+    expect(response.body).to include("/docs/apps/ssh-keys")
+  end
+
+  it "301-redirects a merged page to its new home, keeping the language" do
+    get "/docs/billing/plans", params: { lang: "id" }
+    expect(response).to have_http_status(:moved_permanently)
+    expect(response).to redirect_to("/docs/billing/pricing?lang=id")
+  end
+
+  it "renders every sidebar page in both languages" do
+    %w[en id].each do |locale|
+      YAML.load_file(Wokku::Engine.root.join("docs/sidebar.#{locale}.yml")).flat_map { |s| s["items"] }.each do |item|
+        get "/docs/#{item["path"]}", params: { lang: locale }
+        expect(response).to have_http_status(:success), "#{locale} sidebar → #{item["path"]} gave #{response.status}"
+      end
+    end
   end
 
   it "renders the table of contents controller" do

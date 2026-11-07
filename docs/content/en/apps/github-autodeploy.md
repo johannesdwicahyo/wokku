@@ -1,44 +1,52 @@
-# GitHub Auto-Deploy
+---
+title: GitHub Auto-Deploy
+summary: Connect a GitHub repository so every push to your deploy branch deploys automatically.
+last_updated: 2026-11-07
+---
 
-Connect a GitHub repository to deploy automatically on every push.
+You'll install the Wokku GitHub App, pick a repo and branch, and then just push to GitHub.
 
-## Connect a Repository
+## Connect a repository
 
 :::tabs
 ::web-ui
-1. Go to your app's detail page
-2. Click **Connect GitHub**
-3. Authorize the Wokku GitHub App (first time only)
-4. Select your repository and branch
-5. Click **Connect**
+1. Open your app → **Deploy** tab → **GitHub**.
+2. First time only: click **Install GitHub App** and give it access to your repo.
+3. Pick the repository, then the branch.
 
 ::cli
+The Wokku GitHub App must already have access to the repo (install it once from the dashboard).
+
 ```bash
-wokku github:connect my-app --repo your-org/your-repo --branch main
+wokku github:repos                                   # repos the app can see
+wokku github:connect my-app your-org/your-repo --branch main
 ```
 
 ::api
-GitHub connection requires OAuth — use the Web UI for initial setup.
+```bash
+curl -X POST https://wokku.cloud/api/v1/apps/my-app/github_connect \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"repo": "your-org/your-repo", "branch": "main"}'
+```
 
 ::mcp
-Initial GitHub authorization requires the Web UI.
-
-::mobile
-Tap your app → **GitHub** to connect a repository.
+Ask Claude: *"Connect my-app to your-org/your-repo on main."*
 :::
 
-## How It Works
+Connecting doesn't deploy by itself. The next push to the branch does.
 
-1. You push code to the connected branch
-2. GitHub sends a webhook to Wokku
-3. Wokku triggers a deploy on your app's server
-4. Build output streams in real-time
+## How it works
 
-## Change Deploy Branch
+1. You push to the connected branch.
+2. GitHub notifies Wokku.
+3. Wokku builds and deploys that commit. Follow it on the **Deploy** tab.
+
+## Change the deploy branch
 
 :::tabs
 ::web-ui
-Go to your app → **Settings → GitHub** and change the deploy branch.
+On the **Apps** list, open the app's panel and edit **Branch**.
 
 ::cli
 ```bash
@@ -47,23 +55,18 @@ wokku apps:update my-app --branch develop
 
 ::api
 ```bash
-curl -X PUT https://wokku.cloud/api/v1/apps/my-app \
+curl -X PATCH https://wokku.cloud/api/v1/apps/my-app \
   -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
   -d '{"deploy_branch": "develop"}'
 ```
-
-::mcp
-Ask Claude: *"Change my-app deploy branch to develop"*
-
-::mobile
-Tap your app → Settings → change the branch.
 :::
 
 ## Disconnect
 
 :::tabs
 ::web-ui
-Go to your app → **Settings → GitHub** → **Disconnect**.
+**Deploy** tab → **GitHub** box → **Disconnect**.
 
 ::cli
 ```bash
@@ -72,13 +75,17 @@ wokku github:disconnect my-app
 
 ::api
 ```bash
-curl -X DELETE https://wokku.cloud/api/v1/apps/my-app/github \
+curl -X DELETE https://wokku.cloud/api/v1/apps/my-app/github_disconnect \
   -H "Authorization: Bearer $TOKEN"
 ```
 
 ::mcp
-Ask Claude: *"Disconnect GitHub from my-app"*
-
-::mobile
-Tap your app → Settings → Disconnect GitHub.
+Ask Claude: *"Disconnect GitHub from my-app."*
 :::
+
+You can still deploy with `git push wokku main` after disconnecting.
+
+## See also
+
+- [Preview deploys for pull requests](/docs/guides/preview-deploys)
+- [Create & Deploy](/docs/apps/deploy)

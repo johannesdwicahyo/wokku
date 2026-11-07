@@ -1,45 +1,37 @@
 ---
 title: FAQ
-summary: "Most-asked questions about Wokku, supported languages, backups, the open-source split, Heroku migration, and the free tier."
-eyebrow: troubleshooting
-last_updated: 2026-05-29
+summary: Short answers about how Wokku builds apps, what's free, backups, Heroku migration and self-hosting.
+last_updated: 2026-11-07
 ---
 
-# FAQ
+## Is Wokku managed?
 
-## What is Wokku built on?
-
-Wokku is inspired by [Dokku](https://dokku.com) and Heroku-style workflows, but runs on its own runtime (the wokkud host agent, Docker Swarm, and Caddy).
-
-## Is Wokku self-hosted or managed?
-
-Wokku Cloud (this site, `wokku.cloud`) is fully **managed** — we run the hosts for you. If you want to self-host, use the open-source **Community Edition** at [github.com/johannesdwicahyo/wokku](https://github.com/johannesdwicahyo/wokku), which is the same Rails app you can run on your own VPS.
+Yes. Wokku Cloud runs the servers for you — you push code, we build and run it. You never connect or pick a server. If you want to run Wokku yourself, see [Self-Hosting](/docs/oss/overview).
 
 ## What languages are supported?
 
-Any language. Wokku detects and builds Node.js, Python, Ruby, Go, PHP, Java and more automatically, and supports Dockerfiles for full flexibility. See the [framework recipes gallery](/docs/templates/browse) for one-click starters.
-
-## How do backups work?
-
-Wokku backs up databases to S3-compatible storage (AWS S3, Cloudflare R2, Backblaze B2, DigitalOcean Spaces, Wasabi). Configure automatic daily backups or create on-demand snapshots from the database's Backups tab.
-
-## What's the difference between CE and Cloud?
-
-**Community Edition (CE)** is free, open-source (AGPL-3.0), and runs on your own infrastructure. CE ships the **web UI only** — REST API, CLI, MCP server, and mobile app are Cloud-only surfaces. CE releases monthly on the 1st of each month, tagged `vYYYY.MM`.
-
-**Wokku Cloud** is the managed service at [wokku.cloud](https://wokku.cloud) — we operate the hosts, billing runs on monthly invoices, you get the [bundled addons](/docs/billing/plan-bundles) per plan, plus the full surface (API + CLI + MCP + mobile).
-
-See [Open Source Edition](/docs/oss/overview) for the full surface comparison.
-
-## Can I migrate from Heroku?
-
-Yes. Wokku follows the same workflow — `git push` to deploy, `Procfile` for process types, env vars for config. Most Heroku apps work with minimal changes.
+Anything that runs in a container. If your repo has a `Dockerfile`, Wokku builds it. Otherwise it auto-detects Node.js, Python, Ruby, Go, PHP, Java and more with Nixpacks. See [Frameworks](/docs/frameworks/index) and the [one-click apps](/docs/templates/browse).
 
 ## Is there a free tier?
 
-Yes. [Wokku Cloud](https://wokku.cloud) offers a free plan with one box (256 MB RAM) plus shared Postgres and shared Redis. Self-hosted CE is always free.
+Yes. Free apps sleep after 30 minutes without traffic and wake on the next request (about 30 seconds). Shared Postgres, MariaDB and Redis are free too. You pay only for the CPU, RAM and dedicated databases you choose — see [Pricing](/docs/billing/pricing).
+
+## How does billing work?
+
+You top up a balance (in IDR) and Wokku deducts the cost of your resources daily. See [Pricing](/docs/billing/pricing) and [Invoices](/docs/billing/invoices).
+
+## How do backups work?
+
+Dedicated databases are backed up for you, encrypted, and you can take an on-demand backup or restore from the database's page. See [Backups](/docs/databases/backups).
+
+## Can I migrate from Heroku?
+
+Yes. The workflow is the same — `git push` to deploy, a `Procfile` for process types, env vars for config. One difference: there's no release phase, so run migrations with `wokku run my-app -- <command>` after deploying. See [Migrate from Heroku](/docs/migrate/heroku).
+
+## Can I self-host Wokku?
+
+Yes — the engine is open source (AGPL-3.0). See [Self-Hosting](/docs/oss/overview).
 
 ## How do I get support?
 
-- **Community Edition** — [GitHub Issues](https://github.com/johannesdwicahyo/wokku/issues)
-- **Wokku Cloud** — Email [support@wokku.cloud](mailto:support@wokku.cloud)
+Email [support@wokku.cloud](mailto:support@wokku.cloud).

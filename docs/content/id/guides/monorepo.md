@@ -1,63 +1,53 @@
-# Deploy dari Monorepo
+---
+title: Deploy dari Monorepo
+summary: Deploy satu subdirektori dari repo besar sebagai app Wokku tersendiri dengan git subtree.
+last_updated: 2026-11-07
+---
 
-Aplikasimu ada di subdirektori (`apps/api`, `packages/web`) dari repo besar.
-Berikut cara men-deploy hanya subtree itu ke sebuah aplikasi Wokku.
+Kamu akan push hanya satu subdirektori (misalnya `apps/api`) ke sebuah app Wokku.
 
-## Opsi A — push subtree (bekerja di mana saja)
+## Push subtree
 
-`git subtree` mengirim hanya satu subdirektori sebagai root repo dari push-mu.
-Tanpa config server.
+`git subtree` push sebuah subdirektori seolah-olah itu root repo.
 
 ```bash
-# dari root repo, push apps/api ke branch main aplikasi Wokku
+# from the repo root
 git subtree push --prefix apps/api wokku main
 ```
 
-Jika history membuat `subtree push` lambat atau menolak non-fast-forward, split
-dulu lalu force branch-nya:
+Kalau itu lambat atau ditolak sebagai non-fast-forward, split dulu lalu force-push:
 
 ```bash
 git subtree split --prefix apps/api -b deploy-api
 git push wokku deploy-api:main --force
 ```
 
-`Procfile`, `Dockerfile`, dan manifest dependency-mu harus berada di root
-subdirektori itu (`apps/api/Procfile`, dst.) — setelah subtree split, itu menjadi
-root repo yang dilihat Wokku.
+`Procfile`, `Dockerfile`, dan manifest dependency kamu (`package.json`, `Gemfile`, …) harus berada di subdirektori itu, karena subdirektori itulah yang jadi root saat Wokku build.
 
-## Opsi B — build dari subdirektori (GitHub auto-deploy)
+## Beberapa app dari satu repo
 
-Saat deploy via [GitHub Auto-Deploy](/docs/apps/github-autodeploy), set **build
-directory** supaya Wokku build dari subfolder-mu di tiap push:
+Buat satu app per bagian yang di-deploy, masing-masing dengan remote sendiri:
 
-:::tabs
-::web-ui
-Aplikasi → **Settings** → set **Build directory** ke `apps/api`.
-
-::cli
 ```bash
-wokku config:set my-api BUILD_DIR=apps/api
+wokku apps:create my-api
+wokku apps:create my-web
+git remote add wokku-api git@git.wokku.cloud:my-api
+git remote add wokku-web git@git.wokku.cloud:my-web
+git subtree push --prefix apps/api wokku-api main
+git subtree push --prefix apps/web wokku-web main
 ```
+
+:::callout note
+GitHub auto-deploy build dari root repo. Untuk monorepo, pakai subtree push (dari mesin kamu atau CI).
 :::
-
-Tiap push ke branch terhubung mem-build `apps/api` dan men-deploy-nya — tanpa
-ribet subtree.
-
-## Banyak aplikasi dari satu repo
-
-Buat satu aplikasi Wokku per deployable, masing-masing diarahkan ke subdirektorinya:
-
-```bash
-wokku apps:create my-api --server my-server     # build dir apps/api
-wokku apps:create my-web --server my-server     # build dir apps/web
-```
 
 ## Troubleshooting
 
-- **"Updates were rejected"** saat subtree push — pakai bentuk split + `--force` di atas.
-- **Buildpack mendeteksi bahasa yang salah** — pastikan manifest (`package.json`, dst.) ada di root subtree/build-dir.
-- **Shared package tidak ketemu** — `git subtree` push hanya membawa subfolder; vendor kode bersama ke build dir atau pakai Dockerfile yang meng-copy yang dibutuhkan.
+- **"Updates were rejected"**: pakai cara split dan `--force` di atas.
+- **Bahasa yang terdeteksi salah**: manifest harus ada di root subdirektori.
+- **Shared package tidak ada**: subtree push hanya membawa folder itu. Salin kode bersama ke dalamnya, atau pakai [Dockerfile](/docs/guides/dockerfile) di root subdirektori.
 
-## Langkah berikutnya
+## Langkah selanjutnya
 
-- [Deploy dengan Dockerfile](/docs/guides/dockerfile) · [GitHub Auto-Deploy](/docs/apps/github-autodeploy)
+- [Deploy dengan Dockerfile](/docs/guides/dockerfile)
+- [Create & Deploy](/docs/apps/deploy)

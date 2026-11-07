@@ -1,46 +1,44 @@
-# Migrate to Wokku
+---
+title: Migrate to Wokku
+summary: Move an app from another platform to Wokku with its config, database and domain.
+last_updated: 2026-11-07
+---
 
-Moving from another platform? These guides map each platform's concepts to
-Wokku and walk you through the move — app, environment, database, and domain —
-with as little downtime as possible.
+Re-create the app, copy its config, move the database, then switch DNS. Pick your current platform for the specifics.
 
 ## Pick your source
 
-- **[From Heroku](/docs/migrate/heroku)** — the closest match: Procfile, buildpacks, add-ons, `git push`
-- **[From Vercel](/docs/migrate/vercel)** — Next.js and serverless → long-running container
-- **[From Netlify](/docs/migrate/netlify)** — static sites + functions
-- **[From Render](/docs/migrate/render)** — web services, managed DBs, cron jobs
-- **[From a bare VPS](/docs/migrate/vps)** — replace nginx + systemd + manual deploys + certbot
+- **[Heroku](/docs/migrate/heroku)** — Procfile apps, config vars, Heroku Postgres
+- **[Vercel](/docs/migrate/vercel)** — Next.js and serverless functions
+- **[Netlify](/docs/migrate/netlify)** — static sites and functions
+- **[Render](/docs/migrate/render)** — web services, workers, managed Postgres
+- **[A VPS](/docs/migrate/vps)** — nginx, systemd or pm2, certbot
 
-## The general shape of a migration
+## The four steps
 
-Whatever you're coming from, the move is the same four steps:
+1. **Make the app run on Wokku.** It must listen on `$PORT`. Follow your [framework guide](/docs/frameworks/index), then create the app ([Create & Deploy](/docs/apps/deploy)).
+2. **Copy environment variables** with `wokku config:set my-app KEY=VALUE ...` ([Environment Variables](/docs/apps/config)).
+3. **Move the database** (below).
+4. **Point your domain.** Check everything on `https://my-app.wokku.app` first, then add your domain and switch DNS ([Custom Domains](/docs/domains-ssl/custom-domains)). Downtime is limited to DNS propagation.
 
-1. **Re-create the app** on Wokku ([create an app](/docs/apps/create))
-2. **Copy environment variables** ([config](/docs/apps/config))
-3. **Move the database** — `pg_dump` from the old provider, restore into a Wokku
-   [Postgres add-on](/docs/guides/postgres-redis)
-4. **Point your domain** — add it with automatic SSL, then cut over DNS
-   ([custom domains](/docs/domains-ssl/custom-domains))
+## Move a database
 
-:::callout note
-Deploy to the temporary `*.wokku.app` URL first and verify everything works.
-Only switch your real domain's DNS once you're happy — that keeps downtime to a
-DNS-propagation window.
-:::
-
-## Database move, in brief
+Import works on **dedicated** databases (Postgres, MySQL, MariaDB, MongoDB). Shared add-ons can't import a dump, so add a dedicated database for the move:
 
 ```bash
-# 1. Dump from your current provider (custom format)
+# 1. Dump from your current provider (Postgres custom format)
 pg_dump "$OLD_DATABASE_URL" --no-owner --no-acl -Fc -f dump.bin
 
-# 2. Create the Wokku database and read its URL
-wokku addons:create postgres my-app
-wokku config my-app | grep DATABASE_URL
+# 2. Add a dedicated Postgres to the app and find its name
+wokku addons:dedicated:upgrade my-app postgres
+wokku addons my-app
 
-# 3. Restore into Wokku
-pg_restore --no-owner --no-acl -d "$WOKKU_DATABASE_URL" dump.bin
+# 3. Import (this overwrites the database)
+wokku databases:import <database-name> dump.bin
 ```
 
-Each guide below repeats this with provider-specific notes.
+The add-on sets `DATABASE_URL` on the app. Delete any `DATABASE_URL` you copied from the old platform. Import accepts plain SQL or `pg_dump -Fc` for Postgres, `mysqldump` output for MySQL/MariaDB, and `mongodump --archive` for MongoDB. See [Create & Link a Database](/docs/databases/create-link).
+
+:::callout note
+Stop writes to the old app (maintenance mode, or scale it to zero) before the final dump, so no data is lost between dump and cut-over.
+:::

@@ -1,29 +1,12 @@
-# Deploy Django
+---
+title: Django
+summary: Jalankan app Django di Wokku dengan Gunicorn, Postgres, dan WhiteNoise untuk file statis.
+last_updated: 2026-11-07
+---
 
-Deploy aplikasi Django ke Wokku dengan Postgres, migration otomatis, dan file
-statis disajikan via WhiteNoise.
+Tambahkan Gunicorn dan WhiteNoise, baca settings dari environment, push, lalu jalankan migration. Mau repo yang sudah jalan dulu? Deploy starter `django` dari [Templates](/docs/templates/browse).
 
-## Prasyarat
-
-- [Akun Wokku](/docs/getting-started/sign-up) dan [server yang terhubung](/docs/getting-started/connect-server)
-- [SSH key terdaftar](/docs/apps/ssh-keys) untuk `git push`
-- Proyek Django dengan `requirements.txt`
-
-## 1. Buat aplikasi
-
-:::tabs
-::web-ui
-**Apps → New App** → server, nama `my-django-app`, ukuran box, **Create**.
-
-::cli
-```bash
-wokku apps:create my-django-app --server my-server
-```
-:::
-
-## 2. Siapkan aplikasi Django-mu
-
-Python buildpack mendeteksi `requirements.txt`. Pastikan ini ada:
+## Dependency
 
 ```text
 # requirements.txt
@@ -34,94 +17,67 @@ whitenoise
 dj-database-url
 ```
 
-Tambahkan `Procfile`:
-
-```procfile
-web: gunicorn myproject.wsgi --log-file -
-release: python manage.py migrate --noinput
-```
-
-Di `settings.py`, baca database + host dari environment dan biarkan WhiteNoise
-menyajikan file statis:
+## Settings
 
 ```python
-import dj_database_url, os
-DATABASES = {"default": dj_database_url.config(conn_max_age=600)}
+# settings.py
+import os
+import dj_database_url
+
+SECRET_KEY = os.environ["SECRET_KEY"]
+DEBUG = os.environ.get("DEBUG") == "True"
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",")
-MIDDLEWARE = ["whitenoise.middleware.WhiteNoiseMiddleware", *MIDDLEWARE]
+CSRF_TRUSTED_ORIGINS = [f"https://{h}" for h in ALLOWED_HOSTS if h]
+DATABASES = {"default": dj_database_url.config(conn_max_age=600)}
+
+MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")  # right after SecurityMiddleware
 STATIC_ROOT = BASE_DIR / "staticfiles"
 ```
 
-:::callout note
-`collectstatic` berjalan otomatis saat build Python. Proses `release:` menerapkan
-migration setelah build, sebelum traffic dialihkan.
-:::
+## Perintah start
 
-## 3. Set environment variable
+Kumpulkan file statis saat boot, lalu jalankan Gunicorn. Baris Procfile yang berisi `&&` berjalan tanpa shell, jadi taruh kedua langkah di sebuah script:
 
-:::tabs
-::web-ui
-Aplikasi → **Config**:
-
-| Key | Value |
-|---|---|
-| `SECRET_KEY` | string acak panjang |
-| `DJANGO_SETTINGS_MODULE` | `myproject.settings` |
-| `ALLOWED_HOSTS` | `my-django-app.wokku.app` |
-| `DEBUG` | `False` |
-
-::cli
 ```bash
-wokku config:set my-django-app \
-  SECRET_KEY="$(python -c 'import secrets;print(secrets.token_urlsafe(50))')" \
+#!/usr/bin/env bash
+# bin/start  (chmod +x bin/start)
+set -e
+python manage.py collectstatic --noinput
+exec gunicorn myproject.wsgi --bind 0.0.0.0:$PORT --log-file -
+```
+
+```procfile
+web: bin/start
+```
+
+## Config dan database
+
+```bash
+wokku apps:create my-app --shared postgres
+wokku config:set my-app \
+  SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(50))')" \
   DJANGO_SETTINGS_MODULE=myproject.settings \
-  ALLOWED_HOSTS=my-django-app.wokku.app DEBUG=False
-```
-:::
-
-## 4. Tambahkan database
-
-```bash
-wokku addons:create postgres my-django-app
+  ALLOWED_HOSTS=my-app.wokku.app
 ```
 
-Wokku menyuntikkan `DATABASE_URL`; `dj-database-url` membacanya otomatis. Lihat
-[Buat & Link Database](/docs/databases/create-link).
+Add-on Postgres mengisi `DATABASE_URL`, yang dibaca oleh `dj-database-url`. Lihat [Membuat & Menautkan Database](/docs/databases/create-link).
 
-## 5. Deploy
+## Deploy dan migrate
 
-:::tabs
-::web-ui
 ```bash
-git remote add wokku git@git.wokku.cloud:my-django-app
+git remote add wokku git@git.wokku.cloud:my-app
 git push wokku main
+wokku run my-app -- python manage.py migrate --noinput
 ```
 
-::github
-Hubungkan di **Apps → Connect GitHub** untuk push-to-deploy —
-lihat [GitHub Auto-Deploy](/docs/apps/github-autodeploy).
+Jalankan perintah migrate setiap kali deploy yang menambahkan migration. Live di `https://my-app.wokku.app`. Baru pertama deploy? Lihat [Quickstart](/docs/getting-started/first-deploy).
 
-::cli
-```bash
-git remote add wokku git@git.wokku.cloud:my-django-app
-git push wokku main
-```
-:::
+## Domain kustom
 
-Live di `https://my-django-app.wokku.app`.
-
-## 6. Domain kustom
-
-[Domain Kustom](/docs/domains-ssl/custom-domains) — ingat tambahkan hostname baru
-ke `ALLOWED_HOSTS` lalu deploy ulang.
+Setelah kamu menambahkan [domain kustom](/docs/domains-ssl/custom-domains), tambahkan domain itu ke `ALLOWED_HOSTS` (dipisah koma) lalu restart: `wokku ps:restart my-app`.
 
 ## Troubleshooting
 
-- **`DisallowedHost`** — tambahkan domainmu ke `ALLOWED_HOSTS` lalu deploy ulang.
-- **CSS/JS 404 di production** — pastikan middleware WhiteNoise + `STATIC_ROOT`; `collectstatic` harus sukses di build log.
-- **Migration tidak jalan** — cek baris `release:` dan deploy logs.
-
-## Langkah berikutnya
-
-- [Background worker (Celery)](/docs/scaling/bundled-processes)
-- [Logs](/docs/apps/logs) · [Kesiapan Production](/docs/apps/best-practices)
+- **Error `DisallowedHost` atau CSRF** — hostname belum ada di `ALLOWED_HOSTS`.
+- **CSS/JS 404** — cek middleware WhiteNoise dan `STATIC_ROOT`, dan pastikan `collectstatic` berhasil di [log](/docs/monitoring/logs).
+- **Celery** — tambahkan `worker: celery -A myproject worker` ke Procfile lalu scale. Lihat [Background Worker](/docs/guides/background-workers).

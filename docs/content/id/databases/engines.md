@@ -1,67 +1,65 @@
 ---
 title: Engine yang Didukung
-summary: "Lima shared engine gratis (Postgres, Redis, Memcached, RabbitMQ, Meilisearch) tersedia di tiap box, plus empat dedicated engine (Postgres, MySQL, MongoDB, Redis) sebagai upgrade berbayar. Connection URL di-inject otomatis."
-eyebrow: database
-last_updated: 2026-05-31
+summary: Database dan cache apa saja yang dijalankan Wokku, shared gratis atau dedicated berbayar, dan env var yang didapat app kamu.
+last_updated: 2026-11-07
 ---
 
-# Engine yang Didukung
+Pilih engine dan mode. Wokku membuatnya, menghubungkannya ke app kamu, dan mengatur URL koneksinya sebagai environment variable.
 
-Wokku punya dua kategori engine: **shared** (gratis, multi-tenant, enable per box) dan **dedicated** (upgrade berbayar, container single-tenant). Object storage workspace (MinIO) terpisah dari keduanya.
+## Engine
 
-## Shared engine
-
-Lima engine jalan di shared host container. Kamu pilih mana yang mau di-enable saat bikin box — atau tambah/hapus belakangan dari tab **Settings → Add-ons** box. Nggak perlu provisioning terpisah, nggak perlu nunggu; tenant langsung dibuat.
-
-| Engine | Tipe | Env var URL |
+| Engine | Shared (gratis) | Dedicated (berbayar) |
 |---|---|---|
-| **PostgreSQL** | Relasional | `DATABASE_URL` |
-| **Redis** | Key-value / Cache | `REDIS_URL` |
-| **Memcached** | Cache | `MEMCACHED_URL` |
-| **RabbitMQ** | Message Queue | `RABBITMQ_URL` |
-| **Meilisearch** | Full-text Search | `MEILISEARCH_URL` |
+| PostgreSQL | ✓ | ✓ |
+| MariaDB | ✓ | ✓ |
+| Redis | ✓ | ✓ |
+| MySQL | — | ✓ |
+| MongoDB | — | ✓ |
 
-> **Batasan Free plan** — Box Free plan cuma lihat Postgres dan Redis di picker addon. Memcached, RabbitMQ, dan Meilisearch tersedia mulai Solo plan ke atas.
+## Shared vs dedicated
 
-### Cara kerja shared tenancy
+| | Shared | Dedicated |
+|---|---|---|
+| Biaya | Gratis untuk setiap app | Ditagih per resource (CPU, RAM, disk), lihat [Harga](/docs/billing/pricing) |
+| Yang kamu dapat | Database sendiri (atau tenant Redis) di server bersama | Container sendiri |
+| Ukuran | 100 MB untuk Postgres/MariaDB, 10 MB untuk Redis | Kamu yang pilih: preset Small, Medium, Large atau slider |
+| Backup otomatis | Tidak | Setiap malam, lihat [Backup](/docs/databases/backups) |
+| Cocok untuk | Side project, prototype, baru mulai | Data production |
 
-Tiap shared engine menjalankan satu container per server. Saat kamu enable engine di box, Wokku provision role + namespace per-box (role + database buat Postgres, key prefix buat Redis dan Memcached, virtual host buat RabbitMQ, index namespace buat Meilisearch). Tenant terisolasi; satu box nggak bisa baca data box lain.
+Mulai dari shared. Kalau sudah tidak cukup, [upgrade ke dedicated](/docs/databases/create-link#upgrade-to-dedicated). Data kamu ikut pindah.
 
-`DATABASE_URL` (dan var sejenis) di-inject sebagai env var app dan di-update otomatis kalau shared tenant pernah dimigrasikan. Code app kamu lihat nama env var yang sama, baik engine-nya shared maupun dedicated.
+:::callout note
+Shared Redis tidak pernah di-backup. Pakai sebagai cache, atau upgrade ke dedicated Redis kalau isinya data yang perlu kamu simpan.
+:::
 
-## Dedicated engine
+## Ukuran dedicated
 
-Empat engine bisa di-provision sebagai dedicated container single-tenant. Dedicated engine adalah upgrade berbayar — mengonsumsi satu slot dari kuota plan kamu (3 DB slot + 3 Redis slot per workspace berbayar). Lihat [Dedicated upgrade](/docs/databases/dedicated-upgrade) untuk flow lengkapnya.
+| Preset | Postgres, MySQL, MariaDB, MongoDB | Redis |
+|---|---|---|
+| Small | 0.25 vCPU · 512 MB RAM · 5 GB disk | 0.25 vCPU · 256 MB RAM · 1 GB disk |
+| Medium | 0.5 vCPU · 1 GB RAM · 20 GB disk | 0.25 vCPU · 1 GB RAM · 2 GB disk |
+| Large | 1 vCPU · 2 GB RAM · 50 GB disk | 0.5 vCPU · 2 GB RAM · 4 GB disk |
 
-| Engine | Tipe | Env var URL | Catatan |
-|---|---|---|---|
-| **PostgreSQL** | Relasional | `DATABASE_URL` | Migrasi data dari shared Pg saat upgrade |
-| **MySQL** | Relasional | `DATABASE_URL` | Fresh-create only (nggak ada shared MySQL) |
-| **MongoDB** | Document | `MONGO_URL` | Fresh-create only (nggak ada shared MongoDB) |
-| **Redis** | Key-value / Cache | `REDIS_URL` | Migrasi data dari shared Redis saat upgrade |
+Kamu juga bisa mengatur CPU, RAM, dan disk lewat slider, dan mengubah ukurannya nanti. Disk hanya bisa diperbesar.
 
-> Ketiga DB engine (Postgres, MySQL, MongoDB) berbagi **satu pool 3 dedicated DB slot** per workspace. Redis punya pool sendiri sebanyak 3 slot. Size mengikuti box: box medium dapat dedicated engine medium.
+## Environment variable
 
-### Batas koneksi (dedicated Postgres)
+Wokku mengatur variabel berikut di app yang terhubung. Wokku tidak menimpa `DATABASE_URL` yang sudah ada di app kamu.
 
-| Plan | Max koneksi |
+| Add-on | Env var yang di-set |
 |---|---|
-| Solo | 20 |
-| Pro | 80 |
-| Team | 160 |
+| Shared Postgres | `DATABASE_URL` |
+| Shared MariaDB | `MARIADB_URL`, plus `DATABASE_URL` (dalam format `mysql2://` yang dibutuhkan Rails) |
+| Shared Redis | `REDIS_URL` |
+| Dedicated Postgres | `POSTGRES_URL`, plus `DATABASE_URL` |
+| Dedicated MySQL | `MYSQL_URL` |
+| Dedicated MariaDB | `MARIADB_URL` |
+| Dedicated MongoDB | `MONGODB_URL` |
+| Dedicated Redis | `REDIS_URL` |
 
-Butuh headroom lebih? Pasang [PgBouncer](https://www.pgbouncer.org/) di depan Postgres — dia multiplex koneksi tanpa perlu ganti `DATABASE_URL`.
+Baca seperti variabel lainnya: `process.env.DATABASE_URL`, `os.environ["DATABASE_URL"]`, `ENV["DATABASE_URL"]`. Kebanyakan framework (Rails, Django dengan `dj-database-url`, Laravel, Prisma) membaca `DATABASE_URL` dengan sendirinya. Lihat [panduan framework](/docs/frameworks/index) kamu.
 
-## MinIO workspace (object storage)
+## Selanjutnya
 
-MinIO bukan addon per-box — ini adalah object storage level workspace yang di-share ke semua box kamu. Tiap paid plan include bucket MinIO; ukurannya tergantung plan (Solo 2 GB / Pro 10 GB / Team 20 GB). Kredensial akses ada di **Workspace → Storage**.
-
-Use case: upload user (avatar, attachment), PDF generated, asset gambar dan video, deploy artefact, arsip log.
-
-> Support MinIO masih early access — pembuatan bucket dan API S3-compatible sudah stabil, tapi dashboard object browser ship di rilis berikutnya.
-
-## Lihat juga
-
-- [Create & Link add-on](/docs/databases/create-link) — enable shared add-on, referensi CLI + API + MCP
-- [Dedicated upgrade](/docs/databases/dedicated-upgrade) — kapan dan cara upgrade ke dedicated engine
-- [Plan Bundle](/docs/billing/plan-bundles) — apa saja yang included di tiap plan
+- [Tambah & hubungkan database](/docs/databases/create-link)
+- [Backup & restore](/docs/databases/backups)

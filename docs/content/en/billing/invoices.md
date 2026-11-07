@@ -1,132 +1,89 @@
 ---
-title: Invoices
-summary: "Monthly invoice cycle: pre-invoice email → due date → 7-day grace → suspension. Pay via iPaymu. Mid-cycle changes prorated. Refunds via credit on the next bill."
-eyebrow: billing
-last_updated: 2026-05-29
+title: Invoices & Payment
+summary: How your monthly invoice is built, how to pay it, and what happens if it goes unpaid.
+last_updated: 2026-11-07
 ---
 
-# Invoices
-
-Wokku's paid plans use a **monthly invoice** model. There's no metering, no deposit balance, no per-resource line items — just one flat invoice per workspace per month, plus optional add-on lines (extra seats on Team, mid-cycle proration on plan switches).
-
-This page covers the full invoice lifecycle.
+You'll read your invoice, pay it, and check your usage on the Billing page.
 
 ## The cycle
 
-```text
-day 0     subscribe (or upgrade)         → 7-day free trial begins
-day 7     trial ends                     → first invoice generated
-day +N    billing date (your anchor day) → invoice payable from now
-day +N+7  due date                       → unpaid? grace period begins
-day +N+14 grace period ends              → apps suspended if still unpaid
-day +N+30 next billing date              → cycle repeats
-```
+Your **billing date** is the day of the month you first ran something paid. If that was the 15th, every invoice is for the 15th.
 
-Your **billing date** is anchored to the day of the month you first subscribed. If you sign up on the 15th, every monthly invoice lands on the 15th.
+| When | What happens |
+|---|---|
+| 7 days before your billing date | Invoice issued and emailed (PDF attached, with a pay link) |
+| Billing date | Invoice due |
+| 7 days after the due date, still unpaid | Account suspended (see below) |
 
-## What the invoice contains
+Free-only accounts never get an invoice. If there's nothing to bill, no invoice is issued.
 
-A standard renewal invoice has one line:
+## What's on an invoice
 
-```text
-Wokku Pro · 2026-06-15 → 2026-07-15      Rp 225.000
-                            Total:        Rp 225.000
-```
+Each app process, volume and dedicated database gets its own lines:
 
-On the Team plan with extra seats, you'll see a second line:
+| Line | Meaning |
+|---|---|
+| **Advance** | The coming month for each resource, at its current size |
+| **Usage** | What each resource actually cost per day since your last invoice (dates shown) |
+| **Already paid in advance for these days** | Subtracts what an earlier advance already covered |
+| **Credit carried from last invoice** | Subtracts credit left over, for example after a downsize |
 
-```text
-Wokku Team · 2026-06-15 → 2026-07-15           Rp 750.000
-Extra seats × 2 · 2026-06-15 → 2026-07-15      Rp  90.000
-                                Total:         Rp 840.000
-```
+So you pay the next month up front, and the next invoice settles the difference with what you really ran. If credits are bigger than the charges, you pay Rp0 and the rest carries to the next invoice.
 
-On a mid-cycle upgrade, you'll see a proration line:
+Your first invoice has no earlier advance to subtract: it covers your usage so far plus the coming month.
 
-```text
-Pro → Team upgrade · prorated 18 of 30 days    Rp 315.000
-                            Total:             Rp 315.000
-```
+## Pay an invoice
 
-## When invoices are generated
+1. Open the invoice email and click the pay link, or go to **Settings** → **Billing** and click **Pay now**.
+2. On iPaymu's page, pay with QRIS (any e-wallet or banking app), bank transfer (BCA, BNI, BRI, Mandiri and more) or card (Visa, Mastercard).
+3. The invoice turns **paid** once iPaymu confirms the payment.
 
-— **First invoice** — at the end of your 7-day trial
-— **Renewal invoice** — 7 days before each billing date (via `Billing::IssueUpcomingInvoicesJob`, daily)
-— **Proration invoice** — immediately on a mid-cycle upgrade
+Paying always happens in the dashboard. The CLI, API and MCP can list invoices and give you the pay link.
 
-You get an email when the invoice is generated, with the amount and the iPaymu payment link.
+## If an invoice goes unpaid
 
-## Paying
+Seven days after the due date, your account is suspended:
 
-iPaymu handles all payment methods:
+- Your running paid apps are stopped. Free sleeping apps keep running.
+- You can't start, restart or deploy apps until you pay.
+- You get an email listing the stopped apps.
 
-— **QRIS** — universal Indonesian QR — works with any e-wallet
-— **Virtual Account** — BCA, Mandiri, BNI, BRI, Permata
-— **E-wallet direct** — GoPay, OVO, DANA, LinkAja
-— **Card** — Visa, Mastercard, Amex (3DS where supported)
+Your data is kept. Pay every overdue invoice and your apps start again automatically; you get an email when they're back.
 
-You can pay from the email link or from `/dashboard/billing`. iPaymu's webhook updates the invoice status to `paid` within seconds of the bank confirmation.
+## The Billing page
 
-## Grace period & suspension
+Go to **Settings** → **Billing**:
 
-If an invoice goes unpaid past the **due date**, you enter a 7-day grace period. Nothing visible happens — your apps stay up, your team keeps working. We email you reminders at days 1, 3, and 6.
+- **Upcoming invoice** with a **Pay now** button, and your **last paid** invoice.
+- **This month so far** and **Projected next invoice** (with its date), plus any **Credit**.
+- Every app process and dedicated database with its size and monthly price.
+- Your recent invoices, with **view all** and a **csv** export.
 
-If the invoice is still unpaid at **7 days past due**, `Billing::SuspendOverdueJob` runs and:
+## List invoices
 
-— Sets the workspace's `billing_status` to `suspended`
-— Stops every paid app's containers (data preserved on disk; databases keep running)
-— Emails the workspace owner
+:::tabs
+::web-ui
+**Settings** → **Billing** → **view all**.
 
-Pay the invoice → apps wake up automatically (within ~30 seconds of the webhook landing). No redeploy, no data loss.
-
-## Mid-cycle changes
-
-### Upgrade
-
-Switch from Solo to Pro on day 18 of a 30-day cycle:
-
-— A proration invoice is issued **immediately** for the difference, prorated for the days remaining: `(Pro_price - Solo_price) × (days_left / total_days)`
-— The plan flips as soon as the proration invoice is paid (or right away if you're inside the trial)
-— Your next regular renewal lands on the original billing date with the full new plan price
-
-### Downgrade
-
-Switch from Pro to Solo on day 18:
-
-— No immediate invoice — you've already paid for Pro through the end of the cycle
-— The plan change is **scheduled** for the next billing date
-— Until then, you keep Pro
-— The next renewal invoice is at the Solo price
-
-This is intentional: you don't lose what you've paid for.
-
-### Cancel
-
-Cancel the plan from `/dashboard/plan`:
-
-— Like downgrade: scheduled for end of cycle
-— At the billing date, you fall back to the Free plan
-— Your paid resources (Postgres beyond 100 MB, second Redis, larger boxes) are gracefully restricted: data preserved, but reads/writes that exceed the Free tier limits get a 503 with a "upgrade to continue" message
-
-## Refunds
-
-Paid invoices are **non-refundable** as a default. If something goes wrong on our side (hosting incident, billing bug, data loss caused by us), email [billing@wokku.cloud](mailto:billing@wokku.cloud) with the invoice number — we'll work it out case-by-case.
-
-## API
-
+::cli
 ```bash
-curl https://wokku.cloud/api/v1/invoices \
+wokku billing:invoices
+```
+Unpaid invoices show their pay link.
+
+::api
+```bash
+curl https://wokku.cloud/api/v1/billing/invoices \
   -H "Authorization: Bearer $TOKEN"
 ```
+Each invoice has `reference`, `period`, `amount_idr`, `status` (`pending`, `paid`, `failed`, `expired`, `refunded`, `void`), `due_date`, `paid_at`, and `pay_url` while unpaid.
 
-Returns every invoice for the active workspace, ordered newest first. Each row includes `status` (`pending` / `paid` / `failed` / `expired` / `refunded`), `amount_idr`, `period_start`, `period_end`, and the iPaymu payment URL if still unpaid.
-
-## Self-hosted
-
-Community Edition has **no invoice flow**. You run the platform yourself; there's nothing to bill.
+::mcp
+Ask Claude: *"List my Wokku invoices"*
+:::
 
 ## See also
 
-— [Plans & Pricing](/docs/billing/plans) — what each plan costs and includes
-— [Usage](/docs/billing/usage) — live view of plan + seat + bundle utilization
-— [Plan Bundles](/docs/billing/plan-bundles) — DB / Redis / MinIO caps that ship with each plan
+- [Pricing](/docs/billing/pricing)
+- [Resources & Sizing](/docs/scaling/resources)

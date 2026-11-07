@@ -1,84 +1,86 @@
-# Jadwalkan Tugas (Cron)
+---
+title: Menjadwalkan Task (Cron)
+summary: Jalankan perintah sesuai jadwal cron, seperti pembersihan tiap malam atau email laporan, tanpa worker yang berjalan terus.
+last_updated: 2026-11-07
+---
 
-Jalankan perintah sesuai jadwal — pembersihan tiap malam, email laporan, cache
-warmer, sinkronisasi data — tanpa worker yang berjalan terus.
+Kamu akan menambahkan entri cron yang menjalankan perintah dengan config vars dan add-on milik app kamu.
 
 :::callout note
-Scheduled task adalah fitur **Pro**. Lihat [Plan](/docs/billing/plans).
+Scheduled tasks sudah termasuk begitu team kamu membayar resource apa pun. Team yang hanya pakai paket gratis akan melihat ajakan upgrade. Lihat [Pricing](/docs/billing/pricing).
 :::
 
-## Cara kerja
-
-Scheduled task menjalankan perintah sekali-pakai di dalam salinan baru container
-aplikasimu sesuai jadwal cron, lalu keluar. Ia berbagi config var dan add-on
-aplikasimu, jadi bisa menjangkau database dan Redis-mu.
-
-## Buat scheduled task
+## Buat task
 
 :::tabs
 ::web-ui
-1. Buka aplikasimu → **Scheduled Tasks**
-2. **New Task** → masukkan ekspresi cron dan perintahnya
-3. Simpan — jalan sesuai jadwal mulai sekarang
+1. App → tab **Settings** → **Scheduled Tasks**.
+2. Tambahkan task: jadwal cron, perintah, deskripsi (opsional).
+3. Simpan.
 
 ::cli
 ```bash
-# setiap hari jam 02:00
-wokku scheduled-tasks:create my-app \
+wokku cron:add my-app \
   --schedule "0 2 * * *" \
-  --command "bin/rails runner 'Cleanup.run'"
+  --command "bin/rails runner 'Cleanup.run'" \
+  --description "Nightly cleanup"
 ```
 
 ::api
 ```bash
 curl -X POST https://wokku.cloud/api/v1/apps/my-app/scheduled_tasks \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"schedule": "0 2 * * *", "command": "bin/rails runner Cleanup.run"}'
+  -H "Content-Type: application/json" \
+  -d '{"schedule": "0 2 * * *", "command": "bin/rails runner Cleanup.run", "description": "Nightly cleanup"}'
 ```
 
 ::mcp
-Tanya Claude: *"Jadwalkan `bin/rails runner Cleanup.run` jalan tiap hari jam 2 pagi di my-app"*
+Minta ke Claude: *"Jadwalkan `bin/rails runner Cleanup.run` setiap hari jam 02:00 di my-app."*
 :::
 
-## Referensi cepat ekspresi cron
+## Referensi cepat cron
 
 ```text
-┌─ menit (0-59)
-│ ┌─ jam (0-23)
-│ │ ┌─ tanggal (1-31)
-│ │ │ ┌─ bulan (1-12)
-│ │ │ │ ┌─ hari (0-6, Min=0)
+┌─ minute (0-59)
+│ ┌─ hour (0-23)
+│ │ ┌─ day of month (1-31)
+│ │ │ ┌─ month (1-12)
+│ │ │ │ ┌─ day of week (0-6, Sun=0)
 * * * * *
 ```
 
 | Jadwal | Arti |
 |---|---|
-| `*/15 * * * *` | tiap 15 menit |
-| `0 * * * *` | tiap jam, di awal jam |
-| `0 2 * * *` | tiap hari jam 02:00 |
-| `0 0 * * 1` | tiap Senin tengah malam |
+| `*/15 * * * *` | setiap 15 menit |
+| `0 * * * *` | setiap jam |
+| `0 2 * * *` | setiap hari jam 02:00 |
+| `0 0 * * 1` | setiap Senin tengah malam |
 
-:::callout warn
-Jadwal berjalan dalam **UTC**. Konversi waktu lokalmu (WIB = UTC+7) — mis. 09:00
-WIB = `0 2 * * *`.
-:::
-
-## List & hapus
+## Lihat daftar dan hapus
 
 :::tabs
+::web-ui
+Tab **Settings** → **Scheduled Tasks** menampilkan setiap task. Hapus dari daftar itu.
+
 ::cli
 ```bash
-wokku scheduled-tasks my-app            # list
-wokku scheduled-tasks:remove my-app ID  # hapus
+wokku cron my-app                  # list, with task IDs
+wokku cron:remove my-app TASK_ID   # remove
+```
+
+::api
+```bash
+curl https://wokku.cloud/api/v1/apps/my-app/scheduled_tasks -H "Authorization: Bearer $TOKEN"
+curl -X DELETE https://wokku.cloud/api/v1/apps/my-app/scheduled_tasks/TASK_ID -H "Authorization: Bearer $TOKEN"
 ```
 :::
 
 ## Troubleshooting
 
-- **Tugas tidak jalan** — pastikan cron dalam UTC dan aplikasi berstatus Pro.
-- **Command not found** — pakai path yang sama seperti di `wokku run` (mis. `bin/rails`, `python manage.py`).
-- **Butuh DB** — otomatis mewarisi config var + add-on; tanpa wiring tambahan.
+- **Command not found**: pakai perintah yang sama yang berhasil dengan `wokku run my-app -- <command>`.
+- **Error "Upgrade"**: team kamu belum punya resource berbayar.
 
-## Langkah berikutnya
+## Langkah selanjutnya
 
-- [Jalankan background worker](/docs/guides/background-workers) · [Logs](/docs/apps/logs)
+- [Menjalankan background worker](/docs/guides/background-workers)
+- [Log](/docs/monitoring/logs)

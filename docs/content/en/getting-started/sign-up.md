@@ -1,92 +1,49 @@
 ---
 title: Sign Up
-summary: "Create your Wokku account and land on your dashboard ready to deploy. Sign in with GitHub, Google, or email — all three end up in the same account."
-eyebrow: getting started
-last_updated: 2026-05-29
+summary: Create your Wokku account in the browser, then optionally sign in from the CLI or Claude.
+last_updated: 2026-11-07
 ---
 
-# Sign Up
+You'll create an account on wokku.cloud and, if you like, connect the CLI or Claude to it.
 
-Create your Wokku account to start deploying apps in minutes. You can sign up through any of the channels below.
+## Create your account
 
-## Create Your Account
+1. Go to [wokku.cloud](https://wokku.cloud) and click **Get Started**.
+2. Choose how to sign up:
+   - **Email and password**
+   - **Google**
+   - **GitHub**
+   - **Apple**
+3. You land on your dashboard, ready for your [first deploy](/docs/getting-started/first-deploy).
+
+Accounts are created in the browser only. The CLI and API sign in to an account you already have.
+
+## Sign in from other tools (optional)
 
 :::tabs
-::web-ui
-
-Visit [wokku.cloud](https://wokku.cloud) and click **Get Started**. You can sign up with:
-
-- **GitHub** — recommended for developers, enables one-click repo connections
-- **Google** — sign in with your Google workspace or personal account
-- **Email & password** — classic registration with email verification
-
-After signing up, you'll land on your dashboard ready to deploy your first app.
-
 ::cli
-
-Install the Wokku CLI and run the signup command:
-
 ```bash
-# Install via Homebrew
-brew install johannesdwicahyo/tap/wokku
-
-# Sign up for a new account
-wokku auth:signup
+gem install wokku-cli
+wokku auth:login       # opens your browser to approve the login
+wokku auth:whoami      # check who you're signed in as
 ```
 
-This opens your browser to complete registration, then stores your API token locally.
+See [Install the CLI](/docs/cli/install).
 
 ::api
-
-Create an account by calling the signup endpoint:
+Create a token under **Settings → API Tokens**, then send it as a bearer token:
 
 ```bash
-curl -X POST https://wokku.cloud/api/v1/auth/signup \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "you@example.com",
-    "password": "your-secure-password"
-  }'
+curl https://wokku.cloud/api/v1/auth/whoami \
+  -H "Authorization: Bearer $WOKKU_API_TOKEN"
 ```
 
-You'll receive an API token in the response:
-
-```json
-{
-  "token": "wk_live_abc123...",
-  "user": { "email": "you@example.com" }
-}
-```
+See [Authentication](/docs/api/authentication).
 
 ::mcp
-
-First sign up at [wokku.cloud](https://wokku.cloud), then install the Claude Code plugin:
-
-```bash
-claude plugin marketplace add johannesdwicahyo/wokku-plugin
-claude plugin install wokku@wokku
-```
-
-You'll be prompted for your API token (create one at **Settings → API Tokens** in the dashboard). Restart Claude Code, then ask:
-
-> "List my Wokku apps"
-
-See [Claude Code Setup](/docs/mcp/setup) for the full guide.
-
-::mobile
-
-Download the Wokku app from the App Store or Google Play:
-
-- [App Store](https://apps.apple.com/app/wokku)
-- [Google Play](https://play.google.com/store/apps/details?id=dev.wokku.app)
-
-Open the app, tap **Create Account**, and sign up with GitHub, Google, or email.
+The Claude Code plugin uses an API token. Create one under **Settings → API Tokens**, then follow [Claude Code Setup](/docs/mcp/setup).
 :::
 
-## What's Next
+## Turn on two-factor authentication
 
-Once you're signed up, you're ready to deploy. Head to [Your First Deploy](/docs/getting-started/first-deploy) to launch your first app.
-
-## Two-Factor Authentication
-
-We strongly recommend enabling 2FA on your account. Go to **Profile > Security** and follow the prompts to set up TOTP-based two-factor authentication with your authenticator app of choice.
+Go to **Settings → Security** and click **Enable 2FA**. Scan the code with any authenticator app.

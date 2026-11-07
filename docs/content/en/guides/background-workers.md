@@ -1,15 +1,12 @@
-# Run Background Workers
+---
+title: Run Background Workers
+summary: Run Sidekiq, Celery, BullMQ or any non-web process next to your web app.
+last_updated: 2026-11-07
+---
 
-Run queues, job consumers, or any long-running non-web process alongside your
-web app — Sidekiq, Celery, BullMQ, a custom consumer, anything.
+You'll declare a worker in your `Procfile`, deploy, and scale it to one or more instances.
 
-## How it works
-
-Wokku runs each line in your `Procfile` as its own process type. The `web`
-process gets HTTP traffic; any other process type (commonly `worker`) runs in
-the background. You scale each independently.
-
-## 1. Declare the worker in your Procfile
+## 1. Declare the worker
 
 ```procfile
 web: bin/rails server -p $PORT
@@ -19,8 +16,8 @@ worker: bundle exec sidekiq
 Other examples:
 
 ```procfile
-worker: celery -A myproject worker --loglevel=info   # Celery (Python)
-worker: node worker.js                                # BullMQ / custom (Node)
+worker: celery -A myproject worker --loglevel=info   # Celery
+worker: node worker.js                                # BullMQ / custom
 ```
 
 ## 2. Deploy
@@ -29,48 +26,43 @@ worker: node worker.js                                # BullMQ / custom (Node)
 git push wokku main
 ```
 
-On deploy, Wokku starts your `web` process. Background processes start at **zero
-instances** by default — you scale them up explicitly.
+Only `web` starts by default. Other process types run once you scale them.
 
 ## 3. Scale the worker
 
 :::tabs
 ::web-ui
-Open your app → **Resources** → set the instance count for `worker`.
+App → **Runtime** tab → **Scaling** → set CPU, RAM and instances for `worker`.
 
 ::cli
 ```bash
-wokku scale my-app worker=1
-# scale both at once:
-wokku scale my-app web=2 worker=2
+wokku ps:scale my-app worker=1
+wokku ps:scale my-app web=2 worker=2   # both at once
 ```
+
+::mcp
+Ask Claude: *"Scale my-app to 1 worker."*
 :::
 
-See [Bundled Processes](/docs/scaling/bundled-processes) for how process scaling
-and box sizing interact.
+Each process type is sized and billed on its own. See [Scaling Processes](/docs/scaling/dynos).
 
-## 4. Share a queue backend
+## 4. Add a queue backend
 
-Workers usually need Redis (or your DB) as the broker. Add it once and both the
-web and worker processes read the same `REDIS_URL` / `DATABASE_URL`:
+Most workers need Redis. Add a free shared one:
 
 ```bash
-wokku addons:create redis my-app
+wokku addons:shared:enable my-app redis
 ```
 
-See [Add Postgres + Redis](/docs/guides/postgres-redis).
-
-:::callout note
-All process types of an app share the same config vars and linked add-ons —
-set `REDIS_URL` once and the worker sees it too.
-:::
+`REDIS_URL` is set on the app, and every process type sees it. See [Add a database](/docs/databases/create-link).
 
 ## Troubleshooting
 
-- **Worker not running** — it defaults to 0 instances; scale it to ≥1.
-- **Jobs not picked up** — confirm web and worker point at the same broker URL.
-- **Worker killed on deploy** — long jobs receive `SIGTERM`; handle graceful shutdown and keep jobs idempotent.
+- **Worker not running**: scale it to at least 1.
+- **Jobs not picked up**: check that web and worker use the same `REDIS_URL`.
+- **Jobs killed on deploy**: workers get `SIGTERM` when replaced. Keep jobs idempotent. See [Production Readiness](/docs/apps/best-practices).
 
 ## Next steps
 
-- [Schedule tasks (cron)](/docs/guides/scheduled-tasks) · [Logs](/docs/apps/logs)
+- [Schedule tasks (cron)](/docs/guides/scheduled-tasks)
+- [Logs](/docs/monitoring/logs)

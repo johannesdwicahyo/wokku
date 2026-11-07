@@ -1,46 +1,44 @@
-# Schedule Tasks (Cron)
+---
+title: Schedule Tasks (Cron)
+summary: Run a command on a cron schedule, such as nightly cleanups or report emails, without a long-running worker.
+last_updated: 2026-11-07
+---
 
-Run a command on a schedule — nightly cleanups, report emails, cache warmers,
-data syncs — without a long-running worker.
+You'll add a cron entry that runs a command with your app's config vars and add-ons.
 
 :::callout note
-Scheduled tasks are a **Pro** feature. See [Plans](/docs/billing/plans).
+Scheduled tasks are included once your team pays for any resource. Free-only teams see an upgrade prompt. See [Pricing](/docs/billing/pricing).
 :::
 
-## How it works
-
-A scheduled task runs a one-off command inside a fresh copy of your app's
-container on a cron schedule, then exits. It shares your app's config vars and
-linked add-ons, so it can reach your database and Redis.
-
-## Create a scheduled task
+## Create a task
 
 :::tabs
 ::web-ui
-1. Open your app → **Scheduled Tasks**
-2. **New Task** → enter a cron expression and the command
-3. Save — it runs on schedule from now on
+1. App → **Settings** tab → **Scheduled Tasks**.
+2. Add a task: cron schedule, command, optional description.
+3. Save.
 
 ::cli
 ```bash
-# every day at 02:00
-wokku scheduled-tasks:create my-app \
+wokku cron:add my-app \
   --schedule "0 2 * * *" \
-  --command "bin/rails runner 'Cleanup.run'"
+  --command "bin/rails runner 'Cleanup.run'" \
+  --description "Nightly cleanup"
 ```
 
 ::api
 ```bash
 curl -X POST https://wokku.cloud/api/v1/apps/my-app/scheduled_tasks \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"schedule": "0 2 * * *", "command": "bin/rails runner Cleanup.run"}'
+  -H "Content-Type: application/json" \
+  -d '{"schedule": "0 2 * * *", "command": "bin/rails runner Cleanup.run", "description": "Nightly cleanup"}'
 ```
 
 ::mcp
-Ask Claude: *"Schedule `bin/rails runner Cleanup.run` to run daily at 2am on my-app"*
+Ask Claude: *"Schedule `bin/rails runner Cleanup.run` daily at 02:00 on my-app."*
 :::
 
-## Cron expression quick reference
+## Cron quick reference
 
 ```text
 ┌─ minute (0-59)
@@ -54,31 +52,35 @@ Ask Claude: *"Schedule `bin/rails runner Cleanup.run` to run daily at 2am on my-
 | Schedule | Meaning |
 |---|---|
 | `*/15 * * * *` | every 15 minutes |
-| `0 * * * *` | hourly, on the hour |
+| `0 * * * *` | every hour |
 | `0 2 * * *` | daily at 02:00 |
-| `0 0 * * 1` | every Monday at midnight |
+| `0 0 * * 1` | Mondays at midnight |
 
-:::callout warn
-Schedules run in **UTC**. Convert your local time (WIB is UTC+7) — e.g. 09:00
-WIB = `0 2 * * *`.
-:::
-
-## List & remove
+## List and remove
 
 :::tabs
+::web-ui
+**Settings** tab → **Scheduled Tasks** shows each task. Delete it from the list.
+
 ::cli
 ```bash
-wokku scheduled-tasks my-app            # list
-wokku scheduled-tasks:remove my-app ID  # remove
+wokku cron my-app                  # list, with task IDs
+wokku cron:remove my-app TASK_ID   # remove
+```
+
+::api
+```bash
+curl https://wokku.cloud/api/v1/apps/my-app/scheduled_tasks -H "Authorization: Bearer $TOKEN"
+curl -X DELETE https://wokku.cloud/api/v1/apps/my-app/scheduled_tasks/TASK_ID -H "Authorization: Bearer $TOKEN"
 ```
 :::
 
 ## Troubleshooting
 
-- **Task didn't run** — confirm the cron is UTC and the app is Pro.
-- **Command not found** — use the same path you'd use in `wokku run` (e.g. `bin/rails`, `python manage.py`).
-- **Needs the DB** — it inherits config vars + add-ons automatically; no extra wiring.
+- **Command not found**: use the same command that works with `wokku run my-app -- <command>`.
+- **"Upgrade" error**: your team has no paid resources yet.
 
 ## Next steps
 
-- [Run background workers](/docs/guides/background-workers) · [Logs](/docs/apps/logs)
+- [Run background workers](/docs/guides/background-workers)
+- [Logs](/docs/monitoring/logs)

@@ -1,72 +1,65 @@
-# Migrasi dari VPS Biasa
+---
+title: Migrasi dari VPS
+summary: Ganti nginx, systemd, certbot, dan deploy manual di VPS dengan git push ke Wokku.
+last_updated: 2026-11-07
+---
 
-Menjalankan aplikasimu manual di VPS — nginx, systemd atau pm2, `git pull`
-manual, perpanjangan certbot? Wokku tetap memberimu kendali atas server sendiri
-tapi mengganti semua glue dengan `git push`.
+Wokku itu managed: kamu push kode, dan Wokku yang menjalankan server, routing, dan HTTPS. Buat app listen di `$PORT`, pindahkan config dan data, lalu alihkan DNS.
 
-## Yang digantikan Wokku
+## Apa menggantikan apa
 
-| Di VPS-mu sekarang | Di Wokku |
+| Di VPS kamu | Di Wokku |
 |---|---|
-| Unit `systemd` / proses `pm2` | Proses `web` dari `Procfile`-mu |
-| Reverse proxy nginx | Routing bawaan ke aplikasimu |
-| certbot + cron renewal | SSL otomatis ([SSL](/docs/domains-ssl/ssl)) |
-| Script `git pull` + restart | `git push` (build + release + restart) |
-| Runtime install manual | Buildpack (otomatis) atau `Dockerfile`-mu |
+| systemd unit / pm2 | Baris `web:` di `Procfile` |
+| nginx reverse proxy | Routing bawaan ke `$PORT` |
+| Perpanjangan certbot | HTTPS otomatis ([Custom Domains](/docs/domains-ssl/custom-domains)) |
+| `git pull` + script restart | `git push wokku main` (build, lalu restart) |
+| Runtime yang di-install manual | `Dockerfile` kamu, atau deteksi otomatis Nixpacks |
 | `crontab` | [Scheduled Tasks](/docs/guides/scheduled-tasks) |
-| File `.env` di box | Config vars ([config](/docs/apps/config)) |
-| `apt install postgresql` | Add-on Postgres ([panduan](/docs/guides/postgres-redis)) |
+| `.env` di server | [Environment Variables](/docs/apps/config) |
+| Postgres/MySQL lokal | [Add-on database](/docs/databases/create-link) |
 
-## 1. Siapkan aplikasi agar buildpack- atau Docker-ready
+## 1. Pastikan app bisa di-build
 
-- Jika stack standar, tambah `Procfile` dan biarkan buildpack mendeteksinya —
-  lihat [panduan framework](/docs/frameworks/index)-mu.
-- Jika ada dependency sistem tak biasa, commit `Dockerfile` —
-  lihat [Deploy dengan Dockerfile](/docs/guides/dockerfile).
+- Stack standar: ikuti [panduan framework](/docs/frameworks/index) kamu. Nixpacks akan mendeteksi bahasanya.
+- Butuh system package yang tidak umum: commit sebuah [Dockerfile](/docs/guides/dockerfile).
 
-Pastikan aplikasi **listen di `$PORT`**, bukan port tetap di belakang nginx.
+Apa pun caranya, app harus **listen di `$PORT`** pada `0.0.0.0`. Sudah tidak ada nginx di depannya.
 
-## 2. Pindahkan environment-mu
+## 2. Buat app dan salin config
 
-Salin nilai dari `.env` server-mu (atau baris `Environment=` systemd) ke
-[config var](/docs/apps/config).
+```bash
+wokku apps:create my-app
+wokku config:set my-app KEY1=value1 KEY2=value2
+```
+
+Salin nilai dari file `.env` kamu atau baris `Environment=` di systemd.
 
 ## 3. Pindahkan database
 
-Jika Postgres jalan di VPS:
-
 ```bash
-# di VPS (atau lewat SSH)
+# on the VPS
 pg_dump "postgres://user:pass@localhost/dbname" --no-owner --no-acl -Fc -f dump.bin
 
-# buat Postgres Wokku + restore
-wokku addons:create postgres my-app
-wokku config my-app | grep DATABASE_URL
-pg_restore --no-owner --no-acl -d "$WOKKU_DATABASE_URL" dump.bin
+# on your machine (after copying dump.bin down)
+wokku addons:dedicated:upgrade my-app postgres
+wokku addons my-app                          # note the database name
+wokku databases:import <database-name> dump.bin
 ```
 
-Pindahkan file upload ke object storage — container Wokku punya disk ephemeral.
+Untuk MySQL/MariaDB, import file `mysqldump` dengan cara yang sama. Lihat [Memindahkan database](/docs/migrate/index).
 
-## 4. Deploy
+## 4. Deploy dan alihkan DNS
 
 ```bash
-wokku apps:create my-app --server my-server
 git remote add wokku git@git.wokku.cloud:my-app
 git push wokku main
 ```
 
-## 5. Alihkan DNS
+Cek `https://my-app.wokku.app`, tambahkan domain kamu, arahkan DNS ke Wokku, dan matikan VPS setelah traffic sudah pindah.
 
-Tambahkan domainmu di Wokku (SSL provisioning otomatis), verifikasi di
-`my-app.wokku.app`, lalu arahkan DNS-mu ke Wokku dan matikan box lama setelah
-traffic berpindah. Lihat [Domain Kustom](/docs/domains-ssl/custom-domains).
+## Hal yang perlu diperhatikan
 
-## Gotcha
-
-- **Tulis file lokal** — apa pun yang kamu tulis ke disk (upload, SQLite) harus pindah ke DB atau object storage.
-- **Background job dari cron** — ubah jadi proses `worker` atau [Scheduled Tasks](/docs/guides/scheduled-tasks).
-- **Port/path di-hardcode** — bind ke `$PORT`; jangan asumsikan nginx ada di depan.
-
-## Langkah berikutnya
-
-- [Deploy dengan Dockerfile](/docs/guides/dockerfile) · [Kesiapan Production](/docs/apps/best-practices)
+- **File lokal** — upload dan file SQLite di disk harus dipindah ke object storage atau database. Disk app bersifat sementara.
+- **Script cron** — ubah jadi [scheduled tasks](/docs/guides/scheduled-tasks) atau process `worker`.
+- **Port dan path yang di-hardcode** — listen di `$PORT`, dan jangan berasumsi ada nginx atau struktur direktori yang tetap.

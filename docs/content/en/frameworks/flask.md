@@ -1,100 +1,49 @@
-# Deploy Flask
+---
+title: Flask
+summary: Run a Flask app on Wokku with Gunicorn.
+last_updated: 2026-11-07
+---
 
-Deploy a Flask app to Wokku with Gunicorn and Postgres.
+Add Gunicorn, push, and the app is live. Want a working repo first? Deploy the `flask` starter from [Templates](/docs/templates/browse).
 
-## Prerequisites
-
-- A [Wokku account](/docs/getting-started/sign-up) and a [connected server](/docs/getting-started/connect-server)
-- An [SSH key registered](/docs/apps/ssh-keys) for `git push`
-- A Flask app with `requirements.txt`
-
-## 1. Create the app
-
-:::tabs
-::web-ui
-**Apps → New App** → server, name `my-flask-app`, box size, **Create**.
-
-::cli
-```bash
-wokku apps:create my-flask-app --server my-server
-```
-:::
-
-## 2. Prepare your Flask app
-
-Include `gunicorn` in `requirements.txt`:
+## Dependencies
 
 ```text
+# requirements.txt
 flask
 gunicorn
-psycopg[binary]
 ```
 
-Add a `Procfile` (assuming your app object is `app` in `app.py`):
+## Start command
+
+Assuming your app object is `app` in `app.py`:
 
 ```procfile
-web: gunicorn app:app
+web: gunicorn app:app --bind 0.0.0.0:$PORT
 ```
 
-If you use Flask-Migrate, add a release step:
-
-```procfile
-release: flask db upgrade
-```
-
-## 3. Set environment variables
-
-:::tabs
-::web-ui
-App → **Config** → add `SECRET_KEY` and any config your app reads from the env.
-
-::cli
-```bash
-wokku config:set my-flask-app SECRET_KEY="$(python -c 'import secrets;print(secrets.token_urlsafe(32))')"
-```
-:::
-
-## 4. Add a database (optional)
+## Config and database
 
 ```bash
-wokku addons:create postgres my-flask-app
+wokku apps:create my-app
+wokku config:set my-app SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
+wokku addons:shared:enable my-app postgres   # optional
 ```
 
-Read `os.environ["DATABASE_URL"]` in your SQLAlchemy config. See
-[Create & Link a Database](/docs/databases/create-link).
+The add-on sets `DATABASE_URL`; read it in your SQLAlchemy config. See [Create & Link a Database](/docs/databases/create-link).
 
-## 5. Deploy
+## Deploy and migrate
 
-:::tabs
-::web-ui
 ```bash
-git remote add wokku git@git.wokku.cloud:my-flask-app
+git remote add wokku git@git.wokku.cloud:my-app
 git push wokku main
+wokku run my-app -- flask db upgrade   # if you use Flask-Migrate
 ```
 
-::github
-Connect under **Apps → Connect GitHub** for push-to-deploy —
-see [GitHub Auto-Deploy](/docs/apps/github-autodeploy).
-
-::cli
-```bash
-git remote add wokku git@git.wokku.cloud:my-flask-app
-git push wokku main
-```
-:::
-
-Live at `https://my-flask-app.wokku.app`.
-
-## Custom domain
-
-[Custom Domains](/docs/domains-ssl/custom-domains) — SSL is automatic.
+Live at `https://my-app.wokku.app`. First deploy? See the [Quickstart](/docs/getting-started/first-deploy).
 
 ## Troubleshooting
 
-- **`ModuleNotFoundError`** — make sure the dependency is in `requirements.txt`.
-- **App object not found** — match `gunicorn app:app` to your module and variable names.
-- **DB connection refused** — confirm the Postgres add-on is linked and `DATABASE_URL` is set.
-
-## Next steps
-
-- [Background workers](/docs/scaling/bundled-processes) · [Logs](/docs/apps/logs) · [Production Readiness](/docs/apps/best-practices)
+- **`ModuleNotFoundError`** — add the package to `requirements.txt`.
+- **App object not found** — `gunicorn app:app` is `module:variable`; match your file and variable names.
+- **Can't reach the database** — check `wokku config my-app` shows `DATABASE_URL`.

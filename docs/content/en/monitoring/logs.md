@@ -1,103 +1,70 @@
 ---
 title: Logs
-summary: "Every container log line, persisted and searchable. Shipped from your host by Vector and stored on the control plane. Retention scales with your plan."
-eyebrow: monitoring
-last_updated: 2026-05-29
+summary: Read, search and live-tail your app's stdout and stderr from the dashboard, CLI, API or Claude.
+last_updated: 2026-11-07
 ---
 
-# Logs
+You'll read your app's logs. Wokku collects everything your containers write to stdout and stderr — print to stdout and it shows up here.
 
-Wokku captures **every line** of stdout/stderr from every container — your apps, the addons, the platform's own containers — and stores them on the control plane. You can scroll back in time, search by container, and filter by level.
+## View logs
 
-## How it works
+:::tabs
+::web-ui
+Open your app → **Runtime** → **Logs**.
 
-On every host, a **Vector** agent tails Docker container logs and ships them in NDJSON batches to `POST /api/v1/logs/ingest`. The control plane writes one row per line to the `logs` table.
+- **Search** and the **level** dropdown query stored history.
+- **Live tail** streams new lines as they arrive; **follow** auto-refreshes the view.
+- **Filter visible logs** and the Errors / Warnings pills narrow what's already on screen.
 
-The whole pipeline:
-
-```text
-container stdout → Docker JSON file → Vector docker_logs source → HTTP POST → logs table
+::cli
+```bash
+wokku logs my-app              # last 100 lines
+wokku logs my-app --lines 500  # last 500 lines
+wokku logs my-app -f           # live tail (also --follow)
 ```
 
-Vector authenticates with a per-server bearer token (`Server#ingest_token`). The token rotates from the dashboard at any time.
-
-## Viewing logs
-
-### Dashboard
-
-Open the app → **Logs** tab. You get:
-
-— **Live tail** — new lines stream in via WebSocket as they arrive
-— **History scroll** — every line stored for the plan's retention window
-— **Search** — case-insensitive substring match against the line content
-— **Level filter** — info / warn / error / debug (auto-detected from line content if Vector didn't set a level)
-— **Container filter** — narrow to one process type (e.g. `web` vs `worker` vs `sidekiq`)
-
-### CLI
-
+::api
 ```bash
-wokku logs                       # live tail
-wokku logs --tail 500            # last 500 lines
-wokku logs --since 2h            # last 2 hours
-wokku logs --search "ERROR 500"  # filter by substring
-wokku logs --level error         # filter by level
-wokku logs --container web       # one process type
-```
-
-### API
-
-```bash
-curl https://wokku.cloud/api/v1/apps/myapp/logs \
+curl -G https://wokku.cloud/api/v1/apps/my-app/logs \
   -H "Authorization: Bearer $TOKEN" \
-  -G --data-urlencode "lines=500" --data-urlencode "level=error"
+  --data-urlencode "lines=200" \
+  --data-urlencode "level=error" \
+  --data-urlencode "q=timeout"
 ```
 
-## Retention
-
-How far back logs reach depends on your plan:
-
-| Plan | Log retention |
+| Param | Meaning |
 |---|---|
-| Free | 1 day |
-| Solo | 3 days |
-| Pro | 7 days |
-| Team | 30 days |
+| `lines` | Number of lines, 1–1000 (default 100) |
+| `since`, `until` | ISO 8601 times (default: the last 24 hours) |
+| `level` | `error`, `warn`, `info` or `debug` |
+| `q` | Text to search for |
+| `follow=1` | Stream live lines as plain text |
 
-A nightly `LogRetentionPruneJob` deletes lines older than your plan's window. Need more? See [retention windows](/docs/observability/retention) for the cleanup pass schedule and how the per-plan windows are wired.
+::mcp
+Ask Claude: *"Show me the last 200 error lines for my-app."*
+:::
 
 ## Log levels
 
-Vector best-effort detects a level from line content (looks for `ERROR`, `WARN`, `INFO`, `DEBUG`, `FATAL`, `TRACE`, plus common framework markers like `exception`, `panic`, `traceback`). Lines that don't match anything default to `info`.
+Each line gets a level from the words in it:
 
-If your app emits structured logs (JSON lines), set the level field explicitly:
+| Level | Matches |
+|---|---|
+| error | `ERROR`, `FATAL`, `CRITICAL`, `exception`, `panic`, `traceback` |
+| warn | `WARN`, `WARNING` |
+| info | `INFO`, `NOTICE`, and anything that matches nothing else |
+| debug | `DEBUG`, `TRACE`, `VERBOSE` |
 
-```json
-{"level":"error","msg":"db connect failed","attempt":3}
-```
+Matching ignores case, so a JSON line like `{"level":"error",...}` counts as an error.
 
-The ingest controller picks that up over the regex fallback.
+## Limits
 
-## Log drains (external forwarding)
-
-If you want to forward logs to Datadog, Logtail, Papertrail, or any HTTP/syslog endpoint, add a log drain on the **app → Settings → Log drains** page. Drains run in addition to the Vector ingest (you keep your in-dashboard history; the drain gets a copy).
-
-Supported targets:
-
-— HTTPS endpoint (Datadog, Logtail, custom)
-— Syslog over TLS (Papertrail, custom)
-
-## What's NOT captured
-
-— Log lines emitted before Vector started on the host (extremely rare; happens during initial provisioning)
-— Lines longer than 16 KB — trimmed to 16 KB at ingest
-— Build-time logs from the builder (those live on the deploy page, not the runtime log)
-
-## Self-hosted
-
-Community Edition ships Vector setup as a Rake task (`rake vector:install[<host>]`). Without it, the dashboard shows live tail only (via SSH) and no history.
+- Lines over 16 KB are cut to 16 KB.
+- Build output isn't here — read it on the deploy in the **Deploy** tab.
+- Logs are kept for a limited window. Ship anything you must keep long-term from your app to your own log service.
+- There are no log drains. To forward logs, send them from your app.
 
 ## See also
 
-— [Metrics](/docs/monitoring/metrics) — CPU + memory for the same containers
-— [Audit log](/docs/monitoring/audit-log) — who-did-what records (separate from app logs)
-— [Retention windows](/docs/observability/retention) — full per-plan retention matrix
+- [Metrics](/docs/monitoring/metrics) — CPU, memory, requests and Web Vitals
+- [Audit log](/docs/monitoring/audit-log) — who changed what in your workspace

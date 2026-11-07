@@ -1,132 +1,89 @@
 ---
-title: Invoice
-summary: "Siklus invoice bulanan: email pre-invoice → due date → grace 7 hari → suspend. Bayar via iPaymu. Perubahan mid-cycle prorata. Refund via credit di tagihan berikutnya."
-eyebrow: billing
-last_updated: 2026-05-29
+title: Invoice & Pembayaran
+summary: Bagaimana invoice bulanan kamu disusun, cara membayarnya, dan apa yang terjadi kalau tidak dibayar.
+last_updated: 2026-11-07
 ---
 
-# Invoice
-
-Plan paid Wokku pakai model **invoice bulanan**. Nggak ada metering, nggak ada saldo deposit, nggak ada line item per-resource — cuma satu invoice flat per workspace per bulan, plus optional line add-on (extra seat di Team, proration mid-cycle di switch plan).
-
-Halaman ini bahas lifecycle invoice lengkap.
+Di sini kamu akan membaca invoice, membayarnya, dan mengecek pemakaian di halaman Billing.
 
 ## Siklusnya
 
-```text
-hari 0     subscribe (atau upgrade)         → free trial 7 hari mulai
-hari 7     trial selesai                    → invoice pertama dibuat
-hari +N    tanggal billing (anchor day)     → invoice mulai bisa dibayar
-hari +N+7  due date                         → belum bayar? grace period mulai
-hari +N+14 grace period selesai             → app di-suspend kalau masih belum bayar
-hari +N+30 tanggal billing berikutnya       → siklus ulang
-```
+**Tanggal billing** kamu adalah tanggal di bulan saat kamu pertama kali menjalankan sesuatu yang berbayar. Kalau itu tanggal 15, setiap invoice jatuh pada tanggal 15.
 
-**Tanggal billing** kamu nge-anchor ke tanggal pertama kali subscribe. Kalau signup tanggal 15, tiap invoice bulanan landed tanggal 15.
+| Kapan | Yang terjadi |
+|---|---|
+| 7 hari sebelum tanggal billing | Invoice diterbitkan dan dikirim lewat email (PDF terlampir, dengan link pembayaran) |
+| Tanggal billing | Invoice jatuh tempo |
+| 7 hari setelah jatuh tempo, masih belum dibayar | Akun di-suspend (lihat di bawah) |
 
-## Apa yang ada di invoice
+Akun yang hanya memakai layanan gratis tidak pernah mendapat invoice. Kalau tidak ada yang perlu ditagih, tidak ada invoice yang diterbitkan.
 
-Invoice renewal standar punya satu line:
+## Isi invoice
 
-```text
-Wokku Pro · 2026-06-15 → 2026-07-15      Rp 225.000
-                            Total:        Rp 225.000
-```
+Setiap process app, volume, dan dedicated database punya baris masing-masing:
 
-Di plan Team dengan extra seat, kamu liat line kedua:
+| Baris | Arti |
+|---|---|
+| **Advance** | Bulan berikutnya untuk setiap resource, sesuai ukurannya saat ini |
+| **Usage** | Biaya sebenarnya setiap resource per hari sejak invoice terakhir (tanggal ditampilkan) |
+| **Already paid in advance for these days** | Mengurangi yang sudah dibayar lewat advance sebelumnya |
+| **Credit carried from last invoice** | Mengurangi sisa kredit, misalnya setelah downsize |
 
-```text
-Wokku Team · 2026-06-15 → 2026-07-15           Rp 750.000
-Extra seat × 2 · 2026-06-15 → 2026-07-15       Rp  90.000
-                                Total:         Rp 840.000
-```
+Jadi kamu membayar bulan berikutnya di depan, dan invoice berikutnya menyelesaikan selisihnya dengan apa yang benar-benar kamu jalankan. Kalau kredit lebih besar dari tagihan, kamu bayar Rp0 dan sisanya dibawa ke invoice berikutnya.
 
-Pas upgrade mid-cycle, kamu liat line proration:
+Invoice pertama kamu tidak punya advance sebelumnya untuk dikurangi: isinya pemakaian kamu sejauh ini plus bulan berikutnya.
 
-```text
-Pro → Team upgrade · prorata 18 dari 30 hari   Rp 315.000
-                            Total:             Rp 315.000
-```
+## Bayar invoice
 
-## Kapan invoice di-generate
+1. Buka email invoice dan klik link pembayaran, atau buka **Settings** → **Billing** lalu klik **Pay now**.
+2. Di halaman iPaymu, bayar dengan QRIS (e-wallet atau aplikasi banking apa pun), transfer bank (BCA, BNI, BRI, Mandiri, dan lainnya), atau kartu (Visa, Mastercard).
+3. Invoice berubah menjadi **paid** setelah iPaymu mengonfirmasi pembayaran.
 
-— **Invoice pertama** — di akhir trial 7 hari
-— **Invoice renewal** — 7 hari sebelum tiap tanggal billing (via `Billing::IssueUpcomingInvoicesJob`, harian)
-— **Invoice proration** — seketika pas upgrade mid-cycle
+Pembayaran selalu dilakukan di dashboard. CLI, API, dan MCP bisa menampilkan daftar invoice dan memberikan link pembayaran.
 
-Kamu dapat email pas invoice di-generate, dengan jumlah dan link pembayaran iPaymu.
+## Kalau invoice tidak dibayar
 
-## Bayar
+Tujuh hari setelah jatuh tempo, akun kamu di-suspend:
 
-iPaymu handle semua metode pembayaran:
+- App berbayar yang sedang berjalan akan dihentikan. App sleeping gratis tetap berjalan.
+- Kamu tidak bisa start, restart, atau deploy app sampai kamu membayar.
+- Kamu menerima email berisi daftar app yang dihentikan.
 
-— **QRIS** — QR Indonesia universal — jalan sama e-wallet mana aja
-— **Virtual Account** — BCA, Mandiri, BNI, BRI, Permata
-— **E-wallet direct** — GoPay, OVO, DANA, LinkAja
-— **Kartu** — Visa, Mastercard, Amex (3DS kalau didukung)
+Data kamu tetap disimpan. Bayar semua invoice yang lewat jatuh tempo dan app kamu akan berjalan lagi secara otomatis; kamu akan menerima email saat app sudah kembali.
 
-Kamu bisa bayar dari link email atau dari `/dashboard/billing`. Webhook iPaymu update status invoice ke `paid` dalam hitungan detik konfirmasi bank.
+## Halaman Billing
 
-## Grace period & suspend
+Buka **Settings** → **Billing**:
 
-Kalau invoice nggak dibayar lewat **due date**, kamu masuk grace period 7 hari. Nggak ada yang keliatan — app kamu tetap jalan, tim kamu tetap kerja. Kami email reminder di hari 1, 3, dan 6.
+- **Upcoming invoice** dengan tombol **Pay now**, dan invoice **last paid** kamu.
+- **This month so far** dan **Projected next invoice** (dengan tanggalnya), plus **Credit** kalau ada.
+- Setiap process app dan dedicated database beserta ukuran dan harga bulanannya.
+- Invoice terbaru kamu, dengan **view all** dan ekspor **csv**.
 
-Kalau invoice masih belum dibayar di **7 hari past due**, `Billing::SuspendOverdueJob` jalan dan:
+## Lihat daftar invoice
 
-— Set `billing_status` workspace ke `suspended`
-— Stop semua container app paid (data tetap di disk; database masih jalan)
-— Email owner workspace
+:::tabs
+::web-ui
+**Settings** → **Billing** → **view all**.
 
-Bayar invoice → app bangun otomatis (dalam ~30 detik webhook landed). Nggak perlu redeploy, nggak ada data hilang.
-
-## Perubahan mid-cycle
-
-### Upgrade
-
-Switch dari Solo ke Pro di hari 18 dari 30-hari siklus:
-
-— Invoice proration di-issue **seketika** buat selisih, prorata buat sisa hari: `(harga_Pro - harga_Solo) × (sisa_hari / total_hari)`
-— Plan flip begitu invoice proration dibayar (atau langsung kalau kamu masih di trial)
-— Renewal regular berikutnya landed di tanggal billing original dengan harga plan baru penuh
-
-### Downgrade
-
-Switch dari Pro ke Solo di hari 18:
-
-— Nggak ada invoice seketika — kamu udah bayar Pro sampai akhir siklus
-— Perubahan plan **dijadwal** di tanggal billing berikutnya
-— Sampai itu, kamu tetap Pro
-— Invoice renewal berikutnya di harga Solo
-
-Ini sengaja: kamu nggak rugi apa yang udah dibayar.
-
-### Cancel
-
-Cancel plan dari `/dashboard/plan`:
-
-— Kayak downgrade: dijadwal di akhir siklus
-— Pas tanggal billing, kamu turun ke plan Free
-— Resource paid kamu (Postgres di atas 100 MB, Redis kedua, box lebih besar) di-restrict graceful: data tetap, tapi read/write yang lewat batas Free tier dapat 503 dengan pesan "upgrade to continue"
-
-## Refund
-
-Invoice yang udah dibayar **nggak refundable** secara default. Kalau ada masalah di sisi kami (insiden hosting, bug billing, kehilangan data karena kami), email [billing@wokku.cloud](mailto:billing@wokku.cloud) dengan nomor invoice — kami selesain case-by-case.
-
-## API
-
+::cli
 ```bash
-curl https://wokku.cloud/api/v1/invoices \
+wokku billing:invoices
+```
+Invoice yang belum dibayar menampilkan link pembayarannya.
+
+::api
+```bash
+curl https://wokku.cloud/api/v1/billing/invoices \
   -H "Authorization: Bearer $TOKEN"
 ```
+Setiap invoice punya `reference`, `period`, `amount_idr`, `status` (`pending`, `paid`, `failed`, `expired`, `refunded`, `void`), `due_date`, `paid_at`, dan `pay_url` selama belum dibayar.
 
-Return tiap invoice buat workspace aktif, urut terbaru pertama. Tiap row include `status` (`pending` / `paid` / `failed` / `expired` / `refunded`), `amount_idr`, `period_start`, `period_end`, dan URL pembayaran iPaymu kalau masih belum dibayar.
-
-## Self-hosted
-
-Community Edition **nggak punya flow invoice**. Kamu jalanin platform sendiri; nggak ada yang ditagih.
+::mcp
+Minta ke Claude: *"Tampilkan daftar invoice Wokku saya"*
+:::
 
 ## Lihat juga
 
-— [Plan & Harga](/docs/billing/plans) — harga dan isi tiap plan
-— [Usage](/docs/billing/usage) — view live plan + seat + utilization bundle
-— [Plan Bundle](/docs/billing/plan-bundles) — cap DB / Redis / MinIO yang ship sama tiap plan
+- [Harga](/docs/billing/pricing)
+- [Resource & Ukuran](/docs/scaling/resources)

@@ -2,11 +2,10 @@
 title: Every Surface
 summary: "What you can do from the dashboard, the REST API, the CLI, Claude Code and the iOS app. Every dashboard action has an API endpoint, and the CLI and Claude Code cover nearly all of them."
 eyebrow: api
+last_updated: 2026-11-07
 ---
 
-# Every Surface
-
-Wokku is API-first: every action in the dashboard goes through the same [REST API](/docs/api/endpoints) you can call yourself. The [CLI](/docs/cli/commands) and [Claude Code](/docs/mcp/tools) are built on that API, so they can do almost everything the dashboard can. The [iOS app](/docs/mobile/download) is for being on call: checking status, reading logs, restarting, rolling back and handling incidents.
+Wokku is API-first: every action in the dashboard goes through the same [REST API](/docs/api/endpoints) you can call yourself. The [CLI](/docs/cli/commands) and [Claude Code](/docs/mcp/tools) are built on that API, so they can do almost everything the dashboard can. The [iOS & Mac app](/docs/mobile/download) (coming soon) is for being on call: checking status, reading logs, restarting, rolling back and handling incidents.
 
 ✅ available · — not available
 
@@ -20,7 +19,7 @@ Wokku is API-first: every action in the dashboard goes through the same [REST AP
 | Domains and SSL | ✅ | ✅ | ✅ | ✅ | — |
 | HTTPS, CDN and maintenance mode | ✅ | ✅ | ✅ | ✅ | — |
 | GitHub auto-deploy and preview apps | ✅ | ✅ | ✅ | ✅ | — |
-| Health checks | ✅ | ✅ | ✅ | ✅ | — |
+| View health checks | ✅ | ✅ | ✅ | ✅ | — |
 | Scheduled tasks | ✅ | ✅ | ✅ | ✅ | — |
 | One-off commands and terminal | ✅ | ✅ | ✅ | ✅ | — |
 
@@ -30,11 +29,11 @@ Wokku is API-first: every action in the dashboard goes through the same [REST AP
 |---|---|---|---|---|---|
 | Start, stop and restart | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Scale processes | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Resize (CPU, RAM, disk) | ✅ | ✅ | ✅ | ✅ | — |
+| Resize (CPU and RAM) | ✅ | ✅ | ✅ | ✅ | — |
 | Logs | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Deploy history and releases | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Roll back a release | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Deploy or redeploy | ✅ | ✅ | ✅ | ✅ | — |
+| Deploy or redeploy | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Metrics and activity feed | ✅ | ✅ | ✅ | ✅ | — |
 | Incidents | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Mute alerts | ✅ | ✅ | ✅ | ✅ | ✅ |

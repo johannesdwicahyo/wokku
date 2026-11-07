@@ -1,15 +1,12 @@
-# Deploy dengan Dockerfile
+---
+title: Deploy dengan Dockerfile
+summary: Commit sebuah Dockerfile dan Wokku akan build app kamu dari situ, bukan dari deteksi otomatis.
+last_updated: 2026-11-07
+---
 
-Saat buildpack tidak cukup — dependency sistem kustom, build multi-stage, base
-image yang spesifik — commit `Dockerfile` dan Wokku mem-build aplikasimu dari
-situ.
+Kamu akan menambahkan `Dockerfile` di root repo dan push. Wokku otomatis build dari file itu. Tanpa Dockerfile, Wokku mendeteksi bahasa kamu secara otomatis dengan Nixpacks.
 
-## Cara kerja
-
-Jika `Dockerfile` ada di root repo-mu, Wokku memakainya otomatis saat `git push`
-— tanpa buildpack, tanpa config. Kamu memiliki seluruh build.
-
-## 1. Tambah Dockerfile
+## 1. Tambahkan Dockerfile
 
 ```dockerfile
 FROM node:20-slim
@@ -17,14 +14,13 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
 COPY . .
-EXPOSE 3000
 CMD ["node", "server.js"]
 ```
 
-:::callout warn
-**Listen di port yang kamu `EXPOSE`, dan baca `$PORT` jika aplikasimu mendukung.**
-Wokku memetakan traffic masuk ke port yang di-expose. Hardcode port lain adalah
-alasan paling umum deploy Docker berhasil build tapi tidak menyajikan apa pun.
+`server.js` harus listen di `process.env.PORT`.
+
+:::callout warning
+**Listen di `$PORT`.** Wokku men-set `PORT` dan mengirim traffic ke situ. `EXPOSE` tidak mengubah port, dan port yang di-hardcode adalah penyebab paling umum deploy Docker yang berhasil build tapi tidak melayani apa-apa.
 :::
 
 ## 2. Deploy
@@ -34,40 +30,41 @@ git remote add wokku git@git.wokku.cloud:my-app
 git push wokku main
 ```
 
-Wokku mendeteksi `Dockerfile`, mem-build image di server-mu, dan menjalankannya.
-Pantau build di [logs](/docs/apps/logs)-mu.
+Pantau build-nya di tab **Deploy** milik app.
 
-## 3. Banyak proses
+## 3. Process type tambahan
 
-`Procfile` tetap bekerja dengan deploy Dockerfile — deklarasikan process type
-tambahan dan mereka jalan dari image yang dibuild:
+`Procfile` tetap bisa dipakai. Setiap baris dijalankan dari image hasil build:
 
 ```procfile
 web: node server.js
 worker: node worker.js
 ```
 
-## 4. Jalankan migration saat release
+Scale process type tambahan dengan `wokku ps:scale my-app worker=1`. Lihat [Background Workers](/docs/guides/background-workers).
 
-```procfile
-release: node migrate.js
-web: node server.js
+## Migration
+
+Tidak ada release phase. Jalankan migration setelah deploy:
+
+```bash
+wokku run my-app -- node migrate.js
 ```
 
-Proses `release` jalan setelah build sukses, sebelum traffic dialihkan.
+Jangan taruh baris `release:` di Procfile kamu. Baris itu akan jadi process type, bukan langkah sekali jalan.
 
 ## Tips
 
-- **Image lebih kecil deploy lebih cepat** — pakai base slim/alpine dan build multi-stage.
-- **Cache dependency** — copy lockfile dan install sebelum copy source (seperti di atas).
-- **Jangan tanam secret** — set sebagai [config var](/docs/apps/config), baca saat runtime.
+- Base image yang slim dan multi-stage build menghasilkan image lebih kecil yang deploy-nya lebih cepat.
+- Salin lockfile dan install dependency sebelum menyalin source, supaya layer itu di-cache.
+- Jangan tanam secret ke dalam image. Set sebagai [environment variable](/docs/apps/config).
 
 ## Troubleshooting
 
-- **Berhasil build tapi tidak ada respons** — `EXPOSE` dan listen di port yang sama; utamakan `$PORT`.
-- **Build lambat tiap kali** — susun ulang layer agar install dependency ter-cache.
-- **Wokku malah pakai buildpack** — pastikan `Dockerfile` ada di root repo.
+- **Berhasil build tapi tidak ada respons**: app tidak listen di `$PORT`.
+- **Dockerfile diabaikan**: nama file harus `Dockerfile` dan berada di root repo.
 
-## Langkah berikutnya
+## Langkah selanjutnya
 
-- [Environment Variables](/docs/apps/config) · [Logs](/docs/apps/logs)
+- [Environment Variables](/docs/apps/config)
+- [Log](/docs/monitoring/logs)

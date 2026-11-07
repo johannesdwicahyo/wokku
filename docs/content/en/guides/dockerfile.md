@@ -1,13 +1,10 @@
-# Deploy with a Dockerfile
+---
+title: Deploy with a Dockerfile
+summary: Commit a Dockerfile and Wokku builds your app from it instead of auto-detecting.
+last_updated: 2026-11-07
+---
 
-When buildpacks aren't enough — a custom system dependency, a multi-stage build,
-an exact base image — commit a `Dockerfile` and Wokku builds your app from it
-instead.
-
-## How it works
-
-If a `Dockerfile` exists at the root of your repo, Wokku uses it automatically
-on `git push` — no buildpack, no config. You own the whole build.
+You'll add a `Dockerfile` at the root of your repo and push. Wokku builds from it automatically. Without one, Wokku auto-detects your language with Nixpacks.
 
 ## 1. Add a Dockerfile
 
@@ -17,14 +14,13 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
 COPY . .
-EXPOSE 3000
 CMD ["node", "server.js"]
 ```
 
-:::callout warn
-**Listen on the port you `EXPOSE`, and read `$PORT` if your app supports it.**
-Wokku maps inbound traffic to the exposed port. Hardcoding a different port is
-the most common reason a Docker deploy builds but serves nothing.
+`server.js` should listen on `process.env.PORT`.
+
+:::callout warning
+**Listen on `$PORT`.** Wokku sets `PORT` and sends traffic to it. `EXPOSE` doesn't change the port, and a hardcoded port is the most common reason a Docker deploy builds but serves nothing.
 :::
 
 ## 2. Deploy
@@ -34,40 +30,41 @@ git remote add wokku git@git.wokku.cloud:my-app
 git push wokku main
 ```
 
-Wokku detects the `Dockerfile`, builds the image on your server, and runs it.
-Watch the build in your [logs](/docs/apps/logs).
+Follow the build on the app's **Deploy** tab.
 
-## 3. Multiple processes
+## 3. More process types
 
-A `Procfile` still works with Dockerfile deploys — declare extra process types
-and they run from the built image:
+A `Procfile` still works. Each line runs from the built image:
 
 ```procfile
 web: node server.js
 worker: node worker.js
 ```
 
-## 4. Run migrations on release
+Scale extra process types with `wokku ps:scale my-app worker=1`. See [Background Workers](/docs/guides/background-workers).
 
-```procfile
-release: node migrate.js
-web: node server.js
+## Migrations
+
+There's no release phase. Run migrations after the deploy:
+
+```bash
+wokku run my-app -- node migrate.js
 ```
 
-The `release` process runs after a successful build, before traffic shifts.
+Don't put a `release:` line in your Procfile. It becomes a process type, not a one-time step.
 
 ## Tips
 
-- **Smaller images deploy faster** — use slim/alpine bases and multi-stage builds.
-- **Cache dependencies** — copy lockfiles and install before copying source (as above).
-- **Don't bake secrets** — set them as [config vars](/docs/apps/config), read at runtime.
+- Slim bases and multi-stage builds make smaller images that deploy faster.
+- Copy lockfiles and install dependencies before copying source, so that layer is cached.
+- Don't bake secrets into the image. Set them as [environment variables](/docs/apps/config).
 
 ## Troubleshooting
 
-- **Builds but no response** — `EXPOSE` and listen on the same port; prefer `$PORT`.
-- **Build is slow every time** — reorder layers so dependency install is cached.
-- **Wokku used a buildpack instead** — make sure the `Dockerfile` is at the repo root.
+- **Builds but no response**: the app isn't listening on `$PORT`.
+- **Dockerfile ignored**: it must be named `Dockerfile` and sit at the repo root.
 
 ## Next steps
 
-- [Environment Variables](/docs/apps/config) · [Logs](/docs/apps/logs)
+- [Environment Variables](/docs/apps/config)
+- [Logs](/docs/monitoring/logs)
