@@ -148,4 +148,18 @@ RSpec.describe Preview::Deployer do
     expect(preview.status).to eq("crashed")
     expect(commenter).not_to have_received(:deployed!)
   end
+
+  it "removes a stale parent DATABASE_URL from an existing preview" do
+    dsn = "postgres://postgres:pw@dokku.postgres.proddb:5432/proddb"
+    db = create(:database_service, name: "proddb", server: server, dsn: dsn)
+    create(:app_database, app_record: parent, database_service: db)
+    parent.env_vars.create!(key: "DATABASE_URL", value: dsn, scope: "both")
+    preview = described_class.new(parent: parent, event: event).call
+    Apps::EnvWriter.set(preview, "DATABASE_URL" => dsn) # as an older deploy left it
+    preview.deploys.destroy_all
+
+    described_class.new(parent: parent, event: event).call
+
+    expect(preview.reload.runtime_env).not_to have_key("DATABASE_URL")
+  end
 end

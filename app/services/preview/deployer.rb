@@ -22,9 +22,9 @@ module Preview
       begin
         write_env(preview)
         Preview::DnsRegistrar.new(preview).register
-        # Previews deploy with the parent's env and NO databases (zero preview
-        # usage to date). Per-preview DBs return as wokkud shared tenants if
-        # previews get real usage — never as dokku services (W7).
+        # Previews deploy with the parent's env minus its DB credentials
+        # (EnvBuilder) and NO databases of their own. Per-preview DBs return
+        # as wokkud shared tenants if previews get real usage.
 
         # Build synchronously through the shared native path. Previews own
         # their own completion (PR comment, preview DNS, status) so they do
@@ -119,8 +119,11 @@ module Preview
     end
 
     def write_env(preview)
-      env = Preview::EnvBuilder.new(@parent).build
+      builder = Preview::EnvBuilder.new(@parent)
+      env = builder.build
       Apps::EnvWriter.set(preview, env) if env.any?
+      # An older deploy may have copied the parent's DB credentials in.
+      Apps::EnvWriter.unset(preview, *builder.removed_keys) if builder.removed_keys.any?
     end
   end
 end

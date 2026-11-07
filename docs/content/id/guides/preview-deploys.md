@@ -34,10 +34,16 @@ Lalu buka pull request. Wokku build branch PR itu di `https://my-app-pr-42.wokku
 
 ## Data
 
-Preview mendapat salinan environment variable app, **termasuk `DATABASE_URL`**, jadi preview terhubung ke database yang sama dengan app kamu. Pengaturan **Database strategy** tersimpan, tapi preview belum mendapat database sendiri.
+Preview belum mendapat database sendiri. Secara default (**No database**), Wokku menghapus nilai koneksi database app kamu dari environment variable preview (`DATABASE_URL`, `REDIS_URL`, dan variable lain yang berisi kredensial tersebut), jadi preview tidak pernah bisa menyentuh data produksi. Halaman yang butuh database akan error di preview.
+
+Kalau kamu ingin preview memakai database produksi, pilih **Share production database** di halaman **Deploy → Previews** app, atau jalankan:
+
+```bash
+wokku previews:settings my-app --database shared
+```
 
 :::callout warning
-Jangan jalankan migration atau script seed di preview, dan jangan klik alur yang menulis data penting. Kalau itu berisiko untuk app kamu, biarkan preview mati.
+Dengan database bersama, migration, script seed, dan apa pun yang kamu klik di preview akan menulis ke produksi. Pakai hanya kalau preview kamu read-only.
 :::
 
 ## Batasan dan pembersihan

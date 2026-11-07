@@ -34,10 +34,16 @@ Then open a pull request. Wokku builds the PR branch at `https://my-app-pr-42.wo
 
 ## Data
 
-A preview gets a copy of the app's environment variables, **including `DATABASE_URL`**, so it talks to the same database as your app. The **Database strategy** setting is saved, but previews don't get their own database yet.
+Previews don't get a database of their own yet. By default (**No database**), Wokku removes your app's database connection values from the preview's environment variables (`DATABASE_URL`, `REDIS_URL`, and any other variable that holds those credentials), so a preview can never touch production data. Pages that need a database will error in the preview.
+
+To let previews use the production database instead, choose **Share production database** on the app's **Deploy → Previews** page, or run:
+
+```bash
+wokku previews:settings my-app --database shared
+```
 
 :::callout warning
-Don't run migrations or seed scripts in a preview, and don't click through flows that write data you care about. If that's a risk for your app, leave previews off.
+With a shared database, migrations, seed scripts and anything you click in a preview write to production. Only use it if your previews are read-only.
 :::
 
 ## Limits and cleanup

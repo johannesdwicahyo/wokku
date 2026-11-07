@@ -25,13 +25,13 @@
           <div>
             <span class="block text-xs font-semibold text-ink-soft mb-1.5">Database strategy</span>
             <div class="space-y-1.5">
-              <% %w[empty snapshot shared].each do |strategy| %>
+              <%# "snapshot" stays a valid stored value but is not offered — it is not built and behaves like "empty". %>
+              <% { "empty" => [ "No database", "Previews get none of this app's database credentials." ],
+                   "shared" => [ "Share production database", "Shares prod data — destructive migrations affect prod." ] }.each do |strategy, (label, hint)| %>
                 <label class="flex items-center gap-2.5 cursor-pointer">
-                  <%= f.radio_button :database_strategy, strategy, class: "border-1.5 border-ink text-ink focus:ring-2 focus:ring-ink/20 focus:ring-offset-0" %>
-                  <span class="text-sm text-ink capitalize"><%= strategy %></span>
-                  <% if strategy == "shared" %>
-                    <span class="text-[11px] text-warn">Shares prod data — destructive migrations affect prod</span>
-                  <% end %>
+                  <%= f.radio_button :database_strategy, strategy, checked: (@app.database_strategy == "shared") == (strategy == "shared"), class: "border-1.5 border-ink text-ink focus:ring-2 focus:ring-ink/20 focus:ring-offset-0" %>
+                  <span class="text-sm text-ink"><%= label %></span>
+                  <span class="text-[11px] <%= strategy == "shared" ? "text-warn" : "text-dim" %>"><%= hint %></span>
                 </label>
               <% end %>
             </div>

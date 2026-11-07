@@ -14,6 +14,14 @@ RSpec.describe "Dashboard::PreviewManagement", type: :request do
     expect(response).to have_http_status(:ok)
   end
 
+  it "offers only the database strategies that exist, and pre-selects 'No database' for a stored snapshot" do
+    parent.update!(preview_enabled: true, database_strategy: "snapshot")
+    get "/dashboard/apps/#{parent.id}/previews"
+    expect(response.body).to include("No database", "Share production database")
+    expect(response.body).not_to include('value="snapshot"')
+    expect(response.body).to match(/value="empty"[^>]*checked|checked[^>]*value="empty"/)
+  end
+
   it "enqueues CleanupJob with parent.id and pr_number" do
     preview = AppRecord.create!(
       name: "myapp-pr-7", team: team, server: parent.server, creator: user,
