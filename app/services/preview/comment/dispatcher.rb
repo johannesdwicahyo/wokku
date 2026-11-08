@@ -2,7 +2,8 @@ module Preview
   module Comment
     class Dispatcher
       def self.for(parent_app, preview_app: nil)
-        provider = parent_app.git_provider
+        # GitHub connect only sets github_repo_full_name (see EventDispatcher.parents_for).
+        provider = parent_app.git_provider.presence || ("github" if parent_app.github_repo_full_name.present?)
         return nil if provider.blank?
 
         case provider

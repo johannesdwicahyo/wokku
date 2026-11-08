@@ -3,11 +3,18 @@
 module Preview
   class EventDispatcher
     def self.handle(event)
-      AppRecord.main_apps
-               .where(git_provider: event.provider.to_s,
-                      git_repo_full_name: event.repo_full_name,
-                      preview_enabled: true)
-               .find_each { |parent| dispatch_for(parent, event) }
+      parents_for(event).find_each { |parent| dispatch_for(parent, event) }
+    end
+
+    # GitHub connect stores the repo in github_repo_full_name and never sets
+    # git_provider; GitLab/Bitbucket use the generic (git_provider, git_repo_full_name) pair.
+    def self.parents_for(event)
+      scope = AppRecord.main_apps.where(preview_enabled: true)
+      if event.provider.to_s == "github"
+        scope.where(github_repo_full_name: event.repo_full_name)
+      else
+        scope.where(git_provider: event.provider.to_s, git_repo_full_name: event.repo_full_name)
+      end
     end
 
     def self.dispatch_for(parent, event)

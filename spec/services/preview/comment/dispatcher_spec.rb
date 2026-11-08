@@ -5,8 +5,7 @@ RSpec.describe Preview::Comment::Dispatcher do
   let(:user) { create(:user, github_installation_id: 42) }
   let!(:membership) { create(:team_membership, team: team, user: user, role: :admin) }
   let(:parent) do
-    create(:app_record, team: team, git_provider: "github",
-           git_repo_full_name: "octo/repo", github_repo_full_name: "octo/repo")
+    create(:app_record, team: team, github_repo_full_name: "octo/repo") # what GitHub connect sets
   end
 
   describe ".for" do

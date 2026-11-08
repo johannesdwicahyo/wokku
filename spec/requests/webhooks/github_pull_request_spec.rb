@@ -5,9 +5,7 @@ require "rails_helper"
 RSpec.describe "Webhooks::Github pull_request", type: :request do
   let(:team) { create(:team) }
   let!(:parent) do
-    create(:app_record, team: team, github_repo_full_name: "octo/repo",
-           git_provider: "github", git_repo_full_name: "octo/repo",
-           preview_enabled: true)
+    create(:app_record, team: team, github_repo_full_name: "octo/repo", preview_enabled: true)
   end
   let(:payload) { File.read(Rails.root.join("spec/fixtures/webhooks/github/pull_request_opened.json")) }
 
@@ -24,7 +22,7 @@ RSpec.describe "Webhooks::Github pull_request", type: :request do
   end
 
   it "no-ops when no parent has the repo connected" do
-    parent.update!(github_repo_full_name: "other/repo", git_repo_full_name: "other/repo")
+    parent.update!(github_repo_full_name: "other/repo")
     expect {
       post "/webhooks/github",
            params: payload,

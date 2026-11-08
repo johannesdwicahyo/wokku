@@ -8,8 +8,7 @@ RSpec.describe Preview::EventDispatcher do
   let!(:membership) { create(:team_membership, team: team, user: user, role: :admin) }
   let!(:parent) do
     create(:app_record, team: team, name: "myapp",
-           github_repo_full_name: "octo/repo",
-           git_provider: "github", git_repo_full_name: "octo/repo",
+           github_repo_full_name: "octo/repo", # what GitHub connect sets (no git_provider)
            preview_enabled: true)
   end
   let(:event) do
@@ -30,7 +29,7 @@ RSpec.describe Preview::EventDispatcher do
   end
 
   it "is no-op when no parent matches the repo" do
-    parent.update!(github_repo_full_name: "other/repo", git_repo_full_name: "other/repo")
+    parent.update!(github_repo_full_name: "other/repo")
     expect { described_class.handle(event) }.not_to have_enqueued_job(Preview::DeployJob)
   end
 
@@ -85,7 +84,6 @@ RSpec.describe Preview::EventDispatcher do
   it "does NOT match a gitlab event against a github-connected app with the same repo name" do
     create(:app_record, team: team, name: "myapp-github",
            github_repo_full_name: "octo/repo",
-           git_provider: "github", git_repo_full_name: "octo/repo",
            preview_enabled: true)
     other_team = create(:team)
     create(:app_record, team: other_team, name: "myapp-gitlab",
