@@ -1,7 +1,7 @@
 ---
 title: Bundling Processes
 summary: Run web and worker in one container, so you pay for one size instead of two.
-last_updated: 2026-11-07
+last_updated: 2026-11-09
 ---
 
 You'll run several processes inside one container with a process manager.
@@ -15,7 +15,7 @@ web: bundle exec rails server
 worker: bundle exec sidekiq
 ```
 
-Two Starter containers (0.25 vCPU, 512 MB each) cost Rp32.000/month. One container with 0.25 vCPU and 1 GB holds both processes for Rp28.000/month, because they share the CPU. You save more with each extra process.
+Two Starter containers (0.25 vCPU, 512 MB each) cost Rp48.000/month. One container with 0.25 vCPU and 1 GB holds both processes for Rp42.000/month, because they share the CPU. You save more with each extra process.
 
 ## The pattern
 

@@ -1,7 +1,7 @@
 ---
 title: Menggabungkan Process
 summary: Jalankan web dan worker dalam satu container, jadi kamu cukup bayar satu ukuran, bukan dua.
-last_updated: 2026-11-07
+last_updated: 2026-11-09
 ---
 
 Di sini kamu akan menjalankan beberapa process dalam satu container dengan process manager.
@@ -15,7 +15,7 @@ web: bundle exec rails server
 worker: bundle exec sidekiq
 ```
 
-Dua container Starter (masing-masing 0.25 vCPU, 512 MB) biayanya Rp32.000/bulan. Satu container dengan 0.25 vCPU dan 1 GB bisa menampung kedua process seharga Rp28.000/bulan, karena keduanya berbagi CPU. Makin banyak process tambahan, makin besar hematnya.
+Dua container Starter (masing-masing 0.25 vCPU, 512 MB) biayanya Rp48.000/bulan. Satu container dengan 0.25 vCPU dan 1 GB bisa menampung kedua process seharga Rp42.000/bulan, karena keduanya berbagi CPU. Makin banyak process tambahan, makin besar hematnya.
 
 ## Polanya
 

@@ -1,7 +1,7 @@
 ---
 title: Pricing
 summary: Pay only for the CPU, RAM and disk you run, in Rupiah. No plans or packages.
-last_updated: 2026-11-07
+last_updated: 2026-11-09
 ---
 
 You'll see what Wokku costs and how to estimate your bill.
@@ -16,9 +16,9 @@ You'll see what Wokku costs and how to estimate your bill.
 
 | Resource | Price per month |
 |---|---|
-| CPU | Rp16.000 per vCPU |
-| RAM | Rp24.000 per GB |
-| Disk | Rp1.000 per GB |
+| CPU | Rp24.000 per vCPU |
+| RAM | Rp36.000 per GB |
+| Disk | Rp1.500 per GB |
 
 All features are included once you pay for anything.
 
@@ -30,31 +30,31 @@ App processes, per instance:
 
 | Preset | CPU / RAM | Per month |
 |---|---|---|
-| Nano | 0.25 vCPU / 256 MB | Rp10.000 |
-| Starter | 0.25 vCPU / 512 MB | Rp16.000 |
-| Standard | 0.5 vCPU / 1 GB | Rp32.000 |
-| Large | 1 vCPU / 2 GB | Rp64.000 |
-| X-Large | 2 vCPU / 4 GB | Rp128.000 |
+| Nano | 0.25 vCPU / 256 MB | Rp15.000 |
+| Starter | 0.25 vCPU / 512 MB | Rp24.000 |
+| Standard | 0.5 vCPU / 1 GB | Rp48.000 |
+| Large | 1 vCPU / 2 GB | Rp96.000 |
+| X-Large | 2 vCPU / 4 GB | Rp192.000 |
 
 Dedicated databases (Postgres, MySQL, MariaDB, MongoDB):
 
 | Preset | CPU / RAM / disk | Per month |
 |---|---|---|
-| Small | 0.25 vCPU / 512 MB / 5 GB | Rp21.000 |
-| Medium | 0.5 vCPU / 1 GB / 20 GB | Rp52.000 |
-| Large | 1 vCPU / 2 GB / 50 GB | Rp114.000 |
+| Small | 0.25 vCPU / 512 MB / 5 GB | Rp31.500 |
+| Medium | 0.5 vCPU / 1 GB / 20 GB | Rp78.000 |
+| Large | 1 vCPU / 2 GB / 50 GB | Rp171.000 |
 
 Dedicated Redis:
 
 | Preset | CPU / RAM / disk | Per month |
 |---|---|---|
-| Small | 0.25 vCPU / 256 MB / 1 GB | Rp11.000 |
-| Medium | 0.25 vCPU / 1 GB / 2 GB | Rp30.000 |
-| Large | 0.5 vCPU / 2 GB / 4 GB | Rp60.000 |
+| Small | 0.25 vCPU / 256 MB / 1 GB | Rp16.500 |
+| Medium | 0.25 vCPU / 1 GB / 2 GB | Rp45.000 |
+| Large | 0.5 vCPU / 2 GB / 4 GB | Rp90.000 |
 
 ## Example
 
-A Rails app with a Standard `web` (Rp32.000), a Starter `worker` (Rp16.000) and a Small dedicated Postgres (Rp21.000) costs **Rp69.000/month**.
+A Rails app with a Standard `web` (Rp48.000), a Starter `worker` (Rp24.000) and a Small dedicated Postgres (Rp31.500) costs **Rp103.500/month**.
 
 The sliders on **Runtime** → **Scaling** show the price before you save. See [Resources & Sizing](/docs/scaling/resources).
 
