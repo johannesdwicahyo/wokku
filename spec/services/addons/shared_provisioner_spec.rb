@@ -82,7 +82,7 @@ RSpec.describe Addons::SharedProvisioner do
       expect(service.call).to eq(:provisioned)
     end
 
-    describe "generic engine path (redis/memcached)" do
+    describe "generic engine path (redis)" do
       # Byte pins for the CP-composed env shapes: same scheme/host/port form
       # the dokku-shared-* plugins emitted, host = parent container name.
       # slug = app name ("myapp").
@@ -91,11 +91,6 @@ RSpec.describe Addons::SharedProvisioner do
           alias_env: "REDIS", password_sent: true, result: { "slug" => "myapp" },
           envs: { "REDIS_URL" => "redis://myapp:s3cret@dokku-shared-redis:6379/0" },
           role: "myapp"
-        },
-        "memcached" => {
-          alias_env: "MEMCACHED", password_sent: false, result: { "slug" => "myapp" },
-          envs: { "MEMCACHED_URL" => "dokku-shared-memcached:11211", "MEMCACHED_KEY_PREFIX" => "myapp:" },
-          role: nil
         }
       }.each do |engine, cfg|
         context "for #{engine}" do

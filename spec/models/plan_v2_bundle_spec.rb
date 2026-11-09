@@ -11,27 +11,29 @@ RSpec.describe Plan, "bundle v2 columns" do
   let(:team) { Plan.find_by!(key: "team") }
 
   describe "shared engines (auto-attached at box create)" do
-    it "every plan ships the same shared engines" do
+    it "every plan ships the three shared engines" do
       Plan.where(key: Plan::KEYS).find_each do |p|
         expect(p.shared_engines).to contain_exactly(
-          "postgres", "mariadb", "redis", "memcached"
+          "postgres", "mariadb", "redis"
         )
       end
     end
 
-    it "shared_tenant_cap returns the right column per engine" do
-      # SQL engines report the ENFORCED cap (db_bundle_mb, stamped on the
-      # tenant row at provision), not the dead shared_pg_mb_per_tenant.
-      expect(solo.shared_tenant_cap("postgres")).to    eq(solo.db_bundle_mb)
-      expect(solo.shared_tenant_cap("mariadb")).to     eq(solo.db_bundle_mb)
-      expect(solo.shared_tenant_cap("postgres")).not_to eq(solo.shared_pg_mb_per_tenant)
-      expect(solo.shared_tenant_cap("redis")).to       eq(10)
-      expect(solo.shared_tenant_cap("memcached")).to   eq(16)
+    it "shared_tenant_cap returns the enforced limit per engine (pg/mariadb = db_bundle_mb)" do
+      expect(solo.shared_tenant_cap("postgres")).to  eq(solo.db_bundle_mb)
+      expect(solo.shared_tenant_cap("mariadb")).to   eq(solo.db_bundle_mb)
+      expect(solo.shared_tenant_cap("redis")).to     eq(10)
+      expect(solo.shared_tenant_cap("memcached")).to eq(16)
       expect { solo.shared_tenant_cap("rabbitmq") }.to raise_error(ArgumentError)
     end
 
     it "raises on unknown engines" do
       expect { solo.shared_tenant_cap("riak") }.to raise_error(ArgumentError, /Unknown shared engine/)
+    end
+
+    it "RabbitMQ + Meilisearch caps scale up across paid plans" do
+      expect([ free, solo, pro, team ].map(&:shared_rabbitmq_msg_per_tenant)).to eq([ 10_000, 10_000, 50_000, 200_000 ])
+      expect([ free, solo, pro, team ].map(&:shared_meilisearch_mb_per_tenant)).to eq([ 50, 50, 250, 1024 ])
     end
   end
 
@@ -64,9 +66,9 @@ RSpec.describe Plan, "bundle v2 columns" do
       expect(team.dedicated_size_mb("redis")).to eq(1024)
     end
 
-    it "no engines other than Pg/Redis are upgradable" do
+    it "no engines other than the SQL pool (Pg/MariaDB/MySQL) and Redis are upgradable" do
       [ solo, pro, team ].each do |p|
-        %w[memcached rabbitmq meilisearch mongo mysql].each do |e|
+        %w[memcached rabbitmq meilisearch mongo].each do |e|
           expect(p.offers_dedicated?(e)).to be(false), "#{p.key} should NOT offer dedicated #{e}"
         end
       end

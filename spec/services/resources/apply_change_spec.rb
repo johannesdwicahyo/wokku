@@ -249,8 +249,10 @@ RSpec.describe Resources::ApplyChange do
 
     it "I8: a volume-only change shows up in the enforcer's to: with the new disk" do
       seen = nil
-      allow(Wokku.config.plan_enforcer).to receive(:allowed?).and_wrap_original do |_m, _team, _kind, from:, to:|
-        seen = to
+      # Other callers (AppRecord#run_allowed?) ask allowed? without from:/to:.
+      allow(Wokku.config.plan_enforcer).to receive(:allowed?).and_wrap_original do |m, team, kind, **kw|
+        next m.call(team, kind, **kw) unless kind == :resources
+        seen = kw[:to]
         true
       end
       described_class.call(app: app, user: user, processes: {}, volume_disk_gb: "7")

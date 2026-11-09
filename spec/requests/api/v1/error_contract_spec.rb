@@ -80,6 +80,7 @@ RSpec.describe "API error contract", type: :request do
   end
 
   it "500s a stray ArgumentError from ps update instead of echoing it as invalid_params" do
+    allow(Wokku.config).to receive(:resource_builder?).and_return(false) # scaling path, not ApplyChange
     allow(::Lifecycle::Ops).to receive(:converge!).and_raise(ArgumentError, "internal: comparison of String with nil")
     expect(Sentry).to receive(:capture_exception).with(kind_of(ArgumentError))
 
@@ -90,6 +91,7 @@ RSpec.describe "API error contract", type: :request do
   end
 
   it "422s ps update on a never-deployed app with the user-facing NotDeployed message" do
+    allow(Wokku.config).to receive(:resource_builder?).and_return(false) # scaling path, not ApplyChange
     allow(::Lifecycle::Ops).to receive(:converge!)
       .and_raise(::Lifecycle::Ops::NotDeployed, "no image for #{app_record.name} — deploy first")
 

@@ -72,7 +72,7 @@ RSpec.describe "API::V1::AddonsController", type: :request do
     end
 
     it "POST /addons/shared with valid engine returns 202 and updates app" do
-      allow_any_instance_of(Plan).to receive(:shared_engines_available).and_return(%w[postgres redis memcached])
+      allow_any_instance_of(Plan).to receive(:shared_engines_available).and_return(%w[postgres redis memcached rabbitmq meilisearch])
       post shared_api_v1_app_addons_path(app_record),
            params: { engine: "redis" },
            headers: headers
@@ -92,9 +92,7 @@ RSpec.describe "API::V1::AddonsController", type: :request do
     end
 
     it "POST /addons/shared returns 422 for engine not in user plan" do
-      # Shared-engine gating goes through the injected enforcer (OSS null allows all).
-      allow(Wokku.config.plan_enforcer).to receive(:allowed?)
-        .with(anything, :shared_engine, engine: "memcached").and_return(false)
+      allow_any_instance_of(Plan).to receive(:shared_engines_available).and_return(%w[postgres redis])
       post shared_api_v1_app_addons_path(app_record),
            params: { engine: "memcached" },
            headers: headers
@@ -146,9 +144,9 @@ RSpec.describe "API::V1::AddonsController", type: :request do
       expect(body["dedicated_id"]).to eq("fake-uuid")
     end
 
-    it "POST /addons/dedicated with mysql engine returns 422" do
+    it "POST /addons/dedicated with an unsupported engine returns 422" do
       post dedicated_api_v1_app_addons_path(app_record),
-           params: { engine: "mysql" },
+           params: { engine: "clickhouse" },
            headers: headers
       expect(response).to have_http_status(:unprocessable_entity)
     end

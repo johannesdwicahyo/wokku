@@ -61,6 +61,9 @@ module WokkuHarness
       # render their mapped status (the Devise admin-constraint 404 specs
       # assert responses, not raises); unmapped exceptions still raise.
       config.action_dispatch.show_exceptions = :rescuable
+      # No cache in tests (matches wokku-cloud): the default file store under
+      # tmp/cache leaks values between examples and between runs.
+      config.cache_store = :null_store
     end
 
     # Jobs run in-process via the Solid Queue puma plugin (config/puma.rb).

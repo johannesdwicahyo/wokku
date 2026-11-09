@@ -7,7 +7,7 @@ RSpec.describe "POST /api/v1/apps/:app_id/deploys/uploads", type: :request do
   let(:app_record) { app_records(:one) }
   let(:token) { api_v1_token_for(user) }
   let(:headers) { { "Authorization" => "Bearer #{token}", "Content-Type" => "application/json" } }
-  let(:store) { instance_double(DeployArchiveStore) }
+  let(:store) { instance_double(Wokku::Providers::LocalBackupStore) }
 
   before do
     allow(Wokku.config).to receive(:backup_store).and_return(store)

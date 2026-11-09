@@ -12,10 +12,14 @@ RSpec.describe Plan, "bundle v2 REVISED" do
   let(:team) { Plan.find_by!(key: "team") }
 
   describe "#shared_engines_available" do
-    it "every plan, Free included, sees every shared engine at box creation" do
-      [ free, solo, pro, team ].each do |p|
+    it "Free sees the whole free shared lineup at box creation" do
+      expect(free.shared_engines_available).to contain_exactly("postgres", "mariadb", "redis")
+    end
+
+    it "Solo/Pro/Team see the same three shared engines" do
+      [ solo, pro, team ].each do |p|
         expect(p.shared_engines_available).to contain_exactly(
-          "postgres", "mariadb", "redis", "memcached"
+          "postgres", "mariadb", "redis"
         )
       end
     end

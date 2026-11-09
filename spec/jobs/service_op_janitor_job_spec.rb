@@ -40,7 +40,8 @@ RSpec.describe ServiceOpJanitorJob, type: :job do
   end
 
   it "prunes terminal lifecycle ops past PRUNE_AFTER, keeps recent and non-terminal ones" do
-    old_done = create(:lifecycle_op, status: :succeeded, finished_at: 31.days.ago)
+    old_done = create(:lifecycle_op, status: :succeeded, finished_at: 31.days.ago, created_at: 31.days.ago)
+    create(:lifecycle_op, app_record: old_done.app_record, status: :succeeded, finished_at: 1.day.ago) # newer converge → old one is not the fallback
     recent   = create(:lifecycle_op, status: :failed, finished_at: 2.days.ago)
     pending  = create(:lifecycle_op) # pending, no finished_at — never pruned
 
@@ -49,6 +50,22 @@ RSpec.describe ServiceOpJanitorJob, type: :job do
     expect(LifecycleOp.exists?(old_done.id)).to be false
     expect(LifecycleOp.exists?(recent.id)).to be true
     expect(LifecycleOp.exists?(pending.id)).to be true
+  end
+
+  # 2026-10-07: pruning an adopted app's ONLY succeeded converge erased its
+  # image + command fallback ("no image for batumas" on every restart).
+  it "never prunes an app's latest succeeded stack.converge, and scrubs its per-service env" do
+    params = { "image_ref" => "r", "services" => { "web" => { "image" => "r", "command" => [ "run" ], "env" => { "SECRET" => "x" } } } }
+    old_failed = create(:lifecycle_op, status: :failed, finished_at: 60.days.ago, created_at: 60.days.ago)
+    latest = create(:lifecycle_op, app_record: old_failed.app_record, status: :succeeded,
+      finished_at: 40.days.ago, created_at: 40.days.ago, params: params)
+
+    described_class.perform_now
+
+    expect(LifecycleOp.exists?(old_failed.id)).to be false
+    expect(latest.reload.params.dig("services", "web", "env")).to eq("[REDACTED]")
+    expect(Lifecycle::Ops.image_ref_from(latest.params)).to eq("r")
+    expect(Lifecycle::Ops.formation_commands_from(latest.params)).to eq("web" => [ "run" ])
   end
 
   # I3: never-claimed pending ops wedge the lane forever — reap the stale ones.

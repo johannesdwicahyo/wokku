@@ -50,6 +50,9 @@ RSpec.describe Organisms::AppsTableComponent, type: :component do
   end
 
   describe "#box_label" do
+    # Tier vocabulary is the plan-billed path; per-resource shows the shape.
+    before { allow(Wokku.config).to receive(:resource_builder?).and_return(false) }
+
     # The SIZE column must show the box vocabulary (sleeping/small/medium/...),
     # not the raw internal DynoTier name (free/basic/standard/...).
     {

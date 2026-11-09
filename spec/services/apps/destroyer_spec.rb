@@ -117,7 +117,7 @@ RSpec.describe Apps::Destroyer do
   end
 
   it "never references Dokku:: anywhere in the destroyer" do
-    source = File.read(Rails.root.join("engines/wokku/app/services/apps/destroyer.rb"))
+    source = File.read(Wokku::Engine.root.join("app/services/apps/destroyer.rb"))
     expect(source).not_to match(/Dokku::/)
   end
 end

@@ -24,22 +24,23 @@ RSpec.describe DatastoreReconcileJob, type: :job do
     expect(seen).not_to include(tenant)
   end
 
-  it "ensures the shared mariadb parent with empty params (wokkud owns its run-spec)" do
-    parent = managed(service_type: "mariadb", tier_name: "shared_host", name: "dokku-shared-mariadb")
-    expect(Services::Ops).to receive(:issue_and_wait!)
-      .with(service: parent, kind: "service.ensure", params: {}, timeout: described_class::ENSURE_TIMEOUT)
-      .and_return(instance_double("ServiceOp", succeeded?: true))
-    described_class.perform_now
-  end
-
-  it "skips engines wokkud can't run (legacy dedicated mysql) instead of raising every sweep" do
-    mysql = managed(service_type: "postgres", tier_name: "basic", name: "ghost-mysql")
-    mysql.update_column(:service_type, "mysql") # grandfathered pre-retirement row
+  it "skips engines wokkud can't run instead of raising every sweep" do
+    es = managed(service_type: "postgres", tier_name: "basic", name: "old-es")
+    es.update_column(:service_type, "elasticsearch")
     seen = []
     allow(Services::Ops).to receive(:issue_and_wait!) { |a| seen << a[:service]; instance_double("ServiceOp", succeeded?: true) }
     expect(Sentry).not_to receive(:capture_exception) if defined?(Sentry)
     described_class.perform_now
-    expect(seen).not_to include(mysql)
+    expect(seen).not_to include(es)
+  end
+
+  it "ensures dedicated mysql now that wokkud runs it (the Ghost DBs self-heal)" do
+    mysql = managed(service_type: "postgres", tier_name: "basic", name: "ghost-mysql")
+    mysql.update_column(:service_type, "mysql")
+    seen = []
+    allow(Services::Ops).to receive(:issue_and_wait!) { |a| seen << a[:service]; instance_double("ServiceOp", succeeded?: true) }
+    described_class.perform_now
+    expect(seen).to include(mysql)
   end
 
   it "excludes other shared parents (shared_host that are not dokku-shared-postgres)" do
