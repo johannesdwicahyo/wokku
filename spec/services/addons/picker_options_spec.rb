@@ -17,9 +17,9 @@ RSpec.describe Addons::PickerOptions do
   end
 
   describe "engine list" do
-    it "exposes the 5 Bundle v2 engines in a stable order" do
+    it "exposes the 5 engines (shared lineup pg/mariadb/redis + dedicated mysql/mongodb) in a stable order" do
       result = described_class.for_user(free_user)
-      expect(result.keys).to eq(%w[postgres redis memcached mariadb mongodb])
+      expect(result.keys).to eq(%w[postgres redis mariadb mysql mongodb])
     end
 
     it "offers mysql as dedicated-only — the free shared SQL tier stays MariaDB" do
@@ -38,33 +38,22 @@ RSpec.describe Addons::PickerOptions do
       expect(result["postgres"][:modes].map { |m| m[:mode] }).to eq(%w[shared dedicated])
     end
 
-    it "exposes shared-only engines without a dedicated card" do
+    it "does not expose retired shared engines (memcached, rabbitmq, meilisearch)" do
       result = described_class.for_user(free_user)
-      expect(result["memcached"][:modes].map { |m| m[:mode] }).to eq(%w[shared])
-      expect(result.keys).not_to include("rabbitmq", "meilisearch")
+      expect(result.keys).not_to include("memcached", "rabbitmq", "meilisearch")
     end
 
-    it "exposes dedicated-only engines without a shared card" do
+    it "exposes mariadb as shared + dedicated and mongodb as dedicated-only" do
       result = described_class.for_user(free_user)
-      expect(result["mongodb"][:modes].map { |m| m[:mode] }).to eq(%w[dedicated])
-    end
-
-    it "offers exactly the four shared engines, all free and available on the free plan" do
-      result = described_class.for_user(free_user)
-      shared = result.select { |_, e| e[:modes].any? { |m| m[:mode] == "shared" } }
-      expect(shared.keys).to contain_exactly("postgres", "mariadb", "redis", "memcached")
-      expect(shared.keys).to match_array(DatabaseService::SHARED_ENGINES)
-      expect(DatabaseService::SHARED_ENGINES_FREE).to match_array(DatabaseService::SHARED_ENGINES)
-      shared.each_value do |e|
-        mode = e[:modes].find { |m| m[:mode] == "shared" }
-        expect(mode).to include(available: true, kicker: "Free, included")
-      end
-      expect(result["mariadb"][:label]).to eq("MariaDB")
       expect(result["mariadb"][:modes].map { |m| m[:mode] }).to eq(%w[shared dedicated])
+      expect(result["mongodb"][:modes].map { |m| m[:mode] }).to eq(%w[dedicated])
     end
   end
 
   describe "availability" do
+    # Plan-gated dedicated is the non-per-resource (self-host) behaviour.
+    before { allow(Wokku.config).to receive(:resource_builder?).and_return(false) }
+
     it "shows shared as always available" do
       shared = described_class.for_user(free_user)["postgres"][:modes].find { |m| m[:mode] == "shared" }
       expect(shared[:available]).to be true
@@ -96,6 +85,19 @@ RSpec.describe Addons::PickerOptions do
       expect(shared[:label]).to eq("Shared")
       expect(shared[:kicker]).to eq("Free, included")
       expect(shared[:description]).to match(/auto-attaches DATABASE_URL/i)
+    end
+  end
+
+  describe "per-resource billing" do
+    before { allow(Wokku.config).to receive(:resource_builder?).and_return(true) }
+
+    it "offers dedicated to a free-plan team; the create path enforces size and balance" do
+      result = described_class.for_user(free_user)
+      %w[postgres redis mariadb mysql mongodb].each do |engine|
+        ded = result[engine][:modes].find { |m| m[:mode] == "dedicated" }
+        expect(ded).to include(available: true, unavailable_reason: nil, kicker: "Pay per resource")
+        expect(ded[:description]).not_to match(/plan|slots/i)
+      end
     end
   end
 end

@@ -46,6 +46,13 @@ module Addons
       }
     }.freeze
 
+    # Per-resource billing: dedicated is sized in the builder and checked at
+    # create (Resources::ApplyChange.check_new_shape), not gated by plan.
+    PER_RESOURCE_DEDICATED_COPY = {
+      kicker:      "Pay per resource",
+      description: "Its own container. You choose CPU, memory and disk, billed per resource."
+    }.freeze
+
     def self.for_user(user)
       new(user).call
     end
@@ -71,6 +78,7 @@ module Addons
 
     def mode_entry(engine, mode)
       base = MODE_COPY.fetch(mode).dup
+      base.merge!(PER_RESOURCE_DEDICATED_COPY) if mode == "dedicated" && Wokku.config.resource_builder?
       avail = availability(engine, mode)
       base.merge(mode: mode, available: avail[:ok], unavailable_reason: avail[:reason])
     end
@@ -81,7 +89,9 @@ module Addons
         # Free + paid all get shared today (Bundle v2 spec).
         { ok: true, reason: nil }
       when "dedicated"
-        if @plan.nil? || @plan.free?
+        if Wokku.config.resource_builder?
+          { ok: true, reason: nil }
+        elsif @plan.nil? || @plan.free?
           { ok: false, reason: "Upgrade to Solo or higher for dedicated databases" }
         elsif !@plan.offers_dedicated?(engine)
           { ok: false, reason: "Dedicated #{engine} not yet available on your plan" }

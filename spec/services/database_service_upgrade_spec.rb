@@ -19,7 +19,12 @@ RSpec.describe DatabaseServiceUpgrade do
   end
 
   let(:solo) { create(:plan, :solo, dedicated_pg_slots: 3, dedicated_pg_size_mb: 512) }
-  before    { allow(user).to receive(:current_plan).and_return(solo) }
+  before do
+    allow(user).to receive(:current_plan).and_return(solo)
+    # Plan slots/size caps are the plan-billed (self-host) path; builder
+    # mode is covered in "per-resource builder" below.
+    allow(Wokku.config).to receive(:resource_builder?).and_return(false)
+  end
 
   around do |ex|
     orig = ENV["BUNDLE_V2_ENABLED"]
@@ -235,6 +240,13 @@ RSpec.describe DatabaseServiceUpgrade do
       allow(Wokku.config).to receive(:resource_builder?).and_return(false)
       dedicated = described_class.call(app: app, user: user)
       expect([ dedicated.tier_name, dedicated.cpu, dedicated.memory_mb, dedicated.disk_gb ]).to eq([ "basic", nil, nil, nil ])
+    end
+
+    it "lets a Free-plan team upgrade; the account limit gates it instead of plan slots" do
+      allow(Wokku.config).to receive(:resource_builder?).and_return(true)
+      allow(user).to receive(:current_plan).and_return(create(:plan, :free, dedicated_pg_slots: 0, dedicated_pg_size_mb: 0))
+      shared.update!(live_db_bytes: 600 * 1024 * 1024)
+      expect { described_class.call(app: app, user: user) }.to have_enqueued_job(UpgradeSharedPgToDedicatedJob)
     end
 
     it "refuses over the account limit before creating anything" do

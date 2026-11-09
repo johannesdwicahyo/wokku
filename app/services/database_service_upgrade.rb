@@ -42,7 +42,10 @@ class DatabaseServiceUpgrade
     raise UpgradeError::PlanNoSlots.new(engine: @engine) unless Addons::SharedProvisioner.feature_enabled?
 
     plan = @user.current_plan
-    raise UpgradeError::PlanNoSlots.new(engine: @engine) if slots_cap(plan).zero?
+    # Per-resource billing has no plan slots: the account limit
+    # (check_new_shape below) gates dedicated instead.
+    plan_caps = !Wokku.config.resource_builder?
+    raise UpgradeError::PlanNoSlots.new(engine: @engine) if plan_caps && slots_cap(plan).zero?
 
     # postgres/redis require a shared tenant to upgrade FROM; mariadb uses
     # one if present (before 2026-10-13 it was ignored → the app landed on an
@@ -56,12 +59,14 @@ class DatabaseServiceUpgrade
     User.transaction do
       @user.lock!
 
-      used = DatabaseService.dedicated.where(service_type: slot_pool_types, creator_id: @user.id).count
-      raise UpgradeError::NoFreeSlots.new(engine: @engine) if used >= slots_cap(plan)
+      if plan_caps
+        used = DatabaseService.dedicated.where(service_type: slot_pool_types, creator_id: @user.id).count
+        raise UpgradeError::NoFreeSlots.new(engine: @engine) if used >= slots_cap(plan)
+      end
 
       # Size-cap check is shared-engine only (mysql/mongo have nothing to
       # check — no shared data exists to oversize the dedicated cap).
-      if shared
+      if shared && plan_caps
         size_mb = (shared.live_db_bytes.to_i.to_f / 1.megabyte).ceil
         if size_mb > size_mb_cap(plan)
           next_plan_name = plan.key == "solo" ? "Pro" : "Team"
