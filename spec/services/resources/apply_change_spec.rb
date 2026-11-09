@@ -18,6 +18,13 @@ RSpec.describe Resources::ApplyChange do
     expect(app.process_scales.find_by(process_type: "web").count).to eq(2)
   end
 
+  it "keeps the current CPU when only memory is given (wokku ps:resize --memory)" do
+    described_class.call(app: app, user: user, processes: { "web" => { cpu: "0.5", memory_mb: "1024" } })
+    result = described_class.call(app: app, user: user, processes: { "web" => { memory_mb: "2048" } })
+    expect(result.ok).to be(true), result.error
+    expect(app.dyno_allocations.find_by(process_type: "web").shape.to_h).to include(cpu: 0.5, memory_mb: 2048)
+  end
+
   it "switches a process to the free sleeping preset" do
     # global_fixtures loads a "free" dyno_tier (memory_mb 256, sleeps: true)
     # for every spec — matches what this test needs, no factory required.

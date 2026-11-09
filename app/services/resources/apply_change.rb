@@ -142,7 +142,9 @@ module Resources
       @processes = normalize(@raw_processes)
       shapes = @processes.to_h do |proc, p|
         next [ proc, :sleeping ] if ActiveModel::Type::Boolean.new.cast(p[:sleeping])
-        shape = Shape.new(cpu: p[:cpu], memory_mb: p[:memory_mb])
+        # Either half may be omitted (ps:resize --memory); keep the current value.
+        current = self.class.inherited_shape_for(@app, proc) if p[:cpu].blank? || p[:memory_mb].blank?
+        shape = Shape.new(cpu: p[:cpu].presence || current&.cpu, memory_mb: p[:memory_mb].presence || current&.memory_mb)
         raise Rejected, "#{proc}: #{shape.errors.join(', ')}" unless shape.valid?
         [ proc, shape ]
       end
