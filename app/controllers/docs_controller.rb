@@ -158,10 +158,12 @@ class DocsController < ApplicationController
       tone = ($1 || "note").to_sym
       tone = :note unless %i[note warn success danger].include?(tone)
       body = render_markdown($2.strip)
+      # with_content, not a block: controller render drops a block, which
+      # left every callout an empty box.
       ApplicationController.render(
-        Molecules::CalloutComponent.new(tone: tone),
+        Molecules::CalloutComponent.new(tone: tone).with_content(body.html_safe),
         layout: false
-      ) { body.html_safe }
+      )
     rescue StandardError
       # Fallback: emit a plain div so a malformed block doesn't blank
       # the page. Keeps the docs survivable during authoring.
