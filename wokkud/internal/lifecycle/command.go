@@ -46,3 +46,37 @@ func splitCommand(s string) []string {
 	}
 	return args
 }
+
+// shellSyntax marks a command that needs a shell: env expansion ($PORT),
+// chaining (&&, ;), pipes, redirects, subshells.
+const shellSyntax = "$&|;<>`\n"
+
+// processCommand turns a Procfile command into the service's
+// (Command, Args) — Swarm's ENTRYPOINT and CMD overrides. Procfile lines
+// are shell lines (Heroku runs them via bash -c), so exec-splitting alone
+// left $PORT literal and && as an argument.
+//   - Image ENTRYPOINT is a shell's "-c" (nixpacks: bash -l -c): keep it
+//     and pass the whole line as CMD. The login shell also loads the PATH
+//     nixpacks writes to ~/.profile (Python's venv lives only there).
+//   - Shell syntax otherwise: /bin/sh -c.
+//   - Plain command: exec form, as before (no shell needed in the image).
+func processCommand(entrypoint []string, cmd string) (command, args []string) {
+	if strings.TrimSpace(cmd) == "" {
+		return nil, nil
+	}
+	if n := len(entrypoint); n >= 2 && entrypoint[n-1] == "-c" && isShell(entrypoint[0]) {
+		return nil, []string{cmd}
+	}
+	if strings.ContainsAny(cmd, shellSyntax) {
+		return []string{"/bin/sh", "-c", cmd}, nil
+	}
+	return splitCommand(cmd), nil
+}
+
+func isShell(path string) bool {
+	switch path[strings.LastIndex(path, "/")+1:] {
+	case "sh", "bash", "ash", "dash":
+		return true
+	}
+	return false
+}

@@ -44,6 +44,9 @@ type swarmAPI interface {
 	// it — the tag_from_local adopt shim, called by Converge before any
 	// service create/update when TagFromLocal is set (Task 10).
 	ImageTagPush(ctx context.Context, localRef, registryRef string) error
+	// ImageEntrypoint returns the image's ENTRYPOINT; an error (image not
+	// local) means "unknown" and callers fall back to exec form.
+	ImageEntrypoint(ctx context.Context, ref string) ([]string, error)
 	// JobTasks returns ALL tasks of one service by name, terminal states
 	// included (TaskList deliberately drops terminal history; a finished
 	// job's Complete/Failed task is exactly what stack.run polls for).
@@ -81,12 +84,15 @@ type Healthcheck struct {
 type ServiceSpec struct {
 	Name, App, Process, DeployID, Image string
 	Command                             []string
-	Env                                 map[string]string
-	Replicas                            int
-	MemoryMB                            int
-	CPU                                 float64
-	Networks                            []string
-	PublishedPort, TargetPort           int // 0 = don't publish
+	// Args overrides the image CMD. omitempty: unset must not change the
+	// SpecHash of services that predate it.
+	Args                      []string `json:"args,omitempty"`
+	Env                       map[string]string
+	Replicas                  int
+	MemoryMB                  int
+	CPU                       float64
+	Networks                  []string
+	PublishedPort, TargetPort int // 0 = don't publish
 
 	// B5b. Tagged omitempty so a service using neither marshals — and
 	// therefore hashes — exactly as it did before B5b. TestSpecHashStable
@@ -271,8 +277,14 @@ func Converge(ctx context.Context, s swarmAPI, p ConvergeParams) (*ConvergeResul
 		return nil
 	}
 
+	entrypoints := map[string][]string{}
 	for name, sp := range desired {
-		spec := p.specFor(name, sp)
+		ep, seen := entrypoints[sp.Image]
+		if !seen {
+			ep, _ = s.ImageEntrypoint(ctx, sp.Image) // unknown → nil → exec form
+			entrypoints[sp.Image] = ep
+		}
+		spec := p.specFor(name, sp, ep)
 		cur, exists := liveByProc[name]
 		if !exists {
 			if err := ensureNetworks(); err != nil {
@@ -345,14 +357,16 @@ func (p ConvergeParams) serviceParams() map[string]ServiceParams {
 
 // specFor builds the desired ServiceSpec for one service. Only the service
 // marked Public publishes a port — pre-B5b this was hardcoded to proc == "web".
-func (p ConvergeParams) specFor(name string, sp ServiceParams) ServiceSpec {
+func (p ConvergeParams) specFor(name string, sp ServiceParams, entrypoint []string) ServiceSpec {
+	command, args := processCommand(entrypoint, sp.Command)
 	spec := ServiceSpec{
 		Name:        ServiceName(p.App, name),
 		App:         p.App,
 		Process:     name,
 		DeployID:    p.DeployID,
 		Image:       sp.Image,
-		Command:     splitCommand(sp.Command),
+		Command:     command,
+		Args:        args,
 		Env:         sp.Env,
 		Replicas:    sp.Replicas,
 		MemoryMB:    sp.MemoryMB,

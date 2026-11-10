@@ -84,10 +84,13 @@ func RunOnce(ctx context.Context, s swarmAPI, p RunParams) (*RunResult, error) {
 	// behind — same op id, same name. Best-effort remove before create.
 	_ = s.ServiceRemove(ctx, name)
 
+	ep, _ := s.ImageEntrypoint(ctx, p.ImageRef) // unknown → exec form
+	command, args := processCommand(ep, p.Command)
 	spec := ServiceSpec{
 		Name: name, App: p.App, Process: "run",
 		Image:    p.ImageRef,
-		Command:  splitCommand(p.Command),
+		Command:  command,
+		Args:     args,
 		Env:      p.Env,
 		Replicas: 1,
 		MemoryMB: p.MemoryMB, CPU: p.CPU,
