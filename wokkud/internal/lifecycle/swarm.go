@@ -191,6 +191,17 @@ func (r *realSwarmAPI) NetworkEnsureOverlay(ctx context.Context, name string) er
 // under a registry ref and push it. Called by Converge (converge.go) before
 // any service create/update when the op's params carry tag_from_local, so
 // the image already exists in the registry by the time Swarm goes to pull it.
+func (r *realSwarmAPI) ImageEntrypoint(ctx context.Context, ref string) ([]string, error) {
+	img, err := r.cli.ImageInspect(ctx, ref)
+	if err != nil {
+		return nil, err
+	}
+	if img.Config == nil {
+		return nil, nil
+	}
+	return img.Config.Entrypoint, nil
+}
+
 func (r *realSwarmAPI) ImageTagPush(ctx context.Context, localRef, registryRef string) error {
 	if err := r.cli.ImageTag(ctx, localRef, registryRef); err != nil {
 		return err
@@ -232,6 +243,7 @@ func buildSpec(s ServiceSpec) swarm.ServiceSpec {
 				ContainerSpec: &swarm.ContainerSpec{
 					Image:   s.Image,
 					Command: s.Command,
+					Args:    s.Args,
 					Env:     envSlice(s.Env),
 					Labels:  labels,
 				},
@@ -259,7 +271,8 @@ func buildSpec(s ServiceSpec) swarm.ServiceSpec {
 		TaskTemplate: swarm.TaskSpec{
 			ContainerSpec: &swarm.ContainerSpec{
 				Image:   s.Image,
-				Command: s.Command, // exec array; nil falls back to image CMD
+				Command: s.Command, // exec array; nil falls back to image ENTRYPOINT
+				Args:    s.Args,    // nil falls back to image CMD
 				Env:     envSlice(s.Env),
 				Labels:  labels,
 			},

@@ -12,13 +12,14 @@ import (
 // fakeSwarm records the write-call sequence so tests assert on exactly what
 // the engine did (and, via idempotency, what it didn't).
 type fakeSwarm struct {
-	live          []ServiceInfo
-	calls         []string // "create:<name>", "update:<name>:force=<bool>", "remove:<name>", "net:<name>"
-	jobTasks      map[string][]JobTask
-	logs          map[string]string
-	specs         map[string]ServiceSpec // ServiceCreate specs recorded by name, for run.go tests
-	jobTasksErr   error                  // If set, JobTasks returns this error instead
-	jobTasksHook  func()                 // If set, called in JobTasks before returning (before jobTasksErr check)
+	live         []ServiceInfo
+	calls        []string // "create:<name>", "update:<name>:force=<bool>", "remove:<name>", "net:<name>"
+	jobTasks     map[string][]JobTask
+	logs         map[string]string
+	specs        map[string]ServiceSpec // ServiceCreate specs recorded by name, for run.go tests
+	jobTasksErr  error                  // If set, JobTasks returns this error instead
+	jobTasksHook func()                 // If set, called in JobTasks before returning (before jobTasksErr check)
+	entrypoints  map[string][]string    // image ref -> ENTRYPOINT; missing = inspect error
 }
 
 // newFakeSwarm is the fake's constructor (run_test.go's preferred entry point
@@ -37,6 +38,14 @@ func (f *fakeSwarm) ServiceList(ctx context.Context, appLabel string) ([]Service
 		}
 	}
 	return out, nil
+}
+
+func (f *fakeSwarm) ImageEntrypoint(ctx context.Context, ref string) ([]string, error) {
+	ep, ok := f.entrypoints[ref]
+	if !ok {
+		return nil, errors.New("no such image")
+	}
+	return ep, nil
 }
 
 func (f *fakeSwarm) ServiceCreate(ctx context.Context, spec ServiceSpec) error {
@@ -360,7 +369,7 @@ func liveFromHashed(p ConvergeParams) []ServiceInfo {
 	out := liveFrom(p)
 	desired := p.serviceParams()
 	for i := range out {
-		out[i].SpecHash = p.specFor(out[i].Process, desired[out[i].Process]).SpecHash()
+		out[i].SpecHash = p.specFor(out[i].Process, desired[out[i].Process], nil).SpecHash()
 	}
 	return out
 }
@@ -555,5 +564,28 @@ func TestServiceParamsPrefersServicesShape(t *testing.T) {
 	}
 	if got["web"].Replicas != 1 {
 		t.Fatal("legacy formation must be ignored when services is present")
+	}
+}
+
+func TestConvergeNixpacksImageRunsCommandsThroughItsShell(t *testing.T) {
+	p := baseParams()
+	p.FormationCommands["web"] = "rails s -p $PORT"
+	f := &fakeSwarm{entrypoints: map[string][]string{p.ImageRef: {"/bin/bash", "-l", "-c"}}}
+	if _, err := Converge(context.Background(), f, p); err != nil {
+		t.Fatal(err)
+	}
+	web := f.createdSpec("wokku-blog-web")
+	if web.Command != nil || !reflect.DeepEqual(web.Args, []string{"rails s -p $PORT"}) {
+		t.Fatalf("web Command=%#v Args=%#v", web.Command, web.Args)
+	}
+}
+
+func TestConvergeUninspectableImageKeepsExecForm(t *testing.T) {
+	f := &fakeSwarm{}
+	if _, err := Converge(context.Background(), f, baseParams()); err != nil {
+		t.Fatal(err)
+	}
+	if got := f.createdSpec("wokku-blog-worker").Command; !reflect.DeepEqual(got, []string{"bundle", "exec", "sidekiq"}) {
+		t.Fatalf("worker Command = %#v", got)
 	}
 }
