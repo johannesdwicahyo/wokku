@@ -284,6 +284,20 @@ RSpec.describe TemplateDeployer, "deep orchestration" do
     expect(env["JWT_SECRET"]).not_to eq(env["CREDS_KEY"])
   end
 
+  # Outline refuses to boot unless SECRET_KEY is exactly 64 hex chars (2026-11-03);
+  # LibreChat wants CREDS_KEY as 64 hex and CREDS_IV as 32 hex.
+  it "generates hex secrets of the length strict apps require" do
+    template = { repo: "https://github.com/x/y", generate_secrets: %w[SECRET_KEY CREDS_IV TOTP_VAULT_KEY] }
+
+    described_class.new(template: template, app_name: "hexapp", server: server, user: user).deploy!
+
+    env = AppRecord.find_by!(name: "hexapp").env_vars.pluck(:key, :value).to_h
+    expect(env["SECRET_KEY"]).to match(/\A\h{64}\z/)
+    expect(env["CREDS_IV"]).to match(/\A\h{32}\z/)
+    # Plausible: base64 of exactly 32 bytes.
+    expect(Base64.strict_decode64(env["TOTP_VAULT_KEY"]).bytesize).to eq(32)
+  end
+
   it "generates a Laravel-format APP_KEY (base64: + 32 bytes)" do
     template = { repo: "https://github.com/x/y", generate_secrets: %w[APP_KEY] }
 
@@ -313,6 +327,15 @@ RSpec.describe TemplateDeployer, "deep orchestration" do
 
     env = AppRecord.find_by!(name: "setapp").env_vars.pluck(:key, :value).to_h
     expect(env).to include("url" => "https://setapp.wokku.cloud", "BASE_URL" => "https://setapp.wokku.cloud")
+  end
+
+  it "set_host populates each key with the bare <app>.wokku.cloud host" do
+    template = { repo: "https://github.com/x/y", set_host: %w[NEXTCLOUD_TRUSTED_DOMAINS] }
+
+    described_class.new(template: template, app_name: "hostapp", server: server, user: user).deploy!
+
+    env = AppRecord.find_by!(name: "hostapp").env_vars.pluck(:key, :value).to_h
+    expect(env["NEXTCLOUD_TRUSTED_DOMAINS"]).to eq("hostapp.wokku.cloud")
   end
 
   it "on_progress callback is invoked for each step" do

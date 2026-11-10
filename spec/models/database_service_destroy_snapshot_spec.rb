@@ -57,6 +57,26 @@ RSpec.describe DatabaseService, "farewell snapshot policy (shared_free tier)" do
     end
   end
 
+  context "shared redis tenant" do
+    let(:db) do
+      parent = create(:database_service, server: server, service_type: "redis", tier_name: "shared_host",
+                                         name: "dokku-shared-redis")
+      create(:database_service, server: server, service_type: "redis", tier_name: "shared_free",
+                                shared: true, parent_service: parent)
+    end
+
+    it "never snapshots — the export would be the whole parent RDB (every tenant's keys)" do
+      expect(db.backups_unsupported?).to be true
+      expect_any_instance_of(BackupService).not_to receive(:perform!)
+      db.farewell_snapshot!
+    end
+
+    it "BackupService refuses it outright, without creating a backup row" do
+      expect { BackupService.new(db).perform! }.to raise_error(ArgumentError, /Shared Redis isn't backed up/)
+      expect(db.backups).to be_empty
+    end
+  end
+
   context "cache-type service (redis)" do
     let(:db) do
       ServiceTier.find_or_create_by!(name: "basic", service_type: "redis") { |t| t.monthly_price_cents = 30000 }

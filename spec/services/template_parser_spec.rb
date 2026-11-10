@@ -136,6 +136,11 @@ RSpec.describe TemplateParser do
     expect(described_class.parse(yaml, slug: "x")[:set_url]).to eq([])
   end
 
+  it "set_host splits comma list" do
+    yaml = "# set_host: NEXTCLOUD_TRUSTED_DOMAINS, HOST\nservices:\n  app:\n    image: foo\n"
+    expect(described_class.parse(yaml, slug: "x")[:set_host]).to eq(%w[NEXTCLOUD_TRUSTED_DOMAINS HOST])
+  end
+
   it "min_tier metadata is parsed when present" do
     yaml = "# min_tier: basic\nservices:\n  app:\n    image: foo\n"
     expect(described_class.parse(yaml, slug: "x")[:min_tier]).to eq("basic")

@@ -86,6 +86,14 @@ RSpec.describe Plan do
       plan = build(:plan, dedicated_pg_slots: 3)
       expect(plan.dedicated_slot_cap("mariadb")).to eq(plan.dedicated_pg_slots)
     end
+
+    it "pools mysql and mongodb into the same database slots, so paid plans can buy them" do
+      plan = build(:plan, dedicated_pg_slots: 3)
+      %w[mysql mongodb].each do |engine|
+        expect(plan.dedicated_slot_cap(engine)).to eq(3)
+        expect(plan.offers_dedicated?(engine)).to be true
+      end
+    end
   end
 
   describe "extra-box pricing" do

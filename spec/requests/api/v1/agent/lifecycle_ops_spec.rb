@@ -84,6 +84,14 @@ RSpec.describe "Api::V1::Agent::LifecycleOps" do
       expect(op.reload.params).to eq("env" => "[REDACTED]", "image_ref" => "r")
     end
 
+    it "redacts per-service env on report but keeps image + command (the restart fallback)" do
+      op.update!(status: :claimed,
+                 params: { "services" => { "web" => { "image" => "r", "command" => [ "run" ], "env" => { "SECRET" => "x" } } } })
+      post "/api/v1/agent/lifecycle_ops/#{op.id}/report",
+        params: { status: "succeeded", result: {} }, headers: headers, as: :json
+      expect(op.reload.params).to eq("services" => { "web" => { "image" => "r", "command" => [ "run" ], "env" => "[REDACTED]" } })
+    end
+
     it "redacts a stack.run op's params.command on report — baked $VARs carry secrets too" do
       other_app = create(:app_record, server: server)
       run_op = create(:lifecycle_op, kind: "stack.run", server: server, app_record: other_app, status: :claimed,

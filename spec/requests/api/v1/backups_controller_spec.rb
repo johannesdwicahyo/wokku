@@ -30,6 +30,16 @@ RSpec.describe "API::V1::BackupsController", type: :request do
     expect(JSON.parse(response.body)).to eq([])
   end
 
+  it "create refuses a shared redis tenant with 422" do
+    database.update_columns(service_type: "redis", shared: true)
+    allow_any_instance_of(ServerPolicy).to receive(:update?).and_return(true)
+    expect {
+      post api_v1_database_backups_path(database), headers: headers
+    }.not_to have_enqueued_job(BackupJob)
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response.parsed_body["error"]).to match(/Shared Redis isn't backed up/)
+  end
+
   it "unauthenticated request is rejected" do
     get api_v1_database_backups_path(database)
     expect(response).to have_http_status(:unauthorized)

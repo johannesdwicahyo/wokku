@@ -21,6 +21,16 @@ RSpec.describe DatabaseProvisioner do
       context "when the server has wokkud services enabled" do
         before { app.server.update!(wokkud_services_enabled: true) }
 
+        it "links the row to the app before the op, so a failed create is never an unlinked orphan" do
+          allow(Services::Ops).to receive(:issue_and_wait!).and_raise(Services::Ops::Timeout, "agent never reported")
+
+          expect {
+            described_class.new(app: app, service_type: "postgres", tier: "mini", name: "orphan-check-postgres").call
+          }.to raise_error(Services::Ops::Timeout)
+
+          expect(app.reload.database_services.pluck(:name)).to include("orphan-check-postgres")
+        end
+
         it "provisions via a service.create op, marks wokkud_managed, and never SSHes" do
           op = build_stubbed(:service_op, status: :succeeded)
           expect(Services::Ops).to receive(:issue_and_wait!)
@@ -28,6 +38,7 @@ RSpec.describe DatabaseProvisioner do
                   params: hash_including(:service_type, :image, :admin_pass, :memory_mb, :max_connections, :network, :volume_path))
             .and_return(op)
           expect(Hosts::Ssh).not_to receive(:new)
+          app.env_vars.where(key: "DATABASE_URL").delete_all # fixture ships one
 
           db = described_class.new(app: app, service_type: "postgres", tier: "mini").call
 
@@ -35,9 +46,20 @@ RSpec.describe DatabaseProvisioner do
           expect(db.dsn).to be_present
           expect(db.status).to eq("running")
           expect(app.env_vars.find_by(key: "POSTGRES_URL")&.value).to eq(db.dsn)
+          expect(app.env_vars.find_by(key: "DATABASE_URL")&.value).to eq(db.dsn)
           # The DSN host (container name) resolves via the wokku-services
           # overlay the service joins at create and every app task runs on —
           # no dokku network attach step remains.
+        end
+
+        it "leaves an existing DATABASE_URL alone (a shared tenant or another DB owns it)" do
+          allow(Services::Ops).to receive(:issue_and_wait!).and_return(build_stubbed(:service_op, status: :succeeded))
+          Apps::EnvWriter.set(app, { "DATABASE_URL" => "postgres://existing/db" }) # explicit, not the fixture's
+
+          db = described_class.new(app: app, service_type: "postgres", tier: "mini").call
+
+          expect(app.env_vars.find_by(key: "POSTGRES_URL")&.value).to eq(db.dsn)
+          expect(app.env_vars.find_by(key: "DATABASE_URL")&.value).to eq("postgres://existing/db")
         end
 
         # Task 10: a fresh dedicated DB must get its APPLICATION database
@@ -117,11 +139,22 @@ RSpec.describe DatabaseProvisioner do
       end
 
       context "when the shared-postgres parent is wokkud_managed" do
+        # Shared tenants set DATABASE_URL only when the app has none (they
+        # never clobber a dedicated DB's or the user's own value).
         before do
           parent.update!(wokkud_managed: true)
-          # The app fixture ships a DATABASE_URL; a shared tenant only sets
-          # it when absent (env ownership rule), so start from none here.
           app.env_vars.where(key: "DATABASE_URL").delete_all
+        end
+
+        it "keeps an app's existing DATABASE_URL instead of overwriting it" do
+          parent
+          app.env_vars.create!(key: "DATABASE_URL", value: "postgres://user-owned/db")
+          allow(Services::Ops).to receive(:issue_and_wait!).and_return(build_stubbed(:service_op, status: :succeeded))
+
+          db = described_class.new(app: app, service_type: "postgres", tier: "shared_free").call
+
+          expect(db.dsn).to be_present
+          expect(app.env_vars.find_by(key: "DATABASE_URL").value).to eq("postgres://user-owned/db")
         end
 
         it "provisions the tenant via a tenant.provision op and ensures the parent on the overlay" do
@@ -190,6 +223,21 @@ RSpec.describe DatabaseProvisioner do
             described_class.new(app: app, service_type: "postgres", tier: "shared_free").call
           }.to raise_error(Services::Ops::Failed)
         end
+
+        # Record-first: a failed tenant op leaves the row LINKED (so app
+        # deletion cleans it up) and marked error, not an unlinked orphan.
+        it "links the row to the app before the tenant op and marks it error when the op fails" do
+          parent
+          allow(Services::Ops).to receive(:issue_and_wait!).and_raise(Services::Ops::Timeout, "agent never reported")
+
+          expect {
+            described_class.new(app: app, service_type: "postgres", tier: "shared_free").call
+          }.to raise_error(Services::Ops::Timeout)
+
+          db = app.reload.database_services.find_by(shared: true, parent_service: parent)
+          expect(db).to be_present
+          expect(db.status).to eq("error")
+        end
       end
     end
   end
@@ -207,6 +255,13 @@ RSpec.describe DatabaseProvisioner do
     it "falls back to DEFAULT_IMAGES when the tier pins no image" do
       db = create(:database_service, tier_name: "basic")
       expect(described_class.image_for(db)).to eq("postgres:16")
+    end
+
+    # The live Ghost DBs run mysql:9.6.0 and DatastoreReconcileJob recreates with
+    # this image — anything older refuses to start on their data (2026-11-03).
+    it "never pins mysql below the 9.6 the live databases run" do
+      expect(Gem::Version.new(described_class::DEFAULT_IMAGES["mysql"].split(":").last)).to be >= Gem::Version.new("9.6.0")
+      expect(CreateDedicatedDatabaseJob::DEFAULT_IMAGES["mysql"]).to eq(described_class::DEFAULT_IMAGES["mysql"])
     end
 
     it "raises the friendly refusal for unsupported engines" do
