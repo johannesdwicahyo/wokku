@@ -85,9 +85,9 @@
     <% if user_signed_in? && current_user.billing_status == "suspended" %>
       <div class="border-b border-line bg-danger-soft px-4 py-2.5">
         <div class="flex items-center justify-center gap-2 text-xs text-ink">
-          <span>// apps suspended — insufficient funds.</span>
+          <span>// apps suspended — an invoice is unpaid.</span>
           <% if respond_to?(:dashboard_billing_path) %>
-            <%= link_to "top_up()", dashboard_billing_path, class: "font-bold underline" %>
+            <%= link_to "pay_invoice()", dashboard_billing_path, class: "font-bold underline" %>
           <% end %>
         </div>
       </div>

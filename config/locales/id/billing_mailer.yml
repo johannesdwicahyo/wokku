@@ -20,13 +20,13 @@ id:
     apps_suspended:
       subject: "Wokku — aplikasi kamu udah disuspend"
       heading: "Aplikasi kamu udah disuspend"
-      line_what: "Saldo Wokku kamu habis, jadi kami pause aplikasi kamu supaya nggak terus nagih. Data kamu aman."
+      line_what: "Ada tagihan yang sudah lewat jatuh tempo lebih dari 7 hari, jadi kami pause aplikasi kamu. Data kamu aman."
       line_apps: "Aplikasi yang disuspend: %{apps}"
-      line_action: "Top up saldo kamu untuk menghidupkan kembali."
-      cta: "Top Up dan Pulihkan"
+      line_action: "Bayar tagihannya, aplikasi kamu langsung aktif lagi."
+      cta: "Bayar tagihan dan pulihkan"
     apps_restored:
       subject: "Wokku — aplikasi kamu udah aktif lagi"
       heading: "Aplikasi kamu udah aktif lagi"
-      line_what: "Top up berhasil. Semua aplikasi kamu udah jalan lagi."
+      line_what: "Tagihan sudah dibayar. Semua aplikasi kamu udah jalan lagi."
       line_balance: "Saldo saat ini: %{balance}"
       cta: "Buka dashboard"

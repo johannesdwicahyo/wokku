@@ -4,7 +4,7 @@
     <h2>Welcome to Wokku<%= ", #{@user.name.split.first}" if @user.name.present? %>.</h2>
   </div>
   <div class="wk-body">
-    <p>Thanks for signing up. You're on a <strong>7-day free trial</strong> — full plan features, no payment method needed yet.</p>
+    <p>Thanks for signing up.<% if respond_to?(:dashboard_billing_url) %> Sleeping apps and shared databases are <strong>free</strong>; bigger apps are billed per resource on a monthly invoice. No payment method needed to start.<% end %></p>
 
     <div class="wk-label">// three_things_to_try()</div>
     <ul class="wk-list">

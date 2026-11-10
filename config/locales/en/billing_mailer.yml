@@ -20,13 +20,13 @@ en:
     apps_suspended:
       subject: "Wokku — your apps have been suspended"
       heading: "Your Wokku apps have been suspended"
-      line_what: "Your Wokku balance reached zero, so we paused your apps to stop charges. Your data is safe."
+      line_what: "An invoice is more than 7 days past due, so we paused your apps. Your data is safe."
       line_apps: "Suspended apps: %{apps}"
-      line_action: "Top up your balance to restore them."
-      cta: "Top Up and Restore"
+      line_action: "Pay the open invoice and your apps come back online."
+      cta: "Pay invoice and restore"
     apps_restored:
       subject: "Wokku — your apps are back online"
       heading: "Your Wokku apps are back online"
-      line_what: "Top-up confirmed. Your apps are running again."
+      line_what: "Invoice paid. Your apps are running again."
       line_balance: "Current balance: %{balance}"
       cta: "Open dashboard"
