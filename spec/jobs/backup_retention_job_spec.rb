@@ -189,4 +189,15 @@ RSpec.describe BackupRetentionJob, type: :job do
       expect { described_class.new.perform }.not_to change { Backup.where(mount_path: mount).count }
     end
   end
+  it "keeps only the newest free_cap backups of a shared database" do
+    parent = create(:database_service, service_type: "postgres", tier_name: "basic", status: :running)
+    db = create(:database_service, server: parent.server, service_type: "postgres", status: :running,
+                                   tier_name: "shared_free", shared: true, parent_service: parent)
+    backups = Array.new(4) { |i| create(:backup, database_service: db, created_at: i.hours.ago) }
+    allow_any_instance_of(described_class).to receive(:delete_backup) { |_j, b| b.destroy! }
+
+    described_class.new.perform
+
+    expect(db.backups.pluck(:id)).to match_array(backups.first(2).map(&:id))
+  end
 end

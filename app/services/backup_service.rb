@@ -18,7 +18,7 @@ class BackupService
 
   def perform!
     # Last line of defense for every caller (jobs, dashboard, API, MCP).
-    raise ArgumentError, DatabaseService::BACKUPS_UNSUPPORTED_MESSAGE if @db.backups_unsupported?
+    raise ArgumentError, @db.backups_unsupported_message if @db.backups_unsupported?
 
     destination = @server.backup_destination
     raise "No backup destination configured for #{@server.name}" unless destination

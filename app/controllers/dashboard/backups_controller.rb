@@ -12,13 +12,13 @@ module Dashboard
       authorize @database, :update?
 
       if @database.backups_unsupported?
-        redirect_to dashboard_addon_backups_path(@database), alert: DatabaseService::BACKUPS_UNSUPPORTED_MESSAGE
+        redirect_to dashboard_addon_backups_path(@database), alert: @database.backups_unsupported_message
         return
       end
 
       if @database.backup_limit_reached?
         redirect_to dashboard_addon_backups_path(@database),
-          alert: "Free tier limit reached (2 backups). Upgrade to Basic for daily auto-backups with 7-day retention."
+          alert: @database.backup_limit_message
         return
       end
 

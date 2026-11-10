@@ -58,7 +58,7 @@ RSpec.describe "API::V1::BackupsController", type: :request do
         post api_v1_database_backups_path(db), headers: headers
       }.not_to have_enqueued_job(BackupJob)
       expect(response).to have_http_status(:payment_required)
-      expect(JSON.parse(response.body)["error"]).to match(/Free tier limit reached/)
+      expect(JSON.parse(response.body)["error"]).to match(/Backup limit reached/)
     end
 
     it "returns a typed internal_error without the exception text when something blows up" do

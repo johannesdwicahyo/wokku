@@ -308,9 +308,13 @@ module Dashboard
           alert: "Attach a database to this app before triggering a backup."
       end
 
+      if db.backups_unsupported?
+        return redirect_to dashboard_app_path(@app), alert: db.backups_unsupported_message
+      end
+
       if db.backup_limit_reached?
         return redirect_to dashboard_app_path(@app),
-          alert: "Free tier backup limit reached. Upgrade to Solo or Pro for daily backups with retention."
+          alert: db.backup_limit_message
       end
 
       BackupJob.perform_later(db.id)

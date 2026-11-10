@@ -207,17 +207,30 @@ class DatabaseService < ApplicationRecord
 
   # Shared redis tenants are never backed up (2026-10-12): the export is the
   # whole parent's RDB — every tenant's keys — and redis restore isn't
-  # streamable anyway. Dedicated redis keeps its nightly export.
+  # streamable anyway. Dedicated redis keeps its nightly export. Memcached
+  # has no export at all.
   BACKUPS_UNSUPPORTED_MESSAGE = "Shared Redis isn't backed up. Upgrade to a dedicated Redis for backups."
+  MEMCACHED_BACKUPS_MESSAGE = "Memcached is a cache and isn't backed up."
 
   def backups_unsupported?
-    shared? && service_type == "redis"
+    service_type == "memcached" || (shared? && service_type == "redis")
   end
 
+  def backups_unsupported_message
+    service_type == "memcached" ? MEMCACHED_BACKUPS_MESSAGE : BACKUPS_UNSUPPORTED_MESSAGE
+  end
+
+  def backup_limit_message
+    "Backup limit reached: free shared databases can take #{backup_policy[:free_cap]} backups a day. " \
+      "Upgrade to a dedicated database for nightly backups."
+  end
+
+  # Free tiers cap manual backups per rolling day (in-flight ones count, so a
+  # double click can't slip past). Retention keeps the newest free_cap.
   def backup_limit_reached?
     cap = backup_policy[:free_cap]
     return false unless cap # paid tiers have no cap
-    backups.completed.count >= cap
+    backups.where.not(status: "failed").where(created_at: 24.hours.ago..).count >= cap
   end
 
   # Best-effort pre-destroy snapshot (shared_free policy). Called by

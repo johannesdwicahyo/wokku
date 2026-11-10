@@ -11,13 +11,13 @@ Cek backup database kamu, buat backup sekarang, download, atau restore.
 | Database | Backup otomatis |
 |---|---|
 | Dedicated Postgres, MySQL, MariaDB, MongoDB, Redis | Setiap malam. Wokku menyimpan minimal 7 backup harian terakhir. |
-| Shared Postgres, MariaDB | Tidak ada. Snapshot terakhir dibuat saat kamu menghapus add-on. |
-| Shared Redis | Tidak pernah di-backup. |
+| Shared Postgres, MariaDB | Tidak ada. Kamu bisa membuat backup sendiri sampai 2 kali sehari, dan Wokku menyimpan 2 yang terbaru. Snapshot terakhir dibuat saat kamu menghapus add-on. |
+| Shared Redis, Memcached | Tidak pernah di-backup. |
 
 Backup dienkripsi, dan Wokku yang mengatur lokasi penyimpanannya.
 
 :::callout tip
-Butuh backup untuk shared database? [Upgrade ke dedicated](/docs/databases/create-link#upgrade-to-dedicated). Data kamu ikut pindah.
+Butuh backup harian untuk shared database? [Upgrade ke dedicated](/docs/databases/create-link#upgrade-to-dedicated). Data kamu ikut pindah.
 :::
 
 ## Lihat daftar backup

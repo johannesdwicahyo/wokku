@@ -29,6 +29,10 @@
       <span class="text-ink-soft">No scheduled backup</span>
       <span class="text-dim">·</span>
       <span class="text-ink-soft">Snapshot saved on destroy</span>
+      <% if policy[:free_cap].to_i.positive? %>
+        <span class="text-dim">·</span>
+        <span class="text-ink-soft">Backup now up to <%= policy[:free_cap] %>× a day, latest <%= policy[:free_cap] %> kept</span>
+      <% end %>
     <% else %>
       <span class="text-ink-soft">Manual-only backups</span>
       <% if policy[:free_cap] && policy[:free_cap].positive? %>
@@ -132,7 +136,7 @@
     empty_body = if @destination&.enabled? && policy[:auto_backup]
       "Automatic backups run daily at 02:00 UTC. We keep #{gfs_retention_summary(policy[:gfs])}. Or trigger one now with 'Backup Now' above."
     elsif @destination&.enabled? && policy[:on_destroy_snapshot]
-      "This tier doesn't take scheduled backups. A snapshot will be saved when the database is destroyed. Use 'Backup Now' for manual snapshots."
+      "This tier doesn't take scheduled backups. A snapshot will be saved when the database is destroyed. Use 'Backup Now' for a manual backup#{policy[:free_cap].to_i.positive? ? " (up to #{policy[:free_cap]} a day; the latest #{policy[:free_cap]} are kept)" : ""}."
     elsif @destination&.enabled?
       cap = policy[:free_cap] && policy[:free_cap].positive? ? " (up to #{policy[:free_cap]} stored)" : ""
       "This tier supports manual backups only#{cap}. Use 'Backup Now' to create one."

@@ -5,7 +5,7 @@
   <% destination = database.server.backup_destination %>
   <% in_flight = database.backups.in_flight.exists? %>
   <% if database.backups_unsupported? %>
-    <div class="text-xs text-dim"><%= DatabaseService::BACKUPS_UNSUPPORTED_MESSAGE %></div>
+    <div class="text-xs text-dim"><%= database.backups_unsupported_message %></div>
   <% elsif in_flight %>
     <%= render "dashboard/shared/spinning_button",
         label: "Backing up",

@@ -15,13 +15,13 @@ module Api
         authorize db, :update? # same rule as the dashboard (and #restore below)
 
         if db.backups_unsupported?
-          render json: { error: DatabaseService::BACKUPS_UNSUPPORTED_MESSAGE }, status: :unprocessable_entity
+          render json: { error: db.backups_unsupported_message }, status: :unprocessable_entity
           return
         end
 
         if db.backup_limit_reached?
           render json: {
-            error: "Free tier limit reached (2 backups). Upgrade to Basic for daily auto-backups with 7-day retention."
+            error: db.backup_limit_message
           }, status: :payment_required
           return
         end

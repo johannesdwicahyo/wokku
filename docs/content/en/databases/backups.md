@@ -11,13 +11,13 @@ Check your database's backups, take one now, download it, or restore it.
 | Database | Automatic backups |
 |---|---|
 | Dedicated Postgres, MySQL, MariaDB, MongoDB, Redis | Nightly. Wokku keeps at least the last 7 daily backups. |
-| Shared Postgres, MariaDB | None. A final snapshot is taken when you remove the add-on. |
-| Shared Redis | Never backed up. |
+| Shared Postgres, MariaDB | None. You can take up to 2 backups a day yourself, and Wokku keeps the latest 2. A final snapshot is taken when you remove the add-on. |
+| Shared Redis, Memcached | Never backed up. |
 
 Backups are encrypted, and Wokku manages where they're stored.
 
 :::callout tip
-Need backups for a shared database? [Upgrade it to dedicated](/docs/databases/create-link#upgrade-to-dedicated). Your data moves over.
+Need nightly backups for a shared database? [Upgrade it to dedicated](/docs/databases/create-link#upgrade-to-dedicated). Your data moves over.
 :::
 
 ## List backups

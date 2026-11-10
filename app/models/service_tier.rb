@@ -9,7 +9,9 @@ class ServiceTier < ApplicationRecord
   #
   # - shared_free: no scheduled auto-backup, but takes a one-shot snapshot
   #                on destroy so the user has a recovery file in R2 for
-  #                30 days after deleting a free-tier service.
+  #                30 days after deleting a free-tier service. "Backup now"
+  #                works free_cap times a day; retention keeps the newest
+  #                free_cap.
   # - basic:       daily auto, 7 dailies kept, no weekly/monthly.
   # - standard:    daily auto, 7 dailies + 4 weeklies + 1 monthly (GFS).
   # - performance: daily auto, 7 dailies + 4 weeklies + 3 monthlies (GFS).
@@ -21,7 +23,7 @@ class ServiceTier < ApplicationRecord
   # regardless of tier (no export path). redis IS backed up (RDB snapshot)
   # since 2026-07-15 — customers use it as a store, not just a cache.
   BACKUP_POLICIES = {
-    "shared_free" => { auto_backup: false, gfs: { daily: 0, weekly: 0, monthly: 0 }, on_destroy_snapshot: true,  free_cap: 0 },
+    "shared_free" => { auto_backup: false, gfs: { daily: 0, weekly: 0, monthly: 0 }, on_destroy_snapshot: true,  free_cap: 2 },
     "basic"       => { auto_backup: true,  gfs: { daily: 7, weekly: 0, monthly: 0 }, on_destroy_snapshot: false, free_cap: nil },
     "standard"    => { auto_backup: true,  gfs: { daily: 7, weekly: 4, monthly: 1 }, on_destroy_snapshot: false, free_cap: nil },
     "performance" => { auto_backup: true,  gfs: { daily: 7, weekly: 4, monthly: 3 }, on_destroy_snapshot: false, free_cap: nil }

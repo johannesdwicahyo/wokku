@@ -7,10 +7,14 @@ class BackupRetentionJob < ApplicationJob
 
   def perform
     DatabaseService.where(status: :running).find_each do |db|
-      gfs = db.backup_policy[:gfs] || { daily: 0, weekly: 0, monthly: 0 }
-      next if gfs.values.all? { |v| v.to_i.zero? } # shared_free: no scheduled backups, never delete
+      policy = db.backup_policy
+      gfs = policy[:gfs] || { daily: 0, weekly: 0, monthly: 0 }
+      completed = db.backups.where(status: "completed").order(created_at: :desc)
+      cap = policy[:free_cap].to_i
+      next if cap.zero? && gfs.values.all? { |v| v.to_i.zero? } # no schedule, no cap: never delete
 
-      keep = gfs_keep_ids(db.backups.where(status: "completed").order(created_at: :desc), gfs)
+      # shared_free has no schedule; it keeps its newest `cap` manual backups.
+      keep = cap.positive? ? completed.limit(cap).pluck(:id).to_set : gfs_keep_ids(completed, gfs)
       next if keep.empty? # defense-in-depth: empty keep-set must never mean "delete everything"
       deleted = 0
       db.backups.where(status: "completed").where.not(id: keep.to_a).find_each do |backup|
