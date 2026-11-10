@@ -59,6 +59,8 @@ module Dashboard
       if Addons::SharedProvisioner.feature_enabled?
         begin
           enforce_plan_quota!(current_user, size: box_size, additional: 1)
+        rescue PlanEnforceable::AccountLimitError => e
+          return redirect_to dashboard_template_path(params[:template_slug]), alert: e.message
         rescue PlanEnforceable::PlanQuotaError => e
           if current_user.plan.buyable_box_sizes.include?(box_size)
             price = current_user.plan.extra_box_price(box_size, currency: :idr)

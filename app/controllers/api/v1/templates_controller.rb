@@ -48,7 +48,8 @@ module Api
           begin
             enforce_plan_quota!(current_user, size: box_size, additional: 1)
           rescue PlanEnforceable::PlanQuotaError => e
-            return render json: { error: "Plan allows #{e.allowed} #{box_size} boxes — at limit. Upgrade your plan." },
+            msg = e.is_a?(PlanEnforceable::AccountLimitError) ? e.message : "Plan allows #{e.allowed} #{box_size} boxes — at limit. Upgrade your plan."
+            return render json: { error: msg },
                           status: :forbidden
           end
         end

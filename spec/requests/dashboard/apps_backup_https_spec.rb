@@ -64,6 +64,7 @@ RSpec.describe "Dashboard::Apps backup/https/quota", type: :request do
       # Zero quota for every size: resolve_box_size finds no headroom and
       # enforce_plan_quota! raises, exercising the controller-level rescue.
       allow(Wokku.config.plan_enforcer).to receive(:quota).and_return(0)
+      allow(Wokku.config).to receive(:resource_builder?).and_return(false) # plan-mode quotas
       post dashboard_apps_path, params: {
         app_record: { name: "quota-app", server_id: servers(:one).id, box_size: "small" }
       }

@@ -7,6 +7,10 @@ module Dashboard
 
     deferred_sections :list, :activity, :panel_deploys, :panel_logs
 
+    rescue_from PlanEnforceable::AccountLimitError do |e|
+      redirect_to new_dashboard_app_path, alert: e.message
+    end
+
     rescue_from PlanEnforceable::PlanQuotaError do |e|
       redirect_to new_dashboard_app_path,
         alert: "Your #{current_user.plan.name} plan allows #{e.allowed} #{e.size} boxes; you already have #{e.requested - 1}. Upgrade or pick a smaller size."
