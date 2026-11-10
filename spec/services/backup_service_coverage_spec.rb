@@ -32,17 +32,12 @@ RSpec.describe BackupService do
       expect(db.backups.count).to eq(0)
     end
 
-    it "raises for an unsupported database type and marks the backup failed" do
+    it "refuses memcached up front and creates no backup row" do
       db.update_column(:service_type, "memcached")
-      allow(db).to receive(:server).and_return(server)
-      allow(server).to receive(:backup_destination).and_return(destination)
       expect(Services::Ops).not_to receive(:issue_and_wait!)
 
-      service = described_class.new(db)
-      # The export_command guard raises inside perform_managed!, so the
-      # running backup row is created first then flipped to failed.
-      expect { service.perform! }.to raise_error(/Unsupported database type for backup/)
-      expect(db.backups.last.status).to eq("failed")
+      expect { described_class.new(db).perform! }.to raise_error(ArgumentError, /Memcached/)
+      expect(db.backups.count).to eq(0)
     end
   end
 
