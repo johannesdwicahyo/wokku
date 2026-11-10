@@ -13,6 +13,13 @@ module PlanEnforceable
     end
   end
 
+  # Per-resource billing: a paid size over the account's resource limit
+  # (the new-account cap). Subclass so every existing rescue still catches it.
+  class AccountLimitError < PlanQuotaError
+    MESSAGE = "That size is over your account limit — pay your first invoice to go higher.".freeze
+    def message = MESSAGE
+  end
+
   # ---------------------------------------------------------------------------
   # Box-quota enforcement (public — called from controllers + specs)
   # Renamed from slot_count → box_count in the 1.9 box-rename.
@@ -52,6 +59,10 @@ module PlanEnforceable
   end
 
   def enforce_plan_quota!(user, size:, additional:)
+    # Per-resource billing retired the plans' paid box quotas: paid sizes
+    # are gated by the account limit instead. Sleeping keeps its quota.
+    return enforce_account_limit!(user, size: size, additional: additional) if Wokku.config.resource_builder? && size.to_s != "sleeping"
+
     allowed = quota_allowed(user, size)
     used    = current_box_count(user, size)
     if (used + additional) > allowed
@@ -173,5 +184,20 @@ module PlanEnforceable
       .active
       .where(resource_type: resource_type, resource_id_ref: resource_id_ref)
       .find_each(&:stop!)
+  end
+
+  private
+
+  def enforce_account_limit!(user, size:, additional:)
+    team = user.teams.first
+    tier = DynoTier.find_by(name: DynoTier::BOX_SIZE_TO_DYNO_TIER[size.to_s])
+    shape = Resources::ApplyChange.shape_for_dyno_tier(tier)
+    return unless team && shape
+
+    before = Resources::ApplyChange.team_allocations(team)
+    after = before + [ { shape: shape, instances: additional } ]
+    return if Wokku.config.plan_enforcer.allowed?(team, :resources, from: before, to: after)
+
+    raise AccountLimitError.new(size: size, allowed: 0, requested: additional)
   end
 end
