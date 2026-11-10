@@ -16,7 +16,7 @@ module PlanEnforceable
   # Per-resource billing: a paid size over the account's resource limit
   # (the new-account cap). Subclass so every existing rescue still catches it.
   class AccountLimitError < PlanQuotaError
-    MESSAGE = "That size is over your account limit — pay your first invoice to go higher.".freeze
+    MESSAGE = "That size is over your account limit — add credit on the Billing page to go higher.".freeze
     def message = MESSAGE
   end
 

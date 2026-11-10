@@ -66,7 +66,7 @@ Slider di **Runtime** → **Scaling** menampilkan harga sebelum kamu menyimpan. 
 
 ## Akun baru
 
-Sampai invoice pertama kamu dibayar, total semua resource kamu dibatasi Rp150.000/bulan (halaman Billing kamu menampilkan batas saat ini). Bayar invoice tersebut untuk menaikkan batasnya.
+Sampai pembayaran pertama kamu, total semua resource kamu dibatasi Rp150.000/bulan (halaman Billing kamu menampilkan batas saat ini). Untuk langsung membuka batas ini, klik **Add credit** di halaman Billing dan bayar salah satu nominal yang tersedia. Kredit tersebut akan memotong invoice berikutnya.
 
 ## Perubahan harga
 

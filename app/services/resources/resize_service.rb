@@ -20,7 +20,7 @@ module Resources
         before = ApplyChange.team_allocations(team)
         after  = before.reject { |a| a[:service_id] == db.id } + [ { shape: shape, instances: 1, service_id: db.id } ]
         unless Wokku.config.plan_enforcer.allowed?(team, :resources, from: before, to: after)
-          return ApplyChange::Result.new(ok: false, error: "That size is over your account limit — pay your first invoice to go higher.")
+          return ApplyChange::Result.new(ok: false, error: "That size is over your account limit — add credit on the Billing page to go higher.")
         end
       end
       add_mb = shape.memory_mb - (db.memory_mb || db.service_tier&.spec&.dig("memory_mb").to_i)

@@ -118,7 +118,7 @@ module Resources
       before = team_allocations(team)
       after = before + shapes.map { |s| { shape: s, instances: 1 } }
       unless Wokku.config.plan_enforcer.allowed?(team, :resources, from: before, to: after)
-        return Result.new(ok: false, error: "That size is over your account limit — pay your first invoice to go higher.")
+        return Result.new(ok: false, error: "That size is over your account limit — add credit on the Billing page to go higher.")
       end
       CapacityGuard.check!(server, add_mb: shapes.sum(&:memory_mb))
       Result.new(ok: true)
@@ -166,7 +166,7 @@ module Resources
         persist!(shapes, counts, disk)
         after = self.class.team_allocations(@app.team)
         unless Wokku.config.plan_enforcer.allowed?(@app.team, :resources, from: before, to: after)
-          raise Rejected, "That size is over your account limit — pay your first invoice to go higher."
+          raise Rejected, "That size is over your account limit — add credit on the Billing page to go higher."
         end
         CapacityGuard.check_change!(@app.server, before_mb: before_mb)
       end

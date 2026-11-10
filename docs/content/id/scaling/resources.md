@@ -70,7 +70,7 @@ Kalau app kamu punya persistent volume, slider **Volume disk** (0–100 GB) munc
 
 ## Batas akun baru
 
-Sampai invoice pertama kamu dibayar, total semua resource kamu dibatasi (default Rp150.000/bulan; halaman Billing menampilkan batas saat ini). Kalau melebihi batas, akan muncul *"That size is over your account limit — pay your first invoice to go higher."*
+Sampai pembayaran pertama kamu, total semua resource kamu dibatasi (default Rp150.000/bulan; halaman Billing menampilkan batas saat ini). Kalau melebihi batas, akan muncul *"That size is over your account limit — add credit on the Billing page to go higher."*
 
 ## Database
 

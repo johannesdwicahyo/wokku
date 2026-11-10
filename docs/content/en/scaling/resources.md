@@ -70,7 +70,7 @@ If your app has a persistent volume, a **Volume disk** slider (0–100 GB) appea
 
 ## New-account limit
 
-Until your first invoice is paid, the total of all your resources is capped (Rp150.000/month by default; the Billing page shows the current cap). Going over shows *"That size is over your account limit — pay your first invoice to go higher."*
+Until your first payment, the total of all your resources is capped (Rp150.000/month by default; the Billing page shows the current cap). Going over shows *"That size is over your account limit — add credit on the Billing page to go higher."*
 
 ## Databases
 

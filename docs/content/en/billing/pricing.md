@@ -66,7 +66,7 @@ The sliders on **Runtime** → **Scaling** show the price before you save. See [
 
 ## New accounts
 
-Until your first invoice is paid, the total of all your resources is capped at Rp150.000/month (your Billing page shows the current cap). Pay that invoice to go higher.
+Until your first payment, the total of all your resources is capped at Rp150.000/month (your Billing page shows the current cap). To lift it right away, click **Add credit** on the Billing page and pay any of the listed amounts. The credit comes off your next invoice.
 
 ## Price changes
 

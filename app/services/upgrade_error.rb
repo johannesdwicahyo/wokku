@@ -37,7 +37,7 @@ class UpgradeError < StandardError
   # Builder mode: the plan enforcer / capacity guard refused the shape.
   # Raised with Resources::ApplyChange's message.
   class OverLimit < UpgradeError
-    UI_MESSAGE = "That size is over your account limit — pay your first invoice to go higher.".freeze
+    UI_MESSAGE = "That size is over your account limit — add credit on the Billing page to go higher.".freeze
     def initialize(msg = UI_MESSAGE); super; end
   end
 
