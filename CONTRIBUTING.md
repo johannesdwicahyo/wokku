@@ -48,7 +48,7 @@ Things that probably won't be accepted upstream:
 1. Fork the `wokku` repository on GitHub
 2. Create a topic branch from `main`
 3. Make your change with clear commit messages
-4. Run any relevant tests (see `README.md` if scripts are present)
+4. Run `bin/ci` (needs a local Postgres; Go optional): the engine suite in parallel, the 95% line-coverage gate, and `wokkud` vet + tests. Engine specs live here, in `spec/`.
 5. Open a pull request describing what and why
 6. Sign the CLA when prompted by the bot
 7. Maintainer reviews; iterate as needed

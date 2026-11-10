@@ -1,0 +1,29 @@
+#!/bin/sh
+# Local CI for the engine: the same gates as .github/workflows/ci.yml.
+# Needs a local Postgres (PGHOST/PGUSER as in harness/config/database.yml).
+set -eu
+cd "$(dirname "$0")/.."
+N=${PARALLEL_TEST_PROCESSORS:-8}
+export PARALLEL_TEST_PROCESSORS=$N RAILS_ENV=test
+
+echo "== Test DBs (x$N)"
+for i in $(seq 1 "$N"); do
+  db="wokku_oss_harness_test$([ "$i" -eq 1 ] || echo "$i")"
+  dropdb --if-exists "$db" && createdb "$db"
+  psql -q -v ON_ERROR_STOP=1 -d "$db" -f db/structure.sql >/dev/null
+done
+
+echo "== RSpec (parallel)"
+rm -rf coverage
+bundle exec parallel_rspec spec/
+
+echo "== Coverage gate (95% line)"
+bundle exec rake coverage:check
+
+if command -v go >/dev/null; then
+  echo "== wokkud: vet + test"
+  (cd wokkud && go vet ./... && go test ./...)
+else
+  echo "== wokkud: skipped (go not installed)"
+fi
+echo "✅ engine CI passed"

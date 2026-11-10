@@ -7,6 +7,10 @@
 require "ostruct" # Ruby 3.4 dropped it from autoload; specs use it
 require "simplecov"
 SimpleCov.start do
+  # One result per parallel_tests worker ("" for worker 1, "2".."N" after),
+  # merged by `rake coverage:check`. Without it workers overwrite each other.
+  command_name "RSpec#{ENV['TEST_ENV_NUMBER']}"
+  merge_timeout 3600
   enable_coverage :branch
   SimpleCov.skip "/spec/"
   SimpleCov.skip "/harness/"
