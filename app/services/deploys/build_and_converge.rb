@@ -71,9 +71,26 @@ module Deploys
         sleep POLL until deploy.reload.build_finished_at.present?
         raise Error, "wokkud build failed: #{deploy.build_error}" if deploy.build_error.present?
 
+        run_release!(app, deploy)
         ::Lifecycle::Ops.converge!(app, image_ref: deploy.wokkud_image_ref, deploy: deploy)
         deploy.reload.log.to_s
       end
+    end
+
+    # Procfile `release:` (Heroku release phase): a one-off container on the
+    # NEW image, before switch-over. A failure fails the deploy and the old
+    # version keeps serving. Skipped for previews — a preview may share the
+    # parent's database, and a PR branch must not migrate production.
+    def run_release!(app, deploy)
+      cmd = deploy.formation_json&.dig("release").presence
+      return if cmd.nil? || app.is_preview?
+
+      line = "→ running release: #{cmd}\n"
+      Deploy.where(id: deploy.id).update_all([ "log = COALESCE(log, '') || ?", line ])
+      DeployChannel.broadcast_to(deploy, { type: "log", data: line })
+      ::Lifecycle::Ops.run!(app, cmd, deploy: deploy)
+    rescue ::Lifecycle::Ops::Failed => e
+      raise Error, [ "release failed: #{e.message}", e.op&.result&.dig("output") ].compact.join("\n")
     end
 
     # Two clocks: the idle clock (CLAIM_WAIT seconds of builder-idle silence

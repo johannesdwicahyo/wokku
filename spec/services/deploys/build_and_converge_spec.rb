@@ -139,6 +139,43 @@ RSpec.describe Deploys::BuildAndConverge do
     end
   end
 
+  describe "Procfile release phase" do
+    before do
+      allow(service).to receive(:wokkud_build?).and_return(true)
+      allow(service).to receive(:wait_for_claim).and_return(true)
+      deploy.update!(build_picked_up_at: Time.current, build_finished_at: Time.current, log: "built",
+                     formation_json: { "web" => "bin/rails server", "release" => "bin/rails db:migrate" })
+    end
+
+    it "runs the release command on the new image before switching over" do
+      expect(::Lifecycle::Ops).to receive(:run!).with(app_record, "bin/rails db:migrate", deploy: deploy).ordered
+      expect(::Lifecycle::Ops).to receive(:converge!).ordered
+      service.call
+    end
+
+    it "fails the deploy without switching over when release fails, showing its output" do
+      op = instance_double(LifecycleOp, kind: "stack.run", error: "exit 1", error_code: "exit_nonzero",
+                                        result: { "output" => "PG::UndefinedTable" })
+      allow(::Lifecycle::Ops).to receive(:run!).and_raise(::Lifecycle::Ops::Failed.new(op))
+      expect(::Lifecycle::Ops).not_to receive(:converge!)
+      expect { service.call }.to raise_error(Deploys::BuildAndConverge::Error, /release failed.*PG::UndefinedTable/m)
+    end
+
+    it "skips release for PR previews (they may share the parent's database)" do
+      app_record.update_columns(is_preview: true)
+      expect(::Lifecycle::Ops).not_to receive(:run!)
+      allow(::Lifecycle::Ops).to receive(:converge!)
+      service.call
+    end
+
+    it "does nothing extra without a release line" do
+      deploy.update!(formation_json: { "web" => "bin/rails server" })
+      expect(::Lifecycle::Ops).not_to receive(:run!)
+      allow(::Lifecycle::Ops).to receive(:converge!)
+      service.call
+    end
+  end
+
   describe "timeout budget" do
     it "does not start DEPLOY_TIMEOUT until the build is picked up" do
       allow(service).to receive(:wokkud_build?).and_return(true)
