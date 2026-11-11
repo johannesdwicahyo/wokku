@@ -85,12 +85,16 @@ module Deploys
       cmd = deploy.formation_json&.dig("release").presence
       return if cmd.nil? || app.is_preview?
 
-      line = "→ running release: #{cmd}\n"
-      Deploy.where(id: deploy.id).update_all([ "log = COALESCE(log, '') || ?", line ])
-      DeployChannel.broadcast_to(deploy, { type: "log", data: line })
-      ::Lifecycle::Ops.run!(app, cmd, deploy: deploy)
+      append_log(deploy, "→ running release: #{cmd}\n")
+      output = ::Lifecycle::Ops.run!(app, cmd, deploy: deploy)&.result&.dig("output").to_s
+      append_log(deploy, output.end_with?("\n") ? output : "#{output}\n") if output.present?
     rescue ::Lifecycle::Ops::Failed => e
       raise Error, [ "release failed: #{e.message}", e.op&.result&.dig("output") ].compact.join("\n")
+    end
+
+    def append_log(deploy, text)
+      Deploy.where(id: deploy.id).update_all([ "log = COALESCE(log, '') || ?", text ])
+      DeployChannel.broadcast_to(deploy, { type: "log", data: text })
     end
 
     # Two clocks: the idle clock (CLAIM_WAIT seconds of builder-idle silence

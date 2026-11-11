@@ -153,6 +153,13 @@ RSpec.describe Deploys::BuildAndConverge do
       service.call
     end
 
+    it "writes the release output into the deploy log on success" do
+      op = instance_double(LifecycleOp, result: { "output" => "Seeded 5 assistant personalities.\n" })
+      allow(::Lifecycle::Ops).to receive(:run!).and_return(op)
+      allow(::Lifecycle::Ops).to receive(:converge!)
+      expect(service.call).to include("running release: bin/rails db:migrate", "Seeded 5 assistant personalities.")
+    end
+
     it "fails the deploy without switching over when release fails, showing its output" do
       op = instance_double(LifecycleOp, kind: "stack.run", error: "exit 1", error_code: "exit_nonzero",
                                         result: { "output" => "PG::UndefinedTable" })
