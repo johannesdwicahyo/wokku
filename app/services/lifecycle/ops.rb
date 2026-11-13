@@ -171,7 +171,28 @@ module Lifecycle
         restart: restart, tag_from_local: tag_from_local,
         local_ref: (tag_from_local ? "dokku/#{app.name}:latest" : nil)
       }.compact
-      issue!(app, "stack.converge", params, wait: wait, timeout: timeout)
+      # Containers this converge replaces or stops exit on purpose — not
+      # crashes, whatever exit code the app's SIGTERM handling picks
+      # (mochipos exits 1). The window outlives the op so a die event that
+      # arrives a little late is still recognised.
+      mark_expected_exit!(app, timeout.seconds + EXPECTED_EXIT_GRACE)
+      begin
+        issue!(app, "stack.converge", params, wait: wait, timeout: timeout)
+      ensure
+        mark_expected_exit!(app, EXPECTED_EXIT_GRACE) if wait
+      end
+    end
+
+    EXPECTED_EXIT_GRACE = 2.minutes
+
+    def self.mark_expected_exit!(app, ttl)
+      Rails.cache.write("lifecycle:expected_exit:#{app.id}", true, expires_in: ttl)
+    end
+
+    # A container death Wokku caused: mid-converge (deploy, restart, scale,
+    # stop, idle sleep), or the app is meant to be down.
+    def self.expected_exit?(app)
+      app.sleeping? || app.stopped? || Rails.cache.read("lifecycle:expected_exit:#{app.id}").present?
     end
 
     # [image_ref, formation_commands] of the app's live web service, read-only

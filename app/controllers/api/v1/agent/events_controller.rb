@@ -32,6 +32,7 @@ module Api
 
           app = lookup_app(event[:app].to_s, event[:container].to_s)
           return false unless app
+          return false if ::Lifecycle::Ops.expected_exit?(app)
 
           # wokkud always sends the docker container ID; without it we can't dedupe
           # crashes (the DB unique index on container_id would collapse distinct

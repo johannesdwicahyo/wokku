@@ -61,6 +61,7 @@ class CrashLoopDetectorJob < ApplicationJob
       next if CrashEvent.where(container_id: r[:name]).exists?
       app = server.app_records.find_by(name: r[:app])
       next unless app
+      next if Lifecycle::Ops.expected_exit?(app)
       details = fetch_crash_details(server, r[:name])
       next if details.nil?
       app.crash_events.create!(

@@ -97,6 +97,17 @@ RSpec.describe "Api::V1::Agent::Events" do
     expect(CrashEvent.last.log_excerpt.bytesize).to eq(Api::V1::Agent::EventsController::MAX_EXCERPT_BYTES)
   end
 
+  it "ignores a death Wokku caused (idle sleep, stop, restart) — no crash row, no alert" do
+    Lifecycle::Ops.mark_expected_exit!(app_record, 1.minute)
+    expect { post_die(exit_code: 1, oom: false) }.not_to change(CrashEvent, :count)
+    expect(response.parsed_body).to eq("ingested" => 0)
+  end
+
+  it "ignores a death reported after the app went to sleep" do
+    app_record.update!(status: :sleeping)
+    expect { post_die(exit_code: 1, oom: false) }.not_to change(CrashEvent, :count)
+  end
+
   it "rejects a bad token" do
     post "/api/v1/agent/events", params: { events: [] }.to_json,
          headers: headers.merge("Authorization" => "Bearer wrong")

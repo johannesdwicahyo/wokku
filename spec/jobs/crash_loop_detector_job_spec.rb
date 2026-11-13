@@ -56,6 +56,14 @@ RSpec.describe CrashLoopDetectorJob do
       expect(ev.container_id).to eq("loopy.web.1.aaa")
     end
 
+    it "does not record a container Wokku stopped on purpose (app asleep)" do
+      app.update!(status: :sleeping)
+      rows = [ { app: "loopy", crashed: true, age_seconds: 60, name: "loopy.web.1.zzz" } ]
+      allow_any_instance_of(described_class).to receive(:fetch_container_rows).and_return(rows)
+      expect_any_instance_of(described_class).not_to receive(:fetch_crash_details)
+      expect { described_class.perform_now(server.id) }.not_to change { CrashEvent.count }
+    end
+
     it "does not double-record the same container" do
       app.crash_events.create!(container_id: "loopy.web.1.aaa", exit_code: 1, exited_at: Time.current)
       rows = [ { app: "loopy", crashed: true, age_seconds: 60, name: "loopy.web.1.aaa" } ]

@@ -19,6 +19,22 @@ RSpec.describe Lifecycle::Ops do
       create(:deploy, :succeeded, :wokkud, app_record: app, formation_json: { "web" => "bundle exec puma" })
     end
 
+    it "marks the app's container exits as expected while it converges (a stop/restart is not a crash)" do
+      allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
+      expect(described_class.expected_exit?(app)).to be(false)
+      described_class.converge!(app, wait: false)
+      expect(described_class.expected_exit?(app)).to be(true)
+      travel 15.minutes do
+        expect(described_class.expected_exit?(app)).to be(false)
+      end
+    end
+
+    it "treats a sleeping or stopped app's exits as expected" do
+      expect(described_class.expected_exit?(app.tap { _1.update!(status: :sleeping) })).to be(true)
+      expect(described_class.expected_exit?(app.tap { _1.update!(status: :stopped) })).to be(true)
+      expect(described_class.expected_exit?(app.tap { _1.update!(status: :running) })).to be(false)
+    end
+
     it "assembles desired-state params from records" do
       app.process_scales.create!(process_type: "web", count: 2)
       app.process_scales.create!(process_type: "worker", count: 1)
