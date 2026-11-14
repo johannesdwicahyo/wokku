@@ -54,7 +54,7 @@ Tanya Claude: *"Kirim alert deploy gagal dan downtime untuk my-app ke Slack webh
 | **Discord** | URL webhook channel (`config.url`) |
 | **Telegram** | Bot token + chat ID (`config.bot_token`, `config.chat_id`) |
 | **Webhook** | URL HTTPS apa saja (`config.url`). Wokku mengirim POST JSON: `{"event": "...", "app": "...", "timestamp": "..."}` |
-| **Push** | Ditambahkan otomatis saat kamu login ke app Wokku iOS & Mac (segera hadir) |
+| **Push** | Ditambahkan otomatis saat kamu login ke app Wokku iOS & Mac |
 
 ## Event
 

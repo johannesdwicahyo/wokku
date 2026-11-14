@@ -30,7 +30,7 @@ What's different from Wokku Cloud:
 
 - **No billing.** There are no prices, plans or limits.
 - **No automatic DNS.** You point your own domains.
-- **The `wokku` CLI, the Claude Code plugin and the iOS app only talk to wokku.cloud.** Use the dashboard or the REST API on your install.
+- **The `wokku` CLI, the Claude Code plugin and the iOS & Mac apps only talk to wokku.cloud.** Use the dashboard or the REST API on your install.
 - **Sign-up is closed by default.** You create the admin account on first visit; others can't register unless you allow it.
 
 ## Requirements

@@ -2,16 +2,14 @@
 title: iOS & Mac App
 summary: The Wokku app for iPhone and the Mac menu bar — check your apps, read logs, fix things and get alerts while away from your desk.
 eyebrow: mobile
-last_updated: 2026-11-11
+last_updated: 2026-11-14
 ---
 
 Use the Wokku app to stay on call for your apps from your iPhone or Mac menu bar.
 
 **[Download Wokku for iPhone on the App Store](https://apps.apple.com/app/wokku/id6826866287)**
 
-:::callout note
-The Mac menu bar app is coming soon to the Mac App Store.
-:::
+**[Download Wokku for Mac on the Mac App Store](https://apps.apple.com/app/wokku/id6826866287?platform=mac)**
 
 ## Requirements
 

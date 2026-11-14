@@ -5,7 +5,7 @@ eyebrow: api
 last_updated: 2026-11-07
 ---
 
-Wokku itu API-first: setiap aksi di dashboard berjalan lewat [REST API](/docs/api/endpoints) yang sama dan bisa kamu panggil sendiri. [CLI](/docs/cli/commands) dan [Claude Code](/docs/mcp/tools) dibangun di atas API itu, jadi keduanya bisa melakukan hampir semua yang bisa dilakukan dashboard. [App iPhone](https://apps.apple.com/app/wokku/id6826866287) (app menu bar Mac segera hadir) dibuat untuk on call: cek status, baca log, restart, rollback, dan menangani insiden.
+Wokku itu API-first: setiap aksi di dashboard berjalan lewat [REST API](/docs/api/endpoints) yang sama dan bisa kamu panggil sendiri. [CLI](/docs/cli/commands) dan [Claude Code](/docs/mcp/tools) dibangun di atas API itu, jadi keduanya bisa melakukan hampir semua yang bisa dilakukan dashboard. [App iPhone](https://apps.apple.com/app/wokku/id6826866287) dan [app menu bar Mac](https://apps.apple.com/app/wokku/id6826866287?platform=mac) dibuat untuk on call: cek status, baca log, restart, rollback, dan menangani insiden.
 
 ✅ tersedia · — tidak tersedia
 

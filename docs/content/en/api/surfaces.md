@@ -5,7 +5,7 @@ eyebrow: api
 last_updated: 2026-11-07
 ---
 
-Wokku is API-first: every action in the dashboard goes through the same [REST API](/docs/api/endpoints) you can call yourself. The [CLI](/docs/cli/commands) and [Claude Code](/docs/mcp/tools) are built on that API, so they can do almost everything the dashboard can. The [iPhone app](https://apps.apple.com/app/wokku/id6826866287) (Mac menu bar app coming soon) is for being on call: checking status, reading logs, restarting, rolling back and handling incidents.
+Wokku is API-first: every action in the dashboard goes through the same [REST API](/docs/api/endpoints) you can call yourself. The [CLI](/docs/cli/commands) and [Claude Code](/docs/mcp/tools) are built on that API, so they can do almost everything the dashboard can. The [iPhone app](https://apps.apple.com/app/wokku/id6826866287) and the [Mac menu bar app](https://apps.apple.com/app/wokku/id6826866287?platform=mac) are for being on call: checking status, reading logs, restarting, rolling back and handling incidents.
 
 ✅ available · — not available
 

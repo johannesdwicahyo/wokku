@@ -92,7 +92,7 @@ Ask Claude: *"Mute alerts for my-app until tomorrow morning."*
 Events you can mute: `deploy_succeeded`, `deploy_failed`, `app_crashed`, `backup_completed`, `backup_failed`, `resource_high_cpu`, `resource_high_memory`, `app_down`, `app_recovered`.
 
 :::callout note
-Push alerts need the Wokku iOS & Mac app, which is coming soon. See [iOS & Mac App](/docs/mobile/download).
+Push alerts need the Wokku iOS & Mac app. See [iOS & Mac App](/docs/mobile/download).
 :::
 
 ## See also

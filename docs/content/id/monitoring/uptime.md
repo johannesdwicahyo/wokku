@@ -92,7 +92,7 @@ Tanya Claude: *"Mute alert untuk my-app sampai besok pagi."*
 Event yang bisa di-mute: `deploy_succeeded`, `deploy_failed`, `app_crashed`, `backup_completed`, `backup_failed`, `resource_high_cpu`, `resource_high_memory`, `app_down`, `app_recovered`.
 
 :::callout note
-Push alert butuh app Wokku iOS & Mac, yang segera hadir. Lihat [App iOS & Mac](/docs/mobile/download).
+Push alert butuh app Wokku iOS & Mac. Lihat [App iOS & Mac](/docs/mobile/download).
 :::
 
 ## Lihat juga
