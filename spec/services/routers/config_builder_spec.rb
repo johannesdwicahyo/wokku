@@ -92,4 +92,26 @@ RSpec.describe Routers::ConfigBuilder do
     apps = builder.as_json.fetch("apps")
     expect(apps.first["upstreams"]).to eq([ { "local" => true } ])
   end
+
+  describe "static routes (WOKKU_STATIC_ROUTES)" do
+    let(:env) { "#{server.name} s3.wokku.cloud 127.0.0.1:9100, other-host files.wokku.cloud 127.0.0.1:9200" }
+
+    it "routes a fixed hostname to a local port on the named server only" do
+      stub_const("ENV", ENV.to_h.merge("WOKKU_STATIC_ROUTES" => env))
+      apps = builder.as_json.fetch("apps")
+      expect(apps).to eq([ {
+        "name" => "static-s3.wokku.cloud",
+        "container_port" => 0,
+        "domains" => [ { "hostname" => "s3.wokku.cloud", "tls" => "wildcard" } ],
+        "upstreams" => [ { "dial" => "127.0.0.1:9100" } ]
+      } ])
+    end
+
+    it "leaves the config (and its version) untouched when unset" do
+      v = builder.version
+      stub_const("ENV", ENV.to_h.except("WOKKU_STATIC_ROUTES"))
+      expect(described_class.new(server).as_json.fetch("apps")).to eq([])
+      expect(described_class.new(server).version).to eq(v)
+    end
+  end
 end

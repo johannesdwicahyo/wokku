@@ -30,7 +30,27 @@ module Routers
     private
 
     def apps_json
-      control_plane_entries + app_entries
+      control_plane_entries + static_entries + app_entries
+    end
+
+    # Fixed hostname → local port on one host, for platform services that
+    # aren't customer apps (e.g. RustFS object storage at s3.wokku.cloud).
+    # WOKKU_STATIC_ROUTES="<server-name> <hostname> <dial>, ..." — unset
+    # means no entries, so the config bytes and version hash are unchanged.
+    # ponytail: env-driven, needs a deploy to change; a DB table if these
+    # ever become customer-managed. Hostname must sit under the wildcard cert.
+    def static_entries
+      ENV["WOKKU_STATIC_ROUTES"].to_s.split(",").filter_map do |spec|
+        server_name, hostname, dial = spec.split
+        next unless server_name == @server.name && hostname && dial
+
+        {
+          "name" => "static-#{hostname}",
+          "container_port" => 0,
+          "domains" => [ { "hostname" => hostname, "tls" => "wildcard" } ],
+          "upstreams" => [ { "dial" => dial } ]
+        }
+      end
     end
 
     # Self-host: the dashboard itself rides the same Caddy on 80/443 —
