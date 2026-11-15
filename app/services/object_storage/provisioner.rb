@@ -41,15 +41,28 @@ module ObjectStorage
         bucket.update!(quota_gb: gb)
       end
 
+      # Two phases so a retry never mints a third key: (1) only when nothing is
+      # pending, mint + persist the new pair (old key -> pending_revoke_access_key)
+      # and best-effort restart; (2) always revoke the pending key. Revocation
+      # does not wait for the restart: the env applies on the next restart, and a
+      # possibly-leaked key must die now. On failure the pending key stays and
+      # the error re-raises so RotateJob retries phase 2.
       def rotate!(bucket)
-        old = bucket.access_key
-        bucket.assign_attributes(access_key: "wk#{SecureRandom.hex(9)}", secret_key: SecureRandom.alphanumeric(40))
-        client.add_user(bucket.access_key, bucket.secret_key)
-        client.attach_policy(bucket.name, bucket.access_key)
-        bucket.save!
-        Apps::EnvWriter.set(bucket.app_record, env_for(bucket))
-        # keep the old key unless the app restarted onto the new one
-        client.remove_user(old) if restart_best_effort(bucket.app_record)
+        c = client
+        if bucket.pending_revoke_access_key.blank?
+          bucket.assign_attributes(pending_revoke_access_key: bucket.access_key,
+            access_key: "wk#{SecureRandom.hex(9)}", secret_key: SecureRandom.alphanumeric(40))
+          c.add_user(bucket.access_key, bucket.secret_key)
+          c.attach_policy(bucket.name, bucket.access_key)
+          bucket.save!
+          Apps::EnvWriter.set(bucket.app_record, env_for(bucket))
+          restart_best_effort(bucket.app_record)
+        end
+        c.remove_user(bucket.pending_revoke_access_key)
+        bucket.update!(pending_revoke_access_key: nil, last_error: nil)
+      rescue ObjectStorage::Error => e
+        bucket.reload.update!(last_error: e.message) # reload: drop an unsaved new pair
+        raise
       end
 
       def destroy!(bucket)
@@ -58,6 +71,7 @@ module ObjectStorage
           Apps::EnvWriter.unset(app, *ENV_KEYS)
           restart_best_effort(app)
         end
+        client.remove_user(bucket.pending_revoke_access_key) if bucket.pending_revoke_access_key.present?
         client.remove_user(bucket.access_key)
         client.remove_policy(bucket.name)
         client.delete_bucket!(bucket.name)

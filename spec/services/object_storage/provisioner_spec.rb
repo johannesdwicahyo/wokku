@@ -82,8 +82,9 @@ RSpec.describe ObjectStorage::Provisioner do
   end
 
   describe ".rotate!" do
-    it "swaps keys, restarts, then removes the old user" do
-      bucket = create(:object_storage_bucket, app_record: app)
+    let(:bucket) { create(:object_storage_bucket, app_record: app) }
+
+    it "swaps keys, restarts, then revokes the old user" do
       old = bucket.access_key
       expect(client).to receive(:add_user).ordered
       expect(client).to receive(:attach_policy).ordered
@@ -91,17 +92,39 @@ RSpec.describe ObjectStorage::Provisioner do
       expect(client).to receive(:remove_user).with(old).ordered
       described_class.rotate!(bucket)
       expect(bucket.reload.access_key).not_to eq(old)
+      expect(bucket.pending_revoke_access_key).to be_nil
       expect(app.env_vars.find_by(key: "S3_ACCESS_KEY_ID").value).to eq(bucket.access_key)
     end
-  end
 
-  describe ".rotate! with a failing restart" do
-    it "keeps the old user" do
-      bucket = create(:object_storage_bucket, app_record: app)
+    it "revokes the old key even when the restart fails" do
+      old = bucket.access_key
       allow(client).to receive_messages(add_user: true, attach_policy: true)
       allow(Apps::Restarter).to receive(:restart).and_raise(Lifecycle::Ops::NotDeployed)
-      expect(client).not_to receive(:remove_user)
+      expect(client).to receive(:remove_user).with(old)
       described_class.rotate!(bucket)
+      expect(bucket.reload.pending_revoke_access_key).to be_nil
+    end
+
+    it "keeps the pending revoke on failure and a retry only revokes the original (no third key)" do
+      original = bucket.access_key
+      allow(client).to receive_messages(add_user: true, attach_policy: true)
+      allow(client).to receive(:remove_user).and_raise(ObjectStorage::Error, "down")
+      expect { described_class.rotate!(bucket) }.to raise_error(ObjectStorage::Error)
+      second = bucket.reload.access_key
+      expect(bucket).to have_attributes(pending_revoke_access_key: original, last_error: "down")
+
+      allow(client).to receive(:remove_user).and_return(true)
+      described_class.rotate!(bucket.reload)
+      expect(client).to have_received(:add_user).once
+      expect(client).to have_received(:remove_user).with(original).twice
+      expect(bucket.reload).to have_attributes(access_key: second, pending_revoke_access_key: nil, last_error: nil)
+    end
+
+    it "does not persist the new key when creating the user fails" do
+      original = bucket.access_key
+      allow(client).to receive(:add_user).and_raise(ObjectStorage::Error, "down")
+      expect { described_class.rotate!(bucket) }.to raise_error(ObjectStorage::Error)
+      expect(bucket.reload).to have_attributes(access_key: original, pending_revoke_access_key: nil, last_error: "down")
     end
   end
 
@@ -117,6 +140,14 @@ RSpec.describe ObjectStorage::Provisioner do
       expect(app.env_vars.count).to eq(0)
       expect(Apps::Restarter).to have_received(:restart).with(app)
       expect(ObjectStorageBucket.exists?(bucket.id)).to be false
+    end
+
+    it "also revokes a key still pending revocation" do
+      bucket.update!(pending_revoke_access_key: "wkold")
+      allow(client).to receive_messages(remove_policy: true, delete_bucket!: true)
+      expect(client).to receive(:remove_user).with("wkold")
+      expect(client).to receive(:remove_user).with(bucket.access_key)
+      described_class.destroy!(bucket)
     end
 
     it "skips env/restart when the app is gone" do

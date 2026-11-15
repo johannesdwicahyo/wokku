@@ -804,7 +804,8 @@ CREATE TABLE public.object_storage_buckets (
     status character varying DEFAULT 'provisioning'::character varying NOT NULL,
     last_error text,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    pending_revoke_access_key character varying
 );
 
 
@@ -4624,6 +4625,7 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261115000003'),
 ('20261115000002'),
 ('20261115000001'),
 ('20261031000001'),
