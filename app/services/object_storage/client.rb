@@ -35,9 +35,15 @@ module ObjectStorage
 
     def remove_user(access_key) = admin(:delete, "remove-user", { accessKey: access_key }, nil, ok: [ 404 ])
 
+    # Explicit allow-list: no s3:* — that would let a tenant set a public
+    # bucket policy/ACL, versioning, object lock or replication.
+    BUCKET_ACTIONS = %w[s3:GetObject s3:PutObject s3:DeleteObject s3:ListBucket
+                        s3:ListBucketMultipartUploads s3:ListMultipartUploadParts
+                        s3:AbortMultipartUpload s3:GetBucketLocation].freeze
+
     def put_policy(name, bucket)
       policy = { Version: "2012-10-17", Statement: [ {
-        Effect: "Allow", Action: [ "s3:*" ],
+        Effect: "Allow", Action: BUCKET_ACTIONS,
         Resource: [ "arn:aws:s3:::#{bucket}", "arn:aws:s3:::#{bucket}/*" ]
       } ] }
       admin(:put, "add-canned-policy", { name: name }, policy)

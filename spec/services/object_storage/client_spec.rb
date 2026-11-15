@@ -38,14 +38,20 @@ RSpec.describe ObjectStorage::Client do
     expect(stub).to have_been_requested
   end
 
-  it "put_policy" do
+  it "put_policy grants only object/listing actions (no policy, ACL, versioning, lock, replication)" do
+    sent = nil
     stub = stub_request(:put, "#{admin}/add-canned-policy").with(query: { name: "p" }, headers: auth) { |req|
-      st = JSON.parse(req.body)["Statement"].first
-      st["Effect"] == "Allow" && st["Action"] == [ "s3:*" ] &&
-        st["Resource"] == [ "arn:aws:s3:::b", "arn:aws:s3:::b/*" ]
+      sent = JSON.parse(req.body)["Statement"]
     }.to_return(status: 200)
     expect(client.put_policy("p", "b")).to be true
     expect(stub).to have_been_requested
+    expect(sent.size).to eq(1)
+    st = sent.first
+    expect(st["Effect"]).to eq("Allow")
+    expect(st["Resource"]).to eq([ "arn:aws:s3:::b", "arn:aws:s3:::b/*" ])
+    expect(st["Action"]).to match_array(%w[s3:GetObject s3:PutObject s3:DeleteObject s3:ListBucket
+      s3:ListBucketMultipartUploads s3:ListMultipartUploadParts s3:AbortMultipartUpload s3:GetBucketLocation])
+    expect(st["Action"].grep(/\*|Policy|Acl|Versioning|ObjectLock|Replication|Retention|LegalHold/)).to be_empty
   end
 
   it "remove_policy" do
