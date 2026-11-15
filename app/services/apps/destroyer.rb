@@ -80,11 +80,11 @@ module Apps
 
       # After the app row is gone (FK nulled the bucket's app_record_id), so
       # Provisioner.destroy! skips env/restart. On failure it leaves the row
-      # `deleting`; the job retries it.
+      # `deleting`; the job retries it (and UsageRefreshJob sweeps orphans hourly).
       if bucket
         best_effort("destroy object storage bucket #{bucket.name}", step: "Deleting object storage bucket") do
           ObjectStorage::Provisioner.destroy!(bucket.reload)
-        rescue ObjectStorage::Error
+        rescue StandardError
           ObjectStorage::DeprovisionJob.perform_later(bucket.id)
           raise
         end

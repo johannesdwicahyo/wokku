@@ -37,4 +37,13 @@ RSpec.describe Apps::Destroyer, "object storage bucket" do
     expect(result.warnings.join).to include("rustfs down")
     expect(bucket.reload).to have_attributes(status: "deleting", app_record_id: nil)
   end
+
+  it "enqueues a retry on a non-ObjectStorage error too" do
+    allow(ObjectStorage::Provisioner).to receive(:destroy!).and_raise(ActiveRecord::StatementInvalid, "pg blip")
+
+    result = nil
+    expect { result = described_class.call(app_record) }
+      .to have_enqueued_job(ObjectStorage::DeprovisionJob).with(bucket.id)
+    expect(result.warnings.join).to include("pg blip")
+  end
 end
