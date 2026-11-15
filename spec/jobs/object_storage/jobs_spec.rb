@@ -67,6 +67,16 @@ RSpec.describe "object storage jobs" do
       expect(ObjectStorage::DeprovisionJob).not_to have_been_enqueued.with(bucket.id)
     end
 
+    # RotateJob gives up after 3 attempts; a rotated-out key must still get revoked.
+    it "re-enqueues rotation for active buckets with a key still pending revocation" do
+      allow(client).to receive(:usage).and_return({})
+      pending = create(:object_storage_bucket, pending_revoke_access_key: "wkoldkey")
+      bucket # active, nothing pending
+      described_class.perform_now
+      expect(ObjectStorage::RotateJob).to have_been_enqueued.with(pending.id)
+      expect(ObjectStorage::RotateJob).not_to have_been_enqueued.with(bucket.id)
+    end
+
     it "still sweeps when the usage call fails" do
       deleting = create(:object_storage_bucket, status: "deleting")
       allow(client).to receive(:usage).and_raise(ObjectStorage::Error, "down")

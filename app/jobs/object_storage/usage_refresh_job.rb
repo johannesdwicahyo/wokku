@@ -7,6 +7,7 @@ module ObjectStorage
     def perform
       return unless Wokku.config.object_storage?
       sweep_deletions
+      sweep_pending_revokes
       usage = Client.new.usage
       ObjectStorageBucket.find_each do |b|
         # RustFS's scanner reports nothing right after a restart: keep the last value.
@@ -32,6 +33,13 @@ module ObjectStorage
     def sweep_deletions
       ObjectStorageBucket.where(status: "deleting").or(ObjectStorageBucket.where(app_record_id: nil))
         .pluck(:id).each { |id| DeprovisionJob.perform_later(id) }
+    end
+
+    # RotateJob gives up after 3 attempts; a rotated-out key must not stay valid.
+    # A retry with a pending key only revokes it (no new key pair).
+    def sweep_pending_revokes
+      ObjectStorageBucket.where(status: "active").where.not(pending_revoke_access_key: nil)
+        .pluck(:id).each { |id| RotateJob.perform_later(id) }
     end
   end
 end
