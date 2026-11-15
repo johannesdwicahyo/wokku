@@ -16,7 +16,7 @@ class ObjectStorageBucket < ApplicationRecord
 
   STATUSES.each { |s| define_method(:"#{s}?") { status == s } }
 
-  def self.bucket_name_for(app) = "wk-#{app.id.delete('-')[0, 12]}"
+  def self.bucket_name_for(app) = "wk-#{app.id.delete('-')[-12..]}" # random tail: UUIDv7's head is the creation ms
 
   def used_gb = used_bytes.to_f / 1024**3
 

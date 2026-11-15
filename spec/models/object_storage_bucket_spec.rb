@@ -1,9 +1,9 @@
 require "rails_helper"
 
 RSpec.describe ObjectStorageBucket do
-  it "derives the bucket name from the app id" do
-    app = build_stubbed(:app_record)
-    expect(described_class.bucket_name_for(app)).to eq("wk-#{app.id.delete('-')[0, 12]}")
+  it "derives the bucket name from the random tail of the app id (not the UUIDv7 timestamp)" do
+    app = build_stubbed(:app_record, id: "01a1dec8-3b54-71db-8a2f-0123456789ab")
+    expect(described_class.bucket_name_for(app)).to eq("wk-0123456789ab")
   end
 
   it "reports used_gb and encrypts the secret" do
