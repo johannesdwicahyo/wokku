@@ -4,6 +4,9 @@ default: &default
   host: <%= ENV.fetch("PGHOST", "localhost") %>
   username: <%= ENV.fetch("PGUSER", ENV.fetch("USER", "postgres")) %>
   password: <%= ENV["PGPASSWORD"] %>
+  # Fresh databases load the engine's schema dump (see config/application.rb).
+  # (Rails resolves this relative to harness/db/, even for absolute paths.)
+  schema_dump: ../../db/structure.sql
 
 development:
   <<: *default

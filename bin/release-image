@@ -40,6 +40,25 @@ echo "→ building $IMAGE:$VERSION"
   -f harness/Dockerfile -t $IMAGE:$VERSION -t $IMAGE:latest ." >/dev/null
 "${SSH[@]}" "docker image inspect $IMAGE:$VERSION --format 'size: {{.Size}} bytes'"
 
+# Fresh-install gate: the image must boot on an EMPTY database and serve
+# /up before it may be published (a fresh-install break shipped unnoticed
+# from 2026-10-19 to 11-16). Only this test's containers/volumes are removed.
+echo "→ boot test on an empty database"
+"${SSH[@]}" "set -e; N=wokku-boottest-\$\$; IMG=$IMAGE:$VERSION
+  cleanup() { docker rm -f -v \$N-web \$N-db >/dev/null 2>&1 || true; docker network rm \$N >/dev/null 2>&1 || true; }
+  trap cleanup EXIT
+  docker network create \$N >/dev/null
+  docker run -d --name \$N-db --network \$N -e POSTGRES_USER=wokku -e POSTGRES_PASSWORD=wokku -e POSTGRES_DB=wokku_oss_harness_production postgres:16 >/dev/null
+  for i in \$(seq 1 30); do docker exec \$N-db pg_isready -U wokku >/dev/null 2>&1 && break; sleep 2; done
+  docker run -d --name \$N-web --network \$N -e PGHOST=\$N-db -e PGUSER=wokku -e PGPASSWORD=wokku -e WOKKU_FORCE_SSL=0 \
+    -e SECRET_KEY_BASE=\$(openssl rand -hex 64) -e WOKKU_CANONICAL_DOMAIN=localhost \$IMG >/dev/null
+  for i in \$(seq 1 60); do
+    docker exec \$N-web curl -fsS -o /dev/null -m 2 http://127.0.0.1:3000/up 2>/dev/null && { echo '  boot ok'; exit 0; }
+    [ \"\$(docker inspect -f '{{.State.Running}}' \$N-web)\" = true ] || break
+    sleep 3
+  done
+  echo '  BOOT FAILED — last log lines:'; docker logs --tail 15 \$N-web 2>&1 | cut -c1-200; exit 1"
+
 if [ "$PUSH" = 1 ]; then
   echo "→ pushing to ghcr.io"
   gh auth token --user "$GH_USER" | "${SSH[@]}" "docker login ghcr.io -u $GH_USER --password-stdin >/dev/null"

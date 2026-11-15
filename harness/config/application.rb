@@ -10,6 +10,11 @@ module WokkuHarness
     # would take precedence in db:prepare on an empty database and its
     # uuidv7() defaults don't load on stock Postgres 16.
     config.active_record.dump_schema_after_migration = false
+    # A fresh (empty) database loads the engine's structure.sql — schema AND
+    # its applied-migrations list — before migrating, so migrations already
+    # folded into the dump never re-run (that broke fresh installs from
+    # 2026-10-19: DuplicateColumn). Never dumped back (flag above).
+    config.active_record.schema_format = :sql
 
     config.load_defaults 8.1
     config.eager_load = ENV["HARNESS_EAGER_LOAD"] == "1"
