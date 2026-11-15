@@ -7,6 +7,8 @@ module ObjectStorage
   # (<endpoint>/rustfs/admin/v3, plain JSON bodies).
   class Client
     ADMIN = "/rustfs/admin/v3"
+    TRANSPORT_ERRORS = [ SystemCallError, SocketError, Timeout::Error, IOError, Net::OpenTimeout,
+                         Net::ReadTimeout, OpenSSL::SSL::SSLError ].freeze
 
     def initialize(endpoint: nil, access_key: nil, secret_key: nil)
       cfg = Wokku.config.object_storage || {}
@@ -52,7 +54,11 @@ module ObjectStorage
     end
 
     def usage
-      body = JSON.parse(call(:get, "#{ADMIN}/datausageinfo", raw: true))
+      begin
+        body = JSON.parse(call(:get, "#{ADMIN}/datausageinfo", raw: true))
+      rescue JSON::ParserError
+        raise Error, "RustFS usage response was not JSON"
+      end
       (body["buckets_usage"] || {}).transform_values { |v| v["size"].to_i }
     end
 
@@ -74,7 +80,12 @@ module ObjectStorage
       req = Net::HTTP.const_get(verb.to_s.capitalize).new(uri, headers.merge(signed))
       req["Content-Type"] = "application/json" if body
       req.body = payload if body
-      res = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 10, read_timeout: 60) { |h| h.request(req) }
+      res = begin
+        Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 10, read_timeout: 60) { |h| h.request(req) }
+      rescue *TRANSPORT_ERRORS => e
+        # class name only: no request detail that could carry credentials
+        raise Error, "RustFS #{verb.to_s.upcase} #{path} unreachable (#{e.class})"
+      end
       code = res.code.to_i
       return (raw ? res.body : true) if code.between?(200, 299)
       return true if ok.include?(code) && res.body.to_s.include?("<Code>#{ok_code}</Code>")

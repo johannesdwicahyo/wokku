@@ -87,4 +87,9 @@ RSpec.describe ObjectStorage::Client do
   ensure
     Wokku.config.object_storage = nil
   end
+
+  it "wraps transport failures as ObjectStorage::Error without secrets" do
+    stub_request(:put, "#{base}/b9").to_raise(Errno::ECONNREFUSED)
+    expect { client.create_bucket("b9") }.to raise_error(ObjectStorage::Error) { |e| expect(e.message).not_to include("SK") }
+  end
 end

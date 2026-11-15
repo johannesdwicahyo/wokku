@@ -771,24 +771,6 @@ CREATE TABLE public.mobile_auth_codes (
 
 
 --
--- Name: storage_backup_runs; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.storage_backup_runs (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    server_id uuid NOT NULL,
-    kind character varying NOT NULL,
-    status character varying NOT NULL,
-    objects bigint,
-    bytes bigint,
-    duration_s integer,
-    error text,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
 -- Name: notifications; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -801,6 +783,28 @@ CREATE TABLE public.notifications (
     id uuid DEFAULT public.uuidv7() NOT NULL,
     team_id uuid NOT NULL,
     app_record_id uuid
+);
+
+
+--
+-- Name: object_storage_buckets; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.object_storage_buckets (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    app_record_id uuid,
+    team_id uuid NOT NULL,
+    name character varying NOT NULL,
+    access_key character varying NOT NULL,
+    secret_key text NOT NULL,
+    quota_gb integer NOT NULL,
+    used_bytes bigint DEFAULT 0 NOT NULL,
+    used_at timestamp(6) without time zone,
+    warned_at timestamp(6) without time zone,
+    status character varying DEFAULT 'provisioning'::character varying NOT NULL,
+    last_error text,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
 );
 
 
@@ -1503,6 +1507,24 @@ CREATE TABLE public.ssh_public_keys (
 
 
 --
+-- Name: storage_backup_runs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.storage_backup_runs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    server_id uuid NOT NULL,
+    kind character varying NOT NULL,
+    status character varying NOT NULL,
+    objects bigint,
+    bytes bigint,
+    duration_s integer,
+    error text,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: subscriptions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2082,6 +2104,14 @@ ALTER TABLE ONLY public.notifications
 
 
 --
+-- Name: object_storage_buckets object_storage_buckets_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.object_storage_buckets
+    ADD CONSTRAINT object_storage_buckets_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: oss_revenue_shares oss_revenue_shares_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2295,6 +2325,14 @@ ALTER TABLE ONLY public.solid_queue_semaphores
 
 ALTER TABLE ONLY public.ssh_public_keys
     ADD CONSTRAINT ssh_public_keys_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: storage_backup_runs storage_backup_runs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.storage_backup_runs
+    ADD CONSTRAINT storage_backup_runs_pkey PRIMARY KEY (id);
 
 
 --
@@ -3126,28 +3164,6 @@ CREATE INDEX index_metrics_on_app_record_id ON public.metrics USING btree (app_r
 
 
 --
--- Name: storage_backup_runs storage_backup_runs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.storage_backup_runs
-    ADD CONSTRAINT storage_backup_runs_pkey PRIMARY KEY (id);
-
-
---
--- Name: index_storage_backup_runs_on_server_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_storage_backup_runs_on_server_id ON public.storage_backup_runs USING btree (server_id);
-
-
---
--- Name: index_storage_backup_runs_on_server_id_and_kind_and_created_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_storage_backup_runs_on_server_id_and_kind_and_created_at ON public.storage_backup_runs USING btree (server_id, kind, created_at);
-
-
---
 -- Name: index_mobile_auth_codes_on_code_digest; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3173,6 +3189,27 @@ CREATE INDEX index_notifications_on_app_record_id ON public.notifications USING 
 --
 
 CREATE INDEX index_notifications_on_team_id ON public.notifications USING btree (team_id);
+
+
+--
+-- Name: index_object_storage_buckets_on_app_record_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_object_storage_buckets_on_app_record_id ON public.object_storage_buckets USING btree (app_record_id);
+
+
+--
+-- Name: index_object_storage_buckets_on_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_object_storage_buckets_on_name ON public.object_storage_buckets USING btree (name);
+
+
+--
+-- Name: index_object_storage_buckets_on_team_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_object_storage_buckets_on_team_id ON public.object_storage_buckets USING btree (team_id);
 
 
 --
@@ -3565,6 +3602,20 @@ CREATE UNIQUE INDEX index_ssh_public_keys_on_fingerprint ON public.ssh_public_ke
 --
 
 CREATE INDEX index_ssh_public_keys_on_user_id ON public.ssh_public_keys USING btree (user_id);
+
+
+--
+-- Name: index_storage_backup_runs_on_server_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_storage_backup_runs_on_server_id ON public.storage_backup_runs USING btree (server_id);
+
+
+--
+-- Name: index_storage_backup_runs_on_server_id_and_kind_and_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_storage_backup_runs_on_server_id_and_kind_and_created_at ON public.storage_backup_runs USING btree (server_id, kind, created_at);
 
 
 --
@@ -4007,6 +4058,14 @@ ALTER TABLE ONLY public.notifications
 
 
 --
+-- Name: object_storage_buckets fk_rails_38c9ec588b; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.object_storage_buckets
+    ADD CONSTRAINT fk_rails_38c9ec588b FOREIGN KEY (team_id) REFERENCES public.teams(id);
+
+
+--
 -- Name: solid_queue_failed_executions fk_rails_39bbc7a631; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4036,6 +4095,14 @@ ALTER TABLE ONLY public.invoices
 
 ALTER TABLE ONLY public.app_records
     ADD CONSTRAINT fk_rails_3e698f373d FOREIGN KEY (parent_app_id) REFERENCES public.app_records(id);
+
+
+--
+-- Name: object_storage_buckets fk_rails_4a8ed097ce; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.object_storage_buckets
+    ADD CONSTRAINT fk_rails_4a8ed097ce FOREIGN KEY (app_record_id) REFERENCES public.app_records(id) ON DELETE SET NULL;
 
 
 --
@@ -4327,6 +4394,14 @@ ALTER TABLE ONLY public.scheduled_tasks
 
 
 --
+-- Name: alert_mutes fk_rails_b2df00d648; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.alert_mutes
+    ADD CONSTRAINT fk_rails_b2df00d648 FOREIGN KEY (app_record_id) REFERENCES public.app_records(id) ON DELETE CASCADE;
+
+
+--
 -- Name: request_samples fk_rails_bbc071f07a; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4359,14 +4434,6 @@ ALTER TABLE ONLY public.mobile_auth_codes
 
 
 --
--- Name: storage_backup_runs fk_rails_d36111b548; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.storage_backup_runs
-    ADD CONSTRAINT fk_rails_d36111b548 FOREIGN KEY (server_id) REFERENCES public.servers(id);
-
-
---
 -- Name: solid_queue_scheduled_executions fk_rails_c4316f352d; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4391,19 +4458,19 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: alert_mutes fk_rails_b2df00d648; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.alert_mutes
-    ADD CONSTRAINT fk_rails_b2df00d648 FOREIGN KEY (app_record_id) REFERENCES public.app_records(id) ON DELETE CASCADE;
-
-
---
 -- Name: database_services fk_rails_d34d450af6; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.database_services
     ADD CONSTRAINT fk_rails_d34d450af6 FOREIGN KEY (server_id) REFERENCES public.servers(id);
+
+
+--
+-- Name: storage_backup_runs fk_rails_d36111b548; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.storage_backup_runs
+    ADD CONSTRAINT fk_rails_d36111b548 FOREIGN KEY (server_id) REFERENCES public.servers(id);
 
 
 --
@@ -4557,6 +4624,7 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261115000002'),
 ('20261115000001'),
 ('20261031000001'),
 ('20261025200001'),

@@ -1,0 +1,2 @@
+<p>Your object storage bucket <strong><%= @bucket.name %></strong> is using <%= number_with_precision(@bucket.used_gb, precision: 2) %> GB of its <%= @bucket.quota_gb %> GB quota.</p>
+<p>Writes will be rejected once the quota is full. Delete files or raise the quota from the app's storage settings.</p>

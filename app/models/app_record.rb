@@ -108,6 +108,7 @@ class AppRecord < ApplicationRecord
   has_many :incidents,             dependent: :destroy
   has_many :lifecycle_ops,         dependent: :destroy
   has_one :preview_dns_record, dependent: :destroy
+  has_one :object_storage_bucket, dependent: nil
 
   def ensure_vitals_ingest_token!
     return vitals_ingest_token if vitals_ingest_token.present?
