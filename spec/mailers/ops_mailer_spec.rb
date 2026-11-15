@@ -47,4 +47,12 @@ RSpec.describe OpsMailer do
       expect(mail.subject).to include("DEGRADED").and include("jkt-01")
     end
   end
+
+  describe "#storage_backup_stale" do
+    it "names the real systemd timers" do
+      body = described_class.storage_backup_stale(server, nil).body.encoded
+      expect(body).to include("rustfs-backup.timer").and include("rustfs-backup-drill.timer")
+      expect(body).not_to include("rustfs-r2-sync")
+    end
+  end
 end
