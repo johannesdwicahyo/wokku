@@ -299,7 +299,8 @@ Rails.application.routes.draw do
             post   "dedicated",       to: "addons#upgrade_dedicated"
           end
         end
-        resource :object_storage, only: %i[show create update destroy] do
+        resource :object_storage, only: %i[show create destroy] do
+          patch "/", action: :update # PATCH only (no PUT twin to document)
           post :rotate
         end
         resource :buildpacks, only: [ :show, :create, :destroy, :update ], controller: "buildpacks"
