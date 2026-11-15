@@ -1,0 +1,15 @@
+# Keep the self-host image small and free of repo history / local state.
+.git
+.github
+.superpowers
+coverage
+log
+tmp
+harness/log
+harness/tmp
+harness/storage
+**/node_modules
+**/.DS_Store
+**/*.log
+.env
+.env.*

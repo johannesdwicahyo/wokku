@@ -17,6 +17,24 @@ INSTALL_DIR="${WOKKU_INSTALL_DIR:-/opt/wokku}"
 export DEBIAN_FRONTEND=noninteractive
 log() { printf "\n→ %s\n" "$*"; }
 
+# Fail fast with a clear message instead of a half-installed box.
+preflight() {
+  # shellcheck disable=SC1091
+  . /etc/os-release 2>/dev/null || true
+  case "${ID:-}" in ubuntu|debian) ;; *) echo "Wokku supports Ubuntu or Debian (found: ${PRETTY_NAME:-unknown})."; exit 1 ;; esac
+  [ "$(uname -m)" = "x86_64" ] || { echo "Wokku currently needs an x86_64 (amd64) server (found: $(uname -m))."; exit 1; }
+  local mem_mb disk_gb
+  mem_mb=$(( $(awk '/^MemTotal:/{print $2}' /proc/meminfo) / 1024 ))
+  [ "$mem_mb" -ge 1800 ] || { echo "Wokku needs at least 2 GB of RAM (this server has ${mem_mb} MB)."; exit 1; }
+  disk_gb=$(( $(df -Pk / | awk 'NR==2{print $4}') / 1024 / 1024 ))
+  [ "$disk_gb" -ge 10 ] || { echo "Wokku needs at least 10 GB of free disk (this server has ${disk_gb} GB free)."; exit 1; }
+  if [ ! -d "$INSTALL_DIR" ] && command -v ss >/dev/null && ss -ltnH '( sport = :80 or sport = :443 )' | grep -q .; then
+    echo "Ports 80/443 are already in use (another web server?). Wokku needs them for its router."; exit 1
+  fi
+}
+log "checking this server"
+preflight
+
 log "docker + git"
 command -v docker >/dev/null 2>&1 || { apt-get update -qq; apt-get install -y -qq docker.io docker-compose-v2 >/dev/null; }
 systemctl enable --now docker >/dev/null 2>&1 || true
@@ -52,11 +70,22 @@ WOKKU_CANONICAL_DOMAIN=${WOKKU_CANONICAL_DOMAIN:-${PUBLIC_IP}.sslip.io}
 EOF
 fi
 
-log "building + starting the control plane (first build takes a few minutes)"
-docker compose up -d --build
+log "downloading the control plane"
+if docker compose pull -q web; then
+  docker compose up -d
+else
+  log "prebuilt image unavailable — building from source instead (takes several minutes)"
+  docker compose up -d --build
+fi
 
 log "waiting for the control plane to come up"
-until curl -fsS -o /dev/null -m 2 http://127.0.0.1:3000/up; do sleep 3; done
+for _ in $(seq 1 100); do
+  curl -fsS -o /dev/null -m 2 http://127.0.0.1:3000/up && break
+  sleep 3
+done
+curl -fsS -o /dev/null -m 2 http://127.0.0.1:3000/up || {
+  echo "The control plane didn't start within 5 minutes. Logs: cd ${INSTALL_DIR} && docker compose logs web"; exit 1
+}
 
 log "registering this box as the first server"
 TOKEN=$(docker compose exec -T web bin/rails runner \

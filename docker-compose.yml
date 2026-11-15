@@ -3,6 +3,9 @@
 # runtime on the box. First visit shows /setup to create your admin.
 services:
   web:
+    # Prebuilt image (install.sh pulls it; pin a release with WOKKU_VERSION
+    # in .env). `docker compose build` still builds it from this checkout.
+    image: ghcr.io/johannesdwicahyo/wokku:${WOKKU_VERSION:-latest}
     build:
       context: .
       dockerfile: harness/Dockerfile

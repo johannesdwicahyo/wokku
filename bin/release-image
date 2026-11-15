@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# Build the self-host image on a remote Docker host (the laptop has no
+# daemon) and publish it to ghcr.io so install.sh can pull instead of build.
+#
+#   bin/release-image                 # version = YYYY.MM.DD-<sha7>, also tags :latest
+#   bin/release-image 0.9.0           # explicit version
+#   bin/release-image --no-push       # build + boot-check only (no registry login)
+#
+# Env: BUILD_HOST (ssh target, default the Tencent build box), GH_USER.
+# Needs a gh token with write:packages for pushes:
+#   gh auth refresh -h github.com -s write:packages,read:packages --user johannesdwicahyo
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+PUSH=1
+VERSION=""
+for arg in "$@"; do
+  case "$arg" in
+    --no-push) PUSH=0 ;;
+    -*) echo "unknown option $arg" >&2; exit 2 ;;
+    *) VERSION="$arg" ;;
+  esac
+done
+VERSION=${VERSION:-$(date -u +%Y.%m.%d)-$(git rev-parse --short=7 HEAD)}
+[[ "$VERSION" =~ ^[0-9A-Za-z._-]+$ ]] || { echo "bad version: $VERSION" >&2; exit 2; }
+HOST=${BUILD_HOST:-ubuntu@43.165.195.185}
+GH_USER=${GH_USER:-johannesdwicahyo}
+IMAGE=ghcr.io/johannesdwicahyo/wokku
+DIR=wokku-image-build
+SSH=(ssh -o ServerAliveInterval=30 "$HOST")
+
+[ -z "$(git status --porcelain --untracked-files=no)" ] ||
+  echo "note: uncommitted changes are NOT in the image (it builds from HEAD)" >&2
+
+echo "→ shipping $(git rev-parse --short HEAD) to $HOST"
+git archive HEAD | gzip -6 | "${SSH[@]}" "rm -rf ~/$DIR && mkdir ~/$DIR && tar -xz -C ~/$DIR"
+
+echo "→ building $IMAGE:$VERSION"
+"${SSH[@]}" "cd ~/$DIR && DOCKER_BUILDKIT=1 docker build -q --build-arg WOKKU_VERSION=$VERSION \
+  -f harness/Dockerfile -t $IMAGE:$VERSION -t $IMAGE:latest ." >/dev/null
+"${SSH[@]}" "docker image inspect $IMAGE:$VERSION --format 'size: {{.Size}} bytes'"
+
+if [ "$PUSH" = 1 ]; then
+  echo "→ pushing to ghcr.io"
+  gh auth token --user "$GH_USER" | "${SSH[@]}" "docker login ghcr.io -u $GH_USER --password-stdin >/dev/null"
+  "${SSH[@]}" "docker push -q $IMAGE:$VERSION && docker push -q $IMAGE:latest; rc=\$?; docker logout ghcr.io >/dev/null; exit \$rc"
+  echo "✓ published $IMAGE:$VERSION and :latest"
+else
+  echo "✓ built $IMAGE:$VERSION (not pushed)"
+fi
+"${SSH[@]}" "rm -rf ~/$DIR"
