@@ -1,0 +1,12 @@
+The control plane can't SSH into <%= @server.name %> (<%= @server.host %>) — two checks in a row failed, about 10 minutes apart.
+
+The host is still heartbeating, so apps are most likely still serving. What's broken: live logs, metrics, backups and restore drills (anything that needs SSH).
+
+Last heartbeat: <%= @server.heartbeat_at&.utc&.strftime("%Y-%m-%d %H:%M UTC") || "never" %>
+
+What to do:
+  1. Try `ssh johannes@<%= @server.host %>` from your laptop.
+  2. If it's refused or hangs, sshd is down: ask the provider to log in on the console as `baremetal` and run `sudo systemctl start ssh` (then `sudo systemctl enable ssh`).
+  3. If you get in but the control plane still can't, check the `wokku` user's key and /var/log/auth.log.
+
+You'll get an "SSH back" email when it recovers. No repeat emails while it stays down.

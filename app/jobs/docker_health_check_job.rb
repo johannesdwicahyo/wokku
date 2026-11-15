@@ -25,6 +25,8 @@ class DockerHealthCheckJob < ApplicationJob
       docker_status_checked_at: Time.current
     )
 
+    alert_on_ssh(server, status, previous_status)
+
     if status != "active" && defined?(Sentry)
       # Only page on transition to non-active, not on every poll while
       # it's down. Subsequent pings happen via the scheduler cadence.
@@ -42,6 +44,21 @@ class DockerHealthCheckJob < ApplicationJob
   end
 
   private
+
+  # 2026-09-21: sshd died while the host kept heartbeating (apps fine, nobody
+  # could log in) and it went unnoticed for days. Page the founder after two
+  # failed probes in a row (~10 min, so one network blip stays quiet), once,
+  # and only while heartbeats arrive — a silent host already gets Host DOWN.
+  def alert_on_ssh(server, status, previous_status)
+    if status == "unreachable"
+      return unless previous_status == "unreachable" && server.ssh_alerted_at.nil? && !server.heartbeat_stale?
+      server.update_columns(ssh_alerted_at: Time.current)
+      OpsMailer.ssh_down(server).deliver_later
+    elsif server.ssh_alerted_at.present?
+      server.update_columns(ssh_alerted_at: nil)
+      OpsMailer.ssh_recovered(server).deliver_later
+    end
+  end
 
   # Returns one of: "active", "failed", "inactive", "activating",
   # "deactivating", or "unreachable" (we couldn't SSH at all).

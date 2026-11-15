@@ -19,6 +19,18 @@ class OpsMailer < ApplicationMailer
     mail(to: ENV["ADMIN_EMAIL"], subject: subject)
   end
 
+  def ssh_down(server)
+    return if ENV["ADMIN_EMAIL"].blank?
+    @server = server
+    mail(to: ENV["ADMIN_EMAIL"], subject: "[Wokku OPS] SSH DOWN on #{server.name} (#{server.host}) — host still up")
+  end
+
+  def ssh_recovered(server)
+    return if ENV["ADMIN_EMAIL"].blank?
+    @server = server
+    mail(to: ENV["ADMIN_EMAIL"], subject: "[Wokku OPS] SSH back on #{server.name} (#{server.host})")
+  end
+
   def starter_check_failed(failures, total)
     return if ENV["ADMIN_EMAIL"].blank?
     @failures = failures

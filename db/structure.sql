@@ -1080,7 +1080,8 @@ CREATE TABLE public.servers (
     wokkud_builds_enabled boolean DEFAULT false NOT NULL,
     wokkud_router_enabled boolean DEFAULT false NOT NULL,
     wokkud_services_enabled boolean DEFAULT false NOT NULL,
-    wokkud_cron_enabled boolean DEFAULT false NOT NULL
+    wokkud_cron_enabled boolean DEFAULT false NOT NULL,
+    ssh_alerted_at timestamp(6) without time zone
 );
 
 
@@ -4625,6 +4626,7 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261116000001'),
 ('20261115000003'),
 ('20261115000002'),
 ('20261115000001'),

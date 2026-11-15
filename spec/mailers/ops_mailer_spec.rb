@@ -55,4 +55,20 @@ RSpec.describe OpsMailer do
       expect(body).not_to include("rustfs-r2-sync")
     end
   end
+
+  describe "ssh_down / ssh_recovered" do
+    let(:server) { create(:server, name: "jkt-01", host: "203.0.113.7") }
+    around { |ex| old = ENV["ADMIN_EMAIL"]; ENV["ADMIN_EMAIL"] = "ops@example.com"; ex.run; ENV["ADMIN_EMAIL"] = old }
+
+    it "says SSH is down while the host is alive, and what to do" do
+      mail = described_class.ssh_down(server)
+      expect(mail.to).to eq([ "ops@example.com" ])
+      expect(mail.subject).to eq("[Wokku OPS] SSH DOWN on jkt-01 (203.0.113.7) — host still up")
+      expect(mail.body.to_s).to include("still heartbeating", "provider")
+    end
+
+    it "announces recovery" do
+      expect(described_class.ssh_recovered(server).subject).to eq("[Wokku OPS] SSH back on jkt-01 (203.0.113.7)")
+    end
+  end
 end
