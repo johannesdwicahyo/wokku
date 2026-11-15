@@ -109,6 +109,21 @@ RSpec.describe "API object storage", type: :request do
       patch url, params: { quota_gb: 5 }, headers: auth(user_with(:viewer))
       expect(response).to have_http_status(:forbidden)
     end
+
+    it "409s while the bucket is not active" do
+      bucket.update!(status: "provisioning")
+      patch url, params: { quota_gb: 50 }, headers: auth(member)
+      expect(response).to have_http_status(:conflict)
+      expect(response.parsed_body["error"]).to eq("Object storage is not ready (status: provisioning)")
+      expect(ObjectStorage::Provisioner).not_to have_received(:resize!)
+    end
+
+    it "503s when RustFS is unavailable" do
+      allow(ObjectStorage::Provisioner).to receive(:resize!).and_raise(ObjectStorage::Error, "down")
+      patch url, params: { quota_gb: 50 }, headers: auth(member)
+      expect(response).to have_http_status(:service_unavailable)
+      expect(response.parsed_body["error"]).to eq("Object storage is temporarily unavailable, try again shortly")
+    end
   end
 
   describe "rotate and delete" do
@@ -117,6 +132,13 @@ RSpec.describe "API object storage", type: :request do
     it "rotate enqueues and 202s" do
       expect { post "#{url}/rotate", headers: auth(member) }.to have_enqueued_job(ObjectStorage::RotateJob).with(bucket.id)
       expect(response).to have_http_status(:accepted)
+    end
+
+    it "rotate 409s while the bucket is not active" do
+      bucket.update!(status: "failed")
+      expect { post "#{url}/rotate", headers: auth(member) }.not_to have_enqueued_job(ObjectStorage::RotateJob)
+      expect(response).to have_http_status(:conflict)
+      expect(response.parsed_body["error"]).to eq("Object storage is not ready (status: failed)")
     end
 
     it "delete marks deleting, enqueues, 202s" do

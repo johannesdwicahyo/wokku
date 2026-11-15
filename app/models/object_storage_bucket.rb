@@ -18,6 +18,10 @@ class ObjectStorageBucket < ApplicationRecord
 
   def self.bucket_name_for(app) = "wk-#{app.id.delete('-')[-12..]}" # random tail: UUIDv7's head is the creation ms
 
+  UNAVAILABLE = "Object storage is temporarily unavailable, try again shortly".freeze
+
+  def not_ready_message = "Object storage is not ready (status: #{status})"
+
   def used_gb = used_bytes.to_f / 1024**3
 
   def near_quota? = used_gb >= quota_gb * WARN_AT

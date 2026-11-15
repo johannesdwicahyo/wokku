@@ -4,6 +4,7 @@ module Api
       before_action :require_feature
       before_action :set_app
       before_action :set_bucket, except: :create
+      before_action :require_active, only: %i[update rotate]
 
       def show
         authorize @app, :show?
@@ -24,7 +25,11 @@ module Api
         status, message = @bucket.quota_error(params[:quota_gb])
         return render json: { error: message }, status: status if status
 
-        ObjectStorage::Provisioner.resize!(@bucket, params[:quota_gb])
+        begin
+          ObjectStorage::Provisioner.resize!(@bucket, params[:quota_gb])
+        rescue ObjectStorage::Error
+          return render json: { error: ObjectStorageBucket::UNAVAILABLE }, status: :service_unavailable
+        end
         track("object_storage.resized", target: @app, metadata: { quota_gb: @bucket.quota_gb }, team: @app.team)
         render json: payload(@bucket)
       end
@@ -56,6 +61,10 @@ module Api
 
       def set_bucket
         @bucket = @app.object_storage_bucket or raise ActiveRecord::RecordNotFound
+      end
+
+      def require_active
+        render json: { error: @bucket.not_ready_message }, status: :conflict unless @bucket.active?
       end
 
       def payload(bucket) = bucket.as_api_json(reveal: policy(@app).update?)

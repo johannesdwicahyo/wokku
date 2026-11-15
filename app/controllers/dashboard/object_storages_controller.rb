@@ -3,6 +3,7 @@ module Dashboard
     before_action :require_feature
     before_action :set_app
     before_action :set_bucket, except: :create
+    before_action :require_active, only: %i[update rotate]
 
     # Turbo-frame reveal (POST: never prefetched, CSRF-protected). The secret
     # is only rendered on this audited request.
@@ -29,7 +30,11 @@ module Dashboard
       _status, message = @bucket.quota_error(params[:quota_gb])
       return back(alert: message) if message
 
-      ObjectStorage::Provisioner.resize!(@bucket, params[:quota_gb])
+      begin
+        ObjectStorage::Provisioner.resize!(@bucket, params[:quota_gb])
+      rescue ObjectStorage::Error
+        return back(alert: ObjectStorageBucket::UNAVAILABLE)
+      end
       track("object_storage.resized", target: @app, metadata: { quota_gb: @bucket.quota_gb }, team: @app.team)
       back notice: "Quota set to #{@bucket.quota_gb} GB."
     end
@@ -63,6 +68,10 @@ module Dashboard
 
     def set_bucket
       @bucket = @app.object_storage_bucket or raise ActiveRecord::RecordNotFound
+    end
+
+    def require_active
+      back(alert: @bucket.not_ready_message) unless @bucket.active?
     end
   end
 end

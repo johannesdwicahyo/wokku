@@ -105,6 +105,25 @@ RSpec.describe "Dashboard object storage", type: :request do
       expect(flash[:alert]).to include("must be between 1 and 1024 GB")
     end
 
+    it "refuses resize and rotate while the bucket is not active" do
+      b = create(:object_storage_bucket, app_record: app_record, status: "provisioning")
+      expect(ObjectStorage::Provisioner).not_to receive(:resize!)
+      patch base, params: { quota_gb: 20 }
+      expect(response).to redirect_to("/dashboard/apps/#{app_record.id}/resources")
+      expect(flash[:alert]).to eq("Object storage is not ready (status: provisioning)")
+      expect { post "#{base}/rotate" }.not_to have_enqueued_job(ObjectStorage::RotateJob)
+      expect(flash[:alert]).to eq("Object storage is not ready (status: provisioning)")
+      expect(b.reload.quota_gb).to eq(10)
+    end
+
+    it "alerts instead of erroring when RustFS is unavailable on resize" do
+      create(:object_storage_bucket, app_record: app_record)
+      allow(ObjectStorage::Provisioner).to receive(:resize!).and_raise(ObjectStorage::Error, "down")
+      patch base, params: { quota_gb: 20 }
+      expect(response).to redirect_to("/dashboard/apps/#{app_record.id}/resources")
+      expect(flash[:alert]).to eq("Object storage is temporarily unavailable, try again shortly")
+    end
+
     it "rotates and deletes via jobs" do
       b = create(:object_storage_bucket, app_record: app_record)
       expect { post "#{base}/rotate" }.to have_enqueued_job(ObjectStorage::RotateJob)
