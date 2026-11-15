@@ -50,6 +50,9 @@
         No add-ons attached. <%= link_to "Browse →", helpers.dashboard_addons_path, class: "text-accent hover:underline", data: { turbo_frame: "_top" } %>
       </div>
     <% end %>
+    <% if Wokku.config.object_storage? && (storage = app.object_storage_bucket) %>
+      <%= render Molecules::ObjectStorageCardComponent.new(bucket: storage) %>
+    <% end %>
     <% if addons.any? %>
       <%= render Molecules::BackupsSummaryCardComponent.new(app: app, current_user: helpers.current_user) %>
     <% end %>

@@ -87,6 +87,9 @@ Rails.application.routes.draw do
       resource :performance, only: [ :show ], module: "apps", controller: "performance" do
         post :rotate_token
       end
+      resource :object_storage, only: %i[show create update destroy] do
+        post :rotate
+      end
       resource :resources, only: [ :show, :create, :update, :destroy ], controller: "resources"
       resource :scaling, only: [ :show, :update ], controller: "scaling" do
         post :change_tier
@@ -295,6 +298,9 @@ Rails.application.routes.draw do
             delete "shared/:engine",  to: "addons#disable_shared", as: :disable_shared
             post   "dedicated",       to: "addons#upgrade_dedicated"
           end
+        end
+        resource :object_storage, only: %i[show create update destroy] do
+          post :rotate
         end
         resource :buildpacks, only: [ :show, :create, :destroy, :update ], controller: "buildpacks"
         resource :storage, only: [ :show, :create, :destroy ], controller: "storage"

@@ -26,6 +26,7 @@ class Activity < ApplicationRecord
     "app.restarted" => "restarted app",
     "app.stopped" => "stopped app",
     "app.started" => "started app",
+    "object_storage.revealed" => "revealed object storage secret for",
     "config.updated" => "updated config for",
     "domain.added" => "added domain to",
     "domain.removed" => "removed domain from",

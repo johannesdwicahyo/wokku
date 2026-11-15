@@ -92,6 +92,10 @@
     <% end %>
   </div>
 
+  <% if Wokku.config.object_storage? %>
+    <%= render "dashboard/object_storages/section", app: @app %>
+  <% end %>
+
   <%# Monthly cost comes from the host app's billing (none on a self-host). %>
   <% if respond_to?(:app_monthly_cost) %>
     <% amount, caption = app_monthly_cost(@app) %>

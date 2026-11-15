@@ -1,0 +1,45 @@
+<%# Object storage card on the Resources tab. Secret is never in this HTML:
+    members load it through the audited show endpoint (Turbo frame). %>
+<% bucket = app.object_storage_bucket %>
+<% can_write = policy(app).update? %>
+<div class="bg-paper border-1.5 border-ink rounded-md mb-6 overflow-hidden" id="object-storage">
+  <div class="px-6 py-4 border-b border-line flex items-center justify-between gap-3 flex-wrap">
+    <div>
+      <h2 class="font-headline text-base font-bold text-ink">Object storage</h2>
+      <p class="text-xs text-dim mt-1">S3-compatible bucket for uploads and files. Rp 400/GB per month after 1 GB free.</p>
+    </div>
+    <% if bucket.nil? && can_write %>
+      <%= button_to "Enable object storage", dashboard_app_object_storage_path(app), method: :post, class: Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>
+    <% end %>
+  </div>
+  <% if bucket %>
+    <dl class="px-6 py-4 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-xs">
+      <dt class="text-dim">Status</dt><dd class="text-ink capitalize"><%= bucket.status %></dd>
+      <% if bucket.last_error.present? && bucket.failed? %><dt class="text-dim">Error</dt><dd class="text-danger break-all"><%= bucket.last_error %></dd><% end %>
+      <dt class="text-dim">Bucket</dt><dd class="font-mono text-ink"><%= bucket.name %></dd>
+      <dt class="text-dim">Endpoint</dt><dd class="font-mono text-ink break-all"><%= Wokku.config.object_storage&.dig(:endpoint) %></dd>
+      <dt class="text-dim">Access key</dt><dd class="font-mono text-ink"><%= bucket.access_key %></dd>
+      <dt class="text-dim">Secret key</dt>
+      <dd>
+        <% if can_write %>
+          <%= turbo_frame_tag "object_storage_secret" do %>
+            <%= link_to "reveal", dashboard_app_object_storage_path(app), class: "text-accent hover:underline" %>
+          <% end %>
+        <% else %>
+          <span class="text-dim">hidden</span>
+        <% end %>
+      </dd>
+      <dt class="text-dim">Usage</dt><dd class="text-ink"><%= number_with_precision(bucket.used_gb, precision: 1) %> GB of <%= bucket.quota_gb %> GB</dd>
+    </dl>
+    <% if can_write %>
+      <div class="px-6 py-4 border-t border-line flex items-center gap-3 flex-wrap">
+        <%= form_with url: dashboard_app_object_storage_path(app), method: :patch, class: "flex items-center gap-2" do %>
+          <%= number_field_tag :quota_gb, bucket.quota_gb, min: 1, max: ObjectStorageBucket::MAX_QUOTA_GB, class: "w-24 bg-paper border-1.5 border-ink rounded-md px-2 py-1 text-sm", "aria-label": "Quota in GB" %>
+          <%= submit_tag "Set quota (GB)", class: Atoms::ButtonComponent.new(variant: :outline, size: :sm).classes %>
+        <% end %>
+        <%= button_to "Rotate keys", rotate_dashboard_app_object_storage_path(app), method: :post, data: { turbo_confirm: "Rotate keys? The app restarts with new credentials." }, class: Atoms::ButtonComponent.new(variant: :outline, size: :sm).classes %>
+        <%= button_to "Delete", dashboard_app_object_storage_path(app), method: :delete, data: { turbo_confirm: "Delete this bucket and all its files? This cannot be undone." }, class: "text-xs text-dim hover:text-danger cursor-pointer bg-transparent border-0" %>
+      </div>
+    <% end %>
+  <% end %>
+</div>
