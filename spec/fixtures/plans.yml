@@ -23,7 +23,6 @@ free:
   metric_aggregate_retention_days: 7
   db_bundle_mb: 100
   redis_bundle_mb: 25
-  minio_bundle_gb: 0
   shared_pg_mb_per_tenant: 50
   shared_redis_mb_per_tenant: 10
   shared_memcached_mb_per_tenant: 16
@@ -56,7 +55,6 @@ solo:
   metric_aggregate_retention_days: 30
   db_bundle_mb: 1024
   redis_bundle_mb: 100
-  minio_bundle_gb: 2
   shared_pg_mb_per_tenant: 50
   shared_redis_mb_per_tenant: 10
   shared_memcached_mb_per_tenant: 16
@@ -114,7 +112,6 @@ pro:
   metric_aggregate_retention_days: 90
   db_bundle_mb: 5120
   redis_bundle_mb: 500
-  minio_bundle_gb: 10
   shared_pg_mb_per_tenant: 50
   shared_redis_mb_per_tenant: 10
   shared_memcached_mb_per_tenant: 16
@@ -149,7 +146,6 @@ team:
   metric_aggregate_retention_days: 365
   db_bundle_mb: 10240
   redis_bundle_mb: 1024
-  minio_bundle_gb: 20
   shared_pg_mb_per_tenant: 50
   shared_redis_mb_per_tenant: 10
   shared_memcached_mb_per_tenant: 16

@@ -10,17 +10,12 @@ RSpec.describe Plan, "bundle defaults" do
     Plan.where(key: %w[solo pro team]).find_each do |p|
       expect(p.db_bundle_mb).to    be > 0, "#{p.key} db_bundle_mb"
       expect(p.redis_bundle_mb).to be > 0, "#{p.key} redis_bundle_mb"
-      expect(p.minio_bundle_gb).to be > 0, "#{p.key} minio_bundle_gb"
     end
-  end
-
-  it "free plan has zero MinIO (workspace storage gated on paid tier)" do
-    expect(Plan.find_by!(key: "free").minio_bundle_gb).to eq(0)
   end
 
   it "bundle sizes scale monotonically Free → Solo → Pro → Team" do
     ordered = Plan::KEYS.map { |k| Plan.find_by!(key: k) }
-    %i[db_bundle_mb redis_bundle_mb minio_bundle_gb].each do |col|
+    %i[db_bundle_mb redis_bundle_mb].each do |col|
       vals = ordered.map(&col)
       expect(vals).to eq(vals.sort), "#{col} should be monotonic: got #{vals.inspect}"
     end

@@ -368,7 +368,7 @@ en:
       dedicated_redis_slots: "Dedicated Redis slots (workspace)"
       dedicated_size_note: "Dedicated size (follows box size)"
       # storage & backups
-      minio_bundle: "Object storage (MinIO, S3-compatible)"
+      object_storage: "Object storage (S3-compatible)"
       backups: "Backups (frequency · retention)"
       monthly_archive: "Monthly archive snapshots"
       db_stats: "DB stats (connections / disk / slow queries)"

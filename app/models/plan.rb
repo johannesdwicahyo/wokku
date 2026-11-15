@@ -1,4 +1,7 @@
 class Plan < ApplicationRecord
+  # Column kept for rolling-deploy safety; dropped in a follow-up migration.
+  self.ignored_columns += [ "minio_bundle_gb" ]
+
   KEYS = %w[free solo pro team].freeze
 
   has_many :users, dependent: :restrict_with_exception

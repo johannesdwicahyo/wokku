@@ -50,5 +50,5 @@ Run the migrate command after every deploy that adds migrations. Live at `https:
 ## Troubleshooting
 
 - **500 on first load** — usually a missing `APP_KEY`. Set it and restart (`wokku ps:restart my-app`).
-- **Sessions, cache or uploads lost** — local disk is temporary. Use the `database` or `redis` driver for sessions, cache and queues, and object storage for files.
+- **Sessions, cache or uploads lost** — local disk is temporary. Use the `database` or `redis` driver for sessions, cache and queues, and [object storage](/docs/databases/object-storage) for files.
 - **Queues** — add `worker: php artisan queue:work` to a Procfile and scale it. See [Background Workers](/docs/guides/background-workers).

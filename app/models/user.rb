@@ -349,7 +349,7 @@ class User < ApplicationRecord
   def estimated_daily_cost          = 0
   def estimated_monthly_cost_cents  = 0
   def active_resource_usages        = []
-  def free_tier_counts              = { eco_containers: 0, mini_databases: 0, starter_minio: 0 }
+  def free_tier_counts              = { eco_containers: 0, mini_databases: 0 }
 
   def card_user?
     payment_method_type == "card"

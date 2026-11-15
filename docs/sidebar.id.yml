@@ -69,6 +69,8 @@
       path: databases/create-link
     - title: Backup & Restore
       path: databases/backups
+    - title: Object Storage
+      path: databases/object-storage
 
 - title: Domains & HTTPS
   icon: language

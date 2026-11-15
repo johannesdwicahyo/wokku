@@ -368,7 +368,7 @@ id:
       dedicated_redis_slots: "Slot Redis dedicated (workspace)"
       dedicated_size_note: "Ukuran dedicated (ikut ukuran box)"
       # storage & backup
-      minio_bundle: "Object storage (MinIO, S3-compatible)"
+      object_storage: "Object storage (kompatibel S3)"
       backups: "Backup (frekuensi · retensi)"
       monthly_archive: "Snapshot arsip bulanan"
       db_stats: "Stats DB (koneksi / disk / query lambat)"

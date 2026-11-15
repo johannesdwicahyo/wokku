@@ -112,13 +112,15 @@
           </div>
           <div class="font-mono text-[10px] text-dim mt-1">// dedicated · up to <%= fmt_mb.call(@plan.redis_bundle_mb) %></div>
         </div>
+        <% if (storage = @bundle_usage[:storage]) %>
         <div class="border-1.5 border-ink bg-bg px-4 py-3">
           <div class="font-mono text-[10px] text-dim tracking-widest uppercase mb-1.5">Object Storage</div>
           <div class="font-mono text-2xl text-ink font-semibold tracking-tighter">
-            <%= @bundle_usage[:minio_count] %><span class="text-sm text-dim">/1</span>
+            <%= number_with_precision(storage[0], precision: 1) %> GB <span class="text-sm text-dim">of <%= storage[1] %> GB</span>
           </div>
-          <div class="font-mono text-[10px] text-dim mt-1">// minio · up to <%= @plan.minio_bundle_gb %> GB · launching soon</div>
+          <div class="font-mono text-[10px] text-dim mt-1">// S3-compatible · Rp <%= ObjectStorageBucket::PRICE_IDR_PER_GB %>/GB after <%= ObjectStorageBucket::FREE_QUOTA_GB %> GB free</div>
         </div>
+        <% end %>
       </div>
     </div>
   </div>

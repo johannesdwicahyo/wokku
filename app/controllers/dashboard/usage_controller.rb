@@ -44,11 +44,18 @@ module Dashboard
     # storage-MB tracking is the SharedDatabaseQuotaJob's job; not
     # surfaced here yet because the plugin reports it but the column
     # isn't persisted in v1.
+    # [used_gb, quota_gb] across the team's buckets; nil when the feature is off.
+    def storage_usage
+      return unless Wokku.config.object_storage?
+      buckets = ObjectStorageBucket.where(team: current_team)
+      [ buckets.sum(&:used_gb), buckets.sum(:quota_gb) ]
+    end
+
     def compute_bundle_usage
       {
         db_count: DatabaseService.where(creator: current_user, service_type: "postgres").count,
         redis_count: DatabaseService.where(creator: current_user, service_type: "redis").count,
-        minio_count: 0
+        storage: storage_usage
       }
     end
   end
