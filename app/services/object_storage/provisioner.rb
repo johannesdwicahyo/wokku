@@ -26,7 +26,7 @@ module ObjectStorage
         remote_setup(bucket)
         app = bucket.app_record
         Apps::EnvWriter.set(app, env_for(bucket))
-        Apps::Restarter.restart(app)
+        restart_best_effort(app)
         bucket.update!(status: "active", last_error: nil)
       rescue ObjectStorage::Error => e
         bucket.update!(status: "failed", last_error: e.message)
@@ -48,15 +48,15 @@ module ObjectStorage
         client.attach_policy(bucket.name, bucket.access_key)
         bucket.save!
         Apps::EnvWriter.set(bucket.app_record, env_for(bucket))
-        Apps::Restarter.restart(bucket.app_record)
-        client.remove_user(old)
+        # keep the old key unless the app restarted onto the new one
+        client.remove_user(old) if restart_best_effort(bucket.app_record)
       end
 
       def destroy!(bucket)
         app = bucket.app_record
         if app
           Apps::EnvWriter.unset(app, *ENV_KEYS)
-          Apps::Restarter.restart(app)
+          restart_best_effort(app)
         end
         client.remove_user(bucket.access_key)
         client.remove_policy(bucket.name)
@@ -70,6 +70,16 @@ module ObjectStorage
       private
 
       def client = ObjectStorage::Client.new
+
+      # A never-deployed app (NotDeployed) or a busy/failed converge must not
+      # strand the bucket: the env is already written and applies on next deploy.
+      def restart_best_effort(app)
+        Apps::Restarter.restart(app)
+        true
+      rescue => e
+        Rails.logger.warn("[ObjectStorage] restart of #{app.name} skipped: #{e.class}: #{e.message}")
+        false
+      end
 
       def remote_setup(bucket)
         c = client

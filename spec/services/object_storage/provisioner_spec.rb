@@ -46,6 +46,14 @@ RSpec.describe ObjectStorage::Provisioner do
       expect(bucket.reload).to be_active
     end
 
+    it "still activates when the restart raises NotDeployed (never-deployed app)" do
+      allow(client).to receive_messages(create_bucket: true, add_user: true, put_policy: true, attach_policy: true, set_quota: true)
+      allow(Apps::Restarter).to receive(:restart).and_raise(Lifecycle::Ops::NotDeployed)
+      described_class.provision!(bucket)
+      expect(bucket.reload).to be_active
+      expect(app.env_vars.count).to eq(10)
+    end
+
     it "marks failed with no env change, no restart, and re-raises" do
       allow(client).to receive(:create_bucket)
       allow(client).to receive(:add_user).and_raise(ObjectStorage::Error, "boom")
@@ -87,6 +95,16 @@ RSpec.describe ObjectStorage::Provisioner do
     end
   end
 
+  describe ".rotate! with a failing restart" do
+    it "keeps the old user" do
+      bucket = create(:object_storage_bucket, app_record: app)
+      allow(client).to receive_messages(add_user: true, attach_policy: true)
+      allow(Apps::Restarter).to receive(:restart).and_raise(Lifecycle::Ops::NotDeployed)
+      expect(client).not_to receive(:remove_user)
+      described_class.rotate!(bucket)
+    end
+  end
+
   describe ".destroy!" do
     let(:bucket) { create(:object_storage_bucket, app_record: app) }
 
@@ -106,6 +124,13 @@ RSpec.describe ObjectStorage::Provisioner do
       allow(client).to receive_messages(remove_user: true, remove_policy: true, delete_bucket!: true)
       described_class.destroy!(bucket.reload)
       expect(Apps::Restarter).not_to have_received(:restart)
+      expect(ObjectStorageBucket.exists?(bucket.id)).to be false
+    end
+
+    it "still deletes remote + row when the restart raises NotDeployed" do
+      allow(Apps::Restarter).to receive(:restart).and_raise(Lifecycle::Ops::NotDeployed)
+      allow(client).to receive_messages(remove_user: true, remove_policy: true, delete_bucket!: true)
+      described_class.destroy!(bucket)
       expect(ObjectStorageBucket.exists?(bucket.id)).to be false
     end
 

@@ -26,14 +26,14 @@ module ObjectStorage
 
     # RustFS 1.0.4 honours x-rustfs-force-delete (verified live): empties + deletes.
     def delete_bucket!(name)
-      call(:delete, "/#{name}", headers: { "x-rustfs-force-delete" => "true" })
+      call(:delete, "/#{name}", headers: { "x-rustfs-force-delete" => "true" }, ok: [ 404 ])
     end
 
     def add_user(access_key, secret_key)
       admin(:put, "add-user", { accessKey: access_key }, { secretKey: secret_key, status: "enabled" })
     end
 
-    def remove_user(access_key) = admin(:delete, "remove-user", { accessKey: access_key })
+    def remove_user(access_key) = admin(:delete, "remove-user", { accessKey: access_key }, nil, ok: [ 404 ])
 
     def put_policy(name, bucket)
       policy = { Version: "2012-10-17", Statement: [ {
@@ -43,7 +43,7 @@ module ObjectStorage
       admin(:put, "add-canned-policy", { name: name }, policy)
     end
 
-    def remove_policy(name) = admin(:delete, "remove-canned-policy", { name: name })
+    def remove_policy(name) = admin(:delete, "remove-canned-policy", { name: name }, nil, ok: [ 404 ])
 
     def attach_policy(name, access_key)
       admin(:put, "set-user-or-group-policy", { policyName: name, userOrGroup: access_key, isGroup: "false" })
@@ -64,12 +64,12 @@ module ObjectStorage
 
     private
 
-    def admin(verb, action, query = {}, body = nil)
-      call(verb, "#{ADMIN}/#{action}", query: query, body: body && JSON.generate(body))
+    def admin(verb, action, query = {}, body = nil, ok: [])
+      call(verb, "#{ADMIN}/#{action}", query: query, body: body && JSON.generate(body), ok: ok)
     end
 
     # Returns true (or the body when raw:). ok_code: treat an `ok` status with
-    # that S3 error code as success.
+    # that S3 error code (any, when ok_code is nil) as success.
     def call(verb, path, query: {}, body: nil, headers: {}, raw: false, ok: [], ok_code: nil)
       uri = @endpoint.dup
       uri.path = path
@@ -88,7 +88,7 @@ module ObjectStorage
       end
       code = res.code.to_i
       return (raw ? res.body : true) if code.between?(200, 299)
-      return true if ok.include?(code) && res.body.to_s.include?("<Code>#{ok_code}</Code>")
+      return true if ok.include?(code) && (ok_code.nil? || res.body.to_s.include?("<Code>#{ok_code}</Code>"))
       msg = res.body.to_s[%r{<Message>(.*?)</Message>}m, 1] || res.body.to_s[0, 200]
       raise Error, "RustFS #{verb.to_s.upcase} #{path} -> #{code}: #{msg}"
     end

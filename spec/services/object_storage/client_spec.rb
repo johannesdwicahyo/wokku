@@ -92,4 +92,13 @@ RSpec.describe ObjectStorage::Client do
     stub_request(:put, "#{base}/b9").to_raise(Errno::ECONNREFUSED)
     expect { client.create_bucket("b9") }.to raise_error(ObjectStorage::Error) { |e| expect(e.message).not_to include("SK") }
   end
+
+  it "treats 404 as success for remove_user, remove_policy and delete_bucket! (retry-safe)" do
+    stub_request(:delete, "#{admin}/remove-user").with(query: { accessKey: "u" }).to_return(status: 404, body: "<Error><Code>NoSuchUser</Code></Error>")
+    stub_request(:delete, "#{admin}/remove-canned-policy").with(query: { name: "p" }).to_return(status: 404, body: "{}")
+    stub_request(:delete, "#{base}/gone").to_return(status: 404, body: "<Error><Code>NoSuchBucket</Code></Error>")
+    expect(client.remove_user("u")).to be true
+    expect(client.remove_policy("p")).to be true
+    expect(client.delete_bucket!("gone")).to be true
+  end
 end
