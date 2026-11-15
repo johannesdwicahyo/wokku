@@ -1,0 +1,2 @@
+The <%= @run.kind %> backup of object storage on <%= @server.name %> failed at <%= @run.created_at.iso8601 %>.
+Error: <%= @run.error.presence || "(none reported)" %>

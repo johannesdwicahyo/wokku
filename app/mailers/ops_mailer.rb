@@ -31,4 +31,18 @@ class OpsMailer < ApplicationMailer
     @server = server
     mail(to: ENV["ADMIN_EMAIL"], subject: "[Wokku OPS] RAM capacity full: #{server.name} — add a host")
   end
+
+  def storage_backup_failed(server, run)
+    return if ENV["ADMIN_EMAIL"].blank?
+    @server = server
+    @run = run
+    mail(to: ENV["ADMIN_EMAIL"], subject: "[Wokku OPS] Object storage backup FAILED: #{server.name}")
+  end
+
+  def storage_backup_stale(server, last_ok)
+    return if ENV["ADMIN_EMAIL"].blank?
+    @server = server
+    @last_ok = last_ok
+    mail(to: ENV["ADMIN_EMAIL"], subject: "[Wokku OPS] Object storage backup STALE: #{server.name}")
+  end
 end

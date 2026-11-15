@@ -1,4 +1,5 @@
 class Server < ApplicationRecord
+  has_many :storage_backup_runs, dependent: :delete_all
   # All-wokkud world: new servers are born fully capability-flagged (the
   # DB defaults are false — Track-B gradual-rollout relics; existing rows
   # keep their values).

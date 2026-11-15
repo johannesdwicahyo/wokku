@@ -388,6 +388,7 @@ Rails.application.routes.draw do
         get "cron/config",     to: "cron_configs#show"
         get "apps/:name/env",  to: "app_envs#show", constraints: { name: /[a-z][a-z0-9-]{0,62}/ }
         post "cron_runs",      to: "cron_runs#create"
+        post "storage_backup_runs", to: "storage_backup_runs#create"
 
         # Phase B4 datastore-op executor: wokkud claims a pending ServiceOp,
         # streams its log, and reports the outcome. Same trust boundary as

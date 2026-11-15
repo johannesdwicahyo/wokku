@@ -771,6 +771,24 @@ CREATE TABLE public.mobile_auth_codes (
 
 
 --
+-- Name: storage_backup_runs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.storage_backup_runs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    server_id uuid NOT NULL,
+    kind character varying NOT NULL,
+    status character varying NOT NULL,
+    objects bigint,
+    bytes bigint,
+    duration_s integer,
+    error text,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: notifications; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3108,6 +3126,28 @@ CREATE INDEX index_metrics_on_app_record_id ON public.metrics USING btree (app_r
 
 
 --
+-- Name: storage_backup_runs storage_backup_runs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.storage_backup_runs
+    ADD CONSTRAINT storage_backup_runs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: index_storage_backup_runs_on_server_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_storage_backup_runs_on_server_id ON public.storage_backup_runs USING btree (server_id);
+
+
+--
+-- Name: index_storage_backup_runs_on_server_id_and_kind_and_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_storage_backup_runs_on_server_id_and_kind_and_created_at ON public.storage_backup_runs USING btree (server_id, kind, created_at);
+
+
+--
 -- Name: index_mobile_auth_codes_on_code_digest; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4319,6 +4359,14 @@ ALTER TABLE ONLY public.mobile_auth_codes
 
 
 --
+-- Name: storage_backup_runs fk_rails_5b0c1e7a42; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.storage_backup_runs
+    ADD CONSTRAINT fk_rails_5b0c1e7a42 FOREIGN KEY (server_id) REFERENCES public.servers(id);
+
+
+--
 -- Name: solid_queue_scheduled_executions fk_rails_c4316f352d; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4509,6 +4557,7 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261115000001'),
 ('20261031000001'),
 ('20261025200001'),
 ('20261025100001'),
