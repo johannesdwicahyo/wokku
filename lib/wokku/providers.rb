@@ -25,13 +25,19 @@ module Wokku
     end
 
     attr_accessor :tls, :billing
-    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder, :host_ssh_user, :control_plane_host, :openapi_path
+    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder, :host_ssh_user, :control_plane_host, :openapi_path, :object_storage
 
     # The OpenAPI file GET /api/v1/openapi.yaml serves. Engine default: its
     # own derived contract; the cloud points it at the cloud superset.
     def openapi_path
       @openapi_path || Wokku::Engine.root.join("openapi/v1.yaml")
     end
+
+    # {endpoint:, access_key:, secret_key:} for the object-storage (RustFS)
+    # add-on; nil (OSS default) means the add-on is unavailable.
+    def object_storage = @object_storage.presence
+
+    def object_storage? = @object_storage.present?
 
     def plan_enforcer
       @plan_enforcer ||= NullPlanEnforcer.new

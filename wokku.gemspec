@@ -15,4 +15,5 @@ Gem::Specification.new do |spec|
   # the connection (anti-rebinding), revalidates redirects.
   spec.add_dependency "ssrf_filter", "~> 1.5"
   spec.add_dependency "csv"
+  spec.add_dependency "aws-sigv4", "~> 1.12"
 end

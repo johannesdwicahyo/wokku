@@ -2,6 +2,7 @@ PATH
   remote: .
   specs:
     wokku (0.0.1)
+      aws-sigv4 (~> 1.12)
       csv
       rails (>= 8.1.2)
       ssrf_filter (~> 1.5)
