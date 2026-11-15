@@ -5437,6 +5437,344 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
+  "/api/v1/apps/{app_id}/object_storage":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    get:
+      summary: Show the app's object storage bucket
+      operationId: object_storage.show
+      tags:
+      - object_storage
+      security:
+      - bearer: []
+      responses:
+        '200':
+          description: bucket
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - bucket
+                - endpoint
+                - region
+                - access_key_id
+                - quota_gb
+                - used_gb
+                - status
+                - price_idr_per_gb
+                - free_gb
+                properties:
+                  bucket:
+                    type: string
+                  endpoint:
+                    type: string
+                  region:
+                    type: string
+                  access_key_id:
+                    type: string
+                  secret_access_key:
+                    type: string
+                    description: omitted entirely for viewers
+                  quota_gb:
+                    type: integer
+                  used_gb:
+                    type: number
+                  status:
+                    type: string
+                    enum:
+                    - provisioning
+                    - active
+                    - failed
+                    - deleting
+                  price_idr_per_gb:
+                    type: integer
+                    example: 400
+                  free_gb:
+                    type: integer
+                    example: 1
+        '404':
+          description: feature disabled, or the app has no bucket
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    post:
+      summary: Enable object storage (provisioning queued)
+      operationId: object_storage.create
+      tags:
+      - object_storage
+      security:
+      - bearer: []
+      responses:
+        '202':
+          description: provisioning
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - bucket
+                - endpoint
+                - region
+                - access_key_id
+                - quota_gb
+                - used_gb
+                - status
+                - price_idr_per_gb
+                - free_gb
+                properties:
+                  bucket:
+                    type: string
+                  endpoint:
+                    type: string
+                  region:
+                    type: string
+                  access_key_id:
+                    type: string
+                  secret_access_key:
+                    type: string
+                    description: omitted entirely for viewers
+                  quota_gb:
+                    type: integer
+                  used_gb:
+                    type: number
+                  status:
+                    type: string
+                    enum:
+                    - provisioning
+                    - active
+                    - failed
+                    - deleting
+                  price_idr_per_gb:
+                    type: integer
+                    example: 400
+                  free_gb:
+                    type: integer
+                    example: 1
+        '409':
+          description: the app already has object storage
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                properties:
+                  error:
+                    type: string
+        '403':
+          description: caller is a viewer on the app's team
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+    patch:
+      summary: Change the quota (1 to 1024 GB; free plan fixed at 1 GB)
+      operationId: object_storage.update
+      tags:
+      - object_storage
+      security:
+      - bearer: []
+      parameters: []
+      responses:
+        '200':
+          description: resized
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - bucket
+                - endpoint
+                - region
+                - access_key_id
+                - quota_gb
+                - used_gb
+                - status
+                - price_idr_per_gb
+                - free_gb
+                properties:
+                  bucket:
+                    type: string
+                  endpoint:
+                    type: string
+                  region:
+                    type: string
+                  access_key_id:
+                    type: string
+                  secret_access_key:
+                    type: string
+                    description: omitted entirely for viewers
+                  quota_gb:
+                    type: integer
+                  used_gb:
+                    type: number
+                  status:
+                    type: string
+                    enum:
+                    - provisioning
+                    - active
+                    - failed
+                    - deleting
+                  price_idr_per_gb:
+                    type: integer
+                    example: 400
+                  free_gb:
+                    type: integer
+                    example: 1
+        '422':
+          description: quota_gb must be between 1 and 1024 GB
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                properties:
+                  error:
+                    type: string
+        '403':
+          description: free plan storage is fixed at 1 GB, or caller is a viewer
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                properties:
+                  error:
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - quota_gb
+              properties:
+                quota_gb:
+                  type: integer
+                  example: 50
+    delete:
+      summary: Delete the bucket and its files (async)
+      operationId: object_storage.destroy
+      tags:
+      - object_storage
+      security:
+      - bearer: []
+      responses:
+        '202':
+          description: deleting
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - bucket
+                - endpoint
+                - region
+                - access_key_id
+                - quota_gb
+                - used_gb
+                - status
+                - price_idr_per_gb
+                - free_gb
+                properties:
+                  bucket:
+                    type: string
+                  endpoint:
+                    type: string
+                  region:
+                    type: string
+                  access_key_id:
+                    type: string
+                  secret_access_key:
+                    type: string
+                    description: omitted entirely for viewers
+                  quota_gb:
+                    type: integer
+                  used_gb:
+                    type: number
+                  status:
+                    type: string
+                    enum:
+                    - provisioning
+                    - active
+                    - failed
+                    - deleting
+                  price_idr_per_gb:
+                    type: integer
+                    example: 400
+                  free_gb:
+                    type: integer
+                    example: 1
+  "/api/v1/apps/{app_id}/object_storage/rotate":
+    parameters:
+    - name: app_id
+      in: path
+      schema:
+        type: string
+      description: App UUID or name
+      required: true
+    post:
+      summary: Rotate the access keys (async; the app restarts onto the new ones)
+      operationId: object_storage.rotate
+      tags:
+      - object_storage
+      security:
+      - bearer: []
+      responses:
+        '202':
+          description: rotation queued
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - bucket
+                - endpoint
+                - region
+                - access_key_id
+                - quota_gb
+                - used_gb
+                - status
+                - price_idr_per_gb
+                - free_gb
+                properties:
+                  bucket:
+                    type: string
+                  endpoint:
+                    type: string
+                  region:
+                    type: string
+                  access_key_id:
+                    type: string
+                  secret_access_key:
+                    type: string
+                    description: omitted entirely for viewers
+                  quota_gb:
+                    type: integer
+                  used_gb:
+                    type: number
+                  status:
+                    type: string
+                    enum:
+                    - provisioning
+                    - active
+                    - failed
+                    - deleting
+                  price_idr_per_gb:
+                    type: integer
+                    example: 400
+                  free_gb:
+                    type: integer
+                    example: 1
   "/api/v1/apps/{app_id}/previews":
     parameters:
     - name: app_id
