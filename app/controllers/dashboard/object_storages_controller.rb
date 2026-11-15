@@ -4,10 +4,12 @@ module Dashboard
     before_action :set_app
     before_action :set_bucket, except: :create
 
-    # Turbo-frame reveal: the secret is only rendered on this audited request.
-    def show
+    # Turbo-frame reveal (POST: never prefetched, CSRF-protected). The secret
+    # is only rendered on this audited request.
+    def reveal
       authorize @app, :update?
-      track("object_storage.revealed", target: @app)
+      track("object_storage.revealed", target: @app, team: @app.team)
+      response.headers["Cache-Control"] = "no-store"
       render partial: "dashboard/object_storages/secret", locals: { bucket: @bucket }, layout: false
     end
 
@@ -17,7 +19,7 @@ module Dashboard
         back alert: "Object storage is already enabled."
       else
         ObjectStorage::Provisioner.create!(@app)
-        track("object_storage.created", target: @app)
+        track("object_storage.created", target: @app, team: @app.team)
         back notice: "Object storage is being provisioned."
       end
     end
@@ -28,14 +30,14 @@ module Dashboard
       return back(alert: message) if message
 
       ObjectStorage::Provisioner.resize!(@bucket, params[:quota_gb])
-      track("object_storage.resized", target: @app, metadata: { quota_gb: @bucket.quota_gb })
+      track("object_storage.resized", target: @app, metadata: { quota_gb: @bucket.quota_gb }, team: @app.team)
       back notice: "Quota set to #{@bucket.quota_gb} GB."
     end
 
     def rotate
       authorize @app, :update?
       ObjectStorage::RotateJob.perform_later(@bucket.id)
-      track("object_storage.rotated", target: @app)
+      track("object_storage.rotated", target: @app, team: @app.team)
       back notice: "Rotating keys. Your app restarts with the new ones shortly."
     end
 
@@ -43,7 +45,7 @@ module Dashboard
       authorize @app, :update?
       @bucket.update!(status: "deleting")
       ObjectStorage::DeprovisionJob.perform_later(@bucket.id)
-      track("object_storage.destroyed", target: @app)
+      track("object_storage.destroyed", target: @app, team: @app.team)
       back notice: "Object storage is being deleted."
     end
 

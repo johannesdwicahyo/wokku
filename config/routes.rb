@@ -87,8 +87,9 @@ Rails.application.routes.draw do
       resource :performance, only: [ :show ], module: "apps", controller: "performance" do
         post :rotate_token
       end
-      resource :object_storage, only: %i[show create update destroy] do
+      resource :object_storage, only: %i[create update destroy] do
         post :rotate
+        post :reveal
       end
       resource :resources, only: [ :show, :create, :update, :destroy ], controller: "resources"
       resource :scaling, only: [ :show, :update ], controller: "scaling" do

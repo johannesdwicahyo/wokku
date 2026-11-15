@@ -15,7 +15,7 @@ module Api
         return render json: { error: "App already has object storage" }, status: :conflict if @app.object_storage_bucket
 
         bucket = ObjectStorage::Provisioner.create!(@app)
-        track("object_storage.created", target: @app)
+        track("object_storage.created", target: @app, team: @app.team)
         render json: payload(bucket), status: :accepted
       end
 
@@ -25,14 +25,14 @@ module Api
         return render json: { error: message }, status: status if status
 
         ObjectStorage::Provisioner.resize!(@bucket, params[:quota_gb])
-        track("object_storage.resized", target: @app, metadata: { quota_gb: @bucket.quota_gb })
+        track("object_storage.resized", target: @app, metadata: { quota_gb: @bucket.quota_gb }, team: @app.team)
         render json: payload(@bucket)
       end
 
       def rotate
         authorize @app, :update?
         ObjectStorage::RotateJob.perform_later(@bucket.id)
-        track("object_storage.rotated", target: @app)
+        track("object_storage.rotated", target: @app, team: @app.team)
         render json: payload(@bucket), status: :accepted
       end
 
@@ -40,7 +40,7 @@ module Api
         authorize @app, :update?
         @bucket.update!(status: "deleting")
         ObjectStorage::DeprovisionJob.perform_later(@bucket.id)
-        track("object_storage.destroyed", target: @app)
+        track("object_storage.destroyed", target: @app, team: @app.team)
         render json: payload(@bucket), status: :accepted
       end
 

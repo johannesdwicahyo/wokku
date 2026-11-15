@@ -53,15 +53,31 @@ RSpec.describe "Dashboard object storage", type: :request do
   describe "reveal" do
     let!(:bucket) { create(:object_storage_bucket, app_record: app_record) }
 
-    it "shows the secret to a member and audits it" do
+    it "shows the secret to a member, audited, uncached" do
       sign_in user_with(:member)
-      expect { get base }.to change { Activity.where(action: "object_storage.revealed").count }.by(1)
+      expect { post "#{base}/reveal" }.to change { Activity.where(action: "object_storage.revealed").count }.by(1)
       expect(response.body).to include(bucket.secret_key)
+      expect(response.headers["Cache-Control"]).to include("no-store")
+    end
+
+    it "files the audit under the app's team for a multi-team user" do
+      user = user_with(:member)
+      other = create(:team)
+      create(:team_membership, user: user, team: other, role: :admin)
+      sign_in user
+      post "#{base}/reveal"
+      expect(Activity.find_by!(action: "object_storage.revealed").team).to eq(app_record.team)
+    end
+
+    it "has no GET reveal route" do
+      sign_in user_with(:member)
+      get base
+      expect(response).to have_http_status(:not_found)
     end
 
     it "refuses a viewer" do
       sign_in user_with(:viewer)
-      get base
+      post "#{base}/reveal"
       expect(response.body).not_to include(bucket.secret_key)
       expect(Activity.where(action: "object_storage.revealed")).to be_empty
     end

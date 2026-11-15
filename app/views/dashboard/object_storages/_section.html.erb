@@ -23,7 +23,7 @@
       <dd>
         <% if can_write %>
           <%= turbo_frame_tag "object_storage_secret" do %>
-            <%= link_to "reveal", dashboard_app_object_storage_path(app), class: "text-accent hover:underline" %>
+            <%= button_to "reveal", reveal_dashboard_app_object_storage_path(app), form: { data: { turbo_frame: "object_storage_secret" } }, class: "text-accent hover:underline cursor-pointer bg-transparent border-0 p-0" %>
           <% end %>
         <% else %>
           <span class="text-dim">hidden</span>

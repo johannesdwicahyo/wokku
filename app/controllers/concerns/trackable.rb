@@ -3,9 +3,9 @@ module Trackable
 
   private
 
-  def track(action, target: nil, metadata: {})
+  def track(action, target: nil, metadata: {}, team: nil)
     user = respond_to?(:current_user, true) ? current_user : nil
-    team = respond_to?(:current_team, true) ? current_team : nil
+    team ||= respond_to?(:current_team, true) ? current_team : nil
     team ||= user&.teams&.first
     return unless user && team
 
