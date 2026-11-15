@@ -5650,6 +5650,28 @@ paths:
                 properties:
                   error:
                     type: string
+        '409':
+          description: the bucket is not active yet (provisioning, failed or deleting)
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                properties:
+                  error:
+                    type: string
+        '503':
+          description: object storage is temporarily unavailable; retry shortly
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                properties:
+                  error:
+                    type: string
       requestBody:
         content:
           application/json:
@@ -5775,6 +5797,17 @@ paths:
                   free_gb:
                     type: integer
                     example: 1
+        '409':
+          description: the bucket is not active yet (provisioning, failed or deleting)
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - error
+                properties:
+                  error:
+                    type: string
   "/api/v1/apps/{app_id}/previews":
     parameters:
     - name: app_id
