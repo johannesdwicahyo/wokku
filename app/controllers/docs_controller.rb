@@ -24,7 +24,11 @@ class DocsController < ApplicationController
     "getting-started/connect-server" => "oss/connect-server"
   }.freeze
 
+  # Pages hidden (404, not in sidebar/search) until their feature is on.
+  GATED = { "databases/object-storage" => -> { Wokku.config.object_storage? } }.freeze
+
   def show
+    raise ActiveRecord::RecordNotFound if gated?(params[:path])
     if (target = MOVED[params[:path]])
       return redirect_to docs_page_path(target, lang: params[:lang].presence), status: :moved_permanently
     end
@@ -56,6 +60,7 @@ class DocsController < ApplicationController
     entries = []
     Dir.glob(base.join("**/*.md")).each do |file|
       path = file.sub(base.to_s + "/", "").sub(".md", "")
+      next if gated?(path)
       raw = File.read(file)
       frontmatter, content = split_frontmatter(raw)
       title = frontmatter["title"].presence ||
@@ -71,6 +76,8 @@ class DocsController < ApplicationController
 
   private
 
+  def gated?(path) = (check = GATED[path]) && !check.call
+
   # Locale source order: explicit ?lang= param → I18n.locale → default.
   def resolve_locale
     candidate = params[:lang].presence || I18n.locale.to_s
@@ -82,7 +89,7 @@ class DocsController < ApplicationController
     @_sidebar[locale] ||= begin
       file = Wokku::Engine.root.join("docs/sidebar.#{locale}.yml")
       file = Wokku::Engine.root.join("docs/sidebar.#{DEFAULT_LOCALE}.yml") unless file.file?
-      YAML.load_file(file)
+      YAML.load_file(file).each { |section| section["items"]&.reject! { |item| gated?(item["path"]) } }
     end
   end
 

@@ -62,5 +62,5 @@ Cek `https://my-app.wokku.app`, lalu pindahkan domain kamu. Lihat [Custom Domain
 
 ## Hal yang perlu diperhatikan
 
-- **Persistent disk** — tidak ada disk yang terpasang. Simpan file di [object storage](/docs/databases/object-storage) atau database.
+- **Persistent disk** — tidak ada disk yang terpasang. Simpan file di object storage atau database.
 - **Path health check** — atur di [Health Checks](/docs/monitoring/health-checks).

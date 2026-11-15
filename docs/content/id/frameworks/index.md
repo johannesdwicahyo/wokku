@@ -42,7 +42,7 @@ Baris `web:` di `Procfile` menjadi perintah start. Setiap baris lainnya menjadi 
   ```
 
 - **Buat perintah Procfile tetap sederhana.** Perintah yang mengandung `'`, `|`, `;` atau `&` berjalan tanpa shell. Taruh perintah gabungan (`a && b`) di sebuah script lalu panggil script itu. Untuk mengisi env var secara inline, tulis `env HOST=0.0.0.0 node server.js`, bukan `HOST=0.0.0.0 node server.js`.
-- **Disk-nya sementara.** File yang ditulis saat runtime hilang di deploy atau restart berikutnya. Simpan upload di [object storage](/docs/databases/object-storage) dan data di [database](/docs/databases/create-link).
+- **Disk-nya sementara.** File yang ditulis saat runtime hilang di deploy atau restart berikutnya. Simpan upload di object storage dan data di [database](/docs/databases/create-link).
 - **Config var berlaku saat runtime, bukan saat build.** Nilai yang di-inline framework saat build (`NEXT_PUBLIC_*`, `PUBLIC_*`) harus ada di repo-mu, misalnya di `.env.production` yang di-commit.
 
 ## Snippet deploy

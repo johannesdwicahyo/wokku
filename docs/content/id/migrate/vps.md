@@ -60,6 +60,6 @@ Cek `https://my-app.wokku.app`, tambahkan domain kamu, arahkan DNS ke Wokku, dan
 
 ## Hal yang perlu diperhatikan
 
-- **File lokal** — upload dan file SQLite di disk harus dipindah ke [object storage](/docs/databases/object-storage) atau database. Disk app bersifat sementara.
+- **File lokal** — upload dan file SQLite di disk harus dipindah ke object storage atau database. Disk app bersifat sementara.
 - **Script cron** — ubah jadi [scheduled tasks](/docs/guides/scheduled-tasks) atau process `worker`.
 - **Port dan path yang di-hardcode** — listen di `$PORT`, dan jangan berasumsi ada nginx atau struktur direktori yang tetap.

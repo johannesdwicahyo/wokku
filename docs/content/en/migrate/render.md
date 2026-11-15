@@ -62,5 +62,5 @@ Check `https://my-app.wokku.app`, then move your domain. See [Custom Domains](/d
 
 ## Gotchas
 
-- **Persistent disks** — there's no attached disk. Keep files in [object storage](/docs/databases/object-storage) or a database.
+- **Persistent disks** — there's no attached disk. Keep files in object storage or a database.
 - **Health check path** — set it under [Health Checks](/docs/monitoring/health-checks).

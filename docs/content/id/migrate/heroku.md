@@ -63,5 +63,5 @@ Cek app di `https://my-app.wokku.app`, lalu tambahkan domain kamu (HTTPS otomati
 ## Hal yang perlu diperhatikan
 
 - **Perintah khusus buildpack** — baris Procfile seperti `heroku-php-apache2` tidak ada di sini. Lihat [panduan framework](/docs/frameworks/index) kamu.
-- **Disk sementara** — sama seperti Heroku. Simpan upload di [object storage](/docs/databases/object-storage).
+- **Disk sementara** — sama seperti Heroku. Simpan upload di object storage.
 - **Nama variabel add-on** — arahkan app kamu ke `DATABASE_URL` / `REDIS_URL`, bukan nama add-on Heroku seperti `HEROKU_POSTGRESQL_*`.
