@@ -208,9 +208,15 @@ class AppRecord < ApplicationRecord
 
   SUPPORTED_GIT_PROVIDERS = %w[github gitlab bitbucket].freeze
 
+  # Platform subdomains on the managed zone. An app's name becomes
+  # <name>.<zone>'s DNS record, and deleting the app deletes that record —
+  # an app named `git` would take down git.wokku.cloud.
+  RESERVED_NAMES = %w[s3 git cdn www status].freeze
+
   validates :name, presence: true,
     uniqueness: { scope: :server_id },
-    format: { with: /\A[a-z][a-z0-9-]*\z/, message: "must be lowercase alphanumeric with hyphens" }
+    format: { with: /\A[a-z][a-z0-9-]*\z/, message: "must be lowercase alphanumeric with hyphens" },
+    exclusion: { in: RESERVED_NAMES, message: "is reserved" }
   validates :git_provider, inclusion: { in: SUPPORTED_GIT_PROVIDERS }, allow_nil: true
   # PR preview database: empty, snapshot of prod, or shared with prod.
   PREVIEW_DATABASE_STRATEGIES = %w[empty snapshot shared].freeze

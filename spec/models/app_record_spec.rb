@@ -23,6 +23,18 @@ RSpec.describe AppRecord do
       expect(app.errors[:name]).to include("must be lowercase alphanumeric with hyphens")
     end
 
+    # Platform subdomains on the managed zone — an app with one of these
+    # names would own <name>.wokku.cloud's DNS record and delete it on
+    # app delete (e.g. `git` would break every git push).
+    it "rejects reserved platform names" do
+      %w[s3 git cdn www status].each do |reserved|
+        app = AppRecord.new(name: reserved, server: server, team: team, creator: owner)
+        expect(app).not_to be_valid
+        expect(app.errors[:name]).to include("is reserved")
+      end
+      expect(AppRecord.new(name: "s3-backup", server: server, team: team, creator: owner)).to be_valid
+    end
+
     it "name cannot start with a number" do
       app = AppRecord.new(name: "1app", server: server, team: team, creator: owner)
       expect(app).not_to be_valid
