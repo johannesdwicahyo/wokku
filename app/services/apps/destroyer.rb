@@ -43,6 +43,8 @@ module Apps
       # decision is immune to the app-row cascade that happens below.
       exclusive_dbs = @app.database_services.select { |db| db.app_records.where.not(id: @app.id).empty? }
 
+      bucket = @app.object_storage_bucket
+
       # Flagged apps run as Swarm services — tear the stack down BEFORE the
       # record cascade (lifecycle_ops is dependent: :destroy) so the services
       # and swarm_port are freed. remove_if_flagged! already swallows its own
@@ -73,6 +75,18 @@ module Apps
         best_effort("destroy database #{db.name}", step: "Deleting #{db.service_type} database #{db.name}") do
           DatabaseProvisioner.destroy!(database_service: db)
           destroyed_db_names << db.name
+        end
+      end
+
+      # After the app row is gone (FK nulled the bucket's app_record_id), so
+      # Provisioner.destroy! skips env/restart. On failure it leaves the row
+      # `deleting`; the job retries it.
+      if bucket
+        best_effort("destroy object storage bucket #{bucket.name}", step: "Deleting object storage bucket") do
+          ObjectStorage::Provisioner.destroy!(bucket.reload)
+        rescue ObjectStorage::Error
+          ObjectStorage::DeprovisionJob.perform_later(bucket.id)
+          raise
         end
       end
 
