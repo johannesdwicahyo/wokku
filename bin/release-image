@@ -53,7 +53,13 @@ echo "→ boot test on an empty database"
   docker run -d --name \$N-web --network \$N -e PGHOST=\$N-db -e PGUSER=wokku -e PGPASSWORD=wokku -e WOKKU_FORCE_SSL=0 \
     -e SECRET_KEY_BASE=\$(openssl rand -hex 64) -e WOKKU_CANONICAL_DOMAIN=localhost \$IMG >/dev/null
   for i in \$(seq 1 60); do
-    docker exec \$N-web curl -fsS -o /dev/null -m 2 http://127.0.0.1:3000/up 2>/dev/null && { echo '  boot ok'; exit 0; }
+    if docker exec \$N-web curl -fsS -o /dev/null -m 2 http://127.0.0.1:3000/up 2>/dev/null; then
+      # Healthy once isn't enough: Solid Queue can die seconds later and take
+      # Puma with it (stale recurring.yml, 2026-11-16). Must still be up.
+      sleep 30
+      [ \"\$(docker inspect -f '{{.State.Running}}' \$N-web)\" = true ] && docker exec \$N-web curl -fsS -o /dev/null -m 2 http://127.0.0.1:3000/up 2>/dev/null && { echo '  boot ok (still serving after 30s)'; exit 0; }
+      break
+    fi
     [ \"\$(docker inspect -f '{{.State.Running}}' \$N-web)\" = true ] || break
     sleep 3
   done

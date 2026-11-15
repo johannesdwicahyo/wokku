@@ -12,6 +12,8 @@ services:
     # Bound to loopback: the dashboard is served by the host's Caddy on
     # 80/443 at the canonical apex (wokkud renders the route).
     ports: ["127.0.0.1:3000:3000"]
+    # Come back after a crash or a server reboot without anyone touching it.
+    restart: unless-stopped
     environment:
       PGHOST: db
       PGUSER: wokku
@@ -24,6 +26,7 @@ services:
         condition: service_healthy
   db:
     image: postgres:16
+    restart: unless-stopped
     environment:
       POSTGRES_USER: wokku
       POSTGRES_PASSWORD: wokku

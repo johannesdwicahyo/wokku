@@ -39,11 +39,6 @@ production:
     schedule: every 1 minute
     queue: metrics
 
-  request_aggregate_rollup:
-    class: RequestAggregateRollupJob
-    schedule: every 5 minutes
-    queue: metrics
-
   vitals_rollup:
     class: VitalsRollupJob
     schedule: every 5 minutes
