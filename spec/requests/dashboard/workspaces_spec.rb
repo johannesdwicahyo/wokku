@@ -1,6 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "Dashboard::Workspaces (PR C)", type: :request do
+  # Cloud behaviour (plans, invoices); self-host is covered in selfhost_pages_spec.
+  before { allow(Wokku).to receive(:cloud?).and_return(true) }
   include Devise::Test::IntegrationHelpers
 
   let(:user) { users(:one) }

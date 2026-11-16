@@ -39,6 +39,7 @@ RSpec.describe Organisms::ResourceBuilderComponent, type: :component do
   end
 
   it "offers the free sleeping option and disk with a floor" do
+    allow(Wokku).to receive(:cloud?).and_return(true) # "(free)" is cloud copy
     render_inline(described_class.new(name: "p", shape: Resources::Shape.new(cpu: 0.25, memory_mb: 512, disk_gb: 10), presets: {}, disk: true, min_disk_gb: 10, sleeping_option: true))
     expect(page).to have_button("Sleeping (free)")
     expect(page).to have_css("input[name='p[disk_gb]'][min='10']")
