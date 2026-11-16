@@ -75,7 +75,10 @@ module Addons
       ENGINES.each_with_object({}) do |engine, h|
         h[engine[:key]] = {
           label: engine[:label],
-          modes: engine[:modes].map { |m| mode_entry(engine[:key], m) }
+          # Dedicated-only where the install runs no shared engines (the
+          # open-source edition): shared isn't offered at all.
+          modes: engine[:modes].select { |m| m != "shared" || Addons::SharedProvisioner.feature_enabled? }
+                               .map { |m| mode_entry(engine[:key], m) }
         }
       end
     end
@@ -93,13 +96,9 @@ module Addons
     def availability(engine, mode)
       case mode
       when "shared"
-        # Free + paid all get shared today (Bundle v2 spec) — where the
-        # install runs shared host containers at all (not self-host default).
-        if Addons::SharedProvisioner.feature_enabled?
-          { ok: true, reason: nil }
-        else
-          { ok: false, reason: "Not available on this install — choose Dedicated" }
-        end
+        # Free + paid all get shared today (Bundle v2 spec). Only listed
+        # where shared engines run (see for_user).
+        { ok: true, reason: nil }
       when "dedicated"
         if Wokku.config.resource_builder?
           { ok: true, reason: nil }

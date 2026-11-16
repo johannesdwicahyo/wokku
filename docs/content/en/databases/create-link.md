@@ -1,4 +1,5 @@
 ---
+shared_dbs: true
 title: Add & Link a Database
 summary: Add a free shared database to your app, upgrade it to dedicated, or share one database between apps.
 last_updated: 2026-11-07

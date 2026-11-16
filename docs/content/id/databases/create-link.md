@@ -1,4 +1,5 @@
 ---
+shared_dbs: true
 title: Tambah & Hubungkan Database
 summary: Tambahkan shared database gratis ke app kamu, upgrade ke dedicated, atau pakai satu database bersama untuk beberapa app.
 last_updated: 2026-11-07

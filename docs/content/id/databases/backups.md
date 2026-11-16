@@ -1,4 +1,5 @@
 ---
+shared_dbs: true
 title: Backup & Restore
 summary: Backup harian untuk database dedicated, backup on-demand, download, dan restore.
 last_updated: 2026-11-07

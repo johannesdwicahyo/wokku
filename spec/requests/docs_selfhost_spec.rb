@@ -15,6 +15,11 @@ RSpec.describe "Docs on a self-host install", type: :request do
     end
   end
 
+  it "says the open-source edition uses dedicated databases" do
+    get "/docs/databases/engines"
+    expect(response.body).to include("data-dedicated-only-note")
+  end
+
   it "hides the wokku.cloud beta notice" do
     get "/docs/beta"
     expect(response).to have_http_status(:not_found)

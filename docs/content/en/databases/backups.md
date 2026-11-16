@@ -1,4 +1,5 @@
 ---
+shared_dbs: true
 title: Backups & Restore
 summary: Nightly backups for dedicated databases, on-demand backups, downloads and restores.
 last_updated: 2026-11-07

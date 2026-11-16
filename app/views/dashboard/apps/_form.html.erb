@@ -143,6 +143,7 @@
       }
       available_engines = plan.shared_engines_available
     %>
+    <% if Addons::SharedProvisioner.feature_enabled? %><%# none in the open-source edition %>
     <div>
       <label class="block text-xs font-semibold text-ink-soft mb-1">
         <%= t("dashboard.apps.shared_addons_label") %>
@@ -164,6 +165,7 @@
       </div>
       <p class="text-[11.5px] text-dim mt-1">All shared add-ons are free and included in your plan.</p>
     </div>
+    <% end %>
 
     <%#
       Bundle v2: Dedicated add-ons at creation (optional, paid plans only).

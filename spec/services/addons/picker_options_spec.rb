@@ -3,6 +3,9 @@
 require "rails_helper"
 
 RSpec.describe Addons::PickerOptions do
+  # Cloud shape by default (shared + dedicated); self-host examples turn it off.
+  before { allow(Addons::SharedProvisioner).to receive(:feature_enabled?).and_return(true) }
+
   let(:free_user) { users(:one) }
   let(:free_plan) { instance_double(Plan, free?: true) }
   let(:solo_plan) do
@@ -60,12 +63,12 @@ RSpec.describe Addons::PickerOptions do
       expect(shared[:available]).to be true
     end
 
-    # Self-host default: shared was offered (and preselected) but creating it
-    # failed with "Shared engines are not enabled" (2026-11-16 visual audit).
-    it "marks shared unavailable where shared engines are off" do
+    # The open-source edition is dedicated-only: no shared option at all
+    # (it was preselected, then failed "Shared engines are not enabled").
+    it "offers only dedicated where shared engines are off" do
       allow(Addons::SharedProvisioner).to receive(:feature_enabled?).and_return(false)
-      shared = described_class.for_user(free_user)["postgres"][:modes].find { |m| m[:mode] == "shared" }
-      expect(shared).to include(available: false, unavailable_reason: /Not available on this install/)
+      modes = described_class.for_user(free_user)["postgres"][:modes].map { |m| m[:mode] }
+      expect(modes).to eq([ "dedicated" ])
     end
 
     it "shows dedicated as unavailable for free-plan users with upgrade copy" do
@@ -116,11 +119,14 @@ RSpec.describe Addons::PickerOptions do
   end
 
   describe "self-host (no billing host)" do
-    before { allow(Wokku.config).to receive(:resource_builder?).and_return(true) }
+    before do
+      allow(Wokku.config).to receive(:resource_builder?).and_return(true)
+      allow(Addons::SharedProvisioner).to receive(:feature_enabled?).and_return(false)
+    end
 
     it "describes what you get, never price or plan" do
       modes = described_class.for_user(free_user)["postgres"][:modes]
-      expect(modes.map { |m| m[:kicker] }).to eq([ "Included", "Own container" ])
+      expect(modes.map { |m| m[:kicker] }).to eq([ "Own container" ])
       expect(modes.map { |m| m[:description] }.join).not_to match(/free|cost|billed|plan|paid/i)
     end
   end

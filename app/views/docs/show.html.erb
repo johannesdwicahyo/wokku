@@ -11,6 +11,13 @@
       source:  @doc_edit_url
     ) %>
 
+<%# Database pages: the open-source edition has dedicated databases only. %>
+<% if @frontmatter["shared_dbs"] && !Addons::SharedProvisioner.feature_enabled? %>
+  <p data-dedicated-only-note class="mt-6 border-1.5 border-line bg-bg px-4 py-3 font-mono text-xs text-dim">
+    <%= @docs_locale == "id" ? "Instalasi self-host hanya memakai database dedicated (container sendiri per database). Database shared adalah fitur wokku.cloud." : "Self-hosted installs use dedicated databases only (one container per database). Shared databases are a wokku.cloud feature." %>
+  </p>
+<% end %>
+
 <%# Pages that walk through wokku.cloud's own sign-up/deploy flow. %>
 <% if @frontmatter["cloud_flow"] && !wokku_cloud? %>
   <p data-cloud-flow-note class="mt-6 border-1.5 border-line bg-bg px-4 py-3 font-mono text-xs text-dim">
