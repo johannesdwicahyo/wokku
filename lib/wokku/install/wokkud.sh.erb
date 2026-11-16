@@ -13,7 +13,9 @@ set -euo pipefail
 TOKEN="${1:?usage: ... | sudo bash -s -- <ingest-token> [--no-harden]}"
 HARDEN=1
 [ "${2:-}" = "--no-harden" ] && HARDEN=0
-CONTROL_URL="<%= control_url %>"
+# install.sh (same box) sets WOKKU_CONTROL_URL=http://127.0.0.1:3000: under
+# force_ssl the URL baked in here is https://, which loopback can't speak.
+CONTROL_URL="${WOKKU_CONTROL_URL:-<%= control_url %>}"
 
 [ "$(id -u)" = "0" ] || { echo "run with sudo"; exit 1; }
 export DEBIAN_FRONTEND=noninteractive
@@ -76,7 +78,9 @@ command -v docker >/dev/null 2>&1 || { apt-get update -qq; apt-get install -y -q
 systemctl enable --now docker >/dev/null 2>&1 || true
 
 log "docker swarm"
-docker info 2>/dev/null | grep -q "Swarm: active" || \
+# Not `docker info | grep -q`: under pipefail grep's early exit SIGPIPEs
+# docker (141) and a re-run tried to init an existing swarm.
+[ "$(docker info --format '{{.Swarm.LocalNodeState}}' 2>/dev/null)" = active ] || \
   docker swarm init --advertise-addr "$(hostname -I | awk '{print $1}')" >/dev/null
 
 # Deployed apps are published on Swarm ingress ports (20000-29999). Docker's

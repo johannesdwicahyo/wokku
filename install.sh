@@ -94,7 +94,9 @@ TOKEN=$(docker compose exec -T web bin/rails runner \
 [ -n "$TOKEN" ] || { echo "could not mint an ingest token"; exit 1; }
 
 log "installing the wokku runtime on this box (swarm, registry, caddy, nixpacks, wokkud)"
-curl -fsSL http://127.0.0.1:3000/install/wokkud.sh | bash -s -- "$TOKEN"
+# Same box: the agent talks to the control plane over loopback, not via
+# Caddy (which this very step installs).
+curl -fsSL http://127.0.0.1:3000/install/wokkud.sh | WOKKU_CONTROL_URL=http://127.0.0.1:3000 bash -s -- "$TOKEN"
 
 DOMAIN=$(grep '^WOKKU_CANONICAL_DOMAIN=' .env | cut -d= -f2)
 log "done — open https://${DOMAIN} to create your admin account and deploy."
