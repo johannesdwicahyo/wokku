@@ -15,6 +15,16 @@ RSpec.describe "Docs on a self-host install", type: :request do
     end
   end
 
+  it "hides the wokku.cloud beta notice" do
+    get "/docs/beta"
+    expect(response).to have_http_status(:not_found)
+  end
+
+  it "explains how sign-up and deploy differ on a self-hosted install" do
+    get "/docs/getting-started/first-deploy"
+    expect(response.body).to include("data-cloud-flow-note")
+  end
+
   %w[en id].each do |lang|
     it "marks wokku.cloud prices on mixed pages (#{lang})" do
       get "/docs/scaling/resources", params: { lang: lang }

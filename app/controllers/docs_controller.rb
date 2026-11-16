@@ -29,7 +29,8 @@ class DocsController < ApplicationController
   GATED = {
     "databases/object-storage" => -> { Wokku.config.object_storage? },
     "billing/pricing"          => -> { Wokku.cloud? },
-    "billing/invoices"         => -> { Wokku.cloud? }
+    "billing/invoices"         => -> { Wokku.cloud? },
+    "beta"                     => -> { Wokku.cloud? }
   }.freeze
 
   def show

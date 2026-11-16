@@ -1,4 +1,5 @@
 ---
+cloud_flow: true
 title: Daftar
 summary: Buat akun Wokku kamu di browser, lalu kalau mau, login dari CLI atau Claude.
 last_updated: 2026-11-07

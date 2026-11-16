@@ -1,4 +1,5 @@
 ---
+cloud_flow: true
 title: Sign Up
 summary: Create your Wokku account in the browser, then optionally sign in from the CLI or Claude.
 last_updated: 2026-11-07
