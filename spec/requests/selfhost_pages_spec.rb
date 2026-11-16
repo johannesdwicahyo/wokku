@@ -104,4 +104,11 @@ RSpec.describe "Self-host dashboard pages", type: :request do
     expect(response.body).not_to include("and billing", "billing currency can be set", "Dynos", "enable <code class=\"font-mono text-accent\">git push")
     expect(response.body).to include("Manage your account, security and API credentials.")
   end
+
+  # No plan page on self-host: an unavailable picker card linked "upgrade
+  # plan →" to "#".
+  it "offers no plan-upgrade link in the database picker" do
+    get "/dashboard/addons"
+    expect(response.body).to include('data-addon-tier-picker-plan-upgrade-url-value=""')
+  end
 end

@@ -16,7 +16,7 @@
 <%= form_with(model: database, url: dashboard_addons_path, class: "space-y-5",
               data: { controller: "addon-tier-picker",
                       "addon-tier-picker-engines-value": engine_payload.to_json,
-                      "addon-tier-picker-plan-upgrade-url-value": (respond_to?(:dashboard_plan_path) ? dashboard_plan_path : "#") }) do |f| %>
+                      "addon-tier-picker-plan-upgrade-url-value": (respond_to?(:dashboard_plan_path) ? dashboard_plan_path : "") }) do |f| %>
   <% if database.errors.any? %>
     <div class="border-1.5 border-danger bg-danger-soft p-3">
       <ul class="font-mono text-xs text-danger space-y-1">

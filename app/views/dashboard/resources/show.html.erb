@@ -125,7 +125,7 @@
     <%= form_with url: dashboard_addons_path, method: :post, class: "space-y-5",
                   data: { controller: "addon-tier-picker",
                           "addon-tier-picker-engines-value": engine_payload.to_json,
-                          "addon-tier-picker-plan-upgrade-url-value": (respond_to?(:dashboard_plan_path) ? dashboard_plan_path : "#") } do |f| %>
+                          "addon-tier-picker-plan-upgrade-url-value": (respond_to?(:dashboard_plan_path) ? dashboard_plan_path : "") } do |f| %>
       <%# App is fixed on this page — submit it as hidden so the form
           posts to the canonical DatabasesController#create path. %>
       <%= hidden_field_tag "database_service[app_id]", @app.id %>
