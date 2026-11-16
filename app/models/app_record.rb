@@ -243,13 +243,18 @@ class AppRecord < ApplicationRecord
   # Canonical git remote URL shown to users everywhere (dashboard, API,
   # CLI). Goes through the wokku SSH gateway rather than exposing the
   # underlying Dokku server IP.
+  # nil when this install runs no git SSH gateway (self-host by default):
+  # views and the API then hide git-push instructions instead of pointing
+  # users at someone else's server. wokku.cloud sets WOKKU_GIT_HOST.
   def git_remote_url
-    # Default is the DEDICATED git gateway subdomain, never the web apex:
-    # wokku.cloud/wokku.app may be Cloudflare-proxied and are not guaranteed
-    # reachable on port 22 (see docs/infra/ssh-gateway.md). Prod sets this
-    # env var explicitly; the default only bites dev/self-host fallbacks.
-    host = ENV.fetch("WOKKU_GIT_HOST", "git.wokku.cloud")
-    "git@#{host}:#{name}"
+    host = self.class.git_gateway_host
+    host && "git@#{host}:#{name}"
+  end
+
+  # The DEDICATED git gateway host, never the web apex (wokku.cloud may be
+  # Cloudflare-proxied and not reachable on port 22; docs/infra/ssh-gateway.md).
+  def self.git_gateway_host
+    ENV["WOKKU_GIT_HOST"].presence
   end
 
   # Direct-to-Dokku URL. Still works and can be used as a bypass if the

@@ -54,7 +54,19 @@ RSpec.describe "API::V1::AppsController contract", type: :request do
     get "/api/v1/apps/#{own_app.id}", headers: headers
     body = JSON.parse(response.body)
     expect(body).not_to include("github_webhook_secret", "git_webhook_secret")
-    expect(body).to include("name" => own_app.name, "git_remote" => be_present)
+    expect(body).to include("name" => own_app.name)
+  end
+
+  it "show returns null git_remote/push_instructions when no git gateway is configured" do
+    orig = ENV.delete("WOKKU_GIT_HOST")
+    get "/api/v1/apps/#{own_app.id}", headers: headers
+    body = JSON.parse(response.body)
+    expect(body).to include("git_remote" => nil, "push_instructions" => nil)
+    ENV["WOKKU_GIT_HOST"] = "git.example.test"
+    get "/api/v1/apps/#{own_app.id}", headers: headers
+    expect(JSON.parse(response.body)["git_remote"]).to eq("git@git.example.test:#{own_app.name}")
+  ensure
+    orig ? ENV["WOKKU_GIT_HOST"] = orig : ENV.delete("WOKKU_GIT_HOST")
   end
 
   it "github_connect with no repo is a typed 422" do

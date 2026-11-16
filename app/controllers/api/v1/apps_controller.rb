@@ -21,7 +21,7 @@ module Api
         authorize app
         render json: app_json(app).merge(
           git_remote: app.git_remote_url,
-          push_instructions: "git remote add wokku #{app.git_remote_url} && git push wokku #{app.deploy_branch || 'main'}",
+          push_instructions: (app.git_remote_url && "git remote add wokku #{app.git_remote_url} && git push wokku #{app.deploy_branch || 'main'}"),
           # wokkud host health — lets an agent distinguish "your app
           # crashed" from "the host is down; not your code".
           host_status: app.server&.heartbeat_status,
@@ -119,7 +119,7 @@ module Api
 
         render json: app_json(app).merge(
           git_remote: app.git_remote_url,
-          push_instructions: "git remote add wokku #{app.git_remote_url} && git push wokku #{app.deploy_branch || 'main'}",
+          push_instructions: (app.git_remote_url && "git remote add wokku #{app.git_remote_url} && git push wokku #{app.deploy_branch || 'main'}"),
           warnings: warnings.presence
         ).compact, status: :created
       end

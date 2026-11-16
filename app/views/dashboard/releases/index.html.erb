@@ -28,6 +28,9 @@
           works but isn't shown (see AppRecord#direct_git_remote_url). %>
       <% git_remote = @app.git_remote_url %>
       <% branch = @app.deploy_branch || "main" %>
+      <% if git_remote.nil? %>
+        <p class="text-[11.5px] text-dim">Git push isn't set up on this install (no git gateway). Deploy from a repository or a template instead.</p>
+      <% else %>
       <div class="space-y-2">
         <div class="flex items-center gap-2">
           <code class="flex-1 bg-bg border-1.5 border-ink rounded-md px-3 py-2 font-mono text-sm text-ink-soft overflow-x-auto">git remote add wokku <%= git_remote %></code>
@@ -42,6 +45,7 @@
           </button>
         </div>
       </div>
+      <% end %>
     </div>
 
     <div class="border-t border-line"></div>

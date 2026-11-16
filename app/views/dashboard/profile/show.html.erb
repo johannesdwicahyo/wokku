@@ -216,13 +216,15 @@
           <%= render "dashboard/ssh_keys/key_list", keys: current_user.ssh_public_keys.order(created_at: :desc), key: nil %>
         <% end %>
 
+        <% if (git_host = AppRecord.git_gateway_host) %>
         <div class="mt-4 pt-4 border-t border-line">
           <div class="border-1.5 border-ink bg-bg p-3 rounded-md">
             <p class="text-[10.5px] text-dim uppercase tracking-widest mb-1">Deploy command</p>
-            <code class="block font-mono text-xs text-ink-soft">git remote add wokku git@<%= ENV.fetch("WOKKU_GIT_HOST", "wokku.cloud") %>:APP_NAME</code>
+            <code class="block font-mono text-xs text-ink-soft">git remote add wokku git@<%= git_host %>:APP_NAME</code>
             <code class="block font-mono text-xs text-ink-soft">git push wokku main</code>
           </div>
         </div>
+        <% end %>
       </div>
     </div>
 

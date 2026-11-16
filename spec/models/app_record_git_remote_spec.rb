@@ -10,9 +10,11 @@ RSpec.describe AppRecord, "git remote URLs" do
     ENV["WOKKU_GIT_HOST"] = orig
   end
 
-  it "defaults git_remote_url to the dedicated git gateway subdomain" do
+  # Self-host runs no git gateway by default: no remote rather than one
+  # pointing at wokku.cloud's server (2026-11-16 audit).
+  it "has no git remote when no gateway is configured" do
     ENV.delete("WOKKU_GIT_HOST")
-    expect(app.git_remote_url).to eq("git@git.wokku.cloud:#{app.name}")
+    expect(app.git_remote_url).to be_nil
   end
 
   it "honors WOKKU_GIT_HOST (e.g. for self-hosted installs)" do
