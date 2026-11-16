@@ -117,11 +117,15 @@ module Api
           end
         end
 
-        render json: app_json(app).merge(
+        # git_remote/push_instructions are always present (null without a git
+        # gateway); only warnings is optional. A blanket .compact dropped the
+        # keys entirely on self-host.
+        body = app_json(app).merge(
           git_remote: app.git_remote_url,
-          push_instructions: (app.git_remote_url && "git remote add wokku #{app.git_remote_url} && git push wokku #{app.deploy_branch || 'main'}"),
-          warnings: warnings.presence
-        ).compact, status: :created
+          push_instructions: (app.git_remote_url && "git remote add wokku #{app.git_remote_url} && git push wokku #{app.deploy_branch || 'main'}")
+        )
+        body[:warnings] = warnings if warnings.present?
+        render json: body, status: :created
       end
 
       def update

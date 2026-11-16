@@ -94,4 +94,17 @@ RSpec.describe "API::V1::AppsController contract", type: :request do
     expect(response).to have_http_status(:payment_required)
     expect(JSON.parse(response.body)).to include("error_code" => "quota_exceeded")
   end
+
+  # .compact dropped git_remote/push_instructions from the create response
+  # when they were nil (no git gateway) — the contract requires the keys.
+  it "create always returns git_remote and push_instructions (null without a gateway)" do
+    orig = ENV.delete("WOKKU_GIT_HOST")
+    post "/api/v1/apps", params: { name: "created-#{SecureRandom.hex(2)}", server_id: servers(:one).id }.to_json, headers: headers
+    expect(response).to have_http_status(:created)
+    body = JSON.parse(response.body)
+    expect(body).to include("git_remote" => nil, "push_instructions" => nil)
+    expect(body).not_to have_key("warnings")
+  ensure
+    orig ? ENV["WOKKU_GIT_HOST"] = orig : ENV.delete("WOKKU_GIT_HOST")
+  end
 end
