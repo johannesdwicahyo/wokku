@@ -170,7 +170,6 @@ components:
         git_remote:
           type: string
           nullable: true
-          description: null when the install runs no git SSH gateway (self-host default).
         push_instructions:
           type: string
           nullable: true
