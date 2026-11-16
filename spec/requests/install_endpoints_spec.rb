@@ -44,6 +44,14 @@ RSpec.describe "connect-a-server installer endpoints", type: :request do
     expect(script).to include("SHARES one public IP")
   end
 
+  # Ubuntu's docker.io ships without buildx and nixpacks builds need it:
+  # every source deploy on a fresh self-host failed (2026-11-16 audit).
+  it "installs buildx when the host's docker lacks it" do
+    get "/install/wokkud.sh"
+    expect(response.body).to include("docker buildx version >/dev/null 2>&1 ||")
+    expect(response.body).to include("docker-buildx")
+  end
+
   it "404s the binary with a clear message when not bundled" do
     get "/install/wokkud"
     expect(response).to have_http_status(:not_found)

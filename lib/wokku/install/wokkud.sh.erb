@@ -75,6 +75,9 @@ fi
 # ── Phase 2: wokku runtime ───────────────────────────────────────────────
 log "docker"
 command -v docker >/dev/null 2>&1 || { apt-get update -qq; apt-get install -y -qq docker.io >/dev/null; }
+# nixpacks builds need buildx; Ubuntu/Debian docker.io ships without it
+# (Docker's own docker-ce packages include it, so this is a no-op there).
+docker buildx version >/dev/null 2>&1 || { apt-get update -qq; apt-get install -y -qq docker-buildx >/dev/null || echo "  ! could not install docker-buildx — source builds will fail until buildx is installed"; }
 systemctl enable --now docker >/dev/null 2>&1 || true
 
 log "docker swarm"
