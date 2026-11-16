@@ -1,3 +1,4 @@
+<%# Kicker: the "free Jakarta server" line is cloud-only (billing host present, same seam as _onboarding_tour). %>
 <%# First-deploy chooser — shown on the apps landing (/dashboard/apps) when
     the user has zero apps. Migrated 2026-06-07 from the retired dashboard
     home (dashboard/dashboard/show.html.erb) so first-app onboarding lives
@@ -7,7 +8,7 @@
   registry = TemplateRegistry.new
   curated  = %w[astro ghost n8n nextjs].select { |s| registry.find(s) }
 %>
-<%= render Molecules::PanelComponent.new(label: t("onboarding2.title"), kicker: t("onboarding2.sub")) do %>
+<%= render Molecules::PanelComponent.new(label: t("onboarding2.title"), kicker: t(respond_to?(:dashboard_billing_path) ? "onboarding2.sub" : "onboarding2.sub_self_host")) do %>
   <div class="p-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
     <% curated.each do |slug| %>
       <% tpl = registry.find(slug) %>

@@ -262,6 +262,7 @@ id:
   onboarding2:
     title: "Deploy app pertama kamu"
     sub: "// pilih satu — langsung live di server gratis Jakarta ~60 detik"
+    sub_self_host: "// pilih satu — langsung live di server kamu ~60 detik"
     push_own: "atau push code sendiri"
     building: "build ~30–90 detik tergantung stack"
   onboarding_tour:
