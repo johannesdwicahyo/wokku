@@ -60,11 +60,18 @@ RSpec.describe Organisms::AppsTableComponent, type: :component do
       "performance" => "large", "performance-2x" => "xlarge"
     }.each do |tier_name, box_label|
       it "maps the #{tier_name} web tier to the box label '#{box_label}'" do
+        allow(Wokku).to receive(:cloud?).and_return(true) # cloud size vocabulary
         tier = DynoTier.find_by(name: tier_name) || create(:dyno_tier, name: tier_name)
         create(:dyno_allocation, app_record: app, dyno_tier: tier, process_type: "web")
         component = described_class.new(apps: [ app ])
         expect(component.box_label(app.reload)).to eq(box_label)
       end
+    end
+
+    it "calls the free tier 'tiny' on self-host, where apps never sleep" do
+      tier = DynoTier.find_by(name: "free") || create(:dyno_tier, name: "free")
+      create(:dyno_allocation, app_record: app, dyno_tier: tier, process_type: "web")
+      expect(described_class.new(apps: [ app ]).box_label(app.reload)).to eq("tiny")
     end
 
     it "returns an em dash when there is no web allocation" do

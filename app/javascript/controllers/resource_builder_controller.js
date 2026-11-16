@@ -4,7 +4,7 @@ import { Controller } from "@hotwired/stimulus"
 // server's pricing seam (IDR/month); the formula mirrors
 // Billing::Pricing.monthly_idr — keep them in sync.
 export default class extends Controller {
-  static targets = ["cpu", "memory", "disk", "count", "price", "preset", "sleeping", "sleepingField",
+  static targets = ["cpu", "memory", "disk", "count", "price", "preset", "sleeping", "sleepingField", "railsHint",
                     "sliders", "cpuLabel", "memoryLabel", "diskLabel"]
   static values = { units: Object }
 
@@ -24,6 +24,7 @@ export default class extends Controller {
     if (this.hasSleepingTarget) this.sleepingTarget.setAttribute("aria-pressed", on)
     this.slidersTarget.classList.toggle("opacity-40", on)
     this.slidersTarget.classList.toggle("pointer-events-none", on)
+    if (this.hasRailsHintTarget) this.railsHintTarget.classList.toggle("hidden", !on)
   }
 
   input() {

@@ -6,7 +6,7 @@
     <% if sleeping_option? %>
       <button type="button" data-action="resource-builder#toggleSleeping" data-resource-builder-target="sleeping"
               aria-pressed="<%= sleeping %>"
-              class="px-2.5 py-1 text-xs border-1.5 rounded-md <%= sleeping ? 'border-accent bg-accent-soft' : 'border-line' %>">Sleeping<%= " (free)" if helpers.wokku_cloud? %></button>
+              class="px-2.5 py-1 text-xs border-1.5 rounded-md <%= sleeping ? 'border-accent bg-accent-soft' : 'border-line' %>"><%= helpers.wokku_cloud? ? "Sleeping (free)" : "Tiny" %></button>
     <% end %>
     <% presets.each do |key, p| %>
       <button type="button" data-action="resource-builder#pick" data-resource-builder-target="preset"
@@ -15,8 +15,9 @@
               class="px-2.5 py-1 text-xs border-1.5 border-line rounded-md aria-pressed:border-accent aria-pressed:bg-accent-soft"><%= key.split("-").map(&:capitalize).join("-") %></button>
     <% end %>
   </div>
+  <%# Only true of the fixed 256 MB size — shown while that size is on. %>
   <% if rails_hint %>
-    <p class="text-[11px] text-dim"><%= t("resources.rails_hint", default: "256 MB is not enough for Rails — pick 512 MB or more.") %></p>
+    <p data-resource-builder-target="railsHint" class="text-[11px] text-dim <%= 'hidden' unless sleeping %>"><%= t("resources.rails_hint", default: "256 MB is not enough for Rails — pick 512 MB or more.") %></p>
   <% end %>
 
   <input type="hidden" name="<%= field(:sleeping) %>" value="<%= sleeping ? 1 : 0 %>" data-resource-builder-target="sleepingField">

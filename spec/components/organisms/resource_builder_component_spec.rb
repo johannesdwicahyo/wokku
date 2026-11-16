@@ -91,4 +91,13 @@ RSpec.describe Organisms::ResourceBuilderComponent, type: :component do
       expect(note.text).not_to include("RAM")
     end
   end
+
+  # Self-host never sleeps apps (IdleCheckJob is cloud-only), so the 256 MB
+  # size is "Tiny" there; the Rails hint only applies to that size.
+  it "names the 256 MB size Tiny on self-host and ties the Rails hint to it" do
+    render_inline(described_class.new(name: "p", shape: Resources::Shape.new(cpu: 0.25, memory_mb: 512, disk_gb: 10), presets: {}, sleeping_option: true, rails_hint: true))
+    expect(page).to have_button("Tiny")
+    expect(page).not_to have_button(/Sleeping/)
+    expect(page).to have_css("[data-resource-builder-target='railsHint'].hidden", visible: :all)
+  end
 end

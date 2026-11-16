@@ -40,7 +40,9 @@ class DynoAllocation < ApplicationRecord
   # User-facing size string for the allocation, regardless of whether it's
   # backed by a legacy tier or a per-resource shape.
   def size_label
-    return "sleeping" if sleeping?
+    # Apps only actually sleep on wokku.cloud (IdleCheckJob); elsewhere this
+    # is just the fixed 256 MB size.
+    return (Wokku.cloud? ? "sleeping" : "tiny") if sleeping?
     return DynoTier::DYNO_TIER_TO_BOX_SIZE[dyno_tier.name] || dyno_tier.name if shape.nil? && dyno_tier
     mem = memory_mb >= 1024 ? "#{(memory_mb / 1024.0).to_s.delete_suffix('.0')} GB" : "#{memory_mb} MB"
     "#{cpu.to_f.to_s.delete_suffix('.0')} vCPU · #{mem}"
