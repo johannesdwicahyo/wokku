@@ -126,4 +126,13 @@ RSpec.describe "DocsController", type: :request do
       expect(json.any? { |e| e["path"] == "getting-started/sign-up" }).to be(true)
     end
   end
+
+  # commonmarker 2.9 puts an <a class="anchor"> inside every heading; the
+  # "on this page" list copied the heading HTML, so it showed the raw
+  # anchor markup as text (seen on self-host, 2026-11-16 visual audit).
+  it "lists plain heading text in the table of contents" do
+    get "/docs/getting-started/first-deploy", params: { lang: "en" }
+    expect(response.body).not_to include("&lt;a href=&quot;#")
+    expect(response.body).not_to include("Link to heading &#39;")
+  end
 end

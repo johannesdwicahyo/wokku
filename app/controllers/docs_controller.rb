@@ -249,7 +249,9 @@ class DocsController < ApplicationController
     # After PR-3's add_heading_anchors simplification the inline <a>
     # anchor inside the heading is gone; match the heading id directly.
     html.scan(/<(h[23]) id="([^"]+)"[^>]*>(.*?)<\/\1>/im).map do |tag, id, text|
-      { level: tag == "h2" ? 2 : 3, id: id, text: text.strip }
+      # Plain text: commonmarker 2.9 nests an <a class="anchor"> in each
+      # heading, which would otherwise show up as literal markup.
+      { level: tag == "h2" ? 2 : 3, id: id, text: ActionController::Base.helpers.strip_tags(text).strip }
     end
   end
 
