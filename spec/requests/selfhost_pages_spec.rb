@@ -68,4 +68,27 @@ RSpec.describe "Self-host dashboard pages", type: :request do
   ensure
     orig ? ENV["WOKKU_VERSION"] = orig : ENV.delete("WOKKU_VERSION")
   end
+
+  describe "deploying your own code from a public repository" do
+    let(:server) { servers(:two) }
+
+    it "creates the app, names the release, and starts the build" do
+      allow(RepoUrlDeployJob).to receive(:valid_url?).and_return(true)
+      expect {
+        post "/dashboard/apps", params: { app_record: { name: "from-repo-#{SecureRandom.hex(2)}", server_id: server.id,
+                                                        git_repository_url: "https://github.com/o/r" } }
+      }.to have_enqueued_job(RepoUrlDeployJob).with(hash_including(url: "https://github.com/o/r", branch: "main"))
+      app = AppRecord.order(:created_at).last
+      expect(app.git_repository_url).to eq("https://github.com/o/r")
+      expect(app.releases.last.description).to eq("Deploy from https://github.com/o/r")
+      expect(response).to redirect_to(%r{/dashboard/apps/#{app.id}/deploys/})
+    end
+
+    it "refuses a non-public repository address without creating the app" do
+      expect {
+        post "/dashboard/apps", params: { app_record: { name: "bad-repo", server_id: server.id, git_repository_url: "file:///etc" } }
+      }.not_to change(AppRecord, :count)
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+  end
 end

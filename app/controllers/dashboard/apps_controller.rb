@@ -156,6 +156,14 @@ module Dashboard
       end
       authorize @app
 
+      repo_url = params.dig(:app_record, :git_repository_url).to_s.strip.presence
+      if repo_url && !RepoUrlDeployJob.valid_url?(repo_url)
+        @app.errors.add(:base, "Repository must be a public https:// address (for example https://github.com/you/your-app).")
+        @servers  = policy_scope(Server)
+        @has_apps = policy_scope(AppRecord).main_apps.exists?
+        return render :index, status: :unprocessable_entity
+      end
+
       enforce_plan_quota!(current_user, size: box_size, additional: 1) unless builder_mode
 
       if @app.save
@@ -210,6 +218,14 @@ module Dashboard
 
         track("app.created", target: @app)
         fire_team_event(@app.team, "app_created", app_name: @app.name)
+
+        if repo_url
+          @app.update_column(:git_repository_url, repo_url)
+          deploy = @app.deploys.create!(status: :pending)
+          @app.releases.create!(deploy: deploy, description: "Deploy from #{repo_url}".truncate(200))
+          RepoUrlDeployJob.perform_later(app_id: @app.id, deploy_id: deploy.id, url: repo_url, branch: @app.deploy_branch.presence || "main")
+          return redirect_to dashboard_app_deploy_path(@app, deploy), notice: "Building #{repo_url}…"
+        end
         # TODO: extract this first-app analytics guard to a shared concern at a 3rd callsite.
         # Activation-funnel "started" signal — fires on the user's first app (generic create has no deploy queued yet; the template path does).
         if current_user.app_records.count == 1

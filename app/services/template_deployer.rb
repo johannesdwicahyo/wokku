@@ -251,6 +251,9 @@ class TemplateDeployer
       # post_deploy can't run inline here — the build is async (TarballDeployJob
       # owns the tail). Ride the Deploy row; the job runs it after converge.
       deploy&.update!(app_record: app, run_after_deploy: template[:post_deploy].presence)
+      # Name the release after what was deployed — otherwise PostDeploySetupJob
+      # files it as "Deploy via git push".
+      app.releases.create!(deploy: deploy, description: "Deploy template #{template[:name]}") if deploy && deploy.reload.release_id.nil?
       @log << { step: "Build enqueued — deploy continues in the background.", at: Time.current }
       @on_progress&.call("Build enqueued — deploy continues in the background.")
 
