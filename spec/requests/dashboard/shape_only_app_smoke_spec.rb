@@ -17,6 +17,7 @@ RSpec.describe "Shape-only apps render everywhere", type: :request do
 
   %w[/dashboard/apps /dashboard/usage].each do |path|
     it "GET #{path} renders" do
+      allow(Wokku).to receive(:cloud?).and_return(true) # usage page is cloud-only
       get path
       expect(response).to have_http_status(:ok)
     end
