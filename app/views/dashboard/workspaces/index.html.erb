@@ -39,7 +39,7 @@
   </div>
 
   <%= render layout: "dashboard/shared/slide_panel",
-             locals: { title: "New workspace", subtitle: "Org teams require a paid plan", size: "lg" } do %>
+             locals: { title: "New workspace", subtitle: (wokku_cloud? ? "Org teams require a paid plan" : nil), size: "lg" } do %>
     <%= render "form", workspace: @workspace || Team.new, paid_plans: @paid_plans || Plan.where(key: Dashboard::WorkspacesController::PAID_PLAN_KEYS).order(:price_idr) %>
   <% end %>
 </div>

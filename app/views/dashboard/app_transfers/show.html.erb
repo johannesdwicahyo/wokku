@@ -5,7 +5,8 @@
   alloc = defined?(DynoAllocation) ? app.dyno_allocations.includes(:dyno_tier).find_by(process_type: "web") : nil
   tier  = alloc&.dyno_tier
   monthly_cents = tier ? tier.price_cents_per_hour * 24 * 30 * (alloc.count || 1) : 0
-  addons = app.database_services.includes(:service_tier)
+  # service_tier is a billing-host association; self-host has none.
+  addons = DatabaseService.reflect_on_association(:service_tier) ? app.database_services.includes(:service_tier) : app.database_services
   domains = app.domains
   row = "px-5 py-3 flex items-center justify-between gap-3 font-mono"
 %>
@@ -18,8 +19,8 @@
     <h1 class="mt-2 font-mono text-xl font-semibold tracking-tighter text-ink"># accept transfer of <%= app.name %>?</h1>
     <p class="mt-1 font-mono text-sm text-dim">
       <%= @transfer.from_user.email %> wants to transfer this app to you.
-      Once you accept, billing for the container and any non-shared add-ons will start hitting your account
-      from the moment of acceptance. Expires <%= time_ago_in_words(@transfer.expires_at) %> from now.
+      <% if wokku_cloud? %>Once you accept, billing for the container and any non-shared add-ons will start hitting your account
+      from the moment of acceptance.<% end %> Expires <%= time_ago_in_words(@transfer.expires_at) %> from now.
     </p>
   </div>
 
@@ -47,10 +48,13 @@
         <% end %>
       </p>
     </div>
+    <%# Price helpers live in the billing host; self-host has no cost (and 500'd here). %>
+    <% if wokku_cloud? %>
     <div class="<%= row %>">
       <p class="text-[10px] uppercase tracking-widest text-dim font-bold">Estimated Monthly Cost</p>
       <p class="text-sm text-ink font-semibold"><%= format_cents_for_user(monthly_cents, override: "idr") %><%= price_period("idr") %></p>
     </div>
+    <% end %>
     <div class="px-5 py-3 font-mono">
       <p class="text-[10px] uppercase tracking-widest text-dim font-bold mb-2">Linked Add-ons</p>
       <% if addons.any? %>
@@ -73,7 +77,7 @@
       <% if domains.any? %>
         <ul class="space-y-1">
           <% domains.each do |d| %>
-            <li class="text-sm text-ink"><%= d.host %></li>
+            <li class="text-sm text-ink"><%= d.hostname %></li>
           <% end %>
         </ul>
       <% else %>
@@ -84,7 +88,7 @@
 
   <% if @transfer.pending? %>
     <div class="flex items-center gap-3">
-      <%= button_to "accept transfer", accept_dashboard_app_transfer_path(@transfer), data: { turbo_confirm: "Accept ownership of #{app.name}? Billing will start on your account immediately." }, class: "px-4 py-2 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer" %>
+      <%= button_to "accept transfer", accept_dashboard_app_transfer_path(@transfer), data: { turbo_confirm: "Accept ownership of #{app.name}?#{" Billing will start on your account immediately." if wokku_cloud?}" }, class: "px-4 py-2 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer" %>
       <%= button_to "decline", decline_dashboard_app_transfer_path(@transfer), data: { turbo_confirm: "Decline this transfer?" }, class: "px-4 py-2 border-1.5 border-ink bg-paper text-ink font-mono text-sm hover:bg-bg-deep transition cursor-pointer" %>
     </div>
   <% else %>

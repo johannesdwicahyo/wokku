@@ -40,10 +40,9 @@
   ]
 
   # Billing (cloud-only) has no rail item — it lives on the Settings → Billing tab.
-  sidebar_footer_links = [
-    { label: t("console.sidebar.footer.docs"),    href: "/docs",                      external: true },
-    { label: t("console.sidebar.footer.support"), href: "mailto:support@wokku.cloud", external: false }
-  ]
+  # Support is wokku.cloud's inbox — a self-host install has no such desk.
+  sidebar_footer_links = [ { label: t("console.sidebar.footer.docs"), href: "/docs", external: true } ]
+  sidebar_footer_links << { label: t("console.sidebar.footer.support"), href: "mailto:support@wokku.cloud", external: false } if wokku_cloud?
 %>
 <!DOCTYPE html>
 <html lang="<%= I18n.locale %>"

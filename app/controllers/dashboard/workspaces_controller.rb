@@ -36,9 +36,15 @@ module Dashboard
     end
 
     def create
-      plan = Plan.find_by(id: params.dig(:team, :plan_id))
-      return render_form_error("Pick a plan.") if plan.nil?
-      return render_form_error("Org workspaces require a paid plan.") unless PAID_PLAN_KEYS.include?(plan.key)
+      if Wokku.cloud?
+        plan = Plan.find_by(id: params.dig(:team, :plan_id))
+        return render_form_error("Pick a plan.") if plan.nil?
+        return render_form_error("Org workspaces require a paid plan.") unless PAID_PLAN_KEYS.include?(plan.key)
+      else
+        # Self-host has no billing and seeds only the $0 Free plan; requiring
+        # a paid plan made workspaces impossible to create there.
+        plan = Plan.find_by(key: "free")
+      end
 
       name = params.dig(:team, :name).to_s.strip
       return render_form_error("Name can't be blank.") if name.empty?

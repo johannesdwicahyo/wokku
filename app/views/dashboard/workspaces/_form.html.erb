@@ -16,6 +16,7 @@ Both pass `workspace` + `paid_plans` locals. %>
           class: "mt-1 w-full border border-rule-soft bg-bg px-3 py-2 text-ink placeholder:text-dim" %>
   </label>
 
+  <% if wokku_cloud? %>
   <fieldset class="space-y-2">
     <legend class="text-[10px] text-dim uppercase tracking-widest mb-2">plan</legend>
     <% paid_plans.each do |plan| %>
@@ -31,6 +32,7 @@ Both pass `workspace` + `paid_plans` locals. %>
       </label>
     <% end %>
   </fieldset>
+  <% end %>
 
   <div class="flex justify-between gap-3 pt-2">
     <%# Plain link: works both in the slide panel and on standalone /new. %>

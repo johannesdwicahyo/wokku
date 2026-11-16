@@ -7,6 +7,10 @@ module Dashboard
   # No more per-hour metering.
   class UsageController < BaseController
     def show
+      # Plan/trial/invoice page: nothing to show without billing (and
+      # trial_ends_at is nil there -> it 500'd on self-host).
+      return redirect_to dashboard_apps_path unless Wokku.cloud?
+
       @plan = current_user.plan
       @on_trial = current_user.on_trial?
       @trial_ends_at = current_user.trial_ends_at

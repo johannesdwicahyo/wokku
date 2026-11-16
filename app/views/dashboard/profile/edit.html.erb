@@ -24,6 +24,8 @@
       <%= f.email_field :email, class: "w-full bg-paper border-1.5 border-ink text-ink text-sm rounded-md px-3 py-2 focus:outline-none focus:shadow-brutal-sm" %>
     </div>
 
+    <%# Cloud-only: self-host has no billing (and no resource_usages). %>
+    <% if wokku_cloud? %>
     <div>
       <%= f.label :currency, "Billing currency", class: "block text-xs font-semibold text-ink-soft mb-1" %>
       <% if Wokku::LaunchMode.idr_only? %>
@@ -40,6 +42,7 @@
         <%= combobox_tag "user[currency]", [["US Dollar (USD)", "usd"], ["Indonesian Rupiah (IDR)", "idr"]], value: current_user.currency, placeholder: "Select currency" %>
       <% end %>
     </div>
+    <% end %>
 
     <%# Notifications %>
     <div class="border-t border-line pt-4">

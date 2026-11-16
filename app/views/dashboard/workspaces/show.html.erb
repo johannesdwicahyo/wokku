@@ -4,13 +4,14 @@
   <div class="flex flex-wrap items-baseline justify-between gap-4">
     <%= render Atoms::HashHeaderComponent.new(
           title: @workspace.name,
-          kicker: "// #{@workspace.kind} · #{@plan.name} plan",
+          kicker: (wokku_cloud? ? "// #{@workspace.kind} · #{@plan.name} plan" : "// #{@workspace.kind}"),
           size: :md) %>
     <%= link_to "← all workspaces", dashboard_workspaces_path,
           class: "font-mono text-xs text-dim hover:text-ink" %>
   </div>
 
-  <%# ── Seat usage banner ────────────────────────────────────── %>
+  <%# ── Seat usage banner (seats are billed: cloud only) ─────── %>
+  <% if wokku_cloud? %>
   <div class="border-1.5 border-ink bg-paper px-5 py-4 font-mono text-xs">
     <div class="flex items-baseline justify-between gap-3">
       <div>
@@ -38,6 +39,7 @@
       </p>
     <% end %>
   </div>
+  <% end %>
 
   <%# ── Extra boxes ──────────────────────────────────────────── %>
   <% if @box_addons.present? && @box_addons.any? %>
