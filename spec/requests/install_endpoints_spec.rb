@@ -52,6 +52,24 @@ RSpec.describe "connect-a-server installer endpoints", type: :request do
     expect(response.body).to include("docker-buildx")
   end
 
+  # Small boxes (2 GB, no swap) risk OOM-killing npm/bundler builds.
+  it "adds a 2 GB swap file only on small servers without swap" do
+    get "/install/wokkud.sh"
+    expect(response.body).to include("fallocate -l 2G /swapfile")
+    expect(response.body).to match(/swapon --noheadings.*-lt 4096/m)
+  end
+
+  # The first nixpacks build downloads nixpkgs + the Node toolchain (~10 min
+  # on a small box). A background throwaway Node 22 build (same package set
+  # as the Node templates) primes Docker's layer cache, once per server.
+  it "warms the build cache in the background once" do
+    get "/install/wokkud.sh"
+    body = response.body
+    expect(body).to include("systemd-run --unit=wokku-build-warmup")
+    expect(body).to include(%q("engines":{"node":"22"}))
+    expect(body).to include("/var/lib/wokku/build-cache-warmed")
+  end
+
   it "404s the binary with a clear message when not bundled" do
     get "/install/wokkud"
     expect(response).to have_http_status(:not_found)

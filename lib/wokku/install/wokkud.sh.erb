@@ -73,6 +73,19 @@ else
 fi
 
 # ── Phase 2: wokku runtime ───────────────────────────────────────────────
+# Small servers: npm/bundler builds can exceed RAM with no swap and get
+# OOM-killed. Add 2 GB of swap once on boxes under 4 GB that have none
+# (some VPS types forbid swap — warn and carry on).
+if [ -z "$(swapon --noheadings)" ] && [ "$(awk '/MemTotal/{print int($2/1024)}' /proc/meminfo)" -lt 4096 ] && [ ! -e /swapfile ]; then
+  log "swap: 2 GB /swapfile (under 4 GB RAM, no swap)"
+  if fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile >/dev/null && swapon /swapfile; then
+    grep -q '^/swapfile ' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+  else
+    echo "  ! could not enable swap on this server — large builds may run out of memory"
+    rm -f /swapfile
+  fi
+fi
+
 log "docker"
 command -v docker >/dev/null 2>&1 || { apt-get update -qq; apt-get install -y -qq docker.io >/dev/null; }
 # nixpacks builds need buildx; Ubuntu/Debian docker.io ships without it
@@ -185,5 +198,19 @@ systemctl daemon-reload
 systemctl enable --now wokku-caddy || { echo "wokku-caddy failed to start (is port 80/443 in use?)"; journalctl -u wokku-caddy --no-pager | tail -5; exit 1; }
 systemctl enable wokkud >/dev/null 2>&1
 systemctl restart wokkud
+
+# Warm the build cache in the background, once: the first nixpacks build on
+# a fresh box downloads nixpkgs + the Node toolchain (~10 min on 1 vCPU). A
+# throwaway Node 22 build has the same package set as the Node templates
+# (nodejs_22 + npm-9_x), so the user's first Node deploy reuses that layer.
+if [ ! -f /var/lib/wokku/build-cache-warmed ] && command -v systemd-run >/dev/null; then
+  log "warming the build cache in the background (~10 min; deploys work meanwhile)"
+  WARM=$(mktemp -d)
+  printf '{"name":"wokku-warmup","version":"1.0.0","engines":{"node":"22"},"scripts":{"start":"node -e 0"}}\n' > "$WARM/package.json"
+  systemd-run --unit=wokku-build-warmup --quiet --collect sh -c \
+    "nixpacks build '$WARM' --name wokku-build-warmup >/var/log/wokku-build-warmup.log 2>&1 \
+     && mkdir -p /var/lib/wokku && touch /var/lib/wokku/build-cache-warmed; \
+     docker rmi wokku-build-warmup >/dev/null 2>&1; rm -rf '$WARM'" || true
+fi
 
 log "done — the server should heartbeat within ~30s; watch its status in the dashboard."
