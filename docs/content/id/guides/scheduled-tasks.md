@@ -1,4 +1,5 @@
 ---
+cloud_prices: true
 title: Menjadwalkan Task (Cron)
 summary: Jalankan perintah sesuai jadwal cron, seperti pembersihan tiap malam atau email laporan, tanpa worker yang berjalan terus.
 last_updated: 2026-11-07

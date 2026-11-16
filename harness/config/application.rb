@@ -47,6 +47,9 @@ module WokkuHarness
     config.active_record.schema_format = :sql
 
     config.load_defaults 8.1
+    # No model has file attachments, so image variants are never generated;
+    # without this every boot warned about the missing image_processing gem.
+    config.active_storage.variant_processor = :disabled
     config.eager_load = ENV["HARNESS_EAGER_LOAD"] == "1"
     config.hosts.clear
 

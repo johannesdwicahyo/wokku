@@ -1,4 +1,5 @@
 ---
+cloud_prices: true
 title: Workspaces
 summary: Your personal workspace, org workspaces for shared work, and how to switch between them.
 last_updated: 2026-11-07

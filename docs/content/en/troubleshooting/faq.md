@@ -1,4 +1,5 @@
 ---
+cloud_prices: true
 title: FAQ
 summary: Short answers about how Wokku builds apps, what's free, backups, Heroku migration and self-hosting.
 last_updated: 2026-11-07

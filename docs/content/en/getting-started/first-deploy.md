@@ -1,4 +1,5 @@
 ---
+cloud_prices: true
 title: Quickstart
 summary: Go from a new account to a live app at https://my-app.wokku.app, with a one-click template or your own code and git push.
 last_updated: 2026-11-07

@@ -1,4 +1,5 @@
 ---
+cloud_prices: true
 title: Beta Notice
 summary: Wokku Cloud is in public beta. Here's what that means for your apps and how to report problems.
 last_updated: 2026-11-07

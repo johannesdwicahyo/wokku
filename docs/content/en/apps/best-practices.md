@@ -1,4 +1,5 @@
 ---
+cloud_prices: true
 title: Production Readiness
 summary: Keep state out of the container, shut down cleanly, and size your app so deploys and resizes don't surprise you.
 last_updated: 2026-11-07

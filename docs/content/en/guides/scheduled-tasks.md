@@ -1,4 +1,5 @@
 ---
+cloud_prices: true
 title: Schedule Tasks (Cron)
 summary: Run a command on a cron schedule, such as nightly cleanups or report emails, without a long-running worker.
 last_updated: 2026-11-07

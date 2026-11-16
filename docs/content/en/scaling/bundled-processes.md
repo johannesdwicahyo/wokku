@@ -1,4 +1,5 @@
 ---
+cloud_prices: true
 title: Bundling Processes
 summary: Run web and worker in one container, so you pay for one size instead of two.
 last_updated: 2026-11-09

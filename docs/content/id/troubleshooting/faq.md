@@ -1,4 +1,5 @@
 ---
+cloud_prices: true
 title: FAQ
 summary: Jawaban singkat tentang cara Wokku mem-build app, apa yang gratis, backup, migrasi dari Heroku, dan self-hosting.
 last_updated: 2026-11-07

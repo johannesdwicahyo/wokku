@@ -25,7 +25,12 @@ class DocsController < ApplicationController
   }.freeze
 
   # Pages hidden (404, not in sidebar/search) until their feature is on.
-  GATED = { "databases/object-storage" => -> { Wokku.config.object_storage? } }.freeze
+  # Billing pages describe wokku.cloud's plans/invoices: cloud-only.
+  GATED = {
+    "databases/object-storage" => -> { Wokku.config.object_storage? },
+    "billing/pricing"          => -> { Wokku.cloud? },
+    "billing/invoices"         => -> { Wokku.cloud? }
+  }.freeze
 
   def show
     raise ActiveRecord::RecordNotFound if gated?(params[:path])
@@ -38,7 +43,7 @@ class DocsController < ApplicationController
     @sidebar = load_sidebar(@docs_locale)
 
     rendered = render_doc(@path, @docs_locale)
-    @content      = rendered[:html]
+    @content      = unlink_gated(rendered[:html])
     @frontmatter  = rendered[:frontmatter]
     @doc_title    = @frontmatter["title"] || extract_h1(@content) || @path.split("/").last.titleize
     @doc_summary  = @frontmatter["summary"]
@@ -78,6 +83,11 @@ class DocsController < ApplicationController
 
   def gated?(path) = (check = GATED[path]) && !check.call
 
+  # In-page links to a hidden page would 404; keep the text, drop the link.
+  def unlink_gated(html)
+    html.gsub(%r{<a href="/docs/([a-z0-9\-_/]+)[^"]*"[^>]*>(.*?)</a>}m) { gated?(Regexp.last_match(1)) ? Regexp.last_match(2) : Regexp.last_match(0) }
+  end
+
   # Locale source order: explicit ?lang= param → I18n.locale → default.
   def resolve_locale
     candidate = params[:lang].presence || I18n.locale.to_s
@@ -89,7 +99,9 @@ class DocsController < ApplicationController
     @_sidebar[locale] ||= begin
       file = Wokku::Engine.root.join("docs/sidebar.#{locale}.yml")
       file = Wokku::Engine.root.join("docs/sidebar.#{DEFAULT_LOCALE}.yml") unless file.file?
-      YAML.load_file(file).each { |section| section["items"]&.reject! { |item| gated?(item["path"]) } }
+      YAML.load_file(file)
+        .each { |section| section["items"]&.reject! { |item| gated?(item["path"]) } }
+        .reject { |section| section.key?("items") && section["items"].empty? }
     end
   end
 

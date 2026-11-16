@@ -63,6 +63,7 @@ RSpec.describe "DocsController", type: :request do
 
   it "renders every sidebar page in both languages" do
     allow(Wokku.config).to receive(:object_storage?).and_return(true) # feature-gated pages
+    allow(Wokku).to receive(:cloud?).and_return(true) # cloud-only billing pages
     %w[en id].each do |locale|
       YAML.load_file(Wokku::Engine.root.join("docs/sidebar.#{locale}.yml")).flat_map { |s| s["items"] }.each do |item|
         get "/docs/#{item["path"]}", params: { lang: locale }
@@ -78,6 +79,7 @@ RSpec.describe "DocsController", type: :request do
 
   it "loads every sidebar page" do
     allow(Wokku.config).to receive(:object_storage?).and_return(true) # feature-gated pages
+    allow(Wokku).to receive(:cloud?).and_return(true) # cloud-only billing pages
     sidebar = YAML.load_file(Wokku::Engine.root.join("docs/sidebar.en.yml"))
     sidebar.each do |section|
       section["items"].each do |item|

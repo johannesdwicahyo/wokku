@@ -11,6 +11,13 @@
       source:  @doc_edit_url
     ) %>
 
+<%# Pages that mix how-to with prices (frontmatter cloud_prices: true). %>
+<% if @frontmatter["cloud_prices"] && !wokku_cloud? %>
+  <p data-cloud-prices-note class="mt-6 border-1.5 border-line bg-bg px-4 py-3 font-mono text-xs text-dim">
+    <%= @docs_locale == "id" ? "Harga di halaman ini berlaku untuk wokku.cloud. Instalasi self-host tidak punya tagihan." : "Prices on this page are wokku.cloud's. A self-hosted install has no billing." %>
+  </p>
+<% end %>
+
 <article class="prose-doc mt-10">
   <%# `@content` is the rendered HTML body; the doc's first H1 is
       already surfaced by DocHeaderComponent so strip it from the

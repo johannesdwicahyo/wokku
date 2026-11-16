@@ -1,4 +1,5 @@
 ---
+cloud_prices: true
 title: Supported Engines
 summary: Which databases and caches Wokku runs, free shared or paid dedicated, and the env vars your app gets.
 last_updated: 2026-11-07

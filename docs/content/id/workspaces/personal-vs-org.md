@@ -1,4 +1,5 @@
 ---
+cloud_prices: true
 title: Workspace
 summary: Workspace personal kamu, workspace org untuk kerja bersama, dan cara berpindah di antaranya.
 last_updated: 2026-11-07

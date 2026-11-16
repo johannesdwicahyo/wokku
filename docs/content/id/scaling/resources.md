@@ -1,4 +1,5 @@
 ---
+cloud_prices: true
 title: Resource & Ukuran
 summary: Pilih CPU dan RAM untuk setiap process dengan slider atau preset, atau biarkan app gratis tetap sleeping.
 last_updated: 2026-11-07

@@ -50,4 +50,22 @@ RSpec.describe "Self-host dashboard pages", type: :request do
     expect(response.body).not_to include("support@wokku.cloud", "Billing currency", "https://wokku.cloud/api")
     expect(response.body).to include("http://www.example.com/api/v1")
   end
+
+  it "gives a user who signed up without a team (email sign-up) a personal team" do
+    teamless = User.create!(email: "teamless-#{SecureRandom.hex(3)}@example.test", password: "a-long-password-123")
+    expect(teamless.teams).to be_empty
+    sign_in teamless
+    get "/dashboard/apps"
+    expect(response).to have_http_status(:ok)
+    expect(teamless.reload.personal_team).to be_present
+  end
+
+  it "shows the running image's release, not the gem's placeholder version" do
+    orig = ENV["WOKKU_VERSION"]
+    ENV["WOKKU_VERSION"] = "2026.11.16-abc1234"
+    get "/dashboard/apps"
+    expect(response.body).to include("wokku 2026.11.16-abc1234")
+  ensure
+    orig ? ENV["WOKKU_VERSION"] = orig : ENV.delete("WOKKU_VERSION")
+  end
 end

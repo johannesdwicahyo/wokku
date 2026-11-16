@@ -1,4 +1,5 @@
 ---
+cloud_prices: true
 title: Pemberitahuan Beta
 summary: Wokku Cloud sedang dalam tahap public beta. Ini artinya untuk app kamu, dan cara melaporkan masalah.
 last_updated: 2026-11-07

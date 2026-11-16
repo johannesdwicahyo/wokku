@@ -1,4 +1,5 @@
 ---
+cloud_prices: true
 title: Resources & Sizing
 summary: Pick CPU and RAM for each process with sliders or presets, or keep a free app sleeping.
 last_updated: 2026-11-07

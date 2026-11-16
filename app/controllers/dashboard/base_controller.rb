@@ -30,10 +30,19 @@ module Dashboard
       @current_team ||= begin
         cookie_team_id = session[:current_team_id]
         from_cookie    = cookie_team_id && user_teams.find_by(id: cookie_team_id)
-        from_cookie || current_user.personal_team || user_teams.first
+        from_cookie || current_user.personal_team || user_teams.first || adopt_personal_team
       end
     end
     helper_method :current_team
+
+    # Email/password sign-up (and admin-created users) never got a personal
+    # team — only OAuth, the API and /setup create one — leaving the user
+    # unable to create anything. Create it on first dashboard visit.
+    def adopt_personal_team
+      team, _created = current_user.ensure_personal_team!
+      @user_teams = nil
+      team
+    end
 
     def user_teams
       @user_teams ||= current_user.teams

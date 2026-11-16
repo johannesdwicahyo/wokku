@@ -117,7 +117,7 @@
       <%= render Organisms::ConsoleSidebarComponent.new(
             groups: sidebar_groups,
             footer_links: sidebar_footer_links,
-            version_line: "wokku v#{Wokku::VERSION}",
+            version_line: "wokku #{ENV["WOKKU_VERSION"].presence || "v#{Wokku::VERSION}"}", # image release (self-host) or gem version
             workspaces: current_user.teams.includes(:plan).order(:created_at),
             current_workspace: current_team,
             workspaces_index_path: dashboard_workspaces_path,

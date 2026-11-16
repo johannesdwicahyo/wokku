@@ -1,4 +1,5 @@
 ---
+cloud_prices: true
 title: Mulai Cepat
 summary: Dari akun baru sampai app live di https://my-app.wokku.app, dengan template sekali klik atau kode kamu sendiri lewat git push.
 last_updated: 2026-11-07

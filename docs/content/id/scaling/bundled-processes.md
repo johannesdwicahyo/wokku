@@ -1,4 +1,5 @@
 ---
+cloud_prices: true
 title: Menggabungkan Process
 summary: Jalankan web dan worker dalam satu container, jadi kamu cukup bayar satu ukuran, bukan dua.
 last_updated: 2026-11-09

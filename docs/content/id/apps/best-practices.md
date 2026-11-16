@@ -1,4 +1,5 @@
 ---
+cloud_prices: true
 title: Siap Production
 summary: Jauhkan state dari container, shutdown dengan rapi, dan atur ukuran app supaya deploy dan resize tidak bikin kaget.
 last_updated: 2026-11-07

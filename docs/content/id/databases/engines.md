@@ -1,4 +1,5 @@
 ---
+cloud_prices: true
 title: Engine yang Didukung
 summary: Database dan cache apa saja yang dijalankan Wokku, shared gratis atau dedicated berbayar, dan env var yang didapat app kamu.
 last_updated: 2026-11-07
