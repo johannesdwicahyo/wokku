@@ -4,6 +4,10 @@ require "rails/all"
 Bundler.require(*Rails.groups)
 
 module WokkuHarness
+  # Requests that reached Puma directly (no Caddy X-Forwarded-Proto): the
+  # same-box agent, Caddy's TLS `ask` gate, the installer. See force_ssl.
+  LOCAL_CONTROL_REQUEST = ->(request) { request.get_header("HTTP_X_FORWARDED_PROTO").blank? }
+
   class Application < Rails::Application
     # Never dump schema.rb after migrating: the schema's single source is
     # the engine's baseline migration (structure.sql). A dumped schema.rb
@@ -43,12 +47,16 @@ module WokkuHarness
     # The standard install serves the dashboard behind Caddy's TLS on
     # 80/443, so in production force HTTPS: this sets Strict-Transport-
     # Security (HSTS), the Secure flag on cookies, and an http->https
-    # redirect. assume_ssl trusts Caddy's X-Forwarded-Proto so there's no
-    # redirect loop. Opt out with WOKKU_FORCE_SSL=0 for a plain-http or
-    # localhost-only deployment.
+    # redirect. Rails reads Caddy's X-Forwarded-Proto, so browser traffic
+    # is https. NOT assume_ssl: that made the agent's loopback http calls
+    # look https too, so every URL handed to the agent (connect script,
+    # build archive) was https://127.0.0.1:3000 and every deploy failed.
+    # Port 3000 is bound to 127.0.0.1 only, so a request without the header
+    # is the local agent/installer — never redirect it. Opt out entirely
+    # with WOKKU_FORCE_SSL=0 for a plain-http or localhost-only deployment.
     if Rails.env.production? && ENV["WOKKU_FORCE_SSL"] != "0"
-      config.assume_ssl = true
-      config.force_ssl  = true
+      config.force_ssl   = true
+      config.ssl_options = { redirect: { exclude: LOCAL_CONTROL_REQUEST } }
     end
 
     # Test env: capture mail instead of hitting SMTP, and give mailer URLs
