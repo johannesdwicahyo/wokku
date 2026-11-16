@@ -149,4 +149,28 @@ RSpec.describe Server, "#record_heartbeat!" do
       }.to raise_error(ActiveRecord::ReadOnlyRecord)
     end
   end
+
+  # Self-host has no SSH metrics path, so app memory/CPU read 0 forever
+  # (2026-11-16 visual audit). wokkud now ships per-service docker stats.
+  describe "app stats" do
+    let!(:foo)    { create(:app_record, server: server, name: "foo") }
+    let!(:foobar) { create(:app_record, server: server, name: "foo-bar") }
+
+    it "stores live CPU/memory per app, summing its processes, longest name wins" do
+      server.record_heartbeat!(vitals: { "docker" => "ok", "app_stats" => {
+        "wokku-foo-web"        => { "cpu_pct" => 1.5, "mem_mb" => 40, "mem_limit_mb" => 256 },
+        "wokku-foo-worker"     => { "cpu_pct" => 0.5, "mem_mb" => 10, "mem_limit_mb" => 128 },
+        "wokku-foo-bar-web"    => { "cpu_pct" => 9.0, "mem_mb" => 300, "mem_limit_mb" => 512 },
+        "wokku-unknown-web"    => { "cpu_pct" => 99, "mem_mb" => 999, "mem_limit_mb" => 999 }
+      } })
+      expect(foo.reload).to have_attributes(live_cpu_pct: 2.0, live_mem_used_mb: 50, live_mem_limit_mb: 384)
+      expect(foo.live_metrics_at).to be_within(2.seconds).of(Time.current)
+      expect(foobar.reload).to have_attributes(live_mem_used_mb: 300, live_mem_limit_mb: 512)
+    end
+
+    it "never breaks the beat on malformed stats" do
+      expect { server.record_heartbeat!(vitals: { "docker" => "ok", "app_stats" => "nope" }) }.not_to raise_error
+      expect(server.reload.heartbeat_status).to eq("ok")
+    end
+  end
 end

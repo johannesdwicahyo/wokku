@@ -75,4 +75,18 @@ RSpec.describe Organisms::AppOverviewComponent, type: :component do
       expect(component.display_url).to eq("https://shop.example.com")
     end
   end
+
+  # AppRecord has no `activities` association, so the overview always said
+  # "Nothing here yet" — even right after a deploy (2026-11-16 visual audit).
+  it "lists this app's activity" do
+    Activity.log(user: user, team: app.team, action: "app.deployed", target: app)
+    events = described_class.new(app: app).recent_events
+    expect(events.map(&:action)).to include("app.deployed")
+  end
+
+  # memory_used_mb existed on no model, so the overview always read 0 MB.
+  it "shows the app's live memory use" do
+    app.update_columns(live_mem_used_mb: 120)
+    expect(described_class.new(app: app).memory_used_mb).to eq(120)
+  end
 end

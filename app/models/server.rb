@@ -144,6 +144,36 @@ class Server < ApplicationRecord
     rescue StandardError => e
       Rails.logger.warn("record_heartbeat! visit tracking: #{e.class}: #{e.message}")
     end
+
+    begin
+      record_app_stats!(vitals["app_stats"])
+    rescue StandardError => e
+      Rails.logger.warn("record_heartbeat! app stats: #{e.class}: #{e.message}")
+    end
+  end
+
+  # wokkud's per-Swarm-service docker stats ("wokku-<app>-<process>") →
+  # live CPU/memory per app. Without this, hosts with no SSH metrics path
+  # (self-host) showed 0 MB for every app. Longest app name wins so app
+  # "foo" never absorbs "foo-bar"'s services.
+  def record_app_stats!(stats)
+    return unless stats.is_a?(Hash) && stats.any?
+
+    apps = app_records.pluck(:id, :name).sort_by { |_, name| -name.length }
+    totals = Hash.new { |h, k| h[k] = { cpu: 0.0, mem: 0, limit: 0 } }
+    stats.each do |service, s|
+      id, = apps.find { |_, name| service.to_s.start_with?("wokku-#{name}-") }
+      next unless id && s.is_a?(Hash)
+      t = totals[id]
+      t[:cpu] += s["cpu_pct"].to_f
+      t[:mem] += s["mem_mb"].to_i
+      t[:limit] += s["mem_limit_mb"].to_i
+    end
+    now = Time.current
+    totals.each do |id, t|
+      AppRecord.where(id: id).update_all(live_cpu_pct: t[:cpu].round(1), live_mem_used_mb: t[:mem],
+                                         live_mem_limit_mb: t[:limit], live_metrics_at: now)
+    end
   end
 
   # Builds waiting for this host's wokkud to claim them (Phase 4c). The

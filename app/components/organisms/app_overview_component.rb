@@ -5,13 +5,14 @@ module Organisms
     end
     attr_reader :app
 
-    def memory_used_mb; app.respond_to?(:memory_used_mb) ? app.memory_used_mb.to_i : 0; end
+    def memory_used_mb; app.live_mem_used_mb.to_i; end # heartbeat app_stats / MetricsPollJob
     def memory_max_mb;  app.dyno_allocations.first&.effective_memory_mb.to_i; end
     def memory_pct;     memory_max_mb.positive? ? (memory_used_mb * 100.0 / memory_max_mb).round : 0; end
     def size_label;     app.dyno_allocations.first&.size_label; end
 
     def recent_events
-      app.respond_to?(:activities) ? (app.activities.order(created_at: :desc).limit(8) rescue []) : []
+      # Activity points at its app polymorphically (no AppRecord#activities).
+      Activity.where(target_type: "AppRecord", target_id: app.id).order(created_at: :desc).limit(8)
     end
 
     def display_url

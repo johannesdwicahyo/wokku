@@ -32,6 +32,7 @@ var Version = "0.7.0"
 // volumeCache holds the hourly per-resource disk usage walk (Task 9) so the
 // 15s heartbeat loop never blocks on a disk walk.
 var volumeCache = vitals.NewUsageCache()
+var appStatsCache = &vitals.AppStatsCache{TTL: time.Minute}
 
 func main() {
 	cfg, err := config.Load()
@@ -134,6 +135,7 @@ func beat(ctx context.Context, mon *dockermon.Monitor, client *control.Client, b
 	}
 	v.VolumeUsage = volumeCache.Get(time.Now())
 	v.HostRequests = rtr.HostRequests(ctx)
+	v.AppStats = appStatsCache.Get(time.Now())
 	resp, err := client.PostHeartbeat(v, lc.TaskStates(ctx))
 	if err != nil {
 		log.Printf("wokkud: heartbeat: %v", err)

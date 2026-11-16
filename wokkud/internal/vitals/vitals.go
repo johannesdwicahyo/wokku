@@ -15,18 +15,19 @@ import (
 )
 
 type Vitals struct {
-	DiskUsedPct         float64          `json:"disk_used_pct"`
-	DiskFreeGB          float64          `json:"disk_free_gb"`
-	MemUsedMB           int              `json:"mem_used_mb"`
-	MemTotalMB          int              `json:"mem_total_mb"`
-	Load1               float64          `json:"load1"`
-	Docker              string           `json:"docker"`                          // "ok" | "down"
-	Registry            string           `json:"registry,omitempty"`              // "ok" | "unreachable" — local registry probe (Phase 4c)
-	Router              string           `json:"router,omitempty"`                // "ok" | "degraded" — set only when caddy is installed (Phase B1)
-	RouterConfigApplied string           `json:"router_config_applied,omitempty"` // sha of the last successfully applied router config
-	Swarm               string           `json:"swarm,omitempty"`                 // raw Docker Swarm.LocalNodeState, e.g. "active" — B5a adopt guard
-	VolumeUsage         map[string]int64 `json:"volume_usage,omitempty"`          // per-resource data dir → bytes, hourly (Task 9)
-	HostRequests        map[string]int64 `json:"host_requests,omitempty"`         // hostname → cumulative Caddy request count (wake-on-request)
+	DiskUsedPct         float64                  `json:"disk_used_pct"`
+	DiskFreeGB          float64                  `json:"disk_free_gb"`
+	MemUsedMB           int                      `json:"mem_used_mb"`
+	MemTotalMB          int                      `json:"mem_total_mb"`
+	Load1               float64                  `json:"load1"`
+	Docker              string                   `json:"docker"`                          // "ok" | "down"
+	Registry            string                   `json:"registry,omitempty"`              // "ok" | "unreachable" — local registry probe (Phase 4c)
+	Router              string                   `json:"router,omitempty"`                // "ok" | "degraded" — set only when caddy is installed (Phase B1)
+	RouterConfigApplied string                   `json:"router_config_applied,omitempty"` // sha of the last successfully applied router config
+	Swarm               string                   `json:"swarm,omitempty"`                 // raw Docker Swarm.LocalNodeState, e.g. "active" — B5a adopt guard
+	VolumeUsage         map[string]int64         `json:"volume_usage,omitempty"`          // per-resource data dir → bytes, hourly (Task 9)
+	HostRequests        map[string]int64         `json:"host_requests,omitempty"`         // hostname → cumulative Caddy request count (wake-on-request)
+	AppStats            map[string]ContainerStat `json:"app_stats,omitempty"`             // Swarm service → live CPU/memory, ~1/min (app metrics without SSH)
 }
 
 // Collect gathers live vitals. dockerStatus is injected by the caller
