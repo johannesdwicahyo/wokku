@@ -1611,6 +1611,20 @@ CREATE TABLE public.tunnel_sessions (
 
 
 --
+-- Name: update_statuses; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.update_statuses (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    latest_version character varying,
+    notified_version character varying,
+    checked_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: usage_events; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2367,6 +2381,14 @@ ALTER TABLE ONLY public.teams
 
 ALTER TABLE ONLY public.tunnel_sessions
     ADD CONSTRAINT tunnel_sessions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: update_statuses update_statuses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.update_statuses
+    ADD CONSTRAINT update_statuses_pkey PRIMARY KEY (id);
 
 
 --
@@ -4626,6 +4648,7 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261117000001'),
 ('20261116000001'),
 ('20261115000003'),
 ('20261115000002'),

@@ -1,0 +1,9 @@
+<%# Self-host admins only: a newer release is published (UpdateCheckJob). %>
+<% if !wokku_cloud? && current_user&.admin? && (status = UpdateStatus.first)&.update_available? %>
+  <div data-update-banner class="bg-accent-soft border-b border-line px-4 py-2.5 text-sm text-ink">
+    <div class="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+      <span><%= t("update_banner.available", latest: status.latest_version, current: ENV["WOKKU_VERSION"]) %></span>
+      <code class="font-mono text-xs bg-paper border border-line rounded px-1.5 py-0.5">cd /opt/wokku &amp;&amp; sudo bash install.sh</code>
+    </div>
+  </div>
+<% end %>

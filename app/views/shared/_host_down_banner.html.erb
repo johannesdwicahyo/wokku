@@ -12,7 +12,7 @@
         <span>
           Apps on <strong><%= server.name %></strong> may be unavailable — the host stopped responding
           <%= server.heartbeat_at ? "#{time_ago(server.heartbeat_at)}" : "" %>.
-          This is on our side, not your code. We're on it.
+          <% if wokku_cloud? %>This is on our side, not your code. We're on it.<% else %>Check that the server is up and the wokkud agent is running (systemctl status wokkud).<% end %>
         </span>
       <% else %>
         <span>

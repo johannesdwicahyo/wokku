@@ -9,6 +9,11 @@ production:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
 
+  # Is a newer self-host release published? Banner + one email per release.
+  update_check:
+    class: UpdateCheckJob
+    schedule: every day at 4:17am
+
   host_heartbeat_monitor:
     class: HostHeartbeatMonitorJob
     schedule: every 1 minute

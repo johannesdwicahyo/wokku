@@ -79,6 +79,20 @@ docker compose run web bin/rails runner \
   'User.find_by(role: :admin).update!(password: "new-strong-password")'
 ```
 
+### Updating
+
+Re-run the installer — it keeps your data and settings, pulls the newest
+image, restarts the dashboard (apps keep running) and updates the agent:
+
+```sh
+cd /opt/wokku && sudo bash install.sh
+```
+
+The dashboard checks for a new release once a day (an anonymous read of the
+public image's version label — nothing about your install is sent). When one
+is out, admins see a banner and the admin gets one email per release. Turn
+it off with `WOKKU_UPDATE_CHECK=0` in `.env`.
+
 ### Email
 
 Password resets, team invites and alerts need an SMTP server. Uncomment the

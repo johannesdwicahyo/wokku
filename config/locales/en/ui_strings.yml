@@ -12,3 +12,5 @@ en:
     save: "Save resources"
     none_attached: "No databases attached."
     browse: "Browse →"
+  update_banner:
+    available: "Wokku %{latest} is available (you run %{current}). To update, run on the server:"

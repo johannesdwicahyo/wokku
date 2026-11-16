@@ -30,3 +30,5 @@ id:
       template_deployed: "deploy template"
       config_updated: "mengubah config"
       database_create_queued: "membuat database"
+  update_banner:
+    available: "Wokku %{latest} sudah tersedia (kamu memakai %{current}). Untuk update, jalankan di server:"

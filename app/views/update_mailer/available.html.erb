@@ -1,0 +1,7 @@
+<p>A new Wokku release is available for your server.</p>
+<p>Installed: <strong><%= @current %></strong><br>Latest: <strong><%= @latest %></strong></p>
+<p>To update, run this on the server (it keeps your data and settings):</p>
+<pre style="background:#f4f4f4;padding:10px;border-radius:4px">cd /opt/wokku &amp;&amp; sudo bash install.sh</pre>
+<p>The update downloads the new version, restarts the dashboard (your apps keep running) and updates the agent.
+<a href="<%= @dashboard_url %>">Open the dashboard</a>.</p>
+<p style="color:#888;font-size:12px">You get one email per release. To stop update checks, set WOKKU_UPDATE_CHECK=0 in /opt/wokku/.env.</p>
