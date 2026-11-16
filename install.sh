@@ -80,7 +80,7 @@ fi
 
 log "waiting for the control plane to come up"
 for _ in $(seq 1 100); do
-  curl -fsS -o /dev/null -m 2 http://127.0.0.1:3000/up && break
+  curl -fs -o /dev/null -m 2 http://127.0.0.1:3000/up && break
   sleep 3
 done
 curl -fsS -o /dev/null -m 2 http://127.0.0.1:3000/up || {
@@ -108,10 +108,10 @@ DOMAIN=$(grep '^WOKKU_CANONICAL_DOMAIN=' .env | cut -d= -f2)
 # can false-alarm. -k: Caddy may still be issuing the certificate.
 log "checking that ${DOMAIN} reaches this server"
 reached=""
-for _ in $(seq 1 15); do  # wokkud applies the route within ~15s
-  body=$(curl -sk -m 8 "https://${DOMAIN}/up" 2>/dev/null || true)
+for _ in $(seq 1 9); do  # ≤45s: route applies in ~15s, cert issues in the background
+  body=$(curl -sk -m 4 "https://${DOMAIN}/up" 2>/dev/null || true)
   case "$body" in *green*) reached=1; break ;; esac
-  sleep 3
+  sleep 1
 done
 if [ -z "$reached" ]; then
   cat <<EOF

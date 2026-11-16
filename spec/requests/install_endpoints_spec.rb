@@ -39,7 +39,7 @@ RSpec.describe "connect-a-server installer endpoints", type: :request do
   # so only our app's health body proves the domain reaches this box.
   it "install.sh verifies public reachability by our /up body, not a redirect" do
     script = Wokku::Engine.root.join("install.sh").read
-    expect(script).to include('curl -sk -m 8 "https://${DOMAIN}/up"')
+    expect(script).to include('curl -sk -m 4 "https://${DOMAIN}/up"')
     expect(script).to include("*green*")
     expect(script).to include("SHARES one public IP")
   end
