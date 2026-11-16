@@ -77,6 +77,13 @@ RSpec.describe "connect-a-server installer endpoints", type: :request do
     expect(script).to include("/setup?token=${SETUP_TOKEN}")
   end
 
+  # The 10 GB fresh-install minimum blocked updates on a 20 GB VPS.
+  it "install.sh needs only 2 GB free to update, and drops the previous Wokku image" do
+    script = Wokku::Engine.root.join("install.sh").read
+    expect(script).to include('[ "$disk_gb" -ge 2 ]', '[ "$disk_gb" -ge 10 ]')
+    expect(script).to include('docker image prune -f --filter "label=org.opencontainers.image.title=wokku"')
+  end
+
   it "404s the binary with a clear message when not bundled" do
     get "/install/wokkud"
     expect(response).to have_http_status(:not_found)

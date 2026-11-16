@@ -27,7 +27,13 @@ preflight() {
   mem_mb=$(( $(awk '/^MemTotal:/{print $2}' /proc/meminfo) / 1024 ))
   [ "$mem_mb" -ge 1800 ] || { echo "Wokku needs at least 2 GB of RAM (this server has ${mem_mb} MB)."; exit 1; }
   disk_gb=$(( $(df -Pk / | awk 'NR==2{print $4}') / 1024 / 1024 ))
-  [ "$disk_gb" -ge 10 ] || { echo "Wokku needs at least 10 GB of free disk (this server has ${disk_gb} GB free)."; exit 1; }
+  if [ -d "$INSTALL_DIR" ]; then
+    # Update: only the new image has to fit. (10 GB blocked updates on a
+    # 20 GB VPS once images, build cache and swap had grown — 2026-11-17.)
+    [ "$disk_gb" -ge 2 ] || { echo "Updating Wokku needs at least 2 GB of free disk (this server has ${disk_gb} GB free)."; echo "  Free space with: docker builder prune -f && docker image prune -f"; exit 1; }
+  else
+    [ "$disk_gb" -ge 10 ] || { echo "Wokku needs at least 10 GB of free disk (this server has ${disk_gb} GB free)."; exit 1; }
+  fi
   if [ ! -d "$INSTALL_DIR" ] && command -v ss >/dev/null && ss -ltnH '( sport = :80 or sport = :443 )' | grep -q .; then
     echo "Ports 80/443 are already in use (another web server?). Wokku needs them for its router."; exit 1
   fi
@@ -99,6 +105,9 @@ done
 curl -fsS -o /dev/null -m 2 http://127.0.0.1:3000/up || {
   echo "The control plane didn't start within 5 minutes. Logs: cd ${INSTALL_DIR} && docker compose logs web"; exit 1
 }
+# An update leaves the previous control-plane image untagged; remove only
+# those (Wokku's own label), never anything else on the server.
+docker image prune -f --filter "label=org.opencontainers.image.title=wokku" >/dev/null 2>&1 || true
 
 log "registering this box as the first server"
 TOKEN=$(docker compose exec -T web bin/rails runner \
@@ -137,6 +146,11 @@ if [ -z "$reached" ]; then
     internet. HTTPS starts working as soon as the domain reaches this box.
 EOF
 fi
-SETUP_TOKEN=$(grep '^WOKKU_SETUP_TOKEN=' .env | cut -d= -f2)
-log "done — open https://${DOMAIN}/setup?token=${SETUP_TOKEN} to create your admin account and deploy."
-echo "  (only this link can create the admin account; it stops working once the admin exists)"
+# Fresh install → the one-time setup link; an update → just the new version.
+if docker compose exec -T web bin/rails runner 'exit(User.exists? ? 0 : 1)' >/dev/null 2>&1; then
+  log "done — Wokku updated to $(docker compose exec -T web printenv WOKKU_VERSION | tr -d '\r'). Open https://${DOMAIN}"
+else
+  SETUP_TOKEN=$(grep '^WOKKU_SETUP_TOKEN=' .env | cut -d= -f2)
+  log "done — open https://${DOMAIN}/setup?token=${SETUP_TOKEN} to create your admin account and deploy."
+  echo "  (only this link can create the admin account; it stops working once the admin exists)"
+fi
