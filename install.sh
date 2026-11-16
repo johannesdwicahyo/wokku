@@ -67,6 +67,14 @@ if [ ! -f .env ]; then
   cat > .env <<EOF
 SECRET_KEY_BASE=$(openssl rand -hex 64)
 WOKKU_CANONICAL_DOMAIN=${WOKKU_CANONICAL_DOMAIN:-${PUBLIC_IP}.sslip.io}
+
+# Email (password resets, team invites, alerts). Without SMTP_ADDRESS no
+# email is sent. Any SMTP provider works; then: docker compose up -d
+# SMTP_ADDRESS=smtp.example.com
+# SMTP_PORT=587
+# SMTP_USERNAME=
+# SMTP_PASSWORD=
+# MAIL_FROM=Wokku <noreply@your-domain>
 EOF
 fi
 

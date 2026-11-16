@@ -79,10 +79,23 @@ docker compose run web bin/rails runner \
   'User.find_by(role: :admin).update!(password: "new-strong-password")'
 ```
 
+### Email
+
+Password resets, team invites and alerts need an SMTP server. Uncomment the
+`SMTP_*` lines in `/opt/wokku/.env` (any provider works), then
+`cd /opt/wokku && docker compose up -d`. Without SMTP the dashboard works but
+sends no email.
+
+### Budget VPS with a shared public IP
+
+Some providers share one public IPv4 between many VPSes (you SSH in on a
+high port, and the server has a private address). Their proxy routes ports
+80/443 by domain, so add your dashboard domain (e.g. `<ip>.sslip.io`) in the
+provider's panel — the installer warns when the domain doesn't reach the
+server. Re-add it after reinstalling the OS.
+
 **Notes:** the bundled Postgres works out of the box; external/managed
-Postgres needs privileges for `CREATE EXTENSION pgcrypto`. Recurring job
-schedules (metrics collectors, retention sweeps) are not yet wired for
-self-host — tracked for the next release.
+Postgres needs privileges for `CREATE EXTENSION pgcrypto`.
 
 ## Don't want to host it yourself?
 

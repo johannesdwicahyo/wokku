@@ -8,6 +8,32 @@ module WokkuHarness
   # same-box agent, Caddy's TLS `ask` gate, the installer. See force_ssl.
   LOCAL_CONTROL_REQUEST = ->(request) { request.get_header("HTTP_X_FORWARDED_PROTO").blank? }
 
+  # Self-host mail: links point at this install's domain, senders use it
+  # (never wokku.cloud), and SMTP comes from SMTP_* in .env. Without an SMTP
+  # server, delivery is skipped (logged) instead of failing every job.
+  def self.mail_settings(env)
+    domain = env.fetch("WOKKU_CANONICAL_DOMAIN", "localhost")
+    smtp   = env["SMTP_ADDRESS"].presence
+    {
+      default_url_options: { host: domain, protocol: env["WOKKU_FORCE_SSL"] == "0" ? "http" : "https" },
+      from_defaults: {
+        "MAIL_FROM"         => "Wokku <noreply@#{domain}>",
+        "MAIL_FROM_HELLO"   => "Wokku <noreply@#{domain}>",
+        "MAIL_FROM_SUPPORT" => "Wokku Security <noreply@#{domain}>"
+      },
+      perform_deliveries: !smtp.nil?,
+      delivery_method: smtp ? :smtp : :test,
+      smtp_settings: smtp && {
+        address: smtp,
+        port: env.fetch("SMTP_PORT", "587").to_i,
+        user_name: env["SMTP_USERNAME"].presence,
+        password: env["SMTP_PASSWORD"].presence,
+        authentication: (:plain if env["SMTP_USERNAME"].present?),
+        enable_starttls_auto: true
+      }.compact
+    }
+  end
+
   class Application < Rails::Application
     # Never dump schema.rb after migrating: the schema's single source is
     # the engine's baseline migration (structure.sql). A dumped schema.rb
@@ -57,6 +83,22 @@ module WokkuHarness
     if Rails.env.production? && ENV["WOKKU_FORCE_SSL"] != "0"
       config.force_ssl   = true
       config.ssl_options = { redirect: { exclude: LOCAL_CONTROL_REQUEST } }
+    end
+
+    if Rails.env.production?
+      mail = WokkuHarness.mail_settings(ENV)
+      # Mailer classes read these at load time (default from:), so set them
+      # before eager loading; explicit MAIL_FROM* in .env still win.
+      mail[:from_defaults].each { |k, v| ENV[k] ||= v }
+      config.action_mailer.default_url_options = mail[:default_url_options]
+      config.action_mailer.perform_deliveries  = mail[:perform_deliveries]
+      config.action_mailer.delivery_method     = mail[:delivery_method]
+      config.action_mailer.smtp_settings       = mail[:smtp_settings] if mail[:smtp_settings]
+      unless mail[:perform_deliveries]
+        config.after_initialize do
+          Rails.logger.warn("wokku: no SMTP_ADDRESS set — emails (password reset, invites, alerts) are NOT sent. Add SMTP_* to .env.")
+        end
+      end
     end
 
     # Test env: capture mail instead of hitting SMTP, and give mailer URLs
