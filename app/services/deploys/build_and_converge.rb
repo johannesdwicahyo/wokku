@@ -17,10 +17,24 @@ module Deploys
     # deploy with a clear message, for native and adopted apps alike.
     class BuilderUnavailable < StandardError; end
 
-    DEPLOY_TIMEOUT = 15.minutes # bounds build+converge FROM PICKUP — queue wait is budgeted separately
     CLAIM_WAIT = 35 # seconds of builder-IDLE silence before giving up (sick builder)
     QUEUE_WAIT_MAX = 10.minutes # total claim-wait budget while queued behind live builds
-    BUSY_CLAIM_MAX_AGE = 12.minutes # agent build timeout (600s) + slack — older claimed rows are wedged
+
+    # One budget drives every build limit so control plane and agent agree.
+    # deploy_timeout bounds build+converge FROM PICKUP (queue wait is budgeted
+    # separately). Self-host gets 30 min: the first nixpacks build on a fresh
+    # box downloads the Nix toolchain and blew 15 min. wokku.cloud: 15/10/12.
+    def self.deploy_timeout
+      minutes = ENV["WOKKU_DEPLOY_TIMEOUT_MINUTES"].to_i
+      minutes = Wokku.cloud? ? 15 : 30 unless minutes.positive?
+      [ minutes, 10 ].max.minutes # build_timeout = this - 5, keep it sane
+    end
+
+    # The agent's own build kill switch (sent with the claim).
+    def self.build_timeout = deploy_timeout - 5.minutes
+
+    # Older claimed rows are wedged builds, not busy ones.
+    def self.busy_claim_max_age = build_timeout + 2.minutes
     POLL = 2
 
     def self.call(app:, deploy:) = new(app: app, deploy: deploy).call
@@ -52,7 +66,7 @@ module Deploys
       server.wokkud_builds_enabled? && !server.heartbeat_stale? && server.vitals&.dig("registry") == "ok"
     end
 
-    def with_deploy_timeout(&) = Timeout.timeout(DEPLOY_TIMEOUT.to_i, &)
+    def with_deploy_timeout(&) = Timeout.timeout(self.class.deploy_timeout.to_i, &)
 
     # Waits for wokkud to claim + finish the build (its output streams into
     # deploy.log via Api::V1::Agent::BuildsController#log while we poll), then
@@ -130,7 +144,7 @@ module Deploys
             .where(app_records: { server_id: server.id })
             .where(builder: "wokkud", build_finished_at: nil)
             .where.not(id: deploy.id)
-            .where("build_picked_up_at > ?", BUSY_CLAIM_MAX_AGE.ago)
+            .where("build_picked_up_at > ?", self.class.busy_claim_max_age.ago)
             .exists?
     end
   end

@@ -23,7 +23,7 @@ RSpec.describe "Api::V1::Agent::Builds" do
         "app_name" => app_record.name,
         "archive_url" => "https://r2.example.com/signed",
         "push_ref" => "127.0.0.1:5000/wokku/#{app_record.name}:#{deploy.id}",
-        "timeout_seconds" => 600
+        "timeout_seconds" => Deploys::BuildAndConverge.build_timeout.to_i
       )
       expect(deploy.reload.build_picked_up_at).to be_present
     end

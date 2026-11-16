@@ -41,7 +41,6 @@
 class RollbackDeployJob < ApplicationJob
   queue_as :deploys
 
-  DEPLOY_TIMEOUT = 15.minutes
 
   def perform(app_id:, deploy_id:)
     app = AppRecord.find(app_id)
@@ -84,7 +83,7 @@ class RollbackDeployJob < ApplicationJob
 
     if deploy.image_ref.present?
       DeployChannel.broadcast_to(deploy, { type: "log", data: "Rolling back #{app.name} to #{deploy.image_ref} (reusing the already-built image)...\n" })
-      Timeout.timeout(DEPLOY_TIMEOUT.to_i) do
+      Timeout.timeout(Deploys::BuildAndConverge.deploy_timeout.to_i) do
         Lifecycle::Ops.converge!(app, image_ref: deploy.image_ref, deploy: deploy)
       end
       log = "Rolled back #{app.name} to #{deploy.image_ref} via wokkud.\n"

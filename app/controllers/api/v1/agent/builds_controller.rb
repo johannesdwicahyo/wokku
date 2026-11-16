@@ -8,7 +8,7 @@ module Api
       # gave up; a late report must not touch it), and a second claim is 409
       # so a raced duplicate agent never double-builds.
       class BuildsController < BaseController
-        BUILD_TIMEOUT_SECONDS = 600
+        def self.build_timeout_seconds = Deploys::BuildAndConverge.build_timeout.to_i
         # Mirrors the Go producer's Procfile cap (wokkud parses ≤16KB into a
         # flat map[string]string) — anything bigger or differently shaped
         # didn't come from that producer.
@@ -29,7 +29,7 @@ module Api
           # reachable from the agent (it's the URL this claim came in on).
           if archive_url.nil? && @deploy.archive_key.present?
             token = Rails.application.message_verifier(:deploy_archive)
-                         .generate(@deploy.id, expires_in: BUILD_TIMEOUT_SECONDS + 300)
+                         .generate(@deploy.id, expires_in: self.class.build_timeout_seconds + 300)
             archive_url = "#{request.base_url}/api/v1/agent/archive?token=#{CGI.escape(token)}"
           end
           claimed = Deploy.where(id: @deploy.id, build_picked_up_at: nil, builder: "wokkud")
@@ -42,7 +42,7 @@ module Api
             app_name: @deploy.app_record.name,
             archive_url: archive_url,
             push_ref: @deploy.wokkud_image_ref,
-            timeout_seconds: BUILD_TIMEOUT_SECONDS
+            timeout_seconds: self.class.build_timeout_seconds
           }
         end
 

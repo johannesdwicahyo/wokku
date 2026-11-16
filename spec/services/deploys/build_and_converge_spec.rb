@@ -46,7 +46,7 @@ RSpec.describe Deploys::BuildAndConverge do
       picked_up.join
     end
 
-    it "does not count a wedged claim (older than BUSY_CLAIM_MAX_AGE) as busy" do
+    it "does not count a wedged claim (older than busy_claim_max_age) as busy" do
       busy_row!(picked_up_at: 13.minutes.ago)
       expect(service.send(:wait_for_claim, deploy, server)).to be(false)
     end
@@ -189,7 +189,7 @@ RSpec.describe Deploys::BuildAndConverge do
       allow(service).to receive(:wait_for_claim).and_return(true)
       deploy.update!(build_picked_up_at: Time.current, build_finished_at: Time.current, log: "built")
       allow(::Lifecycle::Ops).to receive(:converge!)
-      expect(Timeout).to receive(:timeout).with(Deploys::BuildAndConverge::DEPLOY_TIMEOUT.to_i).and_call_original
+      expect(Timeout).to receive(:timeout).with(Deploys::BuildAndConverge.deploy_timeout.to_i).and_call_original
       service.call
     end
   end
