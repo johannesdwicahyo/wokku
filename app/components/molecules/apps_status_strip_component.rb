@@ -11,8 +11,10 @@ module Molecules
       @apps.group_by { |a| a.status.to_s }.transform_values(&:count)
     end
 
+    # Only apps actually building. :created also covers apps whose deploys
+    # all failed — counting those as "building" hid the failure.
     def in_progress_count
-      state_counts["deploying"].to_i + state_counts["created"].to_i
+      state_counts["deploying"].to_i
     end
 
     def total_boxes_used

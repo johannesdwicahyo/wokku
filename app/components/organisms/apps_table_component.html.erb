@@ -13,7 +13,7 @@
     <tbody data-controller="grid-nav" data-action="keydown->grid-nav#keydown">
       <% apps.each do |app| %>
         <% deployed_at = last_deployed_at(app) %>
-        <% status_pill = Atoms::StatusPillComponent.new(status: app.status.to_s) %>
+        <% status_pill = Atoms::StatusPillComponent.new(status: app.display_status) %>
         <%# Rows are focusable (tabindex/role/aria-label) and grid-nav above
             handles Arrow/Home/End/Space; Enter fires a native click. Making
             the row focusable also fixes slide-panel's focus-restore: it
@@ -35,7 +35,7 @@
           <td class="px-3.5 py-2.5"><%= status_pill.render_in(self) %></td>
           <td class="hidden sm:table-cell px-3.5 py-2.5 text-[12.5px] text-dim"><%= box_label(app) %></td>
           <td class="hidden md:table-cell px-3.5 py-2.5 text-[12.5px] text-dim"><%= primary_domain(app) || "—" %></td>
-          <td class="hidden md:table-cell px-3.5 py-2.5 text-[12.5px] text-dim"><%= deployed_at ? "#{time_ago_in_words(deployed_at)} ago" : "never" %></td>
+          <td class="hidden md:table-cell px-3.5 py-2.5 text-[12.5px] text-dim"><%= if deployed_at then "#{time_ago_in_words(deployed_at)} ago" elsif status_pill.status == "deploy_failed" then "failed" else "never" end %></td>
         </tr>
       <% end %>
       <tr class="border-t border-dashed border-faint hover:bg-bg-deep transition-colors">

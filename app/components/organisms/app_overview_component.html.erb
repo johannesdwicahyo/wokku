@@ -5,7 +5,7 @@
         <div>
           <div class="text-[10.5px] uppercase tracking-widest text-ink-soft font-bold mb-2">Status</div>
           <div class="flex items-center gap-3 mb-3">
-            <%= render Atoms::StatusPillComponent.new(status: app.status.to_s) %>
+            <%= render Atoms::StatusPillComponent.new(status: app.display_status) %>
             <a href="<%= display_url %>" target="_blank" class="font-mono text-sm text-accent hover:underline"><%= display_url.sub(%r{https?://}, "") %></a>
           </div>
           <div class="flex gap-2 flex-wrap">

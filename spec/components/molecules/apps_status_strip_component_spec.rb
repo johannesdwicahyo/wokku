@@ -17,6 +17,7 @@ RSpec.describe Molecules::AppsStatusStripComponent, type: :component do
 
   describe "rendering" do
     it "renders the running/building/crashed/boxes chips with their counts" do
+      allow(Wokku).to receive(:cloud?).and_return(true) # boxes = cloud plan quota
       render_inline(component)
 
       expect(page).to have_text("running")
@@ -65,6 +66,20 @@ RSpec.describe Molecules::AppsStatusStripComponent, type: :component do
 
     it "is empty when there are no apps" do
       expect(component.box_breakdown).to eq([])
+    end
+  end
+
+  # Self-host audit 2026-11-16: "building 3" counted apps whose deploys had
+  # failed (status :created), and "boxes 4 / 0" showed a cloud plan quota.
+  describe "self-host" do
+    it "counts only deploying apps as building" do
+      apps = [ build(:app_record, status: :deploying), build(:app_record, status: :created) ]
+      expect(described_class.new(apps: apps, plan: plan, box_usage: {}).in_progress_count).to eq(1)
+    end
+
+    it "has no boxes quota chip" do
+      render_inline(described_class.new(apps: [], plan: plan, box_usage: box_usage))
+      expect(page).not_to have_text("boxes")
     end
   end
 end

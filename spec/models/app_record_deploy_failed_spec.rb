@@ -24,4 +24,22 @@ RSpec.describe AppRecord, "#mark_deploy_failed!" do
   it "labels :created as Not deployed" do
     expect(Atoms::StatusPillComponent.new(status: "created").spec[:label]).to eq("Not deployed")
   end
+
+  # The list said "Not Deployed · never" (and counted it as "building") for
+  # apps whose only deploys had failed — the user never saw it failed.
+  describe "#display_status" do
+    it "is deploy_failed for a never-deployed app whose last deploy failed or timed out" do
+      app_record.update!(status: :created)
+      create(:deploy, app_record: app_record, status: :timed_out)
+      expect(app_record.display_status).to eq("deploy_failed")
+      expect(Atoms::StatusPillComponent.new(status: "deploy_failed").spec[:label]).to eq("Deploy failed")
+    end
+
+    it "is the plain status otherwise" do
+      app_record.update!(status: :created)
+      expect(app_record.display_status).to eq("created")
+      app_record.update!(status: :running)
+      expect(app_record.display_status).to eq("running")
+    end
+  end
 end

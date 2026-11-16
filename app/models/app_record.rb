@@ -24,6 +24,13 @@ class AppRecord < ApplicationRecord
     update!(status: deploys.succeeded.exists? ? :crashed : :created)
   end
 
+  # What lists show: a never-deployed app whose latest deploy failed is
+  # "Deploy failed", not "Not deployed" (which hid the failure).
+  def display_status
+    return status.to_s unless created?
+    deploys.order(created_at: :desc).pick(:status).to_s.in?(%w[failed timed_out]) ? "deploy_failed" : "created"
+  end
+
   # B6 W2: standard creates birth apps wokkud-native (no dokku shell, all
   # wokkud flags on). Flipped 2026-07-19 after the §4 creation smoke passed
   # on prod (w2-smoke: no dokku app ever, EnvVar-only env, wokkud build →
