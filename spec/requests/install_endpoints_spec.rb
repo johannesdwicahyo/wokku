@@ -70,6 +70,13 @@ RSpec.describe "connect-a-server installer endpoints", type: :request do
     expect(body).to include("/var/lib/wokku/build-cache-warmed")
   end
 
+  it "install.sh generates a setup token and prints the tokened setup link" do
+    script = Wokku::Engine.root.join("install.sh").read
+    expect(script).to include("WOKKU_SETUP_TOKEN=$(openssl rand -hex 16)")
+    expect(script).to include("grep -q '^WOKKU_SETUP_TOKEN=' .env ||")
+    expect(script).to include("/setup?token=${SETUP_TOKEN}")
+  end
+
   it "404s the binary with a clear message when not bundled" do
     get "/install/wokkud"
     expect(response).to have_http_status(:not_found)

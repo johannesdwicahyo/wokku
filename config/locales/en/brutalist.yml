@@ -102,6 +102,9 @@ en:
     created: "Admin account created — welcome!"
     connect_label: "Also register this server so I can deploy to it"
     connect_hint: "You'll get a one-command installer on the next screen."
+    locked_title: "Setup link required"
+    locked_body: "Open the setup link the installer printed. Lost it? On the server run: grep WOKKU_SETUP_TOKEN /opt/wokku/.env — then open /setup?token=<that value>."
+    locked_body_no_token: "Set WOKKU_SETUP_TOKEN in your .env, restart (docker compose up -d), then open /setup?token=<that value>."
   signin:
     email_label: Email
     password_label: Password

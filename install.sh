@@ -67,6 +67,8 @@ if [ ! -f .env ]; then
   cat > .env <<EOF
 SECRET_KEY_BASE=$(openssl rand -hex 64)
 WOKKU_CANONICAL_DOMAIN=${WOKKU_CANONICAL_DOMAIN:-${PUBLIC_IP}.sslip.io}
+# Only someone with this token can create the admin account at /setup.
+WOKKU_SETUP_TOKEN=$(openssl rand -hex 16)
 
 # Email (password resets, team invites, alerts). Without SMTP_ADDRESS no
 # email is sent. Any SMTP provider works; then: docker compose up -d
@@ -77,6 +79,9 @@ WOKKU_CANONICAL_DOMAIN=${WOKKU_CANONICAL_DOMAIN:-${PUBLIC_IP}.sslip.io}
 # MAIL_FROM=Wokku <noreply@your-domain>
 EOF
 fi
+# Installs from before the setup token existed: add one (only matters
+# until the admin account is created).
+grep -q '^WOKKU_SETUP_TOKEN=' .env || echo "WOKKU_SETUP_TOKEN=$(openssl rand -hex 16)" >> .env
 
 log "downloading the control plane"
 if docker compose pull -q web; then
@@ -132,4 +137,6 @@ if [ -z "$reached" ]; then
     internet. HTTPS starts working as soon as the domain reaches this box.
 EOF
 fi
-log "done — open https://${DOMAIN} to create your admin account and deploy."
+SETUP_TOKEN=$(grep '^WOKKU_SETUP_TOKEN=' .env | cut -d= -f2)
+log "done — open https://${DOMAIN}/setup?token=${SETUP_TOKEN} to create your admin account and deploy."
+echo "  (only this link can create the admin account; it stops working once the admin exists)"

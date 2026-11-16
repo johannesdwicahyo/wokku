@@ -102,6 +102,9 @@ id:
     created: "Akun admin dibuat — selamat datang!"
     connect_label: "Daftarkan juga server ini supaya bisa langsung deploy"
     connect_hint: "Perintah pemasangan satu baris muncul di layar berikutnya."
+    locked_title: "Butuh tautan setup"
+    locked_body: "Buka tautan setup yang dicetak installer. Hilang? Di server jalankan: grep WOKKU_SETUP_TOKEN /opt/wokku/.env — lalu buka /setup?token=<nilai itu>."
+    locked_body_no_token: "Isi WOKKU_SETUP_TOKEN di .env, restart (docker compose up -d), lalu buka /setup?token=<nilai itu>."
   signin:
     email_label: Email
     password_label: Kata sandi

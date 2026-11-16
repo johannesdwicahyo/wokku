@@ -4,6 +4,7 @@
 class SetupController < ApplicationController
   skip_before_action :authenticate_user!, raise: false
   before_action :ensure_fresh_install!
+  before_action :require_setup_authorization!
 
   layout "application"
 
@@ -38,5 +39,26 @@ class SetupController < ApplicationController
 
   def ensure_fresh_install!
     redirect_to new_user_session_path if User.exists?
+  end
+
+  # Whoever finishes /setup owns the install, and bots find a new server
+  # within the hour. install.sh writes WOKKU_SETUP_TOKEN and prints
+  # /setup?token=…; without one (manual docker compose), only visitors on
+  # this machine or a private network may set up.
+  def require_setup_authorization!
+    @setup_token = ENV["WOKKU_SETUP_TOKEN"].presence
+    allowed = if @setup_token
+      ActiveSupport::SecurityUtils.secure_compare(params[:token].to_s, @setup_token)
+    else
+      private_network_request?
+    end
+    render :locked, status: :forbidden unless allowed
+  end
+
+  def private_network_request?
+    ip = IPAddr.new(request.remote_ip)
+    ip.loopback? || ip.private? || ip.link_local?
+  rescue IPAddr::InvalidAddressError
+    false
   end
 end
