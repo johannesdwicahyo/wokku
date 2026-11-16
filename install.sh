@@ -99,4 +99,29 @@ log "installing the wokku runtime on this box (swarm, registry, caddy, nixpacks,
 curl -fsSL http://127.0.0.1:3000/install/wokkud.sh | WOKKU_CONTROL_URL=http://127.0.0.1:3000 bash -s -- "$TOKEN"
 
 DOMAIN=$(grep '^WOKKU_CANONICAL_DOMAIN=' .env | cut -d= -f2)
+
+# Does the public DOMAIN reach THIS box? Only our stack serves Rails'
+# health page (a green body) at https://DOMAIN/up — a provider's proxy
+# can redirect http->https too, so a redirect proves nothing. Typical miss:
+# a budget VPS on a SHARED public IP (SSH on a high port) where the
+# provider routes 80/443 by domain. Warn, don't fail: hairpin-NAT quirks
+# can false-alarm. -k: Caddy may still be issuing the certificate.
+log "checking that ${DOMAIN} reaches this server"
+reached=""
+for _ in $(seq 1 15); do  # wokkud applies the route within ~15s
+  body=$(curl -sk -m 8 "https://${DOMAIN}/up" 2>/dev/null || true)
+  case "$body" in *green*) reached=1; break ;; esac
+  sleep 3
+done
+if [ -z "$reached" ]; then
+  cat <<EOF
+
+  ! http://${DOMAIN} does not reach this server's router yet.
+    If your provider SHARES one public IP between VPSes (common on budget
+    VPS: SSH on a non-22 port, a private address on this box), add
+    ${DOMAIN} in the provider's panel (VPS details → Domain / port 80+443
+    forwarding). Otherwise check that ports 80 and 443 are open to the
+    internet. HTTPS starts working as soon as the domain reaches this box.
+EOF
+fi
 log "done — open https://${DOMAIN} to create your admin account and deploy."

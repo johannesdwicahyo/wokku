@@ -35,6 +35,15 @@ RSpec.describe "connect-a-server installer endpoints", type: :request do
     expect(script).to include("WOKKU_CONTROL_URL=http://127.0.0.1:3000 bash -s")
   end
 
+  # Shared-IP budget VPS: the provider's proxy also redirects http->https,
+  # so only our app's health body proves the domain reaches this box.
+  it "install.sh verifies public reachability by our /up body, not a redirect" do
+    script = Wokku::Engine.root.join("install.sh").read
+    expect(script).to include('curl -sk -m 8 "https://${DOMAIN}/up"')
+    expect(script).to include("*green*")
+    expect(script).to include("SHARES one public IP")
+  end
+
   it "404s the binary with a clear message when not bundled" do
     get "/install/wokkud"
     expect(response).to have_http_status(:not_found)
