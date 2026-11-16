@@ -128,6 +128,9 @@ RSpec.describe TemplateDeployer, "branch coverage" do
   end
 
   describe "bundle v2 routing" do
+    # Shared engines only exist where the install enables them (cloud).
+    before { allow(Addons::SharedProvisioner).to receive(:feature_enabled?).and_return(true) }
+
     it "attaches each shared engine via SharedProvisioner" do
       provisioner = instance_double(Addons::SharedProvisioner, call: nil)
       allow(Addons::SharedProvisioner).to receive(:new).and_return(provisioner)
