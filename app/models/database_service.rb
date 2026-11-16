@@ -105,6 +105,14 @@ class DatabaseService < ApplicationRecord
   # The old ResourceUsage open/close/rotate helpers were removed in 1.8
   # along with the daily-debit rail.
 
+  # What lists show: the size the user picked ("0.25 vCPU · 512 MB"), not
+  # the internal tier name ("basic" read as a different size than "Small").
+  def size_label
+    return tier_name.to_s.tr("_", " ") unless cpu.present? && memory_mb.present?
+    mem = memory_mb >= 1024 ? "#{(memory_mb / 1024.0).to_s.delete_suffix('.0')} GB" : "#{memory_mb} MB"
+    "#{cpu.to_f.to_s.delete_suffix('.0')} vCPU · #{mem}"
+  end
+
   def shape
     Resources::Shape.new(cpu: cpu, memory_mb: memory_mb, disk_gb: disk_gb.to_i) if cpu.present? && memory_mb.present?
   end

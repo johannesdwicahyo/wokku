@@ -46,7 +46,7 @@
       <% end %>
     <% else %>
       <div class="border-1.5 border-ink border-dashed bg-paper p-4 text-xs text-dim rounded-md">
-        <div class="text-[10.5px] uppercase tracking-widest text-ink-soft font-bold mb-2">Add-ons</div>
+        <div class="text-[10.5px] uppercase tracking-widest text-ink-soft font-bold mb-2"><%= t("resources.addons_title") %></div>
         No add-ons attached. <%= link_to "Browse →", helpers.dashboard_addons_path, class: "text-accent hover:underline", data: { turbo_frame: "_top" } %>
       </div>
     <% end %>

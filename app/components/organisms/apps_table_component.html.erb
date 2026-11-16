@@ -35,12 +35,12 @@
           <td class="px-3.5 py-2.5"><%= status_pill.render_in(self) %></td>
           <td class="hidden sm:table-cell px-3.5 py-2.5 text-[12.5px] text-dim"><%= box_label(app) %></td>
           <td class="hidden md:table-cell px-3.5 py-2.5 text-[12.5px] text-dim"><%= primary_domain(app) || "—" %></td>
-          <td class="hidden md:table-cell px-3.5 py-2.5 text-[12.5px] text-dim"><%= if deployed_at then "#{time_ago_in_words(deployed_at)} ago" elsif status_pill.status == "deploy_failed" then "failed" else "never" end %></td>
+          <td class="hidden md:table-cell px-3.5 py-2.5 text-[12.5px] text-dim"><%= if deployed_at then "#{time_ago(deployed_at)}" elsif status_pill.status == "deploy_failed" then "failed" else "never" end %></td>
         </tr>
       <% end %>
       <tr class="border-t border-dashed border-faint hover:bg-bg-deep transition-colors">
         <td colspan="5" class="px-3.5 py-2.5">
-          <%= link_to "+ New app", new_dashboard_app_path, data: { turbo_frame: "_top" },
+          <%= link_to t("dashboard.apps.new_app"), new_dashboard_app_path, data: { turbo_frame: "_top" },
                 class: "block text-[13px] font-semibold text-faint hover:text-ink" %>
         </td>
       </tr>

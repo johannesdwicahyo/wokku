@@ -23,7 +23,7 @@
         </div>
       <% end %>
       <div class="px-6 py-4 flex justify-end">
-        <%= submit_tag "Save resources", data: { turbo_confirm: "Containers will restart with the new size." },
+        <%= submit_tag t("resources.save"), data: { turbo_confirm: "Containers will restart with the new size." },
               class: Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>
       </div>
     </div>

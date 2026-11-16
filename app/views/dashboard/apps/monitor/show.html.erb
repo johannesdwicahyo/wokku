@@ -75,7 +75,7 @@
     <%= render Molecules::StatTileComponent.new(
           label: "Monitoring status",
           value: @latest ? "Live ●" : "Idle",
-          sub: @latest ? "Last bucket #{time_ago_in_words(@latest.bucket_start)} ago" : "Awaiting first bucket",
+          sub: @latest ? "Last bucket #{time_ago(@latest.bucket_start)}" : "Awaiting first bucket",
           tone: @latest ? :success : :warn,
           glyph: @latest ? "●" : "○") %>
   </div>

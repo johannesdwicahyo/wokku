@@ -2,7 +2,7 @@
   <div class="text-[11px] font-medium text-dim normal-case tracking-normal mb-2">Backups</div>
   <div class="text-sm">
     <% if last_backup %>
-      <b>Last: <%= time_ago_in_words(last_backup.created_at) %> ago</b>
+      <b>Last: <%= time_ago(last_backup.created_at) %></b>
     <% elsif has_database %>
       <b>No backups yet</b>
     <% else %>

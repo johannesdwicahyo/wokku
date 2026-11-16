@@ -176,7 +176,7 @@
                 <span class="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0"></span>
                 <span class="text-xs text-ink-soft truncate"><%= activity.description %> <span class="text-accent"><%= activity.target_name %></span></span>
               </div>
-              <span class="text-[11px] text-dim flex-shrink-0 ml-3"><%= time_ago_in_words(activity.created_at) %> ago</span>
+              <span class="text-[11px] text-dim flex-shrink-0 ml-3"><%= time_ago(activity.created_at) %></span>
             </div>
           <% end %>
         </div>

@@ -75,4 +75,16 @@ RSpec.describe DatabaseService, "legacy tier assignment with the builder on" do
     host = create(:database_service, tier_name: "shared_host")
     expect(host.reload.shape).to be_nil
   end
+
+  # The add-on list said "Basic" for a database created as "Small".
+  describe "#size_label" do
+    it "shows the picked size" do
+      expect(DatabaseService.new(cpu: 0.25, memory_mb: 512, tier_name: "basic").size_label).to eq("0.25 vCPU · 512 MB")
+      expect(DatabaseService.new(cpu: 1, memory_mb: 2048).size_label).to eq("1 vCPU · 2 GB")
+    end
+
+    it "falls back to the tier name without a shape" do
+      expect(DatabaseService.new(tier_name: "shared_free").size_label).to eq("shared free")
+    end
+  end
 end

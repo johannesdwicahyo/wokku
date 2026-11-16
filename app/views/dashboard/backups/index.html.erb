@@ -42,7 +42,7 @@
     <% end %>
   </div>
   <% if last_completed %>
-    <span class="text-xs text-dim">Last backup <%= time_ago_in_words(last_completed.created_at) %> ago</span>
+    <span class="text-xs text-dim">Last backup <%= time_ago(last_completed.created_at) %></span>
   <% end %>
 </div>
 

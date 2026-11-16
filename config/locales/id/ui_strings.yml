@@ -1,0 +1,30 @@
+id:
+  dashboard:
+    recent_activity: "Aktivitas terbaru"
+    apps:
+      new_app: "+ App baru"
+  resources:
+    addons_title: "Database"
+    addons_sub: "Database, cache, dan layanan yang terpasang di app ini"
+    add: "+ Tambah"
+    save: "Simpan resource"
+    rails_hint: "256 MB tidak cukup untuk Rails — pilih 512 MB atau lebih."
+  status_pill:
+    running: "Berjalan"
+    deploying: "Sedang deploy"
+    crashed: "Crash"
+    stopped: "Berhenti"
+    sleeping: "Tidur"
+    created: "Belum di-deploy"
+    deploy_failed: "Deploy gagal"
+  activity:
+    actions:
+      app_created: "membuat app"
+      app_destroyed: "menghapus app"
+      app_deployed: "deploy"
+      app_restarted: "me-restart app"
+      app_stopped: "menghentikan app"
+      app_started: "menjalankan app"
+      template_deployed: "deploy template"
+      config_updated: "mengubah config"
+      database_create_queued: "membuat database"

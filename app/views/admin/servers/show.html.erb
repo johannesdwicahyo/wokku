@@ -123,7 +123,7 @@
   <div class="flex items-baseline justify-between mb-4">
     <p class="text-xs text-dim uppercase tracking-widest">Live Host Metrics</p>
     <p class="text-[11px] text-dim">
-      <% if collected %>Updated <%= time_ago_in_words(collected) %> ago<%= " · stale" unless fresh %><% else %>Awaiting first poll<% end %>
+      <% if collected %>Updated <%= time_ago(collected) %><%= " · stale" unless fresh %><% else %>Awaiting first poll<% end %>
     </p>
   </div>
 

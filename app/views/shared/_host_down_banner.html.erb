@@ -11,7 +11,7 @@
       <% if server.heartbeat_status == "down" %>
         <span>
           Apps on <strong><%= server.name %></strong> may be unavailable — the host stopped responding
-          <%= server.heartbeat_at ? "#{time_ago_in_words(server.heartbeat_at)} ago" : "" %>.
+          <%= server.heartbeat_at ? "#{time_ago(server.heartbeat_at)}" : "" %>.
           This is on our side, not your code. We're on it.
         </span>
       <% else %>

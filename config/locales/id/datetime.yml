@@ -1,0 +1,49 @@
+# Indonesian relative times for time_ago_in_words / distance_of_time_in_words
+# (no rails-i18n gem here; every "… ago" rendered in English under id).
+id:
+  time_ago: "%{time} yang lalu"
+  datetime:
+    distance_in_words:
+      half_a_minute: "setengah menit"
+      less_than_x_seconds:
+        one: "kurang dari 1 detik"
+        other: "kurang dari %{count} detik"
+      x_seconds:
+        one: "1 detik"
+        other: "%{count} detik"
+      less_than_x_minutes:
+        one: "kurang dari 1 menit"
+        other: "kurang dari %{count} menit"
+      x_minutes:
+        one: "1 menit"
+        other: "%{count} menit"
+      about_x_hours:
+        one: "sekitar 1 jam"
+        other: "sekitar %{count} jam"
+      x_hours:
+        one: "1 jam"
+        other: "%{count} jam"
+      x_days:
+        one: "1 hari"
+        other: "%{count} hari"
+      about_x_months:
+        one: "sekitar 1 bulan"
+        other: "sekitar %{count} bulan"
+      x_months:
+        one: "1 bulan"
+        other: "%{count} bulan"
+      about_x_years:
+        one: "sekitar 1 tahun"
+        other: "sekitar %{count} tahun"
+      over_x_years:
+        one: "lebih dari 1 tahun"
+        other: "lebih dari %{count} tahun"
+      almost_x_years:
+        one: "hampir 1 tahun"
+        other: "hampir %{count} tahun"
+      about_x_weeks:
+        one: "sekitar 1 minggu"
+        other: "sekitar %{count} minggu"
+      x_weeks:
+        one: "1 minggu"
+        other: "%{count} minggu"

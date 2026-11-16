@@ -25,7 +25,7 @@
               <% end %>
             </div>
             <div class="text-[11px] text-dim mt-0.5">
-              owned by <%= cred.team&.name || "—" %> · added <%= time_ago_in_words(cred.created_at) %> ago
+              owned by <%= cred.team&.name || "—" %> · added <%= time_ago(cred.created_at) %>
             </div>
           </div>
 

@@ -10,7 +10,7 @@
   <%= turbo_stream_from "user_#{current_user.id}_addons" %>
 
   <div class="flex items-center justify-between mb-5">
-    <h1 class="font-headline text-2xl font-extrabold tracking-tight"><%= t("dashboard.nav.addons") %></h1>
+    <h1 class="font-headline text-2xl font-extrabold tracking-tight"><%= t("dashboard.nav.databases") %></h1>
     <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, data: { action: "click->slide-panel#open" }) do %><%= t("dashboard.databases.new_addon") %><% end %>
   </div>
 

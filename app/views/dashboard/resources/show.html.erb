@@ -26,10 +26,10 @@
   <div class="bg-paper border-1.5 border-ink rounded-md mb-6 overflow-hidden">
     <div class="px-6 py-4 border-b border-line flex items-center justify-between gap-3 flex-wrap">
       <div>
-        <h2 class="font-headline text-base font-bold text-ink">Add-ons</h2>
-        <p class="text-xs text-dim mt-1">Databases, caches, and services attached to this app</p>
+        <h2 class="font-headline text-base font-bold text-ink"><%= t("resources.addons_title") %></h2>
+        <p class="text-xs text-dim mt-1"><%= t("resources.addons_sub") %></p>
       </div>
-      <button data-action="click->slide-panel#open" class="<%= Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>">+ Add</button>
+      <button data-action="click->slide-panel#open" class="<%= Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>"><%= t("resources.add") %></button>
     </div>
 
     <%# Subscribe to the page-refresh channel so this view auto-refreshes
@@ -51,7 +51,7 @@
                 <span class="text-xs text-dim capitalize"><%= addon.service_type %></span>
                 <% if addon.tier_name.present? %>
                   <span class="text-xs text-dim">·</span>
-                  <span class="text-xs text-dim capitalize"><%= addon.tier_name.tr("_", " ") %></span>
+                  <span class="text-xs text-dim"><%= addon.size_label %></span>
                 <% end %>
                 <% if addon.status == "creating" %>
                   <%= render Atoms::StatusPillComponent.new(label: "Provisioning", tone: :warn) %>

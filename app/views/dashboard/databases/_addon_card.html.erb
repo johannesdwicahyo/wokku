@@ -26,7 +26,7 @@
       <% end %>
     </td>
     <td class="px-3.5 py-2.5 text-[12.5px] text-dim capitalize"><%= addon.service_type %></td>
-    <td class="px-3.5 py-2.5 text-[12.5px] text-dim"><%= addon.tier_name %></td>
+    <td class="px-3.5 py-2.5 text-[12.5px] text-dim"><%= addon.size_label %></td>
     <td class="px-3.5 py-2.5 text-[12.5px] text-dim"><%= addon.app_records.any? ? addon.app_records.map(&:name).join(", ") : "—" %></td>
     <td class="px-3.5 py-2.5 text-right">
       <% if addon.status == "error" %>

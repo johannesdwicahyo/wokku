@@ -54,7 +54,7 @@ class Activity < ApplicationRecord
   }.freeze
 
   def description
-    ACTIONS[action] || action
+    I18n.t("activity.actions.#{action.to_s.tr('.', '_')}", default: ACTIONS[action] || action)
   end
 
   def self.log(user:, team:, action:, target: nil, metadata: {})

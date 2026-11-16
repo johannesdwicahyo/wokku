@@ -28,9 +28,9 @@
         <div>
           <span class="text-xs font-bold text-ink"><%= token.name %></span>
           <span class="text-[11px] text-dim ml-2">
-            Created <%= time_ago_in_words(token.created_at) %> ago
+            Created <%= time_ago(token.created_at) %>
             <% if token.last_used_at %>
-              · Last used <%= time_ago_in_words(token.last_used_at) %> ago
+              · Last used <%= time_ago(token.last_used_at) %>
             <% end %>
           </span>
         </div>

@@ -1,0 +1,12 @@
+# Strings that were hardcoded English (seen untranslated in the 2026-11-16
+# Indonesian visual audit).
+en:
+  dashboard:
+    recent_activity: "Recent activity"
+    apps:
+      new_app: "+ New app"
+  resources:
+    addons_title: "Databases"
+    addons_sub: "Databases, caches, and services attached to this app"
+    add: "+ Add"
+    save: "Save resources"

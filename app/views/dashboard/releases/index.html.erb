@@ -141,7 +141,7 @@
               <% end %>
             </td>
             <td class="px-3.5 py-2.5 text-[12.5px] text-dim"><%= release.deploy&.duration ? "#{release.deploy.duration.round}s" : "—" %></td>
-            <td class="px-3.5 py-2.5 text-[12.5px] text-dim"><%= time_ago_in_words(release.created_at) %> ago</td>
+            <td class="px-3.5 py-2.5 text-[12.5px] text-dim"><%= time_ago(release.created_at) %></td>
             <td class="px-3.5 py-2.5 text-right">
               <%# Rollback button: only on succeeded releases that aren't already
                   the current one and whose deploy has a recorded commit SHA. %>
