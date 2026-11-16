@@ -91,4 +91,17 @@ RSpec.describe "Self-host dashboard pages", type: :request do
       expect(response).to have_http_status(:unprocessable_entity)
     end
   end
+
+  it "sign-in has no cloud pitch and no half sentence about terms" do
+    sign_out :user
+    get "/users/sign_in"
+    expect(response.body).not_to include("no card", "you agree to our")
+    expect(response.body).to include("sign in to deploy")
+  end
+
+  it "settings talk about this install, not billing or git push" do
+    get "/dashboard/profile"
+    expect(response.body).not_to include("and billing", "billing currency can be set", "Dynos", "enable <code class=\"font-mono text-accent\">git push")
+    expect(response.body).to include("Manage your account, security and API credentials.")
+  end
 end

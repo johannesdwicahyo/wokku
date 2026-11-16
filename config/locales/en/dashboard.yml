@@ -178,6 +178,8 @@ en:
     profile:
       title: "Settings"
       subtitle: "Manage your account, security, API credentials, and billing."
+      subtitle_self_host: "Manage your account, security and API credentials."
+      preferences_hint_self_host: "Choose the dashboard language."
       account: "Account"
       security: "Security"
       ssh_keys: "SSH Keys"

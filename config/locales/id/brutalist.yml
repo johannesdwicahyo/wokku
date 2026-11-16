@@ -111,6 +111,7 @@ id:
     submit: masuk()
     title: "Satu langkah lagi — masuk buat deploy"
     sub: "// gratis · tanpa kartu · live ~60 detik"
+    sub_self_host: "// masuk untuk deploy"
     reassure: "Cuma baca email kamu — nggak ada akses ke repo atau kode."
     continue_with: "Lanjut pakai %{provider}"
   footer:

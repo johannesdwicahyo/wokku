@@ -178,6 +178,8 @@ id:
     profile:
       title: "Pengaturan"
       subtitle: "Kelola akun, keamanan, kredensial API, dan tagihan kamu."
+      subtitle_self_host: "Kelola akun, keamanan, dan kredensial API kamu."
+      preferences_hint_self_host: "Pilih bahasa dashboard."
       account: "Akun"
       security: "Keamanan"
       ssh_keys: "SSH Keys"

@@ -36,10 +36,10 @@
       <% end %>
     </div>
   <% else %>
-    <p class="text-xs text-dim text-center py-2">No keys yet — add one to enable <code class="font-mono">git push</code>.</p>
+    <p class="text-xs text-dim text-center py-2">No keys yet<% if AppRecord.git_gateway_host %> — add one to enable <code class="font-mono">git push</code><% end %>.</p>
   <% end %>
 
-  <%= render layout: "dashboard/shared/slide_panel", locals: { title: "Add SSH Key", subtitle: "Paste your public key to enable git push" } do %>
+  <%= render layout: "dashboard/shared/slide_panel", locals: { title: "Add SSH Key", subtitle: (AppRecord.git_gateway_host ? "Paste your public key to enable git push" : "Paste your SSH public key") } do %>
     <% if local_assigns[:key] && key && key.errors.any? %>
       <div class="border-1.5 border-danger bg-danger-soft rounded-md p-3 mb-4">
         <p class="text-xs text-danger font-bold mb-1">Couldn't add key</p>

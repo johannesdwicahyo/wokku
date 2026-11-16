@@ -19,7 +19,7 @@
 
 <div class="mb-6">
   <h2 class="<%= card_title %>"><%= t("dashboard.profile.title") %></h2>
-  <p class="text-xs text-dim mt-1"><%= t("dashboard.profile.subtitle") %></p>
+  <p class="text-xs text-dim mt-1"><%= t(wokku_cloud? ? "dashboard.profile.subtitle" : "dashboard.profile.subtitle_self_host") %></p>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6 items-start">
@@ -77,7 +77,7 @@
     <div class="border-1.5 border-ink bg-paper rounded-md overflow-hidden">
       <div class="px-6 py-4 border-b border-line">
         <h3 class="<%= card_title %>"><%= t("dashboard.profile.preferences", default: "Preferences") %></h3>
-        <p class="text-xs text-dim mt-0.5"><%= t("dashboard.profile.preferences_hint", default: "Display language and billing currency can be set independently.") %></p>
+        <p class="text-xs text-dim mt-0.5"><%= wokku_cloud? ? t("dashboard.profile.preferences_hint", default: "Display language and billing currency can be set independently.") : t("dashboard.profile.preferences_hint_self_host") %></p>
       </div>
       <div class="p-6">
         <%= form_with url: dashboard_profile_path, method: :patch, local: true, class: "grid grid-cols-1 sm:grid-cols-2 gap-4" do |f| %>
@@ -126,7 +126,8 @@
             running_app_count = user_apps.select(&:running?).size
             total_app_count   = user_apps.size
             addon_count       = user_dbs.size
-            dyno_count        = user_apps.flat_map(&:dyno_allocations).sum { |a| a.count.to_i }
+            # Running apps only — failed/never-deployed apps have allocations too.
+            dyno_count        = user_apps.select { |a| a.status.to_s == "running" }.flat_map(&:dyno_allocations).sum { |a| a.count.to_i }
           %>
           <% if respond_to?(:team_monthly_cost) && current_team %>
             <% amount, caption = team_monthly_cost(current_team) %>
@@ -150,9 +151,9 @@
             <p class="text-[11px] text-dim mt-1">databases &amp; services</p>
           </div>
           <div class="border-1.5 border-ink bg-bg p-4 rounded-md">
-            <p class="<%= stat_label %>">Dynos</p>
+            <p class="<%= stat_label %>">Containers</p>
             <span class="text-2xl font-bold text-ink"><%= dyno_count %></span>
-            <p class="text-[11px] text-dim mt-1">active containers</p>
+            <p class="text-[11px] text-dim mt-1">running</p>
           </div>
         </div>
       </div>
@@ -212,7 +213,11 @@
     <div class="border-1.5 border-ink bg-paper rounded-md overflow-hidden">
       <div class="<%= card_head %>"><h3 class="<%= card_title %>"><%= t("dashboard.profile.ssh_keys") %></h3></div>
       <div class="p-5">
-        <p class="text-xs text-dim mb-3">Add your SSH public key to enable <code class="font-mono text-accent">git push</code> deployments.</p>
+        <% if AppRecord.git_gateway_host %>
+          <p class="text-xs text-dim mb-3">Add your SSH public key to enable <code class="font-mono text-accent">git push</code> deployments.</p>
+        <% else %>
+          <p class="text-xs text-dim mb-3">Add your SSH public key for SSH access to your apps (dev sessions).</p>
+        <% end %>
 
         <%= turbo_frame_tag "ssh_keys" do %>
           <%= render "dashboard/ssh_keys/key_list", keys: current_user.ssh_public_keys.order(created_at: :desc), key: nil %>

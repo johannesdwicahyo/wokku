@@ -2,7 +2,7 @@
   <div class="w-full max-w-sm">
     <div class="text-center mb-8">
       <h1 class="font-headline text-2xl font-semibold tracking-tight text-ink"><%= t('signin.title') %></h1>
-      <p class="text-xs text-dim mt-2"><%= t('signin.sub') %></p>
+      <p class="text-xs text-dim mt-2"><%= t(wokku_cloud? ? 'signin.sub' : 'signin.sub_self_host') %></p>
     </div>
     <div class="border-1.5 border-ink bg-paper rounded-md p-6 space-y-3">
       <% if flash[:alert] %>
@@ -84,12 +84,15 @@
         <p class="text-[11px] text-dim text-center pt-1"><%= t('signin.reassure') %></p>
       <% end %>
 
-      <p class="text-[10px] text-dim text-center pt-2">
-        By signing in, you agree to our
-        <%# Legal pages are cloud-host routes; a standalone engine skips the links. %>
-        <% if respond_to?(:terms_path) && respond_to?(:privacy_path) %><%= link_to "Terms", terms_path, class: "underline hover:text-accent transition" %> and
-        <%= link_to "Privacy Policy", privacy_path, class: "underline hover:text-accent transition" %>.<% end %>
-      </p>
+      <%# Legal pages are cloud-host routes; without them the sentence went too
+          (it used to end at "you agree to our"). %>
+      <% if respond_to?(:terms_path) && respond_to?(:privacy_path) %>
+        <p class="text-[10px] text-dim text-center pt-2">
+          By signing in, you agree to our
+          <%= link_to "Terms", terms_path, class: "underline hover:text-accent transition" %> and
+          <%= link_to "Privacy Policy", privacy_path, class: "underline hover:text-accent transition" %>.
+        </p>
+      <% end %>
     </div>
     <p class="text-center mt-5 text-[11px] text-dim">
       <%= link_to "← #{request.host}", root_path, class: "hover:text-accent" %>

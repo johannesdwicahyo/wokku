@@ -111,6 +111,7 @@ en:
     submit: sign_in()
     title: "One step from deploying"
     sub: "// free · no card · live in ~60s"
+    sub_self_host: "// sign in to deploy"
     reassure: "We only read your email — no access to your repos or code."
     continue_with: "Continue with %{provider}"
   footer:
