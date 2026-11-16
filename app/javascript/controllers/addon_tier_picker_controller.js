@@ -19,7 +19,16 @@ export default class extends Controller {
   static targets = ["serviceType", "cards", "tierInput", "shapeBuilder"]
   static values  = { engines: Object, planUpgradeUrl: { type: String, default: "" } }
 
-  connect() { this.refresh() }
+  // This page refreshes by Turbo *morph*: a redirect back here (e.g. after a
+  // failed create) resets the cards to the server's "Loading options…" while
+  // the controller stays connected — so redraw after every morph.
+  connect() {
+    this.refresh()
+    this.onMorph = () => this.refresh()
+    document.addEventListener("turbo:morph", this.onMorph)
+  }
+
+  disconnect() { document.removeEventListener("turbo:morph", this.onMorph) }
 
   currentEngineKey() {
     const el = this.serviceTypeTarget
