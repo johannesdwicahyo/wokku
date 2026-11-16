@@ -96,6 +96,25 @@ RSpec.describe TemplateDeployer do
     end
   end
 
+  describe "#attach_shared_engine!" do
+    let(:app) { app_records(:one) }
+    let(:deployer) { deployer_for.call({ slug: "x", repo: "git", shared_engines: %w[postgres] }) }
+
+    it "attaches the shared engine where shared add-ons are enabled" do
+      allow(Addons::SharedProvisioner).to receive(:feature_enabled?).and_return(true)
+      prov = instance_double(Addons::SharedProvisioner, call: :provisioned)
+      expect(Addons::SharedProvisioner).to receive(:new).with(app: app, engine: "postgres").and_return(prov)
+      deployer.send(:attach_shared_engine!, app, "postgres")
+    end
+
+    # Self-host: shared engines are off, so n8n/Ghost/Dify got no database.
+    it "provisions a dedicated database where shared add-ons are off" do
+      allow(Addons::SharedProvisioner).to receive(:feature_enabled?).and_return(false)
+      expect(deployer).to receive(:provision_dedicated_db!).with(app, "postgres")
+      deployer.send(:attach_shared_engine!, app, "postgres")
+    end
+  end
+
   describe "#container_tier" do
     let(:template) { { slug: "x", repo: "git", min_tier: "basic", addons: [ { "type" => "postgres" } ] } }
     let(:deployer) do

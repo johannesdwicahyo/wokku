@@ -54,9 +54,18 @@ RSpec.describe Addons::PickerOptions do
     # Plan-gated dedicated is the non-per-resource (self-host) behaviour.
     before { allow(Wokku.config).to receive(:resource_builder?).and_return(false) }
 
-    it "shows shared as always available" do
+    it "shows shared as available where the install runs shared engines" do
+      allow(Addons::SharedProvisioner).to receive(:feature_enabled?).and_return(true)
       shared = described_class.for_user(free_user)["postgres"][:modes].find { |m| m[:mode] == "shared" }
       expect(shared[:available]).to be true
+    end
+
+    # Self-host default: shared was offered (and preselected) but creating it
+    # failed with "Shared engines are not enabled" (2026-11-16 visual audit).
+    it "marks shared unavailable where shared engines are off" do
+      allow(Addons::SharedProvisioner).to receive(:feature_enabled?).and_return(false)
+      shared = described_class.for_user(free_user)["postgres"][:modes].find { |m| m[:mode] == "shared" }
+      expect(shared).to include(available: false, unavailable_reason: /Not available on this install/)
     end
 
     it "shows dedicated as unavailable for free-plan users with upgrade copy" do

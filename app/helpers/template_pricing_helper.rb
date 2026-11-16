@@ -22,7 +22,9 @@ module TemplatePricingHelper
     label = if addon_count.zero?
       "1 #{box.capitalize} box"
     else
-      "1 #{box.capitalize} box + #{addon_count} shared add-on#{'s' if addon_count != 1}"
+      # Without shared engines (self-host) the template gets its own database.
+      kind = Addons::SharedProvisioner.feature_enabled? ? "shared add-on" : "database"
+      "1 #{box.capitalize} box + #{addon_count} #{kind}#{'s' if addon_count != 1}"
     end
     # "plan-included" is cloud pricing copy; a self-host has no plan quota.
     wokku_cloud? ? "#{label} · plan-included" : label

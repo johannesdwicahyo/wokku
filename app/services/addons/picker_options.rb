@@ -93,8 +93,13 @@ module Addons
     def availability(engine, mode)
       case mode
       when "shared"
-        # Free + paid all get shared today (Bundle v2 spec).
-        { ok: true, reason: nil }
+        # Free + paid all get shared today (Bundle v2 spec) — where the
+        # install runs shared host containers at all (not self-host default).
+        if Addons::SharedProvisioner.feature_enabled?
+          { ok: true, reason: nil }
+        else
+          { ok: false, reason: "Not available on this install — choose Dedicated" }
+        end
       when "dedicated"
         if Wokku.config.resource_builder?
           { ok: true, reason: nil }

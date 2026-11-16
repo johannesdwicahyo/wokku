@@ -109,11 +109,7 @@ class TemplateDeployer
     bundle_v2_path      = shared_engines.any? || dedicated_db_engine.present?
 
     if bundle_v2_path
-      shared_engines.each do |engine|
-        step("Attaching shared #{engine}...") do
-          Addons::SharedProvisioner.new(app: app, engine: engine).call
-        end
-      end
+      shared_engines.each { |engine| attach_shared_engine!(app, engine) }
 
       if dedicated_db_engine
         step("Provisioning dedicated #{dedicated_db_engine}...") do
@@ -382,6 +378,17 @@ class TemplateDeployer
   # branch, EnvWriter, and the network attach, and drops two Dokku call sites.
   # It also raises on an engine wokkud has no image for, rather than silently
   # provisioning something the app can never reach.
+  # Shared add-ons are off where the install runs no shared host containers
+  # (self-host default): the provisioner would no-op and the app would boot
+  # without its database, so fall back to a small dedicated one.
+  def attach_shared_engine!(app, engine)
+    if Addons::SharedProvisioner.feature_enabled?
+      step("Attaching shared #{engine}...") { Addons::SharedProvisioner.new(app: app, engine: engine).call }
+    else
+      step("Provisioning #{engine} (own container)...") { provision_dedicated_db!(app, engine) }
+    end
+  end
+
   def provision_dedicated_db!(app, engine, tier_name: "basic")
     shape = Resources::ApplyChange.service_shape_for_tier(engine, tier_name)
     db = DatabaseProvisioner.new(
