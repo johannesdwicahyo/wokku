@@ -25,6 +25,6 @@ module TemplatePricingHelper
       "1 #{box.capitalize} box + #{addon_count} shared add-on#{'s' if addon_count != 1}"
     end
     # "plan-included" is cloud pricing copy; a self-host has no plan quota.
-    respond_to?(:dashboard_billing_path) ? "#{label} · plan-included" : label
+    wokku_cloud? ? "#{label} · plan-included" : label
   end
 end

@@ -1,4 +1,7 @@
 module ApplicationHelper
+  # Cloud-only copy/links/features: see Wokku.cloud?.
+  def wokku_cloud? = Wokku.cloud?
+
   # ---------------------------------------------------------------------------
   # Section-path helpers for the Deploy / Runtime / Settings sub-nav strips.
   # Each constant maps section keys → path lambdas; section_path/3 resolves

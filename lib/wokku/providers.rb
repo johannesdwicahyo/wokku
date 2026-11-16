@@ -1,4 +1,11 @@
 module Wokku
+  # Is this the managed wokku.cloud (billing host attached) rather than a
+  # self-host install? The single check for cloud-only copy, links and
+  # features — the billing host draws dashboard_billing, self-host never does.
+  def self.cloud?
+    Rails.application.routes.named_routes.key?(:dashboard_billing)
+  end
+
   # Dependency-injection seam between the OSS engine and the managed host app.
   # The engine calls Wokku.config.<provider>; OSS ships null/local defaults,
   # wokku-cloud injects managed implementations via Wokku.configure at boot.

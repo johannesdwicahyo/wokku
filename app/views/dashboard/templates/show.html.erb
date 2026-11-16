@@ -45,7 +45,7 @@
     %>
     <%# Plan-quota narration is cloud pricing copy — self-host owns the
         hardware, so the whole section is billing-host-only. %>
-    <% if respond_to?(:dashboard_billing_path) %>
+    <% if wokku_cloud? %>
     <div class="mt-4 pt-4 border-t border-rule-soft">
       <h3 class="font-mono text-[10px] font-bold text-dim uppercase tracking-widest mb-3">what_this_uses_from_your_plan</h3>
       <div class="space-y-2">

@@ -18,7 +18,7 @@ module Organisms
     def tabs
       TABS.select do |t|
         case t
-        when :billing then helpers.respond_to?(:dashboard_billing_path)
+        when :billing then helpers.wokku_cloud?
         when :admin   then show_admin
         else true
         end

@@ -14,7 +14,7 @@
   <% if Wokku.config.plan_enforcer.allowed?(current_user, :feature, slug: :scheduled_tasks) %>
     <%# Opens the slide-panel modal; href is the no-JS fallback. %>
     <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, href: new_dashboard_app_scheduled_task_path(@app), data: { action: "click->slide-panel#open" }) do %>+ New task<% end %>
-  <% elsif respond_to?(:dashboard_billing_path) %>
+  <% elsif wokku_cloud? %>
     <%= render Atoms::ButtonComponent.new(variant: :outline, size: :sm, href: dashboard_billing_path, data: { turbo_frame: "_top" }) do %>Upgrade to Pro<% end %>
   <% end %>
 </div>

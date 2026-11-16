@@ -1,7 +1,7 @@
 <%# The guided tour narrates the CLOUD free tier (shared Jakarta server,
     free dyno, no credit card) — on a self-host install it would mislead,
     so it only renders when the billing host is present. %>
-<% if current_user&.tour_active? && respond_to?(:dashboard_billing_path) %>
+<% if current_user&.tour_active? && wokku_cloud? %>
   <div data-controller="onboarding-tour"
        data-onboarding-tour-step-value="<%= current_user.onboarding_step %>"
        data-onboarding-tour-skip-url-value="<%= dashboard_onboarding_skip_path %>"
