@@ -8,6 +8,8 @@ id:
     addons_sub: "Database, cache, dan layanan yang terpasang di app ini"
     add: "+ Tambah"
     save: "Simpan resource"
+    none_attached: "Belum ada database terpasang."
+    browse: "Lihat →"
     rails_hint: "256 MB tidak cukup untuk Rails — pilih 512 MB atau lebih."
   status_pill:
     running: "Berjalan"

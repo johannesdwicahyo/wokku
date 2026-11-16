@@ -10,3 +10,5 @@ en:
     addons_sub: "Databases, caches, and services attached to this app"
     add: "+ Add"
     save: "Save resources"
+    none_attached: "No databases attached."
+    browse: "Browse →"

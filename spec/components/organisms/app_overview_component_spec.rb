@@ -28,10 +28,10 @@ RSpec.describe Organisms::AppOverviewComponent, type: :component do
     expect(page).to have_link("scale ↗")
   end
 
-  it "shows an empty add-ons hint when no addons attached" do
+  it "shows an empty databases hint when none attached" do
     render_inline(described_class.new(app: app))
-    expect(page).to have_text("Add-ons")
-    expect(page).to have_text(/no add-ons attached/i)
+    expect(page).to have_text("Databases")
+    expect(page).to have_text(/no databases attached/i)
   end
 
   it "renders one card per attached database service + backups card" do
