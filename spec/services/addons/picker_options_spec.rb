@@ -80,6 +80,8 @@ RSpec.describe Addons::PickerOptions do
   end
 
   describe "copy carried through to entries" do
+    before { allow(Wokku).to receive(:cloud?).and_return(true) }
+
     it "ships kicker + description for the view to render directly" do
       shared = described_class.for_user(free_user)["postgres"][:modes].find { |m| m[:mode] == "shared" }
       expect(shared[:label]).to eq("Shared")
@@ -89,7 +91,10 @@ RSpec.describe Addons::PickerOptions do
   end
 
   describe "per-resource billing" do
-    before { allow(Wokku.config).to receive(:resource_builder?).and_return(true) }
+    before do
+      allow(Wokku.config).to receive(:resource_builder?).and_return(true)
+      allow(Wokku).to receive(:cloud?).and_return(true)
+    end
 
     it "offers dedicated to a free-plan team; the create path enforces size and balance" do
       result = described_class.for_user(free_user)
@@ -98,6 +103,16 @@ RSpec.describe Addons::PickerOptions do
         expect(ded).to include(available: true, unavailable_reason: nil, kicker: "Pay per resource")
         expect(ded[:description]).not_to match(/plan|slots/i)
       end
+    end
+  end
+
+  describe "self-host (no billing host)" do
+    before { allow(Wokku.config).to receive(:resource_builder?).and_return(true) }
+
+    it "describes what you get, never price or plan" do
+      modes = described_class.for_user(free_user)["postgres"][:modes]
+      expect(modes.map { |m| m[:kicker] }).to eq([ "Included", "Own container" ])
+      expect(modes.map { |m| m[:description] }.join).not_to match(/free|cost|billed|plan|paid/i)
     end
   end
 end

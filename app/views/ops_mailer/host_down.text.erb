@@ -4,4 +4,4 @@ Last beat: <%= @server.heartbeat_at&.utc&.strftime("%Y-%m-%d %H:%M UTC") || "nev
 Last vitals: <%= @server.vitals.to_json %>
 
 Apps on this host may be down. Check:
-  https://wokku.cloud/dashboard/servers
+  <%= admin_servers_url %>

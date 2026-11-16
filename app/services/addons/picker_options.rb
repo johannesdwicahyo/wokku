@@ -53,6 +53,12 @@ module Addons
       description: "Its own container. You choose CPU, memory and disk, billed per resource."
     }.freeze
 
+    # Self-host has no prices or plans: describe what you get, not what it costs.
+    SELF_HOST_COPY = {
+      "shared"    => { kicker: "Included", description: "Logical tenant on a per-server host container. Auto-attaches DATABASE_URL." },
+      "dedicated" => { kicker: "Own container", description: "Its own container. You choose CPU, memory and disk." }
+    }.freeze
+
     def self.for_user(user)
       new(user).call
     end
@@ -79,6 +85,7 @@ module Addons
     def mode_entry(engine, mode)
       base = MODE_COPY.fetch(mode).dup
       base.merge!(PER_RESOURCE_DEDICATED_COPY) if mode == "dedicated" && Wokku.config.resource_builder?
+      base.merge!(SELF_HOST_COPY.fetch(mode)) unless Wokku.cloud?
       avail = availability(engine, mode)
       base.merge(mode: mode, available: avail[:ok], unavailable_reason: avail[:reason])
     end

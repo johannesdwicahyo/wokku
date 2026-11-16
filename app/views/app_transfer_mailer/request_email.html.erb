@@ -15,6 +15,6 @@
     <p style="font-size:11px; color:#888; margin-top:24px;">This request expires <%= time_ago_in_words(@transfer.expires_at) %> from now. If you didn't expect this, ignore the email — nothing changes until you click Accept.</p>
   </div>
   <div class="wk-footer">
-    Wokku · Invoice-based billing · jakarta, id
+    Wokku<%= " · Invoice-based billing · jakarta, id" if Wokku.cloud? %>
   </div>
 </div>

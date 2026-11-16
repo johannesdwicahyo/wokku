@@ -7,7 +7,7 @@ en:
       apps_header: "Apps that will be deleted:"
       databases_header: "Databases that will be deleted:"
       line_balance: "Your current balance of %{balance} will be forfeit."
-      line_mistake: "If this was a mistake, contact support@wokku.cloud before the deadline and we'll cancel the deletion."
+      line_mistake: "If this was a mistake, contact %{support} before the deadline and we'll cancel the deletion."
       cta: "Contact Support to Cancel"
 
   dashboard:
@@ -30,7 +30,7 @@ en:
       submit_button: "Permanently delete my account"
       cancel_link: "Cancel"
       email_mismatch: "Email does not match. Please type your exact email address to confirm."
-      scheduled_notice: "Your account has been scheduled for deletion. You have 3 days to recover by contacting support@wokku.cloud."
+      scheduled_notice: "Your account has been scheduled for deletion. You have 3 days to recover by contacting %{support}."
 
   admin:
     users:

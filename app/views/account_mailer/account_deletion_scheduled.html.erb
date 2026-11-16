@@ -26,13 +26,13 @@
       </ul>
     <% end %>
 
-    <p>If this was a mistake, reply to this email or contact <a href="mailto:support@wokku.cloud">support@wokku.cloud</a> before the deadline and we'll cancel the deletion.</p>
+    <p>If this was a mistake, reply to this email or contact <a href="mailto:<%= Wokku.support_email %>"><%= Wokku.support_email %></a> before the deadline and we'll cancel the deletion.</p>
 
     <hr class="wk-divider">
 
-    <a href="mailto:support@wokku.cloud" class="wk-cta" style="background: #E5484D;">Contact support to cancel →</a>
+    <a href="mailto:<%= Wokku.support_email %>" class="wk-cta" style="background: #E5484D;">Contact support to cancel →</a>
   </div>
   <div class="wk-footer">
-    Wokku · Invoice-based billing · jakarta, id
+    Wokku<%= " · Invoice-based billing · jakarta, id" if Wokku.cloud? %>
   </div>
 </div>

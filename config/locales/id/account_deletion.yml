@@ -7,7 +7,7 @@ id:
       apps_header: "Aplikasi yang akan dihapus:"
       databases_header: "Database yang akan dihapus:"
       line_balance: "Saldo kamu sebesar %{balance} akan hangus."
-      line_mistake: "Kalau ini bukan kehendakmu, hubungi support@wokku.cloud sebelum tenggat waktu dan kami akan membatalkan penghapusan."
+      line_mistake: "Kalau ini bukan kehendakmu, hubungi %{support} sebelum tenggat waktu dan kami akan membatalkan penghapusan."
       cta: "Hubungi Support untuk Membatalkan"
 
   dashboard:
@@ -30,7 +30,7 @@ id:
       submit_button: "Hapus akun saya secara permanen"
       cancel_link: "Batal"
       email_mismatch: "Email tidak cocok. Ketik alamat email kamu yang benar untuk konfirmasi."
-      scheduled_notice: "Akun kamu dijadwalkan untuk dihapus. Kamu punya 3 hari untuk membatalkan dengan menghubungi support@wokku.cloud."
+      scheduled_notice: "Akun kamu dijadwalkan untuk dihapus. Kamu punya 3 hari untuk membatalkan dengan menghubungi %{support}."
 
   admin:
     users:

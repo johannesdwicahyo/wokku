@@ -6,6 +6,13 @@ module Wokku
     Rails.application.routes.named_routes.key?(:dashboard_billing)
   end
 
+  # Who users should contact: wokku.cloud's support desk, or on self-host
+  # the install's admin (there is no wokku.cloud desk for them).
+  def self.support_email
+    return "support@wokku.cloud" if cloud?
+    User.find_by(role: :admin)&.email || "your administrator"
+  end
+
   # Dependency-injection seam between the OSS engine and the managed host app.
   # The engine calls Wokku.config.<provider>; OSS ships null/local defaults,
   # wokku-cloud injects managed implementations via Wokku.configure at boot.

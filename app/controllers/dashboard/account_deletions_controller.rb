@@ -22,8 +22,8 @@ module Dashboard
 
       sign_out current_user
       redirect_to root_path,
-        notice: t("dashboard.account_deletions.scheduled_notice",
-          default: "Your account has been scheduled for deletion. You have 3 days to recover by signing back in or contacting support@wokku.cloud.")
+        notice: t("dashboard.account_deletions.scheduled_notice", support: Wokku.support_email,
+          default: "Your account has been scheduled for deletion. You have 3 days to recover by signing back in or contacting %{support}.")
     end
 
     # Self-service "Cancel deletion". User signs in during the 3-day grace

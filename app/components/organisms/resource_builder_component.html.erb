@@ -6,7 +6,7 @@
     <% if sleeping_option? %>
       <button type="button" data-action="resource-builder#toggleSleeping" data-resource-builder-target="sleeping"
               aria-pressed="<%= sleeping %>"
-              class="px-2.5 py-1 text-xs border-1.5 rounded-md <%= sleeping ? 'border-accent bg-accent-soft' : 'border-line' %>">Sleeping (free)</button>
+              class="px-2.5 py-1 text-xs border-1.5 rounded-md <%= sleeping ? 'border-accent bg-accent-soft' : 'border-line' %>">Sleeping<%= " (free)" if helpers.wokku_cloud? %></button>
     <% end %>
     <% presets.each do |key, p| %>
       <button type="button" data-action="resource-builder#pick" data-resource-builder-target="preset"

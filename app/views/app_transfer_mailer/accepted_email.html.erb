@@ -7,6 +7,6 @@
     <p>Ownership of <strong><%= @app.name %></strong> moved on <%= @transfer.accepted_at.strftime("%b %-d, %Y at %H:%M") %>. The app's plan box now counts against their plan, not yours.</p>
   </div>
   <div class="wk-footer">
-    Wokku · Invoice-based billing · jakarta, id
+    Wokku<%= " · Invoice-based billing · jakarta, id" if Wokku.cloud? %>
   </div>
 </div>

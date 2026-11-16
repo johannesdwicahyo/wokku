@@ -29,11 +29,20 @@ RSpec.describe AccountMailer, type: :mailer do
       expect(mail.subject).to match(/Wokku/)
     end
 
-    it "body mentions support contact" do
-      mail = described_class.account_deletion_scheduled(user)
+    def body_of(mail)
       body = mail.parts.map(&:body).map(&:to_s).join
-      body = mail.body.to_s if body.blank?
-      expect(body).to match(/support@wokku\.cloud/)
+      body.presence || mail.body.to_s
+    end
+
+    it "body points self-host users at their install's admin, not wokku.cloud" do
+      body = body_of(described_class.account_deletion_scheduled(user))
+      expect(body).to include(User.find_by(role: :admin).email)
+      expect(body).not_to include("support@wokku.cloud", "Invoice-based billing")
+    end
+
+    it "body mentions wokku.cloud support on the cloud" do
+      allow(Wokku).to receive(:cloud?).and_return(true)
+      expect(body_of(described_class.account_deletion_scheduled(user))).to match(/support@wokku\.cloud/)
     end
 
     it "body is non-trivial" do

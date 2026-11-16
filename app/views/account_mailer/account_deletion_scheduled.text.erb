@@ -22,5 +22,5 @@
        balance: @balance,
        default: "Your current balance of #{@balance} will be forfeit.") %>
 
-<%= t("account_mailer.deletion_scheduled.line_mistake",
-       default: "If this was a mistake, contact support@wokku.cloud before the deadline and we'll cancel the deletion.") %>
+<%= t("account_mailer.deletion_scheduled.line_mistake", support: Wokku.support_email,
+       default: "If this was a mistake, contact %{support} before the deadline and we'll cancel the deletion.") %>
