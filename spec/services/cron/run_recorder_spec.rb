@@ -66,7 +66,7 @@ RSpec.describe Cron::RunRecorder do
     notification
     record(1) # failure 1
     record(1) # failure 2
-    ts = Time.current.iso8601
+    ts = next_tick
     third = { "task_id" => task.id, "started_at" => ts, "finished_at" => ts, "exit_code" => 1, "log_excerpt" => "boom" }
 
     expect { described_class.new(server).call([ third ]) }.to have_enqueued_job(NotifyJob) # 3rd real failure fires
