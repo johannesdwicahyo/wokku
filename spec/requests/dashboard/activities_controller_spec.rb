@@ -69,7 +69,7 @@ RSpec.describe "Dashboard::Activities", type: :request do
 
   describe "GET /dashboard/activities.csv" do
     it "streams a CSV with action + channel columns" do
-      log(action: "app.deployed", channel: "git_push", target_name: "ichat-llm")
+      log(action: "app.deployed", channel: "git_push", target_name: "chat-bot")
       get "/dashboard/activities.csv"
       expect(response.media_type).to eq("text/csv")
       expect(response.body).to include("action")

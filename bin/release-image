@@ -6,7 +6,7 @@
 #   bin/release-image 0.9.0           # explicit version
 #   bin/release-image --no-push       # build + boot-check only (no registry login)
 #
-# Env: BUILD_HOST (ssh target, default the Tencent build box), GH_USER.
+# Env: BUILD_HOST (required: ssh target of an amd64 Docker host), GH_USER.
 # Needs a gh token with write:packages for pushes:
 #   gh auth refresh -h github.com -s write:packages,read:packages --user johannesdwicahyo
 set -euo pipefail
@@ -23,7 +23,7 @@ for arg in "$@"; do
 done
 VERSION=${VERSION:-$(date -u +%Y.%m.%d)-$(git rev-parse --short=7 HEAD)}
 [[ "$VERSION" =~ ^[0-9A-Za-z._-]+$ ]] || { echo "bad version: $VERSION" >&2; exit 2; }
-HOST=${BUILD_HOST:-ubuntu@43.165.195.185}
+HOST=${BUILD_HOST:?set BUILD_HOST=user@host (an amd64 box with Docker)}
 GH_USER=${GH_USER:-johannesdwicahyo}
 IMAGE=ghcr.io/johannesdwicahyo/wokku
 DIR=wokku-image-build
