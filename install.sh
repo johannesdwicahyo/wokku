@@ -94,6 +94,13 @@ fi
 # Installs from before the setup token existed: add one (only matters
 # until the admin account is created).
 grep -q '^WOKKU_SETUP_TOKEN=' .env || echo "WOKKU_SETUP_TOKEN=$(openssl rand -hex 16)" >> .env
+# Database backups are encrypted to this keypair before they leave the box.
+# Generated once; without it backups can't be restored, so keep a copy of
+# .env somewhere safe (it also holds SECRET_KEY_BASE).
+grep -q '^WOKKU_BACKUP_PRIVATE_KEY=' .env || {
+  log "generating the backup encryption key (keep a copy of ${INSTALL_DIR}/.env somewhere safe)"
+  echo "WOKKU_BACKUP_PRIVATE_KEY=$(openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:4096 2>/dev/null | base64 -w0)" >> .env
+}
 
 log "downloading the control plane"
 if docker compose pull -q web; then

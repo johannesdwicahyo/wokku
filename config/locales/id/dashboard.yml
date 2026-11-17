@@ -115,6 +115,8 @@ id:
       new_addon: "+ Database baru"
       unlinked: "Add-on tak tertaut"
       unlinked_hint: "— tidak terhubung ke aplikasi mana pun. Tautkan atau hapus."
+      backups_off: "Backup database otomatis belum aktif — perlu bucket yang kompatibel dengan S3 (Amazon S3, Cloudflare R2, Backblaze B2, MinIO, …)."
+      backups_off_cta: "Tambahkan bucket →"
       by_type: "Per tipe"
       by_app: "Per aplikasi"
       count:

@@ -127,9 +127,15 @@ class EnvelopeCipher
 
   # The control-plane keypair. Private key never leaves Rails; the agent gets
   # only public_key_pem (per export op) and per-backup DEKs (per import op).
+  # wokku.cloud: Rails credentials. Self-host: install.sh generates a
+  # keypair once and writes it base64-encoded to .env.
   def self.master_private_key
-    pem = Rails.application.credentials.dig(:backup_envelope, :private_key)
-    raise Error, "backup_envelope.private_key not set in Rails credentials" if pem.blank?
+    pem = Rails.application.credentials.dig(:backup_envelope, :private_key).presence ||
+          ENV["WOKKU_BACKUP_PRIVATE_KEY"].presence&.then { |b64| Base64.decode64(b64) }
+    if pem.blank?
+      raise Error, "no backup key: set WOKKU_BACKUP_PRIVATE_KEY (self-host; re-run install.sh) " \
+                   "or backup_envelope.private_key in Rails credentials"
+    end
 
     OpenSSL::PKey::RSA.new(pem)
   end

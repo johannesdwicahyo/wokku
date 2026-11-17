@@ -115,6 +115,8 @@ en:
       new_addon: "+ New database"
       unlinked: "Unlinked add-ons"
       unlinked_hint: "— not attached to any app. Link or destroy."
+      backups_off: "Automatic database backups are off — they need an S3-compatible bucket (Amazon S3, Cloudflare R2, Backblaze B2, MinIO, …)."
+      backups_off_cta: "Add a bucket →"
       by_type: "By type"
       by_app: "By app"
       count:

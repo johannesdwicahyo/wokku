@@ -92,6 +92,12 @@ RSpec.describe "connect-a-server installer endpoints", type: :request do
     expect(lines.last).to eq('main "$@"')
   end
 
+  # Self-host backups are encrypted to a keypair generated once per install.
+  it "install.sh adds a backup encryption key to .env once" do
+    script = Wokku::Engine.root.join("install.sh").read
+    expect(script).to include("grep -q '^WOKKU_BACKUP_PRIVATE_KEY=' .env ||")
+  end
+
   it "404s the binary with a clear message when not bundled" do
     get "/install/wokkud"
     expect(response).to have_http_status(:not_found)

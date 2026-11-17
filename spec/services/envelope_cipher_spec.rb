@@ -110,10 +110,19 @@ RSpec.describe EnvelopeCipher do
       expect(described_class.public_key_pem).to start_with("-----BEGIN PUBLIC KEY-----")
     end
 
-    it "raises a clear error when the credential is missing" do
+    it "raises a clear error when neither the credential nor the self-host key is set" do
       allow(Rails.application.credentials).to receive(:dig).with(:backup_envelope, :private_key).and_return(nil)
+      stub_const("ENV", ENV.to_h.except("WOKKU_BACKUP_PRIVATE_KEY"))
       expect { described_class.master_private_key }
-        .to raise_error(EnvelopeCipher::Error, /backup_envelope\.private_key/)
+        .to raise_error(EnvelopeCipher::Error, /WOKKU_BACKUP_PRIVATE_KEY/)
+    end
+
+    # Self-host: install.sh writes a base64 PEM to .env (no Rails credentials).
+    it "falls back to WOKKU_BACKUP_PRIVATE_KEY (base64 PEM) on self-host" do
+      pem = File.read(Rails.root.join("spec/fixtures/envelope/test_key.pem"))
+      allow(Rails.application.credentials).to receive(:dig).with(:backup_envelope, :private_key).and_return(nil)
+      stub_const("ENV", ENV.to_h.merge("WOKKU_BACKUP_PRIVATE_KEY" => Base64.strict_encode64(pem)))
+      expect(described_class.master_private_key.to_pem).to eq(OpenSSL::PKey::RSA.new(pem).to_pem)
     end
   end
 

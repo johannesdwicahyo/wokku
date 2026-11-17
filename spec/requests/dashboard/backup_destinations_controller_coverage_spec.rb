@@ -22,6 +22,7 @@ RSpec.describe "Dashboard::BackupDestinations (admin route)", type: :request do
     # Admin needs membership for enforce_admin_2fa! / current_team helpers
     # rendered in the admin layout.
     TeamMembership.find_or_create_by!(user: admin, team: teams(:one)) { |m| m.role = :admin }
+    allow_any_instance_of(BackupDestination).to receive(:verify_connection!) # no real S3 here
   end
 
   describe "auth guards" do
@@ -85,6 +86,35 @@ RSpec.describe "Dashboard::BackupDestinations (admin route)", type: :request do
       }
       expect(response).to redirect_to(admin_server_path(server))
       expect(server.reload.backup_destination.bucket).to eq("new-bucket")
+    end
+
+    it "tests the bucket on save and shows why it failed" do
+      allow_any_instance_of(BackupDestination).to receive(:verify_connection!)
+        .and_raise(BackupDestination::ConnectionError, "Access denied — check the access key and secret")
+      sign_in admin
+      patch admin_server_backup_destination_path(server), params: {
+        backup_destination: { provider: "s3", bucket: "b", access_key_id: "k", secret_access_key: "s", enabled: "1" }
+      }
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include("Access denied — check the access key and secret")
+      expect(server.reload.backup_destination).to be_nil
+    end
+
+    # The secret field is never pre-filled, so re-saving the page sends "".
+    it "keeps the stored secret when the field is left blank" do
+      server.create_backup_destination!(provider: "s3", bucket: "b", secret_access_key: "keep-me")
+      sign_in admin
+      patch admin_server_backup_destination_path(server), params: {
+        backup_destination: { bucket: "b2", secret_access_key: "" }
+      }
+      expect(server.reload.backup_destination.secret_access_key).to eq("keep-me")
+    end
+
+    it "new destinations default to enabled with a per-server prefix" do
+      sign_in admin
+      get edit_admin_server_backup_destination_path(server)
+      expect(response.body).to match(/<input[^>]*type="checkbox"[^>]*checked="checked"[^>]*name="backup_destination\[enabled\]"/)
+      expect(response.body).to include(%(value="dbs/#{server.name.parameterize}"))
     end
 
     it "re-renders edit with 422 when the destination is invalid (blank bucket)" do

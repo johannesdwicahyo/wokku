@@ -14,6 +14,14 @@
     <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, data: { action: "click->slide-panel#open" }) do %><%= t("dashboard.databases.new_addon") %><% end %>
   </div>
 
+  <%# Self-host: no bucket = no database backups. Say so instead of failing silently. %>
+  <% if !wokku_cloud? && current_user.admin? && (unbacked = Server.where.not(id: BackupDestination.where(enabled: true).select(:server_id)).order(:created_at).first) %>
+    <div data-backups-off role="status" class="border border-line bg-accent-soft rounded px-4 py-3 text-sm text-ink">
+      <%= t("dashboard.databases.backups_off") %>
+      <%= link_to t("dashboard.databases.backups_off_cta"), edit_admin_server_backup_destination_path(unbacked), class: "text-accent font-medium hover:underline" %>
+    </div>
+  <% end %>
+
   <% if @orphan_addons.any? %>
     <div>
       <div class="flex items-baseline gap-2 mb-2">
