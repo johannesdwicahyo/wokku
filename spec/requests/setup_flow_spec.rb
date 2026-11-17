@@ -28,6 +28,20 @@ RSpec.describe "first-boot setup", type: :request do
     expect(created.personal_team).to be_present
   end
 
+  # The setup page follows the visitor's language (cookie / browser); the
+  # admin must keep it after sign-in instead of dropping to the 'en' default.
+  it "keeps the language the admin set up in" do
+    allow(User).to receive(:exists?).and_return(false)
+    users(:admin).update_column(:role, 0)
+    stub_const("User::ADMIN_EMAIL", "owner@selfhost.local")
+
+    post "/setup", params: { user: { email: "owner@selfhost.local",
+                                     password: "a-strong-password-123",
+                                     password_confirmation: "a-strong-password-123" } },
+                   headers: { "HTTP_ACCEPT_LANGUAGE" => "id-ID,id;q=0.9" }
+    expect(User.find_by(email: "owner@selfhost.local").locale).to eq("id")
+  end
+
   it "pre-registers this host as the first server when the checkbox is on" do
     allow(User).to receive(:exists?).and_return(false)
     users(:admin).update_column(:role, 0)

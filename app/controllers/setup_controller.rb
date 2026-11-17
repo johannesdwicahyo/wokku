@@ -13,7 +13,8 @@ class SetupController < ApplicationController
   end
 
   def create
-    @user = User.new(setup_params.merge(role: :admin))
+    # Keep the language the setup page was shown in (cookie / browser).
+    @user = User.new(setup_params.merge(role: :admin, locale: I18n.locale.to_s))
     if @user.save
       @user.ensure_personal_team!
       sign_in(@user)
