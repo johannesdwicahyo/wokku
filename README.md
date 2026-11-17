@@ -26,10 +26,10 @@ server.
 - **Automatic HTTPS** — Caddy owns routing and TLS; every app gets a
   certificate out of the box, custom domains included. Works with zero
   DNS setup via `<ip>.sslip.io`.
-- **Encrypted backups** — envelope-encrypted database backups with
-  retention policies and automated restore drills on wokku.cloud.
-  Self-host backups (to your own S3-compatible bucket) are not wired up
-  yet — back up your databases yourself for now.
+- **Encrypted backups** — nightly, encrypted database backups to any
+  S3-compatible bucket (AWS S3, Cloudflare R2, Backblaze B2, MinIO, …),
+  with retention and one-click restore. Set the bucket in admin → servers
+  → backups.
 - **Scheduled tasks** — cron jobs defined in the dashboard, executed on
   the host by the agent.
 - **Logs, metrics, and web vitals** — persisted searchable logs,
@@ -102,6 +102,14 @@ The dashboard checks for a new release once a day (an anonymous read of the
 public image's version label — nothing about your install is sent). When one
 is out, admins see a banner and the admin gets one email per release. Turn
 it off with `WOKKU_UPDATE_CHECK=0` in `.env`.
+
+### Backups
+
+Databases are backed up nightly once you add a bucket in admin → servers →
+backups (any S3-compatible provider; saving tests the connection). Backups
+are encrypted with a key the installer writes to `/opt/wokku/.env` as
+`WOKKU_BACKUP_PRIVATE_KEY`. **Keep a copy of `.env` somewhere safe** —
+without that key, backups can't be restored.
 
 ### Email
 
