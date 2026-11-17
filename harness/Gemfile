@@ -38,3 +38,5 @@ gem "faraday-retry"
 gem "expo-server-sdk"
 gem "csv"
 gem "bootsnap", require: false
+# BackupDestination (self-host DB backups to any S3-compatible bucket).
+gem "aws-sdk-s3", require: false
