@@ -9,25 +9,27 @@ server.
 [![Rails](https://img.shields.io/badge/Rails-8.1-CC0000.svg)](https://rubyonrails.org)
 [![Go](https://img.shields.io/badge/wokkud-Go-00ADD8.svg)](wokkud/)
 
-> **Status: pre-release.** The engine split landed recently; the self-host
-> story (installer, server connect, docs) is actively being built. Watch
-> releases.
+> **Status: early.** The one-command install is tested on fresh budget
+> VPSes and the same engine runs [wokku.cloud](https://wokku.cloud) in
+> production — but this is a young open-source project. Expect rough edges
+> and please [open issues](https://github.com/johannesdwicahyo/wokku/issues).
 
 ## Features
 
 - **Git push deploys** — `git push wokku main` builds with
   [nixpacks](https://nixpacks.com) or your own Dockerfile and ships to
   Docker Swarm. Real-time build logs in the browser.
-- **137 one-click templates** — Ghost, Umami, Appwrite, Authentik, n8n,
-  Baserow, and 130+ more open-source tools, deployed with sane defaults.
-- **Managed databases** — dedicated PostgreSQL, Redis, MariaDB, and
-  MongoDB, plus shared PostgreSQL/Redis/Memcached/RabbitMQ/Meilisearch
-  for lighter workloads. Linked to apps with one click.
+- **100+ one-click templates** — Ghost, Umami, Appwrite, Authentik, n8n,
+  Baserow, and many more open-source tools, deployed with sane defaults.
+- **Databases** — PostgreSQL, MySQL, MariaDB, Redis, and MongoDB, each in
+  its own container on your server, linked to apps with one click.
 - **Automatic HTTPS** — Caddy owns routing and TLS; every app gets a
   certificate out of the box, custom domains included. Works with zero
   DNS setup via `<ip>.sslip.io`.
 - **Encrypted backups** — envelope-encrypted database backups with
-  retention policies and automated restore drills.
+  retention policies and automated restore drills on wokku.cloud.
+  Self-host backups (to your own S3-compatible bucket) are not wired up
+  yet — back up your databases yourself for now.
 - **Scheduled tasks** — cron jobs defined in the dashboard, executed on
   the host by the agent.
 - **Logs, metrics, and web vitals** — persisted searchable logs,
@@ -35,17 +37,18 @@ server.
 - **Browser terminal** — SSH into your servers and app containers from
   the dashboard (xterm.js).
 - **Rollbacks** — every deploy keeps an image; roll back from the UI.
-- **Teams and 2FA** — role-based team access; admin accounts require
-  two-factor.
+- **Teams and 2FA** — role-based team access and two-factor login (set
+  `WOKKU_REQUIRE_ADMIN_2FA=1` to make it mandatory for the admin).
 - **GitHub integration** — connect a repo for automatic deploys on push.
-- **API, CLI, and MCP** — a full REST API, the `wokku` CLI, and an MCP
-  server so AI agents can deploy and operate apps.
+- **REST API** — everything the dashboard does, with an OpenAPI spec at
+  `/api/v1/openapi.yaml`. (The `wokku` CLI and MCP server currently talk
+  to wokku.cloud only; self-host support is planned.)
 - **Multi-server** — connect additional servers with a one-line command;
   one dashboard, your whole fleet.
 
 ## Get started
 
-One command on a fresh Ubuntu 22.04/24.04 or Debian 11+ box:
+One command on a fresh Ubuntu 22.04+ or Debian 11+ box (x86_64, 2 GB RAM, 10 GB free disk):
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/johannesdwicahyo/wokku/main/install.sh | sudo bash
@@ -136,7 +139,7 @@ UI, with billing, managed infrastructure, and Indonesian payment methods
 The managed cloud runs this exact engine and layers billing and managed
 infrastructure on top via provider injection (`Wokku.configure`) —
 open-source and managed share one codebase, one UI, one test suite
-(2,900+ examples, 95% line coverage enforced in CI).
+(4,000+ examples, 95% line coverage enforced in CI).
 
 **How a deploy works:** the control plane writes a typed operation row;
 the wokkud agent on your server claims it, builds the image, converges
