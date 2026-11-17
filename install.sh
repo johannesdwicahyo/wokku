@@ -10,6 +10,12 @@
 # command the dashboard shows under admin → servers.
 set -euo pipefail
 
+# Everything runs inside main(), called on the last line: with
+# `curl … | sudo bash` the script itself arrives on stdin, and any command
+# that reads stdin (docker compose exec did) would swallow the rest of it —
+# bash then exits 0 halfway through. A function is parsed whole first.
+main() {
+
 REPO_URL="${WOKKU_REPO_URL:-https://github.com/johannesdwicahyo/wokku}"
 INSTALL_DIR="${WOKKU_INSTALL_DIR:-/opt/wokku}"
 
@@ -154,3 +160,6 @@ else
   log "done — open https://${DOMAIN}/setup?token=${SETUP_TOKEN} to create your admin account and deploy."
   echo "  (only this link can create the admin account; it stops working once the admin exists)"
 fi
+}
+
+main "$@"

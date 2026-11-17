@@ -84,6 +84,14 @@ RSpec.describe "connect-a-server installer endpoints", type: :request do
     expect(script).to include('docker image prune -f --filter "label=org.opencontainers.image.title=wokku"')
   end
 
+  # `curl | sudo bash` feeds the script on stdin; a stdin-reading command
+  # swallowed the rest of it and the install "succeeded" halfway (11-17).
+  it "install.sh runs from a function so it survives being piped into bash" do
+    lines = Wokku::Engine.root.join("install.sh").read.lines.map(&:strip).reject(&:empty?)
+    expect(lines).to include("main() {")
+    expect(lines.last).to eq('main "$@"')
+  end
+
   it "404s the binary with a clear message when not bundled" do
     get "/install/wokkud"
     expect(response).to have_http_status(:not_found)
