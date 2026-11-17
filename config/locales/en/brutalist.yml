@@ -266,7 +266,7 @@ en:
   onboarding2:
     title: "Deploy your first app"
     sub: "// pick one — it's live on the free Jakarta server in ~60s"
-    sub_self_host: "// pick one — it's live on your server in ~60s"
+    sub_self_host: "// pick one — the first deploy downloads build images (a few minutes, longer on a slow connection); after that ~60s"
     push_own: "or push your own code"
     building: "build ~30–90s depending on stack"
   onboarding_tour:

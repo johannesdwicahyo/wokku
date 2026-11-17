@@ -79,6 +79,13 @@ docker compose run web bin/rails runner \
   'User.find_by(role: :admin).update!(password: "new-strong-password")'
 ```
 
+### Your first deploy
+
+The first deploy on a new server downloads the build images (Node, Python,
+… base layers), so it takes a few minutes — longer on a slow connection.
+The installer starts that download in the background right away; once it
+is done, deploys take about a minute.
+
 ### Updating
 
 Re-run the installer — it keeps your data and settings, pulls the newest
