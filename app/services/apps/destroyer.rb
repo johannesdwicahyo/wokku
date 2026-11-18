@@ -56,6 +56,14 @@ module Apps
       # best-effort like every step but the row.
       if @app.wokkud_lifecycle?
         best_effort("tear down Swarm stack for #{@app.name}", step: "Stopping and removing containers") { ::Lifecycle::Ops.remove!(@app, wait: true) }
+        # Every build image: an empty keep-list prunes all tags from the
+        # host registry and untags the host's local copies (wokkud), which
+        # otherwise stayed on disk forever (GBs per deleted app). Waits so
+        # the op finishes before the app-row cascade deletes it.
+        best_effort("remove images for #{@app.name}", step: "Removing build images") do
+          ::Lifecycle::Ops.issue!(@app, "registry.prune", { "repo" => "wokku/#{@app.name}", "keep_tags" => [] },
+                                  wait: true, timeout: 120)
+        end
       end
 
       best_effort("remove DNS records for #{@app.name}", step: "Removing DNS records") do

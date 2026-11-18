@@ -19,6 +19,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 )
 
@@ -191,6 +192,37 @@ func deleteDigest(ctx context.Context, baseURL, repo, digest string) error {
 		return fmt.Errorf("delete manifest %s/%s: HTTP %d", repo, digest, resp.StatusCode)
 	}
 	return nil
+}
+
+// LocalHost is the registry's host:port as it appears in local image names
+// (the builder tags and pushes 127.0.0.1:5000/<repo>:<tag>).
+const LocalHost = "127.0.0.1:5000"
+
+// RemoveLocalImages untags this host's local copies of repo's tags that are
+// not in keep. Pruning the registry doesn't touch them, and GC's
+// `docker image prune -f` only removes UNTAGGED images, so every build of
+// every app — and deleted apps' whole images — otherwise stayed on disk.
+// Plain `docker rmi` (never -f): an image a container still uses is left
+// alone. Failures are logged, never returned: this is best-effort cleanup.
+func RemoveLocalImages(ctx context.Context, docker execer, repo string, keep []string) {
+	ref := LocalHost + "/" + repo
+	out, err := docker.Run(ctx, "docker", "images", "--format", "{{.Tag}}", ref)
+	if err != nil {
+		log.Printf("registry: list local images %s: %v: %s", ref, err, out)
+		return
+	}
+	keepSet := make(map[string]bool, len(keep))
+	for _, t := range keep {
+		keepSet[t] = true
+	}
+	for _, tag := range strings.Fields(string(out)) {
+		if tag == "<none>" || keepSet[tag] {
+			continue
+		}
+		if out, err := docker.Run(ctx, "docker", "rmi", ref+":"+tag); err != nil {
+			log.Printf("registry: docker rmi %s:%s: %v: %s", ref, tag, err, out)
+		}
+	}
 }
 
 // execer runs one host command and returns combined output; faked in tests.
