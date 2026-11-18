@@ -190,6 +190,7 @@ Rails.application.routes.draw do
       end
       resources :users, only: [ :index, :show, :destroy ]
       resources :cloud_credentials, only: [ :index, :create, :destroy ]
+      resource :settings, only: [ :show, :update ]
     end
   end
 

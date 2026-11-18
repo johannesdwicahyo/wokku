@@ -71,9 +71,6 @@
     <% end %>
   </div>
 
-    <%# Wicara support chat widget (Wokku CS) — wokku.cloud only; self-host admins are their own support. %>
-    <% if wokku_cloud? %>
-    <script src="https://wicara.cloud/widget.js" data-workspace="wokku" data-token="DcGlr9IFgxWi6kTDAdWvcCWnm9CQOkkb" async></script>
-    <% end %>
+    <%= render "shared/addon_scripts" %>
   </body>
 </html>
