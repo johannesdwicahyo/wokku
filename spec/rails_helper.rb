@@ -36,6 +36,15 @@ Dir[Rails.root.join("../spec/support/**/*.rb")].sort.each { |f| require f }
 Rack::Attack.enabled = false if defined?(Rack::Attack)
 
 RSpec.configure do |config|
+  # I18n.locale is a global the app's locale concern sets per request without
+  # restoring it — a spec rendering :id leaked Indonesian into later examples
+  # (activity_spec saw "deploy" for "deployed"). Reset before every example;
+  # `around` so it runs outermost, ahead of specs' own I18n.with_locale blocks.
+  config.around do |example|
+    I18n.locale = I18n.default_locale
+    example.run
+  end
+
   config.infer_spec_type_from_file_location!
   config.filter_rails_from_backtrace!
   config.include FactoryBot::Syntax::Methods
