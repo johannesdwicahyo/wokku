@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -247,6 +248,11 @@ func TestDispatchRunnerRegistryPrune(t *testing.T) {
 	srv := rr.server(t)
 	defer srv.Close()
 
+	docker := &dockerRecorder{images: "keep\nstale\n"}
+	origDocker := registryDocker
+	registryDocker = docker
+	defer func() { registryDocker = origDocker }()
+
 	d := &dispatchRunner{client: control.New(srv.URL, "tok", "0.7.0")}
 	params, _ := json.Marshal(map[string]any{"repo": "myapp", "keep_tags": []string{"keep"}})
 	d.run(context.Background(), &queuedOp{id: "op-prune", kind: "registry.prune", appName: "myapp", params: params, timeoutSeconds: 5})
@@ -265,6 +271,25 @@ func TestDispatchRunnerRegistryPrune(t *testing.T) {
 	if result["deleted"] != float64(1) || result["kept"] != float64(1) || result["skipped_shared"] != float64(0) {
 		t.Fatalf("result = %v", result)
 	}
+	// The host's tagged local copy of the pruned tag is removed too (GC's
+	// image prune never touches tagged images).
+	if last := docker.calls[len(docker.calls)-1]; strings.Join(last, " ") != "docker rmi 127.0.0.1:5000/myapp:stale" {
+		t.Fatalf("docker calls = %v", docker.calls)
+	}
+}
+
+// dockerRecorder fakes the host docker CLI for registry.prune's local cleanup.
+type dockerRecorder struct {
+	images string
+	calls  [][]string
+}
+
+func (d *dockerRecorder) Run(ctx context.Context, name string, args ...string) ([]byte, error) {
+	d.calls = append(d.calls, append([]string{name}, args...))
+	if len(args) > 0 && args[0] == "images" {
+		return []byte(d.images), nil
+	}
+	return nil, nil
 }
 
 // TestDispatchStackRunReportsFailureWithResult: a failed stack.run must still

@@ -3,6 +3,7 @@ package registry
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -279,5 +280,46 @@ func TestGCRunsWhenNotBusy(t *testing.T) {
 	f.mu.Unlock()
 	if n == 0 {
 		t.Fatalf("expected at least one GC run while not busy, got 0")
+	}
+}
+
+// scriptedExecer answers `docker images` with a fixed tag list and records
+// every call; rmiErr makes each `docker rmi` fail (e.g. image in use).
+type scriptedExecer struct {
+	tags   string
+	rmiErr error
+	calls  [][]string
+}
+
+func (f *scriptedExecer) Run(ctx context.Context, name string, args ...string) ([]byte, error) {
+	f.calls = append(f.calls, append([]string{name}, args...))
+	if len(args) > 0 && args[0] == "images" {
+		return []byte(f.tags), nil
+	}
+	return []byte("Error response from daemon: conflict"), f.rmiErr
+}
+
+// GC's `docker image prune -f` only removes UNTAGGED images, so the host's
+// tagged local copies of pruned (or deleted-app) tags leaked forever.
+// RemoveLocalImages untags every local tag of repo not in keep — without -f,
+// so an image a container still uses is never removed.
+func TestRemoveLocalImagesUntagsAllButKept(t *testing.T) {
+	f := &scriptedExecer{tags: "keep\nold1\nold2\n<none>\n", rmiErr: errors.New("in use")}
+	RemoveLocalImages(context.Background(), f, "wokku/app", []string{"keep"})
+	want := [][]string{
+		{"docker", "images", "--format", "{{.Tag}}", "127.0.0.1:5000/wokku/app"},
+		{"docker", "rmi", "127.0.0.1:5000/wokku/app:old1"},
+		{"docker", "rmi", "127.0.0.1:5000/wokku/app:old2"},
+	}
+	if !reflect.DeepEqual(f.calls, want) {
+		t.Fatalf("calls = %v, want %v", f.calls, want)
+	}
+}
+
+func TestRemoveLocalImagesEmptyKeepRemovesEverything(t *testing.T) {
+	f := &scriptedExecer{tags: "a\n"}
+	RemoveLocalImages(context.Background(), f, "wokku/gone", nil)
+	if got := f.calls[len(f.calls)-1]; !reflect.DeepEqual(got, []string{"docker", "rmi", "127.0.0.1:5000/wokku/gone:a"}) {
+		t.Fatalf("last call = %v", got)
 	}
 }

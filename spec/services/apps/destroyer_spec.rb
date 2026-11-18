@@ -30,10 +30,11 @@ RSpec.describe Apps::Destroyer do
       expect(DatabaseService.where(id: shared_db.id)).to exist
     end
 
-    it "removes the Swarm stack before app.destroy (order pin)" do
+    it "removes the Swarm stack, then every image of the app, before app.destroy (order pin)" do
       calls = []
       app_record.update!(wokkud_lifecycle: true)
       allow(Lifecycle::Ops).to receive(:remove!) { |app, **| calls << [ :remove!, app.id ] }
+      allow(Lifecycle::Ops).to receive(:issue!) { |app, kind, params, **| calls << [ kind, params ] }
       original_destroy = app_record.method(:destroy!)
       allow(app_record).to receive(:destroy!) do
         calls << [ :destroy!, app_record.id ]
@@ -42,7 +43,24 @@ RSpec.describe Apps::Destroyer do
 
       described_class.call(app_record)
 
-      expect(calls).to eq([ [ :remove!, app_record.id ], [ :destroy!, app_record.id ] ])
+      # An empty keep-list deletes every tag from the host registry and the
+      # host's local image copies (they leaked GBs per deleted app before).
+      expect(calls).to eq([
+        [ :remove!, app_record.id ],
+        [ "registry.prune", { "repo" => "wokku/#{app_record.name}", "keep_tags" => [] } ],
+        [ :destroy!, app_record.id ]
+      ])
+    end
+
+    it "still destroys the app when the image prune fails, and collects a warning" do
+      app_record.update!(wokkud_lifecycle: true)
+      allow(Lifecycle::Ops).to receive(:remove!)
+      allow(Lifecycle::Ops).to receive(:issue!).and_raise(Lifecycle::Ops::Timeout, "slow")
+
+      result = described_class.call(app_record)
+
+      expect(AppRecord.where(id: app_record.id)).not_to exist
+      expect(result.warnings.join).to include("remove images")
     end
 
     it "refuses while a deploy is in flight and keeps the app (no orphaned services)" do

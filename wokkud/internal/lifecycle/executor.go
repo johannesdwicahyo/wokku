@@ -34,6 +34,12 @@ const lifecycleOpPanicErrorCode = "lifecycle_op_panic"
 // can point it at an httptest registry instead of the real host one.
 var registryBaseURL = registry.DefaultBaseURL
 
+// registryDocker runs the host docker CLI for registry.prune's local-image
+// cleanup; faked in tests.
+var registryDocker interface {
+	Run(ctx context.Context, name string, args ...string) ([]byte, error)
+} = registry.HostExec{}
+
 // queuedOp is a claimed control.LifecycleOp, trimmed to what the runner uses.
 type queuedOp struct {
 	id             string
@@ -239,6 +245,7 @@ func (d *dispatchRunner) dispatch(ctx context.Context, op *queuedOp) (any, error
 		if err != nil {
 			return nil, err
 		}
+		registry.RemoveLocalImages(ctx, registryDocker, p.Repo, p.KeepTags)
 		return map[string]int{
 			"deleted":        res.Deleted,
 			"kept":           res.Kept,
