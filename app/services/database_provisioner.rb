@@ -306,7 +306,11 @@ class DatabaseProvisioner
       shared: false,
       creator: @creator
     }
-    attrs.merge!(cpu: @shape.cpu, memory_mb: @shape.memory_mb, disk_gb: @shape.disk_gb) if @shape
+    # No shape from the caller (API/CLI create, older forms): use the tier's.
+    # An unshaped dedicated row is skipped by per-resource billing — it ran
+    # for free (2026-11-18). nil when the builder is off (legacy tier pricing).
+    shape = @shape || Resources::ApplyChange.service_shape_for_tier(@service_type, @tier)
+    attrs.merge!(cpu: shape.cpu, memory_mb: shape.memory_mb, disk_gb: shape.disk_gb) if shape
     db = DatabaseService.transaction do
       DatabaseService.create!(attrs).tap { |row| self.class.link!(@app, row) if @app }
     end
