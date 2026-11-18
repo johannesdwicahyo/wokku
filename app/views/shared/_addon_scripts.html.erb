@@ -1,2 +1,4 @@
 <%# Admin → settings → add-on scripts (chat widget, analytics, …). Admin-authored HTML, rendered as-is. %>
 <%= SiteSetting.body_scripts.to_s.html_safe %>
+<%# Host apps may add per-request scripts (e.g. a signed widget identity) in their own app/views/shared/_host_scripts. %>
+<%= render "shared/host_scripts" if lookup_context.exists?("host_scripts", [ "shared" ], true) %>
