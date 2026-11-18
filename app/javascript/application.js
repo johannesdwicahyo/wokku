@@ -10,4 +10,5 @@ import "controllers"
 // Perceived-performance: with instant shells, full-page navigations
 // return fast, so delay the progress bar long enough that it never
 // flashes on a quick nav. Slow nav still shows it after the delay.
-window.Turbo?.setProgressBarDelay?.(700)
+// Turbo 8.0.13+ config property (setProgressBarDelay() is deprecated).
+if (window.Turbo?.config?.drive) window.Turbo.config.drive.progressBarDelay = 700
