@@ -61,6 +61,13 @@ RSpec.describe TemplateRegistry do
     expect(registry.featured.map { |f| f[:slug] }).to include("hermes-agent")
   end
 
+  it "gives n8n a persistent encryption key" do
+    # Without N8N_ENCRYPTION_KEY n8n writes a random key into the container's
+    # ~/.n8n, loses it on the next restart, and then crash-loops with
+    # "Deployment key 'signing.hmac' cannot be read" (2026-11-18).
+    expect(described_class.new.find("n8n")[:generate_secrets]).to include("N8N_ENCRYPTION_KEY")
+  end
+
   it "hides retired-engine templates" do
     stub_const("DatabaseService::RETIRED_TYPES", %w[mysql])
     slugs = described_class.new.all.map { |t| t[:slug] }

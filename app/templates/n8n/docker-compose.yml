@@ -9,6 +9,7 @@
 # port: 5678
 # postgres_components: true
 # shared_engines: postgres
+# generate_secrets: N8N_ENCRYPTION_KEY
 
 services:
   n8n:
