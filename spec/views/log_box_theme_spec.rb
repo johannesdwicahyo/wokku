@@ -9,5 +9,10 @@ RSpec.describe "log boxes" do
       expect(src).to include("bg-[#171717] text-[#9DEE9D]")
       expect(src).not_to match(/bg-ink text-\[#9DEE9D\]/)
     end
+
+    it "#{path} wraps long unspaced log lines inside the box" do
+      src = File.read(File.expand_path("../../#{path}", __dir__))
+      expect(src).to match(/bg-\[#171717\][^"]*\bmin-w-0\b[^"]*\bwrap-anywhere\b/)
+    end
   end
 end

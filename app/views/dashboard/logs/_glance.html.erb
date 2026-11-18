@@ -5,7 +5,7 @@
     rendered content so the frame matches. %>
 <%= turbo_frame_tag "app_logs_glance_#{app.id}" do %>
   <% non_blank = lines.reject { |l| l.to_s.strip.empty? } %>
-  <div class="border-1.5 border-ink bg-[#171717] text-[#9DEE9D] p-3 font-mono text-xs">
+  <div class="border-1.5 border-ink bg-[#171717] text-[#9DEE9D] p-3 font-mono text-xs min-w-0 wrap-anywhere">
     <% if non_blank.any? %>
       <% non_blank.each do |l| %><div><%= l %></div><% end %>
     <% else %>
