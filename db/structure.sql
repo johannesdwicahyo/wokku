@@ -4669,7 +4669,7 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
-('20261119000001'),
+('20261119120001'),
 ('20261118000001'),
 ('20261117000001'),
 ('20261116000001'),
