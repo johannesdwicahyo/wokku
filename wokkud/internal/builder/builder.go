@@ -117,10 +117,16 @@ func Run(ctx context.Context, client *control.Client, job *control.BuildJob) {
 	// the defer is just the abandoned-path backstop.
 	sink := newLogSink(client, job.ID)
 	defer sink.Close()
+	if err := ensureBuilder(ctx, job.PushRef); err != nil {
+		sink.Close()
+		fail(client, job, fmt.Sprintf("build sandbox unavailable: %v", err))
+		return
+	}
 	formation := parseProcfile(src) // before buildCommands — it may remove the Procfile
 	for _, args := range buildCommands(src, job.PushRef, formation["web"]) {
 		cmd := exec.CommandContext(ctx, args[0], args[1:]...)
 		cmd.Dir = src
+		cmd.Env = buildEnv(os.Environ())
 		cmd.Stdout = sink
 		cmd.Stderr = sink
 		if err := cmd.Run(); err != nil {
@@ -140,9 +146,9 @@ func Run(ctx context.Context, client *control.Client, job *control.BuildJob) {
 	}
 }
 
-// buildCommands picks the builder: Dockerfile wins (buildx builds AND
-// pushes in one step); otherwise nixpacks builds locally, then a plain
-// docker push.
+// buildCommands picks the build recipe: Dockerfile wins; otherwise
+// nixpacks only writes its plan (--out) into .nixpacks/. Either way the
+// capped wokku-build builder (capped.go) builds and pushes in one step.
 //
 // A Procfile web command is baked in via --start-cmd and the Procfile is
 // removed from the build context: dokku git:from-image re-parses an
@@ -154,15 +160,16 @@ func Run(ctx context.Context, client *control.Client, job *control.BuildJob) {
 // lifecycle path gets them via formation_json) — plumb the full formation
 // through dokku ps if a non-lifecycle multi-process app ever needs it.
 func buildCommands(srcDir, pushRef, webCmd string) [][]string {
+	buildx := []string{"docker", "buildx", "build", "--builder", builderName, "--push"}
 	if _, err := os.Stat(filepath.Join(srcDir, "Dockerfile")); err == nil {
-		return [][]string{{"docker", "buildx", "build", "--push", "-t", pushRef, srcDir}}
+		return [][]string{append(buildx, "-t", pushRef, srcDir)}
 	}
-	nix := []string{"nixpacks", "build", srcDir, "--name", pushRef}
+	nix := []string{"nixpacks", "build", srcDir, "--out", srcDir}
 	if webCmd != "" {
 		os.Remove(filepath.Join(srcDir, "Procfile"))
 		nix = append(nix, "--start-cmd", webCmd)
 	}
-	return [][]string{nix, {"docker", "push", pushRef}}
+	return [][]string{nix, append(buildx, "-f", filepath.Join(srcDir, ".nixpacks", "Dockerfile"), "-t", pushRef, srcDir)}
 }
 
 // fetchAndExtract downloads the presigned archive and untars it. exec's
