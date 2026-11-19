@@ -27,5 +27,32 @@ RSpec.describe "Dashboard sidebar extra items", type: :request do
     get "/dashboard/apps"
     expect(response).to have_http_status(:ok)
     expect(response.body).not_to include("ExtraThing")
+    expect(response.body).to include('href="/dashboard/apps"')
+  end
+
+  it "wraps a single hash into one item" do
+    Wokku.config.sidebar_extra_items = ->(_view) { { label: "ExtraThing", key: :extra, href: "/dashboard/extra-thing" } }
+    get "/dashboard/apps"
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("ExtraThing")
+  end
+
+  it "drops malformed entries and keeps valid ones" do
+    Wokku.config.sidebar_extra_items = ->(_view) {
+      [ nil, "x", { label: "NoHref" }, { label: "ExtraThing", key: :extra, href: "/dashboard/extra-thing" } ]
+    }
+    get "/dashboard/apps"
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("ExtraThing")
+    expect(response.body).not_to include("NoHref")
+  end
+
+  it "omits an unknown icon but still renders the item" do
+    Wokku.config.sidebar_extra_items = ->(_view) {
+      [ { label: "ExtraThing", key: :extra, href: "/dashboard/extra-thing", icon: "no_such_icon" } ]
+    }
+    get "/dashboard/apps"
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("ExtraThing")
   end
 end

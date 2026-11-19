@@ -25,7 +25,14 @@
 
   # Host-app extension point; a failing callable must never break the page.
   primary_items += begin
-    Array(Wokku.config.sidebar_extra_items.call(self))
+    Array.wrap(Wokku.config.sidebar_extra_items.call(self)).filter_map do |i|
+      next unless i.is_a?(Hash)
+      i = i.symbolize_keys
+      next if i[:label].blank? || i[:href].blank?
+      # Only pass an icon the sidebar can render; otherwise omit it.
+      i.delete(:icon) unless i[:icon].to_s.match?(/\A[a-z_]+\z/) && lookup_context.exists?("shared/icons/#{i[:icon]}", [], true)
+      i
+    end
   rescue StandardError => e
     Rails.logger.warn("sidebar_extra_items failed: #{e.class}: #{e.message}")
     Sentry.capture_exception(e, level: :warning) if defined?(Sentry)
