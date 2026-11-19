@@ -28,15 +28,28 @@ module Api
           allowed = Domain.joins(:app_record)
                           .where(app_records: { server_id: @server.id }, dns_verified: true)
                           .exists?(hostname: hostname)
-          if allowed
-            head :ok
-          else
-            render json: ApiErrors.payload(:domain_not_verified),
-                   status: ApiErrors.status(:domain_not_verified)
+          return head :ok if allowed
+
+          if (wildcard = Domain.covering_wildcard(hostname, server_id: @server.id))
+            return head :ok if wildcard_quota_left?(wildcard)
+            return head :too_many_requests
           end
+          render json: ApiErrors.payload(:domain_not_verified),
+                 status: ApiErrors.status(:domain_not_verified)
         end
 
         private
+
+        # Caddy asks only when it has no cert for a name, so each "yes" is
+        # (roughly) one new ACME order. Cap per wildcard per hour so random
+        # subdomains can't exhaust the platform's shared ACME account.
+        # ponytail: cache counter — a null cache store fails open; move to a
+        # table if self-hosters run without a real cache.
+        def wildcard_quota_left?(wildcard)
+          key = "tls_wildcard:#{wildcard.id}:#{Time.current.strftime('%Y%m%d%H')}"
+          count = Rails.cache.increment(key, 1, expires_in: 2.hours)
+          count.nil? || count <= Domain::WILDCARD_HOURLY_CAP
+        end
 
         # Caddy's on-demand `ask` request appends only ?domain= and cannot
         # set an Authorization header — accept the ingest token as a query

@@ -67,4 +67,38 @@ RSpec.describe "Api::V1::Agent::Routers" do
       expect(response).to have_http_status(:unauthorized)
     end
   end
+
+  describe "GET /api/v1/agent/router/tls_allowed with a wildcard domain" do
+    let(:wc_app) { create(:app_record, server: server) }
+    let(:cache) { ActiveSupport::Cache::MemoryStore.new }
+
+    before { allow(Rails).to receive(:cache).and_return(cache) }
+
+    def ask(host)
+      get "/api/v1/agent/router/tls_allowed", params: { domain: host, token: server.ingest_token }
+    end
+
+    it "allows a single-label subdomain of a verified wildcard" do
+      wc_app.domains.create!(hostname: "*.tenants.example.com", dns_verified: true)
+      ask("acme.tenants.example.com")
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "refuses deeper subdomains, the bare parent, and unverified wildcards" do
+      wc_app.domains.create!(hostname: "*.tenants.example.com", dns_verified: true)
+      wc_app.domains.create!(hostname: "*.pending.example.com", dns_verified: false)
+      %w[a.b.tenants.example.com tenants.example.com acme.pending.example.com].each do |host|
+        ask(host)
+        expect(response).to have_http_status(:forbidden), host
+      end
+    end
+
+    it "caps new subdomains per wildcard per hour so random names can't drain the ACME account" do
+      wc_app.domains.create!(hostname: "*.tenants.example.com", dns_verified: true)
+      Domain::WILDCARD_HOURLY_CAP.times { |i| ask("t#{i}.tenants.example.com") }
+      expect(response).to have_http_status(:ok)
+      ask("one-too-many.tenants.example.com")
+      expect(response).to have_http_status(:too_many_requests)
+    end
+  end
 end

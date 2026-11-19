@@ -41,4 +41,22 @@ RSpec.describe DnsVerificationJob, type: :job do
     expect(domain.dns_verified).to be_truthy
     expect(domain.ssl_enabled).to be_truthy
   end
+
+  it "verifies a wildcard by resolving a random probe name under it" do
+    wc = Domain.create!(hostname: "*.tenants.example.com", app_record: app, dns_verified: false)
+    asked = []
+    fake_a = Object.new
+    fake_a.define_singleton_method(:address) { Object.new.tap { |o| o.define_singleton_method(:to_s) { "10.0.0.50" } } }
+    fake_resolver = Object.new
+    fake_resolver.define_singleton_method(:getresources) do |name, type|
+      asked << name
+      type == Resolv::DNS::Resource::IN::A ? [ fake_a ] : []
+    end
+    allow(Resolv::DNS).to receive(:new).and_return(fake_resolver)
+
+    described_class.perform_now(wc.id)
+    expect(wc.reload.dns_verified).to be true
+    expect(asked.uniq.first).to match(/\Awokku-check-[0-9a-f]{8}\.tenants\.example\.com\z/)
+  end
 end
+
