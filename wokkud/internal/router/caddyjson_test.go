@@ -403,6 +403,13 @@ const renderGolden = `{
               "handle": [
                 {
                   "handler": "reverse_proxy",
+                  "headers": {
+                    "response": {
+                      "delete": [
+                        "Via"
+                      ]
+                    }
+                  },
                   "upstreams": [
                     {
                       "dial": "127.0.0.1:20001"
@@ -522,7 +529,7 @@ func TestRenderWakeRouteProxiesToControlPlane(t *testing.T) {
 	}
 	resp, _ := h["response"].(map[string]any)
 	del, _ := resp["delete"].([]any)
-	if len(del) != 2 || del[0] != "Strict-Transport-Security" || del[1] != "Set-Cookie" {
+	if len(del) != 3 || del[0] != "Strict-Transport-Security" || del[1] != "Set-Cookie" || del[2] != "Via" {
 		t.Errorf("wake proxy response.delete = %v", resp["delete"])
 	}
 	req, _ := h["request"].(map[string]any)
