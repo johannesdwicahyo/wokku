@@ -10,7 +10,7 @@ export/import), build execution, cron runs, and router config rendering
 for Caddy.
 
 ## Config (env, `/etc/wokkud/env` in prod)
-- `WOKKUD_URL`   — your control plane's base URL
+- `WOKKUD_URL`   — your control plane's base URL; must be `https://`, except plain `http://` to localhost (set `WOKKUD_ALLOW_INSECURE_URL=1` to override, which sends the token in cleartext)
 - `WOKKUD_TOKEN` — the host's ingest token (shown when you connect a
   server in the dashboard)
 - `WOKKUD_INTERVAL` — heartbeat cadence (default 15s)
