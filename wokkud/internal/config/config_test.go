@@ -37,3 +37,36 @@ func TestLoadMissingToken(t *testing.T) {
 		t.Fatal("expected error for missing token")
 	}
 }
+
+// Security F-03: the ingest token and op specs travel over this channel,
+// so it must be TLS unless it never leaves the box.
+func TestLoadURLScheme(t *testing.T) {
+	cases := map[string]bool{
+		"https://wokku.cloud":       true,
+		"http://127.0.0.1:3000":     true,
+		"http://localhost:3000":     true,
+		"http://[::1]:3000":         true,
+		"http://wokku.example.com":  false,
+		"http://10.0.0.5:3000":      false,
+		"http://127.0.0.1.evil.com": false,
+		"ftp://wokku.cloud":         false,
+		"wokku.cloud":               false,
+	}
+	for url, ok := range cases {
+		t.Setenv("WOKKUD_URL", url)
+		t.Setenv("WOKKUD_TOKEN", "tok")
+		t.Setenv("WOKKUD_ALLOW_INSECURE_URL", "")
+		if _, err := Load(); (err == nil) != ok {
+			t.Errorf("%s: err=%v, want ok=%v", url, err, ok)
+		}
+	}
+}
+
+func TestLoadInsecureOptIn(t *testing.T) {
+	t.Setenv("WOKKUD_URL", "http://10.0.0.5:3000")
+	t.Setenv("WOKKUD_TOKEN", "tok")
+	t.Setenv("WOKKUD_ALLOW_INSECURE_URL", "1")
+	if _, err := Load(); err != nil {
+		t.Fatalf("explicit opt-in must allow plain http: %v", err)
+	}
+}
