@@ -45,7 +45,7 @@ module Api
           unless domain.reload.dns_verified?
             return render_api_error(:domain_not_verified, status: :unprocessable_entity,
               message: "#{domain.hostname} does not point at this app's server yet, so no certificate can be issued",
-              hint: "Point an A record at #{domain.app_record.server&.host} (or a CNAME at the app's #{Wokku.config.canonical_domain} hostname), DNS-only. HTTPS is enabled automatically once it resolves; wildcard hostnames are not supported.")
+              hint: "Point an A record at #{domain.app_record.server&.host} (or a CNAME at the app's #{Wokku.config.canonical_domain} hostname), DNS-only (for a wildcard, the * record). HTTPS is enabled automatically once it resolves.")
           end
         end
         domain.update(pending_action: "ssl_enable")
