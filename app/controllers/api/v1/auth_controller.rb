@@ -6,17 +6,22 @@ module Api
       skip_before_action :authenticate_api_token!, only: [ :login, :apple, :mobile_token ]
 
       def login
-        user = User.find_by(email: params[:email])
-        if user&.valid_password?(params[:password])
+        # .to_s: an array email must not become a WHERE email IN (...) lookup.
+        user = User.find_for_authentication(email: params[:email].to_s)
+        # Locked (lockable) and deleted accounts get the same answer as a
+        # wrong password.
+        if user&.valid_password?(params[:password].to_s) && user.active_for_authentication?
           # Admin must have 2FA enabled; any 2FA user must provide otp_code
-          # (authenticator or recovery code).
+          # (authenticator or recovery code). Wrong codes count toward the
+          # same lockable limit as the web challenge.
           if user.admin? && !user.two_factor_enabled?
             return render json: { error: "Admin must enable 2FA before using the API. Log in at wokku.cloud first." }, status: :forbidden
           end
-          if user.two_factor_enabled? && !user.consume_second_factor!(params[:otp_code])
+          if user.two_factor_enabled? && !user.valid_for_authentication? { user.consume_second_factor!(params[:otp_code]) }
             track_failed_login!
             return render json: { error: "Invalid or missing OTP code. Provide otp_code parameter." }, status: :unauthorized
           end
+          user.update_columns(failed_attempts: 0) if user.failed_attempts.to_i.positive?
 
           token, plain_token = ApiToken.create_with_token!(
             user: user,

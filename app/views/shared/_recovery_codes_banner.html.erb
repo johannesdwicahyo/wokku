@@ -1,0 +1,9 @@
+<%# 2FA on but no unused recovery codes: losing the phone would lock them out. %>
+<% if user_signed_in? && current_user.two_factor_enabled? && current_user.otp_backup_codes.blank? %>
+  <div data-recovery-codes-banner class="bg-danger-soft border-b border-line px-4 py-2.5 text-sm text-danger">
+    <div class="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+      <span><%= t("auth.two_factor.no_codes_banner") %></span>
+      <%= link_to t("auth.two_factor.regenerate"), dashboard_two_factor_path, class: "font-bold underline" %>
+    </div>
+  </div>
+<% end %>

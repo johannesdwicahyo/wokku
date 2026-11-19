@@ -10,7 +10,7 @@ class Users::TwoFactorChallengesController < ApplicationController
 
   def create
     unless @user.active_for_authentication?
-      return abandon(I18n.t("devise.failure.#{@user.inactive_message}", default: I18n.t("devise.failure.locked")))
+      return abandon(I18n.t("devise.failure.#{@user.inactive_message}", default: I18n.t("devise.failure.inactive")))
     end
 
     if @user.valid_for_authentication? { @user.consume_second_factor!(params[:code]) }

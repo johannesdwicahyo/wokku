@@ -40,6 +40,7 @@ id:
       invalid_code: "Kode tidak valid. Silakan coba lagi."
       admin_cannot_disable: "Akun admin tidak bisa menonaktifkan autentikasi dua faktor."
       codes_regenerated: "Kode pemulihan baru dibuat. Kode lama tidak berlaku lagi."
+      no_codes_banner: "Kamu tidak punya kode pemulihan lagi. Jika kehilangan aplikasi autentikator, kamu tidak bisa masuk."
     two_factor_challenge:
       title: "Autentikasi dua faktor"
       sub: "// masukkan kode dari aplikasi autentikator kamu"

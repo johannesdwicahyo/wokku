@@ -22,12 +22,19 @@ class User < ApplicationRecord
 
   # Second factor for every sign-in path: a current TOTP or an unused
   # recovery code (consumed on use). Recovery codes are hex, so the
-  # dashes/spaces people add when copying them are dropped.
+  # dashes/spaces people add when copying them are dropped. Only the
+  # check matching the input's shape runs (a recovery-code miss costs a
+  # bcrypt per stored code), under a row lock so two requests can't both
+  # spend the same code or TOTP step.
   def consume_second_factor!(code)
-    code = code.to_s.gsub(/[\s-]/, "")
-    return false if code.blank?
-
-    validate_and_consume_otp!(code) || invalidate_otp_backup_code!(code)
+    code = code.to_s.gsub(/[\s-]/, "").downcase
+    if code.match?(/\A\d{6}\z/)
+      with_lock { validate_and_consume_otp!(code) }
+    elsif code.match?(/\A\h{#{2 * self.class.otp_backup_code_length}}\z/)
+      with_lock { invalidate_otp_backup_code!(code) }
+    else
+      false
+    end
   end
 
   TOKEN_REFRESH_WINDOW = 60.seconds

@@ -12,12 +12,19 @@ class Users::SessionsController < Devise::SessionsController
   private
 
   def challenge_two_factor_user
-    creds = params.fetch(:user, {})
-    return unless creds.respond_to?(:key?)
+    # CSRF first: without it, a forged POST would get a right/wrong
+    # password answer (challenge vs. CSRF bounce) that lockable never counts.
+    return unless verified_request?
 
-    user = User.find_for_database_authentication(email: creds[:email].to_s)
-    return unless user&.two_factor_enabled? && user.active_for_authentication? && user.valid_password?(creds[:password].to_s)
+    # The params warden's strategies read (Rack form/query params), not
+    # Rails params: those differ when the query string and body disagree,
+    # which would let Devise sign in a user this check never looked at.
+    creds = Rack::Request.new(request.env).params["user"]
+    return unless creds.is_a?(Hash)
 
-    sign_in_with_two_factor(user, remember: Devise::TRUE_VALUES.include?(creds[:remember_me]))
+    user = User.find_for_database_authentication(email: creds["email"].to_s)
+    return unless user&.two_factor_enabled? && user.active_for_authentication? && user.valid_password?(creds["password"].to_s)
+
+    sign_in_with_two_factor(user, remember: Devise::TRUE_VALUES.include?(creds["remember_me"]))
   end
 end

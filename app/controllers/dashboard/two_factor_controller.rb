@@ -9,6 +9,9 @@ module Dashboard
     end
 
     def enable
+      # Already on: a stray POST must not rotate the secret under the user.
+      return redirect_to(dashboard_two_factor_path) if current_user.two_factor_enabled?
+
       if current_user.validate_and_consume_otp!(params[:otp_code])
         current_user.otp_required_for_login = true
         show_new_codes(t("auth.two_factor.enabled_notice"))
@@ -23,7 +26,7 @@ module Dashboard
 
     # New set of recovery codes, proven with a current second factor.
     def regenerate_codes
-      if current_user.two_factor_enabled? && current_user.consume_second_factor!(params[:otp_code])
+      if current_user.two_factor_enabled? && second_factor_ok?
         show_new_codes(t("auth.two_factor.codes_regenerated"))
       else
         redirect_to dashboard_two_factor_path, alert: t("auth.two_factor.invalid_code")
@@ -36,7 +39,7 @@ module Dashboard
         return
       end
 
-      if current_user.consume_second_factor!(params[:otp_code])
+      if second_factor_ok?
         current_user.update!(otp_required_for_login: false, otp_secret: nil, otp_backup_codes: nil)
         redirect_to dashboard_profile_path, notice: t("auth.two_factor.disabled_notice")
       else
@@ -46,12 +49,19 @@ module Dashboard
 
     private
 
+    # Wrong codes count toward Devise lockable like a wrong password; at the
+    # limit the account locks, which also ends this session.
+    def second_factor_ok?
+      current_user.valid_for_authentication? { current_user.consume_second_factor!(params[:otp_code]) }
+    end
+
     # Rendered (not redirected) so the plaintext codes exist only in this
     # one response; the DB keeps hashes.
     def show_new_codes(notice)
       @recovery_codes = current_user.generate_otp_backup_codes!
       current_user.save!
       flash.now[:notice] = notice
+      response.headers["Cache-Control"] = "no-store"
       render :show
     end
 

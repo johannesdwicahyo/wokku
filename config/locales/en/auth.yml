@@ -40,6 +40,7 @@ en:
       invalid_code: "Invalid code. Please try again."
       admin_cannot_disable: "Admin accounts cannot disable two-factor authentication."
       codes_regenerated: "New recovery codes generated. The old ones no longer work."
+      no_codes_banner: "You have no recovery codes left. If you lose your authenticator you will be locked out."
     two_factor_challenge:
       title: "Two-factor authentication"
       sub: "// enter the code from your authenticator app"
