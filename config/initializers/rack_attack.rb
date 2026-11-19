@@ -25,7 +25,8 @@ class Rack::Attack
 
   throttle("logins/email", limit: 5, period: 20.seconds) do |req|
     if wokku_path(req) == "/users/sign_in" && req.post?
-      req.params.dig("user", "email")&.downcase&.strip
+      email = req.params["user"].is_a?(Hash) ? req.params["user"]["email"] : nil
+      email.downcase.strip if email.is_a?(String)
     end
   end
 
@@ -36,7 +37,8 @@ class Rack::Attack
 
   throttle("api_login/email", limit: 5, period: 1.minute) do |req|
     if wokku_path(req) == "/api/v1/auth/login" && req.post?
-      req.params["email"]&.to_s&.downcase&.strip.presence
+      # Strings only: an array email would get a fresh key per request.
+      req.params["email"].downcase.strip.presence if req.params["email"].is_a?(String)
     end
   end
 
@@ -52,6 +54,16 @@ class Rack::Attack
   # Web side of the iOS handoff: each confirm mints a code.
   throttle("mobile_auth_confirm/ip", limit: 10, period: 1.minute) do |req|
     req.ip if wokku_path(req) == "/mobile/auth/confirm" && req.post?
+  end
+
+  # 2FA step of web sign-in. Lockable caps guesses per account; these stop
+  # parallel bursts racing past it.
+  throttle("two_factor/ip", limit: 10, period: 1.minute) do |req|
+    req.ip if wokku_path(req) == "/users/two_factor" && req.post?
+  end
+
+  throttle("two_factor/user", limit: 5, period: 1.minute) do |req|
+    req.session["two_factor_user_id"]&.to_s if wokku_path(req) == "/users/two_factor" && req.post?
   end
 
   # Fail2Ban: ban an IP for 1h after 20 failed API logins in 10m. The filter

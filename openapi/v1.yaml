@@ -3087,7 +3087,7 @@ paths:
                   type: string
   "/api/v1/auth/login":
     post:
-      summary: Exchange email + password (+ otp_code for admins) for an API token
+      summary: Exchange email + password (+ otp_code when 2FA is on) for an API token
       operationId: auth.login
       tags:
       - auth
@@ -3121,7 +3121,7 @@ paths:
                       role:
                         type: string
         '401':
-          description: invalid credentials (or bad/missing admin OTP)
+          description: invalid credentials (or bad/missing OTP for a 2FA account)
           content:
             application/json:
               schema:
@@ -3146,7 +3146,8 @@ paths:
                   type: string
                 otp_code:
                   type: string
-                  description: Required for admin users
+                  description: Required when the account has 2FA enabled (authenticator
+                    or recovery code)
                 name:
                   type: string
                   description: Label for the new token
@@ -3193,8 +3194,8 @@ paths:
               schema:
                 "$ref": "#/components/schemas/Error"
         '403':
-          description: admin account, or no account may be created (not_authorized
-            | registration_closed)
+          description: admin account, 2FA account, or no account may be created (not_authorized
+            | two_factor_required | registration_closed)
           content:
             application/json:
               schema:

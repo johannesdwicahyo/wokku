@@ -4,12 +4,37 @@ class User < ApplicationRecord
          :omniauthable, omniauth_providers: [ :google_oauth2, :github, :gitlab, :bitbucket, :apple ],
          otp_secret_encryption_key: Rails.application.credentials.secret_key_base
 
+  # 2FA recovery codes. The model half of devise :two_factor_backupable only:
+  # that module's warden strategy re-runs a failed password sign-in and
+  # counts it against lockable twice. Codes are checked by
+  # consume_second_factor! (Users::TwoFactorChallengesController, API login).
+  include Devise::Models::TwoFactorBackupable
+  self.otp_number_of_backup_codes = 10
+  self.otp_backup_code_length = 10
+
   encrypts :gitlab_access_token, :gitlab_refresh_token,
            :bitbucket_access_token, :bitbucket_refresh_token,
            :apple_refresh_token
 
   def two_factor_enabled?
     otp_required_for_login?
+  end
+
+  # Second factor for every sign-in path: a current TOTP or an unused
+  # recovery code (consumed on use). Recovery codes are hex, so the
+  # dashes/spaces people add when copying them are dropped. Only the
+  # check matching the input's shape runs (a recovery-code miss costs a
+  # bcrypt per stored code), under a row lock so two requests can't both
+  # spend the same code or TOTP step.
+  def consume_second_factor!(code)
+    code = code.to_s.gsub(/[\s-]/, "").downcase
+    if code.match?(/\A\d{6}\z/)
+      with_lock { validate_and_consume_otp!(code) }
+    elsif code.match?(/\A\h{#{2 * self.class.otp_backup_code_length}}\z/)
+      with_lock { invalidate_otp_backup_code!(code) }
+    else
+      false
+    end
   end
 
   TOKEN_REFRESH_WINDOW = 60.seconds
