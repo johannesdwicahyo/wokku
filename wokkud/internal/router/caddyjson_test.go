@@ -127,7 +127,7 @@ func TestRenderSkipsAppsWithoutUpstreamsAndNilCert(t *testing.T) {
 	if bravoRoute == nil {
 		t.Fatalf("no bravo route found: %v", routes)
 	}
-	handle := dig(t, bravoRoute, "handle").([]any)[0].(map[string]any)
+	handle := lastHandler(dig(t, bravoRoute, "handle"))
 	ups := handle["upstreams"].([]any)
 	if len(ups) != 1 || ups[0].(map[string]any)["dial"] != "10.77.0.9:3000" {
 		t.Errorf("bravo upstreams = %v, want exactly [{dial: 10.77.0.9:3000}]", ups)
@@ -261,7 +261,7 @@ func TestRenderDialUpstreamPassesThroughVerbatim(t *testing.T) {
 	if len(routes) != 1 {
 		t.Fatalf("routes = %d, want 1", len(routes))
 	}
-	handle := dig(t, routes[0].(map[string]any), "handle").([]any)[0].(map[string]any)
+	handle := lastHandler(dig(t, routes[0].(map[string]any), "handle"))
 	ups := handle["upstreams"].([]any)
 	if len(ups) != 1 || ups[0].(map[string]any)["dial"] != "127.0.0.1:31005" {
 		t.Errorf("gamma upstreams = %v, want exactly [{dial: 127.0.0.1:31005}]", ups)
@@ -301,7 +301,7 @@ func TestRenderMixedLocalAndDialUpstreamsResolveIndependently(t *testing.T) {
 	for _, r := range routes {
 		route := r.(map[string]any)
 		hosts := dig(t, route, "match").([]any)[0].(map[string]any)["host"].([]any)
-		handle := dig(t, route, "handle").([]any)[0].(map[string]any)
+		handle := lastHandler(dig(t, route, "handle"))
 		byHost[hosts[0].(string)] = handle["upstreams"].([]any)
 	}
 	if ups := byHost["alpha.wokku.app"]; len(ups) != 1 || ups[0].(map[string]any)["dial"] != "172.17.0.3:5000" {
@@ -349,7 +349,7 @@ func TestRenderMaintenanceServes503(t *testing.T) {
 	for _, r := range routes {
 		route := r.(map[string]any)
 		hosts := dig(t, route, "match").([]any)[0].(map[string]any)["host"].([]any)
-		byHost[hosts[0].(string)] = dig(t, route, "handle").([]any)[0].(map[string]any)
+		byHost[hosts[0].(string)] = lastHandler(dig(t, route, "handle"))
 	}
 	alpha := byHost["alpha.wokku.app"]
 	if alpha == nil {
@@ -402,14 +402,16 @@ const renderGolden = `{
             {
               "handle": [
                 {
+                  "handler": "headers",
+                  "response": {
+                    "deferred": true,
+                    "delete": [
+                      "Via"
+                    ]
+                  }
+                },
+                {
                   "handler": "reverse_proxy",
-                  "headers": {
-                    "response": {
-                      "delete": [
-                        "Via"
-                      ]
-                    }
-                  },
                   "upstreams": [
                     {
                       "dial": "127.0.0.1:20001"
@@ -529,7 +531,7 @@ func TestRenderWakeRouteProxiesToControlPlane(t *testing.T) {
 	}
 	resp, _ := h["response"].(map[string]any)
 	del, _ := resp["delete"].([]any)
-	if len(del) != 3 || del[0] != "Strict-Transport-Security" || del[1] != "Set-Cookie" || del[2] != "Via" {
+	if len(del) != 2 || del[0] != "Strict-Transport-Security" || del[1] != "Set-Cookie" {
 		t.Errorf("wake proxy response.delete = %v", resp["delete"])
 	}
 	req, _ := h["request"].(map[string]any)
@@ -581,4 +583,11 @@ func TestRenderEnablesPerHostMetrics(t *testing.T) {
 	if !strings.Contains(string(out), `"per_host": true`) {
 		t.Errorf("per-host metrics not enabled:\n%s", out)
 	}
+}
+
+// lastHandler is a route's terminal handler (reverse_proxy, or the static
+// maintenance response); stripVia may sit in front of it.
+func lastHandler(handle any) map[string]any {
+	hs := handle.([]any)
+	return hs[len(hs)-1].(map[string]any)
 }
