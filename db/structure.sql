@@ -1702,7 +1702,8 @@ CREATE TABLE public.users (
     apple_uid character varying,
     apple_refresh_token text,
     apple_token_client_id character varying,
-    email_provider_verified boolean DEFAULT false NOT NULL
+    email_provider_verified boolean DEFAULT false NOT NULL,
+    otp_backup_codes character varying[]
 );
 
 
@@ -4668,6 +4669,7 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261119000001'),
 ('20261118000001'),
 ('20261117000001'),
 ('20261116000001'),

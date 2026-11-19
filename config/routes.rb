@@ -14,7 +14,10 @@ Rails.application.routes.draw do
   get  "/setup", to: "setup#new",    as: :setup
   post "/setup", to: "setup#create"
 
-  devise_for :users, controllers: { omniauth_callbacks: "users/omniauth_callbacks" }
+  devise_for :users, controllers: { omniauth_callbacks: "users/omniauth_callbacks", sessions: "users/sessions" }
+  # 2FA step of a web sign-in (Users::TwoFactorChallengesController).
+  get  "/users/two_factor", to: "users/two_factor_challenges#show", as: :users_two_factor
+  post "/users/two_factor", to: "users/two_factor_challenges#create"
   get "mobile/auth/start", to: "mobile/auth#start", as: :mobile_auth_start
   post "mobile/auth/confirm", to: "mobile/auth#confirm", as: :mobile_auth_confirm
   # Registrations are OAuth-only — redirect any lingering /users/sign_up links
@@ -159,6 +162,7 @@ Rails.application.routes.draw do
     resources :ssh_keys, only: [ :create, :destroy ]
     resource :two_factor, only: [ :show ], controller: "two_factor" do
       post :enable
+      post :regenerate_codes
       delete :disable
     end
     post "locale", to: "locales#update", as: :locale

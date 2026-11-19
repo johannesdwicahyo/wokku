@@ -1,4 +1,6 @@
 class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
+  include TwoFactorSignIn
+
   # Apple returns with a cross-site form POST that carries no Rails
   # authenticity token; OmniAuth's state parameter is the CSRF check.
   skip_before_action :verify_authenticity_token, only: :apple
@@ -31,8 +33,8 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       end
 
       persist_provider_tokens(:gitlab)
-      sign_in_and_redirect @user, event: :authentication
-      set_flash_message(:notice, :success, kind: "GitLab") if is_navigational_format?
+      signed_in = sign_in_with_two_factor(@user)
+      set_flash_message(:notice, :success, kind: "GitLab") if signed_in && is_navigational_format?
     else
       redirect_to new_user_session_path, alert: "Could not sign in with GitLab."
     end
@@ -57,8 +59,8 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       end
 
       persist_provider_tokens(:bitbucket)
-      sign_in_and_redirect @user, event: :authentication
-      set_flash_message(:notice, :success, kind: "Bitbucket") if is_navigational_format?
+      signed_in = sign_in_with_two_factor(@user)
+      set_flash_message(:notice, :success, kind: "Bitbucket") if signed_in && is_navigational_format?
     else
       redirect_to root_path, alert: "Could not sign in with Bitbucket: #{@user.errors.full_messages.join(", ")}"
     end
@@ -119,8 +121,8 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       flash[:posthog_props] = { provider: provider.downcase }
     end
 
-    sign_in_and_redirect @user, event: :authentication
-    set_flash_message(:notice, :success, kind: provider) if is_navigational_format?
+    signed_in = sign_in_with_two_factor(@user)
+    set_flash_message(:notice, :success, kind: provider) if signed_in && is_navigational_format?
   end
 
   def persist_provider_tokens(provider)

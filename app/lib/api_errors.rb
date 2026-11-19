@@ -14,6 +14,9 @@ module ApiErrors
     not_authorized:    { status: :forbidden, retryable: false,
                          message: "Not authorized",
                          hint: "Your token's user is not a member of the team that owns this resource." },
+    two_factor_required: { status: :forbidden, retryable: false,
+                         message: "This account has two-factor authentication. Use the browser sign-in option instead.",
+                         hint: "Sign in through the browser (web sign-in), which asks for the authenticator or recovery code." },
     # resources
     not_found:         { status: :not_found, retryable: false,
                          message: "Resource not found",
