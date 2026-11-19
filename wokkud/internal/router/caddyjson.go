@@ -18,6 +18,16 @@ const maintenanceBody = `<!doctype html><html><head><meta charset="utf-8"><title
 // addrs; remote (mesh) upstreams from the config are appended verbatim.
 // An app renders if anything can back it — locally resolved or mesh; only
 // a fully backless app is skipped, avoiding advertising a route nothing serves.
+// stripVia removes the "Via: 1.1 Caddy" header reverse_proxy adds to every
+// response (discloses the proxy software — gymloka review, 2026-11-20).
+// reverse_proxy's own headers.response.delete runs BEFORE Caddy adds Via,
+// so it has to be a deferred headers handler in front of the proxy
+// (verified on Caddy v2.11.4).
+var stripVia = map[string]any{
+	"handler":  "headers",
+	"response": map[string]any{"deferred": true, "delete": []any{"Via"}},
+}
+
 func Render(cfg *control.RouterConfig, upstreams map[string][]string, askURL, certDir string) ([]byte, error) {
 	httpsPort, httpPort := 8443, 8080
 	if cfg.ListenMode == "live" {
@@ -53,6 +63,7 @@ func Render(cfg *control.RouterConfig, upstreams map[string][]string, askURL, ce
 			routes = append(routes, map[string]any{
 				"match": []any{map[string]any{"host": hosts}},
 				"handle": []any{
+					stripVia,
 					map[string]any{"handler": "rewrite", "uri": app.Wake.Path},
 					map[string]any{
 						"handler":   "reverse_proxy",
@@ -73,7 +84,7 @@ func Render(cfg *control.RouterConfig, upstreams map[string][]string, askURL, ce
 								},
 							},
 							"response": map[string]any{
-								"delete": []any{"Strict-Transport-Security", "Set-Cookie", "Via"},
+								"delete": []any{"Strict-Transport-Security", "Set-Cookie"},
 							},
 						},
 					},
@@ -114,13 +125,10 @@ func Render(cfg *control.RouterConfig, upstreams map[string][]string, askURL, ce
 		}
 		routes = append(routes, map[string]any{
 			"match": []any{map[string]any{"host": hosts}},
-			"handle": []any{map[string]any{
-				"handler":   "reverse_proxy",
-				"upstreams": ups,
-				// Caddy adds "Via: 1.1 Caddy" to every proxied response, which
-				// discloses the proxy software (gymloka review, 2026-11-20).
-				"headers": map[string]any{"response": map[string]any{"delete": []any{"Via"}}},
-			}},
+			"handle": []any{
+				stripVia,
+				map[string]any{"handler": "reverse_proxy", "upstreams": ups},
+			},
 		})
 	}
 
