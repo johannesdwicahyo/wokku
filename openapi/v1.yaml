@@ -4917,7 +4917,7 @@ paths:
       - bearer: []
       responses:
         '202':
-          description: issuance queued
+          description: issuance queued (DNS already points at the app's server)
           content:
             application/json:
               schema:
@@ -4929,6 +4929,13 @@ paths:
                     type: string
                   domain:
                     type: string
+        '422':
+          description: DNS does not point at the app's server yet (domain_not_verified);
+            re-checked on the spot
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
         '401':
           description: missing or invalid token
           content:
