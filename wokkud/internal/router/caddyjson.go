@@ -73,7 +73,7 @@ func Render(cfg *control.RouterConfig, upstreams map[string][]string, askURL, ce
 								},
 							},
 							"response": map[string]any{
-								"delete": []any{"Strict-Transport-Security", "Set-Cookie"},
+								"delete": []any{"Strict-Transport-Security", "Set-Cookie", "Via"},
 							},
 						},
 					},
@@ -113,8 +113,14 @@ func Render(cfg *control.RouterConfig, upstreams map[string][]string, askURL, ce
 			ups[i] = map[string]any{"dial": d}
 		}
 		routes = append(routes, map[string]any{
-			"match":  []any{map[string]any{"host": hosts}},
-			"handle": []any{map[string]any{"handler": "reverse_proxy", "upstreams": ups}},
+			"match": []any{map[string]any{"host": hosts}},
+			"handle": []any{map[string]any{
+				"handler":   "reverse_proxy",
+				"upstreams": ups,
+				// Caddy adds "Via: 1.1 Caddy" to every proxied response, which
+				// discloses the proxy software (gymloka review, 2026-11-20).
+				"headers": map[string]any{"response": map[string]any{"delete": []any{"Via"}}},
+			}},
 		})
 	}
 
