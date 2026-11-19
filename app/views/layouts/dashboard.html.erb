@@ -23,6 +23,22 @@
     { label: t("console.sidebar.items.activity"),  key: :activity,  href: dashboard_activities_path, icon: "activity", active: path.start_with?("/dashboard/activities") }
   ]
 
+  # Host-app extension point; a failing callable must never break the page.
+  primary_items += begin
+    Array.wrap(Wokku.config.sidebar_extra_items.call(self)).filter_map do |i|
+      next unless i.is_a?(Hash)
+      i = i.symbolize_keys
+      next if i[:label].blank? || i[:href].blank?
+      # Only pass an icon the sidebar can render; otherwise omit it.
+      i.delete(:icon) unless i[:icon].to_s.match?(/\A[a-z_]+\z/) && lookup_context.exists?("shared/icons/#{i[:icon]}", [], true)
+      i
+    end
+  rescue StandardError => e
+    Rails.logger.warn("sidebar_extra_items failed: #{e.class}: #{e.message}")
+    Sentry.capture_exception(e, level: :warning) if defined?(Sentry)
+    []
+  end
+
   workspace_items = [
     # Servers is admin-scoped in the engine; members have nothing to see there.
     (if current_user&.admin?
