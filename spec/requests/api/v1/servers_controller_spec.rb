@@ -57,7 +57,7 @@ RSpec.describe "API::V1::ServersController", type: :request do
     create_body = JSON.parse(response.body)
     get api_v1_servers_path, headers: user_headers
     [ show_body, create_body, *JSON.parse(response.body) ].each do |s|
-      expect(s.keys).not_to include("ssh_private_key", "ingest_token")
+      expect(s.keys).not_to include("ssh_private_key", "ingest_token", "ingest_token_digest")
     end
     expect(response.body).not_to include("FAKE-PRIVATE-KEY")
   end
