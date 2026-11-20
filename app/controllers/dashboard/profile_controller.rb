@@ -17,7 +17,7 @@ module Dashboard
     private
 
     def profile_params
-      params.require(:user).permit(:email, :currency, :daily_debit_email_subscribed)
+      params.require(:user).permit(:email, :locale, :currency, :daily_debit_email_subscribed)
     end
   end
 end

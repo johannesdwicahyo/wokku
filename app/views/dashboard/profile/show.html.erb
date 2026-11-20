@@ -81,14 +81,14 @@
       </div>
       <div class="p-6">
         <%= form_with url: dashboard_profile_path, method: :patch, local: true, class: "grid grid-cols-1 sm:grid-cols-2 gap-4" do |f| %>
-          <%= f.fields_for :user, current_user do |u| %>
+          <%= fields_for :user, current_user do |u| %>
             <div>
               <label class="block text-xs font-semibold text-ink-soft mb-1"><%= t("dashboard.profile.language", default: "Language") %></label>
               <%= u.select :locale,
                     [["English", "en"], ["Bahasa Indonesia", "id"]],
                     {},
                     class: "w-full bg-paper text-ink border-1.5 border-ink rounded-md px-3 py-2 text-sm focus:outline-none focus:shadow-brutal-sm",
-                    onchange: "this.form.requestSubmit()" %>
+                    data: { controller: "auto-submit", action: "change->auto-submit#submit" } %>
             </div>
             <% if wokku_cloud? %><%# billing currency only exists where there is billing %>
             <div>
@@ -103,7 +103,7 @@
                       [["USD ($)", "usd"], ["IDR (Rp)", "idr"]],
                       {},
                       class: "w-full bg-paper text-ink border-1.5 border-ink rounded-md px-3 py-2 text-sm focus:outline-none focus:shadow-brutal-sm",
-                      onchange: "this.form.requestSubmit()" %>
+                      data: { controller: "auto-submit", action: "change->auto-submit#submit" } %>
               <% end %>
             </div>
             <% end %>

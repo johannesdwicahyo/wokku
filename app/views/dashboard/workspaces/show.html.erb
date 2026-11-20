@@ -114,7 +114,7 @@
                   <%= form_with url: dashboard_workspace_team_member_path(@workspace, m), method: :patch, local: true, class: "flex gap-2" do %>
                     <%= select_tag "team_membership[role]",
                           options_for_select([ %w[viewer viewer], %w[member member], %w[admin admin] ], m.role),
-                          onchange: "this.form.submit()",
+                          data: { controller: "auto-submit", action: "change->auto-submit#submit" },
                           class: "border border-rule-soft bg-bg px-2 py-1 text-ink text-[11px]" %>
                   <% end %>
                 <% else %>
