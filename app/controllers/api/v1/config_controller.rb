@@ -7,7 +7,7 @@ module Api
       def show
         env = @app_record.runtime_env
         # Viewers see which keys exist, never the secrets in them.
-        return render json: { config: env.transform_values { nil }, masked: true } unless policy(@app_record).update?
+        return render json: { config: env.transform_values { nil }, masked: true } unless reveal_secrets?(@app_record)
 
         render json: { config: env, masked: false }
       end

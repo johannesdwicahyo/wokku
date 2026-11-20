@@ -36,6 +36,13 @@ RSpec.describe ApplicationCable::Connection, type: :channel do
       }.to have_rejected_connection
     end
 
+    it "rejects a read-only token (the terminal channel runs commands)" do
+      token_record.update!(scope: "read")
+      expect {
+        connect headers: { "Authorization" => "Bearer #{plain_token}" }
+      }.to have_rejected_connection
+    end
+
     it "touches last_used_at on successful auth" do
       freeze_time do
         connect headers: { "Authorization" => "Bearer #{plain_token}" }

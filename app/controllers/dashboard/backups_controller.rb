@@ -28,7 +28,8 @@ module Dashboard
 
     def download
       backup = Backup.find(params[:id])
-      authorize backup.database_service, :show?
+      # A dump holds every secret — viewers can't read config, so not this either.
+      authorize backup.database_service, :update?
 
       redirect_to backup.download_url(expires_in: 300), allow_other_host: true
     end

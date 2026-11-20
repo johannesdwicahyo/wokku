@@ -21,8 +21,19 @@ module ApiAuthenticatable
       return
     end
 
+    if @current_api_token.read_only? && !(request.get? || request.head?)
+      render json: ApiErrors.payload(:insufficient_scope), status: :forbidden
+      return
+    end
+
     @current_api_token.touch_last_used!
     sign_in(@current_api_token.user, store: false) if respond_to?(:sign_in)
+  end
+
+  # Secrets (env values, DSNs, bucket keys) go to members+ on a full token
+  # only; a read token sees them masked like a team viewer.
+  def reveal_secrets?(record)
+    !current_api_token&.read_only? && policy(record).update?
   end
 
   def extract_token_from_header

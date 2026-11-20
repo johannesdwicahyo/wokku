@@ -32,7 +32,8 @@ module Api
 
       def download
         db = policy_scope(DatabaseService).lookup!(params[:database_id])
-        authorize db, :show?
+        # A dump holds every secret: members+ on a full token, like config.
+        raise Pundit::NotAuthorizedError unless reveal_secrets?(db)
         backup = db.backups.find(params[:id])
         render json: { url: backup.download_url(expires_in: 300), expires_in: 300 }
       end

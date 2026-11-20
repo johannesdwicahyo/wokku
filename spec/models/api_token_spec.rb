@@ -61,4 +61,28 @@ RSpec.describe ApiToken do
       expect(user.device_tokens.deliverable.pluck(:id)).not_to include(b.id)
     end
   end
+
+  describe "scope (F-02)" do
+    it "defaults to full and only allows read/full" do
+      token, = ApiToken.create_with_token!(user: user, name: "d")
+      expect(token.scope).to eq("full")
+      expect(token).not_to be_read_only
+      expect(ApiToken.new(user: user, name: "x", token_digest: "y", scope: "admin")).not_to be_valid
+    end
+  end
+
+  describe ".expiry_from" do
+    it "maps blank to 90 days, never to nil, and parses dates" do
+      freeze_time do
+        expect(ApiToken.expiry_from(nil)).to eq(90.days.from_now)
+        expect(ApiToken.expiry_from("")).to eq(90.days.from_now)
+        expect(ApiToken.expiry_from("never")).to be_nil
+        expect(ApiToken.expiry_from("2027-01-31").to_date).to eq(Date.new(2027, 1, 31))
+      end
+    end
+
+    it "raises ArgumentError on garbage" do
+      expect { ApiToken.expiry_from("soon") }.to raise_error(ArgumentError)
+    end
+  end
 end

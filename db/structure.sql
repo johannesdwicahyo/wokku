@@ -137,7 +137,9 @@ CREATE TABLE public.api_tokens (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     id uuid DEFAULT public.uuidv7() NOT NULL,
-    user_id uuid NOT NULL
+    user_id uuid NOT NULL,
+    scope character varying DEFAULT 'full'::character varying NOT NULL,
+    CONSTRAINT api_tokens_scope_check CHECK (((scope)::text = ANY ((ARRAY['read'::character varying, 'full'::character varying])::text[])))
 );
 
 
@@ -4669,6 +4671,7 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261120000001'),
 ('20261119120001'),
 ('20261118000001'),
 ('20261117000001'),
