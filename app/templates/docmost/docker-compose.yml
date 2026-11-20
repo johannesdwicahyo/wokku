@@ -9,7 +9,7 @@
 
 services:
   docmost:
-    image: docmost/docmost:0.97.0
+    image: docmost/docmost:0.97.0@sha256:40c454d74ffdd9ecb15833e4d96f3a630d59aad862a1869381ae6ee086454419
     environment:
       - NODE_ENV=production
     depends_on:

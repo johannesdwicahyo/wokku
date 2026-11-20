@@ -9,7 +9,7 @@
 
 services:
   twenty:
-    image: twentycrm/twenty:v2.54.0
+    image: twentycrm/twenty:v2.54.0@sha256:e64479a4daa9211864eb45ffdf15ce7a44a3664850dab06213105027538fce1e
     environment:
       - NODE_ENV=production
     depends_on:

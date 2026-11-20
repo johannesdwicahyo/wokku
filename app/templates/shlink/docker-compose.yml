@@ -8,7 +8,7 @@
 
 services:
   shlink:
-    image: shlinkio/shlink:5.1.8
+    image: shlinkio/shlink:5.1.8@sha256:68a722f7677008a50ccf3a9e570966bc37d7627fe6a870b86be28c5dcf9085ee
     ports:
       - "8080:8080"
     depends_on:

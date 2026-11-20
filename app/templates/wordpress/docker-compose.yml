@@ -14,7 +14,7 @@
 
 services:
   wordpress:
-    image: wordpress:7.1
+    image: wordpress:7.1@sha256:344ca7cf3566d266d5dacdd71e3dd4fe9781b0063097fbb9972fe823412ae9e0
     environment:
       - WORDPRESS_DB_HOST=mysql
       - WORDPRESS_DB_USER=wordpress

@@ -9,7 +9,7 @@
 
 services:
   rallly:
-    image: lukevella/rallly:4.16.4
+    image: lukevella/rallly:4.16.4@sha256:1dacb9297f29d89d543f6fe4de2f8703b2c59e854bac1953fc66a6dbc1d1d8b0
     environment:
       - NODE_ENV=production
     depends_on:

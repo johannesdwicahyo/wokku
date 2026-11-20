@@ -11,7 +11,7 @@
 
 services:
   formbricks:
-    image: ghcr.io/formbricks/formbricks:6.1.3
+    image: ghcr.io/formbricks/formbricks:6.1.3@sha256:c933e6f1e745363a68938962a72821866efbfd1ed5b831cd4656ef7ac0d1ad0a
     depends_on:
       - postgres
 

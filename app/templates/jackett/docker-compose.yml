@@ -8,7 +8,7 @@
 
 services:
   jackett:
-    image: lscr.io/linuxserver/jackett:0.20.1175
+    image: lscr.io/linuxserver/jackett:0.20.1175@sha256:bb4dd299bb5290ae1cf53f249cba5631e9f00bcac5fe2bd9c91c1cbe3711d796
     environment:
       - PUID=1000
       - PGID=1000

@@ -13,7 +13,7 @@
 
 services:
   directus:
-    image: directus/directus:12.6.0
+    image: directus/directus:12.6.0@sha256:5a475c31cf547da604b3ef1bd85097145825ca6aab8841dc784bb08eaa21681b
     ports:
       - "8055:8055"
     depends_on:

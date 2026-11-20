@@ -9,7 +9,7 @@
 
 services:
   trigger-dev:
-    image: ghcr.io/triggerdotdev/trigger.dev:v4.8.3
+    image: ghcr.io/triggerdotdev/trigger.dev:v4.8.3@sha256:54aa67fa90cd1fc88ce11ae670e6dbb8f12d2ba8b39e839e882d9e32bb8bdb1f
     environment:
       - NODE_ENV=production
     depends_on:

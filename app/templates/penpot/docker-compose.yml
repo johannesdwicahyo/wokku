@@ -10,7 +10,7 @@
 
 services:
   penpot-frontend:
-    image: penpotapp/frontend:2.18.5
+    image: penpotapp/frontend:2.18.5@sha256:9bc0c288985d2d18a2c3e7b849d8edda317e1bfd99ec6dd494e5bfdcfe411f06
     ports:
       - "9001:80"
     environment:

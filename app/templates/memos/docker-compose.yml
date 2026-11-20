@@ -8,7 +8,7 @@
 
 services:
   memos:
-    image: neosmemo/memos:stable
+    image: neosmemo/memos:stable@sha256:5dcd6e6b973a55b964f2fe2ccdaa33319463ab448a23404ebb5d2acbd19299ba
     environment:
       - MEMOS_MODE=prod
       - MEMOS_PORT=5230

@@ -9,7 +9,7 @@
 
 services:
   infisical:
-    image: infisical/infisical:v0.167.5
+    image: infisical/infisical:v0.167.5@sha256:214c30e74a6c6c38a325d7a6f92cf1fef09cf3bac44064f1dfa4fccc4d6c8d98
     environment:
       - NODE_ENV=production
     depends_on:

@@ -11,7 +11,7 @@
 
 services:
   uptime_kuma:
-    image: louislam/uptime-kuma:1
+    image: louislam/uptime-kuma:1@sha256:70233f4acb5163fd2a59a49909cf01e44415cecff13dba69e3a86647a2919f83
     ports:
       - "3001:3001"
     volumes:

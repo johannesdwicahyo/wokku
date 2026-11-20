@@ -8,7 +8,7 @@
 
 services:
   langflow:
-    image: langflowai/langflow:1.13.0
+    image: langflowai/langflow:1.13.0@sha256:ff2716e017f4a4bbb9e83556bf66c3d5d70a1d3eb7cffd893312600ba84e303f
     depends_on:
       - postgres
 

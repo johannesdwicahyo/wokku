@@ -9,7 +9,7 @@
 
 services:
   hoppscotch:
-    image: hoppscotch/hoppscotch:2026.10.0
+    image: hoppscotch/hoppscotch:2026.10.0@sha256:b4ba7d797fc84f66d55160645453d58620d79490743ae5c74016b20b2516ff9c
     depends_on:
       - postgres
 

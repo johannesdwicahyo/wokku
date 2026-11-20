@@ -9,7 +9,7 @@
 
 services:
   metabase:
-    image: metabase/metabase:v0.65.2.6
+    image: metabase/metabase:v0.65.2.6@sha256:81dc964c9f2cf4ba3a44535bfb6f3a7f243e718e137924ffa294ede68b57b6b3
     environment:
       # JVM defaults to 25% of the box (256 MB) and dies with OutOfMemoryError.
       - JAVA_OPTS=-XX:MaxRAMPercentage=75

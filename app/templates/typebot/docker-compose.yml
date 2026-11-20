@@ -9,7 +9,7 @@
 
 services:
   typebot:
-    image: baptistearno/typebot-builder:3.19.1
+    image: baptistearno/typebot-builder:3.19.1@sha256:9b277e31c84773f49a07ef2d48c90dc83b01cabeaeef6eb1c43005264d194fdd
     depends_on:
       - postgres
 

@@ -14,7 +14,7 @@
 
 services:
   ghost:
-    image: ghost:5
+    image: ghost:5@sha256:3ffcb8f2f1f808806e7a0f694a2b130cd78652a26b4337b33fe7e249ce58665a
     environment:
       - NODE_ENV=production
       - database__client=mysql2

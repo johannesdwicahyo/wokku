@@ -8,7 +8,7 @@
 
 services:
   rocketchat:
-    image: rocket.chat:8.9.0
+    image: rocket.chat:8.9.0@sha256:baef57bf348d8f27e716ba145168f7f6aae0bc3222c21dc4fb1f762ad8ce9c81
     environment:
       - MONGO_URL=mongodb://mongo:27017/rocketchat
       - MONGO_OPLOG_URL=mongodb://mongo:27017/local
