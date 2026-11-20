@@ -20,7 +20,7 @@ func TestBuildCommandsDockerfile(t *testing.T) {
 	os.WriteFile(filepath.Join(dir, "Dockerfile"), []byte("FROM scratch"), 0o644)
 	os.WriteFile(filepath.Join(dir, "Procfile"), []byte("web: node bin/www\n"), 0o644)
 	got := buildCommands(dir, "127.0.0.1:5000/wokku/blog:id-1", "node bin/www")
-	want := [][]string{{"docker", "buildx", "build", "--builder", "wokku-build", "--push", "-t", "127.0.0.1:5000/wokku/blog:id-1", dir}}
+	want := [][]string{{"docker", "buildx", "build", "--builder", "wokku-build-rootless", "--push", "-t", "127.0.0.1:5000/wokku/blog:id-1", dir}}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v", got)
 	}
@@ -37,7 +37,7 @@ func TestBuildCommandsNixpacks(t *testing.T) {
 	got := buildCommands(dir, "127.0.0.1:5000/wokku/blog:id-1", "")
 	want := [][]string{
 		{"nixpacks", "build", dir, "--out", dir},
-		{"docker", "buildx", "build", "--builder", "wokku-build", "--push", "-f", filepath.Join(dir, ".nixpacks", "Dockerfile"), "-t", "127.0.0.1:5000/wokku/blog:id-1", dir},
+		{"docker", "buildx", "build", "--builder", "wokku-build-rootless", "--push", "-f", filepath.Join(dir, ".nixpacks", "Dockerfile"), "-t", "127.0.0.1:5000/wokku/blog:id-1", dir},
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v", got)
@@ -80,8 +80,8 @@ func TestBuildLimitsDefaultsAndClamp(t *testing.T) {
 }
 
 func TestUpdateArgs(t *testing.T) {
-	got := updateArgs(limits{Memory: "16g", CPUs: 8, Pids: 4096})
-	want := []string{"docker", "update", "--memory", "16g", "--memory-swap", "16g", "--cpus", "8", "--pids-limit", "4096", "buildx_buildkit_wokku-build0"}
+	got := updateArgs(limits{Memory: "16g", CPUs: 8, Pids: 4096}, "wokku-buildkitd")
+	want := []string{"docker", "update", "--memory", "16g", "--memory-swap", "16g", "--cpus", "8", "--pids-limit", "4096", "wokku-buildkitd"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v", got)
 	}
