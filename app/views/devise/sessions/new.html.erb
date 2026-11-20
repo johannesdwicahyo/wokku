@@ -19,40 +19,40 @@
           (filled bg-ink) and FIRST. === %>
       <% providers = configured_oauth_providers %>
       <% if providers.include?(:github) %>
-        <%= button_to user_github_omniauth_authorize_path, method: :post, data: { turbo: false },
-              onclick: "window.posthog && posthog.capture('signup_started', {provider: 'github'})",
+        <%= button_to user_github_omniauth_authorize_path, method: :post, data: { turbo: false, controller: "track", action: "click->track#capture",
+                      track_event_value: "signup_started", track_props_value: { provider: "github" }.to_json },
               class: Atoms::ButtonComponent.new(variant: :primary, size: :md, class: "w-full").classes do %>
           <%= t('signin.continue_with', provider: 'GitHub') %>
         <% end %>
       <% end %>
 
       <% if providers.include?(:google_oauth2) %>
-        <%= button_to user_google_oauth2_omniauth_authorize_path, method: :post, data: { turbo: false },
-              onclick: "window.posthog && posthog.capture('signup_started', {provider: 'google'})",
+        <%= button_to user_google_oauth2_omniauth_authorize_path, method: :post, data: { turbo: false, controller: "track", action: "click->track#capture",
+                      track_event_value: "signup_started", track_props_value: { provider: "google" }.to_json },
               class: Atoms::ButtonComponent.new(variant: :outline, size: :md, class: "w-full").classes do %>
           <%= t('signin.continue_with', provider: 'Google') %>
         <% end %>
       <% end %>
 
       <% if providers.include?(:gitlab) %>
-        <%= button_to user_gitlab_omniauth_authorize_path, method: :post, data: { turbo: false },
-              onclick: "window.posthog && posthog.capture('signup_started', {provider: 'gitlab'})",
+        <%= button_to user_gitlab_omniauth_authorize_path, method: :post, data: { turbo: false, controller: "track", action: "click->track#capture",
+                      track_event_value: "signup_started", track_props_value: { provider: "gitlab" }.to_json },
               class: Atoms::ButtonComponent.new(variant: :outline, size: :md, class: "w-full").classes do %>
           <%= t('signin.continue_with', provider: 'GitLab') %>
         <% end %>
       <% end %>
 
       <% if providers.include?(:bitbucket) %>
-        <%= button_to user_bitbucket_omniauth_authorize_path, method: :post, data: { turbo: false },
-              onclick: "window.posthog && posthog.capture('signup_started', {provider: 'bitbucket'})",
+        <%= button_to user_bitbucket_omniauth_authorize_path, method: :post, data: { turbo: false, controller: "track", action: "click->track#capture",
+                      track_event_value: "signup_started", track_props_value: { provider: "bitbucket" }.to_json },
               class: Atoms::ButtonComponent.new(variant: :outline, size: :md, class: "w-full").classes do %>
           <%= t('signin.continue_with', provider: 'Bitbucket') %>
         <% end %>
       <% end %>
 
       <% if providers.include?(:apple) %>
-        <%= button_to user_apple_omniauth_authorize_path, method: :post, data: { turbo: false },
-              onclick: "window.posthog && posthog.capture('signup_started', {provider: 'apple'})",
+        <%= button_to user_apple_omniauth_authorize_path, method: :post, data: { turbo: false, controller: "track", action: "click->track#capture",
+                      track_event_value: "signup_started", track_props_value: { provider: "apple" }.to_json },
               class: Atoms::ButtonComponent.new(variant: :outline, size: :md, class: "w-full").classes do %>
           <%= t('signin.continue_with', provider: 'Apple') %>
         <% end %>
