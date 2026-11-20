@@ -6,6 +6,7 @@ one:
   team: one
   status: 0
   ingest_token: server_one_ingest_token_fixture_value
+  ingest_token_digest: <%= Digest::SHA256.hexdigest("server_one_ingest_token_fixture_value") %>
 
 two:
   name: Server Two
@@ -15,3 +16,4 @@ two:
   team: two
   status: 0
   ingest_token: server_two_ingest_token_fixture_value
+  ingest_token_digest: <%= Digest::SHA256.hexdigest("server_two_ingest_token_fixture_value") %>

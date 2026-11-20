@@ -53,7 +53,7 @@ module Api
 
         def authenticate_server!
           token = request.headers["Authorization"].to_s.sub(/^Bearer /, "")
-          @server = Server.find_by(ingest_token: token) if token.present?
+          @server = Server.find_by_ingest_token(token) if token.present?
           return if @server
           head :unauthorized
         end

@@ -2,6 +2,7 @@ module Api
   module V1
     class ServersController < BaseController
       SUMMARY_FIELDS = %i[id name host port status created_at heartbeat_status heartbeat_at].freeze
+      SECRET_FIELDS = %i[ssh_private_key ingest_token ingest_token_digest].freeze
 
       def index
         authorize Server, :show?
@@ -15,7 +16,7 @@ module Api
         # Any signed-in user may show a server (deploy target / terminal), but
         # operator details (cost, provider, ssh_user, vitals) are admin-only.
         if policy(server).manage?
-          render json: server.as_json(except: [ :ssh_private_key, :ingest_token ])
+          render json: server.as_json(except: SECRET_FIELDS)
         else
           render json: server.as_json(only: SUMMARY_FIELDS)
         end
@@ -27,7 +28,7 @@ module Api
         authorize server
 
         if server.save
-          render json: server.as_json(except: [ :ssh_private_key, :ingest_token ]), status: :created
+          render json: server.as_json(except: SECRET_FIELDS), status: :created
         else
           render_api_error(:validation_failed, message: server.errors.full_messages.to_sentence, details: server.errors.full_messages)
         end

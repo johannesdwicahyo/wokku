@@ -1083,7 +1083,8 @@ CREATE TABLE public.servers (
     wokkud_router_enabled boolean DEFAULT false NOT NULL,
     wokkud_services_enabled boolean DEFAULT false NOT NULL,
     wokkud_cron_enabled boolean DEFAULT false NOT NULL,
-    ssh_alerted_at timestamp(6) without time zone
+    ssh_alerted_at timestamp(6) without time zone,
+    ingest_token_digest character varying
 );
 
 
@@ -2732,6 +2733,13 @@ CREATE UNIQUE INDEX index_app_records_on_swarm_port ON public.app_records USING 
 --
 
 CREATE INDEX index_app_records_on_team_id ON public.app_records USING btree (team_id);
+
+
+--
+-- Name: index_servers_on_ingest_token_digest; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_servers_on_ingest_token_digest ON public.servers USING btree (ingest_token_digest);
 
 
 --
@@ -4671,6 +4679,7 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261120000002'),
 ('20261120000001'),
 ('20261119120001'),
 ('20261118000001'),

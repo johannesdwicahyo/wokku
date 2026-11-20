@@ -52,15 +52,17 @@ module Api
         end
 
         # Caddy's on-demand `ask` request appends only ?domain= and cannot
-        # set an Authorization header — accept the ingest token as a query
-        # param too, but ONLY for tls_allowed. `show` serves the wildcard
+        # set an Authorization header. wokkud now answers the ask on loopback
+        # and forwards it here WITH the header (security F-10); the query
+        # param stays only for agents older than that — ONLY for tls_allowed.
+        # shortcut: drop the ?token= path once every host runs the new wokkud. `show` serves the wildcard
         # cert's key_pem and must stay header-only — a query param leaks
         # into access logs / referrers, an acceptable exposure for the
         # narrow tls_allowed yes/no gate but not for the private key.
         def authenticate_server!
           token = request.headers["Authorization"].to_s.sub(/^Bearer /, "").presence
           token ||= params[:token].to_s.presence if action_name == "tls_allowed"
-          @server = Server.find_by(ingest_token: token) if token
+          @server = Server.find_by_ingest_token(token) if token
           head :unauthorized unless @server
         end
       end

@@ -62,7 +62,7 @@ func New(f configFetcher, controlURL, token string) *Manager {
 		fetch:           f,
 		dir:             "/etc/wokku/caddy",
 		adminURL:        "http://127.0.0.1:2019",
-		askURL:          fmt.Sprintf("%s/api/v1/agent/router/tls_allowed?token=%s", controlURL, token),
+		askURL:          startAskServer(askAddr, controlURL, token),
 		resolve:         dockerResolver(dcli),
 		validate:        caddyValidate,
 		validateTimeout: 10 * time.Second,
