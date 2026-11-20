@@ -279,22 +279,24 @@ func writeFakeCaddy(t *testing.T, dir string) {
 	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
 }
 
-// TestNewAskURLCarriesToken guards the on-demand TLS ask endpoint: Rails'
-// tls_allowed action authenticates via `?token=<ingest_token>` query param
-// (no header path). If New() ever stops embedding it, every on-demand cert
-// request 401s at cutover.
-func TestNewAskURLCarriesToken(t *testing.T) {
+// TestNewAskURLKeepsTokenOutOfTheURL guards the on-demand TLS ask: Caddy
+// asks wokkud on loopback, and the token never appears in the URL (it used to
+// ride as ?token= and land in access logs — security F-10).
+func TestNewAskURLKeepsTokenOutOfTheURL(t *testing.T) {
 	writeFakeCaddy(t, t.TempDir())
+	old := askAddr
+	askAddr = "127.0.0.1:0"
+	t.Cleanup(func() { askAddr = old })
 
 	m := New(&fakeFetcher{}, "https://cp.example", "secret-token")
 	if m == nil {
 		t.Fatal("New returned nil with caddy on PATH")
 	}
-	if !strings.Contains(m.askURL, "token=secret-token") {
-		t.Errorf("askURL = %q, want it to carry ?token=secret-token", m.askURL)
+	if strings.Contains(m.askURL, "secret-token") {
+		t.Errorf("askURL = %q leaks the token", m.askURL)
 	}
-	if !strings.HasPrefix(m.askURL, "https://cp.example/api/v1/agent/router/tls_allowed") {
-		t.Errorf("askURL = %q, want tls_allowed endpoint", m.askURL)
+	if !strings.HasPrefix(m.askURL, "http://127.0.0.1:") || !strings.HasSuffix(m.askURL, "/tls-ask") {
+		t.Errorf("askURL = %q, want the loopback ask endpoint", m.askURL)
 	}
 }
 

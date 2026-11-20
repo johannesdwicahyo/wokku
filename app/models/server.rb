@@ -29,6 +29,14 @@ class Server < ApplicationRecord
   # rotated by setting `ingest_token: nil; save!`.
   before_validation :ensure_ingest_token
 
+  # Agents authenticate with ingest_token; look it up by SHA-256 digest so the
+  # DB comparison can't be timed to recover the token (security F-10).
+  def self.find_by_ingest_token(token)
+    return nil if token.blank?
+
+    find_by(ingest_token_digest: Digest::SHA256.hexdigest(token.to_s))
+  end
+
   validates :name, presence: true, uniqueness: true
   validates :host, presence: true
   validates :port, numericality: { only_integer: true, greater_than: 0 }
@@ -278,5 +286,6 @@ class Server < ApplicationRecord
 
   def ensure_ingest_token
     self.ingest_token ||= SecureRandom.hex(32)
+    self.ingest_token_digest = Digest::SHA256.hexdigest(ingest_token) if ingest_token_changed? || ingest_token_digest.blank?
   end
 end
