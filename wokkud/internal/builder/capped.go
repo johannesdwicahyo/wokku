@@ -10,27 +10,38 @@ import (
 	"strings"
 )
 
-// Tenant builds run on a dedicated buildx builder ("wokku-build"), never on
-// dockerd's built-in one, so they can be capped (security F-01, 2026-11-19):
+// Tenant builds run on a dedicated buildx builder, never on dockerd's
+// built-in one, so they can be capped and isolated (security F-01):
 //
-//   - buildkitd runs in its own container on the HOST network so it can push
-//     to the loopback registry (127.0.0.1:5000), while --oci-worker-net=bridge
-//     gives every RUN step its own netns — tenant code cannot reach host
-//     loopback services.
-//   - memory/cpu/pids limits are applied with `docker update` on the builder
-//     container; RUN steps are nested cgroups beneath it, so one build can't
-//     starve co-tenant apps (fork bomb, OOM). buildx's cgroup-parent driver
-//     opt is ignored under the systemd cgroup driver, hence docker update.
+//   - The builder is a ROOTLESS BuildKit daemon (rootless.go): the container
+//     is not privileged and runs as a dedicated host uid; "root" inside a
+//     build step maps to that unprivileged uid on the host.
+//   - The daemon shares the host network so it can push to the loopback
+//     registry (127.0.0.1:5000), but build steps run in RootlessKit's
+//     detached slirp4netns namespace with --disable-host-loopback, so tenant
+//     code can't reach host loopback services (Caddy admin, registry, ...).
+//   - memory/cpu/pids limits are applied with `docker update` on the daemon
+//     container; build steps are nested cgroups beneath it, so one build
+//     can't starve co-tenant apps (fork bomb, OOM).
 //
-// The limits are re-applied before every build: cheap, idempotent, and it
-// covers a builder container that buildx recreated.
-// ponytail: still a privileged buildkitd as root — a rootless/ephemeral
-// builder is the real isolation fix (tracked separately).
+// The limits are re-applied before every build: cheap and idempotent.
+// WOKKUD_BUILDER_LEGACY=1 falls back to the previous privileged builder
+// (shortcut: remove the fallback once the rootless builder has run a while).
 const (
-	builderName      = "wokku-build"
-	builderContainer = "buildx_buildkit_" + builderName + "0"
-	buildkitImage    = "moby/buildkit:v0.29.0"
+	legacyBuilderName      = "wokku-build"
+	legacyBuilderContainer = "buildx_buildkit_" + legacyBuilderName + "0"
+	buildkitImage          = "moby/buildkit:v0.29.0"
 )
+
+func legacyBuilder() bool { return os.Getenv("WOKKUD_BUILDER_LEGACY") == "1" }
+
+// activeBuilder is the buildx builder every build runs on.
+func activeBuilder() string {
+	if legacyBuilder() {
+		return legacyBuilderName
+	}
+	return builderName
+}
 
 type limits struct {
 	Memory string
@@ -58,12 +69,12 @@ func buildLimits(getenv func(string) string, ncpu int) limits {
 	return l
 }
 
-func updateArgs(l limits) []string {
+func updateArgs(l limits, container string) []string {
 	return []string{"docker", "update",
 		"--memory", l.Memory, "--memory-swap", l.Memory, // swap == memory: no swap escape
 		"--cpus", strconv.FormatFloat(l.CPUs, 'f', -1, 64),
 		"--pids-limit", strconv.Itoa(l.Pids),
-		builderContainer}
+		container}
 }
 
 // buildkitdConfig marks a loopback registry as plain http (it has no TLS)
@@ -90,7 +101,7 @@ func buildEnv(environ []string) []string {
 	return out
 }
 
-// ensureBuilder makes sure the capped builder exists and is running, then
+// ensureBuilder makes sure the builder exists and is running, then
 // (re)applies the limits. Any failure fails the build — never fall back to
 // the uncapped default builder.
 func ensureBuilder(ctx context.Context, pushRef string) error {
@@ -98,11 +109,17 @@ func ensureBuilder(ctx context.Context, pushRef string) error {
 		cmd := exec.CommandContext(ctx, args[0], args[1:]...)
 		cmd.Env = buildEnv(os.Environ())
 		if out, err := cmd.CombinedOutput(); err != nil {
-			return fmt.Errorf("%s: %v: %s", strings.Join(args[:3], " "), err, strings.TrimSpace(string(out)))
+			return fmt.Errorf("%s: %v: %s", strings.Join(args[:min(3, len(args))], " "), err, strings.TrimSpace(string(out)))
 		}
 		return nil
 	}
-	if run("docker", "buildx", "inspect", "--bootstrap", builderName) != nil {
+	if !legacyBuilder() {
+		if err := ensureRootlessBuilder(ctx, run, pushRef); err != nil {
+			return err
+		}
+		return run(updateArgs(buildLimits(os.Getenv, runtime.NumCPU()), builderContainer)...)
+	}
+	if run("docker", "buildx", "inspect", "--bootstrap", legacyBuilderName) != nil {
 		f, err := os.CreateTemp("", "wokku-buildkitd-*.toml")
 		if err != nil {
 			return err
@@ -110,7 +127,7 @@ func ensureBuilder(ctx context.Context, pushRef string) error {
 		defer os.Remove(f.Name())
 		f.WriteString(buildkitdConfig(pushRef))
 		f.Close()
-		if err := run("docker", "buildx", "create", "--name", builderName,
+		if err := run("docker", "buildx", "create", "--name", legacyBuilderName,
 			"--driver", "docker-container",
 			"--driver-opt", "network=host",
 			"--driver-opt", "image="+buildkitImage,
@@ -121,5 +138,5 @@ func ensureBuilder(ctx context.Context, pushRef string) error {
 			return err
 		}
 	}
-	return run(updateArgs(buildLimits(os.Getenv, runtime.NumCPU()))...)
+	return run(updateArgs(buildLimits(os.Getenv, runtime.NumCPU()), legacyBuilderContainer)...)
 }

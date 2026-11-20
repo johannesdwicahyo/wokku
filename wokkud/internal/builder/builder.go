@@ -148,7 +148,7 @@ func Run(ctx context.Context, client *control.Client, job *control.BuildJob) {
 
 // buildCommands picks the build recipe: Dockerfile wins; otherwise
 // nixpacks only writes its plan (--out) into .nixpacks/. Either way the
-// capped wokku-build builder (capped.go) builds and pushes in one step.
+// capped rootless builder (capped.go, rootless.go) builds and pushes in one step.
 //
 // A Procfile web command is baked in via --start-cmd and the Procfile is
 // removed from the build context: dokku git:from-image re-parses an
@@ -160,7 +160,7 @@ func Run(ctx context.Context, client *control.Client, job *control.BuildJob) {
 // lifecycle path gets them via formation_json) — plumb the full formation
 // through dokku ps if a non-lifecycle multi-process app ever needs it.
 func buildCommands(srcDir, pushRef, webCmd string) [][]string {
-	buildx := []string{"docker", "buildx", "build", "--builder", builderName, "--push"}
+	buildx := []string{"docker", "buildx", "build", "--builder", activeBuilder(), "--push"}
 	if _, err := os.Stat(filepath.Join(srcDir, "Dockerfile")); err == nil {
 		return [][]string{append(buildx, "-t", pushRef, srcDir)}
 	}
