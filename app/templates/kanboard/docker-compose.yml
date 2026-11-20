@@ -8,7 +8,7 @@
 
 services:
   kanboard:
-    image: kanboard/kanboard:v1.2.57
+    image: kanboard/kanboard:v1.2.57@sha256:637989624e5362af2b97bfb4be1936fb6b111ea7cbdffea0ae8bd3068dc84125
     environment:
       - DATABASE_URL=postgres://kanboard:kanboard@postgres:5432/kanboard
     ports:

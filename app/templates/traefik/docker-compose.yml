@@ -10,7 +10,7 @@
 
 services:
   traefik:
-    image: traefik:v3.7
+    image: traefik:v3.7@sha256:a6c0194dda77bcb804824580f36fa7edc56e315b1acfe933366c8b52844a78a4
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"

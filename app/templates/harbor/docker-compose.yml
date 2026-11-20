@@ -8,7 +8,7 @@
 
 services:
   harbor-core:
-    image: goharbor/harbor-core:v2.10.0
+    image: goharbor/harbor-core:v2.10.0@sha256:deb1e0c390771e2d835913b1306598596466fd2b782ffd6626067d6f3cfa4cc1
     environment:
       - DATABASE_TYPE=postgresql
       - POSTGRESQL_HOST=postgres

@@ -8,6 +8,6 @@
 
 services:
   linkstack:
-    image: linkstackorg/linkstack:v4.8.8
+    image: linkstackorg/linkstack:v4.8.8@sha256:deba986fc1f7391af629c0bbcca67a1508284176bd3accf69d041ecc887dc7dd
     ports:
       - "80:80"

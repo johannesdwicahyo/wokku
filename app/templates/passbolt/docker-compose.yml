@@ -8,7 +8,7 @@
 
 services:
   passbolt:
-    image: passbolt/passbolt:latest-ce
+    image: passbolt/passbolt:latest-ce@sha256:d9cdf2e42c5401ebc889cba8c4435c058da876eebcaedab9e509c4bc1c34792f
     command: ["/usr/bin/wait-for.sh", "-t", "0", "mariadb:3306", "--", "/docker-entrypoint.sh"]
     environment:
       - APP_FULL_BASE_URL=http://localhost:8080

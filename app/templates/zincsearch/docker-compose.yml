@@ -8,7 +8,7 @@
 
 services:
   zincsearch:
-    image: public.ecr.aws/zinclabs/zincsearch:0.4.10
+    image: public.ecr.aws/zinclabs/zincsearch:0.4.10@sha256:fd865f7d0393428479726117c9f3b827e26eaee7f2fb21a22d8bc894e8f8f40e
     environment:
       - ZINC_FIRST_ADMIN_USER=admin
       - ZINC_FIRST_ADMIN_PASSWORD=Complexpass#123

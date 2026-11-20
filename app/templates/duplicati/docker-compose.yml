@@ -8,7 +8,7 @@
 
 services:
   duplicati:
-    image: lscr.io/linuxserver/duplicati:2.4.1
+    image: lscr.io/linuxserver/duplicati:2.4.1@sha256:ea137d806f2c0556468f2c620bcac963f0825bf45876de274988b42ff13b453a
     environment:
       - PUID=1000
       - PGID=1000

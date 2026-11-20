@@ -9,7 +9,7 @@
 
 services:
   saleor:
-    image: ghcr.io/saleor/saleor:3.23.45
+    image: ghcr.io/saleor/saleor:3.23.45@sha256:e2fa142c005ca8a859e0ed716229beb594f19a51712713df4e259afe15893f57
     depends_on:
       - postgres
       - redis

@@ -9,7 +9,7 @@
 
 services:
   baserow:
-    image: baserow/baserow:2.4.1
+    image: baserow/baserow:2.4.1@sha256:2229bc0ad9c8e1c3c44cef3324ff0501639d44a7b6f64026ebaa44f61cfb038e
     depends_on:
       - postgres
       - redis

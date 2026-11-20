@@ -4,6 +4,7 @@
 # category: productivity
 # tags: notes, wiki, docs, whiteboard, collaboration
 # icon: productivity
+# hidden: true
 # deploy_method: docker_image
 # port: 3010
 

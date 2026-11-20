@@ -8,7 +8,7 @@
 
 services:
   tandoor:
-    image: vabene1111/recipes:2.7.2
+    image: vabene1111/recipes:2.7.2@sha256:1b6d43c3c0f5d2888aa564d9daf29883212b79ad496f59f3c684c099eb1a57b9
     environment:
       - SECRET_KEY=changeme-secret-key
       - DB_ENGINE=django.db.backends.postgresql

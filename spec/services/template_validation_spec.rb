@@ -33,12 +33,15 @@ RSpec.describe "Template validation" do
     end
   end
 
-  it "pins every deployed image to a version, never :latest" do
+  # Security assessment 2026-11-19, F-04: a tag can be re-pointed by whoever
+  # controls the image; a digest can't. Write it as name:tag@sha256:<digest>
+  # (the tag stays for humans). Get the digest with
+  #   docker buildx imagetools inspect <name:tag>   (the top-level "Digest:")
+  it "pins every deployed image to an immutable digest" do
     registry.all.each do |template|
       image = template[:docker_image].to_s
       next if image.empty?
-      pinned = image.include?("@sha256:") || image.split("/").last.match?(/:(?!latest\z)\S+\z/)
-      expect(pinned).to be(true), "#{template[:slug]} deploys unpinned image #{image}"
+      expect(image).to match(/@sha256:[0-9a-f]{64}\z/), "#{template[:slug]} deploys #{image} without a sha256 digest"
     end
   end
 end

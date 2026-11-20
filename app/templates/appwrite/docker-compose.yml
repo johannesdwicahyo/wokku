@@ -9,7 +9,7 @@
 
 services:
   appwrite:
-    image: appwrite/appwrite:2.6.2
+    image: appwrite/appwrite:2.6.2@sha256:bc2d41def03f9a493fb383b0e9bc793cc77a7fcb232da2e1f9893cc6954ea239
     environment:
       - _APP_ENV=production
       - _APP_OPENSSL_KEY_V1=your-secret-key
