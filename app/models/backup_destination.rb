@@ -6,6 +6,7 @@ class BackupDestination < ApplicationRecord
   encrypts :secret_access_key
 
   validates :bucket, presence: true
+  validate :endpoint_url_is_external, if: :will_save_change_to_endpoint_url?
 
   class ConnectionError < StandardError; end
   TEST_OBJECT = ".wokku-connection-test".freeze
@@ -36,6 +37,37 @@ class BackupDestination < ApplicationRecord
     "spaces" => { name: "DigitalOcean Spaces", endpoint_hint: "https://<region>.digitaloceanspaces.com" },
     "wasabi" => { name: "Wasabi", endpoint_hint: "https://s3.<region>.wasabisys.com" }
   }.freeze
+
+  # Security assessment 2026-11-19, F-06: the control plane sends requests to
+  # this endpoint (connection test, every backup), so it must not reach
+  # internal addresses. Loopback, link-local (cloud metadata) and unspecified
+  # are always refused; private ranges only with
+  # the opt-in WOKKU_ALLOW_PRIVATE_BACKUP_ENDPOINT=1 (a LAN MinIO).
+  # shortcut: checked when saved, not at connect time, so a hostname re-pointed
+  # at an internal IP afterwards (DNS rebinding) isn't caught; admin-only field.
+  ALWAYS_BLOCKED = %w[0.0.0.0/8 127.0.0.0/8 169.254.0.0/16 ::/128 ::1/128 fe80::/10].map { IPAddr.new(_1) }.freeze
+  PRIVATE = %w[10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 100.64.0.0/10 fc00::/7].map { IPAddr.new(_1) }.freeze
+
+  def endpoint_url_is_external
+    return if endpoint_url.blank?
+
+    uri = URI.parse(endpoint_url) rescue nil
+    unless uri.is_a?(URI::HTTP) && uri.host.present? && uri.userinfo.nil?
+      return errors.add(:endpoint_url, "must be an http(s) URL like https://s3.example.com")
+    end
+
+    blocked = ALWAYS_BLOCKED + (ENV["WOKKU_ALLOW_PRIVATE_BACKUP_ENDPOINT"] == "1" ? [] : PRIVATE)
+    host = uri.host.delete_prefix("[").delete_suffix("]")
+    internal = Resolv.getaddresses(host).any? do |addr|
+      ip = IPAddr.new(addr)
+      ip = ip.native if ip.ipv4_mapped?
+      blocked.any? { |range| range.family == ip.family && range.include?(ip) }
+    rescue IPAddr::InvalidAddressError
+      false
+    end
+    errors.add(:endpoint_url, "points at an internal address — use the storage provider's public endpoint " \
+                                    "(self-hosting with a MinIO on your private network? set WOKKU_ALLOW_PRIVATE_BACKUP_ENDPOINT=1)") if internal
+  end
 
   def s3_client
     require "aws-sdk-s3"
