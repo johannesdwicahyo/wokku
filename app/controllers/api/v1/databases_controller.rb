@@ -12,7 +12,7 @@ module Api
       def show
         database = policy_scope(DatabaseService).lookup!(params[:id])
         authorize database
-        render json: policy(database).update? ? database : database.as_json(except: :dsn)
+        render json: reveal_secrets?(database) ? database : database.as_json(except: :dsn)
       end
 
       def create

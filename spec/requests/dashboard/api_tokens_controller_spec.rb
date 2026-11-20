@@ -26,6 +26,34 @@ RSpec.describe "Dashboard::ApiTokens", type: :request do
     end
   end
 
+  describe "POST create with scope and expiry (F-02)" do
+    it "creates a read token that expires in 90 days by default" do
+      freeze_time do
+        post dashboard_api_tokens_path, params: { name: "ro", scope: "read" }
+        token = user.api_tokens.find_by!(name: "ro")
+        expect(token).to be_read_only
+        expect(token.expires_at).to eq(90.days.from_now)
+      end
+    end
+
+    it "creates a full token that never expires when asked" do
+      post dashboard_api_tokens_path, params: { name: "forever", scope: "full", expires: "never" }
+      token = user.api_tokens.find_by!(name: "forever")
+      expect(token.scope).to eq("full")
+      expect(token.expires_at).to be_nil
+    end
+
+    it "falls back to read for an unknown scope" do
+      post dashboard_api_tokens_path, params: { name: "odd", scope: "root" }
+      expect(user.api_tokens.find_by!(name: "odd")).to be_read_only
+    end
+
+    it "shows the scope in the list" do
+      post dashboard_api_tokens_path, params: { name: "ro2", scope: "read" }
+      expect(response.body).to include("Read-only")
+    end
+  end
+
   describe "DELETE destroy" do
     it "revokes the token" do
       _, plain = ApiToken.create_with_token!(user: user, name: "revoke-me")

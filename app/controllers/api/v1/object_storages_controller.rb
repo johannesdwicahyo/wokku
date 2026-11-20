@@ -67,7 +67,7 @@ module Api
         render json: { error: @bucket.not_ready_message }, status: :conflict unless @bucket.active?
       end
 
-      def payload(bucket) = bucket.as_api_json(reveal: policy(@app).update?)
+      def payload(bucket) = bucket.as_api_json(reveal: reveal_secrets?(@app))
     end
   end
 end

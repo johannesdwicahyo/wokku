@@ -3,8 +3,8 @@
 # Shared helper for API v1 request specs: builds the Bearer auth header
 # for a given user using ApiToken.create_with_token!.
 module ApiV1AuthHelper
-  def api_v1_token_for(user, name: "test")
-    _, plain = ApiToken.create_with_token!(user: user, name: name)
+  def api_v1_token_for(user, name: "test", scope: "full")
+    _, plain = ApiToken.create_with_token!(user: user, name: name, scope: scope)
     plain
   end
 

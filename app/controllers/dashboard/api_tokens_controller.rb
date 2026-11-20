@@ -4,7 +4,8 @@ module Dashboard
       _token, @plain_token = ApiToken.create_with_token!(
         user: current_user,
         name: params[:name] || "token-#{Time.current.to_i}",
-        expires_at: nil
+        scope: ApiToken::SCOPES.include?(params[:scope]) ? params[:scope] : "read",
+        expires_at: params[:expires] == "never" ? nil : ApiToken::DEFAULT_TTL.from_now
       )
       @tokens = current_user.api_tokens.active.order(created_at: :desc)
     end
