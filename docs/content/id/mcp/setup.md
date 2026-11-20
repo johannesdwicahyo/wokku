@@ -33,7 +33,7 @@ claude plugin install wokku@wokku
 Saat diminta **Wokku API Token**, tempel token kamu. Lalu restart Claude Code.
 
 :::callout tip
-Kalau token belum di-set, plugin akan memakai login [CLI](/docs/cli/install) kamu (`wokku auth:login`).
+Buat token di **Profil → API tokens**. Pilih **Read-only** kalau Claude cukup melihat (status, log, nama config), atau **Full access** supaya Claude bisa deploy dan mengubah sesuatu. Plugin hanya memakai token ini, tidak pernah login [CLI](/docs/cli/install) kamu.
 :::
 
 ## Coba
