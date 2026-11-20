@@ -42,8 +42,14 @@ COPY --from=build /usr/local/bundle /usr/local/bundle
 COPY --from=build /srv/wokku /srv/wokku
 COPY --from=wokkud-builder /wokkud-bin /srv/wokku/wokkud-dist/wokkud
 WORKDIR /srv/wokku/harness
-# tmp/ and log/ are excluded from the build context; puma needs them.
-RUN mkdir -p tmp/pids log
+# Run as an unprivileged user (security assessment 2026-11-19, F-11). It owns
+# only what the app writes: tmp/ and log/ (excluded from the build context;
+# puma needs them), storage/ (local backups) and /var/lib/wokku (git repos).
+RUN groupadd --system --gid 1000 wokku && \
+    useradd wokku --uid 1000 --gid 1000 --create-home --shell /usr/sbin/nologin && \
+    mkdir -p tmp/pids log storage /var/lib/wokku && \
+    chown -R wokku:wokku tmp log storage /var/lib/wokku
+USER 1000:1000
 ENV WOKKUD_BINARY_PATH=/srv/wokku/wokkud-dist/wokkud RAILS_ENV=production RAILS_LOG_TO_STDOUT=1 RAILS_SERVE_STATIC_FILES=1 \
     SOLID_QUEUE_IN_PUMA=1 HARNESS_EAGER_LOAD=1 BUNDLE_DEPLOYMENT=1 WOKKU_VERSION=${WOKKU_VERSION}
 EXPOSE 3000
