@@ -1,4 +1,9 @@
-<%# Admin → settings → add-on scripts (chat widget, analytics, …). Admin-authored HTML, rendered as-is. %>
-<%= SiteSetting.body_scripts.to_s.html_safe %>
+<%# Admin → settings → add-on scripts (chat widget, analytics, …). Admin-authored HTML, rendered as-is,
+    except each <script> gets the request's CSP nonce so a host app can enforce a strict script-src. %>
+<% addon_html = SiteSetting.body_scripts.to_s %>
+<% if (nonce = content_security_policy_nonce).present? %>
+  <% addon_html = addon_html.gsub(/<script\b/i) { %(<script nonce="#{ERB::Util.html_escape(nonce)}") } %>
+<% end %>
+<%= addon_html.html_safe %>
 <%# Host apps may add per-request scripts (e.g. a signed widget identity) in their own app/views/shared/_host_scripts. %>
 <%= render "shared/host_scripts" if lookup_context.exists?("host_scripts", [ "shared" ], true) %>
