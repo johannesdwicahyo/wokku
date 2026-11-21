@@ -62,6 +62,8 @@ class AppRecord < ApplicationRecord
   # rollback). OSS NullPlanEnforcer always allows; the managed enforcer
   # refuses while the team owner is billing-suspended.
   def run_allowed?
+    return false if team&.owner&.abuse_suspended?
+
     Wokku.config.plan_enforcer.allowed?(team, :run_apps)
   end
 

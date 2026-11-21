@@ -21,6 +21,11 @@ module ApiAuthenticatable
       return
     end
 
+    if @current_api_token.user.abuse_suspended?
+      render json: ApiErrors.payload(:account_disabled), status: :forbidden
+      return
+    end
+
     if @current_api_token.read_only? && !(request.get? || request.head?)
       render json: ApiErrors.payload(:insufficient_scope), status: :forbidden
       return

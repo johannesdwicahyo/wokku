@@ -12,6 +12,7 @@ en:
       invalid: "Invalid %{authentication_keys} or password."
       locked: "Your account is locked."
       account_deleted: "This account has been deleted."
+      abuse_suspended: "This account is suspended for violating the Terms of Service."
       last_attempt: "You have one more attempt before your account is locked."
       not_found_in_database: "Invalid %{authentication_keys} or password."
       timeout: "Your session expired. Please sign in again to continue."
