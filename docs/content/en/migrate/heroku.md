@@ -63,5 +63,5 @@ Check the app on `https://my-app.wokku.app`, then add your domain (HTTPS is auto
 ## Gotchas
 
 - **Buildpack-specific commands** — Procfile lines such as `heroku-php-apache2` don't exist here. See your [framework guide](/docs/frameworks/index).
-- **Temporary disk** — same as Heroku. Keep uploads in object storage.
+- **Temporary disk** — same as Heroku. Keep uploads in [object storage](/docs/databases/object-storage).
 - **Add-on variable names** — point your app at `DATABASE_URL` / `REDIS_URL`, not Heroku add-on names like `HEROKU_POSTGRESQL_*`.

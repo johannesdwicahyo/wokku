@@ -21,7 +21,7 @@ Every deploy, restart and resize replaces the container, and its local disk goes
 | The container's own disk (`/tmp`, `./uploads`, an on-disk SQLite file) | **No** |
 
 :::callout warning
-User uploads in a local folder or an on-disk SQLite database are lost on the next deploy. Put state in a [database](/docs/databases/create-link) or external object storage.
+User uploads in a local folder or an on-disk SQLite database are lost on the next deploy. Put state in a [database](/docs/databases/create-link) or [object storage](/docs/databases/object-storage).
 :::
 
 ## Shut down cleanly

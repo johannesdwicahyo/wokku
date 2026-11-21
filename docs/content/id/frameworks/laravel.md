@@ -50,5 +50,5 @@ Jalankan perintah migrate setiap kali deploy yang menambahkan migration. Live di
 ## Troubleshooting
 
 - **500 saat pertama dibuka** — biasanya karena `APP_KEY` belum diisi. Isi lalu restart (`wokku ps:restart my-app`).
-- **Session, cache, atau upload hilang** — disk lokal bersifat sementara. Pakai driver `database` atau `redis` untuk session, cache, dan queue, serta object storage untuk file.
+- **Session, cache, atau upload hilang** — disk lokal bersifat sementara. Pakai driver `database` atau `redis` untuk session, cache, dan queue, serta [object storage](/docs/databases/object-storage) untuk file.
 - **Queue** — tambahkan `worker: php artisan queue:work` ke Procfile lalu scale. Lihat [Background Worker](/docs/guides/background-workers).
