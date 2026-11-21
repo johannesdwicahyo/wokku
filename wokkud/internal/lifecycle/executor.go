@@ -216,6 +216,9 @@ func (d *dispatchRunner) run(ctx context.Context, op *queuedOp) {
 		if errors.As(err, &cf) {
 			code = ErrCodeCommandFailed
 		}
+		if errors.Is(err, ErrRolloutFailed) {
+			code = ErrCodeRolloutFailed
+		}
 		if errors.Is(err, ErrRunTimeout) {
 			code = ErrCodeRunTimeout
 		}

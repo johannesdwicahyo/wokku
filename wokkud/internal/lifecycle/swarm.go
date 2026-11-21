@@ -101,6 +101,18 @@ func (r *realSwarmAPI) ServiceUpdate(ctx context.Context, name string, spec Serv
 	return err
 }
 
+func (r *realSwarmAPI) RolloutStatus(ctx context.Context, name string) (RolloutStatus, error) {
+	svc, _, err := r.cli.ServiceInspectWithRaw(ctx, name, swarm.ServiceInspectOptions{})
+	if err != nil || svc.UpdateStatus == nil {
+		return RolloutStatus{}, err
+	}
+	st := RolloutStatus{State: string(svc.UpdateStatus.State), Message: svc.UpdateStatus.Message}
+	if svc.UpdateStatus.StartedAt != nil {
+		st.StartedAt = *svc.UpdateStatus.StartedAt
+	}
+	return st, nil
+}
+
 func (r *realSwarmAPI) ServiceRemove(ctx context.Context, name string) error {
 	return r.cli.ServiceRemove(ctx, name)
 }

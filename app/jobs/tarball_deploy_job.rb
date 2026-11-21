@@ -70,7 +70,7 @@ class TarballDeployJob < ApplicationJob
       detail = "#{e.message}\n#{out}"
     end
     deploy.update!(status: :failed, log: deploy.reload.log.to_s + "\n#{detail}", finished_at: Time.current)
-    app.mark_deploy_failed!
+    e.is_a?(Deploys::BuildAndConverge::RolledBack) ? app.update!(status: :running) : app.mark_deploy_failed!
     DeployChannel.broadcast_to(deploy, { type: "status", data: "failed" })
     fire_notifications(app.team, "deploy_failed", deploy)
   end

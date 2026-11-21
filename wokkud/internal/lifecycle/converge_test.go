@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"time"
 )
 
 // fakeSwarm records the write-call sequence so tests assert on exactly what
@@ -16,10 +17,23 @@ type fakeSwarm struct {
 	calls        []string // "create:<name>", "update:<name>:force=<bool>", "remove:<name>", "net:<name>"
 	jobTasks     map[string][]JobTask
 	logs         map[string]string
-	specs        map[string]ServiceSpec // ServiceCreate specs recorded by name, for run.go tests
-	jobTasksErr  error                  // If set, JobTasks returns this error instead
-	jobTasksHook func()                 // If set, called in JobTasks before returning (before jobTasksErr check)
-	entrypoints  map[string][]string    // image ref -> ENTRYPOINT; missing = inspect error
+	specs        map[string]ServiceSpec     // ServiceCreate specs recorded by name, for run.go tests
+	jobTasksErr  error                      // If set, JobTasks returns this error instead
+	jobTasksHook func()                     // If set, called in JobTasks before returning (before jobTasksErr check)
+	entrypoints  map[string][]string        // image ref -> ENTRYPOINT; missing = inspect error
+	rollouts     map[string][]RolloutStatus // successive RolloutStatus answers per service; last repeats
+}
+
+func (f *fakeSwarm) RolloutStatus(ctx context.Context, name string) (RolloutStatus, error) {
+	q := f.rollouts[name]
+	if len(q) == 0 {
+		return RolloutStatus{}, nil
+	}
+	st := q[0]
+	if len(q) > 1 {
+		f.rollouts[name] = q[1:]
+	}
+	return st, nil
 }
 
 // newFakeSwarm is the fake's constructor (run_test.go's preferred entry point
@@ -587,5 +601,79 @@ func TestConvergeUninspectableImageKeepsExecForm(t *testing.T) {
 	}
 	if got := f.createdSpec("wokku-blog-worker").Command; !reflect.DeepEqual(got, []string{"bundle", "exec", "sidekiq"}) {
 		t.Fatalf("worker Command = %#v", got)
+	}
+}
+
+func init() { rolloutPoll, rolloutGrace = time.Millisecond, 0 }
+
+func TestConvergeFailsWhenSwarmRollsBack(t *testing.T) {
+	p := baseParams()
+	f := &fakeSwarm{live: liveFrom(p)}
+	p.DeployID = "d2"
+	p.ImageRef = "127.0.0.1:5000/wokku/blog:d2"
+	now := time.Now()
+	f.rollouts = map[string][]RolloutStatus{"wokku-blog-web": {
+		{State: "updating", StartedAt: now},
+		{State: "rollback_completed", StartedAt: now, Message: "rollback completed"},
+	}}
+	_, err := Converge(context.Background(), f, p)
+	if !errors.Is(err, ErrRolloutFailed) {
+		t.Fatalf("err = %v, want ErrRolloutFailed", err)
+	}
+}
+
+func TestConvergeWaitsForRolloutToComplete(t *testing.T) {
+	p := baseParams()
+	f := &fakeSwarm{live: liveFrom(p)}
+	p.DeployID = "d2"
+	p.ImageRef = "127.0.0.1:5000/wokku/blog:d2"
+	now := time.Now()
+	f.rollouts = map[string][]RolloutStatus{"wokku-blog-web": {
+		{State: "updating", StartedAt: now}, {State: "updating", StartedAt: now}, {State: "completed", StartedAt: now},
+	}}
+	if _, err := Converge(context.Background(), f, p); err != nil {
+		t.Fatal(err)
+	}
+	if len(f.rollouts["wokku-blog-web"]) != 1 {
+		t.Fatal("converge returned before the rollout completed")
+	}
+}
+
+func TestConvergeIgnoresPreviousDeploysRollback(t *testing.T) {
+	p := baseParams()
+	f := &fakeSwarm{live: liveFrom(p)}
+	p.DeployID = "d2"
+	p.ImageRef = "127.0.0.1:5000/wokku/blog:d2"
+	f.rollouts = map[string][]RolloutStatus{"wokku-blog-web": {{State: "rollback_completed", StartedAt: time.Now().Add(-time.Hour)}}}
+	if _, err := Converge(context.Background(), f, p); err != nil {
+		t.Fatalf("a stale rollback must not fail this deploy: %v", err)
+	}
+}
+
+func TestRollsOnlyForTaskReplacingUpdates(t *testing.T) {
+	spec := ServiceSpec{Name: "s", Image: "a", Replicas: 1, Env: map[string]string{"K": "v"}}
+	cur := ServiceInfo{Image: "a", Replicas: 1, SpecHash: spec.SpecHash()}
+	scaled := spec
+	scaled.Replicas = 3
+	envChanged := spec
+	envChanged.Env = map[string]string{"K": "w"}
+	sleeping := cur
+	sleeping.Replicas = 0
+	for name, c := range map[string]struct {
+		cur     ServiceInfo
+		spec    ServiceSpec
+		restart bool
+		want    bool
+	}{
+		"scale only":   {cur, scaled, false, false},
+		"env change":   {cur, envChanged, false, true},
+		"restart":      {cur, spec, true, true},
+		"wake from 0":  {sleeping, envChanged, false, false},
+		"scale to 0":   {cur, ServiceSpec{Replicas: 0}, true, false},
+		"legacy image": {ServiceInfo{Image: "a", Replicas: 1}, ServiceSpec{Image: "b", Replicas: 1}, false, true},
+	} {
+		if got := rolls(c.cur, c.spec, c.restart); got != c.want {
+			t.Errorf("%s: rolls = %v, want %v", name, got, c.want)
+		}
 	}
 }
