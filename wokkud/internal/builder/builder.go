@@ -9,6 +9,7 @@ package builder
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -16,6 +17,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -123,7 +126,21 @@ func Run(ctx context.Context, client *control.Client, job *control.BuildJob) {
 		return
 	}
 	formation := parseProcfile(src) // before buildCommands — it may remove the Procfile
-	for _, args := range buildCommands(src, job.PushRef, formation["web"]) {
+	var buildArgs []string
+	if _, err := os.Stat(filepath.Join(src, "Dockerfile")); err != nil {
+		plan := exec.CommandContext(ctx, "nixpacks", "plan", src)
+		plan.Env = buildEnv(os.Environ())
+		out, err := plan.Output()
+		if err == nil {
+			buildArgs, err = planBuildArgs(out)
+		}
+		if err != nil {
+			sink.Close()
+			fail(client, job, fmt.Sprintf("nixpacks plan: %v", err))
+			return
+		}
+	}
+	for _, args := range buildCommands(src, job.PushRef, formation["web"], buildArgs) {
 		cmd := exec.CommandContext(ctx, args[0], args[1:]...)
 		cmd.Dir = src
 		cmd.Env = buildEnv(os.Environ())
@@ -159,7 +176,7 @@ func Run(ctx context.Context, client *control.Client, job *control.BuildJob) {
 // ponytail: non-web Procfile entries are dropped on the dokku path (the
 // lifecycle path gets them via formation_json) — plumb the full formation
 // through dokku ps if a non-lifecycle multi-process app ever needs it.
-func buildCommands(srcDir, pushRef, webCmd string) [][]string {
+func buildCommands(srcDir, pushRef, webCmd string, buildArgs []string) [][]string {
 	buildx := []string{"docker", "buildx", "build", "--builder", activeBuilder(), "--push"}
 	if _, err := os.Stat(filepath.Join(srcDir, "Dockerfile")); err == nil {
 		return [][]string{append(buildx, "-t", pushRef, srcDir)}
@@ -169,7 +186,39 @@ func buildCommands(srcDir, pushRef, webCmd string) [][]string {
 		os.Remove(filepath.Join(srcDir, "Procfile"))
 		nix = append(nix, "--start-cmd", webCmd)
 	}
+	buildx = append(buildx, buildArgs...)
 	return [][]string{nix, append(buildx, "-f", filepath.Join(srcDir, ".nixpacks", "Dockerfile"), "-t", pushRef, srcDir)}
+}
+
+// planBuildArgs turns `nixpacks plan` JSON into --build-arg flags. nixpacks'
+// Dockerfile declares its plan variables (GEM_HOME, NODE_ENV, ...) as ARGs
+// that `nixpacks build` passes itself; we run buildx ourselves, so without
+// these every such ENV was empty (an empty GEM_HOME crashes RubyGems on
+// Ruby 3.4.13, 2026-11-21). Sorted for a stable cache key.
+// Ruby plans only for now (see below).
+func planBuildArgs(plan []byte) ([]string, error) {
+	var p struct {
+		Variables map[string]string `json:"variables"`
+	}
+	if err := json.Unmarshal(plan, &p); err != nil {
+		return nil, err
+	}
+	// shortcut: Ruby only. Other stacks' variables (NODE_ENV=production,
+	// CI=true, ...) would change existing apps' builds; widen after testing
+	// every starter with them.
+	if !strings.Contains(p.Variables["NIXPACKS_METADATA"], "ruby") {
+		return nil, nil
+	}
+	keys := make([]string, 0, len(p.Variables))
+	for k := range p.Variables {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	var args []string
+	for _, k := range keys {
+		args = append(args, "--build-arg", k+"="+p.Variables[k])
+	}
+	return args, nil
 }
 
 // fetchAndExtract downloads the presigned archive and untars it. exec's
