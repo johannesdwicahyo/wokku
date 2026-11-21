@@ -45,6 +45,7 @@ module Git
 
       user = @ssh_key.user
       raise UnauthorizedError, "key is not bound to a user" unless user
+      raise UnauthorizedError, "account suspended for violating the Terms of Service" if user.abuse_suspended?
       raise UnauthorizedError, "#{user.email} has no access to #{app.name}" unless authorized?(user, app)
 
       Result.new(

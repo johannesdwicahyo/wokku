@@ -21,7 +21,7 @@ module ApplicationCable
 
       token = ApiToken.find_by_token(plain_token)
       # Read tokens never get a socket: the terminal channel runs commands.
-      return nil if token.nil? || !token.active? || token.read_only?
+      return nil if token.nil? || !token.active? || token.read_only? || token.user.abuse_suspended?
 
       token.touch_last_used!
       token.user

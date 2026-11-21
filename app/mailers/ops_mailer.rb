@@ -57,4 +57,10 @@ class OpsMailer < ApplicationMailer
     @last_ok = last_ok
     mail(to: ENV["ADMIN_EMAIL"], subject: "[Wokku OPS] Object storage backup STALE: #{server.name}")
   end
+
+  def relay_suspects(rows)
+    return if ENV["ADMIN_EMAIL"].blank?
+    @rows = rows
+    mail(to: ENV["ADMIN_EMAIL"], subject: "[Wokku OPS] #{rows.size} app(s) look like VPN/proxy relays")
+  end
 end

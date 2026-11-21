@@ -216,7 +216,8 @@ CREATE TABLE public.app_records (
     maintenance_mode boolean DEFAULT false NOT NULL,
     volume_disk_gb integer DEFAULT 0 NOT NULL,
     last_request_at timestamp(6) without time zone,
-    request_count_seen bigint
+    request_count_seen bigint,
+    relay_flagged_at timestamp(6) without time zone
 );
 
 
@@ -1706,7 +1707,8 @@ CREATE TABLE public.users (
     apple_refresh_token text,
     apple_token_client_id character varying,
     email_provider_verified boolean DEFAULT false NOT NULL,
-    otp_backup_codes character varying[]
+    otp_backup_codes character varying[],
+    abuse_suspended_at timestamp(6) without time zone
 );
 
 
@@ -4679,6 +4681,8 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261121000002'),
+('20261121000001'),
 ('20261120000002'),
 ('20261120000001'),
 ('20261119120001'),

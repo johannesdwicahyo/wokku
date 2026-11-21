@@ -128,11 +128,33 @@ class User < ApplicationRecord
   # Prevent hard-deleted accounts from signing in. Soft-deleted users
   # (pending grace period) can still log in to cancel or contact support.
   def active_for_authentication?
-    super && !deleted?
+    super && !deleted? && !abuse_suspended?
   end
 
   def inactive_message
-    deleted? ? :account_deleted : super
+    return :account_deleted if deleted?
+    return :abuse_suspended if abuse_suspended?
+    super
+  end
+
+  # Terms-of-service suspension, set by the operator. Separate from
+  # billing_status, so paying never lifts it. Blocks sign-in, API tokens,
+  # git push and every app bring-up (AppRecord#run_allowed?).
+  def abuse_suspended? = abuse_suspended_at.present?
+
+  # Flags the user, then stops every app in the teams they own (stopped,
+  # not sleeping: nothing wakes or restores it). One failing app doesn't
+  # stop the rest; returns the names that failed.
+  def suspend_for_abuse!
+    update!(abuse_suspended_at: Time.current) unless abuse_suspended?
+    AppRecord.where(team_id: owned_teams.select(:id)).where.not(status: :stopped).filter_map do |app|
+      Lifecycle::Ops.converge!(app, formation: Lifecycle::Ops.stop_formation(app), allow_empty: true)
+      app.update!(status: :stopped)
+      nil
+    rescue StandardError => e
+      Rails.logger.error("suspend_for_abuse!: #{app.name}: #{e.class}: #{e.message}")
+      app.name
+    end
   end
 
   validate :enforce_single_admin, if: :admin?

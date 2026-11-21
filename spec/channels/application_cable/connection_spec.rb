@@ -18,6 +18,13 @@ RSpec.describe ApplicationCable::Connection, type: :channel do
       }.to have_rejected_connection
     end
 
+    it "rejects a suspended user's Bearer token" do
+      user.update!(abuse_suspended_at: Time.current)
+      expect {
+        connect headers: { "Authorization" => "Bearer #{plain_token}" }
+      }.to have_rejected_connection
+    end
+
     it "rejects with no auth at all" do
       expect { connect }.to have_rejected_connection
     end
