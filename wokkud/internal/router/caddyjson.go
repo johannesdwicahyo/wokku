@@ -28,6 +28,15 @@ var stripVia = map[string]any{
 	"response": map[string]any{"deferred": true, "delete": []any{"Via"}},
 }
 
+var notFoundRoute = map[string]any{
+	"handle": []any{map[string]any{
+		"handler":     "static_response",
+		"status_code": 404,
+		"headers":     map[string]any{"Content-Type": []any{"text/plain; charset=utf-8"}},
+		"body":        "404 not found\n",
+	}},
+}
+
 func Render(cfg *control.RouterConfig, upstreams map[string][]string, askURL, certDir string) ([]byte, error) {
 	httpsPort, httpPort := 8443, 8080
 	if cfg.ListenMode == "live" {
@@ -131,6 +140,11 @@ func Render(cfg *control.RouterConfig, upstreams map[string][]string, askURL, ce
 			},
 		})
 	}
+
+	// Catch-all, last: a host with no route (deleted app, removed domain,
+	// typo) gets a 404 instead of Caddy's default empty 200 — uptime
+	// monitors and health checks must not see a dead host as up (2026-11-21).
+	routes = append(routes, notFoundRoute)
 
 	onDemandPolicy := map[string]any{"on_demand": true}
 	if cfg.ListenMode == "shadow" {

@@ -34,6 +34,25 @@ func dig(t *testing.T, m map[string]any, path ...string) any {
 	return cur
 }
 
+// appRoutes returns the per-app routes, asserting the unrouted-host 404
+// catch-all is present and last.
+func appRoutes(t *testing.T, m map[string]any) []any {
+	t.Helper()
+	routes := dig(t, m, "apps", "http", "servers", "wokku", "routes").([]any)
+	if len(routes) == 0 {
+		t.Fatal("no routes; want at least the 404 catch-all")
+	}
+	last := routes[len(routes)-1].(map[string]any)
+	if _, has := last["match"]; has {
+		t.Fatalf("last route has a matcher, want the catch-all: %v", last)
+	}
+	h := lastHandler(dig(t, last, "handle"))
+	if h["handler"] != "static_response" || h["status_code"] != float64(404) {
+		t.Fatalf("catch-all = %v, want static_response 404", h)
+	}
+	return routes[:len(routes)-1]
+}
+
 func baseCfg() *control.RouterConfig {
 	return &control.RouterConfig{
 		Version:    "v1",
@@ -70,7 +89,7 @@ func TestRenderShadowPortsAndRoutes(t *testing.T) {
 	if got := dig(t, m, "apps", "http", "http_port"); got != float64(8080) {
 		t.Errorf("http_port = %v", got)
 	}
-	routes := dig(t, m, "apps", "http", "servers", "wokku", "routes").([]any)
+	routes := appRoutes(t, m)
 	if len(routes) != 2 {
 		t.Fatalf("routes = %d, want 2", len(routes))
 	}
@@ -111,7 +130,7 @@ func TestRenderSkipsAppsWithoutUpstreamsAndNilCert(t *testing.T) {
 	cfg := baseCfg()
 	cfg.WildcardCert = nil
 	m := renderToMap(t, cfg, map[string][]string{"alpha": {"a:1"}}) // bravo unresolved locally, has mesh
-	routes := dig(t, m, "apps", "http", "servers", "wokku", "routes").([]any)
+	routes := appRoutes(t, m)
 	if len(routes) != 2 {
 		t.Errorf("routes = %d, want 2 (bravo renders via mesh)", len(routes))
 	}
@@ -150,7 +169,7 @@ func TestRenderSkipsAppWithNoDials(t *testing.T) {
 		},
 	}
 	m := renderToMap(t, cfg, map[string][]string{}) // no resolution, no mesh entry
-	routes, _ := dig(t, m, "apps", "http", "servers", "wokku", "routes").([]any)
+	routes := appRoutes(t, m)
 	if len(routes) != 0 {
 		t.Errorf("routes = %d, want 0 (delta has no dials)", len(routes))
 	}
@@ -230,11 +249,12 @@ func TestRenderAllBacklessRoutesEmptyArray(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(string(blob), `"routes": null`) {
-		t.Errorf("routes rendered as null, want []: %s", blob)
+	var m map[string]any
+	if err := json.Unmarshal(blob, &m); err != nil {
+		t.Fatal(err)
 	}
-	if !strings.Contains(string(blob), `"routes": []`) {
-		t.Errorf("routes not rendered as empty array: %s", blob)
+	if routes := appRoutes(t, m); len(routes) != 0 {
+		t.Errorf("routes = %d app routes, want 0 (only the 404 catch-all)", len(routes))
 	}
 }
 
@@ -257,7 +277,7 @@ func TestRenderDialUpstreamPassesThroughVerbatim(t *testing.T) {
 	}
 	// Stray docker resolution for "gamma" must be ignored: no `local` entry.
 	m := renderToMap(t, cfg, map[string][]string{"gamma": {"172.17.0.9:9999"}})
-	routes := dig(t, m, "apps", "http", "servers", "wokku", "routes").([]any)
+	routes := appRoutes(t, m)
 	if len(routes) != 1 {
 		t.Fatalf("routes = %d, want 1", len(routes))
 	}
@@ -293,7 +313,7 @@ func TestRenderMixedLocalAndDialUpstreamsResolveIndependently(t *testing.T) {
 		"alpha": {"172.17.0.3:5000"},
 		"beta":  {"172.17.0.4:6000"}, // must be ignored: beta has no `local` upstream
 	})
-	routes := dig(t, m, "apps", "http", "servers", "wokku", "routes").([]any)
+	routes := appRoutes(t, m)
 	if len(routes) != 2 {
 		t.Fatalf("routes = %d, want 2", len(routes))
 	}
@@ -325,7 +345,7 @@ func TestRenderNoneTLSDomain(t *testing.T) {
 		},
 	}
 	m := renderToMap(t, cfg, map[string][]string{"charlie": {"172.17.0.5:4000"}})
-	routes := dig(t, m, "apps", "http", "servers", "wokku", "routes").([]any)
+	routes := appRoutes(t, m)
 	blob, _ := json.Marshal(routes)
 	if !strings.Contains(string(blob), `"charlie.internal"`) {
 		t.Errorf("routes missing charlie.internal: %s", blob)
@@ -341,7 +361,7 @@ func TestRenderMaintenanceServes503(t *testing.T) {
 	cfg.Apps[0].Maintenance = true
 	cfg.Apps[0].Upstreams = nil // no backend at all — must still render
 	m := renderToMap(t, cfg, map[string][]string{"bravo": {"172.17.0.4:3000"}})
-	routes := dig(t, m, "apps", "http", "servers", "wokku", "routes").([]any)
+	routes := appRoutes(t, m)
 	if len(routes) != 2 {
 		t.Fatalf("routes = %d, want 2 (maintenance alpha + live bravo)", len(routes))
 	}
@@ -424,6 +444,20 @@ const renderGolden = `{
                   "host": [
                     "golden.wokku.app"
                   ]
+                }
+              ]
+            },
+            {
+              "handle": [
+                {
+                  "body": "404 not found\n",
+                  "handler": "static_response",
+                  "headers": {
+                    "Content-Type": [
+                      "text/plain; charset=utf-8"
+                    ]
+                  },
+                  "status_code": 404
                 }
               ]
             }
