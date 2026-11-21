@@ -67,6 +67,20 @@ RSpec.describe StarterCheckJob do
       .to have_enqueued_job(described_class).with([], { "go" => a_string_including("no finished deploy") })
   end
 
+  describe "#probe" do
+    let(:app) { throwaway_app.tap { |a| a.domains.create!(hostname: "zz-starter-go.wokku.app") } }
+
+    it "does not count Caddy's empty no-route 200 as the app answering" do
+      stub_request(:get, "https://zz-starter-go.wokku.app/").to_return(status: 200, body: "")
+      expect(described_class.new.send(:probe, app)).to be_nil
+    end
+
+    it "returns the app's own status code" do
+      stub_request(:get, "https://zz-starter-go.wokku.app/").to_return(status: 404, body: "<h1>Not Found</h1>")
+      expect(described_class.new.send(:probe, app)).to eq(404)
+    end
+  end
+
   it "emails the operator only when something failed" do
     expect { described_class.perform_now([], { "go" => "ok" }) }.not_to have_enqueued_mail(OpsMailer, :starter_check_failed)
     expect { described_class.perform_now([], { "go" => "ok", "rails" => "build failed" }) }
