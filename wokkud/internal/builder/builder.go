@@ -225,6 +225,12 @@ func planBuildArgs(plan []byte) ([]string, error) {
 // GNU tar (not archive/tar): tar >=1.29 refuses ".." and absolute member
 // paths without -P — exactly the traversal guard a user-uploaded archive
 // needs, for free.
+//
+// -m (touch) stamps every file with the extraction time: BuildKit syncs the
+// context incrementally under one shared key per host and skips a file whose
+// path, size and mtime match the previous build's — with archive mtimes (git
+// commit time, tenant-controlled) one app's file could land in another app's
+// image (2026-11-21).
 func fetchAndExtract(ctx context.Context, url, workDir, srcDir string) error {
 	archive := filepath.Join(workDir, "src.tar.gz")
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -251,7 +257,7 @@ func fetchAndExtract(ctx context.Context, url, workDir, srcDir string) error {
 	if err := os.Mkdir(srcDir, 0o755); err != nil {
 		return err
 	}
-	if out, err := exec.CommandContext(ctx, "tar", "-xzf", archive, "-C", srcDir).CombinedOutput(); err != nil {
+	if out, err := exec.CommandContext(ctx, "tar", "-xmzf", archive, "-C", srcDir).CombinedOutput(); err != nil {
 		return fmt.Errorf("tar: %v: %s", err, out)
 	}
 	return nil

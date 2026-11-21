@@ -1,16 +1,19 @@
 package builder
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"wokku.cloud/wokkud/internal/control"
 )
@@ -180,5 +183,39 @@ func TestLogSinkCloseFlushesRemainderAndIsIdempotent(t *testing.T) {
 	s.Close() // must not panic (sync.Once) and must not re-send
 	if got := rec.joined(); got != "tail output\n" {
 		t.Fatalf("close flush: got %q", got)
+	}
+}
+
+// BuildKit re-syncs the build context incrementally under one shared key per
+// host and skips a file whose path, size and mtime match the previous build's,
+// so two apps' same-size files with the same (git commit) mtime leaked across
+// builds (2026-11-21: schdl's image got maukemana's credentials.yml.enc).
+// Extracted files must carry the extraction time, never the archive's.
+func TestFetchAndExtractIgnoresArchiveMtimes(t *testing.T) {
+	tmp := t.TempDir()
+	payload := filepath.Join(tmp, "payload")
+	os.Mkdir(payload, 0o755)
+	f := filepath.Join(payload, "secret.txt")
+	os.WriteFile(f, []byte("tenant-a"), 0o644)
+	old := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+	os.Chtimes(f, old, old)
+	archive := filepath.Join(tmp, "src.tar.gz")
+	if out, err := exec.Command("tar", "-czf", archive, "-C", payload, ".").CombinedOutput(); err != nil {
+		t.Fatalf("tar: %v %s", err, out)
+	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, archive) }))
+	defer srv.Close()
+
+	work := t.TempDir()
+	src := filepath.Join(work, "src")
+	if err := fetchAndExtract(context.Background(), srv.URL, work, src); err != nil {
+		t.Fatal(err)
+	}
+	st, err := os.Stat(filepath.Join(src, "secret.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if time.Since(st.ModTime()) > time.Minute {
+		t.Fatalf("extracted file kept the archive mtime %v", st.ModTime())
 	}
 }
