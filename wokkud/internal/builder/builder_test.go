@@ -19,7 +19,7 @@ func TestBuildCommandsDockerfile(t *testing.T) {
 	dir := t.TempDir()
 	os.WriteFile(filepath.Join(dir, "Dockerfile"), []byte("FROM scratch"), 0o644)
 	os.WriteFile(filepath.Join(dir, "Procfile"), []byte("web: node bin/www\n"), 0o644)
-	got := buildCommands(dir, "127.0.0.1:5000/wokku/blog:id-1", "node bin/www")
+	got := buildCommands(dir, "127.0.0.1:5000/wokku/blog:id-1", "node bin/www", nil)
 	want := [][]string{{"docker", "buildx", "build", "--builder", "wokku-build-rootless", "--push", "-t", "127.0.0.1:5000/wokku/blog:id-1", dir}}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v", got)
@@ -34,10 +34,10 @@ func TestBuildCommandsDockerfile(t *testing.T) {
 // default builder.
 func TestBuildCommandsNixpacks(t *testing.T) {
 	dir := t.TempDir()
-	got := buildCommands(dir, "127.0.0.1:5000/wokku/blog:id-1", "")
+	got := buildCommands(dir, "127.0.0.1:5000/wokku/blog:id-1", "", []string{"--build-arg", "GEM_HOME=/g"})
 	want := [][]string{
 		{"nixpacks", "build", dir, "--out", dir},
-		{"docker", "buildx", "build", "--builder", "wokku-build-rootless", "--push", "-f", filepath.Join(dir, ".nixpacks", "Dockerfile"), "-t", "127.0.0.1:5000/wokku/blog:id-1", dir},
+		{"docker", "buildx", "build", "--builder", "wokku-build-rootless", "--push", "--build-arg", "GEM_HOME=/g", "-f", filepath.Join(dir, ".nixpacks", "Dockerfile"), "-t", "127.0.0.1:5000/wokku/blog:id-1", dir},
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v", got)
@@ -51,12 +51,36 @@ func TestBuildCommandsNixpacks(t *testing.T) {
 func TestBuildCommandsNixpacksProcfile(t *testing.T) {
 	dir := t.TempDir()
 	os.WriteFile(filepath.Join(dir, "Procfile"), []byte("web: node bin/www\n"), 0o644)
-	got := buildCommands(dir, "127.0.0.1:5000/wokku/blog:id-1", "node bin/www")
+	got := buildCommands(dir, "127.0.0.1:5000/wokku/blog:id-1", "node bin/www", nil)
 	if want := []string{"nixpacks", "build", dir, "--out", dir, "--start-cmd", "node bin/www"}; !reflect.DeepEqual(got[0], want) {
 		t.Fatalf("got %v", got[0])
 	}
 	if _, err := os.Stat(filepath.Join(dir, "Procfile")); !os.IsNotExist(err) {
 		t.Fatal("Procfile must be removed from the build context so it never lands in the image")
+	}
+}
+
+// nixpacks' Dockerfile declares its plan variables as ARGs that
+// `nixpacks build` passes itself; we run buildx ourselves, so we must pass
+// them (an empty GEM_HOME crashes RubyGems on Ruby 3.4.13). Sorted, and
+// values with spaces stay one argument.
+func TestPlanBuildArgs(t *testing.T) {
+	plan := []byte(`{"variables":{"GEM_HOME":"/usr/local/rvm/gems/3.4.13","A_FLAG":"two words","NIXPACKS_METADATA":"ruby"},"phases":{}}`)
+	got, err := planBuildArgs(plan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"--build-arg", "A_FLAG=two words", "--build-arg", "GEM_HOME=/usr/local/rvm/gems/3.4.13", "--build-arg", "NIXPACKS_METADATA=ruby"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v", got)
+	}
+	// Other stacks keep today's behaviour for now: their variables
+	// (NODE_ENV=production, CI=true, ...) would change existing apps' builds.
+	if got, _ := planBuildArgs([]byte(`{"variables":{"NODE_ENV":"production","NIXPACKS_METADATA":"node"}}`)); got != nil {
+		t.Fatalf("non-ruby plans must pass no build args yet, got %v", got)
+	}
+	if _, err := planBuildArgs([]byte("not json")); err == nil {
+		t.Fatal("bad plan must error")
 	}
 }
 
