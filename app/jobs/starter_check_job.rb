@@ -83,7 +83,10 @@ class StarterCheckJob < ApplicationJob
   def probe(app)
     host = app.domains.order(:created_at).first&.hostname or return nil
     uri = URI("https://#{host}/")
-    Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 10, read_timeout: 20) { |h| h.get("/").code.to_i }
+    res = Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 10, read_timeout: 20) { |h| h.get("/") }
+    # Caddy answers a host it has no route for with an empty 200 — that is not
+    # the app (it made the rails starter "pass" with no root page, 2026-11-21).
+    res.code == "200" && res.body.to_s.empty? ? nil : res.code.to_i
   rescue StandardError
     nil
   end
