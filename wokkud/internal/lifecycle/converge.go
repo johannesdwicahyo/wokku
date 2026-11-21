@@ -44,6 +44,8 @@ type swarmAPI interface {
 	// it — the tag_from_local adopt shim, called by Converge before any
 	// service create/update when TagFromLocal is set (Task 10).
 	ImageTagPush(ctx context.Context, localRef, registryRef string) error
+	// RolloutStatus returns a service's Swarm rolling-update status.
+	RolloutStatus(ctx context.Context, name string) (RolloutStatus, error)
 	// ImageEntrypoint returns the image's ENTRYPOINT; an error (image not
 	// local) means "unknown" and callers fall back to exec form.
 	ImageEntrypoint(ctx context.Context, ref string) ([]string, error)
@@ -203,6 +205,78 @@ type ConvergeResult struct {
 	Removed []string
 }
 
+// RolloutStatus is a service's Swarm UpdateStatus; State "" = none.
+type RolloutStatus struct {
+	State     string // updating, completed, paused, rollback_started, rollback_paused, rollback_completed
+	StartedAt time.Time
+	Message   string
+}
+
+// ErrRolloutFailed: the new tasks never became healthy and Swarm restored the
+// previous version (FailureAction rollback). Before this, converge returned
+// the moment Swarm ACCEPTED the update, so a crashing deploy reported
+// "succeeded" while Swarm quietly rolled it back (schdl, 2026-11-21).
+var ErrRolloutFailed = errors.New("new version did not start; Swarm kept the previous version")
+
+// ErrCodeRolloutFailed is the control-plane error_code for ErrRolloutFailed.
+const ErrCodeRolloutFailed = "rollout_failed"
+
+// Rollout wait knobs (vars for tests). rolloutGrace bounds the wait for an
+// update that never shows a fresh UpdateStatus — Swarm had nothing to roll.
+var (
+	rolloutPoll  = time.Second
+	rolloutGrace = time.Minute
+)
+
+// waitRollout blocks until the rolling update Swarm started at/after since
+// completes; any other terminal state is ErrRolloutFailed.
+func waitRollout(ctx context.Context, s swarmAPI, name string, since time.Time) error {
+	grace := time.Now().Add(rolloutGrace)
+	for {
+		st, err := s.RolloutStatus(ctx, name)
+		if err != nil {
+			return err
+		}
+		if st.State != "" && !st.StartedAt.Before(since) { // ours, not a previous deploy's
+			switch st.State {
+			case "completed":
+				return nil
+			case "updating":
+			default:
+				return fmt.Errorf("%s: %w (%s): %s", name, ErrRolloutFailed, st.State, st.Message)
+			}
+		} else if time.Now().After(grace) {
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(rolloutPoll):
+		}
+	}
+}
+
+// rolls reports whether an update replaces running tasks (a rolling update
+// Swarm can fail and roll back) rather than only scaling. Scale to/from 0
+// starts or stops tasks without an update — a crash there surfaces through
+// the crash-loop detector, not here.
+// ponytail: a published-port-only change also counts as rolling and waits out
+// rolloutGrace; compare endpoint specs if that ever matters.
+func rolls(cur ServiceInfo, spec ServiceSpec, restart bool) bool {
+	if cur.Replicas == 0 || spec.Replicas == 0 {
+		return false
+	}
+	if restart {
+		return true
+	}
+	if cur.SpecHash == "" {
+		return cur.Image != spec.Image || cur.DeployID != spec.DeployID
+	}
+	scaled := spec
+	scaled.Replicas = cur.Replicas
+	return scaled.SpecHash() != cur.SpecHash
+}
+
 // ErrFormationWouldEmpty is the defensive guard: a converge that would drop
 // the last running web service (live web running, desired formation omits the
 // web key) is refused with no writes. The executor maps it to error_code
@@ -277,6 +351,11 @@ func Converge(ctx context.Context, s swarmAPI, p ConvergeParams) (*ConvergeResul
 		return nil
 	}
 
+	type rollout struct {
+		name  string
+		since time.Time
+	}
+	var rolling []rollout
 	entrypoints := map[string][]string{}
 	for name, sp := range desired {
 		ep, seen := entrypoints[sp.Image]
@@ -306,10 +385,21 @@ func Converge(ctx context.Context, s swarmAPI, p ConvergeParams) (*ConvergeResul
 			changed = cur.SpecHash != spec.SpecHash()
 		}
 		if changed || p.Restart {
+			since := time.Now().Add(-2 * time.Second) // manager clock is this host's; small skew slack
 			if err := s.ServiceUpdate(ctx, spec.Name, spec, p.Restart); err != nil {
 				return nil, err
 			}
 			res.Updated = append(res.Updated, spec.Name)
+			if rolls(cur, spec, p.Restart) {
+				rolling = append(rolling, rollout{spec.Name, since})
+			}
+		}
+	}
+
+	// Wait after all writes so an app's processes roll in parallel.
+	for _, r := range rolling {
+		if err := waitRollout(ctx, s, r.name, r.since); err != nil {
+			return res, err
 		}
 	}
 

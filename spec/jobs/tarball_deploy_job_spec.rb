@@ -170,6 +170,20 @@ RSpec.describe TarballDeployJob, type: :job do
       expect(deploy.log).to include("PG::UndefinedTable")
     end
 
+    it "fails the deploy but keeps the app running when Swarm rolled the new version back" do
+      arrange_wokkud_build!
+      rolled = build(:lifecycle_op, kind: "stack.converge", status: :failed,
+                     error: "new version did not start", error_code: "rollout_failed")
+      allow(::Lifecycle::Ops).to receive(:converge!).and_raise(::Lifecycle::Ops::Failed.new(rolled))
+      app.update!(status: :running)
+
+      described_class.perform_now(**base_args)
+
+      expect(deploy.reload.status).to eq("failed")
+      expect(deploy.log).to include("previous version is still running")
+      expect(app.reload.status).to eq("running")
+    end
+
     it "does not issue a run when run_after_deploy is blank" do
       allow(Deploys::BuildAndConverge).to receive(:call).and_return("log")
       expect(::Lifecycle::Ops).not_to receive(:run!)

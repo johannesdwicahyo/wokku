@@ -10,6 +10,10 @@ module Deploys
     # can rescue a single class. Timeout::Error is deliberately NOT wrapped —
     # callers map a timeout to their own distinct status.
     class Error < StandardError; end
+    # The new image's tasks never became healthy and Swarm restored the
+    # previous version (wokkud error_code rollout_failed): the deploy failed,
+    # but the app is still up on its old version.
+    class RolledBack < Error; end
 
     # W7 blocker clearance: there is NO dokku fallback for any app anymore —
     # a fallback build for a Swarm app deploys outside Swarm (split-brain)
@@ -56,7 +60,10 @@ module Deploys
       wokkud_build(@app, @deploy, server)
     rescue Timeout::Error
       raise
-    rescue ::Lifecycle::Ops::Failed, ::Lifecycle::Ops::Timeout, ::Lifecycle::Ops::Busy, BuilderUnavailable => e
+    rescue ::Lifecycle::Ops::Failed => e
+      raise RolledBack, "#{e.message}\nThe new version did not start, so the previous version is still running — check the app's logs." if e.op&.error_code == "rollout_failed"
+      raise Error, e.message
+    rescue ::Lifecycle::Ops::Timeout, ::Lifecycle::Ops::Busy, BuilderUnavailable => e
       raise Error, e.message
     end
 
