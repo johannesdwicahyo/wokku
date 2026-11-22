@@ -16,7 +16,7 @@ RSpec.describe "Dashboard rail", type: :request do
     sign_in users(:one)
     aside = rail
     expect(aside).to have_link("Apps",      href: "/dashboard/apps")
-    expect(aside).to have_link("Databases", href: "/dashboard/addons")
+    expect(aside).to have_link("Add-ons", href: "/dashboard/addons")
     expect(aside).to have_link("Templates", href: "/dashboard/templates")
     expect(aside).to have_link("Activity",  href: "/dashboard/activities")
     expect(aside).to have_text("Workspace")

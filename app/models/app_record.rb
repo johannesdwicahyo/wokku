@@ -114,6 +114,7 @@ class AppRecord < ApplicationRecord
   has_many :vitals_events,         dependent: :delete_all
   has_many :vitals_hourly_rollups, dependent: :delete_all
   has_many :crash_events,          dependent: :delete_all
+  has_many :app_transfers,         dependent: :delete_all
   has_many :incidents,             dependent: :destroy
   has_many :lifecycle_ops,         dependent: :destroy
   has_one :preview_dns_record, dependent: :destroy

@@ -125,7 +125,12 @@ en:
       new_addon_title: "New database"
       new_addon_subtitle: "Provision a database or service"
       empty_body: "Add databases, caches, and services for your apps."
+      object_storage: "Object storage"
+      object_storage_hint: "— S3-compatible buckets, managed from each app's Resources page."
       columns:
+        bucket: "Bucket"
+        used: "Used"
+        app: "App"
         addon: "Add-on"
         status: "Status"
         type: "Type"

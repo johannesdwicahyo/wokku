@@ -140,7 +140,7 @@ en:
       workspace: "Workspace"
       items:
         apps: "Apps"
-        databases: "Databases"
+        databases: "Add-ons"
         templates: "Templates"
         activity: "Activity"
         servers: "Servers"
