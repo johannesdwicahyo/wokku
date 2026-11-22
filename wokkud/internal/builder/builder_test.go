@@ -77,10 +77,14 @@ func TestPlanBuildArgs(t *testing.T) {
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v", got)
 	}
-	// Other stacks keep today's behaviour for now: their variables
-	// (NODE_ENV=production, CI=true, ...) would change existing apps' builds.
-	if got, _ := planBuildArgs([]byte(`{"variables":{"NODE_ENV":"production","NIXPACKS_METADATA":"node"}}`)); got != nil {
-		t.Fatalf("non-ruby plans must pass no build args yet, got %v", got)
+	// Every stack gets its plan variables (2026-11-22, all 14 starters
+	// checked): without them nixpacks bakes e.g. NODE_ENV="" into the image.
+	node, _ := planBuildArgs([]byte(`{"variables":{"NODE_ENV":"production","NIXPACKS_METADATA":"node","NPM_CONFIG_PRODUCTION":"false"}}`))
+	if want := []string{"--build-arg", "NIXPACKS_METADATA=node", "--build-arg", "NODE_ENV=production", "--build-arg", "NPM_CONFIG_PRODUCTION=false"}; !reflect.DeepEqual(node, want) {
+		t.Fatalf("node plan: got %v", node)
+	}
+	if got, _ := planBuildArgs([]byte(`{}`)); got != nil {
+		t.Fatalf("a plan without variables passes no build args, got %v", got)
 	}
 	if _, err := planBuildArgs([]byte("not json")); err == nil {
 		t.Fatal("bad plan must error")
