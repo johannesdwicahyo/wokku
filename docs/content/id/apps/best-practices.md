@@ -21,7 +21,7 @@ Setiap deploy, restart, dan resize mengganti container, dan disk lokalnya ikut h
 | Disk milik container itu sendiri (`/tmp`, `./uploads`, file SQLite di disk) | **Tidak** |
 
 :::callout warning
-Upload user di folder lokal atau database SQLite di disk akan hilang di deploy berikutnya. Simpan state di [database](/docs/databases/create-link) atau object storage eksternal.
+Upload user di folder lokal atau database SQLite di disk akan hilang di deploy berikutnya. Simpan state di [database](/docs/databases/create-link) atau [object storage](/docs/databases/object-storage).
 :::
 
 ## Shutdown dengan rapi

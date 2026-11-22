@@ -42,7 +42,7 @@ The `web:` line of a `Procfile` becomes the start command. Every other line beco
   ```
 
 - **Keep Procfile commands simple.** A command that contains `'`, `|`, `;` or `&` runs without a shell. Put compound commands (`a && b`) in a script and call the script. To set an env var inline, write `env HOST=0.0.0.0 node server.js`, not `HOST=0.0.0.0 node server.js`.
-- **The disk is temporary.** Files written at runtime disappear on the next deploy or restart. Keep uploads in object storage and data in a [database](/docs/databases/create-link).
+- **The disk is temporary.** Files written at runtime disappear on the next deploy or restart. Keep uploads in [object storage](/docs/databases/object-storage) and data in a [database](/docs/databases/create-link).
 - **Config vars apply at runtime, not at build time.** Values a framework inlines during the build (`NEXT_PUBLIC_*`, `PUBLIC_*`) must be in your repo, for example in a committed `.env.production`.
 
 ## The deploy snippet

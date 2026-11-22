@@ -60,6 +60,6 @@ Check `https://my-app.wokku.app`, add your domain, point DNS at Wokku, and shut 
 
 ## Gotchas
 
-- **Local files** — uploads and SQLite files on disk must move to object storage or a database. The app's disk is temporary.
+- **Local files** — uploads and SQLite files on disk must move to [object storage](/docs/databases/object-storage) or a database. The app's disk is temporary.
 - **Cron scripts** — turn them into [scheduled tasks](/docs/guides/scheduled-tasks) or a `worker` process.
 - **Hardcoded ports and paths** — listen on `$PORT`, and don't assume nginx or a fixed directory layout.
