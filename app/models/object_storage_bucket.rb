@@ -32,6 +32,15 @@ class ObjectStorageBucket < ApplicationRecord
 
   PRICE_IDR_PER_GB = 400
 
+  FREE_TEAM_LIMIT_MESSAGE = "The free plan includes #{FREE_QUOTA_GB} GB of object storage per account, " \
+                            "and another app already uses it. Upgrade to add storage to more apps.".freeze
+
+  # The free GB is per team (billing nets it once per team); a free team's
+  # bucket is fixed at that 1 GB, so it gets exactly one bucket.
+  def self.free_team_limit_reached?(team)
+    new(team: team).free_team? && where(team: team).where.not(status: "deleting").exists?
+  end
+
   # [http_status, message] when gb is not an acceptable new quota, else nil.
   def quota_error(gb)
     gb = Integer(gb.to_s, exception: false)

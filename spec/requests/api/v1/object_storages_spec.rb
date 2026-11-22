@@ -49,6 +49,20 @@ RSpec.describe "API object storage", type: :request do
       expect(response).to have_http_status(:conflict)
     end
 
+    it "403s a free team whose 1 GB already went to another app" do
+      allow_any_instance_of(ObjectStorageBucket).to receive(:free_team?).and_return(true)
+      create(:object_storage_bucket, app_record: create(:app_record, team: app_record.team), quota_gb: 1)
+      expect { post url, headers: auth(member) }.not_to have_enqueued_job(ObjectStorage::ProvisionJob)
+      expect(response).to have_http_status(:forbidden)
+      expect(response.parsed_body["error"]).to include("1 GB")
+    end
+
+    it "lets a paid team add a bucket to a second app" do
+      create(:object_storage_bucket, app_record: create(:app_record, team: app_record.team))
+      post url, headers: auth(member)
+      expect(response).to have_http_status(:accepted)
+    end
+
     it "403s for a viewer" do
       post url, headers: auth(user_with(:viewer))
       expect(response).to have_http_status(:forbidden)

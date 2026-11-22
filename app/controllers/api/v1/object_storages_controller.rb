@@ -14,6 +14,9 @@ module Api
       def create
         authorize @app, :update?
         return render json: { error: "App already has object storage" }, status: :conflict if @app.object_storage_bucket
+        if ObjectStorageBucket.free_team_limit_reached?(@app.team)
+          return render json: { error: ObjectStorageBucket::FREE_TEAM_LIMIT_MESSAGE }, status: :forbidden
+        end
 
         bucket = ObjectStorage::Provisioner.create!(@app)
         track("object_storage.created", target: @app, team: @app.team)
