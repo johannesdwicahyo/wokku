@@ -39,7 +39,7 @@ module Wokku
     end
 
     attr_accessor :tls, :billing
-    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder, :host_ssh_user, :control_plane_host, :openapi_path, :object_storage, :sidebar_extra_items
+    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder, :host_ssh_user, :control_plane_host, :openapi_path, :object_storage, :sidebar_extra_items, :app_resource_sections
 
     # The OpenAPI file GET /api/v1/openapi.yaml serves. Engine default: its
     # own derived contract; the cloud points it at the cloud superset.
@@ -52,6 +52,13 @@ module Wokku
     # ones: label:, key:, href:, icon:, active:). Default adds none.
     def sidebar_extra_items
       @sidebar_extra_items || ->(_view) { [] }
+    end
+
+    # Extension point for host apps: a callable taking the view context and the
+    # app, returning extra Resources-page sections as
+    # [{ partial: "path/to/partial", locals: { ... } }, ...]. Default adds none.
+    def app_resource_sections
+      @app_resource_sections || ->(_view, _app) { [] }
     end
 
     # {endpoint:, access_key:, secret_key:} for the object-storage (RustFS)
