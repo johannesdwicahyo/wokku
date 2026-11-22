@@ -28,4 +28,12 @@ RSpec.describe AppTransfer do
     expect(inbox).not_to include(stale)
     expect(inbox).not_to include(other)
   end
+
+  # Deleting an app that was ever offered for transfer hit the FK
+  # (suspended-relay cleanup, 2026-11-22: "atash" would not delete).
+  it "goes away with its app" do
+    t = AppTransfer.create!(app_record: app, from_user: from, to_user: to)
+    app.destroy!
+    expect(AppTransfer.exists?(t.id)).to be false
+  end
 end
