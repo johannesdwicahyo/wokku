@@ -12,9 +12,11 @@ RSpec.describe ApplyDynoTierJob, type: :job do
     described_class.perform_now(-1)
   end
 
-  it "converges with restart: true and clears the resize banner" do
+  # PR #49: resizes no longer force a restart — wokkud rolls only the
+  # processes whose spec (incl. resources) changed.
+  it "converges without a forced restart and clears the resize banner" do
     app.update!(pending_action: "resize")
-    expect(Lifecycle::Ops).to receive(:converge!).with(have_attributes(id: app.id), restart: true)
+    expect(Lifecycle::Ops).to receive(:converge!).with(have_attributes(id: app.id))
 
     described_class.perform_now(allocation.id)
     expect(app.reload.pending_action).to be_nil
