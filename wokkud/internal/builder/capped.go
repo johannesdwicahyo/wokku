@@ -25,23 +25,8 @@ import (
 //     can't starve co-tenant apps (fork bomb, OOM).
 //
 // The limits are re-applied before every build: cheap and idempotent.
-// WOKKUD_BUILDER_LEGACY=1 falls back to the previous privileged builder
-// (shortcut: remove the fallback once the rootless builder has run a while).
-const (
-	legacyBuilderName      = "wokku-build"
-	legacyBuilderContainer = "buildx_buildkit_" + legacyBuilderName + "0"
-	buildkitImage          = "moby/buildkit:v0.29.0"
-)
-
-func legacyBuilder() bool { return os.Getenv("WOKKUD_BUILDER_LEGACY") == "1" }
-
-// activeBuilder is the buildx builder every build runs on.
-func activeBuilder() string {
-	if legacyBuilder() {
-		return legacyBuilderName
-	}
-	return builderName
-}
+// The privileged fallback builder was removed 2026-11-22 after the rootless
+// one ran clean (16/16 builds vs ~10% failures on the old one).
 
 type limits struct {
 	Memory string
@@ -113,30 +98,8 @@ func ensureBuilder(ctx context.Context, pushRef string) error {
 		}
 		return nil
 	}
-	if !legacyBuilder() {
-		if err := ensureRootlessBuilder(ctx, run, pushRef); err != nil {
-			return err
-		}
-		return run(updateArgs(buildLimits(os.Getenv, runtime.NumCPU()), builderContainer)...)
+	if err := ensureRootlessBuilder(ctx, run, pushRef); err != nil {
+		return err
 	}
-	if run("docker", "buildx", "inspect", "--bootstrap", legacyBuilderName) != nil {
-		f, err := os.CreateTemp("", "wokku-buildkitd-*.toml")
-		if err != nil {
-			return err
-		}
-		defer os.Remove(f.Name())
-		f.WriteString(buildkitdConfig(pushRef))
-		f.Close()
-		if err := run("docker", "buildx", "create", "--name", legacyBuilderName,
-			"--driver", "docker-container",
-			"--driver-opt", "network=host",
-			"--driver-opt", "image="+buildkitImage,
-			"--driver-opt", "restart-policy=unless-stopped",
-			"--buildkitd-flags", "--oci-worker-net=bridge",
-			"--buildkitd-config", f.Name(),
-			"--bootstrap"); err != nil {
-			return err
-		}
-	}
-	return run(updateArgs(buildLimits(os.Getenv, runtime.NumCPU()), legacyBuilderContainer)...)
+	return run(updateArgs(buildLimits(os.Getenv, runtime.NumCPU()), builderContainer)...)
 }

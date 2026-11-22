@@ -177,7 +177,7 @@ func Run(ctx context.Context, client *control.Client, job *control.BuildJob) {
 // lifecycle path gets them via formation_json) — plumb the full formation
 // through dokku ps if a non-lifecycle multi-process app ever needs it.
 func buildCommands(srcDir, pushRef, webCmd string, buildArgs []string) [][]string {
-	buildx := []string{"docker", "buildx", "build", "--builder", activeBuilder(), "--push"}
+	buildx := []string{"docker", "buildx", "build", "--builder", builderName, "--push"}
 	if _, err := os.Stat(filepath.Join(srcDir, "Dockerfile")); err == nil {
 		return [][]string{append(buildx, "-t", pushRef, srcDir)}
 	}
