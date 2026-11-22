@@ -3,8 +3,10 @@ require "rails_helper"
 RSpec.describe ApplyResourcesJob do
   let(:app) { create(:app_record, pending_action: "resize") }
 
-  it "converges with restart and clears the pending flag" do
-    expect(Lifecycle::Ops).to receive(:converge!).with(app, restart: true)
+  it "converges (rolling only changed processes) and clears the pending flag" do
+    # No forced restart: wokkud rolls only the services whose spec (incl.
+    # resources) changed, so resizing web never bounces the worker (1.10).
+    expect(Lifecycle::Ops).to receive(:converge!).with(app)
     described_class.perform_now(app.id)
     expect(app.reload.pending_action).to be_nil
   end
