@@ -61,6 +61,13 @@ class AppRecord < ApplicationRecord
   # Seam gate for anything that brings the app UP (start/restart/deploy/
   # rollback). OSS NullPlanEnforcer always allows; the managed enforcer
   # refuses while the team owner is billing-suspended.
+  # Lowercased owner of the deploy repo ("owner" of owner/repo or of an
+  # https/ssh git URL), nil when unknown. Used to spot banned owners.
+  def repo_owner
+    ref = git_repo_full_name.presence || github_repo_full_name.presence || git_repository_url.to_s
+    ref.strip[%r{\A(?:(?:https?://|git@)[^/:]+[/:])?([^/:\s]+)/[^/\s]+\z}, 1]&.downcase
+  end
+
   def run_allowed?
     return false if team&.owner&.abuse_suspended?
 

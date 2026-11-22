@@ -142,12 +142,23 @@ class User < ApplicationRecord
   # git push and every app bring-up (AppRecord#run_allowed?).
   def abuse_suspended? = abuse_suspended_at.present?
 
+  # A repo owner remembered from a still-suspended user.
+  def self.banned_repo_owner?(owner)
+    owner.present? && where.not(abuse_suspended_at: nil).where("? = ANY(abuse_repo_owners)", owner.downcase).exists?
+  end
+
   # Flags the user, then stops every app in the teams they own (stopped,
   # not sleeping: nothing wakes or restores it). One failing app doesn't
   # stop the rest; returns the names that failed.
+  #
+  # Also remembers the GitHub owners behind the user's repos (and their own
+  # GitHub login), so the same person coming back on a new account is caught
+  # (RelaySweepJob, deploy gate) — 2026-11-22, three accounts, one owner.
   def suspend_for_abuse!
-    update!(abuse_suspended_at: Time.current) unless abuse_suspended?
-    AppRecord.where(team_id: owned_teams.select(:id)).where.not(status: :stopped).filter_map do |app|
+    apps = AppRecord.where(team_id: owned_teams.select(:id))
+    owners = (abuse_repo_owners + apps.filter_map(&:repo_owner) + [ github_username.to_s.downcase.presence ]).compact.uniq
+    update!(abuse_suspended_at: abuse_suspended_at || Time.current, abuse_repo_owners: owners)
+    apps.where.not(status: :stopped).filter_map do |app|
       Lifecycle::Ops.converge!(app, formation: Lifecycle::Ops.stop_formation(app), allow_empty: true)
       app.update!(status: :stopped)
       nil

@@ -113,6 +113,11 @@ func Run(ctx context.Context, client *control.Client, job *control.BuildJob) {
 		fail(client, job, err.Error())
 		return
 	}
+	// The control plane matches RelayBlockedPrefix to flag the app for review.
+	if hit := relayScan(src); hit != "" {
+		fail(client, job, RelayBlockedPrefix+hit+" — VPN/proxy relays are not allowed (Terms of Service §3)")
+		return
+	}
 
 	// Close (flush) the sink BEFORE reporting: the report unblocks
 	// TarballDeployJob's final read of deploy.log, and once the deploy goes
