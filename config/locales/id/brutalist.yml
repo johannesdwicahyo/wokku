@@ -140,7 +140,7 @@ id:
       workspace: "Ruang kerja"
       items:
         apps: "Aplikasi"
-        databases: "Database"
+        databases: "Add-on"
         templates: "Template"
         activity: "Aktivitas"
         servers: "Server"

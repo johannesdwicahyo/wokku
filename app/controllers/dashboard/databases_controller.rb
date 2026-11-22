@@ -14,6 +14,8 @@ module Dashboard
       @by_app = @databases.group_by { |db| db.app_records.map(&:name).join(", ").presence || "Unlinked" }
       @database = DatabaseService.new
       @apps = policy_scope(AppRecord).includes(:server).order(:name)
+      # Add-ons page also lists the account's object storage (per-app buckets).
+      @buckets = Wokku.config.object_storage? ? ObjectStorageBucket.where(app_record: @apps).where.not(status: "deleting").includes(:app_record).order(:created_at) : []
       @group_by = params[:group] || "type"
       # shared_free is offered for postgres only — the underlying
       # dokku-shared-postgres plugin (v0.2.1, smoke-passed 2026-05-13)

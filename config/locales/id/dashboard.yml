@@ -125,7 +125,12 @@ id:
       new_addon_title: "Database baru"
       new_addon_subtitle: "Sediakan database atau layanan"
       empty_body: "Tambah database, cache, dan layanan untuk aplikasimu."
+      object_storage: "Object storage"
+      object_storage_hint: "— bucket S3-compatible, dikelola dari halaman Resources tiap app."
       columns:
+        bucket: "Bucket"
+        used: "Terpakai"
+        app: "App"
         addon: "Add-on"
         status: "Status"
         type: "Tipe"

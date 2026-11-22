@@ -10,7 +10,7 @@
   <%= turbo_stream_from "user_#{current_user.id}_addons" %>
 
   <div class="flex items-center justify-between mb-5">
-    <h1 class="font-headline text-2xl font-extrabold tracking-tight"><%= t("dashboard.nav.databases") %></h1>
+    <h1 class="font-headline text-2xl font-extrabold tracking-tight"><%= t("dashboard.nav.addons") %></h1>
     <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, data: { action: "click->slide-panel#open" }) do %><%= t("dashboard.databases.new_addon") %><% end %>
   </div>
 
@@ -55,13 +55,44 @@
       <% end %>
     </div>
 
-  <% else %>
+  <% elsif @buckets.none? %>
     <%= render Molecules::PanelComponent.new(label: t("dashboard.databases.no_databases")) do %>
       <div class="px-6 py-12 text-center flex flex-col items-center gap-4">
         <p class="text-sm text-dim"><%= t("dashboard.databases.empty_body") %></p>
         <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, data: { action: "click->slide-panel#open" }) do %><%= t("dashboard.databases.new_addon") %><% end %>
       </div>
     <% end %>
+  <% end %>
+
+  <% if @buckets.any? %>
+    <div>
+      <div class="flex items-baseline gap-2 mb-2">
+        <h3 class="text-sm font-bold text-ink"><%= t("dashboard.databases.object_storage") %></h3>
+        <span class="text-xs text-dim"><%= t("dashboard.databases.object_storage_hint") %></span>
+      </div>
+      <div class="bg-paper border-1.5 border-ink rounded-md shadow-brutal overflow-hidden">
+        <table class="w-full text-[13.5px]">
+          <thead>
+            <tr class="bg-bg border-b-1.5 border-ink text-[10.5px] font-bold uppercase tracking-[.06em] text-dim text-left">
+              <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.databases.columns.bucket") %></th>
+              <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.databases.columns.status") %></th>
+              <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.databases.columns.used") %></th>
+              <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.databases.columns.app") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @buckets.each do |bucket| %>
+              <tr class="border-b border-line last:border-0">
+                <td class="px-3.5 py-2.5 font-mono"><%= bucket.name %></td>
+                <td class="px-3.5 py-2.5"><%= bucket.status %></td>
+                <td class="px-3.5 py-2.5 tabular-nums"><%= number_with_precision(bucket.used_gb, precision: 1) %> / <%= bucket.quota_gb %> GB</td>
+                <td class="px-3.5 py-2.5"><%= link_to bucket.app_record.name, dashboard_app_resources_path(bucket.app_record), class: "text-ink hover:underline" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
   <% end %>
 
   <%= render layout: "dashboard/shared/slide_panel", locals: { title: t("dashboard.databases.new_addon_title"), subtitle: t("dashboard.databases.new_addon_subtitle") } do %>
