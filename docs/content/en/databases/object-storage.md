@@ -83,8 +83,8 @@ s3 = boto3.client(
 
 ## Pricing and quota
 
-- Rp 400 per GB per month, after 1 GB free per team. Downloads are free.
-- Free teams have a fixed 1 GB quota. Paid teams default to a 10 GB cap, which you can change up to 1024 GB.
+- Rp 400 per GB per month, after 1 GB free per account, shared by all its apps. Downloads are free.
+- On the free plan, one app per account can have object storage, with a fixed 1 GB quota. Paid teams default to a 10 GB cap, which you can change up to 1024 GB.
 - You get an email when a bucket reaches 80% of its quota.
 
 ## Backups

@@ -46,7 +46,7 @@ RSpec.describe "Dashboard object storage", type: :request do
       create(:object_storage_bucket, app_record: app_record, quota_gb: 10)
       sign_in user_with(:member)
       get "/dashboard/apps/#{app_record.id}"
-      expect(response.body).to include("Object storage · S3-compatible · 0.0 GB of 10 GB · Rp 400/GB per month after 1 GB free")
+      expect(response.body).to include("Object storage · S3-compatible · 0.0 GB of 10 GB · Rp 400/GB per month after 1 GB free per account")
     end
   end
 
@@ -89,6 +89,13 @@ RSpec.describe "Dashboard object storage", type: :request do
     it "creates" do
       expect { post base }.to have_enqueued_job(ObjectStorage::ProvisionJob)
       expect(response).to redirect_to("/dashboard/apps/#{app_record.id}/resources")
+    end
+
+    it "refuses a free team's second app once its 1 GB is in use" do
+      allow_any_instance_of(ObjectStorageBucket).to receive(:free_team?).and_return(true)
+      create(:object_storage_bucket, app_record: create(:app_record, team: app_record.team), quota_gb: 1)
+      expect { post base }.not_to have_enqueued_job(ObjectStorage::ProvisionJob)
+      expect(flash[:alert]).to include("1 GB")
     end
 
     it "resizes" do

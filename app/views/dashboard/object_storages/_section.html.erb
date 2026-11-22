@@ -6,7 +6,7 @@
   <div class="px-6 py-4 border-b border-line flex items-center justify-between gap-3 flex-wrap">
     <div>
       <h2 class="font-headline text-base font-bold text-ink">Object storage</h2>
-      <p class="text-xs text-dim mt-1">S3-compatible bucket for uploads and files. Rp 400/GB per month after 1 GB free.</p>
+      <p class="text-xs text-dim mt-1">S3-compatible bucket for uploads and files. Rp 400/GB per month after 1 GB free per account.</p>
     </div>
     <% if bucket.nil? && can_write %>
       <%= button_to "Enable object storage", dashboard_app_object_storage_path(app), method: :post, class: Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>

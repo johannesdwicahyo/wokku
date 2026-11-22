@@ -1,3 +1,3 @@
 <%= link_to helpers.dashboard_app_resources_path(bucket.app_record), class: "block border border-line bg-paper rounded-lg p-4 transition-colors hover:bg-bg", data: { turbo_frame: "_top" } do %>
-  <div class="text-sm text-ink">Object storage · S3-compatible · <%= number_with_precision(bucket.used_gb, precision: 1) %> GB of <%= bucket.quota_gb %> GB · Rp <%= ObjectStorageBucket::PRICE_IDR_PER_GB %>/GB per month after <%= ObjectStorageBucket::FREE_QUOTA_GB %> GB free</div>
+  <div class="text-sm text-ink">Object storage · S3-compatible · <%= number_with_precision(bucket.used_gb, precision: 1) %> GB of <%= bucket.quota_gb %> GB · Rp <%= ObjectStorageBucket::PRICE_IDR_PER_GB %>/GB per month after <%= ObjectStorageBucket::FREE_QUOTA_GB %> GB free per account</div>
 <% end %>
