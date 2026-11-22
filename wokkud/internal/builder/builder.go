@@ -18,7 +18,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 
@@ -199,20 +198,16 @@ func buildCommands(srcDir, pushRef, webCmd string, buildArgs []string) [][]strin
 // Dockerfile declares its plan variables (GEM_HOME, NODE_ENV, ...) as ARGs
 // that `nixpacks build` passes itself; we run buildx ourselves, so without
 // these every such ENV was empty (an empty GEM_HOME crashes RubyGems on
-// Ruby 3.4.13, 2026-11-21). Sorted for a stable cache key.
-// Ruby plans only for now (see below).
+// Ruby 3.4.13, 2026-11-21; Node images carried NODE_ENV=""). Every stack
+// since 2026-11-22. A plan PORT (Laravel's 80) is harmless: the control
+// plane sets PORT at runtime, which overrides the image ENV. Sorted for a
+// stable cache key.
 func planBuildArgs(plan []byte) ([]string, error) {
 	var p struct {
 		Variables map[string]string `json:"variables"`
 	}
 	if err := json.Unmarshal(plan, &p); err != nil {
 		return nil, err
-	}
-	// shortcut: Ruby only. Other stacks' variables (NODE_ENV=production,
-	// CI=true, ...) would change existing apps' builds; widen after testing
-	// every starter with them.
-	if !strings.Contains(p.Variables["NIXPACKS_METADATA"], "ruby") {
-		return nil, nil
 	}
 	keys := make([]string, 0, len(p.Variables))
 	for k := range p.Variables {
