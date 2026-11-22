@@ -23,6 +23,25 @@ RSpec.describe Deploys::BuildAndConverge do
            build_picked_up_at: picked_up_at, build_finished_at: nil)
   end
 
+  describe "ban-evasion gate" do
+    before do
+      create(:user, abuse_suspended_at: 1.day.ago, abuse_repo_owners: %w[relay-org])
+      allow(Lifecycle::Ops).to receive(:converge!)
+    end
+
+    it "refuses the deploy and suspends the owner for a relay-looking repo from a banned owner" do
+      app_record.update!(git_repo_full_name: "relay-org/xray-payload")
+      expect { service.call }.to raise_error(described_class::Error, /Terms of Service/)
+      expect(app_record.team.owner.reload.abuse_suspended?).to be(true)
+    end
+
+    it "lets a banned owner's repo through when nothing about it looks like a relay" do
+      app_record.update!(git_repo_full_name: "relay-org/shop")
+      expect(app_record.team.owner.abuse_suspended?).to be(false)
+      expect(RelaySweepJob.reasons_for(app_record)).to be_empty
+    end
+  end
+
   describe "#wait_for_claim" do
     it "returns true as soon as the build is picked up" do
       deploy.update!(build_picked_up_at: Time.current)

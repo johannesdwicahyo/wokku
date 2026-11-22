@@ -131,6 +131,30 @@ RSpec.describe "Api::V1::Agent::Builds" do
       expect(deploy.build_finished_at).to be_present
     end
 
+    context "when wokkud's relay scan blocked the build" do
+      let(:blocked) { "blocked by relay scan: start.sh (xtls/xray-core) — VPN/proxy relays are not allowed (Terms of Service §3)" }
+
+      before { ENV["ADMIN_EMAIL"] = "ops@example.com" }
+      after { ENV.delete("ADMIN_EMAIL") }
+
+      it "flags the app and emails the operator" do
+        expect {
+          post "/api/v1/agent/builds/#{deploy.id}/report", params: { status: "failed", error: blocked }.to_json, headers: headers
+        }.to change { ActionMailer::Base.deliveries.size }.by(1)
+        expect(app_record.reload.relay_flagged_at).to be_present
+        expect(ActionMailer::Base.deliveries.last.body.to_s).to include(app_record.name, "xtls/xray-core")
+      end
+
+      it "suspends the owner when the repo owner is already banned" do
+        create(:user, abuse_suspended_at: 1.day.ago, abuse_repo_owners: %w[relay-org])
+        app_record.update!(git_repo_full_name: "relay-org/innocent-name")
+        allow(Lifecycle::Ops).to receive(:converge!)
+        post "/api/v1/agent/builds/#{deploy.id}/report", params: { status: "failed", error: blocked }.to_json, headers: headers
+        expect(app_record.team.owner.reload.abuse_suspended?).to be(true)
+        expect(ActionMailer::Base.deliveries.last.body.to_s).to include("AUTO-SUSPENDED")
+      end
+    end
+
     it "persists the formation when the agent reports one" do
       post "/api/v1/agent/builds/#{deploy.id}/report",
            params: { status: "succeeded", formation: { "web" => "node bin/www", "worker" => "bundle exec sidekiq" } }.to_json,

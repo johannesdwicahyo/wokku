@@ -77,11 +77,26 @@ module Api
             append_log_line("\n\u2192 build succeeded \u2014 deploying#{host ? " \u00b7 live shortly at https://#{host}" : ""}\n")
           else
             append_log_line("\n\u2717 build failed: #{attrs[:build_error]}\n")
+            flag_relay_scan_block(attrs[:build_error])
           end
           head :ok
         end
 
         private
+
+        RELAY_SCAN_PREFIX = "blocked by relay scan: ".freeze # wokkud builder.RelayBlockedPrefix
+
+        # wokkud's source scan found relay tooling: flag the app for review
+        # (and auto-suspend if it's a banned owner coming back).
+        def flag_relay_scan_block(error)
+          return unless error.to_s.start_with?(RELAY_SCAN_PREFIX)
+
+          app = @deploy.app_record
+          finding = error.delete_prefix(RELAY_SCAN_PREFIX).split(" \u2014 ").first
+          reasons = RelaySweepJob.verdict(app, [ "build blocked: #{finding}" ])
+          app.update_column(:relay_flagged_at, Time.current)
+          OpsMailer.relay_suspects([ [ app.name, app.team&.owner&.email, reasons ] ]).deliver_now
+        end
 
         # Milestone lines the CONTROL PLANE narrates into the build log
         # (claim, trailer) — same append+broadcast path as agent chunks.

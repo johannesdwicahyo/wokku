@@ -42,4 +42,34 @@ RSpec.describe RelaySweepJob do
     app!("xray-#{SecureRandom.hex(3)}")
     expect { described_class.perform_now }.not_to change { ActionMailer::Base.deliveries.size }
   end
+
+  describe "ban evasion (repo owner of an already-suspended user)" do
+    before do
+      User.create!(email: "banned-#{SecureRandom.hex(4)}@example.com", password: "password123456",
+                   abuse_suspended_at: 1.day.ago, abuse_repo_owners: %w[relay-org])
+      allow(Lifecycle::Ops).to receive(:converge!)
+    end
+
+    it "suspends the new owner and stops the app when it also looks like a relay" do
+      app = app!("payload-#{SecureRandom.hex(3)}", repo: "relay-org/xray-payload", status: :sleeping)
+      described_class.perform_now
+      expect(user.reload.abuse_suspended?).to be(true)
+      expect(app.reload.status).to eq("stopped")
+      body = ActionMailer::Base.deliveries.last.body.to_s
+      expect(body).to include(app.name, "AUTO-SUSPENDED", "relay-org")
+    end
+
+    it "only flags an app from a banned owner that shows no relay signal" do
+      app = app!("shop-#{SecureRandom.hex(3)}", repo: "relay-org/shop")
+      described_class.perform_now
+      expect(user.reload.abuse_suspended?).to be(false)
+      expect(ActionMailer::Base.deliveries.last.body.to_s).to include(app.name, "banned repo owner relay-org")
+    end
+  end
+
+  it "also checks sleeping apps, which wake on the first request" do
+    app = app!("vless-#{SecureRandom.hex(3)}", status: :sleeping)
+    described_class.perform_now
+    expect(ActionMailer::Base.deliveries.last.body.to_s).to include(app.name)
+  end
 end

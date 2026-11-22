@@ -43,6 +43,8 @@ module Deploys
 
     def self.call(app:, deploy:) = new(app: app, deploy: deploy).call
 
+    BLOCKED_MESSAGE = "Deploy blocked: VPN/proxy relays are not allowed (Terms of Service §3).".freeze
+
     def initialize(app:, deploy:)
       @app = app
       @deploy = deploy
@@ -52,6 +54,7 @@ module Deploys
     # (callers map to their own timed-out state) or Error for any other
     # build/converge failure.
     def call
+      refuse_ban_evasion!
       server = @app.server
       unless wokkud_build?(server)
         raise BuilderUnavailable, "wokkud builder unavailable on #{server.name} — deploy cannot proceed"
@@ -153,6 +156,17 @@ module Deploys
             .where.not(id: deploy.id)
             .where("build_picked_up_at > ?", self.class.busy_claim_max_age.ago)
             .exists?
+    end
+
+    # A relay-looking repo from a GitHub owner we already banned is the same
+    # person on a new account: suspend them and never start the build.
+    def refuse_ban_evasion!
+      reasons = RelaySweepJob.reasons_for(@app)
+      return if reasons.empty? || !User.banned_repo_owner?(@app.repo_owner)
+
+      reasons = RelaySweepJob.verdict(@app, reasons)
+      OpsMailer.relay_suspects([ [ @app.name, @app.team&.owner&.email, [ "at deploy" ] + reasons ] ]).deliver_later
+      raise Error, BLOCKED_MESSAGE
     end
   end
 end
