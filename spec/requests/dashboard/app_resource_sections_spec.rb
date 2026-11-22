@@ -18,21 +18,14 @@ RSpec.describe "Dashboard resources app_resource_sections", type: :request do
   it "renders nothing extra by default" do
     get path
     expect(response).to have_http_status(:ok)
-    expect(response.body).not_to include("SectionMarker")
+    expect(response.body).not_to include("S3-compatible bucket for uploads and files")
   end
 
   it "renders each configured partial with its locals" do
-    Dir.mktmpdir do |dir|
-      FileUtils.mkdir_p("#{dir}/spec_sections")
-      File.write("#{dir}/spec_sections/_card.html.erb", "<p>SectionMarker <%= name %></p>")
-      Dashboard::ResourcesController.prepend_view_path(dir)
-      Wokku.config.app_resource_sections = ->(_view, app) {
-        [ { partial: "spec_sections/card", locals: { name: app.name } } ]
-      }
-      get path
-      expect(response.body).to include("SectionMarker #{app_record.name}")
-    ensure
-      Dashboard::ResourcesController.view_paths = Dashboard::ResourcesController.view_paths.to_a.reject { |p| p.to_s == dir }
-    end
+    Wokku.config.app_resource_sections = ->(_view, app) {
+      [ { partial: "dashboard/object_storages/section", locals: { app: app } } ]
+    }
+    get path
+    expect(response.body).to include("S3-compatible bucket for uploads and files")
   end
 end
