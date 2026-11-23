@@ -79,6 +79,8 @@ class ObjectStorageBucket < ApplicationRecord
       bucket: name, endpoint: Wokku.config.object_storage&.dig(:endpoint),
       region: ObjectStorage::Provisioner::REGION, access_key_id: access_key,
       quota_gb: quota_gb, used_gb: used_gb.round(2), status: status,
+      pricing_note: Wokku.config.object_storage_pricing_note.call(team),
+      # legacy: kept for API compatibility; prefer pricing_note
       price_idr_per_gb: PRICE_IDR_PER_GB, free_gb: FREE_QUOTA_GB
     }
     h[:secret_access_key] = secret_key if reveal
