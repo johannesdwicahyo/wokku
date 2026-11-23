@@ -96,6 +96,10 @@
     <%= render "dashboard/object_storages/section", app: @app %>
   <% end %>
 
+  <% Array.wrap(Wokku.config.app_resource_sections.call(self, @app)).each do |section| %>
+    <%= render partial: section[:partial], locals: section[:locals] || {} %>
+  <% end %>
+
   <%# Monthly cost comes from the host app's billing (none on a self-host). %>
   <% if respond_to?(:app_monthly_cost) %>
     <% amount, caption = app_monthly_cost(@app) %>
