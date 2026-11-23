@@ -100,4 +100,46 @@ RSpec.describe Organisms::ResourceBuilderComponent, type: :component do
     expect(page).not_to have_button(/Sleeping/)
     expect(page).to have_css("[data-resource-builder-target='railsHint'].hidden", visible: :all)
   end
+
+  describe "pricing kind" do
+    after { Wokku.config.pricing = nil }
+
+    let(:kind_provider) do
+      Class.new do
+        attr_reader :calls
+        def initialize = @calls = []
+        def unit_prices(kind: :app) = (@calls << [ :unit_prices, kind ]; { "cpu" => 1, "memory_gb" => 1, "disk_gb" => 1 })
+        def monthly_idr(_shape, instances: 1, kind: :app) = (@calls << [ :monthly_idr, kind ]; 100)
+        def upcoming_change(kind: :app) = (@calls << [ :upcoming_change, kind ]; nil)
+      end.new
+    end
+
+    it "passes kind: :database through to every seam call" do
+      Wokku.config.pricing = kind_provider
+      render_inline(described_class.new(name: "", shape: shape, presets: {}, kind: :database))
+      expect(kind_provider.calls).to include([ :unit_prices, :database ], [ :monthly_idr, :database ], [ :upcoming_change, :database ])
+    end
+
+    it "does not pass kind for apps (default)" do
+      Wokku.config.pricing = kind_provider
+      render_inline(described_class.new(name: "p", shape: shape, presets: {}))
+      expect(kind_provider.calls.map(&:last).uniq).to eq([ :app ])
+    end
+
+    it "keeps working with a provider that predates kind:" do
+      old = Class.new do
+        def unit_prices = { "cpu" => 1, "memory_gb" => 1, "disk_gb" => 1 }
+        def monthly_idr(_shape, instances: 1) = 50
+        def upcoming_change = nil
+      end.new
+      Wokku.config.pricing = old
+      render_inline(described_class.new(name: "", shape: shape, presets: {}, kind: :database))
+      expect(page).to have_css("[data-resource-builder-target='price']", text: "Rp50")
+    end
+
+    it "is unaffected on the default (null) provider" do
+      render_inline(described_class.new(name: "", shape: shape, presets: {}, kind: :database))
+      expect(page).to have_no_css("[data-resource-builder-target='price']")
+    end
+  end
 end

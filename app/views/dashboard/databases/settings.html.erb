@@ -64,7 +64,7 @@
                   memory_mb: @database.service_tier&.spec&.dig("memory_mb").to_i,
                   disk_gb: @database.service_tier&.spec&.dig("storage_gb").to_i),
                 presets: Resources::Shape::SERVICE_PRESETS.fetch(@database.service_type, Resources::Shape::PRESETS),
-                disk: true, min_disk_gb: @database.disk_gb.to_i) %>
+                disk: true, min_disk_gb: @database.disk_gb.to_i, kind: :database) %>
           <%= submit_tag "Resize", class: Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>
         <% end %>
       </div>

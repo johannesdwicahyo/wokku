@@ -363,9 +363,9 @@ class TemplateDeployer
     tier = container_tier(app)
     web = Resources::ApplyChange.shape_for_dyno_tier(tier) if tier && !(app.persisted? && app.dyno_allocations.exists?(process_type: "web"))
     dbs = planned_dedicated_dbs.map { |engine, tier_name| Resources::ApplyChange.service_shape_for_tier(engine, tier_name) }
-    shapes = [ web, *dbs ].compact
-    return Resources::ApplyChange::Result.new(ok: true) if shapes.empty?
-    Resources::ApplyChange.check_new_shape(team: app.team, server: server, shapes: shapes)
+    dbs, apps = dbs.compact, [ web ].compact
+    return Resources::ApplyChange::Result.new(ok: true) if dbs.empty? && apps.empty?
+    Resources::ApplyChange.check_new_shape(team: app.team, server: server, shapes: dbs, app_shapes: apps)
   end
 
   private
