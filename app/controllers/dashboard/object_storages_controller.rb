@@ -19,7 +19,7 @@ module Dashboard
       if @app.object_storage_bucket
         back alert: "Object storage is already enabled."
       elsif ObjectStorageBucket.free_team_limit_reached?(@app.team)
-        back alert: ObjectStorageBucket::FREE_TEAM_LIMIT_MESSAGE
+        back alert: ObjectStorageBucket.limit_message(@app.team)
       else
         ObjectStorage::Provisioner.create!(@app)
         track("object_storage.created", target: @app, team: @app.team)
