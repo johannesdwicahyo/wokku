@@ -41,8 +41,6 @@ class ObjectStorageBucket < ApplicationRecord
     limits[:max_bucket_gb] unless limits[:free] # differs from free_team? only under the specs' free_team? stub
   end
 
-  PRICE_IDR_PER_GB = 400
-
   FREE_TEAM_LIMIT_MESSAGE = "The free plan includes #{FREE_QUOTA_GB} GB of object storage per account, " \
                             "and another app already uses it. Upgrade to add storage to more apps.".freeze
 
@@ -80,8 +78,7 @@ class ObjectStorageBucket < ApplicationRecord
       region: ObjectStorage::Provisioner::REGION, access_key_id: access_key,
       quota_gb: quota_gb, used_gb: used_gb.round(2), status: status,
       pricing_note: Wokku.config.object_storage_pricing_note.call(team),
-      # legacy: kept for API compatibility; prefer pricing_note
-      price_idr_per_gb: PRICE_IDR_PER_GB, free_gb: FREE_QUOTA_GB
+      free_gb: FREE_QUOTA_GB
     }
     h[:secret_access_key] = secret_key if reveal
     h

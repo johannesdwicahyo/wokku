@@ -8,7 +8,7 @@ RSpec.describe "Object storage docs", type: :request do
       it "serves /docs/databases/object-storage in #{lang} and lists it in the sidebar" do
         get "/docs/databases/object-storage", params: { lang: lang }
         expect(response).to have_http_status(:ok)
-        expect(response.body).to include("s3.wokku.cloud").and include("Rp 400")
+        expect(response.body).to include("s3.wokku.cloud")
         get "/docs/getting-started/first-deploy", params: { lang: lang }
         expect(response.body).to include("databases/object-storage")
       end
