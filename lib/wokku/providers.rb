@@ -39,7 +39,7 @@ module Wokku
     end
 
     attr_accessor :tls, :billing
-    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder, :host_ssh_user, :control_plane_host, :openapi_path, :object_storage, :sidebar_extra_items, :app_resource_sections, :object_storage_limits, :addons_index_sections
+    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder, :host_ssh_user, :control_plane_host, :openapi_path, :object_storage, :sidebar_extra_items, :app_resource_sections, :object_storage_limits, :addons_index_sections, :object_storage_pricing_note
 
     # The OpenAPI file GET /api/v1/openapi.yaml serves. Engine default: its
     # own derived contract; the cloud points it at the cloud superset.
@@ -76,6 +76,12 @@ module Wokku
         free = !!team.current_plan&.free?
         { free: free, max_buckets: nil, max_bucket_gb: (ObjectStorageBucket::FREE_QUOTA_GB if free) }
       }
+    end
+
+    # (team) -> String|nil. Host-supplied pricing text appended to the object-storage
+    # copy (card, section, usage page, API). Default: no price text (self-host).
+    def object_storage_pricing_note
+      @object_storage_pricing_note || ->(_team) { nil }
     end
 
     # {endpoint:, access_key:, secret_key:} for the object-storage (RustFS)
