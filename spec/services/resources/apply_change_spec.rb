@@ -163,6 +163,16 @@ RSpec.describe Resources::ApplyChange do
       expect(result.ok).to be(true)
     end
 
+    it "marks the new datastore allocation as a database (service_id key) but not app shapes" do
+      expect(Wokku.config.plan_enforcer).to receive(:allowed?) do |_team, _res, to:, **|
+        expect(to.last).to include(service_id: :new)
+        expect(to.select { |a| a.key?(:service_id) && a[:service_id] == :new }.size).to eq(1)
+        true
+      end
+      described_class.check_new_shape(team: app.team, server: server, shapes: [ Resources::Shape.new(cpu: 0.25, memory_mb: 512) ],
+                                      app_shapes: [ Resources::Shape.new(cpu: 0.25, memory_mb: 512) ])
+    end
+
     it "rejects an off-grid shape without touching capacity" do
       result = described_class.check_new_shape(team: app.team, server: server, shape: Resources::Shape.new(cpu: 0.3, memory_mb: 512))
       expect(result.ok).to be(false)

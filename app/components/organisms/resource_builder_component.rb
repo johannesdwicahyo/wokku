@@ -6,10 +6,11 @@ module Organisms
   # pricing seam and are hidden on OSS.
   class ResourceBuilderComponent < ApplicationComponent
     def initialize(name:, shape:, presets:, instances: nil, disk: false, sleeping_option: false,
-                   sleeping: false, min_disk_gb: 0, rails_hint: false)
+                   sleeping: false, min_disk_gb: 0, rails_hint: false, kind: :app)
       @name, @shape, @presets, @instances = name, shape, presets, instances
       @disk, @sleeping_option, @sleeping = disk, sleeping_option, sleeping
       @min_disk_gb, @rails_hint = min_disk_gb, rails_hint
+      @kind = kind
     end
     attr_reader :shape, :presets, :instances, :sleeping, :min_disk_gb, :rails_hint
 
@@ -17,13 +18,23 @@ module Organisms
     def sleeping_option? = @sleeping_option
     def field(key) = @name.present? ? "#{@name}[#{key}]" : key.to_s
     def grid(key) = Resources::Shape::GRID.fetch(key)
-    def units = Wokku.config.pricing.unit_prices
-    def price_idr = Wokku.config.pricing.monthly_idr(shape, instances: instances || 1)
+    def units = Wokku.config.pricing.unit_prices(**kind_opts(:unit_prices))
+    def price_idr = Wokku.config.pricing.monthly_idr(shape, instances: instances || 1, **kind_opts(:monthly_idr))
 
     # Optional seam method (older/custom providers may lack it → nothing shown).
     def upcoming_change
       pricing = Wokku.config.pricing
-      pricing.upcoming_change if pricing.respond_to?(:upcoming_change)
+      pricing.upcoming_change(**kind_opts(:upcoming_change)) if pricing.respond_to?(:upcoming_change)
+    end
+
+    # `kind:` is only passed when kind is non-default AND the provider's
+    # method accepts it (older host providers predate it). Doubles/mocks
+    # with a rest signature count as accepting.
+    def kind_opts(meth)
+      return {} if @kind == :app
+      params = Wokku.config.pricing.method(meth).parameters
+      accepts = params.any? { |t, n| (t == :key || t == :keyreq) && n == :kind } || params.any? { |t, _| t == :keyrest }
+      accepts ? { kind: @kind } : {}
     end
 
     UNIT_LABELS = { "cpu" => "vCPU", "memory_gb" => "RAM GB", "disk_gb" => "disk GB" }.freeze

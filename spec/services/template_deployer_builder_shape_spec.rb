@@ -72,7 +72,7 @@ RSpec.describe TemplateDeployer, "builder-mode shapes" do
 
     it "checks the web process and its datastores as one change" do
       expect(Resources::ApplyChange).to receive(:check_new_shape)
-        .with(hash_including(shapes: [ Resources::Shape.new(cpu: 0.5, memory_mb: 512), Resources::Shape.new(cpu: 0.25, memory_mb: 512, disk_gb: 5) ]))
+        .with(hash_including(app_shapes: [ Resources::Shape.new(cpu: 0.5, memory_mb: 512) ], shapes: [ Resources::Shape.new(cpu: 0.25, memory_mb: 512, disk_gb: 5) ]))
         .and_return(Resources::ApplyChange::Result.new(ok: true))
       deploy
     end

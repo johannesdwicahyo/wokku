@@ -109,18 +109,22 @@ module Resources
     # Enforcer + capacity check for a shape that doesn't have a service_id
     # yet — a brand-new dedicated datastore being created (Task 11). Mirrors
     # ResizeService's checks without the "already exists" bookkeeping.
-    # `shapes:` checks several new resources as one change (a template's
-    # web process + its datastores).
-    def self.check_new_shape(team:, server:, shape: nil, shapes: [ shape ])
+    # `shapes:` are NEW datastores; `app_shapes:` are new app processes
+    # checked in the same change (a template's web + its datastores).
+    # A new datastore is marked `service_id: :new` — the same key existing
+    # datastores carry in team_allocations — so the host enforcer prices it
+    # at the database rate (cloud: `database: a.key?(:service_id)`).
+    def self.check_new_shape(team:, server:, shape: nil, shapes: [ shape ], app_shapes: [])
       return disabled unless Wokku.config.resource_builder?
-      invalid = shapes.find { |s| !s.valid? }
+      invalid = (shapes + app_shapes).find { |s| !s.valid? }
       return Result.new(ok: false, error: invalid.errors.join(", ")) if invalid
       before = team_allocations(team)
-      after = before + shapes.map { |s| { shape: s, instances: 1 } }
+      after = before + app_shapes.map { |s| { shape: s, instances: 1 } } +
+        shapes.map { |s| { shape: s, instances: 1, service_id: :new } }
       unless Wokku.config.plan_enforcer.allowed?(team, :resources, from: before, to: after)
         return Result.new(ok: false, error: "That size is over your account limit — add credit on the Billing page to go higher.")
       end
-      CapacityGuard.check!(server, add_mb: shapes.sum(&:memory_mb))
+      CapacityGuard.check!(server, add_mb: (shapes + app_shapes).sum(&:memory_mb))
       Result.new(ok: true)
     rescue CapacityGuard::Full => e
       notify_capacity_full(server)

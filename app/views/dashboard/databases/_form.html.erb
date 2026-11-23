@@ -72,12 +72,12 @@
     <fieldset disabled data-addon-tier-picker-target="shapeBuilder" data-shape-engines="postgres mysql mariadb mongodb" class="hidden border-0 p-0 m-0">
       <%= render Organisms::ResourceBuilderComponent.new(
             name: "", shape: Resources::Shape.new(**Resources::Shape::SERVICE_PRESETS.fetch("postgres")["small"]),
-            presets: Resources::Shape::SERVICE_PRESETS.fetch("postgres"), disk: true) %>
+            presets: Resources::Shape::SERVICE_PRESETS.fetch("postgres"), disk: true, kind: :database) %>
     </fieldset>
     <fieldset disabled data-addon-tier-picker-target="shapeBuilder" data-shape-engines="redis" class="hidden border-0 p-0 m-0">
       <%= render Organisms::ResourceBuilderComponent.new(
             name: "", shape: Resources::Shape.new(**Resources::Shape::SERVICE_PRESETS.fetch("redis")["small"]),
-            presets: Resources::Shape::SERVICE_PRESETS.fetch("redis"), disk: true) %>
+            presets: Resources::Shape::SERVICE_PRESETS.fetch("redis"), disk: true, kind: :database) %>
     </fieldset>
   <% end %>
 
