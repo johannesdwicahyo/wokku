@@ -69,12 +69,12 @@ module Wokku
     end
 
     # Object-storage plan limits for a team: { free: Boolean, max_buckets:
-    # Integer|nil, max_total_gb: Integer|nil } (nil = unlimited). Default is
+    # Integer|nil, max_bucket_gb: Integer|nil } (nil = unlimited; the GB cap is per bucket). Default is
     # the stock behaviour: free plan = one 1 GB bucket, paid = unlimited.
     def object_storage_limits
       @object_storage_limits || ->(team) {
         free = !!team.current_plan&.free?
-        { free: free, max_buckets: nil, max_total_gb: (ObjectStorageBucket::FREE_QUOTA_GB if free) }
+        { free: free, max_buckets: nil, max_bucket_gb: (ObjectStorageBucket::FREE_QUOTA_GB if free) }
       }
     end
 

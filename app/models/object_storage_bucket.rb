@@ -28,17 +28,17 @@ class ObjectStorageBucket < ApplicationRecord
 
   # Free tier = the team's plan is Plan(free). Managed cloud overrides
   # Team#current_plan with the active subscription, so this follows billing.
-  def free_team? = self.class.limits(team)[:free]
+  def free_team? = limits[:free]
 
-  # Plan limits for a team via the host app's seam (see Wokku::Providers).
-  def self.limits(team) = Wokku.config.object_storage_limits.call(team)
+  # Plan limits via the host app's seam (see Wokku::Providers), computed once
+  # per instance so a request does not re-run the lambda.
+  def limits = @limits ||= Wokku.config.object_storage_limits.call(team)
 
-  # Largest quota a bucket of this team may have, nil = no cap. A free team is
-  # always capped (at FREE_QUOTA_GB unless the seam says otherwise).
+  # Largest quota THIS bucket may have, nil = no cap. A free team is always
+  # capped (at FREE_QUOTA_GB unless the seam says otherwise).
   def quota_cap
-    l = self.class.limits(team)
-    return (l[:max_total_gb] || FREE_QUOTA_GB) if free_team?
-    l[:max_total_gb] unless l[:free] # free_team? and limits[:free] only differ under a spec stub
+    return (limits[:max_bucket_gb] || FREE_QUOTA_GB) if free_team?
+    limits[:max_bucket_gb] unless limits[:free] # differs from free_team? only under the specs' free_team? stub
   end
 
   PRICE_IDR_PER_GB = 400
@@ -47,19 +47,21 @@ class ObjectStorageBucket < ApplicationRecord
                             "and another app already uses it. Upgrade to add storage to more apps.".freeze
 
   # The free GB is per team (billing nets it once per team); a free team's
-  # bucket is fixed at that 1 GB, so it gets exactly one bucket.
+  # bucket is fixed at that 1 GB, so it gets exactly one bucket. The seam's
+  # max_buckets, when set, replaces that rule.
   def self.free_team_limit_reached?(team)
+    probe = new(team: team)
     live = where(team: team).where.not(status: "deleting")
-    max = limits(team)[:max_buckets]
+    max = probe.limits[:max_buckets]
     return live.count >= max if max
-    new(team: team).free_team? && live.exists?
+    probe.free_team? && live.exists?
   end
 
   def self.limit_message(team)
-    max = limits(team)[:max_buckets]
-    return FREE_TEAM_LIMIT_MESSAGE if new(team: team).free_team? || max.nil?
+    max = new(team: team).limits[:max_buckets]
+    return FREE_TEAM_LIMIT_MESSAGE unless max
     "Your plan includes #{max} object storage #{'bucket'.pluralize(max)}, and you have reached the limit. " \
-      "Upgrade your plan to add more.".freeze
+      "Upgrade your plan to add more."
   end
 
   # [http_status, message] when gb is not an acceptable new quota, else nil.
