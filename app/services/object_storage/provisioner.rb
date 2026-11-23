@@ -16,7 +16,7 @@ module ObjectStorage
           access_key: "wk#{SecureRandom.hex(9)}", secret_key: SecureRandom.alphanumeric(40),
           status: "provisioning"
         )
-        bucket.quota_gb = bucket.free_team? ? ObjectStorageBucket::FREE_QUOTA_GB : ObjectStorageBucket::DEFAULT_QUOTA_GB
+        bucket.quota_gb = [ ObjectStorageBucket::DEFAULT_QUOTA_GB, bucket.quota_cap ].compact.min
         bucket.save!
         ProvisionJob.perform_later(bucket.id)
         bucket
@@ -36,7 +36,8 @@ module ObjectStorage
       def resize!(bucket, gb)
         gb = Integer(gb)
         raise ArgumentError, "quota must be 1..#{ObjectStorageBucket::MAX_QUOTA_GB} GB" unless gb.between?(1, ObjectStorageBucket::MAX_QUOTA_GB)
-        raise ArgumentError, "free plan is limited to #{ObjectStorageBucket::FREE_QUOTA_GB} GB" if bucket.free_team? && gb != ObjectStorageBucket::FREE_QUOTA_GB
+        cap = bucket.quota_cap
+        raise ArgumentError, "#{bucket.free_team? ? "free " : ""}plan is limited to #{cap} GB" if cap && gb > cap
         client.set_quota(bucket.name, gb)
         bucket.update!(quota_gb: gb)
       end

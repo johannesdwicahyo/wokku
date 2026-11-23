@@ -39,7 +39,7 @@ module Wokku
     end
 
     attr_accessor :tls, :billing
-    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder, :host_ssh_user, :control_plane_host, :openapi_path, :object_storage, :sidebar_extra_items, :app_resource_sections
+    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder, :host_ssh_user, :control_plane_host, :openapi_path, :object_storage, :sidebar_extra_items, :app_resource_sections, :object_storage_limits, :addons_index_sections
 
     # The OpenAPI file GET /api/v1/openapi.yaml serves. Engine default: its
     # own derived contract; the cloud points it at the cloud superset.
@@ -59,6 +59,23 @@ module Wokku
     # [{ partial: "path/to/partial", locals: { ... } }, ...]. Default adds none.
     def app_resource_sections
       @app_resource_sections || ->(_view, _app) { [] }
+    end
+
+    # Extension point for host apps: a callable taking the view context and the
+    # team, returning extra sections for the top of the Add-ons page, same shape
+    # as app_resource_sections. Default adds none.
+    def addons_index_sections
+      @addons_index_sections || ->(_view, _team) { [] }
+    end
+
+    # Object-storage plan limits for a team: { free: Boolean, max_buckets:
+    # Integer|nil, max_total_gb: Integer|nil } (nil = unlimited). Default is
+    # the stock behaviour: free plan = one 1 GB bucket, paid = unlimited.
+    def object_storage_limits
+      @object_storage_limits || ->(team) {
+        free = !!team.current_plan&.free?
+        { free: free, max_buckets: nil, max_total_gb: (ObjectStorageBucket::FREE_QUOTA_GB if free) }
+      }
     end
 
     # {endpoint:, access_key:, secret_key:} for the object-storage (RustFS)

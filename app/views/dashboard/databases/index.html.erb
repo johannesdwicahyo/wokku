@@ -14,6 +14,10 @@
     <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, data: { action: "click->slide-panel#open" }) do %><%= t("dashboard.databases.new_addon") %><% end %>
   </div>
 
+  <% Array.wrap(Wokku.config.addons_index_sections.call(self, current_team)).each do |section| %>
+    <%= render partial: section[:partial], locals: section[:locals] || {} %>
+  <% end %>
+
   <%# Self-host: no bucket = no database backups. Say so instead of failing silently. %>
   <% if !wokku_cloud? && current_user.admin? && (unbacked = Server.where.not(id: BackupDestination.where(enabled: true).select(:server_id)).order(:created_at).first) %>
     <div data-backups-off role="status" class="border border-line bg-accent-soft rounded px-4 py-3 text-sm text-ink">

@@ -28,7 +28,18 @@ class ObjectStorageBucket < ApplicationRecord
 
   # Free tier = the team's plan is Plan(free). Managed cloud overrides
   # Team#current_plan with the active subscription, so this follows billing.
-  def free_team? = !!team.current_plan&.free?
+  def free_team? = self.class.limits(team)[:free]
+
+  # Plan limits for a team via the host app's seam (see Wokku::Providers).
+  def self.limits(team) = Wokku.config.object_storage_limits.call(team)
+
+  # Largest quota a bucket of this team may have, nil = no cap. A free team is
+  # always capped (at FREE_QUOTA_GB unless the seam says otherwise).
+  def quota_cap
+    l = self.class.limits(team)
+    return (l[:max_total_gb] || FREE_QUOTA_GB) if free_team?
+    l[:max_total_gb] unless l[:free] # free_team? and limits[:free] only differ under a spec stub
+  end
 
   PRICE_IDR_PER_GB = 400
 
@@ -38,14 +49,26 @@ class ObjectStorageBucket < ApplicationRecord
   # The free GB is per team (billing nets it once per team); a free team's
   # bucket is fixed at that 1 GB, so it gets exactly one bucket.
   def self.free_team_limit_reached?(team)
-    new(team: team).free_team? && where(team: team).where.not(status: "deleting").exists?
+    live = where(team: team).where.not(status: "deleting")
+    max = limits(team)[:max_buckets]
+    return live.count >= max if max
+    new(team: team).free_team? && live.exists?
+  end
+
+  def self.limit_message(team)
+    max = limits(team)[:max_buckets]
+    return FREE_TEAM_LIMIT_MESSAGE if new(team: team).free_team? || max.nil?
+    "Your plan includes #{max} object storage #{'bucket'.pluralize(max)}, and you have reached the limit. " \
+      "Upgrade your plan to add more.".freeze
   end
 
   # [http_status, message] when gb is not an acceptable new quota, else nil.
   def quota_error(gb)
     gb = Integer(gb.to_s, exception: false)
     return [ :unprocessable_entity, "quota_gb must be between 1 and #{MAX_QUOTA_GB} GB" ] unless gb&.between?(1, MAX_QUOTA_GB)
-    [ :forbidden, "Free plan storage is fixed at #{FREE_QUOTA_GB} GB" ] if free_team? && gb != FREE_QUOTA_GB
+    cap = quota_cap
+    return unless cap && gb > cap
+    [ :forbidden, free_team? ? "Free plan storage is fixed at #{FREE_QUOTA_GB} GB" : "Your plan allows up to #{cap} GB of object storage" ]
   end
 
   # API/dashboard representation; the secret only travels when reveal is true.
