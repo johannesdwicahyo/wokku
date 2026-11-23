@@ -83,7 +83,7 @@ s3 = boto3.client(
 
 ## Harga dan kuota
 
-- Rp 400 per GB per bulan, setelah 1 GB gratis per akun, dipakai bersama semua app-nya. Download gratis.
+- Setiap akun mendapat 1 GB gratis, dipakai bersama semua app-nya. Download gratis. Lihat paketmu untuk harga di atas itu.
 - Di paket gratis, satu app per akun bisa memakai object storage, dengan kuota tetap 1 GB. Team berbayar default 10 GB, bisa diubah sampai 1024 GB.
 - Kamu menerima email saat bucket mencapai 80% kuota.
 

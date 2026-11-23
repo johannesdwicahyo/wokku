@@ -5513,7 +5513,6 @@ paths:
                 - quota_gb
                 - used_gb
                 - status
-                - price_idr_per_gb
                 - free_gb
                 properties:
                   bucket:
@@ -5538,9 +5537,6 @@ paths:
                     - active
                     - failed
                     - deleting
-                  price_idr_per_gb:
-                    type: integer
-                    example: 400
                   free_gb:
                     type: integer
                     example: 1
@@ -5572,7 +5568,6 @@ paths:
                 - quota_gb
                 - used_gb
                 - status
-                - price_idr_per_gb
                 - free_gb
                 properties:
                   bucket:
@@ -5597,9 +5592,6 @@ paths:
                     - active
                     - failed
                     - deleting
-                  price_idr_per_gb:
-                    type: integer
-                    example: 400
                   free_gb:
                     type: integer
                     example: 1
@@ -5643,7 +5635,6 @@ paths:
                 - quota_gb
                 - used_gb
                 - status
-                - price_idr_per_gb
                 - free_gb
                 properties:
                   bucket:
@@ -5668,9 +5659,6 @@ paths:
                     - active
                     - failed
                     - deleting
-                  price_idr_per_gb:
-                    type: integer
-                    example: 400
                   free_gb:
                     type: integer
                     example: 1
@@ -5751,7 +5739,6 @@ paths:
                 - quota_gb
                 - used_gb
                 - status
-                - price_idr_per_gb
                 - free_gb
                 properties:
                   bucket:
@@ -5776,9 +5763,6 @@ paths:
                     - active
                     - failed
                     - deleting
-                  price_idr_per_gb:
-                    type: integer
-                    example: 400
                   free_gb:
                     type: integer
                     example: 1
@@ -5812,7 +5796,6 @@ paths:
                 - quota_gb
                 - used_gb
                 - status
-                - price_idr_per_gb
                 - free_gb
                 properties:
                   bucket:
@@ -5837,9 +5820,6 @@ paths:
                     - active
                     - failed
                     - deleting
-                  price_idr_per_gb:
-                    type: integer
-                    example: 400
                   free_gb:
                     type: integer
                     example: 1

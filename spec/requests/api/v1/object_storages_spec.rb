@@ -38,7 +38,7 @@ RSpec.describe "API object storage", type: :request do
       expect { post url, headers: auth(member) }.to have_enqueued_job(ObjectStorage::ProvisionJob)
       expect(response).to have_http_status(:accepted)
       body = response.parsed_body
-      expect(body).to include("status" => "provisioning", "price_idr_per_gb" => 400, "free_gb" => 1,
+      expect(body).to include("status" => "provisioning", "free_gb" => 1,
                               "endpoint" => "https://s3.example.test", "region" => "us-east-1")
       expect(body["secret_access_key"]).to be_present
     end
