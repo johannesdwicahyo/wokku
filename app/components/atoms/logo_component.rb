@@ -10,13 +10,16 @@ module Atoms
     SEQ = [ 0, 6, 1, 5, 2, 4 ].freeze
     LIVE_SEQ = 3
 
-    def initialize(variant: :lockup, size: :md, href: nil, animated: false)
+    def initialize(variant: :lockup, size: :md, href: nil, animated: false, decorative: false)
+      @decorative = decorative
       @animated = animated
       @variant = variant
       @size = HEIGHTS.fetch(size)
       @href = href
     end
-    attr_reader :variant, :size, :href, :animated
+    attr_reader :variant, :size, :href, :animated, :decorative
+
+    def a11y_attrs = decorative ? 'aria-hidden="true"'.html_safe : 'role="img" aria-label="Wokku"'.html_safe
 
     # ponytail: only the lights sequence is gated by an ancestor .is-loading (CSS)
     def svg_class = animated ? "wk-logo-anim" : nil

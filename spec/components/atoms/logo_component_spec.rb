@@ -19,6 +19,14 @@ RSpec.describe Atoms::LogoComponent, type: :component do
     expect(render_inline(described_class.new(size: :lg)).css("svg[height='32']")).to be_present
   end
 
+  it "can be decorative: hidden from assistive tech, no role or label" do
+    %i[lockup mark].each do |v|
+      page = render_inline(described_class.new(variant: v, decorative: true))
+      expect(page).to have_css("svg[aria-hidden='true']")
+      expect(page).not_to have_css("svg[role], svg[aria-label]")
+    end
+  end
+
   it "draws the tile as a dark rounded square" do
     html = render_inline(described_class.new(variant: :tile)).to_html
     expect(html).to include('fill="#141414"')
