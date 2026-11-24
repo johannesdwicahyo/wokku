@@ -1,0 +1,8 @@
+<% if label.present? %>
+  <span class="inline-flex items-center gap-1.5">
+    <span class="<%= light_classes %>" style="<%= light_style %>" aria-hidden="true"></span>
+    <span class="font-mono text-[11px] uppercase tracking-[.1em] text-ink-soft"><%= label %></span>
+  </span>
+<% else %>
+  <span class="<%= light_classes %>" style="<%= light_style %>" role="img" aria-label="<%= state_label %>"></span>
+<% end %>

@@ -1,1 +1,1 @@
-<%= content_tag(tag_name, **attrs) { content } %>
+<%= content_tag(tag_name, **attrs) do %><% if primary? %><span class="wk-glyph" aria-hidden="true"></span><% end %><%= content %><% end %>

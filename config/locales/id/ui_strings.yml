@@ -30,5 +30,13 @@ id:
       template_deployed: "deploy template"
       config_updated: "mengubah config"
       database_create_queued: "membuat database"
+  status_light:
+    running: "Berjalan"
+    deploying: "Deploy"
+    sleeping: "Tidur"
+    crashed: "Crash"
+    healthy: "Sehat"
+    stopped: "Berhenti"
+    created: "Dibuat"
   update_banner:
     available: "Wokku %{latest} sudah tersedia (kamu memakai %{current}). Untuk update, jalankan di server:"
