@@ -24,4 +24,22 @@ RSpec.describe "design tokens" do
       expect(css).to match(/--font-#{t}:\s*"Geist Mono",\s*ui-monospace,\s*monospace;/)
     end
   end
+
+  it "is dark only" do
+    expect(css).not_to include('[data-theme="dark"]')
+    expect(css).to match(/:root\s*\{\s*color-scheme:\s*dark;/)
+    {
+      bg: "#050605", bg_deep: "#0B0D0B", paper: "#0B0D0B", ink: "#EEF1EC", ink_soft: "#C9CEC7",
+      dim: "#8E968D", faint: "#8E968D", rule: "#1C1F1C", line: "#1C1F1C", rule_soft: "#141714",
+      line_soft: "#141714", line_strong: "#2E332E", accent: "#22C55E", success: "#22C55E",
+      info: "#22C55E", live: "#22C55E", live_hover: "#4ADE80", accent_soft: "#0F2A18",
+      success_soft: "#0F2A18", info_soft: "#0F2A18", warn: "#FEC84B", warn_soft: "#2A220B",
+      danger: "#F04438", hot: "#F04438", danger_soft: "#2A0F0D", hot_soft: "#2A0F0D",
+      deploying: "#EEF1EC", dark_line: "#5D655C", bad_text: "#FDA29B"
+    }.each do |name, hex|
+      expect(css).to match(/--color-#{name.to_s.tr("_", "-")}:\s*#{Regexp.escape(hex)};/)
+    end
+    expect(css).to match(/--grid-dot:\s*rgba\(238,\s*241,\s*236,\s*0?\.06\)/)
+    %w[brutal-sm brutal brutal-lg].each { |n| expect(css).to match(/--shadow-#{n}:\s*none/) }
+  end
 end

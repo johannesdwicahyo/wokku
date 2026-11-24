@@ -63,32 +63,37 @@
      marketing layout + landing page for now; dashboard pages keep using
      the Material tokens. Brutalist `surface` was renamed to `paper`
      to avoid colliding with Material's `--color-surface`.
-     Default values are the LIGHT theme; dark overrides at the bottom of
-     this file flip them under `[data-theme="dark"]`. */
-  --color-bg:           #F6F6F5;
-  --color-bg-deep:      #F0F0EF;
-  --color-paper:        #ffffff;
-  --color-ink:          #171717;
-  --color-ink-soft:     #3F3F3F;
-  --color-dim:          #6B6B6B;
-  --color-faint:        #707070;
-  --color-rule:         #E6E6E4;
-  --color-rule-soft:    #F0F0EF;
-  --color-line:         #E6E6E4;
-  --color-line-soft:    #F0F0EF;
-  --color-accent:       #4C6FB5;
-  --color-accent-soft:  #EEF1FF;
-  --color-info:         #4C6FB5;
-  --color-info-soft:    #EEF1FF;
-  --color-deploying:    #7A5BB0;
-  --color-hot:          #C2483B;
-  --color-hot-soft:     #FBEDEB;
-  --color-warn:         #8F6B12;
-  --color-warn-soft:    #FBF4E4;
-  --color-danger:       #C2483B;
-  --color-danger-soft:  #FBEDEB;
-  --color-success:      #2E7D4F;
-  --color-success-soft: #EBF5EF;
+     Dark only (control-room redesign). */
+  --color-bg:           #050605;
+  --color-bg-deep:      #0B0D0B;
+  --color-paper:        #0B0D0B;
+  --color-ink:          #EEF1EC;
+  --color-ink-soft:     #C9CEC7;
+  --color-dim:          #8E968D;
+  --color-faint:        #8E968D;
+  --color-rule:         #1C1F1C;
+  --color-rule-soft:    #141714;
+  --color-line:         #1C1F1C;
+  --color-line-soft:    #141714;
+  --color-line-strong:  #2E332E;
+  --color-accent:       #22C55E;
+  --color-accent-soft:  #0F2A18;
+  --color-info:         #22C55E;
+  --color-info-soft:    #0F2A18;
+  --color-live:         #22C55E;
+  --color-live-hover:   #4ADE80;
+  --color-deploying:    #EEF1EC;
+  --color-hot:          #F04438;
+  --color-hot-soft:     #2A0F0D;
+  --color-warn:         #FEC84B;
+  --color-warn-soft:    #2A220B;
+  --color-danger:       #F04438;
+  --color-danger-soft:  #2A0F0D;
+  --color-success:      #22C55E;
+  --color-success-soft: #0F2A18;
+  /* Decorative borders only (fails text contrast); readable error text. */
+  --color-dark-line:    #5D655C;
+  --color-bad-text:     #FDA29B;
 
   /* Type families for the brutalist surface. These use the self-hosted
      Geist / Geist Mono faces (see the @font-face block below). */
@@ -98,11 +103,11 @@
   /* Brutalist hard shadows — ink-coloured in light; dropped entirely in
      dark (near-black shadow on near-black bg is invisible), where the
      1.5px ink borders carry elevation instead. */
-  --shadow-brutal-sm: 2px 2px 0 var(--color-ink);
-  --shadow-brutal:    3px 3px 0 var(--color-ink);
-  --shadow-brutal-lg: 4px 4px 0 var(--color-ink);
+  --shadow-brutal-sm: none;
+  --shadow-brutal:    none;
+  --shadow-brutal-lg: none;
 
-  --grid-dot:           rgba(0, 0, 0, 0.06);
+  --grid-dot:           rgba(238, 241, 236, 0.06);
 
   /* Motion tokens — see D6 of 2026-05-21-vps-but-simpler-design.md */
   --t-tap:        80ms;
@@ -117,7 +122,7 @@
    outlines; nothing in the app restores them, so keyboard users get no
    focus indicator at all without this. */
 :focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-live);
   outline-offset: 2px;
 }
 
@@ -129,8 +134,8 @@ input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
   outline: none;
-  border-color: var(--color-ink);
-  box-shadow: var(--shadow-brutal-sm);
+  border-color: var(--color-live);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
 }
 
 @keyframes wk-pulse {
@@ -258,38 +263,8 @@ select:focus-visible {
   src: url("/fonts/inter-600.woff2") format("woff2");
 }
 
-/* Dark-theme override for brutalist tokens. Triggered by the theme
-   Stimulus controller toggling `data-theme="dark"` on <html>. */
-[data-theme="dark"] {
-  --color-bg:           #141414;
-  --color-bg-deep:      #171717;
-  --color-paper:        #1b1b1b;
-  --color-ink:          #ebebeb;
-  --color-ink-soft:     #a3a3a3;
-  --color-dim:          #8f8f8f;
-  --color-faint:        #868686;
-  --color-rule:         #2a2a2a;
-  --color-rule-soft:    #232323;
-  --color-line:         #2a2a2a;
-  --color-line-soft:    #232323;
-  --color-accent:       #5b8def;
-  --color-accent-soft:  rgba(91, 141, 239, 0.14);
-  --color-info:         #6d8fd4;
-  --color-info-soft:    rgba(109, 143, 212, 0.14);
-  --color-deploying:    #9b7fd4;
-  --color-hot:          #ff8456;
-  --color-hot-soft:     rgba(255, 132, 86, 0.14);
-  --color-warn:         #d9a441;
-  --color-warn-soft:    rgba(217, 164, 65, 0.14);
-  --color-danger:       #ff6e73;
-  --color-danger-soft:  rgba(255, 110, 115, 0.14);
-  --color-success:      #4ade80;
-  --color-success-soft: rgba(74, 222, 128, 0.12);
-  --shadow-brutal-sm: none;
-  --shadow-brutal:    none;
-  --shadow-brutal-lg: none;
-  --grid-dot:         rgba(255, 255, 255, 0.05);
-}
+/* Dark only. */
+:root { color-scheme: dark; }
 
 /* Smooth theme transition for the landing — keep it short so the dark
    toggle doesn't feel laggy. */
