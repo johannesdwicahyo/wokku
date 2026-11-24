@@ -55,7 +55,7 @@ export default class extends Controller {
     const c = (this.copyValue && this.copyValue[plan.key]) || {}
 
     this.backdrop = this.el("div",
-      "fixed inset-0 z-[60] bg-ink/40 pointer-events-none")
+      "fixed inset-0 z-[60] bg-black/70 pointer-events-none")
     document.body.appendChild(this.backdrop)
 
     if (anchorEl) {

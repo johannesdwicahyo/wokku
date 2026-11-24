@@ -24,6 +24,12 @@ RSpec.describe "control-room contrast" do
     end
   end
 
+  it "modal and drawer backdrops darken instead of washing the page with ink (near-white)" do
+    offenders = Dir[File.expand_path("../../app/{views,components,javascript}/**/*.{erb,js}", __dir__)]
+                  .select { |f| File.read(f).match?(%r{\bbg-ink/[1-8]0\b}) }
+    expect(offenders).to be_empty
+  end
+
   it "breadcrumb separators are readable", type: :component do
     render_inline(Molecules::BreadcrumbComponent.new(crumbs: [ [ "Apps", "/a" ], [ "demo", nil ] ]))
     expect(page).to have_css("span.text-dim[aria-hidden='true']", text: "/")

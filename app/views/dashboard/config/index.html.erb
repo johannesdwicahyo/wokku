@@ -63,7 +63,7 @@
 
   <%# Edit Modal (hidden by default) %>
   <div data-config-vars-target="editModal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
-    <div class="absolute inset-0 bg-ink/60" data-action="click->config-vars#closeEdit"></div>
+    <div class="absolute inset-0 bg-black/70" data-action="click->config-vars#closeEdit"></div>
     <div class="relative bg-paper border-1.5 border-ink rounded-md shadow-brutal-lg w-full max-w-lg mx-4 p-6">
       <h3 class="font-headline text-base font-bold text-ink mb-4">Edit config var</h3>
       <%= form_with(url: "", method: :patch, data: { config_vars_target: "editForm" }, class: "space-y-4") do |f| %>
