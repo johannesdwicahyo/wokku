@@ -13,7 +13,9 @@ RSpec.describe "control-room contrast" do
 
   root = File.expand_path("../..", __dir__)
   field_helpers = %w[text_field email_field password_field number_field select text_area
-                     search_field url_field telephone_field file_field].join("|")
+                     search_field url_field telephone_field file_field
+                     date_field time_field datetime_field datetime_local_field month_field week_field
+                     color_field collection_select date_select time_zone_select].join("|")
   # A raw control tag (quoted attrs may hold ">", e.g. data-action="input->x#y"),
   # or an ERB output tag calling a Rails field helper
   # (f.text_field, select_tag, text_area_tag, ...), up to its closing %>.
@@ -39,13 +41,16 @@ RSpec.describe "control-room contrast" do
   end
 
   it "modal and drawer backdrops darken instead of washing the page with ink (near-white)" do
-    # Any quoted class string that covers the viewport/parent (inset-0) must
-    # not tint with ink; variant-prefixed classes (hover:bg-ink/90) are fine.
+    # Any quoted string (double, single or template literal, ERB or JS) that
+    # covers the viewport/parent must not tint with ink; variant-prefixed
+    # classes (hover:bg-ink/90) are fine.
+    overlay = /(?<![\w:-])(?:inset-0|inset-x-0|inset-y-0)(?![\w-])|(?<![\w:-])fixed(?![\w-])(?=.*(?<![\w:-])(?:w-full|h-full|size-full|w-screen|h-screen)(?![\w-]))|(?<![\w:-])(?:w-full|h-full|size-full|w-screen|h-screen)(?![\w-])(?=.*(?<![\w:-])fixed(?![\w-]))/m
     offenders = Dir["#{root}/app/{views,components,javascript}/**/*.{erb,js}"].flat_map do |f|
       text = File.read(f)
-      text.to_enum(:scan, /"[^"]*\binset-0\b[^"]*"/).filter_map do
+      text.to_enum(:scan, /"[^"]*"|'[^']*'|`[^`]*`/m).filter_map do
         m = Regexp.last_match
-        "#{f.delete_prefix("#{root}/")}:#{line_of.(text, m.begin(0))}" if m[0].match?(%r{(?<![\w:-])bg-ink/\d+})
+        next unless m[0].match?(%r{(?<![\w:-])bg-ink/\d+}) && m[0].match?(overlay)
+        "#{f.delete_prefix("#{root}/")}:#{line_of.(text, m.begin(0))}"
       end
     end
     expect(offenders).to be_empty, "ink-tinted overlays:\n#{offenders.join("\n")}"
