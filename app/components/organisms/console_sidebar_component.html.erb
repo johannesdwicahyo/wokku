@@ -87,7 +87,7 @@
     <% end %>
   </div>
 
-  <%# Rail footer — Docs · Support · theme · locale, then the user block,
+  <%# Rail footer — Docs · Support · locale, then the user block,
       then the version line (spec §1). %>
   <% if show_footer? %>
     <div class="border-t border-line pt-2.5">
@@ -103,12 +103,6 @@
             </div>
           <% end %>
           <div class="flex items-center gap-2">
-            <button type="button"
-                    data-action="click->theme#toggle"
-                    aria-label="Toggle theme" title="Theme"
-                    class="w-7 h-7 grid place-items-center border-1.5 border-line rounded text-[10px] font-bold text-dim hover:border-ink hover:text-ink transition-colors cursor-pointer p-0">
-              <span class="[&>svg]:w-[13px] [&>svg]:h-[13px]"><%= render "shared/icons/moon" %></span>
-            </button>
             <% if locale_toggle_path.present? %>
               <%= button_to locale.to_s.upcase, locale_toggle_path, method: :post,
                     form_class: "contents", title: locale_toggle_title,

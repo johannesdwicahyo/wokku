@@ -100,9 +100,8 @@
   --font-sans-brutal: "Geist", "Inter", system-ui, sans-serif;
   --font-mono-brutal: "Geist Mono", ui-monospace, monospace;
 
-  /* Brutalist hard shadows — ink-coloured in light; dropped entirely in
-     dark (near-black shadow on near-black bg is invisible), where the
-     1.5px ink borders carry elevation instead. */
+  /* Hard shadows are dropped (none) — near-black shadow on near-black bg is
+     invisible; the 1.5px borders carry elevation instead. */
   --shadow-brutal-sm: none;
   --shadow-brutal:    none;
   --shadow-brutal-lg: none;
@@ -126,10 +125,10 @@
   outline-offset: 2px;
 }
 
-/* Text fields focus in the schdl idiom (ink border + hard shadow) instead
-   of the accent ring — the ring is for links/buttons where the element has
-   no border of its own to speak with. Inputs always match :focus-visible,
-   so without this override every field gets the blue ring on click. */
+/* Text fields focus with a live-green border + soft ring instead of the
+   accent outline — the outline is for links/buttons, which have no border
+   of their own. Inputs always match :focus-visible, so without this
+   override every field gets the outline on click. */
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
@@ -265,10 +264,6 @@ select:focus-visible {
 
 /* Dark only. */
 :root { color-scheme: dark; }
-
-/* Smooth theme transition for the landing — keep it short so the dark
-   toggle doesn't feel laggy. */
-html { transition: background-color 200ms ease, color 200ms ease; }
 
 /* Brutalist hairline borders. Tailwind v4 has no built-in 1.5px width;
    the brutalist component library leans on these for crisp panel/sidebar
