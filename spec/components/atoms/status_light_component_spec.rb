@@ -35,4 +35,10 @@ RSpec.describe Atoms::StatusLightComponent, type: :component do
     render_inline(described_class.new(state: :running, size: 14))
     expect(page).to have_css("span[style*='width:14px']")
   end
+
+  it "decorative hides the light from assistive tech" do
+    render_inline(described_class.new(state: :running, decorative: true))
+    expect(page).to have_css("span.wk-light[aria-hidden='true']")
+    expect(page).not_to have_css("[role='img'], [aria-label]")
+  end
 end

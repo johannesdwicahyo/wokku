@@ -34,3 +34,16 @@ RSpec.describe Atoms::StatusDotComponent, "status light mapping", type: :compone
     end
   end
 end
+
+RSpec.describe Atoms::StatusDotComponent, "accessibility", type: :component do
+  it "with a visible label, the light is aria-hidden and has no role" do
+    render_inline(described_class.new(state: :live))
+    expect(page).to have_css("span.wk-light[aria-hidden='true']")
+    expect(page).not_to have_css("[role='img']")
+  end
+
+  it "without a label (:ok), the light has role=img and an aria-label" do
+    render_inline(described_class.new(state: :ok))
+    expect(page).to have_css("span[role='img'][aria-label='Healthy']")
+  end
+end

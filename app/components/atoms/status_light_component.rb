@@ -10,13 +10,14 @@ module Atoms
       created:   "bg-dark-line"
     }.freeze
 
-    def initialize(state:, label: nil, size: 10)
+    def initialize(state:, label: nil, size: 10, decorative: false)
       @state = STATES.key?(state&.to_sym) ? state.to_sym : :created
       @label = label
       @size = size
+      @decorative = decorative
     end
 
-    attr_reader :state, :label, :size
+    attr_reader :state, :label, :size, :decorative
 
     def light_classes = cx("wk-light inline-block shrink-0", STATES[state])
     def light_style = "width:#{size}px;height:#{size}px"

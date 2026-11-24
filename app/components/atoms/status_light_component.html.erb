@@ -3,6 +3,8 @@
     <span class="<%= light_classes %>" style="<%= light_style %>" aria-hidden="true"></span>
     <span class="font-mono text-[11px] uppercase tracking-[.1em] text-ink-soft"><%= label %></span>
   </span>
+<% elsif decorative %>
+  <span class="<%= light_classes %>" style="<%= light_style %>" aria-hidden="true"></span>
 <% else %>
   <span class="<%= light_classes %>" style="<%= light_style %>" role="img" aria-label="<%= state_label %>"></span>
 <% end %>

@@ -1,4 +1,4 @@
 <span class="inline-flex items-center gap-1.5">
-  <%= render Atoms::StatusLightComponent.new(state: light, size: 8) %>
+  <%= render Atoms::StatusLightComponent.new(state: light, size: 8, decorative: label.present?) %>
   <% if label.present? %><span class="<%= text_classes %>"><%= label %></span><% end %>
 </span>
