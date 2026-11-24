@@ -478,9 +478,10 @@ select:focus-visible {
 .wk-lights-sq:nth-child(7) { grid-area: 1 / 5; --i: 6; }
 .wk-pending .wk-lights { margin-right: 6px; }
 /* Rail logo: same sequence on the SVG rects while Turbo navigates. */
-/* Starts after 700ms (the Turbo progress-bar delay); backwards fill keeps the
-   squares fully lit until then, so fast clicks never dim the logo. */
-.is-loading .wk-logo-anim rect { animation: wk-lights 2.4s linear infinite; animation-delay: calc(700ms + var(--i) * .15s); animation-fill-mode: backwards; }
+/* Starts after 700ms (the Turbo progress-bar delay). No fill-mode: during the
+   delay the squares keep their natural full opacity (backwards would apply the
+   15% 0% keyframe immediately), so fast clicks never dim the logo. */
+.is-loading .wk-logo-anim rect { animation: wk-lights 2.4s linear infinite; animation-delay: calc(700ms + var(--i) * .15s); }
 /* Skeleton: centred large loader appears after 1s, no JS. */
 @keyframes wk-fade-in { to { opacity: 1; } }
 .wk-skeleton-loader { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; animation: wk-fade-in .2s 1s forwards; }

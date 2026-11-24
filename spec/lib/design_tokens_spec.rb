@@ -33,7 +33,7 @@ RSpec.describe "design tokens" do
 
   it "delays the sidebar logo pulse so fast navigations never dim it" do
     rule = css[/^\.is-loading \.wk-logo-anim rect \{[^}]*\}/]
-    expect(rule).to match(/animation-fill-mode:\s*backwards/)
+    expect(rule).not_to match(/animation-fill-mode|backwards|both/)
     expect(rule).to match(/calc\(700ms \+ var\(--i\) \* \.15s\)/)
   end
 
