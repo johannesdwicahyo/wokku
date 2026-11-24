@@ -11,6 +11,9 @@ RSpec.describe "design tokens" do
       expect(css).to include(%(url("/fonts/#{f}.woff2")))
       expect(root.join("harness/public/fonts/#{f}.woff2")).to exist
     end
+    license = root.join("harness/public/fonts/LICENSE-Geist.txt")
+    expect(license).to exist
+    expect(license.read).to include("SIL OPEN FONT LICENSE")
   end
 
   it "uses Geist for every sans token and Geist Mono for mono" do

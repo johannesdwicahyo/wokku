@@ -90,8 +90,8 @@
   --color-success:      #2E7D4F;
   --color-success-soft: #EBF5EF;
 
-  /* Type families for the brutalist surface. Inter Tight + JetBrains
-     Mono are loaded from Google Fonts in the marketing layout. */
+  /* Type families for the brutalist surface. These use the self-hosted
+     Geist / Geist Mono faces (see the @font-face block below). */
   --font-sans-brutal: "Geist", "Inter", system-ui, sans-serif;
   --font-mono-brutal: "Geist Mono", ui-monospace, monospace;
 
@@ -174,12 +174,8 @@ select:focus-visible {
   display: inline-block; margin-right: 6px;
 }
 
-/* Self-hosted webfonts. Replaces the Google Fonts import in the marketing
-   layout. font-display: swap prevents invisible text during the brief load.
-   Files live in public/fonts/ (NOT app/assets/) because Tailwind v4 doesn't
-   pass CSS url() through propshaft's rewriter, and propshaft only serves
-   fingerprinted URLs. public/ files are served verbatim with long cache. */
-/* Geist (sans + mono), OFL, from npm geist@1.5.1. */
+/* Geist (sans + mono): SIL OFL 1.1, from npm geist@1.5.1; license in
+   public/fonts/LICENSE-Geist.txt. Served from /fonts for the reason below. */
 @font-face {
   font-family: "Geist";
   font-style: normal; font-weight: 300; font-display: swap;
@@ -210,6 +206,12 @@ select:focus-visible {
   font-style: normal; font-weight: 500; font-display: swap;
   src: url("/fonts/geist-mono-500.woff2") format("woff2");
 }
+
+/* Self-hosted webfonts. Replaces the Google Fonts import in the marketing
+   layout. font-display: swap prevents invisible text during the brief load.
+   Files live in public/fonts/ (NOT app/assets/) because Tailwind v4 doesn't
+   pass CSS url() through propshaft's rewriter, and propshaft only serves
+   fingerprinted URLs. public/ files are served verbatim with long cache. */
 @font-face {
   font-family: "Inter Tight";
   font-style: normal; font-weight: 400; font-display: swap;
