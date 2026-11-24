@@ -25,6 +25,18 @@ RSpec.describe "design tokens" do
     end
   end
 
+  it "does not paint the light meter squares transparent (unlayered CSS would beat bg-live/bg-ink)" do
+    rule = css[/^\.wk-meter > span \{[^}]*\}/]
+    expect(rule).to be_present
+    expect(rule).not_to match(/background/)
+  end
+
+  it "delays the sidebar logo pulse so fast navigations never dim it" do
+    rule = css[/^\.is-loading \.wk-logo-anim rect \{[^}]*\}/]
+    expect(rule).to match(/animation-fill-mode:\s*backwards/)
+    expect(rule).to match(/calc\(700ms \+ var\(--i\) \* \.15s\)/)
+  end
+
   it "is dark only" do
     expect(css).not_to include('[data-theme="dark"]')
     expect(css).to match(/:root\s*\{\s*color-scheme:\s*dark;/)

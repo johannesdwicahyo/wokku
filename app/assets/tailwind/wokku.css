@@ -170,7 +170,8 @@ select:focus-visible {
 }
 
 /* Geist (sans + mono): SIL OFL 1.1, from npm geist@1.5.1; license in
-   public/fonts/LICENSE-Geist.txt. Served from /fonts for the reason below. */
+   public/fonts/LICENSE-Geist.txt. Served from /fonts (not app/assets/) because Tailwind v4 does not pass
+   CSS url() through propshaft's rewriter; see the note on the legacy faces below. */
 @font-face {
   font-family: "Geist";
   font-style: normal; font-weight: 300; font-display: swap;
@@ -202,8 +203,8 @@ select:focus-visible {
   src: url("/fonts/geist-mono-500.woff2") format("woff2");
 }
 
-/* Self-hosted webfonts. Replaces the Google Fonts import in the marketing
-   layout. font-display: swap prevents invisible text during the brief load.
+/* Legacy self-hosted Inter Tight / JetBrains Mono faces, kept for any markup
+   still naming them (the layouts no longer request Google Fonts for text). font-display: swap prevents invisible text during the brief load.
    Files live in public/fonts/ (NOT app/assets/) because Tailwind v4 doesn't
    pass CSS url() through propshaft's rewriter, and propshaft only serves
    fingerprinted URLs. public/ files are served verbatim with long cache. */
@@ -448,7 +449,7 @@ select:focus-visible {
 .wk-glow-bad   { box-shadow: 0 0 8px rgba(240, 68, 56, 0.6); }
 .wk-outline-muted { background: transparent; border: 1.5px solid var(--color-dim); }
 .wk-glyph { display: inline-block; width: 7px; height: 7px; background: currentColor; }
-.wk-meter > span { display: inline-block; width: 8px; height: 14px; background: transparent; border: 1px solid var(--color-dark-line); }
+.wk-meter > span { display: inline-block; width: 8px; height: 14px; border: 1px solid var(--color-dark-line); }
 .wk-meter > span.on { border-color: transparent; }
 .corner { position: relative; }
 .corner::before, .corner::after { content: ""; position: absolute; width: 10px; height: 10px; pointer-events: none; border: 0 solid var(--color-line-strong); }
@@ -477,7 +478,9 @@ select:focus-visible {
 .wk-lights-sq:nth-child(7) { grid-area: 1 / 5; --i: 6; }
 .wk-pending .wk-lights { margin-right: 6px; }
 /* Rail logo: same sequence on the SVG rects while Turbo navigates. */
-.is-loading .wk-logo-anim rect { animation: wk-lights 2.4s linear infinite; animation-delay: calc(var(--i) * .15s); }
+/* Starts after 700ms (the Turbo progress-bar delay); backwards fill keeps the
+   squares fully lit until then, so fast clicks never dim the logo. */
+.is-loading .wk-logo-anim rect { animation: wk-lights 2.4s linear infinite; animation-delay: calc(700ms + var(--i) * .15s); animation-fill-mode: backwards; }
 /* Skeleton: centred large loader appears after 1s, no JS. */
 @keyframes wk-fade-in { to { opacity: 1; } }
 .wk-skeleton-loader { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; animation: wk-fade-in .2s 1s forwards; }
