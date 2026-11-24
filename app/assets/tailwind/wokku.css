@@ -466,7 +466,7 @@ select:focus-visible {
 .wk-lights-sm { width: 14px; height: 8.4px; }
 .wk-lights-md { width: 24px; height: 14.4px; }
 .wk-lights-lg { width: 40px; height: 24px; }
-.wk-lights-sq { background: #EEF1EC; border-radius: 22%; opacity: .15; animation: wk-lights 2.4s linear infinite; animation-delay: calc(var(--i) * .15s); }
+.wk-lights-sq { background: currentColor; border-radius: 22%; opacity: .15; animation: wk-lights 2.4s linear infinite; animation-delay: calc(var(--i) * .15s); }
 .wk-lights-live { background: #22C55E; }
 .wk-lights-sq:nth-child(1) { grid-area: 1 / 1; --i: 0; }
 .wk-lights-sq:nth-child(2) { grid-area: 2 / 1; --i: 1; }

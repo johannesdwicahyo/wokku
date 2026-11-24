@@ -4,10 +4,13 @@ module Atoms
   class LightsLoaderComponent < ApplicationComponent
     SIZES = { sm: "wk-lights-sm", md: "wk-lights-md", lg: "wk-lights-lg" }.freeze
 
-    def initialize(size: :md, label: nil)
+    def initialize(size: :md, label: nil, decorative: false)
+      @decorative = decorative
       @size = SIZES.fetch(size)
       @label = label
     end
+
+    attr_reader :decorative
 
     def aria_label = @label.presence || t("loading.default")
     def css_class = "wk-lights #{@size}"

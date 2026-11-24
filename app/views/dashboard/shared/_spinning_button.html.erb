@@ -7,6 +7,6 @@
                 size + colour to match siblings)
 %>
 <button disabled class="inline-flex items-center gap-2 cursor-wait opacity-80 <%= classes %>">
-  <%= render Atoms::LightsLoaderComponent.new(size: :sm) %>
+  <%= render Atoms::LightsLoaderComponent.new(decorative: true, size: :sm) %>
   <%= label %>…
 </button>
