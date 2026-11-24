@@ -48,11 +48,11 @@
   --color-inverse-surface: #e2e0fc;
   --color-inverse-on-surface: #2f2e43;
   --color-inverse-primary: #565995;
-  --font-headline: "Inter Tight", "Inter", system-ui, sans-serif;
-  --font-body: "Inter", system-ui, sans-serif;
-  --font-label: "Inter", system-ui, sans-serif;
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-headline: "Geist", "Inter", system-ui, sans-serif;
+  --font-body: "Geist", "Inter", system-ui, sans-serif;
+  --font-label: "Geist", "Inter", system-ui, sans-serif;
+  --font-sans: "Geist", "Inter", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
   --radius-sm: 0.125rem;
   --radius-md: 0.25rem;
   --radius-lg: 0.5rem;
@@ -92,8 +92,8 @@
 
   /* Type families for the brutalist surface. Inter Tight + JetBrains
      Mono are loaded from Google Fonts in the marketing layout. */
-  --font-sans-brutal: "Inter Tight", "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono-brutal: "JetBrains Mono", "IBM Plex Mono", "SF Mono", ui-monospace, monospace;
+  --font-sans-brutal: "Geist", "Inter", system-ui, sans-serif;
+  --font-mono-brutal: "Geist Mono", ui-monospace, monospace;
 
   /* Brutalist hard shadows — ink-coloured in light; dropped entirely in
      dark (near-black shadow on near-black bg is invisible), where the
@@ -179,6 +179,37 @@ select:focus-visible {
    Files live in public/fonts/ (NOT app/assets/) because Tailwind v4 doesn't
    pass CSS url() through propshaft's rewriter, and propshaft only serves
    fingerprinted URLs. public/ files are served verbatim with long cache. */
+/* Geist (sans + mono), OFL, from npm geist@1.5.1. */
+@font-face {
+  font-family: "Geist";
+  font-style: normal; font-weight: 300; font-display: swap;
+  src: url("/fonts/geist-300.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Geist";
+  font-style: normal; font-weight: 400; font-display: swap;
+  src: url("/fonts/geist-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Geist";
+  font-style: normal; font-weight: 500; font-display: swap;
+  src: url("/fonts/geist-500.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Geist";
+  font-style: normal; font-weight: 600; font-display: swap;
+  src: url("/fonts/geist-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal; font-weight: 400; font-display: swap;
+  src: url("/fonts/geist-mono-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal; font-weight: 500; font-display: swap;
+  src: url("/fonts/geist-mono-500.woff2") format("woff2");
+}
 @font-face {
   font-family: "Inter Tight";
   font-style: normal; font-weight: 400; font-display: swap;
