@@ -20,7 +20,8 @@
   </head>
 
   <body class="bg-bg text-ink font-sans antialiased"
-        data-controller="confirm-dialog mobile-nav">
+        data-controller="confirm-dialog mobile-nav nav-loading"
+        data-action="turbo:visit@document->nav-loading#start turbo:load@document->nav-loading#stop turbo:fetch-request-error@document->nav-loading#stop">
     <%
       # Overview + jobs UI are cloud-host admin routes; standalone admin
       # starts at servers.

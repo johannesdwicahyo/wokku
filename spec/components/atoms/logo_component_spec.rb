@@ -24,3 +24,13 @@ RSpec.describe Atoms::LogoComponent, type: :component do
     expect(html).to include('fill="#141414"')
   end
 end
+
+RSpec.describe Atoms::LogoComponent, "animated", type: :component do
+  it "tags the svg and sequences every square only when animated" do
+    render_inline(described_class.new(variant: :mark, animated: true))
+    expect(page).to have_css("svg.wk-logo-anim rect[style*='--i:3']", count: 1)
+    expect(page).to have_css("svg.wk-logo-anim rect[style]", count: 7)
+    render_inline(described_class.new(variant: :mark))
+    expect(page).not_to have_css("svg.wk-logo-anim")
+  end
+end

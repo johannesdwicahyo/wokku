@@ -95,7 +95,8 @@
   </head>
 
   <body class="bg-bg text-ink font-sans antialiased"
-        data-controller="confirm-dialog mobile-nav">
+        data-controller="confirm-dialog mobile-nav nav-loading"
+        data-action="turbo:visit@document->nav-loading#start turbo:load@document->nav-loading#stop turbo:fetch-request-error@document->nav-loading#stop">
     <% if user_signed_in? && current_user.billing_status == "suspended" %>
       <div class="border-b border-line bg-danger-soft px-4 py-2.5">
         <div class="flex items-center justify-center gap-2 text-xs text-ink">

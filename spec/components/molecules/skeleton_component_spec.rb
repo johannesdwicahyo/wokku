@@ -22,3 +22,10 @@ RSpec.describe Molecules::SkeletonComponent, type: :component do
     expect(page).to have_css("[data-skeleton-row]", count: 5)
   end
 end
+
+RSpec.describe Molecules::SkeletonComponent, "loader", type: :component do
+  it "adds a delayed large loader" do
+    render_inline(described_class.new)
+    expect(page).to have_css(".wk-skeleton-loader .wk-lights-lg")
+  end
+end

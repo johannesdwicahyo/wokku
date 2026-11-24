@@ -40,3 +40,5 @@ id:
     created: "Dibuat"
   update_banner:
     available: "Wokku %{latest} sudah tersedia (kamu memakai %{current}). Untuk update, jalankan di server:"
+  loading:
+    default: "Memuat"

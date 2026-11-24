@@ -7,6 +7,6 @@
                 size + colour to match siblings)
 %>
 <button disabled class="inline-flex items-center gap-2 cursor-wait opacity-80 <%= classes %>">
-  <span class="inline-block w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+  <%= render Atoms::LightsLoaderComponent.new(size: :sm) %>
   <%= label %>…
 </button>

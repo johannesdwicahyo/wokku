@@ -15,7 +15,7 @@
       <% steps.each do |s| %>
         <li class="flex items-center gap-2.5">
           <% if s[:state] == "running" %>
-            <span class="inline-block w-3.5 h-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin" aria-hidden="true"></span>
+            <%= render Atoms::LightsLoaderComponent.new(size: :sm) %>
           <% else %>
             <span class="w-3.5 text-center font-bold <%= icon_classes(s[:state]) %>" aria-hidden="true"><%= ICONS.fetch(s[:state], "·") %></span>
           <% end %>

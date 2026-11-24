@@ -9,7 +9,7 @@ RSpec.describe Organisms::AppDeletionProgressComponent, type: :component do
     ])))
     expect(page).to have_css("#app_deletion_a1.fixed.inset-0")
     expect(page).to have_text("Deleting shop…")
-    expect(page).to have_css("li .animate-spin")
+    expect(page).to have_css("li .wk-lights")
     expect(page).not_to have_link("Close")
   end
 

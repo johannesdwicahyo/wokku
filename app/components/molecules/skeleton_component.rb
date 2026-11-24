@@ -18,7 +18,7 @@ module Molecules
     # Pulsing bar; motion-safe so prefers-reduced-motion users get a
     # static placeholder.
     def bar(extra = "")
-      "bg-bg-deep border border-rule-soft motion-safe:animate-pulse #{extra}"
+      "bg-line border border-line motion-safe:animate-pulse #{extra}"
     end
   end
 end

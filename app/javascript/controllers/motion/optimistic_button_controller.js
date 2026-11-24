@@ -32,8 +32,15 @@ export default class extends Controller {
     // Safe DOM: build spinner span + label text node manually.
     // textContent prevents any HTML interpretation of pendingLabelValue.
     while (this.element.firstChild) this.element.removeChild(this.element.firstChild)
+    // Same markup as Atoms::LightsLoaderComponent (:sm); label text follows.
     const spinner = document.createElement("span")
-    spinner.className = "wk-spinner"
+    spinner.className = "wk-lights wk-lights-sm"
+    spinner.setAttribute("aria-hidden", "true")
+    for (let i = 0; i < 7; i++) {
+      const sq = document.createElement("span")
+      sq.className = i === 3 ? "wk-lights-sq wk-lights-live" : "wk-lights-sq"
+      spinner.appendChild(sq)
+    }
     this.element.appendChild(spinner)
     const labelText = document.createTextNode(this.pendingLabelValue || "…")
     this.element.appendChild(labelText)

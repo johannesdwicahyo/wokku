@@ -22,3 +22,5 @@ en:
     created: "Created"
   update_banner:
     available: "Wokku %{latest} is available (you run %{current}). To update, run on the server:"
+  loading:
+    default: "Loading"
