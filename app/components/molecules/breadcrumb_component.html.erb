@@ -1,6 +1,6 @@
 <nav class="text-xs text-dim mb-6 flex items-center gap-2 flex-wrap" aria-label="Breadcrumb">
   <% crumbs.each_with_index do |(label, href), i| %>
-    <% if i.positive? %><span style="color: var(--color-rule-soft)">/</span><% end %>
+    <% if i.positive? %><span class="text-dim" aria-hidden="true">/</span><% end %>
     <% last = i == crumbs.size - 1 %>
     <% if href && !last %>
       <%= link_to label, href, class: "no-underline hover:text-ink" %>
