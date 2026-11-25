@@ -333,7 +333,7 @@ select:focus-visible {
 .wk-glyph { display: inline-block; width: 7px; height: 7px; background: currentColor; }
 .wk-meter > span { display: inline-block; width: 8px; height: 14px; border: 1px solid var(--color-dark-line); }
 .wk-meter > span.on { border-color: transparent; }
-.corner { position: relative; }
+@layer components { .corner { position: relative; } }
 .corner::before, .corner::after { content: ""; position: absolute; width: 10px; height: 10px; pointer-events: none; border: 0 solid var(--color-line-strong); }
 .corner::before { top: -1px; left: -1px; border-top-width: 1px; border-left-width: 1px; }
 .corner::after { bottom: -1px; right: -1px; border-bottom-width: 1px; border-right-width: 1px; }

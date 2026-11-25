@@ -71,4 +71,10 @@ RSpec.describe "design tokens" do
     expect(css).to match(/--grid-dot:\s*rgba\(238,\s*241,\s*236,\s*0?\.06\)/)
     %w[brutal-sm brutal brutal-lg].each { |n| expect(css).to match(/--shadow-#{n}:\s*none/) }
   end
+
+  # Unlayered `.corner { position: relative }` beat Tailwind's `fixed` on the
+  # command palette panel (Task 7 sweep): it must sit in a cascade layer.
+  it "keeps the .corner position rule inside @layer components so utilities win" do
+    expect(css).to match(/@layer components\s*\{\s*\.corner\s*\{\s*position:\s*relative;\s*\}\s*\}/)
+  end
 end
