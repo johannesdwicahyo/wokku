@@ -19,7 +19,7 @@
     <p class="font-mono text-sm text-dim mb-6">// S3-compatible storage for database backups. Supports AWS S3, Cloudflare R2, MinIO, Backblaze B2, DigitalOcean Spaces, and Wasabi.</p>
 
     <% if @destination.errors.any? %>
-      <div role="alert" class="mb-4 border-1.5 border-error bg-error/10 text-error font-mono text-sm px-3 py-2">
+      <div role="alert" class="mb-4 border-1.5 border-danger bg-danger/10 text-bad-text font-mono text-sm px-3 py-2">
         <% @destination.errors.full_messages.each do |m| %><p><%= m %></p><% end %>
       </div>
     <% end %>

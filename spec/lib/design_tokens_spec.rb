@@ -18,11 +18,28 @@ RSpec.describe "design tokens" do
 
   it "uses Geist for every sans token and Geist Mono for mono" do
     %w[sans body label headline sans-brutal].each do |t|
-      expect(css).to match(/--font-#{t}:\s*"Geist",\s*"Inter",\s*system-ui,\s*sans-serif;/)
+      expect(css).to match(/--font-#{t}:\s*"Geist",\s*system-ui,\s*sans-serif;/)
     end
     %w[mono mono-brutal].each do |t|
       expect(css).to match(/--font-#{t}:\s*"Geist Mono",\s*ui-monospace,\s*monospace;/)
     end
+  end
+
+  it "has no Material You tokens" do
+    expect(css).not_to match(/--color-(surface|on-surface|primary|on-primary|secondary|tertiary|error|on-error|outline|inverse|background|on-background)\b/)
+    expect(css).not_to include("material-symbols")
+  end
+
+  it "has no legacy webfonts" do
+    ["Inter Tight", "JetBrains Mono", '"Inter"', "/fonts/inter"].each { |t| expect(css).not_to include(t) }
+    expect(root.join("harness/public/fonts").children.map { |c| c.basename.to_s }).not_to include(/inter|jetbrains/)
+  end
+
+  it "leaves no Material utility classes in app/" do
+    re = /\b(bg|text|border)-(surface|on-surface|primary|on-primary|error|outline)\b|material-symbols/
+    offenders = Dir[root.join("app/**/*")].reject { |f| f.include?("assets/builds") || !File.file?(f) }
+                  .select { |f| File.read(f, encoding: "UTF-8").match?(re) rescue false }
+    expect(offenders).to eq([])
   end
 
   it "does not paint the light meter squares transparent (unlayered CSS would beat bg-live/bg-ink)" do

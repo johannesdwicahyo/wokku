@@ -23,7 +23,7 @@ export default class extends Controller {
     this.term = new Terminal({
       cursorBlink: true,
       fontSize: 13,
-      fontFamily: "'JetBrains Mono', monospace",
+      fontFamily: "'Geist Mono', ui-monospace, monospace",
       theme: {
         background: "#0c0c1f",
         foreground: "#e2e0fc",

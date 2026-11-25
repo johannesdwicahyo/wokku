@@ -76,15 +76,6 @@
     <meta name="turbo-refresh-method" content="morph">
     <meta name="turbo-refresh-scroll" content="preserve">
     <%= yield :head %>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <%# Text fonts (Geist) are self-hosted; only Material Symbols
-        comes from Google. Material Symbols Outlined feeds the ~30 icon ligatures across
-        the dashboard (navbar menu/notifications/terminal, sidebar
-        section icons, combobox expand_more, low-balance banner). The
-        font was never loaded before, so all those spans showed their
-        ligature names as literal text. %>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">

@@ -1,68 +1,17 @@
 @import "tailwindcss";
 
 @theme {
-  --color-surface: #111125;
-  --color-surface-dim: #111125;
-  --color-surface-bright: #37374d;
-  --color-surface-container-lowest: #0c0c1f;
-  --color-surface-container-low: #1a1a2e;
-  --color-surface-container: #1e1e32;
-  --color-surface-container-high: #28283d;
-  --color-surface-container-highest: #333348;
-  --color-surface-variant: #333348;
-  --color-surface-tint: #c0c1ff;
-  --color-primary: #c0c1ff;
-  --color-primary-container: #2c2e68;
-  --color-primary-fixed: #e1e0ff;
-  --color-primary-fixed-dim: #c0c1ff;
-  --color-on-primary: #282a64;
-  --color-on-primary-container: #9597d9;
-  --color-on-primary-fixed: #12124e;
-  --color-on-primary-fixed-variant: #3f417c;
-  --color-secondary: #d2bbff;
-  --color-secondary-container: #5625ab;
-  --color-secondary-fixed: #eaddff;
-  --color-secondary-fixed-dim: #d2bbff;
-  --color-on-secondary: #3e008e;
-  --color-on-secondary-container: #c3a6ff;
-  --color-on-secondary-fixed: #25005a;
-  --color-on-secondary-fixed-variant: #5625ab;
-  --color-tertiary: #ffb694;
-  --color-tertiary-container: #5d2200;
-  --color-tertiary-fixed: #ffdbcc;
-  --color-tertiary-fixed-dim: #ffb694;
-  --color-on-tertiary: #571f00;
-  --color-on-tertiary-container: #de875c;
-  --color-on-tertiary-fixed: #351000;
-  --color-on-tertiary-fixed-variant: #75340f;
-  --color-error: #ffb4ab;
-  --color-error-container: #93000a;
-  --color-on-error: #690005;
-  --color-on-error-container: #ffdad6;
-  --color-background: #111125;
-  --color-on-background: #e2e0fc;
-  --color-on-surface: #e2e0fc;
-  --color-on-surface-variant: #ccc3d5;
-  --color-outline: #958e9e;
-  --color-outline-variant: #4a4453;
-  --color-inverse-surface: #e2e0fc;
-  --color-inverse-on-surface: #2f2e43;
-  --color-inverse-primary: #565995;
-  --font-headline: "Geist", "Inter", system-ui, sans-serif;
-  --font-body: "Geist", "Inter", system-ui, sans-serif;
-  --font-label: "Geist", "Inter", system-ui, sans-serif;
-  --font-sans: "Geist", "Inter", system-ui, sans-serif;
+  --font-headline: "Geist", system-ui, sans-serif;
+  --font-body: "Geist", system-ui, sans-serif;
+  --font-label: "Geist", system-ui, sans-serif;
+  --font-sans: "Geist", system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;
   --radius-sm: 0.125rem;
   --radius-md: 0.25rem;
   --radius-lg: 0.5rem;
   --radius-xl: 0.75rem;
 
-  /* --- Brutalist landing tokens (P1 of redesign-c-full, 2026-05-17) ---
-     Live alongside the Material You tokens above. Used ONLY by the
-     marketing layout + landing page for now; dashboard pages keep using
-     the Material tokens. Brutalist `surface` was renamed to `paper`
-     to avoid colliding with Material's `--color-surface`.
+  /* --- Control-room tokens ---
      Dark only (control-room redesign). */
   --color-bg:           #050605;
   --color-bg-deep:      #0B0D0B;
@@ -97,7 +46,7 @@
 
   /* Type families for the brutalist surface. These use the self-hosted
      Geist / Geist Mono faces (see the @font-face block below). */
-  --font-sans-brutal: "Geist", "Inter", system-ui, sans-serif;
+  --font-sans-brutal: "Geist", system-ui, sans-serif;
   --font-mono-brutal: "Geist Mono", ui-monospace, monospace;
 
   /* Hard shadows are dropped (none) — near-black shadow on near-black bg is
@@ -203,57 +152,6 @@ select:focus-visible {
   src: url("/fonts/geist-mono-500.woff2") format("woff2");
 }
 
-/* Legacy self-hosted Inter Tight / JetBrains Mono faces, kept for any markup
-   still naming them (the layouts no longer request Google Fonts for text). font-display: swap prevents invisible text during the brief load.
-   Files live in public/fonts/ (NOT app/assets/) because Tailwind v4 doesn't
-   pass CSS url() through propshaft's rewriter, and propshaft only serves
-   fingerprinted URLs. public/ files are served verbatim with long cache. */
-@font-face {
-  font-family: "Inter Tight";
-  font-style: normal; font-weight: 400; font-display: swap;
-  src: url("/fonts/inter-tight-400.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Inter Tight";
-  font-style: normal; font-weight: 700; font-display: swap;
-  src: url("/fonts/inter-tight-700.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Inter Tight";
-  font-style: normal; font-weight: 800; font-display: swap;
-  src: url("/fonts/inter-tight-800.woff2") format("woff2");
-}
-@font-face {
-  font-family: "JetBrains Mono";
-  font-style: normal; font-weight: 400; font-display: swap;
-  src: url("/fonts/jetbrains-mono-400.woff2") format("woff2");
-}
-@font-face {
-  font-family: "JetBrains Mono";
-  font-style: normal; font-weight: 600; font-display: swap;
-  src: url("/fonts/jetbrains-mono-600.woff2") format("woff2");
-}
-@font-face {
-  font-family: "JetBrains Mono";
-  font-style: normal; font-weight: 700; font-display: swap;
-  src: url("/fonts/jetbrains-mono-700.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Inter";
-  font-style: normal; font-weight: 400; font-display: swap;
-  src: url("/fonts/inter-400.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Inter";
-  font-style: normal; font-weight: 500; font-display: swap;
-  src: url("/fonts/inter-500.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Inter";
-  font-style: normal; font-weight: 600; font-display: swap;
-  src: url("/fonts/inter-600.woff2") format("woff2");
-}
-
 /* Dark only. */
 :root { color-scheme: dark; }
 
@@ -273,57 +171,41 @@ select:focus-visible {
   background-size: 16px 16px;
 }
 
-.material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-}
-.glass-panel {
-  background: rgba(55, 55, 77, 0.8);
-  backdrop-filter: blur(20px);
-}
-.technical-gradient {
-  background: linear-gradient(135deg, #c0c1ff 0%, #5625ab 100%);
-}
-.glow-running {
-  box-shadow: 0 0 8px rgba(195, 166, 255, 0.4);
-}
-.glow-error {
-  box-shadow: 0 0 8px rgba(255, 180, 171, 0.4);
-}
 .ghost-border {
-  border-color: rgba(74, 68, 83, 0.15);
+  border-color: var(--color-line);
 }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #4a4453; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #958e9e; }
+::-webkit-scrollbar-thumb { background: var(--color-line-strong); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-faint); }
 
 /* === Documentation === */
 .docs-content h1 {
-  @apply font-headline text-3xl font-bold text-on-surface mb-6;
+  @apply font-headline text-3xl font-bold text-ink mb-6;
 }
 .docs-content h2 {
-  @apply font-headline text-xl font-bold text-on-surface mt-10 mb-4;
+  @apply font-headline text-xl font-bold text-ink mt-10 mb-4;
 }
 .docs-content h3 {
-  @apply font-headline text-base font-bold text-on-surface mt-6 mb-3;
+  @apply font-headline text-base font-bold text-ink mt-6 mb-3;
 }
 .docs-content p {
-  @apply text-sm text-on-surface-variant leading-relaxed mb-4;
+  @apply text-sm text-ink-soft leading-relaxed mb-4;
 }
 .docs-content ul, .docs-content ol {
-  @apply text-sm text-on-surface-variant mb-4 pl-5 space-y-1;
+  @apply text-sm text-ink-soft mb-4 pl-5 space-y-1;
 }
 .docs-content ul { @apply list-disc; }
 .docs-content ol { @apply list-decimal; }
 .docs-content li { @apply leading-relaxed; }
 .docs-content a {
-  @apply text-primary hover:underline;
+  @apply text-live hover:underline;
 }
 .docs-content strong {
-  @apply text-on-surface font-medium;
+  @apply text-ink font-medium;
 }
 .docs-content code {
-  @apply bg-surface-container-high/50 text-primary px-1.5 py-0.5 rounded text-xs font-mono;
+  @apply bg-paper text-live px-1.5 py-0.5 rounded text-xs font-mono;
 }
 .docs-content pre code {
   @apply bg-transparent p-0 text-inherit;
@@ -332,56 +214,56 @@ select:focus-visible {
   @apply w-full text-sm mb-6;
 }
 .docs-content thead {
-  @apply bg-surface-container-high;
+  @apply bg-paper;
 }
 .docs-content th {
-  @apply px-4 py-2 text-left text-[10px] text-outline uppercase tracking-wider font-bold;
+  @apply px-4 py-2 text-left text-[10px] text-faint uppercase tracking-wider font-bold;
 }
 .docs-content td {
-  @apply px-4 py-2.5 text-on-surface-variant border-t border-outline-variant/10;
+  @apply px-4 py-2.5 text-ink-soft border-t border-line;
 }
 .docs-content hr {
-  @apply border-outline-variant/20 my-8;
+  @apply border-line-strong my-8;
 }
 .docs-content blockquote {
-  @apply border-l-2 border-primary/50 pl-4 py-1 my-4 text-sm text-on-surface-variant italic;
+  @apply border-l-2 border-live/50 pl-4 py-1 my-4 text-sm text-ink-soft italic;
 }
 
 /* Code blocks */
 .docs-code-block {
-  @apply bg-surface-container-lowest rounded-lg mb-4 overflow-hidden border border-outline-variant/10;
+  @apply bg-bg rounded-lg mb-4 overflow-hidden border border-line;
 }
 .docs-code-block .docs-code-lang {
-  @apply text-[10px] text-outline uppercase tracking-wider font-bold px-4 py-1.5 border-b border-outline-variant/10 bg-surface-container-low;
+  @apply text-[10px] text-faint uppercase tracking-wider font-bold px-4 py-1.5 border-b border-line bg-paper;
 }
 .docs-code-block pre {
   @apply p-4 overflow-x-auto text-xs leading-relaxed;
 }
 .docs-code-block code {
-  @apply font-mono text-on-surface-variant;
+  @apply font-mono text-ink-soft;
 }
 
 /* Heading anchors */
 .docs-anchor {
-  @apply text-outline-variant/0 hover:text-outline ml-1 no-underline transition;
+  @apply text-transparent hover:text-faint ml-1 no-underline transition;
 }
 .docs-content h2:hover .docs-anchor,
 .docs-content h3:hover .docs-anchor {
-  @apply text-outline;
+  @apply text-faint;
 }
 
 /* Channel tabs */
 .docs-tabs {
-  @apply mb-6 border border-outline-variant/15 rounded-lg overflow-hidden;
+  @apply mb-6 border border-line rounded-lg overflow-hidden;
 }
 .docs-tab-bar {
-  @apply flex gap-0 bg-surface-container-low border-b border-outline-variant/15;
+  @apply flex gap-0 bg-paper border-b border-line;
 }
 .docs-tab-btn {
-  @apply px-4 py-2 text-xs font-medium text-outline hover:text-on-surface-variant transition border-b-2 border-transparent;
+  @apply px-4 py-2 text-xs font-medium text-faint hover:text-ink-soft transition border-b-2 border-transparent;
 }
 .docs-tab-btn--active {
-  @apply text-primary border-primary bg-surface-container-high/30;
+  @apply text-live border-live bg-paper;
 }
 .docs-tab-panel {
   @apply p-5;

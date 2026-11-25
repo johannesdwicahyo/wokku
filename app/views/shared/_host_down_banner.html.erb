@@ -5,9 +5,9 @@
 <% unhealthy_team_servers.each do |server| %>
   <%# id is per-server: a team can have apps on two sick hosts at once,
       and duplicate DOM ids are invalid exactly in that worst case. %>
-  <div id="host-down-banner-<%= server.id %>" class="host-down-banner bg-error/10 border-error/30 text-error border-b px-4 py-2.5">
+  <div id="host-down-banner-<%= server.id %>" class="host-down-banner bg-danger/10 border-danger/30 text-bad-text border-b px-4 py-2.5">
     <div class="flex items-center justify-center gap-2 text-sm">
-      <span class="material-symbols-outlined text-[16px]">warning</span>
+      <span class="inline-block size-4"><%= render "shared/icons/warning" %></span>
       <% if server.heartbeat_status == "down" %>
         <span>
           Apps on <strong><%= server.name %></strong> may be unavailable — the host stopped responding

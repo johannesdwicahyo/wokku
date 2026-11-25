@@ -62,7 +62,7 @@ export default class extends Controller {
     this.suggestionsTarget.classList.add("flex")
 
     const label = document.createElement("span")
-    label.className = "text-[10px] text-outline self-center mr-1"
+    label.className = "text-[10px] text-faint self-center mr-1"
     label.textContent = "Try:"
     this.suggestionsTarget.appendChild(label)
 
@@ -71,7 +71,7 @@ export default class extends Controller {
       btn.type = "button"
       btn.dataset.action = "click->app-name-check#pick"
       btn.dataset.name = name
-      btn.className = "px-2 py-0.5 rounded text-[11px] font-mono bg-primary/10 text-primary hover:bg-primary/20 transition"
+      btn.className = "px-2 py-0.5 rounded text-[11px] font-mono bg-live/10 text-live hover:bg-live/20 transition"
       btn.textContent = name
       this.suggestionsTarget.appendChild(btn)
     })
@@ -95,9 +95,9 @@ export default class extends Controller {
   setStatus(text, level) {
     if (!this.hasStatusTarget) return
     this.statusTarget.textContent = text
-    this.statusTarget.classList.remove("text-primary", "text-error", "text-outline")
+    this.statusTarget.classList.remove("text-live", "text-bad-text", "text-faint")
     this.statusTarget.classList.add(
-      level === "ok" ? "text-primary" : level === "err" ? "text-error" : "text-outline"
+      level === "ok" ? "text-live" : level === "err" ? "text-bad-text" : "text-faint"
     )
   }
 
