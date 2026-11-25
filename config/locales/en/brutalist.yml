@@ -136,6 +136,9 @@ en:
     legal: "© 2026 Wokku · wokku.cloud"
     license: "wokku · agpl-3.0"
   console:
+    top:
+      menu: "Open the command palette"
+      region: "Region"
     rail:
       sidebar: "Sidebar"
       workspace: "Workspace"

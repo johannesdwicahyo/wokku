@@ -1,0 +1,19 @@
+<header class="sticky top-0 z-10 flex flex-wrap items-center gap-5 min-h-[60px] px-4 lg:px-7 py-2 lg:py-0 border-b border-line bg-bg/85 backdrop-blur-md">
+  <div class="flex lg:hidden items-center gap-3">
+    <button type="button" data-command-menu-open aria-label="<%= t("console.top.menu") %>"
+            class="w-11 h-11 grid place-items-center border border-line-strong bg-transparent text-ink focus-visible:outline-2 focus-visible:outline-live">
+      <span aria-hidden="true" class="block w-4 h-[1.5px] bg-current shadow-[0_5px_0_currentColor,0_-5px_0_currentColor]"></span>
+    </button>
+    <%= render Atoms::LogoComponent.new(variant: :tile, size: :lg, decorative: true) %>
+    <span class="font-mono text-[11px] uppercase tracking-[.12em] text-ink"><%= page %></span>
+  </div>
+  <div class="hidden lg:flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-[.12em] text-muted">
+    <% crumbs.each do |c| %><span class="truncate max-w-[16rem]"><%= c %></span><span aria-hidden="true">/</span><% end %>
+    <b class="font-medium text-ink"><%= page %></b>
+  </div>
+  <div class="ml-auto flex flex-wrap items-center gap-5 font-mono text-[11px] uppercase tracking-[.12em] text-muted">
+    <% if region %><span class="hidden sm:inline"><%= t("console.top.region") %> <b class="font-medium text-ink"><%= region %></b></span><% end %>
+    <span class="hidden sm:inline" data-controller="clock" data-clock-zone-value="<%= ZONE %>"><b class="font-medium text-ink" data-clock-target="time"><%= clock_text %></b> WIB</span>
+    <% actions.each do |a| %><%= a %><% end %>
+  </div>
+</header>
