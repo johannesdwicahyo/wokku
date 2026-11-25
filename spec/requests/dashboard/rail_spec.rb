@@ -109,3 +109,34 @@ RSpec.describe "Dashboard rail", type: :request do
     end
   end
 end
+
+# Final-review fixes
+RSpec.describe "Dashboard shell fixes", type: :request do
+  include Devise::Test::IntegrationHelpers
+  include Capybara::RSpecMatchers
+
+  it "names the top-bar page from the active nav item, localized, not the SEO title" do
+    sign_in users(:one)
+    get "/dashboard/templates", params: { locale: "id" }
+    header = Capybara.string(response.body).find("header")
+    expect(header).to have_text(I18n.t("console.sidebar.items.templates", locale: :id))
+    expect(header).to have_no_text("WOKKU")
+    expect(header).to have_no_text("1 CLICK", normalize_ws: true)
+  end
+
+  it "puts the rail first so banners sit in the content column" do
+    user = users(:one)
+    user.update_column(:billing_status, "suspended")
+    sign_in user
+    get "/dashboard/apps"
+    body = Capybara.string(response.body)
+    expect(body).to have_css("div.flex-1 > div", text: "apps suspended")
+    expect(response.body.index("<aside")).to be < response.body.index("apps suspended")
+  end
+
+  it "shows the role humanized and localized in the rail" do
+    sign_in users(:one)
+    get "/dashboard/apps", params: { locale: "id" }
+    expect(Capybara.string(response.body).find("aside")).to have_text("Anggota")
+  end
+end

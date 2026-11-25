@@ -120,3 +120,13 @@ RSpec.describe Organisms::RailComponent, type: :component do
     expect(page).to have_text("wokku v9.9")
   end
 end
+
+RSpec.describe Organisms::RailComponent, "role label", type: :component do
+  it "translates the role under :id and humanizes unknown ones" do
+    args = { workspace_items: [], account_items: [], user_email: "a@b.c" }
+    I18n.with_locale(:id) { render_inline(described_class.new(**args, user_role: "member")) }
+    expect(page).to have_text("Anggota")
+    render_inline(described_class.new(**args, user_role: "owner_x"))
+    expect(page).to have_text("Owner x")
+  end
+end

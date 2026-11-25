@@ -151,7 +151,10 @@ id:
       from_template: "Dari template"
       new_app: "App baru"
     rail:
-      sidebar: "Sidebar"
+      sidebar: "Navigasi"
+      roles:
+        member: "Anggota"
+        admin: "Admin"
       workspace: "Ruang kerja"
       account: "Akun"
       search: "Cari atau jalankan perintah"
@@ -168,7 +171,6 @@ id:
         one: "Tim · %{count} anggota"
         other: "Tim · %{count} anggota"
     sidebar:
-      workspace: "Ruang kerja"
       items:
         apps: "Aplikasi"
         databases: "Add-on"
@@ -197,7 +199,6 @@ id:
       actions: "Aksi"
       empty: "Tidak ada yang cocok"
     topbar:
-      search: "cari app..."
       beta: "wokku.cloud lagi public beta — belum buat workload production."
       beta_read: "baca catatannya ↗"
     dashboard:

@@ -21,7 +21,7 @@ module Organisms
     attr_reader :nav, :addons, :app, :search_url
 
     def labels
-      %i[apps addons actions nav open deploy restart stop empty placeholder].index_with { |k| t("console.command.#{k}") }
+      %i[apps addons actions nav open deploy restart stop empty].index_with { |k| t("console.command.#{k}") }
         .merge(status: states.keys.index_with { |k| t("status_light.#{k}") })
     end
 

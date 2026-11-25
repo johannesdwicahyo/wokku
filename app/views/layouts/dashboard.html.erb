@@ -102,36 +102,6 @@
   <body class="bg-bg text-ink font-sans antialiased"
         data-controller="confirm-dialog nav-loading"
         data-action="turbo:visit@document->nav-loading#start turbo:load@document->nav-loading#stop turbo:fetch-request-error@document->nav-loading#stop">
-    <% if user_signed_in? && current_user.billing_status == "suspended" %>
-      <div class="border-b border-line bg-danger-soft px-4 py-2.5">
-        <div class="flex items-center justify-center gap-2 text-xs text-ink">
-          <span>// apps suspended — an invoice is unpaid.</span>
-          <% if wokku_cloud? %>
-            <%= link_to "pay_invoice()", dashboard_billing_path, class: "font-bold underline" %>
-          <% end %>
-        </div>
-      </div>
-    <% end %>
-
-    <%= render "shared/account_deletion_banner" %>
-    <%= optional_partial "shared/low_balance_banner" %>
-    <%= render "shared/host_down_banner" %>
-    <%= render "shared/update_banner" %>
-    <%= render "shared/recovery_codes_banner" %>
-
-    <%# Public-beta strip — single source of truth (the topbar no longer
-        carries its own). Cloud-only: it announces wokku.cloud's beta
-        status, which is meaningless on a self-host install. %>
-    <% if wokku_cloud? %>
-      <div class="border-b border-line bg-warn-soft px-4 py-2">
-        <div class="flex items-center justify-center gap-2 text-[11px] text-ink">
-          <%= render Atoms::TagComponent.new(tone: :warn) do %>● public_beta<% end %>
-          <span class="hidden sm:inline"><%= t("console.topbar.beta") %></span>
-          <%= link_to t("console.topbar.beta_read"), "/docs/beta", class: "underline" %>
-        </div>
-      </div>
-    <% end %>
-
     <%# overflow-x-clip (not hidden) stops the off-canvas slide-panel /
         sidebar — translated off-screen — from creating horizontal
         scroll on mobile, without breaking the sticky topbar the way
@@ -140,7 +110,7 @@
       <%= render Organisms::RailComponent.new(
             workspace_items: workspace_items,
             account_items: account_items,
-            workspaces: current_user.teams.includes(:plan).order(:created_at),
+            workspaces: current_user.teams.order(:created_at),
             current_workspace: current_team,
             workspaces_index_path: dashboard_workspaces_path,
             workspace_new_path: new_dashboard_workspace_path,
@@ -153,7 +123,37 @@
           ) %>
 
       <div class="flex-1 flex flex-col min-w-0">
-        <%= render Organisms::TopBarComponent.new(crumbs: [ current_team&.name ].compact, page: content_for(:title).presence || "Wokku") do |bar| %>
+        <% if user_signed_in? && current_user.billing_status == "suspended" %>
+          <div class="border-b border-line bg-danger-soft px-4 py-2.5">
+            <div class="flex items-center justify-center gap-2 text-xs text-ink">
+              <span>// apps suspended — an invoice is unpaid.</span>
+              <% if wokku_cloud? %>
+                <%= link_to "pay_invoice()", dashboard_billing_path, class: "font-bold underline" %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <%= render "shared/account_deletion_banner" %>
+        <%= optional_partial "shared/low_balance_banner" %>
+        <%= render "shared/host_down_banner" %>
+        <%= render "shared/update_banner" %>
+        <%= render "shared/recovery_codes_banner" %>
+
+        <%# Public-beta strip — single source of truth (the topbar no longer
+            carries its own). Cloud-only: it announces wokku.cloud's beta
+            status, which is meaningless on a self-host install. %>
+        <% if wokku_cloud? %>
+          <div class="border-b border-line bg-warn-soft px-4 py-2">
+            <div class="flex items-center justify-center gap-2 text-[11px] text-ink">
+              <%= render Atoms::TagComponent.new(tone: :warn) do %>● public_beta<% end %>
+              <span class="hidden sm:inline"><%= t("console.topbar.beta") %></span>
+              <%= link_to t("console.topbar.beta_read"), "/docs/beta", class: "underline" %>
+            </div>
+          </div>
+        <% end %>
+
+        <%= render Organisms::TopBarComponent.new(crumbs: [ current_team&.name ].compact, page: content_for(:crumb).presence || (workspace_items + account_items).find { _1[:active] }&.dig(:label) || content_for(:title).to_s.sub(/\s*[-·|]\s*Wokku\z/i, "").presence || "Wokku") do |bar| %>
           <% if content_for?(:top_actions) %>
             <% bar.with_action { content_for(:top_actions) } %>
           <% else %>

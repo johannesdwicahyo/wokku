@@ -56,7 +56,7 @@
           ) %>
 
       <div class="flex-1 flex flex-col min-w-0">
-        <%= render Organisms::TopBarComponent.new(crumbs: [ t("console.admin.crumb") ], page: content_for(:title).presence || "Wokku") %>
+        <%= render Organisms::TopBarComponent.new(crumbs: [ t("console.admin.crumb") ], page: content_for(:crumb).presence || (admin_nav + admin_account).find { _1[:active] }&.dig(:label) || content_for(:title).to_s.sub(/\s*[-·|]\s*Wokku\z/i, "").presence || "Wokku") %>
 
         <main class="flex-1 bg-bg">
           <div class="px-6 py-5">

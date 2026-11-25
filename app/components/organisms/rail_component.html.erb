@@ -82,7 +82,7 @@
         <span class="w-[26px] h-[26px] grid place-items-center shrink-0 bg-[#1A1F1A] border border-line-strong font-mono text-[11px]" aria-hidden="true"><%= user_initials %></span>
         <span class="min-w-0 flex-1">
           <b class="block truncate min-w-0 font-medium text-sm text-ink"><%= user_email %></b>
-          <span class="block truncate text-xs text-dim"><%= user_role %></span>
+          <span class="block truncate text-xs text-dim"><%= t("console.rail.roles.#{user_role}", default: user_role.to_s.humanize) %></span>
         </span>
         <% if sign_out_path %>
           <%= link_to t("console.rail.sign_out"), sign_out_path, data: { turbo_method: :delete },

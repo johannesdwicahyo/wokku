@@ -112,7 +112,7 @@ id:
       linked_apps: "Aplikasi Terhubung"
       backups: "Backup"
       connection_info: "Info Koneksi"
-      new_addon: "+ Database baru"
+      new_addon: "Database baru"
       unlinked: "Add-on tak tertaut"
       unlinked_hint: "— tidak terhubung ke aplikasi mana pun. Tautkan atau hapus."
       backups_off: "Backup database otomatis belum aktif — perlu bucket yang kompatibel dengan S3 (Amazon S3, Cloudflare R2, Backblaze B2, MinIO, …)."

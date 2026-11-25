@@ -1,7 +1,7 @@
 require "digest"
 
 module Organisms
-  # Control-room rail (Phase 2 shell). Data-driven like ConsoleSidebarComponent:
+  # Control-room rail (Phase 2 shell). Data-driven:
   # layouts pass items as { label:, key:, href:, active:, count: nil, external: false }.
   class RailComponent < ApplicationComponent
     def initialize(workspace_items:, account_items:, workspaces: [], current_workspace: nil,

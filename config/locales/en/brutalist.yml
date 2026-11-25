@@ -152,6 +152,9 @@ en:
       new_app: "New app"
     rail:
       sidebar: "Sidebar"
+      roles:
+        member: "Member"
+        admin: "Admin"
       workspace: "Workspace"
       account: "Account"
       search: "Search or run a command"
@@ -168,7 +171,6 @@ en:
         one: "Team · %{count} member"
         other: "Team · %{count} members"
     sidebar:
-      workspace: "Workspace"
       items:
         apps: "Apps"
         databases: "Add-ons"
@@ -197,7 +199,6 @@ en:
       actions: "Actions"
       empty: "No matches"
     topbar:
-      search: "search apps..."
       beta: "wokku.cloud is in public beta — not for production workloads yet."
       beta_read: "read the notice ↗"
     dashboard:
