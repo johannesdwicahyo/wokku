@@ -6,10 +6,20 @@ export default class extends Controller {
   connect() {
     this.clickOutsideHandler = this.clickOutside.bind(this)
     document.addEventListener("click", this.clickOutsideHandler)
+    this.escHandler = this.escape.bind(this)
+    this.element.addEventListener("keydown", this.escHandler)
   }
 
   disconnect() {
     document.removeEventListener("click", this.clickOutsideHandler)
+    this.element.removeEventListener("keydown", this.escHandler)
+  }
+
+  escape(event) {
+    if (event.key !== "Escape" || this.menuTarget.classList.contains("hidden")) return
+    this.menuTarget.classList.add("hidden")
+    this.syncExpanded()
+    this.element.querySelector("[aria-expanded]")?.focus()
   }
 
   toggle(event) {
