@@ -7,9 +7,12 @@ module Apps
 
     def self.for(apps, now: Time.current, buckets: 12)
       since = now - (BUCKET * buckets)
-      idx = "FLOOR(EXTRACT(EPOCH FROM (#{Metric.connection.quote(now.utc)}::timestamp - recorded_at)) / #{BUCKET.to_i})::int"
+      # Containers of one poll get distinct microsecond timestamps, so a poll
+      # is identified by its minute.
+      minute = "DATE_TRUNC('minute', recorded_at)"
+      idx = "FLOOR(EXTRACT(EPOCH FROM (#{Metric.connection.quote(now.utc)}::timestamp - #{minute})) / #{BUCKET.to_i})::int"
       polls = Metric.where(app_record_id: apps.map(&:id), recorded_at: since..now)
-                    .group(:app_record_id, :recorded_at, Arel.sql(idx))
+                    .group(:app_record_id, Arel.sql(minute), Arel.sql(idx))
                     .pluck(:app_record_id, Arel.sql(idx), Arel.sql("SUM(cpu_percent)"))
       per = Hash.new { |h, k| h[k] = Hash.new { |hh, kk| hh[kk] = [] } }
       polls.each { |app_id, age, sum| per[app_id][age] << sum.to_f }

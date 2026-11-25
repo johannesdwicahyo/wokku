@@ -12,6 +12,11 @@ RSpec.describe Atoms::LightBarsComponent, type: :component do
     expect(bars.all("i.on").size).to eq(10)
   end
 
+  it "clamps values above max to the full row height" do
+    render_inline(described_class.new(values: [ 250 ], label: "CPU"))
+    expect(page.find("i")["style"]).to include("height: 18px")
+  end
+
   it "renders a labelled dash when there is no data" do
     [ [], [ nil, nil ] ].each do |vals|
       render_inline(described_class.new(values: vals, label: "CPU"))

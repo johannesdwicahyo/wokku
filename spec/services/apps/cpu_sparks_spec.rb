@@ -20,6 +20,13 @@ RSpec.describe Apps::CpuSparks do
     expect(r.values.map(&:size).uniq).to eq([ 12 ])
   end
 
+  it "treats containers of one poll with distinct sub-second timestamps as one poll" do
+    metric(a, 30, 30.seconds + 0.2.seconds)
+    metric(a, 30, 30.seconds + 0.1.seconds)
+    metric(a, 30, 30.seconds)
+    expect(described_class.for([ a ], now: now)[a.id].last).to eq(90)
+  end
+
   it "uses the same number of queries for 2 and 10 apps" do
     count = lambda do |apps|
       n = 0

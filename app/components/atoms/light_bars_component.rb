@@ -10,7 +10,7 @@ module Atoms
     attr_reader :values, :label
 
     def empty? = values.blank? || values.all?(&:nil?)
-    def height(v) = [ 2, v.to_i * 18 / @max ].max
+    def height(v) = [ 2, [ v.to_i, @max ].min * 18 / @max ].max
     def bar_class(v) = v.to_i.positive? ? "on bg-live" : "bg-dim"
   end
 end
