@@ -8,7 +8,7 @@ module Organisms
 
     CRASH_WINDOW = 10.minutes
     MAX_ALERTS = 3
-    GRID = "grid-cols-[16px_minmax(0,1fr)_80px_20px] lg:grid-cols-[20px_minmax(0,1.6fr)_minmax(0,1.2fr)_max-content_120px_max-content_36px]"
+    GRID = "grid-cols-[16px_minmax(0,1fr)_80px_20px] lg:grid-cols-[20px_minmax(0,1.6fr)_minmax(0,1.2fr)_140px_120px_176px_36px]"
 
     # {app_id => {count:, reason:}} for crashes in the window, one query.
     # reason = the error line of the newest crash's log excerpt (see .reason_from).

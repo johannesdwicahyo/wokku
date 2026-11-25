@@ -54,6 +54,15 @@ RSpec.describe Organisms::AppsRackComponent, type: :component do
     expect(page).to have_link("See logs", count: 3)
   end
 
+  it "uses the identical grid classes on the header and every row" do
+    render_rack
+    header = page.find("[aria-hidden='true']", text: "Domain")["class"].split
+    row = page.find("a[data-rack-unit='alpha']")["class"].split
+    grid = header.select { |c| c.include?("grid-cols") }
+    expect(grid).not_to be_empty
+    expect(row & grid).to eq(grid)
+  end
+
   it "renders a New app unit without a doubled plus" do
     render_rack
     link = page.find("a[href='/dashboard/apps/new']")
