@@ -4,7 +4,7 @@ import { Controller } from "@hotwired/stimulus"
 // Value `data` = Apps::Fleet entries ([{ states: [...] }]). Colours mirror the
 // tokens in wokku.css (canvas needs literals).
 const C = { live: "34,197,94", ink: "238,241,236", muted: "142,150,141", bad: "240,68,56", dim: "93,101,92" }
-const MAX = 10, MIN = 4
+const MAX = 10, MIN = 4, MIN_H = 64, FRAME_MS = 100
 
 export default class extends Controller {
   static values = { mode: String, data: Array }
@@ -30,11 +30,17 @@ export default class extends Controller {
 
   get reduced() { return this.mq.matches }
 
-  // Reduced motion on: stop loop + observer, draw one static frame.
-  // Off: observe visibility and run the blink loop.
+  // Only deploying (blink) and crashed (blink) lights animate; a board of
+  // running/sleeping/stopped lights is drawn once and never loops.
+  get animated() {
+    return this.dataValue.some((a) => a.states.some((st) => st === "deploying" || st === "crashed"))
+  }
+
+  // Reduced motion or nothing blinking: stop loop + observer, draw one frame.
+  // Otherwise observe visibility and run the throttled loop.
   motionChanged = () => {
     this.stopLoop()
-    if (this.reduced) return this.draw(0)
+    if (this.reduced || !this.animated) return this.draw(0)
     this.io = new IntersectionObserver(([e]) => {
       this.visible = e.isIntersecting
       cancelAnimationFrame(this.raf)
@@ -51,21 +57,32 @@ export default class extends Controller {
   }
 
   loop = (now) => {
-    this.draw(now / 1000)
+    if (!(now - (this.last || 0) < FRAME_MS)) { this.last = now; this.draw(now / 1000) }
     if (this.visible) this.raf = requestAnimationFrame(this.loop)
   }
 
+  // Grow the canvas (h-16 is a minimum) until every light fits at MIN size:
+  // rows x (MIN + gap), so nothing is clipped.
   size() {
+    const cell = MIN + 4
+    const slots = this.slots()
+    const cols = Math.max(Math.floor(this.element.getBoundingClientRect().width / cell), 1)
+    const need = Math.ceil(slots / cols) * cell
+    this.element.style.height = need > MIN_H ? `${need}px` : ""
     const r = this.element.getBoundingClientRect()
     this.element.width = Math.round(r.width * this.dpr)
     this.element.height = Math.round(r.height * this.dpr)
   }
 
+  slots() {
+    const groups = this.dataValue.map((a) => a.states)
+    return groups.reduce((n, s) => n + s.length, 0) + Math.max(groups.length - 1, 0)
+  }
+
   // Largest square (<= MAX css px, >= MIN) such that every light plus one-square
   // gaps between apps fits; below MIN it stays MIN and wraps.
   layout(w, h) {
-    const groups = this.dataValue.map((a) => a.states)
-    const slots = groups.reduce((n, s) => n + s.length, 0) + Math.max(groups.length - 1, 0)
+    const groups = this.dataValue.map((a) => a.states), slots = this.slots()
     for (let s = MAX; s > MIN; s--) {
       const cell = (s + 4) * this.dpr
       if (Math.floor(w / cell) * Math.floor(h / cell) >= slots) return { s, groups }
@@ -94,7 +111,7 @@ export default class extends Controller {
     const g = this.g, on = this.reduced || Math.sin(t * 6 + i) > 0
     let fill
     if (st === "running") {
-      fill = `rgba(${C.live},${this.reduced ? 1 : 0.75 + 0.25 * Math.sin(t * 2 + i)})`
+      fill = `rgba(${C.live},1)`
       g.shadowColor = `rgba(${C.live},.8)`; g.shadowBlur = sz
     } else if (st === "deploying") fill = `rgba(${C.ink},${on ? 0.95 : 0.3})`
     else if (st === "crashed") fill = `rgba(${C.bad},${this.reduced || Math.sin(t * 4) > 0 ? 0.95 : 0.35})`

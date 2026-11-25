@@ -3215,10 +3215,10 @@ CREATE INDEX index_metric_hourly_on_app_record_id ON public.metric_hourly USING 
 
 
 --
--- Name: index_metrics_on_app_record_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_metrics_on_app_record_id_and_recorded_at; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_metrics_on_app_record_id ON public.metrics USING btree (app_record_id);
+CREATE INDEX index_metrics_on_app_record_id_and_recorded_at ON public.metrics USING btree (app_record_id, recorded_at);
 
 
 --
@@ -4682,6 +4682,7 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261125000001'),
 ('20261122000001'),
 ('20261121000002'),
 ('20261121000001'),
