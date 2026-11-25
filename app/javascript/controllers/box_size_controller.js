@@ -8,7 +8,12 @@ export default class extends Controller {
   select(event) {
     const button = event.currentTarget
     this.inputTarget.value = button.dataset.boxSize
-    this.element.querySelectorAll("[data-box-size]").forEach((b) => b.classList.remove("bg-bg-deep"))
-    button.classList.add("bg-bg-deep")
+    this.element.querySelectorAll("[data-box-size]").forEach((b) => {
+      const on = b === button
+      b.classList.toggle("border-live", on)
+      b.classList.toggle("bg-live/7", on)
+      b.classList.toggle("border-line-strong", !on)
+      b.setAttribute("aria-pressed", String(on))
+    })
   }
 }

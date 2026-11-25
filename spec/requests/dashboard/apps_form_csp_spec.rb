@@ -17,4 +17,12 @@ RSpec.describe "New-app form without inline handlers", type: :request do
     expect(response.body).to include('data-action="box-size#select"')
     expect(response.body).not_to match(/\son[a-z]+="/)
   end
+
+  it "renders the selected box size visibly and exposes aria-pressed on every option" do
+    get "/dashboard/apps/new"
+    doc = Capybara.string(response.body)
+    expect(doc).to have_css("button[data-box-size][aria-pressed='true'].border-live", count: 1)
+    expect(doc).to have_css("button[data-box-size][aria-pressed='false']")
+    expect(doc).to have_no_css("button[data-box-size][aria-pressed='false'].border-live")
+  end
 end

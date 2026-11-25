@@ -115,7 +115,8 @@
                   data-box-size="<%= size %>"
                   <%= capped ? "disabled".html_safe : "".html_safe %>
                   data-action="box-size#select"
-                  class="w-full text-left border rounded-md <%= selected ? 'border-line-strong bg-bg-deep' : 'border-line-strong hover:bg-bg-deep' %> px-2 py-1.5 transition <%= capped ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer' %>"
+                  aria-pressed="<%= selected %>"
+                  class="w-full text-left border rounded-md <%= selected ? 'border-live bg-live/7' : 'border-line-strong hover:bg-bg-deep' %> px-2 py-1.5 transition <%= capped ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer' %>"
                   title="<%= tier ? "#{tier.memory_mb} MB · #{tier.cpu_shares} vCPU · " : "" %><%= usage_hint %>">
             <div class="text-[11px] font-semibold text-ink uppercase"><%= size %></div>
             <div class="text-[10px] text-dim mt-0.5">
