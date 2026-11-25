@@ -19,8 +19,8 @@ module Organisms
     def app = deploy.app_record
 
     def next_version
-      latest = app.releases.maximum(:version)
-      latest ? "v#{latest + 1}" : "—"
+      v = deploy.release&.version || app.releases.maximum(:version)&.+(1)
+      v ? "v#{v}" : "—"
     end
 
     # Push is done once the deploy exists; Build runs while the deploy is

@@ -1,4 +1,5 @@
-<% content_for :title, "Apps" %>
+<% content_for :title, t("dashboard.apps.title") %>
+<h1 class="sr-only"><%= t("dashboard.apps.title") %></h1>
 <% if @deletion %>
   <%= turbo_stream_from ::Apps::DeletionProgress.stream(@deleting_id) %>
   <%= render Organisms::AppDeletionProgressComponent.new(app_id: @deleting_id, progress: @deletion) %>

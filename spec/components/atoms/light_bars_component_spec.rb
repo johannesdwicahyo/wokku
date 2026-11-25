@@ -12,6 +12,13 @@ RSpec.describe Atoms::LightBarsComponent, type: :component do
     expect(bars.all("i.on").size).to eq(10)
   end
 
+  it "renders a nil sample as an invisible gap, distinct from a 0% bar" do
+    render_inline(described_class.new(values: [ nil, 0, 50 ], label: "CPU"))
+    bars = page.all("i")
+    expect(bars[0]["class"]).to include("opacity-0")
+    expect(bars[1]["class"]).not_to include("opacity-0")
+  end
+
   it "clamps values above max to the full row height" do
     render_inline(described_class.new(values: [ 250 ], label: "CPU"))
     expect(page.find("i")["style"]).to include("height: 18px")
@@ -22,6 +29,7 @@ RSpec.describe Atoms::LightBarsComponent, type: :component do
       render_inline(described_class.new(values: vals, label: "CPU"))
       expect(page).to have_css("[aria-label='No CPU data yet']", text: "—")
       expect(page).not_to have_css("i")
+      expect(page).to have_css("[role='img']")
     end
   end
 

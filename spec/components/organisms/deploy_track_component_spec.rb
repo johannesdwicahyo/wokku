@@ -18,6 +18,13 @@ RSpec.describe Organisms::DeployTrackComponent, type: :component do
     expect(page).to have_link("Open log", href: "/dashboard/apps/#{app.id}/deploys/#{deploy.id}")
   end
 
+  it "shows the deploy's own release version, not latest + 1" do
+    rel = app.releases.create!(description: "mine", version: 20)
+    own = create(:deploy, app_record: app, status: :building, release: rel)
+    render_inline(described_class.new(deploy: own))
+    expect(page).to have_text("#{app.name} → v20")
+  end
+
   it "marks Push done, Build running, Release/Live pending, with no percentage" do
     render_inline(described_class.new(deploy: deploy))
     expect(page).to have_css("[data-stage=push][data-state=done]")

@@ -12,8 +12,10 @@ class Deploy < ApplicationRecord
   scope :recent, -> { order(created_at: :desc).limit(20) }
 
   # Deploys still running for the given apps (relation of AppRecord), newest first.
+  # Bounded by the deploy window so orphaned rows don't pin the track.
   scope :in_progress_for, ->(app_scope) {
-    where(status: %i[pending building], app_record_id: app_scope.select(:id))
+    window = ::Deploys::BuildAndConverge.deploy_timeout + ::Deploys::BuildAndConverge::QUEUE_WAIT_MAX
+    where(status: %i[pending building], app_record_id: app_scope.select(:id), created_at: window.ago..)
       .order(created_at: :desc).includes(:app_record, :release)
   }
 

@@ -39,4 +39,11 @@ RSpec.describe Deploy, ".in_progress_for" do
 
     expect(Deploy.in_progress_for(AppRecord.where(id: mine.id))).to eq([ fresh, old ])
   end
+
+  it "excludes orphaned deploys older than the deploy window" do
+    app = create(:app_record)
+    create(:deploy, app_record: app, status: :building, created_at: 3.hours.ago)
+    live = create(:deploy, app_record: app, status: :building, created_at: 5.minutes.ago)
+    expect(Deploy.in_progress_for(AppRecord.where(id: app.id))).to eq([ live ])
+  end
 end

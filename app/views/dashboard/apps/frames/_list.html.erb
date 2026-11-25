@@ -6,6 +6,6 @@
   <div class="flex flex-col gap-5">
     <%= render Organisms::AppsOverviewComponent.new(fleet: @fleet, running: @fleet_running, total: @fleet_total, deploying: @fleet_deploying, readouts: @readouts) %>
     <%= render Organisms::DeployTrackComponent.new(deploy: @track_deploy, more: @track_more) %>
-    <%= render Organisms::AppsRackComponent.new(apps: @apps, stats: @stats, sparks: @sparks, last_deploys: @last_deploys, crashes: @crashes) %>
+    <%= render Organisms::AppsRackComponent.new(apps: @apps, sparks: @sparks, last_deploys: @last_deploys, crashes: @crashes) %>
   </div>
 <% end %>

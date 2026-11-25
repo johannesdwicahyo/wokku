@@ -465,7 +465,6 @@ module Dashboard
       deploys = Deploy.in_progress_for(policy_scope(AppRecord).main_apps).to_a
       @track_deploy = deploys.first
       @track_more = [ deploys.size - 1, 0 ].max
-      @stats = ::Apps::ListStats.for(@apps)
       @sparks = ::Apps::CpuSparks.for(@apps)
       @last_deploys = Organisms::AppsRackComponent.last_deploys_for(@apps)
       @crashes = Organisms::AppsRackComponent.crashes_for(@apps)

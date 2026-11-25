@@ -11,6 +11,6 @@ module Atoms
 
     def empty? = values.blank? || values.all?(&:nil?)
     def height(v) = [ 2, [ v.to_i, @max ].min * 18 / @max ].max
-    def bar_class(v) = v.to_i.positive? ? "on bg-live" : "bg-dim"
+    def bar_class(v) = v.nil? ? "opacity-0" : (v.to_i.positive? ? "on bg-live" : "bg-dim")
   end
 end

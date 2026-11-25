@@ -12,7 +12,7 @@ require "rails_helper"
 #   - create PlanQuotaError rescue + dedicated DB/Redis provisioning branches
 #   - enforce_free_container_limit! deposit-gate redirect
 #   - reject_creation_during_deletion_pending guard
-#   - index rescue branch + compute_box_usage
+#   - index rescue branch
 #   - run_onboarding_waypoints (deploy_template redirect, first_deploy event)
 #   - search action
 RSpec.describe "Dashboard::Apps (extra coverage)", type: :request do

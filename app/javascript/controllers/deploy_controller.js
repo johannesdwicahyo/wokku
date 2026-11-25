@@ -49,7 +49,7 @@ export default class extends Controller {
       this.outputTarget.textContent += text
       // Track on the apps overview: keep the box to the last 12 lines.
       if (this.reloadFrameValue) {
-        this.outputTarget.textContent = this.outputTarget.textContent.split("\n").slice(-12).join("\n")
+        this.outputTarget.textContent = this.outputTarget.textContent.replace(/\n$/, "").split("\n").slice(-12).join("\n")
       }
       this.outputTarget.scrollTop = this.outputTarget.scrollHeight
     }

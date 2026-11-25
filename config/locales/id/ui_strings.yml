@@ -101,4 +101,3 @@ id:
       alert_reason: "%{name} terus berhenti dengan \"%{reason}\". Wokku sedang me-restart-nya."
       see_logs: "Lihat log"
       never: "belum pernah"
-      failed: "gagal"

@@ -83,4 +83,3 @@ en:
       alert_reason: "%{name} keeps exiting with \"%{reason}\". Wokku is restarting it."
       see_logs: "See logs"
       never: "never"
-      failed: "failed"

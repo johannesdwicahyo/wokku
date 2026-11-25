@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-5">
     <%= render Organisms::AppsSideComponent.new(databases: @side_databases, total: @side_total) %>
     <% @side_sections.each do |section| %>
-      <%= render partial: section[:partial], locals: section[:locals] || {} %>
+      <%= render_seam_partial(section) %>
     <% end %>
   </div>
 <% end %>

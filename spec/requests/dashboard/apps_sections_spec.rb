@@ -83,6 +83,15 @@ RSpec.describe "Dashboard::Apps deferred sections", type: :request do
       expect(response.body).not_to include("Rp")
     end
 
+    it "skips a seam partial that raises and renders the others" do
+      Wokku.config.apps_index_side_sections = ->(_v, _t) {
+        [ { partial: "nope/missing", locals: {} }, { partial: "dashboard/object_storages/section", locals: { app: app_records(:one) } } ]
+      }
+      get sections_dashboard_apps_path(section: :side)
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("S3-compatible bucket for uploads and files")
+    end
+
     it "no longer serves the activity section" do
       get sections_dashboard_apps_path(section: :activity)
       expect(response).to have_http_status(:not_found)

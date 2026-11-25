@@ -10,7 +10,7 @@ RSpec.describe Organisms::AppsRackComponent, type: :component do
   let(:sparks) { { a.id => [ 5, 10, nil ] + Array.new(9, 40), b.id => [] } }
 
   def render_rack(apps: [ a, b ], last_deploys: {}, crashes: {}, sparks: self.sparks)
-    render_inline(described_class.new(apps: apps, stats: {}, sparks: sparks, last_deploys: last_deploys, crashes: crashes))
+    render_inline(described_class.new(apps: apps, sparks: sparks, last_deploys: last_deploys, crashes: crashes))
   end
 
   it "orders units by last deploy desc, nil last" do
@@ -76,6 +76,29 @@ RSpec.describe Organisms::AppsRackComponent, type: :component do
       result = described_class.crashes_for([ a, b ])
       expect(result).to eq(a.id => { count: 2, reason: "new reason" })
     end
+  end
+
+  describe "crash reason extraction" do
+    def reason_for(log)
+      CrashEvent.create!(app_record: a, container_id: SecureRandom.hex(4), exited_at: 1.minute.ago, log_excerpt: log)
+      described_class.crashes_for([ a ])[a.id][:reason]
+    end
+
+    it "prefers the error line of a Node stack trace and strips ANSI" do
+      log = "\e[31mnode:internal/modules\e[0m\n\n\e[1mError: Cannot find module 'express'\e[0m\n    at Module._resolveFilename (x.js:1)\n    at Function.load (y.js:2)\nNode.js v20"
+      expect(reason_for(log)).to eq("Error: Cannot find module 'express'")
+    end
+
+    it "falls back to the last line" do
+      expect(reason_for("one\ntwo\n")).to eq("two")
+    end
+  end
+
+  it "renders a script-tag reason escaped" do
+    a.update_columns(status: AppRecord.statuses[:crashed])
+    render_rack(crashes: { a.id => { count: 1, reason: "<script>alert(1)</script>" } })
+    expect(page.native.to_html).not_to include("<script>alert")
+    expect(page).to have_text("<script>alert(1)</script>")
   end
 
   describe ".last_deploys_for" do
