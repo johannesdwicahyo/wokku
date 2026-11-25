@@ -27,7 +27,7 @@ RSpec.describe "Dashboard::Apps", type: :request do
       expect(response.body).to include('id="apps_list"')
       expect(response.body).to include('loading="lazy"')
       expect(response.body).to include(sections_dashboard_apps_path(section: :list))
-      expect(response.body).to include(sections_dashboard_apps_path(section: :activity))
+      expect(response.body).to include(sections_dashboard_apps_path(section: :side))
     end
 
     it "renders the first-deploy chooser when the user has no apps" do
