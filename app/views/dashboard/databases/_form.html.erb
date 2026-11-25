@@ -1,7 +1,7 @@
 <%
   apps ||= []
   default_type = (database.service_type.presence || "postgres")
-  text_input_classes = "w-full bg-bg border border-line px-3 py-2.5 font-mono text-sm text-ink placeholder-dim focus:outline-none focus:border-accent transition-colors"
+  text_input_classes = "w-full bg-bg border border-dark-line px-3 py-2.5 font-mono text-sm text-ink placeholder-dim focus:outline-none focus:border-accent transition-colors"
   label_classes      = "block font-mono text-[10px] font-bold text-dim mb-1.5 uppercase tracking-widest"
 
   app_options = apps.map do |a|

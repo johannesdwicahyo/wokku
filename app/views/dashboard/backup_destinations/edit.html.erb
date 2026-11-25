@@ -6,7 +6,7 @@
 <% content_for(:title, "Backup Settings — #{@server.name}") %>
 
 <%
-  input  = "w-full bg-bg border border-line text-ink font-mono text-sm px-3 py-2 focus:outline-none focus:border-accent"
+  input  = "w-full bg-bg border border-dark-line text-ink font-mono text-sm px-3 py-2 focus:outline-none focus:border-accent"
   label  = "block font-mono text-[10px] text-dim uppercase tracking-widest mb-1"
 %>
 <div class="max-w-2xl mx-auto space-y-6">
@@ -68,7 +68,7 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <%= f.check_box :enabled, class: "border border-line text-accent focus:ring-accent" %>
+        <%= f.check_box :enabled, class: "border border-dark-line text-accent focus:ring-accent" %>
         <%= f.label :enabled, "Enable automatic daily backups", class: "font-mono text-sm text-ink" %>
       </div>
 

@@ -18,7 +18,7 @@
 
         <%= form_with model: @app, url: dashboard_app_preview_settings_path(@app), method: :patch, data: { turbo: false }, class: "space-y-5" do |f| %>
           <label class="flex items-center gap-2.5 cursor-pointer">
-            <%= f.check_box :preview_enabled, class: "border border-line rounded text-ink focus:ring-2 focus:ring-ink/20 focus:ring-offset-0" %>
+            <%= f.check_box :preview_enabled, class: "border border-dark-line rounded text-ink focus:ring-2 focus:ring-ink/20 focus:ring-offset-0" %>
             <span class="text-sm text-ink font-medium">Enable PR previews</span>
           </label>
 
@@ -29,7 +29,7 @@
               <% { "empty" => [ "No database", "Previews get none of this app's database credentials." ],
                    "shared" => [ "Share production database", "Shares prod data — destructive migrations affect prod." ] }.each do |strategy, (label, hint)| %>
                 <label class="flex items-center gap-2.5 cursor-pointer">
-                  <%= f.radio_button :database_strategy, strategy, checked: (@app.database_strategy == "shared") == (strategy == "shared"), class: "border border-line text-ink focus:ring-2 focus:ring-ink/20 focus:ring-offset-0" %>
+                  <%= f.radio_button :database_strategy, strategy, checked: (@app.database_strategy == "shared") == (strategy == "shared"), class: "border border-dark-line text-ink focus:ring-2 focus:ring-ink/20 focus:ring-offset-0" %>
                   <span class="text-sm text-ink"><%= label %></span>
                   <span class="text-[11px] <%= strategy == "shared" ? "text-warn" : "text-dim" %>"><%= hint %></span>
                 </label>

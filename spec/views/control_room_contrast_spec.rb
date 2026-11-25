@@ -19,7 +19,7 @@ RSpec.describe "control-room contrast" do
   # A raw control tag (quoted attrs may hold ">", e.g. data-action="input->x#y"),
   # or an ERB output tag calling a Rails field helper
   # (f.text_field, select_tag, text_area_tag, ...), up to its closing %>.
-  field = /<(?:input|select|textarea)\b(?:[^>"']|"[^"]*"|'[^']*')*>|<%=\s*(?:\w+\.)?(?:#{field_helpers})(?:_tag)?\b.*?%>/m
+  field = /<(?:input|select|textarea)\b(?:<%.*?%>|[^>"']|"[^"]*"|'[^']*')*>|<%=\s*(?:\w+\.)?(?:#{field_helpers})(?:_tag)?\b.*?%>/m
   # line / rule (and their -soft) are ~1.2:1; line-strong is not matched here.
   faint = /(?<![\w:-])border-(?:line(?:-strong)?|rule)(?:-soft)?(?![\w-])/
 
@@ -38,6 +38,20 @@ RSpec.describe "control-room contrast" do
     end
     expect(scanned).to be > 50 # the pattern still finds the app's fields
     expect(offenders).to be_empty, "faint field borders (need 3:1, use border-dark-line or brighter; line-strong is ~1.6:1):\n#{offenders.join("\n")}"
+  end
+
+  it "no field-class local variable (input/inp/field/classes) carries a faint border" do
+    assign = /^\s*(\w*(?:input|inp|field|classes)\w*)\s*=\s*"([^"]*)"/
+    offenders = Dir["#{root}/app/{views,components}/**/*.erb", "#{root}/app/helpers/**/*.rb"].flat_map do |f|
+      File.read(f).lines.each_with_index.filter_map do |l, i|
+        m = l.match(assign) or next
+        str = m[2]
+        next unless str.match?(/\bpx-\d/) && str.match?(/\bpy-\d/) && str.match?(/rounded|w-full/) && str.match?(faint)
+        next if m[1].match?(/label/)
+        "#{f.delete_prefix("#{root}/")}:#{i + 1}"
+      end
+    end
+    expect(offenders).to be_empty, "field class strings with faint borders:\n#{offenders.join("\n")}"
   end
 
   it "modal and drawer backdrops darken instead of washing the page with ink (near-white)" do
@@ -90,7 +104,7 @@ RSpec.describe "control-room contrast" do
     offenders = Dir["#{root}/app/**/*.{erb,rb,js}"].flat_map do |f|
       rel = f.delete_prefix("#{root}/")
       next [] if allow.include?(rel)
-      File.read(f).lines.each_with_index.filter_map { |l, i| "#{rel}:#{i + 1}" if l.include?("bg-live text-[#03140A]") }
+      File.read(f).lines.each_with_index.filter_map { |l, i| "#{rel}:#{i + 1}" if l.include?("text-[#03140A]") && l.match?(/(?<![\w:-])bg-live(?![\w-])/) }
     end
     expect(offenders).to be_empty, "copies of the primary recipe (use Atoms::ButtonComponent):\n#{offenders.join("\n")}"
   end

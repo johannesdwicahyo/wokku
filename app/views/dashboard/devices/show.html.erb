@@ -38,7 +38,7 @@
 
       <div class="flex gap-2">
         <button type="submit" name="decision" value="approve"
-                class="flex-1 px-4 py-2 font-mono text-sm font-bold text-[#03140A] bg-live border border-live hover:bg-live-hover transition-all cursor-pointer">
+                class="<%= Atoms::ButtonComponent.new(variant: :primary).classes %> flex-1">
           Authorize
         </button>
         <button type="submit" name="decision" value="deny"
