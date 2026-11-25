@@ -25,6 +25,18 @@ en:
   loading:
     default: "Loading"
   apps:
+    deploy_track:
+      title: "Deploy in progress"
+      open_log: "Open log"
+      started: "started %{ago}"
+      more:
+        one: "+%{count} more"
+        other: "+%{count} more"
+      stages:
+        push: "Push"
+        build: "Build"
+        release: "Release"
+        live: "Live"
     fleet:
       summary:
         one: "%{count} process: %{parts}"

@@ -1,0 +1,38 @@
+<%= render Molecules::PanelComponent.new(ticks: true) do %>
+  <div class="flex items-center justify-between px-4 py-2.5 border-b border-line">
+    <span class="font-mono text-[11px] uppercase tracking-[.12em] text-muted"><%= t("apps.deploy_track.title") %></span>
+    <a class="font-mono text-[11px] uppercase tracking-[.12em] text-ink" href="<%= helpers.dashboard_app_deploy_path(app, deploy) %>"><%= t("apps.deploy_track.open_log") %></a>
+  </div>
+  <div class="grid gap-5 p-[18px] md:grid-cols-2">
+    <div class="min-w-0">
+      <h2 class="text-xl text-ink truncate"><b class="font-medium"><%= app.name %></b> → <%= next_version %></h2>
+      <p class="mt-1 text-[13px] text-muted"><%= sub_line %></p>
+      <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+        <% STAGES.each do |stage| %>
+          <% state = stage_state(stage) %>
+          <div data-stage="<%= stage %>" data-state="<%= state %>" class="border <%= state == :run ? "border-line-strong" : "border-line" %> p-2.5 flex flex-col gap-2">
+            <div class="flex justify-between font-mono text-[11px] uppercase tracking-[.06em] text-muted">
+              <span><%= t("apps.deploy_track.stages.#{stage}") %></span>
+              <% if state == :done %><b class="text-live" aria-hidden="true">✓</b><% end %>
+            </div>
+            <div class="flex gap-0.5 h-1.5" aria-hidden="true">
+              <% 8.times do |n| %>
+                <i class="flex-1 rounded-[1px] <%= state == :done ? "bg-body" : (state == :run ? "bg-ink wk-scan" : "bg-dark-line") %>" <% if state == :run %>style="animation-delay:<%= n * 0.12 %>s"<% end %>></i>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+      <% if more > 0 %>
+        <p class="mt-3 font-mono text-[11px] text-muted"><%= t("apps.deploy_track.more", count: more) %></p>
+      <% end %>
+    </div>
+    <div class="min-w-0 border border-line bg-bg p-3 font-mono text-[12px] leading-relaxed text-body"
+         data-controller="deploy"
+         data-deploy-deploy-id-value="<%= deploy.id %>"
+         data-deploy-reload-frame-value="apps_list"
+         aria-live="off">
+      <pre class="whitespace-pre-wrap break-words overflow-hidden max-h-56 m-0" data-deploy-target="output"><%= log_tail %></pre>
+    </div>
+  </div>
+<% end %>

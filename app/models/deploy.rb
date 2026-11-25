@@ -11,6 +11,12 @@ class Deploy < ApplicationRecord
 
   scope :recent, -> { order(created_at: :desc).limit(20) }
 
+  # Deploys still running for the given apps (relation of AppRecord), newest first.
+  scope :in_progress_for, ->(app_scope) {
+    where(status: %i[pending building], app_record_id: app_scope.select(:id))
+      .order(created_at: :desc).includes(:app_record, :release)
+  }
+
   def description
     nil
   end

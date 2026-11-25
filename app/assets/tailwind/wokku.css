@@ -338,7 +338,10 @@ select:focus-visible {
 .corner::before, .corner::after { content: ""; position: absolute; width: 10px; height: 10px; pointer-events: none; border: 0 solid var(--color-line-strong); }
 .corner::before { top: -1px; left: -1px; border-top-width: 1px; border-left-width: 1px; }
 .corner::after { bottom: -1px; right: -1px; border-bottom-width: 1px; border-right-width: 1px; }
+@keyframes wk-scan { 0%, 100% { opacity: .2; } 30% { opacity: 1; } }
+.wk-scan { animation: wk-scan 1.2s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
+  .wk-scan { animation: none !important; opacity: .6; }
   .wk-blink-1s, .wk-blink-14s { animation: none !important; }
 }
 

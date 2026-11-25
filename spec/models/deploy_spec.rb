@@ -27,3 +27,16 @@ RSpec.describe Deploy do
     end
   end
 end
+
+RSpec.describe Deploy, ".in_progress_for" do
+  it "returns pending/building deploys of the scope only, newest first" do
+    mine = create(:app_record)
+    other = create(:app_record)
+    old = create(:deploy, app_record: mine, status: :building, created_at: 2.minutes.ago)
+    fresh = create(:deploy, app_record: mine, status: :pending)
+    create(:deploy, app_record: mine, status: :succeeded)
+    create(:deploy, app_record: other, status: :building)
+
+    expect(Deploy.in_progress_for(AppRecord.where(id: mine.id))).to eq([ fresh, old ])
+  end
+end

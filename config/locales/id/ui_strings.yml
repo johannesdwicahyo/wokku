@@ -43,6 +43,18 @@ id:
   loading:
     default: "Memuat"
   apps:
+    deploy_track:
+      title: "Deploy berjalan"
+      open_log: "Buka log"
+      started: "mulai %{ago}"
+      more:
+        one: "+%{count} lagi"
+        other: "+%{count} lagi"
+      stages:
+        push: "Push"
+        build: "Build"
+        release: "Release"
+        live: "Live"
     fleet:
       summary:
         one: "%{count} proses: %{parts}"
