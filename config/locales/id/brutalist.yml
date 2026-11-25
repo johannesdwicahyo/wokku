@@ -174,17 +174,17 @@ id:
     command:
       title: "Command palette"
       placeholder: "Cari app, add-on, dan aksi"
-      nav: "Pergi ke"
+      nav: "Buka"
       addons: "Add-on"
       open: "Buka %{name}"
       deploy: "Deploy %{name}"
       restart: "Restart %{name}"
       stop: "Stop %{name}"
       hints:
-        move: "↑ ↓ pindah"
+        move: "↑ ↓ pilih"
         open: "↵ buka"
         close: "Esc tutup"
-      apps: "Aplikasi"
+      apps: "App"
       actions: "Aksi"
       empty: "Tidak ada yang cocok"
     topbar:

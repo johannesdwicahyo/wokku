@@ -22,6 +22,7 @@ module Organisms
 
     def labels
       %i[apps addons actions nav open deploy restart stop empty placeholder].index_with { |k| t("console.command.#{k}") }
+        .merge(status: states.keys.index_with { |k| t("status_light.#{k}") })
     end
 
     # Light classes per state, from the Phase 1 atom so the JS never drifts from it.

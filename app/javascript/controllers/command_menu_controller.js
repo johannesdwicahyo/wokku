@@ -10,7 +10,7 @@ import { Controller } from "@hotwired/stimulus"
 //   searchUrl — apps JSON endpoint; absent = no live app search (admin)
 //   app       — { name, open, deploy, restart, stop } or {}
 //   states    — { state: "css classes" }     StatusLightComponent::STATES
-//   labels    — { nav, apps, addons, actions, open, deploy, restart, stop, placeholder, empty }
+//   labels    — { status: {state: text}, nav, apps, addons, actions, open, deploy, restart, stop, placeholder, empty }
 //               (open/deploy/restart/stop contain %{name})
 export default class extends Controller {
   static targets = ["dialog", "backdrop", "input", "list"]
@@ -70,9 +70,10 @@ export default class extends Controller {
   }
 
   onTriggerClick(event) {
-    if (event.target.closest("[data-command-menu-open]")) {
+    const opener = event.target.closest("[data-command-menu-open]")
+    if (opener) {
       event.preventDefault()
-      this.open()
+      this.open(opener)
     }
   }
 
@@ -80,9 +81,10 @@ export default class extends Controller {
     return !this.dialogTarget.classList.contains("hidden")
   }
 
-  open() {
+  // opener: the clicked trigger (Safari/iOS don't focus tapped buttons, so activeElement is body).
+  open(opener) {
     if (this.isOpen()) return
-    this.previouslyFocused = document.activeElement
+    this.previouslyFocused = opener || document.activeElement
     this.backdropTarget.classList.remove("hidden")
     this.dialogTarget.classList.remove("hidden")
     this.inputTarget.value = ""
@@ -122,7 +124,7 @@ export default class extends Controller {
     const L = this.labelsValue
     const keep = (c) => !q || c.label.toLowerCase().includes(q)
     const addons = this.addonsValue.map((a) => ({
-      type: "nav", section: L.addons, label: a.label, href: a.href, state: a.state
+      type: "nav", section: L.addons, label: a.label, href: a.href, state: a.state, meta: this.statusText(a.state)
     }))
     const nav = this.navValue.map((n) => ({
       type: n.method ? "form" : "nav", method: n.method, section: L.nav, label: n.label, href: n.href
@@ -171,11 +173,15 @@ export default class extends Controller {
       if (!res.ok) return []
       const apps = await res.json()
       return apps.map((a) => ({
-        type: "nav", section: this.labelsValue.apps, label: a.name, meta: a.status, state: a.status, href: a.url
+        type: "nav", section: this.labelsValue.apps, label: a.name, meta: this.statusText(a.status), state: a.status, href: a.url
       }))
     } catch {
       return []
     }
+  }
+
+  statusText(state) {
+    return (this.labelsValue.status || {})[state] || state
   }
 
   // ── rendering ──────────────────────────────────────────────────────

@@ -47,12 +47,21 @@ RSpec.describe Organisms::CommandPaletteComponent, type: :component do
     expect(values("app")).to include("name" => "shop", "stop" => "/s")
   end
 
-  it "has no English UI strings in Indonesian" do
+  it "uses the Indonesian copy deck under :id" do
     I18n.with_locale(:id) { render_palette }
     labels = values("labels")
-    expect(labels.values_at("apps", "actions", "nav", "empty")).to all(satisfy { |v| v.present? })
-    expect(labels["empty"]).to eq(I18n.t("console.command.empty", locale: :id))
-    expect(labels["empty"]).not_to eq(I18n.t("console.command.empty", locale: :en))
+    expect(labels).to include("apps" => "App", "addons" => "Add-on", "actions" => "Aksi", "nav" => "Buka",
+                              "open" => "Buka %{name}", "deploy" => "Deploy %{name}", "restart" => "Restart %{name}",
+                              "stop" => "Stop %{name}", "empty" => "Tidak ada yang cocok")
+    expect(labels["status"]).to include("running" => "Berjalan", "crashed" => "Crash", "sleeping" => "Tidur", "stopped" => "Berhenti")
+    expect(page).to have_text("↑ ↓ pilih")
+    expect(page).to have_text("↵ buka")
+    expect(page).to have_text("Esc tutup")
+  end
+
+  it "ships a translated status map" do
+    render_palette
+    expect(values("labels")["status"]).to include("running" => I18n.t("status_light.running"))
   end
 
   describe ".addon_state" do
