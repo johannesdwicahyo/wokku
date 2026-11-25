@@ -12,6 +12,11 @@ RSpec.describe "Dashboard rail", type: :request do
     Capybara.string(response.body)
   end
 
+  def response_body_for(path)
+    get path
+    response.body
+  end
+
   def rail(path = "/dashboard/apps") = page_at(path).find("aside")
 
   it "renders Workspace and Account groups for a member, without Servers or Team" do
@@ -48,6 +53,19 @@ RSpec.describe "Dashboard rail", type: :request do
     expect(doc).to have_css("header [data-controller='clock']")
     expect(doc).to have_css("header button[data-command-menu-open][aria-label]")
     expect(response.body).not_to include("mobile-nav")
+  end
+
+  it "labels the default top-bar actions (no empty buttons)" do
+    sign_in users(:one)
+    header = page_at.find("header")
+    expect(header).to have_link("From a template", href: "/dashboard/templates")
+    expect(header).to have_link("New app", href: "/dashboard/apps/new")
+  end
+
+  # The rail is an in-flow sticky flex child; padding the column too doubled the offset (Task 7 sweep).
+  it "does not pad the main column for the rail on top of the in-flow rail" do
+    sign_in users(:one)
+    expect(response_body_for("/dashboard/apps")).not_to include("lg:pl-[248px]")
   end
 
   it "marks Add-ons active on /dashboard/addons" do
