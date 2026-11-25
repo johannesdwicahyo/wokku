@@ -1,12 +1,10 @@
 <aside aria-label="<%= t("console.rail.sidebar") %>"
-       id="dashboard-sidebar"
-       data-mobile-nav-target="sidebar"
        class="hidden lg:flex flex-col gap-[18px] shrink-0 w-[248px] sticky top-0 h-screen px-3.5 py-[18px] bg-bg-deep border-r border-line">
   <%= render Atoms::LogoComponent.new(variant: :lockup, size: :sm, href: logo_href) %>
 
   <% if show_switcher? %>
     <div class="relative" data-controller="dropdown">
-      <button type="button" data-action="click->dropdown#toggle" aria-haspopup="true"
+      <button type="button" data-action="click->dropdown#toggle" aria-haspopup="true" aria-expanded="false"
               class="flex items-center gap-2.5 w-full p-2.5 text-left border border-line bg-bg cursor-pointer">
         <span class="grid grid-cols-3 gap-0.5 w-7 h-7 p-1 shrink-0 bg-[#111511] border border-line-strong" aria-hidden="true">
           <% team_mark(current_workspace.id || workspace_name(current_workspace)).each do |cell| %>
@@ -33,7 +31,7 @@
             <%= button_to switch_dashboard_workspace_path(ws), method: :post,
                   class: "w-full flex items-center justify-between px-3 py-2 text-xs text-ink-soft hover:bg-white/[.035] hover:text-ink cursor-pointer" do %>
               <span class="truncate"><%= workspace_name(ws) %></span>
-              <span class="font-mono text-[11px] text-dim"><%= ws.kind %></span>
+              <span class="font-mono text-[11px] text-dim"><%= kind_label(ws) %></span>
             <% end %>
           <% end %>
         <% end %>

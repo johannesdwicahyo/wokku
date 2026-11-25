@@ -10,11 +10,6 @@ RSpec.describe Molecules::SidebarNavItemComponent, type: :component do
     expect(page).not_to have_css("svg")
   end
 
-  it "ignores icon: so the legacy sidebar keeps rendering" do
-    render_inline(described_class.new(label: "Apps", key: :apps, href: "/x", icon: "apps"))
-    expect(page).not_to have_css("svg")
-  end
-
   it "marks the active item with aria-current and a live border" do
     render_inline(described_class.new(label: "Apps", key: :apps, href: "/x", active: true))
     link = page.find("a")

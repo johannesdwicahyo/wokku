@@ -139,6 +139,8 @@ en:
     top:
       menu: "Open the command palette"
       region: "Region"
+      from_template: "From a template"
+      new_app: "New app"
     rail:
       sidebar: "Sidebar"
       workspace: "Workspace"
@@ -149,6 +151,9 @@ en:
       new_workspace: "+ New workspace"
       manage: "Manage →"
       language: "Language"
+      kinds:
+        personal: "Personal"
+        team: "Team"
       sign_out: "Sign out"
       team_sub:
         one: "Team · %{count} member"

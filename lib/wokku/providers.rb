@@ -39,7 +39,7 @@ module Wokku
     end
 
     attr_accessor :tls, :billing
-    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder, :host_ssh_user, :control_plane_host, :openapi_path, :object_storage, :sidebar_extra_items, :app_resource_sections, :object_storage_limits, :addons_index_sections, :object_storage_pricing_note
+    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder, :host_ssh_user, :control_plane_host, :openapi_path, :object_storage, :sidebar_extra_items, :addon_path_prefixes, :app_resource_sections, :object_storage_limits, :addons_index_sections, :object_storage_pricing_note
 
     # The OpenAPI file GET /api/v1/openapi.yaml serves. Engine default: its
     # own derived contract; the cloud points it at the cloud superset.
@@ -48,10 +48,16 @@ module Wokku
     end
 
     # Extension point for host apps: a callable taking the view context and
-    # returning extra dashboard sidebar items (same hash shape as the built-in
-    # ones: label:, key:, href:, icon:, active:). Default adds none.
+    # returning extra rail items (label:, key:, href:, active:, count:; optional
+    # group: :workspace | :account, anything else means :workspace; icon: ignored). Default adds none.
     def sidebar_extra_items
       @sidebar_extra_items || ->(_view) { [] }
+    end
+
+    # Path prefixes that mark the rail's Add-ons item active (a host app whose
+    # add-on pages live elsewhere adds its own). Default: the engine's page.
+    def addon_path_prefixes
+      @addon_path_prefixes || [ "/dashboard/addons" ]
     end
 
     # Extension point for host apps: a callable taking the view context and the

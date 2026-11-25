@@ -139,6 +139,8 @@ id:
     top:
       menu: "Buka command palette"
       region: "Region"
+      from_template: "Dari template"
+      new_app: "App baru"
     rail:
       sidebar: "Sidebar"
       workspace: "Ruang kerja"
@@ -149,6 +151,9 @@ id:
       new_workspace: "+ Ruang kerja baru"
       manage: "Kelola →"
       language: "Bahasa"
+      kinds:
+        personal: "Pribadi"
+        team: "Tim"
       sign_out: "Keluar"
       team_sub:
         one: "Tim · %{count} anggota"

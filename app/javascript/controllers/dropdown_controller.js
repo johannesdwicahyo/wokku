@@ -15,11 +15,18 @@ export default class extends Controller {
   toggle(event) {
     event.stopPropagation()
     this.menuTarget.classList.toggle("hidden")
+    this.syncExpanded()
+  }
+
+  syncExpanded() {
+    const button = this.element.querySelector("[aria-expanded]")
+    if (button) button.setAttribute("aria-expanded", String(!this.menuTarget.classList.contains("hidden")))
   }
 
   clickOutside(event) {
     if (!this.element.contains(event.target)) {
       this.menuTarget.classList.add("hidden")
+      this.syncExpanded()
     }
   }
 }

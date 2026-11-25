@@ -7,7 +7,7 @@
   regresses: csrf/csp, Turbo morph refresh meta, xterm.js CSS (terminal
   pages use this layout), the analytics partial, the suspended /
   account-deletion / low-balance banners, the toast container, and the
-  confirm-dialog + mobile-nav Stimulus controllers.
+  confirm-dialog Stimulus controllers.
 
   NOTE: until P3-P6 repaint the remaining dashboard pages, those pages
   still render their Material markup inside this brutalist shell. They
@@ -16,49 +16,44 @@
 <%
   path = request.path
 
-  primary_items = [
-    { label: t("console.sidebar.items.apps"),      key: :apps,      href: dashboard_apps_path,       icon: "apps",     count: current_team&.app_records&.size, active: path.start_with?("/dashboard/apps") },
-    { label: t("console.sidebar.items.databases"), key: :databases, href: dashboard_addons_path,     icon: "database", active: path.start_with?("/dashboard/addons") },
-    { label: t("console.sidebar.items.templates"), key: :templates, href: dashboard_templates_path,  icon: "template", active: path.start_with?("/dashboard/templates") },
-    { label: t("console.sidebar.items.activity"),  key: :activity,  href: dashboard_activities_path, icon: "activity", active: path.start_with?("/dashboard/activities") }
-  ]
+  workspace_items = [
+    { label: t("console.sidebar.items.apps"),      key: :apps,      href: dashboard_apps_path,       count: current_team&.app_records&.size, active: path.start_with?("/dashboard/apps") },
+    { label: t("console.sidebar.items.databases"), key: :databases, href: dashboard_addons_path,     active: Wokku.config.addon_path_prefixes.any? { |prefix| path.start_with?(prefix) } },
+    { label: t("console.sidebar.items.templates"), key: :templates, href: dashboard_templates_path,  active: path.start_with?("/dashboard/templates") },
+    { label: t("console.sidebar.items.activity"),  key: :activity,  href: dashboard_activities_path, active: path.start_with?("/dashboard/activities") },
+    # Servers is admin-scoped in the engine; members have nothing to see there.
+    (if current_user&.admin?
+      { label: t("console.sidebar.items.servers"), key: :servers, href: admin_servers_path, count: Server.count, active: path.start_with?("/admin") }
+    end)
+  ].compact
 
-  # Host-app extension point; a failing callable must never break the page.
-  primary_items += begin
-    Array.wrap(Wokku.config.sidebar_extra_items.call(self)).filter_map do |i|
+  account_items = [
+    { label: t("console.sidebar.items.settings"), key: :settings, href: dashboard_profile_path,
+      active: path.start_with?("/dashboard/profile", "/dashboard/two_factor", "/dashboard/notifications", "/dashboard/account_deletion") },
+    { label: t("console.sidebar.footer.docs"), key: :docs, href: "/docs", external: true }
+  ]
+  # Support is wokku.cloud's inbox; a self-host install has no such desk.
+  account_items << { label: t("console.sidebar.footer.support"), key: :support, href: "mailto:support@wokku.cloud", external: false } if wokku_cloud?
+
+  # Host-app extension point (group: :workspace | :account, unknown -> workspace);
+  # a failing callable must never break the page.
+  begin
+    Array.wrap(Wokku.config.sidebar_extra_items.call(self)).each do |i|
       next unless i.is_a?(Hash)
       i = i.symbolize_keys
       next if i[:label].blank? || i[:href].blank?
-      # Only pass an icon the sidebar can render; otherwise omit it.
-      i.delete(:icon) unless i[:icon].to_s.match?(/\A[a-z_]+\z/) && lookup_context.exists?("shared/icons/#{i[:icon]}", [], true)
-      i
+      if i[:group].to_s == "account"
+        account_items.insert(account_items.index { |a| a[:key] == :settings }, i)
+      else
+        workspace_items << i
+      end
     end
   rescue StandardError => e
     Rails.logger.warn("sidebar_extra_items failed: #{e.class}: #{e.message}")
     Sentry.capture_exception(e, level: :warning) if defined?(Sentry)
-    []
   end
 
-  workspace_items = [
-    # Servers is admin-scoped in the engine; members have nothing to see there.
-    (if current_user&.admin?
-      { label: t("console.sidebar.items.servers"), key: :servers, href: admin_servers_path, icon: "server", count: Server.count, active: path.start_with?("/admin") }
-    end),
-    { label: t("console.sidebar.items.team"),     key: :team,     href: dashboard_workspaces_path, icon: "team",     active: path.start_with?("/dashboard/workspaces") },
-    { label: t("console.sidebar.items.settings"), key: :settings, href: dashboard_profile_path,    icon: "settings",
-      active: path.start_with?("/dashboard/profile", "/dashboard/two_factor", "/dashboard/notifications", "/dashboard/account_deletion") ||
-        (wokku_cloud? && path.start_with?("/dashboard/billing")) }
-  ].compact
-
-  sidebar_groups = [
-    { label: nil, items: primary_items },
-    { label: t("console.sidebar.workspace"), items: workspace_items }
-  ]
-
-  # Billing (cloud-only) has no rail item — it lives on the Settings → Billing tab.
-  # Support is wokku.cloud's inbox — a self-host install has no such desk.
-  sidebar_footer_links = [ { label: t("console.sidebar.footer.docs"), href: "/docs", external: true } ]
-  sidebar_footer_links << { label: t("console.sidebar.footer.support"), href: "mailto:support@wokku.cloud", external: false } if wokku_cloud?
+  palette_groups = [ { label: nil, items: workspace_items + account_items } ]
 %>
 <!DOCTYPE html>
 <html lang="<%= I18n.locale %>"
@@ -86,7 +81,7 @@
   </head>
 
   <body class="bg-bg text-ink font-sans antialiased"
-        data-controller="confirm-dialog mobile-nav nav-loading"
+        data-controller="confirm-dialog nav-loading"
         data-action="turbo:visit@document->nav-loading#start turbo:load@document->nav-loading#stop turbo:fetch-request-error@document->nav-loading#stop">
     <% if user_signed_in? && current_user.billing_status == "suspended" %>
       <div class="border-b border-line bg-danger-soft px-4 py-2.5">
@@ -123,33 +118,30 @@
         scroll on mobile, without breaking the sticky topbar the way
         an overflow scroll-container would. %>
     <div class="flex min-h-screen overflow-x-clip">
-      <%= render Organisms::ConsoleSidebarComponent.new(
-            groups: sidebar_groups,
-            footer_links: sidebar_footer_links,
-            version_line: "wokku #{ENV["WOKKU_VERSION"].presence || "v#{Wokku::VERSION}"}", # image release (self-host) or gem version
+      <%= render Organisms::RailComponent.new(
+            workspace_items: workspace_items,
+            account_items: account_items,
             workspaces: current_user.teams.includes(:plan).order(:created_at),
             current_workspace: current_team,
             workspaces_index_path: dashboard_workspaces_path,
             workspace_new_path: new_dashboard_workspace_path,
-            search_url: search_dashboard_apps_path,
-            search_placeholder: t("console.topbar.search"),
             user_email: current_user.email,
             user_role: current_user.role,
-            user_avatar_url: current_user.try(:avatar_url),
             sign_out_path: destroy_user_session_path,
-            sign_out_label: t("common.sign_out"),
             locale: I18n.locale,
             locale_toggle_path: dashboard_locale_path(locale: I18n.locale == :en ? :id : :en),
-            locale_toggle_title: I18n.locale == :en ? "Ganti ke Bahasa Indonesia" : "Switch to English"
+            version_line: "wokku #{ENV["WOKKU_VERSION"].presence || "v#{Wokku::VERSION}"}" # image release (self-host) or gem version
           ) %>
 
-      <%# Off-canvas backdrop (mobile only). %>
-      <div class="lg:hidden fixed inset-0 bg-black/70 z-20 hidden"
-           data-mobile-nav-target="overlay"
-           data-action="click->mobile-nav#close"></div>
-
-      <div class="flex-1 flex flex-col min-w-0 lg:pl-[232px]">
-        <%= render Organisms::ConsoleTopbarComponent.new %>
+      <div class="flex-1 flex flex-col min-w-0 lg:pl-[248px]">
+        <%= render Organisms::TopBarComponent.new(crumbs: [ current_team&.name ].compact, page: content_for(:title).presence || "Wokku") do |bar| %>
+          <% if content_for?(:top_actions) %>
+            <% bar.with_action { content_for(:top_actions) } %>
+          <% else %>
+            <% bar.with_action { render Atoms::ButtonComponent.new(variant: :secondary, href: dashboard_templates_path) { t("console.top.from_template") } } %>
+            <% bar.with_action { render Atoms::ButtonComponent.new(variant: :primary, href: new_dashboard_app_path) { t("console.top.new_app") } } %>
+          <% end %>
+        <% end %>
 
         <main class="flex-1 bg-bg">
           <div class="px-6 py-5">
@@ -159,7 +151,7 @@
       </div>
 
       <%= render "dashboard/shared/onboarding_tour" %>
-      <%= render "dashboard/shared/command_menu", sidebar_groups: sidebar_groups %>
+      <%= render "dashboard/shared/command_menu", sidebar_groups: palette_groups %>
 
       <%# Toast container — Turbo Stream broadcast target only.
           HTTP flash display is handled by FlashToastComponent below.

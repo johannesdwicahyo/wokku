@@ -33,6 +33,11 @@ module Organisms
     def show_user? = user_email.present?
     def workspace_name(ws) = ws.respond_to?(:name) ? ws.name : ws.to_s
 
+    def kind_label(ws)
+      kind = ws.try(:kind).to_s
+      t("console.rail.kinds.#{kind}", default: kind.humanize)
+    end
+
     # 3x3 cells, one :live, rest :on/:off, deterministic per seed.
     def team_mark(seed)
       bytes = Digest::MD5.digest(seed.to_s).bytes

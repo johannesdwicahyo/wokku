@@ -71,6 +71,20 @@ RSpec.describe Organisms::RailComponent, type: :component do
       expect(page).not_to have_text("+ New workspace")
       expect(page).not_to have_text("Manage")
     end
+
+    it "translates workspace kinds under :id and humanizes unknown ones" do
+      other = Team.new(name: "Other", kind: "personal").tap { |t| t.id = SecureRandom.uuid }
+      weird = Team.new(name: "Weird").tap { |t| t.id = SecureRandom.uuid; allow(t).to receive(:kind).and_return("odd_kind") }
+      I18n.with_locale(:id) { render_rail(**opts, workspaces: [ team, other, weird ]) }
+      expect(page).to have_text("Pribadi")
+      expect(page).not_to have_text("personal")
+      expect(page).to have_text("Odd kind")
+    end
+
+    it "starts the switcher collapsed" do
+      render_rail(**opts)
+      expect(page).to have_css("button[aria-haspopup][aria-expanded='false']")
+    end
   end
 
   describe "#team_mark" do

@@ -1,7 +1,6 @@
 module Molecules
   class SidebarNavItemComponent < ApplicationComponent
-    # ponytail: icon ignored; removed in Task 4 when ConsoleSidebarComponent is deleted
-    def initialize(label:, key:, active: false, href: "#", external: false, icon: nil, count: nil)
+    def initialize(label:, key:, active: false, href: "#", external: false, count: nil)
       @label = label
       @key = key
       @active = active
