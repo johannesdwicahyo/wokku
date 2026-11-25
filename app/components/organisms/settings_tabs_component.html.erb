@@ -1,10 +1,10 @@
 <div class="mb-5">
   <%# Phones: tabs wrap as separate chips (a scrolling strip hid the last
       tabs — Billing — off-screen). sm+: one joined segmented bar. %>
-  <div class="flex flex-wrap gap-1.5 sm:inline-flex sm:gap-0 sm:border-1.5 sm:border-ink sm:rounded-md sm:overflow-hidden sm:shadow-brutal-sm">
+  <div class="flex flex-wrap gap-1.5 sm:inline-flex sm:gap-0 sm:border sm:border-line sm:rounded-md sm:overflow-hidden sm:shadow-brutal-sm">
     <% tabs.each do |t| %>
       <%= link_to tab_label(t), tab_href(t),
-            class: "px-3 sm:px-4 py-[7px] text-[13px] font-semibold whitespace-nowrap border-1.5 border-ink rounded-md sm:rounded-none sm:border-0 sm:border-r-1.5 sm:last:border-r-0 transition-colors #{t == active_tab ? 'bg-ink text-paper' : 'bg-paper text-dim hover:bg-bg-deep'}" %>
+            class: "px-3 sm:px-4 py-[7px] text-[13px] font-semibold whitespace-nowrap border border-line rounded-md sm:rounded-none sm:border-0 sm:border-r sm:last:border-r-0 transition-colors #{t == active_tab ? 'bg-ink text-paper' : 'bg-paper text-dim hover:bg-bg-deep'}" %>
     <% end %>
   </div>
 </div>

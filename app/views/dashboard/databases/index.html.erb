@@ -39,9 +39,9 @@
 
   <% if @databases.any? %>
     <%# Group toggle %>
-    <div class="inline-flex border-1.5 border-ink rounded-md overflow-hidden shadow-brutal-sm">
+    <div class="inline-flex border border-line rounded-md overflow-hidden shadow-brutal-sm">
       <%= link_to t("dashboard.databases.by_type"), dashboard_addons_path(group: "type"),
-            class: "px-4 py-[7px] text-[13px] font-semibold border-r-1.5 border-ink transition-colors #{@group_by == 'type' ? 'bg-ink text-paper' : 'bg-paper text-dim hover:bg-bg-deep'}" %>
+            class: "px-4 py-[7px] text-[13px] font-semibold border-r border-line transition-colors #{@group_by == 'type' ? 'bg-ink text-paper' : 'bg-paper text-dim hover:bg-bg-deep'}" %>
       <%= link_to t("dashboard.databases.by_app"), dashboard_addons_path(group: "app"),
             class: "px-4 py-[7px] text-[13px] font-semibold transition-colors #{@group_by == 'app' ? 'bg-ink text-paper' : 'bg-paper text-dim hover:bg-bg-deep'}" %>
     </div>
@@ -74,10 +74,10 @@
         <h3 class="text-sm font-bold text-ink"><%= t("dashboard.databases.object_storage") %></h3>
         <span class="text-xs text-dim"><%= t("dashboard.databases.object_storage_hint") %></span>
       </div>
-      <div class="bg-paper border-1.5 border-ink rounded-md shadow-brutal overflow-hidden">
+      <div class="bg-paper border border-line rounded-md shadow-brutal overflow-hidden">
         <table class="w-full text-[13.5px]">
           <thead>
-            <tr class="bg-bg border-b-1.5 border-ink text-[10.5px] font-bold uppercase tracking-[.06em] text-dim text-left">
+            <tr class="bg-bg border-b border-line text-[10.5px] font-bold uppercase tracking-[.06em] text-dim text-left">
               <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.databases.columns.bucket") %></th>
               <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.databases.columns.status") %></th>
               <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.databases.columns.used") %></th>

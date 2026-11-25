@@ -13,7 +13,7 @@
   <section>
     <h2 class="text-sm font-bold text-ink mb-2"><%= t("dashboard.app_transfers.incoming", default: "Incoming") %></h2>
     <% if @incoming.any? %>
-      <div class="bg-paper border-1.5 border-ink rounded-md shadow-brutal overflow-hidden">
+      <div class="bg-paper border border-line rounded-md shadow-brutal overflow-hidden">
         <div class="divide-y divide-line">
           <% @incoming.each do |transfer| %>
             <div class="px-3.5 py-3 flex items-center justify-between gap-3 hover:bg-bg-deep transition-colors">
@@ -37,7 +37,7 @@
   <section>
     <h2 class="text-sm font-bold text-ink mb-2"><%= t("dashboard.app_transfers.outgoing", default: "Outgoing") %></h2>
     <% if @outgoing.any? %>
-      <div class="bg-paper border-1.5 border-ink rounded-md shadow-brutal overflow-hidden">
+      <div class="bg-paper border border-line rounded-md shadow-brutal overflow-hidden">
         <div class="divide-y divide-line">
           <% @outgoing.each do |transfer| %>
             <div class="px-3.5 py-3 flex items-center justify-between gap-3 hover:bg-bg-deep transition-colors">
@@ -45,7 +45,7 @@
                 <p class="text-sm font-semibold text-ink truncate"><%= transfer.app_record.name %></p>
                 <p class="text-[12px] text-dim truncate">To <%= transfer.to_user.email %> · expires <%= time_ago_in_words(transfer.expires_at) %> from now</p>
               </div>
-              <%= button_to "Cancel", dashboard_app_transfer_path(transfer), method: :delete,
+              <%= button_to t("common.cancel"), dashboard_app_transfer_path(transfer), method: :delete,
                     data: { turbo_confirm: "Cancel transfer of #{transfer.app_record.name}?" },
                     class: "text-xs text-dim hover:text-danger transition cursor-pointer bg-transparent border-0 flex-shrink-0" %>
             </div>

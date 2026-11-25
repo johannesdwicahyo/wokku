@@ -18,11 +18,28 @@ RSpec.describe "design tokens" do
 
   it "uses Geist for every sans token and Geist Mono for mono" do
     %w[sans body label headline sans-brutal].each do |t|
-      expect(css).to match(/--font-#{t}:\s*"Geist",\s*"Inter",\s*system-ui,\s*sans-serif;/)
+      expect(css).to match(/--font-#{t}:\s*"Geist",\s*system-ui,\s*sans-serif;/)
     end
     %w[mono mono-brutal].each do |t|
       expect(css).to match(/--font-#{t}:\s*"Geist Mono",\s*ui-monospace,\s*monospace;/)
     end
+  end
+
+  it "has no Material You tokens" do
+    expect(css).not_to match(/--color-(surface|on-surface|primary|on-primary|secondary|tertiary|error|on-error|outline|inverse|background|on-background)\b/)
+    expect(css).not_to include("material-symbols")
+  end
+
+  it "has no legacy webfonts" do
+    ["Inter Tight", "JetBrains Mono", '"Inter"', "/fonts/inter"].each { |t| expect(css).not_to include(t) }
+    expect(root.join("harness/public/fonts").children.map { |c| c.basename.to_s }).not_to include(/inter|jetbrains/)
+  end
+
+  it "leaves no Material utility classes in app/" do
+    re = /\b(bg|text|border)-(surface|on-surface|primary|on-primary|error|outline)\b|material-symbols/
+    offenders = Dir[root.join("app/**/*")].reject { |f| f.include?("assets/builds") || !File.file?(f) }
+                  .select { |f| File.read(f, encoding: "UTF-8").match?(re) rescue false }
+    expect(offenders).to eq([])
   end
 
   it "does not paint the light meter squares transparent (unlayered CSS would beat bg-live/bg-ink)" do
@@ -53,5 +70,27 @@ RSpec.describe "design tokens" do
     end
     expect(css).to match(/--grid-dot:\s*rgba\(238,\s*241,\s*236,\s*0?\.06\)/)
     %w[brutal-sm brutal brutal-lg].each { |n| expect(css).to match(/--shadow-#{n}:\s*none/) }
+  end
+
+  # Unlayered `.corner { position: relative }` beat Tailwind's `fixed` on the
+  # command palette panel (Task 7 sweep): it must sit in a cascade layer.
+  it "keeps the .corner position rule inside @layer components so utilities win" do
+    expect(css).to match(/@layer components\s*\{\s*\.corner\s*\{\s*position:\s*relative;\s*\}\s*\}/)
+  end
+
+  it "defines a --color token for every colour utility used under app/" do
+    builtin = %w[white black transparent current inherit auto left right center top bottom base xs sm lg xl
+                 2xl 3xl 4xl 5xl 6xl wrap nowrap balance pretty clip ellipsis start end justify opacity]
+    palette = /\A(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d+\z/
+    defined = css.scan(/--color-([a-z0-9-]+):/).flatten
+    used = Dir[root.join("app/**/*.{erb,rb,js}")].flat_map do |f|
+      File.read(f).scan(/(?<![\w\/-])(?:[a-z-]+:)*(?:text|bg|border|ring|placeholder|fill|stroke|divide|outline)-([a-z][a-z0-9-]*)(?=[\s"'\/\\]|\z)/).flatten
+    end.uniq
+    missing = used.reject do |n|
+      builtin.include?(n) || n.match?(palette) || defined.include?(n) ||
+        defined.any? { |d| n == d || n.start_with?("#{d}-") } ||
+        n.match?(/\A(xs|sm|base|lg|xl|\dxl|left|right|center|justify|start|end|top|bottom|middle|baseline|wrap|nowrap|balance|pretty|clip|ellipsis|none|solid|dashed|dotted|double|hidden|collapse|separate|t|b|l|r|x|y|s|e|\d+|inherit|current|opacity-\d+|offset-\d+|inset|rule|brutal.*|decoration.*|\w+-(?:left|right)|[tblrxyse]-\d+|width)\z/)
+    end
+    expect(missing).to eq([])
   end
 end

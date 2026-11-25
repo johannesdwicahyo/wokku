@@ -9,8 +9,8 @@ module Atoms
     attr_reader :label, :url, :http_method, :pending_label, :kind, :confirm
 
     def classes
-      base = "inline-flex items-center justify-center font-semibold text-xs px-3 py-2 rounded-md transition-[transform,box-shadow,background-color] duration-75 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
-      base + (kind == :primary ? " bg-ink text-paper border-1.5 border-ink shadow-brutal hover:bg-ink/90" : " bg-paper text-ink border-1.5 border-ink shadow-brutal-sm hover:bg-bg-deep")
+      base = "inline-flex items-center justify-center font-semibold text-xs px-3 py-2 rounded-md transition-[transform,box-shadow,background-color] duration-75"
+      base + (kind == :primary ? " bg-live text-[#03140A] border border-live hover:bg-live-hover" : " bg-transparent text-ink border border-line-strong hover:border-ink")
     end
   end
 end

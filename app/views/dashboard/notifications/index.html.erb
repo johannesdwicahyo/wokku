@@ -13,12 +13,12 @@
       <h2 class="text-base font-bold text-ink"><%= t("dashboard.notifications.title") %></h2>
       <p class="text-[12px] text-dim mt-0.5">Get notified about deploys, failures, and other events.</p>
     </div>
-    <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, data: { action: "click->slide-panel#open" }) do %>+ <%= t("dashboard.notifications.add_rule") %><% end %>
+    <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, data: { action: "click->slide-panel#open" }) do %><%= t("dashboard.notifications.add_rule") %><% end %>
   </div>
 
   <%# Existing rules %>
   <% if @notifications.any? %>
-    <div class="bg-paper border-1.5 border-ink rounded-md shadow-brutal overflow-hidden">
+    <div class="bg-paper border border-line rounded-md shadow-brutal overflow-hidden">
       <div class="divide-y divide-line">
         <% @notifications.each do |notification| %>
           <div class="px-3.5 py-3 flex items-center justify-between gap-3 flex-wrap hover:bg-bg-deep transition-colors">
@@ -83,7 +83,7 @@
 
           <%# Email %>
           <div data-notification-config-target="email" class="hidden">
-            <div class="border-1.5 border-ink bg-bg rounded-md p-3 space-y-2">
+            <div class="border border-line bg-bg rounded-md p-3 space-y-2">
               <p class="text-[12.5px] text-ink-soft">Notifications will be sent to <span class="font-semibold text-ink"><%= current_user.email %></span></p>
               <p class="text-[11px] text-dim">No additional setup needed.</p>
             </div>
@@ -91,8 +91,8 @@
 
           <%# Slack %>
           <div data-notification-config-target="slack" class="hidden space-y-2">
-            <input type="text" name="notification[config][url]" placeholder="https://hooks.slack.com/services/T00.../B00.../xxxx" class="w-full bg-paper border-1.5 border-ink rounded-md px-3 py-2 text-sm placeholder-dim focus:shadow-brutal-sm">
-            <div class="border-1.5 border-ink bg-bg rounded-md p-3">
+            <input type="text" name="notification[config][url]" placeholder="https://hooks.slack.com/services/T00.../B00.../xxxx" class="w-full bg-paper border border-dark-line rounded-md px-3 py-2 text-sm placeholder-dim focus:shadow-brutal-sm">
+            <div class="border border-line bg-bg rounded-md p-3">
               <p class="text-[10.5px] text-dim uppercase tracking-[.06em] font-bold mb-1.5">Setup guide</p>
               <ol class="text-[11.5px] text-dim space-y-1 list-decimal list-inside">
                 <li>Open your Slack workspace and go to <span class="text-ink-soft">Apps</span></li>
@@ -106,8 +106,8 @@
 
           <%# Discord %>
           <div data-notification-config-target="discord" class="hidden space-y-2">
-            <input type="text" name="notification[config][url]" placeholder="https://discord.com/api/webhooks/1234.../abcd..." class="w-full bg-paper border-1.5 border-ink rounded-md px-3 py-2 text-sm placeholder-dim focus:shadow-brutal-sm">
-            <div class="border-1.5 border-ink bg-bg rounded-md p-3">
+            <input type="text" name="notification[config][url]" placeholder="https://discord.com/api/webhooks/1234.../abcd..." class="w-full bg-paper border border-dark-line rounded-md px-3 py-2 text-sm placeholder-dim focus:shadow-brutal-sm">
+            <div class="border border-line bg-bg rounded-md p-3">
               <p class="text-[10.5px] text-dim uppercase tracking-[.06em] font-bold mb-1.5">Setup guide</p>
               <ol class="text-[11.5px] text-dim space-y-1 list-decimal list-inside">
                 <li>Open your Discord server and go to <span class="text-ink-soft">Server Settings > Integrations</span></li>
@@ -120,9 +120,9 @@
 
           <%# Telegram %>
           <div data-notification-config-target="telegram" class="hidden space-y-2">
-            <input type="text" name="notification[config][bot_token]" placeholder="123456:ABC-DEF1234..." class="w-full bg-paper border-1.5 border-ink rounded-md px-3 py-2 text-sm placeholder-dim focus:shadow-brutal-sm">
-            <input type="text" name="notification[config][chat_id]" placeholder="-1001234567890" class="w-full bg-paper border-1.5 border-ink rounded-md px-3 py-2 text-sm placeholder-dim focus:shadow-brutal-sm">
-            <div class="border-1.5 border-ink bg-bg rounded-md p-3">
+            <input type="text" name="notification[config][bot_token]" placeholder="123456:ABC-DEF1234..." class="w-full bg-paper border border-dark-line rounded-md px-3 py-2 text-sm placeholder-dim focus:shadow-brutal-sm">
+            <input type="text" name="notification[config][chat_id]" placeholder="-1001234567890" class="w-full bg-paper border border-dark-line rounded-md px-3 py-2 text-sm placeholder-dim focus:shadow-brutal-sm">
+            <div class="border border-line bg-bg rounded-md p-3">
               <p class="text-[10.5px] text-dim uppercase tracking-[.06em] font-bold mb-1.5">Setup guide</p>
               <ol class="text-[11.5px] text-dim space-y-1 list-decimal list-inside">
                 <li>Open Telegram and message <a href="https://t.me/BotFather" class="text-accent hover:underline" target="_blank">@BotFather</a></li>
@@ -136,8 +136,8 @@
 
           <%# Webhook %>
           <div data-notification-config-target="webhook" class="hidden space-y-2">
-            <input type="text" name="notification[config][url]" placeholder="https://example.com/webhooks/wokku" class="w-full bg-paper border-1.5 border-ink rounded-md px-3 py-2 text-sm placeholder-dim focus:shadow-brutal-sm">
-            <div class="border-1.5 border-ink bg-bg rounded-md p-3">
+            <input type="text" name="notification[config][url]" placeholder="https://example.com/webhooks/wokku" class="w-full bg-paper border border-dark-line rounded-md px-3 py-2 text-sm placeholder-dim focus:shadow-brutal-sm">
+            <div class="border border-line bg-bg rounded-md p-3">
               <p class="text-[10.5px] text-dim uppercase tracking-[.06em] font-bold mb-1.5">Setup guide</p>
               <p class="text-[11.5px] text-dim mb-2">We'll send a <span class="text-ink-soft">POST</span> request with a JSON body on each event:</p>
               <code class="block text-[10.5px] text-ink-soft bg-paper border border-line rounded p-2 whitespace-pre">{ "event": "deploy_succeeded",
@@ -155,7 +155,7 @@
           <div class="space-y-1.5 mt-1">
             <% [ "deploy_started", "deploy_succeeded", "deploy_failed", "app_crashed", "app_auto_stopped", "app_down", "app_recovered", "backup_failed", "domain_added", "app_created", "app_deleted", "daily_debit_summary", "scheduled_task_failing", "scheduled_task_recovered" ].each do |event| %>
               <label class="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" name="notification[events][]" value="<%= event %>" class="border-1.5 border-ink text-accent focus:ring-accent">
+                <input type="checkbox" name="notification[events][]" value="<%= event %>" class="border border-dark-line text-accent focus:ring-accent">
                 <span class="text-xs text-ink-soft"><%= event == "app_down" ? "App down (uptime check)" : event == "app_recovered" ? "App recovered" : event == "scheduled_task_failing" ? "Scheduled task failing (3× in a row)" : event == "scheduled_task_recovered" ? "Scheduled task recovered" : event.humanize %></span>
               </label>
             <% end %>
@@ -164,7 +164,7 @@
       </div>
       <div class="flex items-center gap-3 pt-2">
         <%= f.submit "Add rule", class: Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>
-        <button type="button" data-action="click->slide-panel#close" class="<%= Atoms::ButtonComponent.new(variant: :ghost, size: :sm).classes %>">Cancel</button>
+        <button type="button" data-action="click->slide-panel#close" class="<%= Atoms::ButtonComponent.new(variant: :ghost, size: :sm).classes %>"><%= t("common.cancel") %></button>
       </div>
     <% end %>
   <% end %>

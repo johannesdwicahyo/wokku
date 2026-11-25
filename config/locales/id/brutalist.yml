@@ -136,8 +136,41 @@ id:
     legal: "© 2026 Wokku · wokku.cloud"
     license: "wokku · agpl-3.0"
   console:
-    sidebar:
+    admin:
+      crumb: "Admin"
+      overview: "Ringkasan"
+      servers: "Server"
+      cloud_credentials: "Kredensial cloud"
+      users: "Pengguna"
+      settings: "Pengaturan"
+      jobs: "Jobs"
+      back: "← Kembali ke dashboard"
+    top:
+      menu: "Buka command palette"
+      region: "Region"
+      from_template: "Dari template"
+      new_app: "App baru"
+    rail:
+      sidebar: "Navigasi"
+      roles:
+        member: "Anggota"
+        admin: "Admin"
       workspace: "Ruang kerja"
+      account: "Akun"
+      search: "Cari atau jalankan perintah"
+      workspaces: "Ruang kerja"
+      current: "Aktif"
+      new_workspace: "+ Ruang kerja baru"
+      manage: "Kelola →"
+      language: "Bahasa"
+      kinds:
+        personal: "Pribadi"
+        team: "Tim"
+      sign_out: "Keluar"
+      team_sub:
+        one: "Tim · %{count} anggota"
+        other: "Tim · %{count} anggota"
+    sidebar:
       items:
         apps: "Aplikasi"
         databases: "Add-on"
@@ -150,13 +183,22 @@ id:
         docs: "Dokumentasi"
         support: "Dukungan"
     command:
-      placeholder: "Ketik perintah atau cari aplikasi…"
-      nav: "Navigasi"
-      apps: "Aplikasi"
+      title: "Command palette"
+      placeholder: "Cari app, add-on, dan aksi"
+      nav: "Buka"
+      addons: "Add-on"
+      open: "Buka %{name}"
+      deploy: "Deploy %{name}"
+      restart: "Restart %{name}"
+      stop: "Stop %{name}"
+      hints:
+        move: "↑ ↓ pilih"
+        open: "↵ buka"
+        close: "Esc tutup"
+      apps: "App"
       actions: "Aksi"
       empty: "Tidak ada yang cocok"
     topbar:
-      search: "cari app..."
       beta: "wokku.cloud lagi public beta — belum buat workload production."
       beta_read: "baca catatannya ↗"
     dashboard:
@@ -177,11 +219,11 @@ id:
       activity: "recent_activity"
       activity_window: "24 jam terakhir"
     app_tabs:
-      overview:    "overview"
+      overview:    "ringkasan"
       deploy:      "deploy"
       runtime:     "runtime"
       performance: "performa"
-      settings:    "settings"
+      settings:    "pengaturan"
     performance_tabs:
       metrics:  "metrics"
       requests: "requests"

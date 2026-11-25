@@ -5,10 +5,10 @@
       <span class="mx-1">/</span>
       <span class="text-ink font-semibold"><%= app.name %></span>
     </div>
-    <div class="inline-flex border-1.5 border-ink rounded-md overflow-hidden shadow-brutal-sm max-w-full overflow-x-auto">
+    <div class="inline-flex border border-line rounded-md overflow-hidden shadow-brutal-sm max-w-full overflow-x-auto">
       <% TABS.each do |t| %>
         <%= link_to tab_label(t), tab_href(t),
-              class: "px-4 py-[7px] text-[13px] font-semibold whitespace-nowrap border-r-1.5 border-ink last:border-r-0 transition-colors #{t == active_tab ? 'bg-ink text-paper' : 'bg-paper text-dim hover:bg-bg-deep'}" %>
+              class: "px-4 py-[7px] text-[13px] font-semibold whitespace-nowrap border-r border-line last:border-r-0 transition-colors #{t == active_tab ? 'bg-ink text-paper' : 'bg-paper text-dim hover:bg-bg-deep'}" %>
       <% end %>
     </div>
   </div>

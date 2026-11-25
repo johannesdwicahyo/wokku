@@ -45,7 +45,7 @@ export default class extends Controller {
 
     if (!engine || !engine.modes?.length) {
       const note = document.createElement("div")
-      note.className = "text-xs text-dim font-mono px-3 py-2 border-1.5 border-rule-soft"
+      note.className = "text-xs text-dim font-mono px-3 py-2 border border-rule-soft"
       note.textContent = "No picker options for this engine — created with default settings."
       this.cardsTarget.appendChild(note)
       this.tierInputTarget.value = ""
@@ -75,7 +75,7 @@ export default class extends Controller {
       const sel = el.dataset.mode === mode
       el.classList.toggle("border-accent", sel)
       el.classList.toggle("bg-accent-soft", sel)
-      el.classList.toggle("border-ink", !sel)
+      el.classList.toggle("border-line", !sel)
     })
     this.updateShapeBuilders(this.currentEngineKey(), mode)
   }
@@ -100,9 +100,9 @@ export default class extends Controller {
     card.dataset.available = String(!!m.available)
     card.dataset.action = "click->addon-tier-picker#selectMode"
     card.className = [
-      "w-full text-left border-1.5 px-4 py-3 font-mono transition",
+      "w-full text-left border px-4 py-3 font-mono transition",
       m.available ? "cursor-pointer hover:bg-accent-soft" : "cursor-not-allowed opacity-60",
-      isSelected ? "border-accent bg-accent-soft" : "border-ink bg-paper"
+      isSelected ? "border-accent bg-accent-soft" : "border-line bg-paper"
     ].join(" ")
 
     const head = document.createElement("div")

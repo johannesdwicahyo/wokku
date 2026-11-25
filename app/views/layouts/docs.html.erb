@@ -12,10 +12,6 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <%= csp_meta_tag %>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
-
   <%= stylesheet_link_tag :app %>
   <%= stylesheet_link_tag "docs", "data-turbo-track": "reload" %>
   <%= javascript_importmap_tags %>
@@ -44,11 +40,11 @@
       <div class="relative" data-controller="docs-search">
         <input type="text"
                placeholder="Search docs..."
-               class="w-64 bg-paper border-1.5 border-ink rounded-md px-3 py-1.5 text-xs text-ink placeholder:text-dim focus:outline-none focus:shadow-brutal-sm"
+               class="w-64 bg-paper border border-dark-line rounded-md px-3 py-1.5 text-xs text-ink placeholder:text-dim focus:outline-none focus:shadow-brutal-sm"
                data-docs-search-target="input"
                data-action="input->docs-search#search keydown->docs-search#navigate">
         <kbd class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-dim border border-line-soft rounded px-1.5 py-0.5 pointer-events-none bg-bg-deep">/</kbd>
-        <div class="absolute top-full right-0 mt-2 w-80 bg-paper border-1.5 border-ink rounded-md shadow-brutal-sm overflow-hidden hidden" data-docs-search-target="results"></div>
+        <div class="absolute top-full right-0 mt-2 w-80 bg-paper border border-line rounded-md shadow-brutal-sm overflow-hidden hidden" data-docs-search-target="results"></div>
       </div>
     </div>
   </div>

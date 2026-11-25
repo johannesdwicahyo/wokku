@@ -2,7 +2,7 @@ id:
   dashboard:
     recent_activity: "Aktivitas terbaru"
     apps:
-      new_app: "+ App baru"
+      new_app: "App baru"
   resources:
     addons_title: "Database"
     addons_sub: "Database, cache, dan layanan yang terpasang di app ini"

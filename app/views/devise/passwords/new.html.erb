@@ -10,10 +10,10 @@
       <p class="mt-1 text-xs text-dim">We'll send you reset instructions</p>
     </div>
 
-    <div class="border-1.5 border-ink bg-paper rounded-md p-6">
+    <div class="border border-line bg-paper rounded-md p-6">
       <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :post, class: "space-y-3" }) do |f| %>
         <% if resource.errors.any? %>
-          <div class="border-1.5 border-danger bg-danger-soft rounded-md p-4">
+          <div class="border border-danger bg-danger-soft rounded-md p-4">
             <ul class="list-disc list-inside text-sm text-danger space-y-1">
               <% resource.errors.full_messages.each do |message| %>
                 <li><%= message %></li>
@@ -24,7 +24,7 @@
 
         <div>
           <%= f.label :email, class: "block text-xs font-semibold text-ink-soft mb-1" %>
-          <%= f.email_field :email, autofocus: true, autocomplete: "email", placeholder: "you@example.com", class: "w-full px-3 py-2.5 border-1.5 border-ink bg-bg rounded-md text-sm focus:outline-none focus:shadow-brutal-sm" %>
+          <%= f.email_field :email, autofocus: true, autocomplete: "email", placeholder: "you@example.com", class: "w-full px-3 py-2.5 border border-dark-line bg-bg rounded-md text-sm focus:outline-none focus:shadow-brutal-sm" %>
         </div>
 
         <div>

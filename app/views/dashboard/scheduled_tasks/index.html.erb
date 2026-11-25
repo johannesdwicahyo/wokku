@@ -13,14 +13,14 @@
   <h2 class="text-base font-bold"><%= t("dashboard.scheduled_tasks.heading", default: "Scheduled tasks") %></h2>
   <% if Wokku.config.plan_enforcer.allowed?(current_user, :feature, slug: :scheduled_tasks) %>
     <%# Opens the slide-panel modal; href is the no-JS fallback. %>
-    <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, href: new_dashboard_app_scheduled_task_path(@app), data: { action: "click->slide-panel#open" }) do %>+ New task<% end %>
+    <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, href: new_dashboard_app_scheduled_task_path(@app), data: { action: "click->slide-panel#open" }) do %>New task<% end %>
   <% elsif wokku_cloud? %>
     <%= render Atoms::ButtonComponent.new(variant: :outline, size: :sm, href: dashboard_billing_path, data: { turbo_frame: "_top" }) do %>Upgrade to Pro<% end %>
   <% end %>
 </div>
 
 <% unless Wokku.config.plan_enforcer.allowed?(current_user, :feature, slug: :scheduled_tasks) %>
-  <div class="border-1.5 border-ink bg-bg-deep rounded-md p-4 mb-6 text-sm text-ink">
+  <div class="border border-line bg-bg-deep rounded-md p-4 mb-6 text-sm text-ink">
     <strong class="font-semibold">Scheduled tasks is a Pro feature.</strong>
     Upgrade your plan to define cron jobs that run inside your app — patches, nightly cleanups, scheduled reports, etc.
   </div>
@@ -32,10 +32,10 @@
         body: "Cron jobs run inside your app's container on the schedule you define."
       ) %>
 <% else %>
-  <div class="bg-paper border-1.5 border-ink rounded-md shadow-brutal overflow-hidden">
+  <div class="bg-paper border border-line rounded-md shadow-brutal overflow-hidden">
     <table class="w-full text-[13.5px]">
       <thead>
-        <tr class="bg-bg border-b-1.5 border-ink text-[10.5px] font-bold uppercase tracking-[.06em] text-dim text-left">
+        <tr class="bg-bg border-b border-line text-[10.5px] font-bold uppercase tracking-[.06em] text-dim text-left">
           <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.scheduled_tasks.columns.schedule", default: "Schedule") %></th>
           <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.scheduled_tasks.columns.command", default: "Command") %></th>
           <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.scheduled_tasks.columns.enabled", default: "Enabled") %></th>

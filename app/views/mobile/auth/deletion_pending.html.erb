@@ -1,6 +1,6 @@
 <div class="min-h-screen flex items-center justify-center px-5 bg-bg text-ink font-sans">
   <div class="w-full max-w-sm">
-    <div class="border-1.5 border-ink bg-paper rounded-md p-6 space-y-3">
+    <div class="border border-line bg-paper rounded-md p-6 space-y-3">
       <p class="text-sm text-ink">Your account is scheduled for deletion on <strong><%= current_user.deletion_scheduled_at.in_time_zone("Asia/Jakarta").strftime("%-d %b %Y") %></strong>.</p>
       <%= button_to "Cancel deletion", dashboard_account_deletion_path, method: :delete, data: { turbo: false },
             class: Atoms::ButtonComponent.new(variant: :primary, size: :md, class: "w-full").classes %>

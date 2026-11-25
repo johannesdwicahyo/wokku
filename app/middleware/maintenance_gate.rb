@@ -97,7 +97,7 @@ class MaintenanceGate
             html, body { margin: 0; padding: 0; }
             body {
               background: var(--paper); color: var(--ink);
-              font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+              font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Geist", sans-serif;
               min-height: 100vh;
               display: grid; place-items: center;
               padding: 32px 20px;
@@ -110,7 +110,7 @@ class MaintenanceGate
               box-shadow: 6px 6px 0 var(--ink);
             }
             .eyebrow {
-              font-family: ui-monospace, "JetBrains Mono", monospace;
+              font-family: ui-monospace, "Geist Mono", monospace;
               font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
               color: var(--accent);
               margin-bottom: 16px;

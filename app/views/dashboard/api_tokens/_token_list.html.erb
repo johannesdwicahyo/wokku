@@ -1,10 +1,10 @@
 <%# schdl (U5 Task 7). form_tag turbo_frame + button_to delete + clipboard
     wiring preserved 1:1 — presentation only. Token values stay mono (data). %>
 <% if local_assigns[:new_token] && new_token %>
-  <div class="border-1.5 border-success bg-success-soft rounded-md p-4 mb-4">
+  <div class="border border-success bg-success-soft rounded-md p-4 mb-4">
     <p class="text-xs text-ink font-bold mb-2">Token created — copy it now, it won't be shown again</p>
     <div class="relative" data-controller="clipboard">
-      <code data-clipboard-target="source" class="block font-mono text-xs text-ink bg-paper border-1.5 border-ink rounded-md px-3 py-2.5 select-all break-all pr-16"><%= new_token %></code>
+      <code data-clipboard-target="source" class="block font-mono text-xs text-ink bg-paper border border-line-strong rounded-md px-3 py-2.5 select-all break-all pr-16"><%= new_token %></code>
       <button type="button" data-action="click->clipboard#copyFromSource"
               class="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-[11px] font-bold text-accent border border-accent rounded hover:bg-accent-soft transition">
         <span data-clipboard-target="label">Copy</span>
@@ -15,32 +15,32 @@
 
 <%# Generate form %>
 <%= form_tag dashboard_api_tokens_path, method: :post, class: "flex flex-wrap gap-2 mb-4", data: { turbo_frame: "api_tokens" } do %>
-  <input type="text" name="name" placeholder="Token name (e.g. claude-mcp)" required aria-label="Token name"
-         class="flex-1 min-w-40 bg-paper border-1.5 border-ink rounded-md px-3 py-1.5 text-xs text-ink placeholder-dim focus:outline-none focus:shadow-brutal-sm">
+  <input type="text" name="name" placeholder="<%= t("sweep.token_name_ph") %>" required aria-label="Token name"
+         class="flex-1 min-w-40 bg-paper border border-dark-line rounded-md px-3 py-1.5 text-xs text-ink placeholder-dim focus:outline-none focus:shadow-brutal-sm">
   <select name="scope" aria-label="Access"
-          class="bg-paper border-1.5 border-ink rounded-md px-2 py-1.5 text-xs text-ink focus:outline-none focus:shadow-brutal-sm">
-    <option value="read" selected>Read-only</option>
-    <option value="full">Full access</option>
+          class="bg-paper border border-dark-line rounded-md px-2 py-1.5 text-xs text-ink focus:outline-none focus:shadow-brutal-sm">
+    <option value="read" selected><%= t("sweep.read_only") %></option>
+    <option value="full"><%= t("sweep.full_access") %></option>
   </select>
   <select name="expires" aria-label="Expires"
-          class="bg-paper border-1.5 border-ink rounded-md px-2 py-1.5 text-xs text-ink focus:outline-none focus:shadow-brutal-sm">
-    <option value="90d" selected>Expires in 90 days</option>
-    <option value="never">Never expires</option>
+          class="bg-paper border border-dark-line rounded-md px-2 py-1.5 text-xs text-ink focus:outline-none focus:shadow-brutal-sm">
+    <option value="90d" selected><%= t("sweep.expires_90") %></option>
+    <option value="never"><%= t("sweep.never_expires") %></option>
   </select>
-  <button type="submit" class="<%= Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>">Generate</button>
+  <button type="submit" class="<%= Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>"><%= t("sweep.generate") %></button>
 <% end %>
 
 <%# Token list %>
 <% if tokens.any? %>
   <div class="space-y-2">
     <% tokens.each do |token| %>
-      <div class="flex items-center justify-between border-1.5 border-ink bg-bg rounded-md px-3 py-2">
+      <div class="flex items-center justify-between border border-line bg-bg rounded-md px-3 py-2">
         <div>
           <span class="text-xs font-bold text-ink"><%= token.name %></span>
-          <span class="text-[11px] font-semibold text-dim border border-dim rounded px-1 ml-1"><%= token.read_only? ? "Read-only" : "Full access" %></span>
+          <span class="text-[11px] font-semibold text-dim border border-dim rounded px-1 ml-1"><%= token.read_only? ? t("sweep.read_only") : t("sweep.full_access") %></span>
           <span class="text-[11px] text-dim ml-2">
             Created <%= time_ago(token.created_at) %>
-            · <%= token.expires_at ? "Expires #{token.expires_at.to_date.to_fs(:long)}" : "Never expires" %>
+            · <%= token.expires_at ? "Expires #{token.expires_at.to_date.to_fs(:long)}" : t("sweep.never_expires") %>
             <% if token.last_used_at %>
               · Last used <%= time_ago(token.last_used_at) %>
             <% end %>
@@ -55,5 +55,5 @@
     <% end %>
   </div>
 <% else %>
-  <p class="text-xs text-dim text-center py-2">No tokens yet — generate one above.</p>
+  <p class="text-xs text-dim text-center py-2"><%= t("sweep.no_tokens") %></p>
 <% end %>

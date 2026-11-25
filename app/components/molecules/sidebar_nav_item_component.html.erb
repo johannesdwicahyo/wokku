@@ -1,9 +1,7 @@
-<%= link_to href, class: classes, **(external ? { target: "_blank", rel: "noopener" } : {}) do %>
-  <% if icon.present? %>
-    <span class="w-4 h-4 flex-shrink-0 [&>svg]:w-4 [&>svg]:h-4"><%= render "shared/icons/#{icon}" %></span>
-  <% end %>
+<%= link_to href, class: classes, **link_attrs do %>
+  <span class="<%= light_classes %>" aria-hidden="true"></span>
   <span class="truncate"><%= label %></span>
   <% if count.present? %>
-    <span class="ml-auto text-[11.5px] font-semibold text-dim"><%= count %></span>
+    <span class="ml-auto font-mono text-[11px] text-dim"><%= count %></span>
   <% end %>
 <% end %>

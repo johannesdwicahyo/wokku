@@ -136,8 +136,41 @@ en:
     legal: "© 2026 Wokku · wokku.cloud"
     license: "wokku · agpl-3.0"
   console:
-    sidebar:
+    admin:
+      crumb: "Admin"
+      overview: "Overview"
+      servers: "Servers"
+      cloud_credentials: "Cloud credentials"
+      users: "Users"
+      settings: "Settings"
+      jobs: "Jobs"
+      back: "← Back to dashboard"
+    top:
+      menu: "Open the command palette"
+      region: "Region"
+      from_template: "From a template"
+      new_app: "New app"
+    rail:
+      sidebar: "Sidebar"
+      roles:
+        member: "Member"
+        admin: "Admin"
       workspace: "Workspace"
+      account: "Account"
+      search: "Search or run a command"
+      workspaces: "Workspaces"
+      current: "Current"
+      new_workspace: "+ New workspace"
+      manage: "Manage →"
+      language: "Language"
+      kinds:
+        personal: "Personal"
+        team: "Team"
+      sign_out: "Sign out"
+      team_sub:
+        one: "Team · %{count} member"
+        other: "Team · %{count} members"
+    sidebar:
       items:
         apps: "Apps"
         databases: "Add-ons"
@@ -150,13 +183,22 @@ en:
         docs: "Docs"
         support: "Support"
     command:
-      placeholder: "Type a command or search apps…"
-      nav: "Navigate"
+      title: "Command palette"
+      placeholder: "Search apps, add-ons and actions"
+      nav: "Go to"
+      addons: "Add-ons"
+      open: "Open %{name}"
+      deploy: "Deploy %{name}"
+      restart: "Restart %{name}"
+      stop: "Stop %{name}"
+      hints:
+        move: "↑ ↓ move"
+        open: "↵ open"
+        close: "Esc close"
       apps: "Apps"
       actions: "Actions"
       empty: "No matches"
     topbar:
-      search: "search apps..."
       beta: "wokku.cloud is in public beta — not for production workloads yet."
       beta_read: "read the notice ↗"
     dashboard:

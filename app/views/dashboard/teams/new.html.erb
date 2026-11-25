@@ -4,9 +4,9 @@
     <p class="mt-1 font-mono text-sm text-dim">// create a team to collaborate with others</p>
   </div>
 
-  <%= form_with(model: @team, url: dashboard_teams_path, class: "border-1.5 border-ink bg-paper p-6 space-y-5") do |f| %>
+  <%= form_with(model: @team, url: dashboard_teams_path, class: "border border-line bg-paper p-6 space-y-5") do |f| %>
     <% if @team.errors.any? %>
-      <div class="border-1.5 border-danger bg-danger-soft p-4">
+      <div class="border border-danger bg-danger-soft p-4">
         <ul class="list-disc list-inside font-mono text-sm text-danger space-y-1">
           <% @team.errors.full_messages.each do |msg| %>
             <li><%= msg %></li>
@@ -17,12 +17,12 @@
 
     <div>
       <%= f.label :name, class: "block font-mono text-[10px] text-dim uppercase tracking-widest mb-1" %>
-      <%= f.text_field :name, class: "w-full bg-bg border-1.5 border-ink text-ink font-mono text-sm px-3 py-2 focus:outline-none focus:border-accent", placeholder: "My Team", autofocus: true %>
+      <%= f.text_field :name, class: "w-full bg-bg border border-dark-line text-ink font-mono text-sm px-3 py-2 focus:outline-none focus:border-accent", placeholder: "My Team", autofocus: true %>
     </div>
 
     <div class="flex items-center gap-3 pt-2">
-      <%= f.submit "Create Team", class: "px-4 py-2 bg-ink text-bg font-mono text-sm font-semibold border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer" %>
-      <%= link_to "Cancel", dashboard_teams_path, class: "font-mono text-sm text-dim hover:text-ink transition" %>
+      <%= f.submit "Create Team", class: "#{Atoms::ButtonComponent.new(variant: :primary).classes}" %>
+      <%= link_to t("common.cancel"), dashboard_teams_path, class: "font-mono text-sm text-dim hover:text-ink transition" %>
     </div>
   <% end %>
 </div>

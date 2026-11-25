@@ -7,7 +7,7 @@
 %>
 <%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :runtime) do %>
 <%= render Organisms::AppRuntimeComponent.new(app: @app, active: :logs) do %>
-<div class="border-1.5 border-ink bg-paper rounded-md overflow-hidden" data-controller="log-viewer" data-log-viewer-level-value="all">
+<div class="border border-line bg-paper rounded-md overflow-hidden" data-controller="log-viewer" data-log-viewer-level-value="all">
   <div class="px-6 py-4 border-b border-line flex items-center justify-between gap-3 flex-wrap">
     <div>
       <h2 class="font-headline text-base font-bold text-ink">Application logs</h2>
@@ -17,9 +17,9 @@
       <button type="button"
               data-log-viewer-target="followButton"
               data-action="click->log-viewer#toggleFollow"
-              class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-ink-soft border-1.5 border-ink rounded-md bg-paper hover:bg-bg-deep transition-colors cursor-pointer data-[active=true]:bg-ink data-[active=true]:text-success data-[active=true]:border-ink"
+              class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-ink-soft border border-line rounded-md bg-paper hover:bg-bg-deep transition-colors cursor-pointer data-[active=true]:bg-ink data-[active=true]:text-success data-[active=true]:border-ink"
               title="Auto-refresh every 5s">○ follow</button>
-      <a href="<%= dashboard_app_logs_path(@app) %>" data-turbo-action="replace" class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-ink-soft border-1.5 border-ink rounded-md bg-paper hover:bg-bg-deep transition-colors cursor-pointer">↻ Refresh</a>
+      <a href="<%= dashboard_app_logs_path(@app) %>" data-turbo-action="replace" class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-ink-soft border border-line rounded-md bg-paper hover:bg-bg-deep transition-colors cursor-pointer">↻ Refresh</a>
     </div>
   </div>
 
@@ -32,11 +32,11 @@
       <div class="relative flex-1 min-w-[200px]">
         <%= f.text_field :q, value: @search_query,
               placeholder: "Search 24h of history...",
-              class: "w-full px-3 py-1.5 bg-paper border-1.5 border-ink rounded-md text-xs text-ink placeholder:text-dim focus:outline-none focus:shadow-brutal-sm transition" %>
+              class: "w-full px-3 py-1.5 bg-paper border border-dark-line rounded-md text-xs text-ink placeholder:text-dim focus:outline-none focus:shadow-brutal-sm transition" %>
       </div>
       <%= f.select :level, [ [ "All levels", "" ], [ "Error", "error" ], [ "Warn", "warn" ], [ "Info", "info" ], [ "Debug", "debug" ] ],
             { selected: @level_filter || "" },
-            class: "py-1.5 px-2 bg-paper border-1.5 border-ink rounded-md text-xs text-ink" %>
+            class: "py-1.5 px-2 bg-paper border border-dark-line rounded-md text-xs text-ink" %>
       <%= f.submit "Search", class: Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>
       <%= link_to "Live tail", dashboard_app_logs_path(@app, source: "live"),
             class: Atoms::ButtonComponent.new(variant: :ghost, size: :sm).classes %>
@@ -48,7 +48,7 @@
       <input type="text" placeholder="Filter visible logs..."
              data-log-viewer-target="search"
              data-action="input->log-viewer#filter"
-             class="w-full pl-3 pr-9 py-1.5 bg-paper border-1.5 border-ink rounded-md text-xs text-ink placeholder:text-dim focus:outline-none focus:shadow-brutal-sm transition">
+             class="w-full pl-3 pr-9 py-1.5 bg-paper border border-dark-line rounded-md text-xs text-ink placeholder:text-dim focus:outline-none focus:shadow-brutal-sm transition">
       <button type="button"
               data-log-viewer-target="clearSearch"
               data-action="click->log-viewer#clearSearch"
@@ -70,7 +70,7 @@
                 data-level="<%= level %>"
                 data-action="click->log-viewer#setLevel"
                 data-active="<%= level == "all" %>"
-                class="px-2 py-1 rounded-md transition cursor-pointer border-1.5 border-transparent hover:bg-bg-deep data-[active=true]:bg-ink data-[active=true]:text-bg data-[active=true]:border-ink <%= color %>">
+                class="px-2 py-1 rounded-md transition cursor-pointer border border-transparent hover:bg-bg-deep data-[active=true]:bg-ink data-[active=true]:text-bg data-[active=true]:border-ink <%= color %>">
           <%= label %>
         </button>
       <% end %>
@@ -81,10 +81,10 @@
 
     <%# Line-buckets %>
     <div class="flex items-center gap-1">
-      <%= link_to dashboard_app_logs_path(@app, lines: 50), class: "text-[11px] px-2 py-1 rounded-md border-1.5 border-transparent #{(params[:lines] || '200') == '50' ? 'bg-ink text-bg' : 'text-dim hover:bg-bg-deep'}" do %>50<% end %>
-      <%= link_to dashboard_app_logs_path(@app, lines: 100), class: "text-[11px] px-2 py-1 rounded-md border-1.5 border-transparent #{(params[:lines] || '200') == '100' ? 'bg-ink text-bg' : 'text-dim hover:bg-bg-deep'}" do %>100<% end %>
-      <%= link_to dashboard_app_logs_path(@app, lines: 200), class: "text-[11px] px-2 py-1 rounded-md border-1.5 border-transparent #{(params[:lines] || '200') == '200' ? 'bg-ink text-bg' : 'text-dim hover:bg-bg-deep'}" do %>200<% end %>
-      <%= link_to dashboard_app_logs_path(@app, lines: 500), class: "text-[11px] px-2 py-1 rounded-md border-1.5 border-transparent #{params[:lines] == '500' ? 'bg-ink text-bg' : 'text-dim hover:bg-bg-deep'}" do %>500<% end %>
+      <%= link_to dashboard_app_logs_path(@app, lines: 50), class: "text-[11px] px-2 py-1 rounded-md border border-transparent #{(params[:lines] || '200') == '50' ? 'bg-ink text-bg' : 'text-dim hover:bg-bg-deep'}" do %>50<% end %>
+      <%= link_to dashboard_app_logs_path(@app, lines: 100), class: "text-[11px] px-2 py-1 rounded-md border border-transparent #{(params[:lines] || '200') == '100' ? 'bg-ink text-bg' : 'text-dim hover:bg-bg-deep'}" do %>100<% end %>
+      <%= link_to dashboard_app_logs_path(@app, lines: 200), class: "text-[11px] px-2 py-1 rounded-md border border-transparent #{(params[:lines] || '200') == '200' ? 'bg-ink text-bg' : 'text-dim hover:bg-bg-deep'}" do %>200<% end %>
+      <%= link_to dashboard_app_logs_path(@app, lines: 500), class: "text-[11px] px-2 py-1 rounded-md border border-transparent #{params[:lines] == '500' ? 'bg-ink text-bg' : 'text-dim hover:bg-bg-deep'}" do %>500<% end %>
     </div>
   </div>
 

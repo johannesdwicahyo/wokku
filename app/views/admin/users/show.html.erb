@@ -11,7 +11,7 @@
   </div>
 
   <%# User details %>
-  <div class="border-1.5 border-ink bg-paper p-5 mb-4 space-y-3">
+  <div class="border border-line bg-paper p-5 mb-4 space-y-3">
     <div class="<%= row %>"><span class="text-dim">Role</span><span class="text-ink"><%= @target_user.role %></span></div>
     <div class="<%= row %>"><span class="text-dim">Joined</span><span class="text-ink"><%= @target_user.created_at.strftime("%B %-d, %Y") %></span></div>
     <% if @target_user.respond_to?(:last_sign_in_at) %>
@@ -27,7 +27,7 @@
   </div>
 
   <%# Apps %>
-  <div class="border-1.5 border-ink bg-paper p-5 mb-4">
+  <div class="border border-line bg-paper p-5 mb-4">
     <p class="font-mono text-sm font-semibold text-ink mb-3">Apps (<%= @apps.count %>)</p>
     <% if @apps.any? %>
       <ul class="space-y-1 font-mono">
@@ -41,7 +41,7 @@
   </div>
 
   <%# Databases %>
-  <div class="border-1.5 border-ink bg-paper p-5 mb-6">
+  <div class="border border-line bg-paper p-5 mb-6">
     <p class="font-mono text-sm font-semibold text-ink mb-3">Databases (<%= @databases.count %>)</p>
     <% if @databases.any? %>
       <ul class="space-y-1 font-mono">
@@ -56,7 +56,7 @@
 
   <%# Admin actions %>
   <% unless @target_user.deleted? || @target_user.admin? %>
-    <div class="border-1.5 border-danger bg-danger-soft p-5 space-y-3">
+    <div class="border border-danger bg-danger-soft p-5 space-y-3">
       <p class="font-mono text-sm font-bold text-danger"># admin_actions</p>
 
       <% unless @target_user.deletion_pending? %>
@@ -66,7 +66,7 @@
               params: { hard: false },
               data: { turbo_confirm: t("admin.users.soft_delete_confirm",
                 default: "Schedule this user for 3-day grace period deletion?") },
-              class: "w-full text-left px-4 py-2 border-1.5 border-danger text-danger font-mono text-sm hover:bg-danger-soft transition cursor-pointer" %>
+              class: "w-full text-left px-4 py-2 border border-danger text-danger font-mono text-sm hover:bg-danger-soft transition cursor-pointer" %>
       <% end %>
 
       <%= button_to t("admin.users.actions.hard_delete", default: "Hard delete now"),
@@ -75,7 +75,7 @@
             params: { hard: true },
             data: { turbo_confirm: t("admin.users.hard_delete_confirm",
               default: "PERMANENTLY delete this user and all their data now? This cannot be undone.") },
-            class: "w-full text-left px-4 py-2 bg-danger text-bg font-mono text-sm font-semibold border-1.5 border-danger hover:opacity-90 transition cursor-pointer" %>
+            class: "w-full text-left px-4 py-2 bg-danger text-bg font-mono text-sm font-semibold border border-danger hover:opacity-90 transition cursor-pointer" %>
     </div>
   <% end %>
 </div>

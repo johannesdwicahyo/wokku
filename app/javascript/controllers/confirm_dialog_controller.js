@@ -14,26 +14,26 @@ export default class extends Controller {
         overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm"
 
         const panel = document.createElement("div")
-        panel.className = "bg-surface-container-high border border-outline-variant/20 rounded-lg shadow-2xl max-w-sm w-full mx-4 p-6"
+        panel.className = "bg-paper border border-line-strong rounded-lg shadow-2xl max-w-sm w-full mx-4 p-6"
 
         const title = document.createElement("h3")
-        title.className = "text-sm font-semibold text-on-surface font-headline mb-2"
+        title.className = "text-sm font-semibold text-ink font-headline mb-2"
         title.textContent = "Confirm"
 
         const body = document.createElement("p")
-        body.className = "text-sm text-on-surface-variant mb-6"
+        body.className = "text-sm text-ink-soft mb-6"
         body.textContent = message
 
         const actions = document.createElement("div")
         actions.className = "flex items-center justify-end gap-3"
 
         const cancelBtn = document.createElement("button")
-        cancelBtn.className = "px-4 py-2 text-xs font-bold text-on-surface-variant bg-surface-container border border-outline-variant/30 rounded-md hover:bg-surface-container-high transition cursor-pointer"
+        cancelBtn.className = "px-4 py-2 text-xs font-bold text-ink-soft bg-bg border border-line-strong rounded-md hover:bg-paper transition cursor-pointer"
         cancelBtn.textContent = "Cancel"
         cancelBtn.type = "button"
 
         const confirmBtn = document.createElement("button")
-        confirmBtn.className = "px-4 py-2 text-xs font-bold text-on-primary bg-primary rounded-md hover:bg-primary/90 transition cursor-pointer"
+        confirmBtn.className = "px-4 py-2 text-xs font-bold text-bg bg-live rounded-md hover:bg-live-hover transition cursor-pointer"
         confirmBtn.textContent = "Confirm"
         confirmBtn.type = "button"
 

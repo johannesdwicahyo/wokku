@@ -1,0 +1,34 @@
+<div data-controller="command-menu"
+     data-command-menu-nav-value="<%= nav.to_json %>"
+     data-command-menu-addons-value="<%= addons.to_json %>"
+     <% if search_url %>data-command-menu-search-url-value="<%= search_url %>"<% end %>
+     data-command-menu-app-value="<%= app.to_json %>"
+     data-command-menu-states-value="<%= states.to_json %>"
+     data-command-menu-labels-value="<%= labels.to_json %>">
+  <div data-command-menu-target="backdrop"
+       data-action="click->command-menu#backdropClick"
+       class="hidden fixed inset-0 z-[70] bg-black/70 backdrop-blur-[6px]"></div>
+  <div data-command-menu-target="dialog"
+       role="dialog" aria-modal="true" aria-label="<%= t("console.command.title") %>"
+       class="corner hidden fixed left-1/2 top-[12vh] -translate-x-1/2 w-[min(640px,calc(100%-2rem))] z-[71] bg-paper border border-line-strong shadow-[0_40px_120px_rgba(0,0,0,.7)]">
+    <div class="flex items-center gap-3 px-4 border-b border-line">
+      <span class="grid grid-cols-[repeat(5,5px)] grid-rows-[repeat(3,5px)] gap-[2px] shrink-0" aria-hidden="true">
+        <i class="bg-[#D9DED6] rounded-[1px] [grid-area:1/1]"></i><i class="bg-[#D9DED6] rounded-[1px] [grid-area:2/1]"></i><i class="bg-[#D9DED6] rounded-[1px] [grid-area:3/2]"></i><i class="bg-live rounded-[1px] [grid-area:2/3]"></i><i class="bg-[#D9DED6] rounded-[1px] [grid-area:3/4]"></i><i class="bg-[#D9DED6] rounded-[1px] [grid-area:2/5]"></i><i class="bg-[#D9DED6] rounded-[1px] [grid-area:1/5]"></i>
+      </span>
+      <input type="text" role="combobox" aria-expanded="true" aria-controls="<%= LIST_ID %>" aria-autocomplete="list"
+             autocomplete="off" spellcheck="false"
+             data-command-menu-target="input"
+             data-action="input->command-menu#onInput keydown->command-menu#navKeys"
+             placeholder="<%= t("console.command.placeholder") %>"
+             aria-label="<%= t("console.command.placeholder") %>"
+             class="flex-1 min-w-0 bg-transparent border-0 outline-none text-[17px] text-ink placeholder:text-muted py-[18px] p-0">
+      <kbd class="font-mono text-[11px] text-muted border border-line-strong px-1.5 py-0.5">Esc</kbd>
+    </div>
+    <ul id="<%= LIST_ID %>" role="listbox" data-command-menu-target="list" class="max-h-[min(420px,56vh)] overflow-y-auto py-2"></ul>
+    <div class="flex flex-wrap gap-4 px-4 py-2.5 border-t border-line font-mono text-[11px] uppercase tracking-[.12em] text-muted">
+      <span><%= t("console.command.hints.move") %></span>
+      <span><%= t("console.command.hints.open") %></span>
+      <span><%= t("console.command.hints.close") %></span>
+    </div>
+  </div>
+</div>

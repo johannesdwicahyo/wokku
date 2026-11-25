@@ -4,7 +4,7 @@
   label = "block font-mono text-[10px] text-dim uppercase tracking-widest mb-1"
 %>
 <div class="max-w-2xl mx-auto space-y-6">
-  <div class="border-1.5 border-ink bg-paper p-6">
+  <div class="border border-line bg-paper p-6">
     <h1 class="font-mono text-lg font-semibold text-ink mb-1"># add-on scripts</h1>
     <p class="font-mono text-sm text-dim mb-6">// HTML loaded at the end of every dashboard and docs page: a support chat widget, analytics, or anything else. Only paste code you trust — it runs for every signed-in user.</p>
 
@@ -12,11 +12,11 @@
       <div>
         <%= f.label :body_scripts, "Scripts", class: label %>
         <%= f.text_area :body_scripts, rows: 10, spellcheck: false,
-              class: "w-full bg-bg border-1.5 border-ink text-ink font-mono text-sm px-3 py-2 focus:outline-none focus:border-accent",
+              class: "w-full bg-bg border border-dark-line text-ink font-mono text-sm px-3 py-2 focus:outline-none focus:border-accent",
               placeholder: %(<script src="https://example.com/widget.js" async></script>) %>
       </div>
 
-      <%= f.submit "Save Settings", class: "px-4 py-2 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer" %>
+      <%= f.submit "Save Settings", class: "#{Atoms::ButtonComponent.new(variant: :primary).classes}" %>
     <% end %>
   </div>
 </div>

@@ -11,7 +11,7 @@
 <h2 class="text-base font-bold mb-3"><%= t("dashboard.releases.heading", default: "Releases") %></h2>
 
 <%# Deploy method %>
-<div class="border-1.5 border-ink bg-paper rounded-md mb-6 overflow-hidden">
+<div class="border border-line bg-paper rounded-md mb-6 overflow-hidden">
   <div class="px-5 py-3.5 border-b border-line">
     <h3 class="text-sm font-bold text-ink">Deploy</h3>
     <p class="text-[11.5px] text-dim mt-0.5">Push code to your server to deploy.</p>
@@ -33,14 +33,14 @@
       <% else %>
       <div class="space-y-2">
         <div class="flex items-center gap-2">
-          <code class="flex-1 bg-bg border-1.5 border-ink rounded-md px-3 py-2 font-mono text-sm text-ink-soft overflow-x-auto">git remote add wokku <%= git_remote %></code>
-          <button type="button" data-controller="clipboard" data-clipboard-text-value="git remote add wokku <%= git_remote %>" data-action="click->clipboard#copy" class="px-3 py-2 border-1.5 border-ink rounded-md bg-paper text-dim hover:text-ink transition-colors cursor-pointer" title="Copy">
+          <code class="flex-1 bg-bg border border-line rounded-md px-3 py-2 font-mono text-sm text-ink-soft overflow-x-auto">git remote add wokku <%= git_remote %></code>
+          <button type="button" data-controller="clipboard" data-clipboard-text-value="git remote add wokku <%= git_remote %>" data-action="click->clipboard#copy" class="px-3 py-2 border border-line-strong rounded-md bg-paper text-dim hover:text-ink transition-colors cursor-pointer" title="Copy">
             <span data-clipboard-target="label" class="text-xs">Copy</span>
           </button>
         </div>
         <div class="flex items-center gap-2">
-          <code class="flex-1 bg-bg border-1.5 border-ink rounded-md px-3 py-2 font-mono text-sm text-ink-soft overflow-x-auto">git push wokku <%= branch %></code>
-          <button type="button" data-controller="clipboard" data-clipboard-text-value="git push wokku <%= branch %>" data-action="click->clipboard#copy" class="px-3 py-2 border-1.5 border-ink rounded-md bg-paper text-dim hover:text-ink transition-colors cursor-pointer" title="Copy">
+          <code class="flex-1 bg-bg border border-line rounded-md px-3 py-2 font-mono text-sm text-ink-soft overflow-x-auto">git push wokku <%= branch %></code>
+          <button type="button" data-controller="clipboard" data-clipboard-text-value="git push wokku <%= branch %>" data-action="click->clipboard#copy" class="px-3 py-2 border border-line-strong rounded-md bg-paper text-dim hover:text-ink transition-colors cursor-pointer" title="Copy">
             <span data-clipboard-target="label" class="text-xs">Copy</span>
           </button>
         </div>
@@ -51,7 +51,7 @@
     <div class="border-t border-line"></div>
 
     <%# GitHub Integration %>
-    <div class="border-1.5 border-ink bg-bg-deep rounded-md p-4">
+    <div class="border border-line bg-bg-deep rounded-md p-4">
       <h4 class="text-xs font-semibold text-ink-soft mb-2">GitHub</h4>
       <% if @app.github_repo_full_name.present? %>
         <div class="flex items-center justify-between gap-3 flex-wrap">
@@ -93,10 +93,10 @@
 <h3 class="text-sm font-bold text-ink mb-2">Release history</h3>
 
 <% if @releases.any? %>
-  <div class="bg-paper border-1.5 border-ink rounded-md shadow-brutal overflow-hidden">
+  <div class="bg-paper border border-line rounded-md shadow-brutal overflow-hidden">
     <table class="w-full text-[13.5px]">
       <thead>
-        <tr class="bg-bg border-b-1.5 border-ink text-[10.5px] font-bold uppercase tracking-[.06em] text-dim text-left">
+        <tr class="bg-bg border-b border-line text-[10.5px] font-bold uppercase tracking-[.06em] text-dim text-left">
           <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.releases.columns.version", default: "Version") %></th>
           <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.releases.columns.commit", default: "Commit") %></th>
           <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.releases.columns.status", default: "Status") %></th>

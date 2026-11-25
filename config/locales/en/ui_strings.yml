@@ -4,7 +4,7 @@ en:
   dashboard:
     recent_activity: "Recent activity"
     apps:
-      new_app: "+ New app"
+      new_app: "New app"
   resources:
     addons_title: "Databases"
     addons_sub: "Databases, caches, and services attached to this app"

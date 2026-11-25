@@ -2,7 +2,7 @@
 <%= render Molecules::DiskUsageBannerComponent.new(record: @app) %>
 <% if Wokku.config.resource_builder? %>
   <%= form_with url: dashboard_app_resources_path(@app), method: :patch, data: { turbo_frame: "_top" } do %>
-    <div class="bg-paper border-1.5 border-ink rounded-md mb-6 divide-y divide-line">
+    <div class="bg-paper border border-line rounded-md mb-6 divide-y divide-line">
       <% (@allocations.presence || [ @app.dyno_allocations.build(process_type: "web", cpu: 0.25, memory_mb: 512) ]).each do |a| %>
         <div class="px-6 py-4">
           <h3 class="font-headline text-sm font-bold text-ink mb-3"><%= a.process_type %></h3>
@@ -34,7 +34,7 @@
     tier = web_allocation&.dyno_tier
     total_dynos = @app.dyno_allocations.sum(:count)
   %>
-  <div class="bg-paper border-1.5 border-ink rounded-md mb-6 overflow-hidden">
+  <div class="bg-paper border border-line rounded-md mb-6 overflow-hidden">
     <div class="px-6 py-4 border-b border-line">
       <h2 class="font-headline text-base font-bold text-ink">Container</h2>
       <p class="text-xs text-dim mt-1">Compute + memory allocated to <span class="text-ink font-medium"><%= @app.name %></span></p>
@@ -106,7 +106,7 @@
                             when "xlarge"   then "Team plan + buy extra"
                             end
             %>
-            <div class="border-1.5 rounded-md p-3 transition <%= is_current ? 'border-accent bg-accent-soft' : (on_plan ? 'border-ink bg-paper hover:bg-bg-deep' : 'border-line bg-bg-deep opacity-60') %>">
+            <div class="border rounded-md p-3 transition <%= is_current ? 'border-accent bg-accent-soft' : (on_plan ? 'border-line bg-paper hover:bg-bg-deep' : 'border-line bg-bg-deep opacity-60') %>">
               <div class="flex items-baseline justify-between mb-1">
                 <h3 class="text-sm font-semibold text-ink capitalize"><%= box_size %></h3>
                 <% if is_current %>
@@ -132,14 +132,14 @@
                       params: { dyno_tier_id: dt.id, process_type: "web" },
                       method: :post,
                       data: { turbo_confirm: "Resize to #{box_size.capitalize} box (#{dt.memory_mb >= 1024 ? "#{dt.memory_mb / 1024}GB" : "#{dt.memory_mb}MB"}, #{dt.vcpu_label})?" },
-                      class: "w-full text-center px-2 py-1 text-[11px] font-semibold border-1.5 border-ink rounded-md bg-paper text-ink hover:bg-bg-deep transition cursor-pointer" %>
+                      class: "w-full text-center px-2 py-1 text-[11px] font-semibold border border-line rounded-md bg-paper text-ink hover:bg-bg-deep transition cursor-pointer" %>
               <% elsif addon_avail && respond_to?(:dashboard_box_addons_path) %>
                 <%= button_to "Buy #{box_size} box",
                       dashboard_box_addons_path(size: box_size),
                       method: :post,
-                      class: "w-full text-center px-2 py-1 text-[11px] font-semibold border-1.5 border-ink rounded-md bg-ink text-paper hover:bg-ink-soft transition cursor-pointer" %>
+                      class: "#{Atoms::ButtonComponent.new(variant: :primary).classes} w-full text-center" %>
               <% else %>
-                <p class="text-[10px] text-dim text-center px-1 py-1.5 border-1.5 border-line rounded-md"><%= upgrade_msg %></p>
+                <p class="text-[10px] text-dim text-center px-1 py-1.5 border border-line rounded-md"><%= upgrade_msg %></p>
               <% end %>
             </div>
           <% end %>

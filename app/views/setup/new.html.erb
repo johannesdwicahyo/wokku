@@ -4,9 +4,9 @@
       <h1 class="font-headline text-2xl font-semibold tracking-tight text-ink"><%= t('setup.title') %></h1>
       <p class="text-xs text-dim mt-2"><%= t('setup.sub') %></p>
     </div>
-    <div class="border-1.5 border-ink bg-paper rounded-md p-6">
+    <div class="border border-line bg-paper rounded-md p-6">
       <% if @user.errors.any? %>
-        <div class="border-1.5 border-danger bg-danger-soft rounded-md p-2.5 text-xs text-danger mb-3">
+        <div class="border border-danger bg-danger-soft rounded-md p-2.5 text-xs text-danger mb-3">
           <%= @user.errors.full_messages.first %>
         </div>
       <% end %>
@@ -16,17 +16,17 @@
           <div>
             <label class="block text-xs font-semibold text-ink-soft mb-1"><%= t('signin.email_label') %></label>
             <%= f.email_field :email, autofocus: true, autocomplete: "email",
-                  class: "w-full px-3 py-2.5 border-1.5 border-ink bg-bg rounded-md text-sm focus:outline-none focus:shadow-brutal-sm" %>
+                  class: "w-full px-3 py-2.5 border border-dark-line bg-bg rounded-md text-sm focus:outline-none focus:shadow-brutal-sm" %>
           </div>
           <div>
             <label class="block text-xs font-semibold text-ink-soft mb-1"><%= t('signin.password_label') %></label>
             <%= f.password_field :password, autocomplete: "new-password",
-                  class: "w-full px-3 py-2.5 border-1.5 border-ink bg-bg rounded-md text-sm focus:outline-none focus:shadow-brutal-sm" %>
+                  class: "w-full px-3 py-2.5 border border-dark-line bg-bg rounded-md text-sm focus:outline-none focus:shadow-brutal-sm" %>
           </div>
           <div>
             <label class="block text-xs font-semibold text-ink-soft mb-1"><%= t('setup.password_confirmation_label') %></label>
             <%= f.password_field :password_confirmation, autocomplete: "new-password",
-                  class: "w-full px-3 py-2.5 border-1.5 border-ink bg-bg rounded-md text-sm focus:outline-none focus:shadow-brutal-sm" %>
+                  class: "w-full px-3 py-2.5 border border-dark-line bg-bg rounded-md text-sm focus:outline-none focus:shadow-brutal-sm" %>
           </div>
           <%# install.sh already registered + connected this box — the
               checkbox only matters for bare `docker compose up` installs. %>

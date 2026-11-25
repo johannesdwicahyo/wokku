@@ -8,9 +8,6 @@
     <%= csp_meta_tag %>
     <meta name="turbo-refresh-method" content="morph">
     <meta name="turbo-refresh-scroll" content="preserve">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -20,21 +17,21 @@
   </head>
 
   <body class="bg-bg text-ink font-sans antialiased"
-        data-controller="confirm-dialog mobile-nav nav-loading"
+        data-controller="confirm-dialog nav-loading"
         data-action="turbo:visit@document->nav-loading#start turbo:load@document->nav-loading#stop turbo:fetch-request-error@document->nav-loading#stop">
     <%
       # Overview + jobs UI are cloud-host admin routes; standalone admin
       # starts at servers.
       admin_nav = [
         (if respond_to?(:admin_root_path)
-          { label: "Overview", key: :admin, href: admin_root_path, active: request.path == "/admin" }
+          { label: t("console.admin.overview"), key: :admin, href: admin_root_path, active: request.path == "/admin" }
         end),
-        { label: "Servers",           key: :servers,           href: admin_servers_path,           active: request.path.start_with?("/admin/servers") },
-        { label: "Cloud credentials", key: :cloud_credentials, href: admin_cloud_credentials_path, active: request.path.start_with?("/admin/cloud_credentials") },
-        { label: "Users",             key: :users,             href: admin_users_path,             active: request.path.start_with?("/admin/users") },
-        { label: "Settings",          key: :settings,          href: admin_settings_path,          active: request.path.start_with?("/admin/settings") },
+        { label: t("console.admin.servers"),           key: :servers,           href: admin_servers_path,           active: request.path.start_with?("/admin/servers") },
+        { label: t("console.admin.cloud_credentials"), key: :cloud_credentials, href: admin_cloud_credentials_path, active: request.path.start_with?("/admin/cloud_credentials") },
+        { label: t("console.admin.users"),             key: :users,             href: admin_users_path,             active: request.path.start_with?("/admin/users") },
+        { label: t("console.admin.settings"),          key: :settings,          href: admin_settings_path,          active: request.path.start_with?("/admin/settings") },
         (if respond_to?(:admin_root_path)
-          { label: "Jobs", key: :jobs, href: "/admin/jobs", active: request.path.start_with?("/admin/jobs") }
+          { label: t("console.admin.jobs"), key: :jobs, href: "/admin/jobs", active: request.path.start_with?("/admin/jobs") }
         end)
       ].compact
 
@@ -43,25 +40,23 @@
       # layout's context. Rendered via the account: slot so it sits at
       # the bottom of the sidebar with its own divider.
       admin_account = [
-        { label: "← Back to dashboard", key: :back_to_dashboard, href: dashboard_apps_path, active: false }
+        { label: t("console.admin.back"), key: :back_to_dashboard, href: dashboard_apps_path, active: false }
       ]
     %>
 
     <div class="flex min-h-screen overflow-x-clip">
-      <%= render Organisms::ConsoleSidebarComponent.new(
-            groups: [
-              { label: "admin", items: admin_nav },
-              { label: nil, items: admin_account }
-            ]
+      <%= render Organisms::RailComponent.new(
+            workspace_items: admin_nav,
+            account_items: admin_account,
+            user_email: current_user&.email,
+            user_role: current_user&.role,
+            sign_out_path: destroy_user_session_path,
+            locale: I18n.locale,
+            locale_toggle_path: dashboard_locale_path(locale: I18n.locale == :en ? :id : :en)
           ) %>
 
-      <%# Off-canvas backdrop (mobile only). %>
-      <div class="lg:hidden fixed inset-0 bg-black/70 z-20 hidden"
-           data-mobile-nav-target="overlay"
-           data-action="click->mobile-nav#close"></div>
-
-      <div class="flex-1 flex flex-col min-w-0 lg:pl-[232px]">
-        <%= render Organisms::ConsoleTopbarComponent.new %>
+      <div class="flex-1 flex flex-col min-w-0">
+        <%= render Organisms::TopBarComponent.new(crumbs: [ t("console.admin.crumb") ], page: content_for(:crumb).presence || (admin_nav + admin_account).find { _1[:active] }&.dig(:label) || content_for(:title).to_s.sub(/\s*[-·|]\s*Wokku\z/i, "").presence || "Wokku") %>
 
         <main class="flex-1 bg-bg">
           <div class="px-6 py-5">
@@ -69,6 +64,12 @@
           </div>
         </main>
       </div>
+      <%
+        admin_palette_nav = (admin_nav + admin_account).map { |i| { label: i[:label], href: i[:href] } }
+        admin_palette_nav << { label: t("console.rail.language"), href: dashboard_locale_path(locale: I18n.locale == :en ? :id : :en), method: "post" }
+        admin_palette_nav << { label: t("console.rail.sign_out"), href: destroy_user_session_path, method: "delete" }
+      %>
+      <%= render Organisms::CommandPaletteComponent.new(nav: admin_palette_nav) %>
     </div>
     <%= render Molecules::FlashToastComponent.new(flash: flash) %>
   </body>

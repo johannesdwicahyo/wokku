@@ -16,7 +16,7 @@
   </div>
 
   <%# Warning banner %>
-  <div class="border-1.5 border-danger bg-danger-soft rounded-md p-5 mb-6">
+  <div class="border border-danger bg-danger-soft rounded-md p-5 mb-6">
     <p class="font-bold text-danger mb-1">
       <%= t("dashboard.account_deletions.warning_heading", default: "This action is irreversible after 3 days.") %>
     </p>
@@ -27,7 +27,7 @@
   </div>
 
   <%# Apps list %>
-  <div class="border-1.5 border-ink bg-paper rounded-md p-5 mb-4">
+  <div class="border border-line bg-paper rounded-md p-5 mb-4">
     <p class="text-sm font-bold text-ink mb-3">
       <%= t("dashboard.account_deletions.apps_header", count: @apps.count, default: "Apps that will be deleted (#{@apps.count}):") %>
     </p>
@@ -43,12 +43,12 @@
   </div>
 
   <%# Databases list %>
-  <div class="border-1.5 border-ink bg-paper rounded-md p-5 mb-4">
+  <div class="border border-line bg-paper rounded-md p-5 mb-4">
     <p class="text-sm font-bold text-ink mb-3">
       <%= t("dashboard.account_deletions.databases_header", count: @databases.count, default: "Databases that will be deleted (#{@databases.count}):") %>
     </p>
     <% if @databases.any? %>
-      <div class="border-1.5 border-warn bg-warn-soft rounded-md p-3 mb-3 flex items-center gap-2">
+      <div class="border border-warn bg-warn-soft rounded-md p-3 mb-3 flex items-center gap-2">
         <span class="text-sm text-ink">
           <%= t("dashboard.account_deletions.backup_callout", default: "Back up any important data first.") %>
           <%= link_to t("dashboard.account_deletions.backup_link", default: "Open backups"),
@@ -68,7 +68,7 @@
 
   <%# Balance forfeit %>
   <% if @has_balance %>
-    <div class="border-1.5 border-ink bg-paper rounded-md p-5 mb-6">
+    <div class="border border-line bg-paper rounded-md p-5 mb-6">
       <p class="text-sm font-bold text-ink mb-1">
         <%= t("dashboard.account_deletions.balance_label", default: "Balance that will be forfeit:") %>
       </p>
@@ -92,7 +92,7 @@
         <%= text_field_tag :confirmation_email, nil,
               placeholder: current_user.email,
               autocomplete: "off",
-              class: "w-full bg-paper border-1.5 border-ink rounded-md text-ink text-sm px-3 py-2 focus:outline-none focus:shadow-brutal-sm",
+              class: "w-full bg-paper border border-dark-line rounded-md text-ink text-sm px-3 py-2 focus:outline-none focus:shadow-brutal-sm",
               data: {
                 "account-deletion-target": "input",
                 action: "input->account-deletion#check"

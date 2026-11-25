@@ -3,13 +3,13 @@
     that lives inside the drawer shell in dashboard/apps/index.html.erb. %>
 <%= turbo_frame_tag "app_record_panel" do %>
   <div class="flex items-center gap-2.5 pb-4 border-b border-line">
-    <span class="w-[28px] h-[28px] border-1.5 border-ink rounded grid place-items-center font-extrabold text-[13px] bg-paper"><%= @app.name.to_s[0].to_s.upcase %></span>
+    <span class="w-[28px] h-[28px] border border-line rounded grid place-items-center font-extrabold text-[13px] bg-paper"><%= @app.name.to_s[0].to_s.upcase %></span>
     <span class="font-headline font-extrabold text-lg truncate"><%= @app.name %></span>
     <%= render Atoms::StatusPillComponent.new(status: @app.display_status) %>
     <%= link_to dashboard_app_path(@app), title: t("dashboard.apps.panel.open_full"), data: { turbo_frame: "_top" },
-          class: "ml-auto w-7 h-7 grid place-items-center border-1.5 border-line rounded text-dim hover:border-ink hover:text-ink" do %>↗<% end %>
+          class: "ml-auto w-7 h-7 grid place-items-center border border-line rounded text-dim hover:border-ink hover:text-ink" do %>↗<% end %>
     <button type="button" data-action="click->slide-panel#close" aria-label="<%= t("dashboard.apps.panel.close") %>"
-            class="w-7 h-7 grid place-items-center border-1.5 border-line rounded text-dim hover:border-ink hover:text-ink cursor-pointer">✕</button>
+            class="w-7 h-7 grid place-items-center border border-line rounded text-dim hover:border-ink hover:text-ink cursor-pointer">✕</button>
   </div>
 
   <%# ponytail: stacked sections, not tabs — add a tabs controller when panel content outgrows one scroll %>
@@ -35,7 +35,7 @@
                 data: { inline_edit_target: "form", action: "keydown.esc->inline-edit#cancel" },
                 class: "hidden flex items-center gap-1.5" do |f| %>
             <%= f.text_field :deploy_branch, value: @app.deploy_branch, data: { inline_edit_target: "input" },
-                  class: "w-28 border-1.5 border-ink rounded px-1.5 py-0.5 text-[13px] bg-paper focus:outline-none focus:border-accent" %>
+                  class: "w-28 border border-dark-line rounded px-1.5 py-0.5 text-[13px] bg-paper focus:outline-none focus:border-accent" %>
             <button type="submit" class="text-ink font-semibold hover:underline"><%= t("common.save") %></button>
             <button type="button" data-action="click->inline-edit#cancel" class="text-dim hover:text-ink"><%= t("common.cancel") %></button>
           <% end %>

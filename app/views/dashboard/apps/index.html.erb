@@ -43,7 +43,7 @@
     <% end %>
 
     <%= render layout: "dashboard/shared/slide_panel",
-               locals: { title: "Create App", subtitle: "Deploy a new application to one of your servers", size: "lg" } do %>
+               locals: { title: t("sweep.create_app"), subtitle: t("sweep.create_app_sub"), size: "lg" } do %>
       <%= render "form", app: @app, servers: @servers %>
     <% end %>
   </div>

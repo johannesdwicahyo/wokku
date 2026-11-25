@@ -12,13 +12,13 @@
     <h2 class="text-base font-bold mb-3"><%= t("dashboard.previews.heading", default: "PR previews") %></h2>
 
     <section class="space-y-4">
-      <div class="border-1.5 border-ink bg-paper rounded-md p-6">
+      <div class="border border-line bg-paper rounded-md p-6">
         <h3 class="text-sm font-bold text-ink mb-1">Settings</h3>
         <p class="text-[11.5px] text-dim mb-5">Spin up a throwaway environment for every pull request — same buildpack, isolated database, auto-destroyed when the PR closes.</p>
 
         <%= form_with model: @app, url: dashboard_app_preview_settings_path(@app), method: :patch, data: { turbo: false }, class: "space-y-5" do |f| %>
           <label class="flex items-center gap-2.5 cursor-pointer">
-            <%= f.check_box :preview_enabled, class: "border-1.5 border-ink rounded text-ink focus:ring-2 focus:ring-ink/20 focus:ring-offset-0" %>
+            <%= f.check_box :preview_enabled, class: "border border-dark-line rounded text-ink focus:ring-2 focus:ring-ink/20 focus:ring-offset-0" %>
             <span class="text-sm text-ink font-medium">Enable PR previews</span>
           </label>
 
@@ -29,7 +29,7 @@
               <% { "empty" => [ "No database", "Previews get none of this app's database credentials." ],
                    "shared" => [ "Share production database", "Shares prod data — destructive migrations affect prod." ] }.each do |strategy, (label, hint)| %>
                 <label class="flex items-center gap-2.5 cursor-pointer">
-                  <%= f.radio_button :database_strategy, strategy, checked: (@app.database_strategy == "shared") == (strategy == "shared"), class: "border-1.5 border-ink text-ink focus:ring-2 focus:ring-ink/20 focus:ring-offset-0" %>
+                  <%= f.radio_button :database_strategy, strategy, checked: (@app.database_strategy == "shared") == (strategy == "shared"), class: "border border-dark-line text-ink focus:ring-2 focus:ring-ink/20 focus:ring-offset-0" %>
                   <span class="text-sm text-ink"><%= label %></span>
                   <span class="text-[11px] <%= strategy == "shared" ? "text-warn" : "text-dim" %>"><%= hint %></span>
                 </label>
@@ -45,14 +45,14 @@
         <% end %>
       </div>
 
-      <div class="bg-paper border-1.5 border-ink rounded-md shadow-brutal overflow-hidden">
+      <div class="bg-paper border border-line rounded-md shadow-brutal overflow-hidden">
         <div class="px-3.5 pt-3.5 pb-2">
           <h3 class="text-sm font-bold text-ink">Active previews</h3>
         </div>
         <% if @previews.any? %>
           <table class="w-full text-[13.5px]">
             <thead>
-              <tr class="bg-bg border-b-1.5 border-ink text-[10.5px] font-bold uppercase tracking-[.06em] text-dim text-left">
+              <tr class="bg-bg border-b border-line text-[10.5px] font-bold uppercase tracking-[.06em] text-dim text-left">
                 <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.previews.columns.pr", default: "PR") %></th>
                 <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.previews.columns.branch", default: "Branch") %></th>
                 <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.previews.columns.status", default: "Status") %></th>

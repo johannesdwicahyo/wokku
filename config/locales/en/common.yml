@@ -9,6 +9,7 @@ en:
     update: "Update"
     search: "Search"
     loading: "Loading..."
+    loading_options: "Loading options…"
     confirm: "Are you sure?"
     yes: "Yes"
     no: "No"

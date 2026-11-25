@@ -8,9 +8,9 @@
     <h1 class="font-headline text-xl font-bold text-ink">Edit profile</h1>
   </div>
 
-  <%= form_with(model: current_user, url: dashboard_profile_path, method: :patch, class: "border-1.5 border-ink bg-paper rounded-md p-6 space-y-5") do |f| %>
+  <%= form_with(model: current_user, url: dashboard_profile_path, method: :patch, class: "border border-line bg-paper rounded-md p-6 space-y-5") do |f| %>
     <% if current_user.errors.any? %>
-      <div class="border-1.5 border-danger bg-danger-soft rounded-md p-4">
+      <div class="border border-danger bg-danger-soft rounded-md p-4">
         <ul class="list-disc list-inside text-sm text-danger space-y-1">
           <% current_user.errors.full_messages.each do |msg| %>
             <li><%= msg %></li>
@@ -21,7 +21,7 @@
 
     <div>
       <%= f.label :email, class: "block text-xs font-semibold text-ink-soft mb-1" %>
-      <%= f.email_field :email, class: "w-full bg-paper border-1.5 border-ink text-ink text-sm rounded-md px-3 py-2 focus:outline-none focus:shadow-brutal-sm" %>
+      <%= f.email_field :email, class: "w-full bg-paper border border-dark-line text-ink text-sm rounded-md px-3 py-2 focus:outline-none focus:shadow-brutal-sm" %>
     </div>
 
     <%# Cloud-only: self-host has no billing (and no resource_usages). %>
@@ -49,7 +49,7 @@
       <p class="text-xs text-dim uppercase tracking-widest font-bold mb-3">Notifications</p>
       <label class="flex items-start gap-3 cursor-pointer">
         <%= f.check_box :daily_debit_email_subscribed,
-              class: "mt-0.5 border-1.5 border-ink text-accent rounded focus:ring-accent" %>
+              class: "mt-0.5 border border-line text-accent rounded focus:ring-accent" %>
         <span>
           <span class="block text-sm text-ink font-medium">Daily usage email</span>
           <span class="block text-xs text-dim mt-0.5">
@@ -62,7 +62,7 @@
 
     <div class="flex items-center gap-3 pt-2">
       <%= f.submit "Save Changes", class: Atoms::ButtonComponent.new(variant: :primary, size: :md).classes %>
-      <%= link_to "Cancel", dashboard_profile_path, class: "text-sm text-dim hover:text-ink transition" %>
+      <%= link_to t("common.cancel"), dashboard_profile_path, class: "text-sm text-dim hover:text-ink transition" %>
     </div>
   <% end %>
 

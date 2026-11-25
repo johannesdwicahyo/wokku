@@ -23,7 +23,7 @@
   <%= deferred_section "resources_processes", src: dashboard_app_resources_path(@app, deferred: 1), skeleton: :table, target: "_top" %>
 
   <%# Attached Add-ons %>
-  <div class="bg-paper border-1.5 border-ink rounded-md mb-6 overflow-hidden">
+  <div class="bg-paper border border-line rounded-md mb-6 overflow-hidden">
     <div class="px-6 py-4 border-b border-line flex items-center justify-between gap-3 flex-wrap">
       <div>
         <h2 class="font-headline text-base font-bold text-ink"><%= t("resources.addons_title") %></h2>
@@ -71,7 +71,7 @@
                   individually priced. Show shape (shared vs dedicated)
                   instead of a per-addon Rp figure. %>
               <%= render Atoms::TagComponent.new(tone: addon.shared? ? :success : :accent) do %><%= addon.shared? ? "Shared" : "Dedicated" %><% end %>
-              <%= link_to "Info", dashboard_addon_path(addon), class: "text-xs text-ink-soft hover:text-accent border-1.5 border-ink rounded-md px-2 py-1 transition", data: { turbo_frame: "_top" } %>
+              <%= link_to "Info", dashboard_addon_path(addon), class: "text-xs text-ink-soft hover:text-accent border border-line-strong rounded-md px-2 py-1 transition", data: { turbo_frame: "_top" } %>
               <%= button_to "Remove",
                     dashboard_app_resources_path(@app, addon_id: addon.id),
                     method: :delete,
@@ -103,7 +103,7 @@
   <%# Monthly cost comes from the host app's billing (none on a self-host). %>
   <% if respond_to?(:app_monthly_cost) %>
     <% amount, caption = app_monthly_cost(@app) %>
-    <div class="bg-paper border-1.5 border-ink rounded-md mb-6 overflow-hidden">
+    <div class="bg-paper border border-line rounded-md mb-6 overflow-hidden">
       <div class="px-6 py-4">
         <p class="text-[10px] text-dim uppercase tracking-widest font-bold mb-3">Monthly cost</p>
         <div class="flex items-baseline justify-between">
@@ -124,7 +124,7 @@
       engine_payload = Addons::PickerOptions.for_user(current_user)
       service_type_options = engine_payload.map { |k, v| [v[:label], k] }
       label_classes = "block text-xs font-semibold text-ink-soft mb-1.5"
-      input_classes = "w-full bg-paper border-1.5 border-ink rounded-md px-3 py-2.5 font-mono text-sm text-ink placeholder-dim focus:outline-none focus:shadow-brutal-sm transition-colors"
+      input_classes = "w-full bg-paper border border-dark-line rounded-md px-3 py-2.5 font-mono text-sm text-ink placeholder-dim focus:outline-none focus:shadow-brutal-sm transition-colors"
     %>
     <%= form_with url: dashboard_addons_path, method: :post, class: "space-y-5",
                   data: { controller: "addon-tier-picker",
@@ -136,7 +136,7 @@
 
       <div>
         <label class="<%= label_classes %>">Attached to</label>
-        <div class="border-1.5 border-ink bg-bg rounded-md px-4 py-2.5 font-mono text-sm text-ink">
+        <div class="border border-line bg-bg rounded-md px-4 py-2.5 font-mono text-sm text-ink">
           <%= @app.name %> <span class="text-dim">· <%= @app.server.name %></span>
         </div>
         <p class="text-[11px] text-dim mt-1">Linked automatically; runs on the same server.</p>
@@ -160,7 +160,7 @@
             the dedicated DatabaseProvisioner path. %>
         <%= hidden_field_tag "mode", "shared", data: { "addon-tier-picker-target": "tierInput" } %>
         <div class="grid grid-cols-1 gap-2" data-addon-tier-picker-target="cards">
-          <div class="text-xs text-dim px-3 py-2">Loading options…</div>
+          <div class="text-xs text-dim px-3 py-2"><%= t("common.loading_options") %></div>
         </div>
       </div>
 
@@ -188,7 +188,7 @@
 
       <div class="flex items-center gap-2 pt-2">
         <button type="submit" class="flex-1 <%= Atoms::ButtonComponent.new(variant: :primary, size: :md).classes %>">Create add-on</button>
-        <button type="button" data-action="click->slide-panel#close" class="<%= Atoms::ButtonComponent.new(variant: :ghost, size: :md).classes %>">Cancel</button>
+        <button type="button" data-action="click->slide-panel#close" class="<%= Atoms::ButtonComponent.new(variant: :ghost, size: :md).classes %>"><%= t("common.cancel") %></button>
       </div>
     <% end %>
   <% end %>

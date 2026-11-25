@@ -46,7 +46,7 @@
   </div>
 
   <% if @buckets.empty? %>
-    <div class="border-1.5 border-warn bg-warn-soft rounded-md px-5 py-4 text-xs text-ink">
+    <div class="border border-warn bg-warn-soft rounded-md px-5 py-4 text-xs text-ink">
       No request data yet · request counts arrive with the host heartbeat every minute · check back shortly.
     </div>
   <% end %>
@@ -81,7 +81,7 @@
   </div>
 
   <%# ── Req-rate sparkline ──────────────────────────────────── %>
-  <div class="bg-paper border-1.5 border-ink rounded-md px-6 py-5">
+  <div class="bg-paper border border-line rounded-md px-6 py-5">
     <div class="text-[10px] text-dim tracking-widest uppercase font-bold mb-2">Req rate · 24h</div>
     <% if @buckets.any? %>
       <svg viewBox="0 0 <%= spark_w %> <%= spark_h %>" preserveAspectRatio="none" class="w-full h-14">
@@ -98,7 +98,7 @@
   </div>
 
   <%# ── p50/p95 latency chart ───────────────────────────────── %>
-  <div class="bg-paper border-1.5 border-ink rounded-md px-6 py-5">
+  <div class="bg-paper border border-line rounded-md px-6 py-5">
     <div class="flex items-baseline justify-between mb-2">
       <div class="text-[10px] text-dim tracking-widest uppercase font-bold">Latency (ms) · 24h</div>
       <div class="text-[10px] text-dim flex items-center gap-4">
@@ -121,7 +121,7 @@
   </div>
 
   <%# ── Recent slow requests ─────────────────────────────────── %>
-  <div class="bg-paper border-1.5 border-ink rounded-md overflow-hidden">
+  <div class="bg-paper border border-line rounded-md overflow-hidden">
     <div class="px-6 py-4 border-b border-line">
       <h2 class="font-headline text-base font-bold text-ink">Slow requests</h2>
       <p class="text-xs text-dim mt-1">Top 10 by response time · last hour · raw request samples</p>

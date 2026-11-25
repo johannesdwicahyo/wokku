@@ -1,25 +1,25 @@
 import { Controller } from "@hotwired/stimulus"
 
-// ⌘K / Ctrl+K command menu (U6). A global keyboard-driven palette that
-// fuzzy-filters navigation destinations, jump-to-app results (live from the
-// existing /dashboard/apps/search JSON endpoint), and — when viewing an app —
-// that app's actions (Open / Deploy / Restart / Stop).
-//
-// Reuses established patterns: app_search_controller's debounced same-origin
-// fetch + XSS-safe DOM rendering (build nodes, never innerHTML), and
-// slide_panel_controller's Esc-dismiss + focus-trap + focus-restore.
+// ⌘K / Ctrl+K command palette. Groups, in order: Apps (live from searchUrl),
+// Add-ons, Actions (current app), Go to (every rail destination + Team, language, sign out).
+// XSS-safe: nodes are built, never innerHTML.
 //
 // Values on the controller root:
-//   nav       — [{ label, href, group }]  static nav destinations
-//   searchUrl — "/dashboard/apps/search"  apps JSON endpoint
-//   app       — { name, open, deploy, restart, stop } or {}  current app context
-//   labels    — { nav, apps, actions, placeholder, empty }   i18n section text
+//   nav       — [{ label, href, method? }]   "Go to"; method "post"/"delete" submits a CSRF form
+//   addons    — [{ label, href, state }]     state = StatusLight state
+//   searchUrl — apps JSON endpoint; absent = no live app search (admin)
+//   app       — { name, open, deploy, restart, stop } or {}
+//   states    — { state: "css classes" }     StatusLightComponent::STATES
+//   labels    — { status: {state: text}, nav, apps, addons, actions, open, deploy, restart, stop, placeholder, empty }
+//               (open/deploy/restart/stop contain %{name})
 export default class extends Controller {
   static targets = ["dialog", "backdrop", "input", "list"]
   static values = {
     nav: { type: Array, default: [] },
-    searchUrl: { type: String, default: "/dashboard/apps/search" },
+    addons: { type: Array, default: [] },
+    searchUrl: { type: String, default: "" },
     app: { type: Object, default: {} },
+    states: { type: Object, default: {} },
     labels: { type: Object, default: {} }
   }
 
@@ -70,9 +70,10 @@ export default class extends Controller {
   }
 
   onTriggerClick(event) {
-    if (event.target.closest("[data-command-menu-open]")) {
+    const opener = event.target.closest("[data-command-menu-open]")
+    if (opener) {
       event.preventDefault()
-      this.open()
+      this.open(opener)
     }
   }
 
@@ -80,9 +81,10 @@ export default class extends Controller {
     return !this.dialogTarget.classList.contains("hidden")
   }
 
-  open() {
+  // opener: the clicked trigger (Safari/iOS don't focus tapped buttons, so activeElement is body).
+  open(opener) {
     if (this.isOpen()) return
-    this.previouslyFocused = document.activeElement
+    this.previouslyFocused = opener || document.activeElement
     this.backdropTarget.classList.remove("hidden")
     this.dialogTarget.classList.remove("hidden")
     this.inputTarget.value = ""
@@ -95,13 +97,15 @@ export default class extends Controller {
 
   close() {
     if (!this.isOpen()) return
+    this.ticket = (this.ticket || 0) + 1 // drop in-flight searches
     this.dialogTarget.classList.add("hidden")
     this.backdropTarget.classList.add("hidden")
     if (this.trapHandler) {
       this.dialogTarget.removeEventListener("keydown", this.trapHandler)
       this.trapHandler = null
     }
-    this.previouslyFocused?.focus?.()
+    if (this.previouslyFocused?.isConnected) this.previouslyFocused.focus()
+    this.previouslyFocused = null
   }
 
   backdropClick(event) {
@@ -110,31 +114,35 @@ export default class extends Controller {
 
   // ── command assembly ──────────────────────────────────────────────
 
-  // Base list shown before typing: nav destinations + this app's actions.
   renderBaseCommands() {
-    const cmds = this.navCommands().concat(this.actionCommands())
-    this.commands = cmds
-    this.paint(cmds)
+    this.commands = this.localCommands("")
+    this.paint(this.commands)
   }
 
-  navCommands() {
-    return this.navValue.map((n) => ({
-      type: "nav",
-      section: this.labelsValue.nav || "Navigate",
-      label: n.label,
-      href: n.href
+  // Add-ons, Actions, Go to filtered by q (Apps are fetched separately).
+  localCommands(q) {
+    const L = this.labelsValue
+    const keep = (c) => !q || c.label.toLowerCase().includes(q)
+    const addons = this.addonsValue.map((a) => ({
+      type: "nav", section: L.addons, label: a.label, href: a.href, state: a.state, meta: this.statusText(a.state)
     }))
+    const nav = this.navValue.map((n) => ({
+      type: n.method ? "form" : "nav", method: n.method, section: L.nav, label: n.label, href: n.href
+    }))
+    return addons.concat(this.actionCommands(), nav).filter(keep)
   }
 
   actionCommands() {
     const app = this.appValue
     if (!app || !app.name) return []
-    const section = this.labelsValue.actions || "Actions"
+    const L = this.labelsValue
+    const section = L.actions
+    const fmt = (t) => (t || "").replace("%{name}", app.name)
     const out = []
-    if (app.open) out.push({ type: "nav", section, label: `Open ${app.name}`, href: app.open })
-    if (app.deploy) out.push({ type: "post", section, label: `Deploy ${app.name}`, href: app.deploy })
-    if (app.restart) out.push({ type: "post", section, label: `Restart ${app.name}`, href: app.restart })
-    if (app.stop) out.push({ type: "post", section, label: `Stop ${app.name}`, href: app.stop })
+    if (app.open) out.push({ type: "nav", section, label: fmt(L.open), href: app.open })
+    if (app.deploy) out.push({ type: "form", method: "post", section, label: fmt(L.deploy), href: app.deploy })
+    if (app.restart) out.push({ type: "form", method: "post", section, label: fmt(L.restart), href: app.restart })
+    if (app.stop) out.push({ type: "form", method: "post", section, label: fmt(L.stop), href: app.stop })
     return out
   }
 
@@ -147,19 +155,16 @@ export default class extends Controller {
 
   async filter() {
     const q = this.inputTarget.value.trim().toLowerCase()
-    const base = this.navCommands().concat(this.actionCommands())
-    const filteredBase = q ? base.filter((c) => c.label.toLowerCase().includes(q)) : base
-
-    let appCmds = []
-    if (q.length >= 2) {
-      appCmds = await this.fetchApps(q)
-    }
-    const cmds = filteredBase.concat(appCmds)
-    this.commands = cmds
-    this.paint(cmds)
+    const ticket = (this.ticket = (this.ticket || 0) + 1)
+    const apps = q.length >= 2 ? await this.fetchApps(q) : []
+    if (ticket !== this.ticket || !this.isOpen()) return // a newer keystroke or close won
+    // Apps first, then the local groups (already in Add-ons / Actions / Go to order).
+    this.commands = apps.concat(this.localCommands(q))
+    this.paint(this.commands)
   }
 
   async fetchApps(q) {
+    if (!this.searchUrlValue) return []
     try {
       const res = await fetch(`${this.searchUrlValue}?q=${encodeURIComponent(q)}`, {
         headers: { Accept: "application/json" },
@@ -167,14 +172,19 @@ export default class extends Controller {
       })
       if (!res.ok) return []
       const apps = await res.json()
-      const section = this.labelsValue.apps || "Apps"
-      return apps.map((a) => ({ type: "nav", section, label: a.name, meta: a.status, href: a.url }))
+      return apps.map((a) => ({
+        type: "nav", section: this.labelsValue.apps, label: a.name, meta: this.statusText(a.status), state: a.status, href: a.url
+      }))
     } catch {
       return []
     }
   }
 
-  // ── rendering (XSS-safe: build nodes, never innerHTML) ─────────────
+  statusText(state) {
+    return (this.labelsValue.status || {})[state] || state
+  }
+
+  // ── rendering ──────────────────────────────────────────────────────
 
   paint(cmds) {
     this.selectedIndex = cmds.length ? 0 : -1
@@ -182,9 +192,10 @@ export default class extends Controller {
 
     if (!cmds.length) {
       const empty = document.createElement("li")
-      empty.className = "px-4 py-3 text-sm text-dim"
-      empty.textContent = this.labelsValue.empty || "No matches"
+      empty.className = "px-4 py-5 text-muted"
+      empty.textContent = this.labelsValue.empty
       this.listTarget.appendChild(empty)
+      this.inputTarget.removeAttribute("aria-activedescendant")
       return
     }
 
@@ -193,21 +204,24 @@ export default class extends Controller {
       if (cmd.section !== lastSection) {
         lastSection = cmd.section
         const head = document.createElement("li")
-        head.className = "px-4 pt-3 pb-1 text-[10.5px] font-bold uppercase tracking-[.06em] text-dim"
+        head.className = "px-4 pt-2.5 pb-1.5 font-mono text-[11px] uppercase tracking-[.12em] text-muted"
         head.setAttribute("role", "presentation")
         head.textContent = cmd.section
         this.listTarget.appendChild(head)
       }
       const row = document.createElement("li")
+      row.id = `${this.listTarget.id}-opt-${i}`
       row.setAttribute("role", "option")
       row.dataset.index = String(i)
-      row.className = "flex items-center justify-between px-4 py-2 text-sm text-ink cursor-pointer rounded-md mx-1"
+      row.className = "flex items-center gap-3 px-4 py-2.5 text-ink cursor-pointer border-l-2 border-transparent aria-selected:bg-live/10 aria-selected:border-live"
+      if (cmd.state) row.appendChild(this.light(cmd.state))
       const label = document.createElement("span")
+      label.className = "flex-1 min-w-0 truncate"
       label.textContent = cmd.label
       row.appendChild(label)
       if (cmd.meta) {
         const meta = document.createElement("span")
-        meta.className = "text-[11px] text-dim"
+        meta.className = "font-mono text-[11px] tracking-[.08em] text-muted whitespace-nowrap"
         meta.textContent = cmd.meta
         row.appendChild(meta)
       }
@@ -218,12 +232,23 @@ export default class extends Controller {
     this.highlight()
   }
 
+  // Status light (decorative: the state is also written as text for apps).
+  light(state) {
+    const el = document.createElement("span")
+    const classes = this.statesValue[state] || this.statesValue.created || ""
+    el.className = `ic wk-light inline-block shrink-0 w-2 h-2 ${classes}`
+    el.setAttribute("aria-hidden", "true")
+    return el
+  }
+
   highlight() {
+    let active = null
     this.listTarget.querySelectorAll('[role="option"]').forEach((el) => {
       const on = Number(el.dataset.index) === this.selectedIndex
-      el.classList.toggle("bg-bg-deep", on)
       el.setAttribute("aria-selected", on ? "true" : "false")
+      if (on) active = el
     })
+    if (active) this.inputTarget.setAttribute("aria-activedescendant", active.id)
   }
 
   // ── keyboard on the input ──────────────────────────────────────────
@@ -255,26 +280,30 @@ export default class extends Controller {
   activate(index) {
     const cmd = this.commands[index]
     if (!cmd) return
-    if (cmd.type === "post") {
-      this.postTo(cmd.href)
+    if (cmd.type === "form") {
+      this.submitForm(cmd.href, cmd.method)
     } else {
-      window.location.href = cmd.href
+      this.close()
+      if (window.Turbo && new URL(cmd.href, location.href).origin === location.origin) Turbo.visit(cmd.href)
+      else window.location.href = cmd.href
     }
   }
 
-  // Build + submit a CSRF-protected POST form for action commands.
-  postTo(url) {
+  // CSRF-protected form for action rows: "post" as-is, anything else via _method (Rack override).
+  submitForm(url, method) {
     const token = document.querySelector('meta[name="csrf-token"]')?.content
     const form = document.createElement("form")
     form.method = "post"
     form.action = url
-    if (token) {
+    const hidden = (name, value) => {
       const input = document.createElement("input")
       input.type = "hidden"
-      input.name = "authenticity_token"
-      input.value = token
+      input.name = name
+      input.value = value
       form.appendChild(input)
     }
+    if (token) hidden("authenticity_token", token)
+    if (method && method !== "post") hidden("_method", method)
     document.body.appendChild(form)
     form.submit()
   }
@@ -283,18 +312,8 @@ export default class extends Controller {
 
   trap(event) {
     if (event.key !== "Tab") return
-    const focusable = this.dialogTarget.querySelectorAll(
-      'input, [role="option"], button, [href], [tabindex]:not([tabindex="-1"])'
-    )
-    if (!focusable.length) return
-    const first = focusable[0]
-    const last = focusable[focusable.length - 1]
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault()
-      last.focus()
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault()
-      first.focus()
-    }
+    // Options aren't focusable; the input is the only stop, so keep focus there.
+    event.preventDefault()
+    this.inputTarget?.focus()
   }
 }

@@ -10,15 +10,15 @@
     <h1 class="font-headline text-2xl font-extrabold tracking-tight"><%= t("dashboard.workspaces.title", default: "Workspaces") %></h1>
     <%# Opens slide-panel modal; href stays as the no-JS fallback. %>
     <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, href: new_dashboard_workspace_path,
-          data: { action: "click->slide-panel#open" }) do %>+ New workspace<% end %>
+          data: { action: "click->slide-panel#open" }) do %>New workspace<% end %>
   </div>
 
-  <div class="bg-paper border-1.5 border-ink rounded-md shadow-brutal overflow-hidden">
+  <div class="bg-paper border border-line rounded-md shadow-brutal overflow-hidden">
     <div class="divide-y divide-line">
       <% @workspaces.each do |ws| %>
         <% current = ws.id == current_team.id %>
         <div class="px-3.5 py-3 flex items-center gap-3 hover:bg-bg-deep transition-colors">
-          <span class="w-[22px] h-[22px] border-1.5 border-ink rounded grid place-items-center font-extrabold text-[11px] bg-paper flex-shrink-0"><%= ws.name[0].upcase %></span>
+          <span class="w-[22px] h-[22px] border border-line rounded grid place-items-center font-extrabold text-[11px] bg-paper flex-shrink-0"><%= ws.name[0].upcase %></span>
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2 flex-wrap">
               <span class="text-sm font-semibold text-ink truncate"><%= ws.name %></span>

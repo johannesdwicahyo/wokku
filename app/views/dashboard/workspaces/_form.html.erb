@@ -5,7 +5,7 @@ Both pass `workspace` + `paid_plans` locals. %>
 <%= form_with url: dashboard_workspaces_path, method: :post, local: true,
               class: "space-y-5 font-mono text-sm" do |f| %>
   <% if flash[:alert] %>
-    <div class="border-1.5 border-danger bg-danger-soft px-4 py-2 text-danger text-xs">
+    <div class="border border-danger bg-danger-soft px-4 py-2 text-danger text-xs">
       <%= flash[:alert] %>
     </div>
   <% end %>
@@ -39,7 +39,7 @@ Both pass `workspace` + `paid_plans` locals. %>
     <%= link_to "cancel", dashboard_workspaces_path,
           data: { action: "slide-panel#close:prevent", turbo_frame: "_top" },
           class: "px-4 py-2 border border-rule-soft text-dim font-mono text-[11px] uppercase tracking-widest hover:text-ink" %>
-    <button type="submit" class="px-4 py-2 border-1.5 border-ink bg-ink text-paper font-mono text-[11px] uppercase tracking-widest">
+    <button type="submit" class="<%= Atoms::ButtonComponent.new(variant: :primary).classes %>">
       create workspace
     </button>
   </div>

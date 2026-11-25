@@ -12,59 +12,59 @@
 
   <% if @recovery_codes %>
     <% content_for :head do %><meta name="turbo-cache-control" content="no-cache"><% end %>
-    <div class="border-1.5 border-ink bg-paper rounded-md p-6 mb-6">
+    <div class="border border-line bg-paper rounded-md p-6 mb-6">
       <h3 class="text-sm font-bold text-ink mb-2"><%= t("auth.two_factor.recovery_codes") %></h3>
       <p class="text-xs text-danger font-semibold mb-4"><%= t("auth.two_factor.codes_save_now") %></p>
       <ul class="grid grid-cols-2 gap-2 font-mono text-sm text-ink">
         <% @recovery_codes.each do |code| %>
-          <li class="bg-bg border-1.5 border-ink rounded-md px-2 py-1 text-center select-all"><%= code %></li>
+          <li class="bg-bg border border-line-strong rounded-md px-2 py-1 text-center select-all"><%= code %></li>
         <% end %>
       </ul>
     </div>
   <% end %>
 
   <% if current_user.two_factor_enabled? %>
-    <div class="border-1.5 border-success bg-success-soft rounded-md p-6 mb-6">
+    <div class="border border-success bg-success-soft rounded-md p-6 mb-6">
       <h3 class="text-sm font-bold text-ink mb-3"><%= t("auth.two_factor.enabled") %></h3>
       <p class="text-xs text-ink-soft mb-4"><%= t("auth.two_factor.enabled_desc") %></p>
       <%= form_with url: disable_dashboard_two_factor_path, method: :delete, data: { turbo: false }, class: "space-y-3" do |f| %>
         <div>
           <label for="disable_otp_code" class="block text-xs font-semibold text-ink-soft mb-1"><%= t("auth.two_factor.enter_to_disable_or_recovery") %></label>
-          <%= f.text_field :otp_code, id: "disable_otp_code", class: "w-full bg-paper border-1.5 border-ink rounded-md px-3 py-2 text-sm text-ink focus:outline-none focus:shadow-brutal-sm", placeholder: "000000", maxlength: 32, autocomplete: "one-time-code" %>
+          <%= f.text_field :otp_code, id: "disable_otp_code", class: "w-full bg-paper border border-dark-line rounded-md px-3 py-2 text-sm text-ink focus:outline-none focus:shadow-brutal-sm", placeholder: "000000", maxlength: 32, autocomplete: "one-time-code" %>
         </div>
         <%= f.submit t("auth.two_factor.disable"), class: Atoms::ButtonComponent.new(variant: :danger, size: :md).classes %>
       <% end %>
     </div>
 
-    <div class="border-1.5 border-ink bg-paper rounded-md p-6 mb-6">
+    <div class="border border-line bg-paper rounded-md p-6 mb-6">
       <h3 class="text-sm font-bold text-ink mb-2"><%= t("auth.two_factor.recovery_codes") %></h3>
       <p class="text-xs text-ink-soft mb-1"><%= t("auth.two_factor.recovery_codes_desc") %></p>
       <p class="text-xs text-dim mb-4"><%= t("auth.two_factor.codes_remaining", count: current_user.otp_backup_codes.to_a.size) %></p>
       <%= form_with url: regenerate_codes_dashboard_two_factor_path, method: :post, data: { turbo: false }, class: "space-y-3" do |f| %>
         <div>
           <label for="regenerate_otp_code" class="block text-xs font-semibold text-ink-soft mb-1"><%= t("auth.two_factor.enter_to_regenerate") %></label>
-          <%= f.text_field :otp_code, id: "regenerate_otp_code", class: "w-full bg-paper border-1.5 border-ink rounded-md px-3 py-2 text-sm text-ink focus:outline-none focus:shadow-brutal-sm", placeholder: "000000", maxlength: 32, autocomplete: "one-time-code" %>
+          <%= f.text_field :otp_code, id: "regenerate_otp_code", class: "w-full bg-paper border border-dark-line rounded-md px-3 py-2 text-sm text-ink focus:outline-none focus:shadow-brutal-sm", placeholder: "000000", maxlength: 32, autocomplete: "one-time-code" %>
         </div>
         <%= f.submit t("auth.two_factor.regenerate"), class: Atoms::ButtonComponent.new(variant: :outline, size: :md).classes %>
       <% end %>
     </div>
   <% else %>
-    <div class="border-1.5 border-ink bg-paper rounded-md p-6 mb-6">
+    <div class="border border-line bg-paper rounded-md p-6 mb-6">
       <h3 class="text-sm font-bold text-ink mb-4">1. <%= t("auth.two_factor.scan_qr") %></h3>
       <p class="text-xs text-dim mb-4"><%= t("auth.two_factor.scan_qr_desc") %></p>
-      <div class="bg-white border-1.5 border-ink rounded-md p-4 inline-block mb-4">
+      <div class="bg-white border border-line rounded-md p-4 inline-block mb-4">
         <%= sanitize @qr_code,
             tags: %w[svg g path rect circle title desc],
             attributes: %w[xmlns width height viewBox fill stroke stroke-width d x y rx ry cx cy r transform shape-rendering version] %>
       </div>
     </div>
 
-    <div class="border-1.5 border-ink bg-paper rounded-md p-6">
+    <div class="border border-line bg-paper rounded-md p-6">
       <h3 class="text-sm font-bold text-ink mb-4">2. <%= t("auth.two_factor.enter_code") %></h3>
       <%= form_with url: enable_dashboard_two_factor_path, method: :post, data: { turbo: false }, class: "space-y-4" do |f| %>
         <div>
           <label class="block text-xs font-semibold text-ink-soft mb-1"><%= t("auth.two_factor.six_digit") %></label>
-          <%= f.text_field :otp_code, class: "w-full bg-paper border-1.5 border-ink rounded-md px-3 py-2 text-sm text-ink text-center text-lg tracking-[0.5em] focus:outline-none focus:shadow-brutal-sm", placeholder: "000000", maxlength: 6, autocomplete: "one-time-code" %>
+          <%= f.text_field :otp_code, class: "w-full bg-paper border border-dark-line rounded-md px-3 py-2 text-sm text-ink text-center text-lg tracking-[0.5em] focus:outline-none focus:shadow-brutal-sm", placeholder: "000000", maxlength: 6, autocomplete: "one-time-code" %>
         </div>
         <%= f.submit t("auth.two_factor.enable"), class: Atoms::ButtonComponent.new(variant: :primary, size: :md, class: "w-full justify-center").classes %>
       <% end %>

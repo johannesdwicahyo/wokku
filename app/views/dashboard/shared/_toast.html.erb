@@ -13,7 +13,7 @@
   when "alert", "error"
     "bg-danger-soft border-danger text-ink"
   else
-    "bg-paper border-ink text-ink"
+    "bg-paper border-line text-ink"
   end
   glyph = level.to_s.in?([ "alert", "error" ]) ? "!" : "✓"
   glyph_color = level.to_s.in?([ "alert", "error" ]) ? "text-danger" : "text-success"
@@ -21,7 +21,7 @@
 <div id="<%= id %>"
      data-controller="toast"
      data-toast-duration-value="5000"
-     class="pointer-events-auto w-80 max-w-[90vw] border-1.5 shadow-brutal-sm <%= classes %> overflow-hidden"
+     class="pointer-events-auto w-80 max-w-[90vw] border shadow-brutal-sm <%= classes %> overflow-hidden"
      style="animation: toast-in 200ms ease-out;">
   <div class="px-4 py-3 flex items-start gap-3 font-mono">
     <span class="<%= glyph_color %> text-sm font-bold mt-0.5"><%= glyph %></span>

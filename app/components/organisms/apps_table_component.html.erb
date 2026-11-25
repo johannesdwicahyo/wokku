@@ -1,8 +1,8 @@
 <%# app/components/organisms/apps_table_component.html.erb %>
-<div class="bg-paper border-1.5 border-ink rounded-md shadow-brutal overflow-x-auto">
+<div class="bg-paper border border-line rounded-md shadow-brutal overflow-x-auto">
   <table class="w-full text-[13.5px]">
     <thead>
-      <tr class="bg-bg border-b-1.5 border-ink text-[10.5px] font-bold uppercase tracking-[.06em] text-dim text-left">
+      <tr class="bg-bg border-b border-line text-[10.5px] font-bold uppercase tracking-[.06em] text-dim text-left">
         <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.apps.columns.app", default: "App") %></th>
         <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.apps.columns.status", default: "Status") %></th>
         <th scope="col" class="hidden sm:table-cell px-3.5 py-2.5 font-bold"><%= t("dashboard.apps.columns.size", default: "Size") %></th>
@@ -25,7 +25,7 @@
             class="border-b border-line last:border-b-0 hover:bg-bg-deep transition-colors cursor-pointer">
           <td class="px-3.5 py-2.5">
             <%= link_to dashboard_app_path(app), class: "flex items-center gap-2.5 font-semibold hover:underline" do %>
-              <span class="w-[22px] h-[22px] border-1.5 border-ink rounded grid place-items-center font-extrabold text-[11px] bg-paper flex-shrink-0"><%= app_mark(app) %></span>
+              <span class="w-[22px] h-[22px] border border-line rounded grid place-items-center font-extrabold text-[11px] bg-paper flex-shrink-0"><%= app_mark(app) %></span>
               <%= app.name %>
             <% end %>
             <% if (stats = stats_line(app)) %>
@@ -40,7 +40,7 @@
       <% end %>
       <tr class="border-t border-dashed border-faint hover:bg-bg-deep transition-colors">
         <td colspan="5" class="px-3.5 py-2.5">
-          <%= link_to t("dashboard.apps.new_app"), new_dashboard_app_path, data: { turbo_frame: "_top" },
+          <%= link_to "+ #{t("dashboard.apps.new_app")}", new_dashboard_app_path, data: { turbo_frame: "_top" },
                 class: "block text-[13px] font-semibold text-faint hover:text-ink" %>
         </td>
       </tr>

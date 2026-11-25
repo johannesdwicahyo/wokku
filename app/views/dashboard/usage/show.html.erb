@@ -41,7 +41,7 @@
 
   <%# ── Trial / unpaid invoice banner ───────────────────────── %>
   <% if @upcoming_unpaid %>
-    <div class="border-1.5 border-warn bg-warn-soft px-5 py-4 flex flex-wrap items-center justify-between gap-3">
+    <div class="border border-warn bg-warn-soft px-5 py-4 flex flex-wrap items-center justify-between gap-3">
       <div>
         <div class="font-mono text-[10px] text-warn tracking-widest uppercase mb-1">// unpaid_invoice()</div>
         <p class="font-mono text-sm text-ink">
@@ -54,7 +54,7 @@
   <% end %>
 
   <%# ── Plan-included resources ─────────────────────────────── %>
-  <div class="border-1.5 border-ink bg-paper px-6 py-6">
+  <div class="border border-line bg-paper px-6 py-6">
     <div class="font-mono text-[10px] text-dim tracking-widest uppercase mb-3">// plan_includes()</div>
     <h2 class="font-mono text-xl text-ink font-semibold tracking-tighter mb-4"><%= @plan.name %> · what you get</h2>
 
@@ -69,7 +69,7 @@
         used = @box_usage[size_key].to_i
         next if included.zero? && used.zero?
       %>
-        <div class="border-1.5 border-ink bg-bg px-4 py-3">
+        <div class="border border-line bg-bg px-4 py-3">
           <div class="font-mono text-[10px] text-dim tracking-widest uppercase mb-1.5"><%= label %></div>
           <div class="font-mono text-2xl text-ink font-semibold tracking-tighter">
             <%= used %><span class="text-sm text-dim">/<%= included %></span>
@@ -98,14 +98,14 @@
     <div class="mt-5 pt-5 border-t border-rule-soft">
       <div class="font-mono text-[10px] text-dim tracking-widest uppercase mb-3">// addon_bundle()</div>
       <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <div class="border-1.5 border-ink bg-bg px-4 py-3">
+        <div class="border border-line bg-bg px-4 py-3">
           <div class="font-mono text-[10px] text-dim tracking-widest uppercase mb-1.5">Postgres</div>
           <div class="font-mono text-2xl text-ink font-semibold tracking-tighter">
             <%= @bundle_usage[:db_count] %><span class="text-sm text-dim">/1</span>
           </div>
           <div class="font-mono text-[10px] text-dim mt-1">// shared · up to <%= fmt_mb.call(@plan.db_bundle_mb) %></div>
         </div>
-        <div class="border-1.5 border-ink bg-bg px-4 py-3">
+        <div class="border border-line bg-bg px-4 py-3">
           <div class="font-mono text-[10px] text-dim tracking-widest uppercase mb-1.5">Redis</div>
           <div class="font-mono text-2xl text-ink font-semibold tracking-tighter">
             <%= @bundle_usage[:redis_count] %><span class="text-sm text-dim">/1</span>
@@ -113,7 +113,7 @@
           <div class="font-mono text-[10px] text-dim mt-1">// dedicated · up to <%= fmt_mb.call(@plan.redis_bundle_mb) %></div>
         </div>
         <% if (storage = @bundle_usage[:storage]) %>
-        <div class="border-1.5 border-ink bg-bg px-4 py-3">
+        <div class="border border-line bg-bg px-4 py-3">
           <div class="font-mono text-[10px] text-dim tracking-widest uppercase mb-1.5">Object Storage</div>
           <div class="font-mono text-2xl text-ink font-semibold tracking-tighter">
             <%= number_with_precision(storage[0], precision: 1) %> GB <span class="text-sm text-dim">of <%= storage[1] %> GB</span>
@@ -127,7 +127,7 @@
 
   <%# ── Per-app usage table ─────────────────────────────────── %>
   <% if @apps.any? %>
-    <div class="border-1.5 border-ink bg-paper px-6 py-6">
+    <div class="border border-line bg-paper px-6 py-6">
       <div class="font-mono text-[10px] text-dim tracking-widest uppercase mb-3">// usage_by_app()</div>
       <h2 class="font-mono text-xl text-ink font-semibold tracking-tighter mb-4">Apps</h2>
 
@@ -156,7 +156,7 @@
       </div>
     </div>
   <% else %>
-    <div class="border-1.5 border-rule-soft bg-paper px-6 py-8 text-center">
+    <div class="border border-rule-soft bg-paper px-6 py-8 text-center">
       <div class="font-mono text-[10px] text-dim tracking-widest uppercase mb-2">// no_apps_yet()</div>
       <p class="font-mono text-sm text-ink-soft mb-4">You haven't deployed any apps yet. Once you do, they'll appear here with their resource usage.</p>
       <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, mono: true,

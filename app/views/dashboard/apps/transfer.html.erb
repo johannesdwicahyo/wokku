@@ -5,7 +5,7 @@
 <%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :settings) do %>
   <%= render Organisms::AppSettingsComponent.new(app: @app, active: :transfer) do %>
 
-    <div class="border-1.5 border-ink bg-paper rounded-md overflow-hidden">
+    <div class="border border-line bg-paper rounded-md overflow-hidden">
       <div class="px-6 py-4 border-b border-line">
         <h2 class="font-headline text-base font-bold text-ink">Transfer ownership</h2>
         <p class="text-xs text-dim mt-1">Hand off this app to another user — they pick up future billing once they accept.</p>
@@ -35,7 +35,7 @@
             <input type="email" name="email" id="transfer_email" required
                    placeholder="someone@example.com"
                    <%= "disabled" if @pending_transfer %>
-                   class="w-full border-1.5 border-ink bg-paper rounded-md px-3 py-2 text-sm text-ink placeholder:text-dim focus:outline-none focus:shadow-brutal-sm transition disabled:opacity-50">
+                   class="w-full border border-dark-line bg-paper rounded-md px-3 py-2 text-sm text-ink placeholder:text-dim focus:outline-none focus:shadow-brutal-sm transition disabled:opacity-50">
             <p class="text-xs text-dim mt-2">
               The recipient must already have a Wokku account. They'll get an email and can accept from their inbox at /dashboard/app_transfers.
             </p>

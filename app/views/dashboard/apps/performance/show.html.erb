@@ -16,9 +16,9 @@
       <% end %>
     </div>
 
-    <div class="mt-8 bg-paper border-1.5 border-ink rounded-md p-4">
+    <div class="mt-8 bg-paper border border-line rounded-md p-4">
       <h2 class="font-headline text-xs font-bold uppercase tracking-wide text-ink mb-2">Install snippet</h2>
-      <pre class="bg-bg-deep border-1.5 border-ink rounded-md p-3 overflow-x-auto text-xs font-mono"><code><%= @snippet %></code></pre>
+      <pre class="bg-bg-deep border border-line rounded-md p-3 overflow-x-auto text-xs font-mono"><code><%= @snippet %></code></pre>
       <%= button_to t("dashboard.performance.rotate_token", default: "Rotate token"),
                     rotate_token_dashboard_app_performance_path(@app),
                     method: :post,
