@@ -82,7 +82,7 @@
   <% end %>
 
   <div class="flex items-center gap-2 pt-2">
-    <%= f.submit "Create Add-on", class: "flex-1 py-2.5 px-4 bg-live text-[#03140A] hover:bg-live-hover font-mono text-sm border border-live  transition-all cursor-pointer text-center disabled:opacity-50", disabled: apps.empty? %>
+    <%= f.submit "Create Add-on", class: "#{Atoms::ButtonComponent.new(variant: :primary).classes} flex-1 text-center disabled:opacity-50", disabled: apps.empty? %>
     <button type="button" data-action="click->slide-panel#close" class="py-2.5 px-4 font-mono text-sm text-ink border border-line-strong bg-paper hover:bg-bg-deep transition-colors cursor-pointer"><%= t("common.cancel") %></button>
   </div>
 <% end %>

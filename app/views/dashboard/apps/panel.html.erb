@@ -35,7 +35,7 @@
                 data: { inline_edit_target: "form", action: "keydown.esc->inline-edit#cancel" },
                 class: "hidden flex items-center gap-1.5" do |f| %>
             <%= f.text_field :deploy_branch, value: @app.deploy_branch, data: { inline_edit_target: "input" },
-                  class: "w-28 border border-line-strong rounded px-1.5 py-0.5 text-[13px] bg-paper focus:outline-none focus:border-accent" %>
+                  class: "w-28 border border-dark-line rounded px-1.5 py-0.5 text-[13px] bg-paper focus:outline-none focus:border-accent" %>
             <button type="submit" class="text-ink font-semibold hover:underline"><%= t("common.save") %></button>
             <button type="button" data-action="click->inline-edit#cancel" class="text-dim hover:text-ink"><%= t("common.cancel") %></button>
           <% end %>

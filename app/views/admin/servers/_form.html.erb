@@ -47,7 +47,7 @@
   </details>
 
   <div class="flex items-center gap-3 pt-2">
-    <%= f.submit "Add Server", class: "flex-1 py-2 px-4 bg-live text-[#03140A] hover:bg-live-hover font-mono text-sm font-semibold border border-live  transition-all cursor-pointer text-center" %>
+    <%= f.submit "Add Server", class: "#{Atoms::ButtonComponent.new(variant: :primary).classes} flex-1 text-center" %>
     <%# Works in both homes: closes the index slide-panel instantly when
         that controller is present, and plain-navigates from /new. %>
     <%= link_to t("common.cancel"), admin_servers_path, data: { action: "click->slide-panel#close" }, class: "py-2 px-4 font-mono text-sm text-dim hover:text-ink transition cursor-pointer" %>

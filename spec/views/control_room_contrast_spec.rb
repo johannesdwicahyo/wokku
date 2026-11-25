@@ -21,13 +21,13 @@ RSpec.describe "control-room contrast" do
   # (f.text_field, select_tag, text_area_tag, ...), up to its closing %>.
   field = /<(?:input|select|textarea)\b(?:[^>"']|"[^"]*"|'[^']*')*>|<%=\s*(?:\w+\.)?(?:#{field_helpers})(?:_tag)?\b.*?%>/m
   # line / rule (and their -soft) are ~1.2:1; line-strong is not matched here.
-  faint = /\bborder-(?:line|rule)(?:-soft)?(?![\w-])/
+  faint = /(?<![\w:-])border-(?:line(?:-strong)?|rule)(?:-soft)?(?![\w-])/
 
   line_of = ->(text, offset) { text[0, offset].count("\n") + 1 }
 
   it "no form field anywhere uses a faint (line/rule) border" do
     scanned = 0
-    offenders = Dir["#{root}/app/{views,components}/**/*.erb"].flat_map do |f|
+    offenders = Dir["#{root}/app/{views,components}/**/*.erb", "#{root}/app/helpers/**/*.rb", "#{root}/app/javascript/**/*.js"].flat_map do |f|
       text = File.read(f)
       text.to_enum(:scan, field).filter_map do
         m = Regexp.last_match
@@ -37,7 +37,7 @@ RSpec.describe "control-room contrast" do
       end
     end
     expect(scanned).to be > 50 # the pattern still finds the app's fields
-    expect(offenders).to be_empty, "faint field borders (need 3:1, use border-dark-line or brighter):\n#{offenders.join("\n")}"
+    expect(offenders).to be_empty, "faint field borders (need 3:1, use border-dark-line or brighter; line-strong is ~1.6:1):\n#{offenders.join("\n")}"
   end
 
   it "modal and drawer backdrops darken instead of washing the page with ink (near-white)" do
@@ -83,6 +83,16 @@ RSpec.describe "control-room contrast" do
       end
     end
     expect(offenders).to be_empty
+  end
+
+  it "the primary recipe lives only in the button components" do
+    allow = %w[app/components/atoms/button_component.rb app/components/atoms/optimistic_button_component.rb]
+    offenders = Dir["#{root}/app/**/*.{erb,rb,js}"].flat_map do |f|
+      rel = f.delete_prefix("#{root}/")
+      next [] if allow.include?(rel)
+      File.read(f).lines.each_with_index.filter_map { |l, i| "#{rel}:#{i + 1}" if l.include?("bg-live text-[#03140A]") }
+    end
+    expect(offenders).to be_empty, "copies of the primary recipe (use Atoms::ButtonComponent):\n#{offenders.join("\n")}"
   end
 
   it "hand-rolled solid buttons use the live primary, not bg-ink" do

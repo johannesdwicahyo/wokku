@@ -18,7 +18,7 @@
   <% elsif app.stopped? %>
     <%= button_to "> start()", start_dashboard_app_path(app), method: :post,
         data: { turbo_submits_with: "Starting…" },
-        class: "#{btn} bg-live text-[#03140A] hover:bg-live-hover" %>
+        class: "#{Atoms::ButtonComponent.new(variant: :primary).classes} #{btn}" %>
   <% else %>
     <%= button_to "> restart()", restart_dashboard_app_path(app), method: :post,
         data: { turbo_submits_with: "Restarting…" },

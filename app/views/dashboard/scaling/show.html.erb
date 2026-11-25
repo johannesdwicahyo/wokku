@@ -125,7 +125,7 @@
                 <button type="button" data-action="click->counter#decrement" class="px-3 py-2 text-ink hover:bg-bg-deep transition cursor-pointer">−</button>
                 <input type="number" name="scaling[<%= ps.process_type %>]" value="<%= ps.count %>"
                        min="0" max="10" data-counter-target="input"
-                       class="w-12 text-center bg-bg border-x border-line-strong text-ink text-sm py-2 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                       class="w-12 text-center bg-bg border-x border-dark-line text-ink text-sm py-2 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
                 <button type="button" data-action="click->counter#increment" class="px-3 py-2 text-ink hover:bg-bg-deep transition cursor-pointer">+</button>
               </div>
               <span class="text-xs text-dim w-12"><%= ps.count == 1 ? "1 dyno" : "#{ps.count} dynos" %></span>
@@ -133,7 +133,7 @@
               <div class="flex items-center border border-line overflow-hidden opacity-40 cursor-not-allowed" title="Upgrade to Standard or higher to scale horizontally">
                 <div class="px-3 py-2 text-dim">−</div>
                 <input type="number" name="scaling[<%= ps.process_type %>]" value="<%= ps.count %>" readonly
-                       class="w-12 text-center bg-bg border-x border-line-strong text-dim text-sm py-2 cursor-not-allowed">
+                       class="w-12 text-center bg-bg border-x border-dark-line text-dim text-sm py-2 cursor-not-allowed">
                 <div class="px-3 py-2 text-dim">+</div>
               </div>
               <span class="text-xs text-dim w-12"><%= ps.count == 1 ? "1 dyno" : "#{ps.count} dynos" %></span>
@@ -144,7 +144,7 @@
 
       <% if can_scale %>
         <div class="px-6 py-4 bg-bg-deep">
-          <%= f.submit "Apply Changes", class: "px-4 py-2 bg-live text-[#03140A] hover:bg-live-hover font-mono text-sm font-semibold border border-live  transition-all cursor-pointer" %>
+          <%= f.submit "Apply Changes", class: "#{Atoms::ButtonComponent.new(variant: :primary).classes}" %>
         </div>
       <% end %>
     <% end %>

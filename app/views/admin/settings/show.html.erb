@@ -12,11 +12,11 @@
       <div>
         <%= f.label :body_scripts, "Scripts", class: label %>
         <%= f.text_area :body_scripts, rows: 10, spellcheck: false,
-              class: "w-full bg-bg border border-line-strong text-ink font-mono text-sm px-3 py-2 focus:outline-none focus:border-accent",
+              class: "w-full bg-bg border border-dark-line text-ink font-mono text-sm px-3 py-2 focus:outline-none focus:border-accent",
               placeholder: %(<script src="https://example.com/widget.js" async></script>) %>
       </div>
 
-      <%= f.submit "Save Settings", class: "px-4 py-2 bg-live text-[#03140A] hover:bg-live-hover font-mono text-sm border border-live  transition-all cursor-pointer" %>
+      <%= f.submit "Save Settings", class: "#{Atoms::ButtonComponent.new(variant: :primary).classes}" %>
     <% end %>
   </div>
 </div>

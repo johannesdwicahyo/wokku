@@ -4,6 +4,7 @@
 <% if current_user&.tour_active? && wokku_cloud? %>
   <div data-controller="onboarding-tour"
        data-onboarding-tour-step-value="<%= current_user.onboarding_step %>"
+       data-onboarding-tour-button-class-value="<%= Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>"
        data-onboarding-tour-skip-url-value="<%= dashboard_onboarding_skip_path %>"
        data-onboarding-tour-skip-label-value="<%= t('onboarding_tour.skip') %>"
        data-onboarding-tour-next-label-value="<%= t('onboarding_tour.next') %>"

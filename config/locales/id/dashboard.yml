@@ -48,7 +48,7 @@ id:
       completed: "selesai"
     apps:
       title: "Aplikasi"
-      new_app: "Aplikasi Baru"
+      new_app: "App baru"
       create_app: "Buat Aplikasi"
       no_apps: "Belum ada aplikasi"
       no_apps_desc: "Mulai dengan membuat aplikasi pertama kamu."

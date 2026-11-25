@@ -16,14 +16,14 @@
 <%# Generate form %>
 <%= form_tag dashboard_api_tokens_path, method: :post, class: "flex flex-wrap gap-2 mb-4", data: { turbo_frame: "api_tokens" } do %>
   <input type="text" name="name" placeholder="<%= t("sweep.token_name_ph") %>" required aria-label="Token name"
-         class="flex-1 min-w-40 bg-paper border border-line-strong rounded-md px-3 py-1.5 text-xs text-ink placeholder-dim focus:outline-none focus:shadow-brutal-sm">
+         class="flex-1 min-w-40 bg-paper border border-dark-line rounded-md px-3 py-1.5 text-xs text-ink placeholder-dim focus:outline-none focus:shadow-brutal-sm">
   <select name="scope" aria-label="Access"
-          class="bg-paper border border-line-strong rounded-md px-2 py-1.5 text-xs text-ink focus:outline-none focus:shadow-brutal-sm">
+          class="bg-paper border border-dark-line rounded-md px-2 py-1.5 text-xs text-ink focus:outline-none focus:shadow-brutal-sm">
     <option value="read" selected><%= t("sweep.read_only") %></option>
     <option value="full"><%= t("sweep.full_access") %></option>
   </select>
   <select name="expires" aria-label="Expires"
-          class="bg-paper border border-line-strong rounded-md px-2 py-1.5 text-xs text-ink focus:outline-none focus:shadow-brutal-sm">
+          class="bg-paper border border-dark-line rounded-md px-2 py-1.5 text-xs text-ink focus:outline-none focus:shadow-brutal-sm">
     <option value="90d" selected><%= t("sweep.expires_90") %></option>
     <option value="never"><%= t("sweep.never_expires") %></option>
   </select>

@@ -32,11 +32,11 @@
       <div class="relative flex-1 min-w-[200px]">
         <%= f.text_field :q, value: @search_query,
               placeholder: "Search 24h of history...",
-              class: "w-full px-3 py-1.5 bg-paper border border-line-strong rounded-md text-xs text-ink placeholder:text-dim focus:outline-none focus:shadow-brutal-sm transition" %>
+              class: "w-full px-3 py-1.5 bg-paper border border-dark-line rounded-md text-xs text-ink placeholder:text-dim focus:outline-none focus:shadow-brutal-sm transition" %>
       </div>
       <%= f.select :level, [ [ "All levels", "" ], [ "Error", "error" ], [ "Warn", "warn" ], [ "Info", "info" ], [ "Debug", "debug" ] ],
             { selected: @level_filter || "" },
-            class: "py-1.5 px-2 bg-paper border border-line-strong rounded-md text-xs text-ink" %>
+            class: "py-1.5 px-2 bg-paper border border-dark-line rounded-md text-xs text-ink" %>
       <%= f.submit "Search", class: Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>
       <%= link_to "Live tail", dashboard_app_logs_path(@app, source: "live"),
             class: Atoms::ButtonComponent.new(variant: :ghost, size: :sm).classes %>
@@ -48,7 +48,7 @@
       <input type="text" placeholder="Filter visible logs..."
              data-log-viewer-target="search"
              data-action="input->log-viewer#filter"
-             class="w-full pl-3 pr-9 py-1.5 bg-paper border border-line-strong rounded-md text-xs text-ink placeholder:text-dim focus:outline-none focus:shadow-brutal-sm transition">
+             class="w-full pl-3 pr-9 py-1.5 bg-paper border border-dark-line rounded-md text-xs text-ink placeholder:text-dim focus:outline-none focus:shadow-brutal-sm transition">
       <button type="button"
               data-log-viewer-target="clearSearch"
               data-action="click->log-viewer#clearSearch"

@@ -26,7 +26,7 @@
         <label class="block font-mono text-xs font-bold text-ink mb-1">User code</label>
         <input type="text" name="user_code" value="<%= @user_code %>" required autocomplete="off"
                placeholder="XXXX-XXXX"
-               class="w-full bg-bg border border-line-strong px-3 py-2 font-mono text-base uppercase tracking-widest text-ink focus:outline-none focus:border-accent">
+               class="w-full bg-bg border border-dark-line px-3 py-2 font-mono text-base uppercase tracking-widest text-ink focus:outline-none focus:border-accent">
       </div>
 
       <% if @device_authorization && @device_authorization.pending? %>

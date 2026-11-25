@@ -12,7 +12,7 @@
       <span class="block text-xs font-semibold text-ink-soft"><%= t("admin.users.search_placeholder", default: "Search by email…") %></span>
       <%= f.text_field :q, value: @query,
             placeholder: t("admin.users.search_placeholder", default: "Search by email…"),
-            class: "w-full bg-paper border border-line-strong rounded-md px-2.5 py-1.5 text-sm focus:shadow-brutal-sm" %>
+            class: "w-full bg-paper border border-dark-line rounded-md px-2.5 py-1.5 text-sm focus:shadow-brutal-sm" %>
     </label>
     <%= render Atoms::ButtonComponent.new(variant: :outline, size: :sm, type: "submit") do %>Search<% end %>
     <% if @query.present? %>

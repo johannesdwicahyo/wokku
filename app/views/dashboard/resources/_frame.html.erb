@@ -137,7 +137,7 @@
                 <%= button_to "Buy #{box_size} box",
                       dashboard_box_addons_path(size: box_size),
                       method: :post,
-                      class: "w-full text-center px-2 py-1 text-[11px] font-semibold border border-live rounded-md bg-live text-[#03140A] hover:bg-live-hover transition cursor-pointer" %>
+                      class: "#{Atoms::ButtonComponent.new(variant: :primary).classes} w-full text-center" %>
               <% else %>
                 <p class="text-[10px] text-dim text-center px-1 py-1.5 border border-line rounded-md"><%= upgrade_msg %></p>
               <% end %>

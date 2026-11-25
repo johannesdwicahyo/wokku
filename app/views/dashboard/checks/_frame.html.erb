@@ -52,7 +52,7 @@
           <input type="text" name="check_path"
                  value="<%= @checks['checks_path'] || '/' %>"
                  placeholder="/"
-                 class="flex-1 bg-paper border border-line-strong rounded-md px-3 py-1.5 text-sm text-ink font-mono focus:outline-none focus:shadow-brutal-sm transition">
+                 class="flex-1 bg-paper border border-dark-line rounded-md px-3 py-1.5 text-sm text-ink font-mono focus:outline-none focus:shadow-brutal-sm transition">
         </div>
         <p class="text-[10px] text-dim mt-2">Example: <span class="text-ink-soft font-mono">/health</span> or <span class="text-ink-soft font-mono">/up</span></p>
       </div>
@@ -76,7 +76,7 @@
             </div>
             <div class="flex items-center gap-2">
               <input type="number" id="<%= name %>" name="<%= name %>" value="<%= val %>" min="<%= min %>" max="<%= max %>"
-                     class="w-20 bg-paper border border-line-strong rounded-md px-3 py-1.5 text-sm text-ink text-center tabular-nums focus:outline-none focus:shadow-brutal-sm transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                     class="w-20 bg-paper border border-dark-line rounded-md px-3 py-1.5 text-sm text-ink text-center tabular-nums focus:outline-none focus:shadow-brutal-sm transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
               <span class="text-xs text-dim"><%= unit %></span>
             </div>
           </div>

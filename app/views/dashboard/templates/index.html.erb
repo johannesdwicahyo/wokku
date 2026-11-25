@@ -13,7 +13,7 @@
       <input type="text" name="q" placeholder="<%= t('dashboard.templates.search_placeholder') %>" value="<%= params[:q] %>"
              data-templates-search-target="input"
              data-action="input->templates-search#filter"
-             class="w-full pl-3 pr-10 py-2.5 bg-paper border border-line-strong text-sm text-ink placeholder-dim focus:outline-none focus:border-ink"
+             class="w-full pl-3 pr-10 py-2.5 bg-paper border border-dark-line text-sm text-ink placeholder-dim focus:outline-none focus:border-ink"
              <%= "autofocus" if params[:q].present? %>>
       <% if params[:q].present? %>
         <%= link_to dashboard_templates_path,
@@ -86,7 +86,7 @@
             </div>
             <div class="flex items-center justify-between mt-4 pt-3 border-t border-rule-soft">
               <span class="text-[10px] text-dim">From <%= template_total_label(t) %></span>
-              <span class="px-3 py-1 text-[10px] font-bold bg-live text-[#03140A]">Deploy →</span>
+              <span class="<%= Atoms::ButtonComponent.new(variant: :primary).classes %>">Deploy →</span>
             </div>
           <% end %>
         <% end %>

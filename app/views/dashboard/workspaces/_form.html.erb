@@ -39,7 +39,7 @@ Both pass `workspace` + `paid_plans` locals. %>
     <%= link_to "cancel", dashboard_workspaces_path,
           data: { action: "slide-panel#close:prevent", turbo_frame: "_top" },
           class: "px-4 py-2 border border-rule-soft text-dim font-mono text-[11px] uppercase tracking-widest hover:text-ink" %>
-    <button type="submit" class="px-4 py-2 border border-live bg-live text-[#03140A] hover:bg-live-hover font-mono text-[11px] uppercase tracking-widest">
+    <button type="submit" class="<%= Atoms::ButtonComponent.new(variant: :primary).classes %>">
       create workspace
     </button>
   </div>

@@ -56,7 +56,7 @@ export default class extends Controller {
           </label>
           <input type="text"
                  data-confirm-input
-                 class="w-full border border-line bg-bg px-4 py-2.5 font-mono text-sm text-ink placeholder:text-dim focus:outline-none focus:ring-2 focus:ring-danger focus:border-danger transition"
+                 class="w-full border border-dark-line bg-bg px-4 py-2.5 font-mono text-sm text-ink placeholder:text-dim focus:outline-none focus:ring-2 focus:ring-danger focus:border-danger transition"
                  autocomplete="off"
                  autofocus>
 

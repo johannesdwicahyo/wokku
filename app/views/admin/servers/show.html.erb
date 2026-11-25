@@ -86,7 +86,7 @@
       </ul>
     </div>
     <div class="flex flex-wrap items-center gap-2 font-mono">
-      <%= button_to "↻ retry_sync", sync_admin_server_path(@server), method: :post, class: "inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold bg-live text-[#03140A] hover:bg-live-hover border border-live hover:bg-ink-soft transition cursor-pointer" %>
+      <%= button_to "↻ retry_sync", sync_admin_server_path(@server), method: :post, class: "#{Atoms::ButtonComponent.new(variant: :primary).classes} gap-1" %>
       <%= link_to "edit_server", edit_admin_server_path(@server), class: "inline-flex items-center gap-1 px-3 py-1.5 text-xs text-ink border border-line-strong hover:bg-bg-deep transition" %>
       <a href="/docs/getting-started/connect-server" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-dim hover:text-accent transition">view docs ↗</a>
     </div>

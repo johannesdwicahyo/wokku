@@ -88,7 +88,7 @@
 
   <% if @transfer.pending? %>
     <div class="flex items-center gap-3">
-      <%= button_to "accept transfer", accept_dashboard_app_transfer_path(@transfer), data: { turbo_confirm: "Accept ownership of #{app.name}?#{" Billing will start on your account immediately." if wokku_cloud?}" }, class: "px-4 py-2 bg-live text-[#03140A] hover:bg-live-hover font-mono text-sm border border-live  transition-all cursor-pointer" %>
+      <%= button_to "accept transfer", accept_dashboard_app_transfer_path(@transfer), data: { turbo_confirm: "Accept ownership of #{app.name}?#{" Billing will start on your account immediately." if wokku_cloud?}" }, class: "#{Atoms::ButtonComponent.new(variant: :primary).classes}" %>
       <%= button_to "decline", decline_dashboard_app_transfer_path(@transfer), data: { turbo_confirm: "Decline this transfer?" }, class: "px-4 py-2 border border-line-strong bg-paper text-ink font-mono text-sm hover:bg-bg-deep transition cursor-pointer" %>
     </div>
   <% else %>

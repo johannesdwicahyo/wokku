@@ -87,7 +87,7 @@
               <%= u.select :locale,
                     [["English", "en"], ["Bahasa Indonesia", "id"]],
                     {},
-                    class: "w-full bg-paper text-ink border border-line-strong rounded-md px-3 py-2 text-sm focus:outline-none focus:shadow-brutal-sm",
+                    class: "w-full bg-paper text-ink border border-dark-line rounded-md px-3 py-2 text-sm focus:outline-none focus:shadow-brutal-sm",
                     data: { controller: "auto-submit", action: "change->auto-submit#submit" } %>
             </div>
             <% if wokku_cloud? %><%# billing currency only exists where there is billing %>
@@ -102,7 +102,7 @@
                 <%= u.select :currency,
                       [["USD ($)", "usd"], ["IDR (Rp)", "idr"]],
                       {},
-                      class: "w-full bg-paper text-ink border border-line-strong rounded-md px-3 py-2 text-sm focus:outline-none focus:shadow-brutal-sm",
+                      class: "w-full bg-paper text-ink border border-dark-line rounded-md px-3 py-2 text-sm focus:outline-none focus:shadow-brutal-sm",
                       data: { controller: "auto-submit", action: "change->auto-submit#submit" } %>
               <% end %>
             </div>
@@ -139,21 +139,21 @@
         </div>
       </div>
       <div class="p-6">
-        <div class="grid grid-cols-3 gap-3">
-          <div class="border border-line bg-bg p-4 rounded-md">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="border border-line bg-bg p-4 rounded-md min-w-0 break-words">
             <p class="<%= stat_label %>"><%= t("sweep.active_apps") %></p>
             <span class="text-2xl font-bold text-ink"><%= running_app_count %></span>
-            <p class="text-[11px] text-dim mt-1">of <%= total_app_count %> total</p>
+            <p class="text-[11px] text-dim mt-1"><%= t("sweep.of_total", count: total_app_count) %></p>
           </div>
-          <div class="border border-line bg-bg p-4 rounded-md">
+          <div class="border border-line bg-bg p-4 rounded-md min-w-0 break-words">
             <p class="<%= stat_label %>">Add-ons</p>
             <span class="text-2xl font-bold text-ink"><%= addon_count %></span>
-            <p class="text-[11px] text-dim mt-1">databases &amp; services</p>
+            <p class="text-[11px] text-dim mt-1"><%= t("sweep.addons_sub") %></p>
           </div>
-          <div class="border border-line bg-bg p-4 rounded-md">
+          <div class="border border-line bg-bg p-4 rounded-md min-w-0 break-words">
             <p class="<%= stat_label %>"><%= t("sweep.containers") %></p>
             <span class="text-2xl font-bold text-ink"><%= dyno_count %></span>
-            <p class="text-[11px] text-dim mt-1">running</p>
+            <p class="text-[11px] text-dim mt-1"><%= t("sweep.running") %></p>
           </div>
         </div>
       </div>

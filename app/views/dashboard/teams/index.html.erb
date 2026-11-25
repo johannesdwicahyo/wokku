@@ -4,7 +4,7 @@
       <h1 class="font-mono text-2xl font-semibold tracking-tighter text-ink"># teams</h1>
       <p class="mt-1 font-mono text-sm text-dim">// manage your teams</p>
     </div>
-    <button data-action="click->slide-panel#open" class="inline-flex items-center px-4 py-2 bg-live text-[#03140A] hover:bg-live-hover font-mono text-sm border border-live  transition-all cursor-pointer">+ new_team</button>
+    <button data-action="click->slide-panel#open" class="<%= Atoms::ButtonComponent.new(variant: :primary).classes %>">+ new_team</button>
   </div>
 
   <% if @teams.any? %>
@@ -25,7 +25,7 @@
       <h3 class="font-mono text-lg font-medium text-ink">// no teams yet</h3>
       <p class="mt-2 font-mono text-sm text-dim">Create a team to start collaborating.</p>
       <div class="mt-6">
-        <button data-action="click->slide-panel#open" class="inline-flex items-center px-4 py-2 bg-live text-[#03140A] hover:bg-live-hover font-mono text-sm border border-live  transition-all cursor-pointer">+ new_team</button>
+        <button data-action="click->slide-panel#open" class="<%= Atoms::ButtonComponent.new(variant: :primary).classes %>">+ new_team</button>
       </div>
     </div>
   <% end %>

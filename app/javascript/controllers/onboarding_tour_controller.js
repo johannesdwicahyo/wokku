@@ -7,7 +7,7 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static values = {
     step: Number, skipUrl: String, skipLabel: String,
-    nextLabel: String, copy: Object,
+    nextLabel: String, copy: Object, buttonClass: String,
   }
 
   connect() {
@@ -82,7 +82,7 @@ export default class extends Controller {
     }
     if (plan.key === "s0") {
       const btn = this.el("button",
-        "mt-3 inline-block bg-live text-[#03140A] hover:bg-live-hover px-3 py-1.5 text-xs border border-live",
+        `mt-3 ${this.buttonClassValue}`,
         c.cta || this.nextLabelValue)
       btn.addEventListener("click", () => {
         this.backdrop && this.backdrop.remove()
@@ -97,7 +97,7 @@ export default class extends Controller {
     // resume at the persisted step on the next page load.
     if (plan.key === "s5" && c.cta) {
       const a = this.el("a",
-        "mt-3 inline-block bg-live text-[#03140A] hover:bg-live-hover px-3 py-1.5 text-xs border border-live",
+        `mt-3 ${this.buttonClassValue}`,
         c.cta)
       a.href = "/dashboard"
       this.card.appendChild(a)
@@ -115,7 +115,7 @@ export default class extends Controller {
       )
       if (appLink && appLink.href) {
         const a = this.el("a",
-          "mt-3 inline-block bg-live text-[#03140A] hover:bg-live-hover px-3 py-1.5 text-xs border border-live",
+          `mt-3 ${this.buttonClassValue}`,
           c.cta)
         a.href = appLink.href
         a.target = "_blank"

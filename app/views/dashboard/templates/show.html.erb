@@ -86,7 +86,7 @@
   </div>
 
   <div class="border border-line bg-paper p-6">
-    <h2 class="font-mono text-[10px] font-bold text-dim uppercase tracking-widest mb-4">deploy_this_template</h2>
+    <h2 class="font-mono text-[10px] font-bold text-dim uppercase tracking-widest mb-4"><%= t("sweep.deploy_this_template") %></h2>
 
     <% if flash[:box_addon_size].present? %>
       <div class="mb-4 border border-warn bg-warn-soft p-3">
@@ -97,7 +97,7 @@
         <%= button_to "Buy a #{flash[:box_addon_size]} box — Rp#{ActiveSupport::NumberHelper.number_to_delimited(flash[:box_addon_price], delimiter: '.')}/mo",
               dashboard_box_addons_path(size: flash[:box_addon_size]),
               method: :post,
-              class: "w-full py-2.5 px-4 bg-live text-[#03140A] hover:bg-live-hover font-mono text-sm font-bold border border-live transition-all cursor-pointer text-center" %>
+              class: "#{Atoms::ButtonComponent.new(variant: :primary).classes} w-full text-center" %>
         <% end %>
       </div>
     <% end %>
@@ -109,7 +109,7 @@
       <div>
         <label class="block font-mono text-xs font-medium text-dim mb-1.5 uppercase tracking-widest">App Name</label>
         <input type="text" name="app_name" required placeholder="my-app" value="<%= @suggested_app_name %>"
-               class="w-full bg-bg border border-line-strong px-3 py-2 font-mono text-sm text-ink placeholder-dim focus:outline-none focus:border-accent"
+               class="w-full bg-bg border border-dark-line px-3 py-2 font-mono text-sm text-ink placeholder-dim focus:outline-none focus:border-accent"
                pattern="[a-z][a-z0-9\-]*"
                title="Lowercase letters, numbers, and hyphens"
                autocomplete="off"
@@ -131,9 +131,9 @@
       </div>
 
       <div class="pt-2">
-        <button type="submit" data-deploy-button-target="button" data-app-name-check-target="submit" data-tour-target="confirm-deploy" class="w-full py-2.5 px-4 bg-live text-[#03140A] hover:bg-live-hover font-mono text-sm font-bold border border-live  transition-all cursor-pointer text-center disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2">
+        <button type="submit" data-deploy-button-target="button" data-app-name-check-target="submit" data-tour-target="confirm-deploy" class="<%= Atoms::ButtonComponent.new(variant: :primary).classes %> w-full text-center disabled:opacity-60 disabled:cursor-not-allowed justify-center gap-2">
           <span data-deploy-button-target="spinner" class="hidden"><%= render Atoms::LightsLoaderComponent.new(decorative: true, size: :sm) %></span>
-          <span data-deploy-button-target="label">Deploy <%= @template[:name] %></span>
+          <span data-deploy-button-target="label"><%= t("sweep.deploy_named", name: @template[:name]) %></span>
         </button>
       </div>
     <% end %>
