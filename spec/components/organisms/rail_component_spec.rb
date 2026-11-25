@@ -81,6 +81,13 @@ RSpec.describe Organisms::RailComponent, type: :component do
       expect(page).to have_text("Odd kind")
     end
 
+    it "renders no kind text for a workspace with a nil kind" do
+      blank = Team.new(name: "Blank").tap { |t| t.id = SecureRandom.uuid; allow(t).to receive(:kind).and_return(nil) }
+      render_rail(**opts, workspaces: [ team, blank ])
+      expect(page).not_to have_text("{")
+      expect(page.text).not_to include("=>")
+    end
+
     it "starts the switcher collapsed" do
       render_rail(**opts)
       expect(page).to have_css("button[aria-haspopup][aria-expanded='false']")

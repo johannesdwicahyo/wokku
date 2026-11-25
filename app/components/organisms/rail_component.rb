@@ -35,6 +35,7 @@ module Organisms
 
     def kind_label(ws)
       kind = ws.try(:kind).to_s
+      return "" if kind.blank?
       t("console.rail.kinds.#{kind}", default: kind.humanize)
     end
 

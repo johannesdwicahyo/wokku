@@ -75,4 +75,11 @@ RSpec.describe "Dashboard sidebar extra items", type: :request do
     get "/dashboard/apps"
     expect(Capybara.string(response.body).find("nav[aria-label='Workspace']")).to have_link("ExtraThing")
   end
+
+  it "renders an item that has no key" do
+    Wokku.config.sidebar_extra_items = ->(_view) { [ { label: "KeylessThing", href: "/x" } ] }
+    get "/dashboard/apps"
+    expect(response).to have_http_status(:ok)
+    expect(Capybara.string(response.body)).to have_link("KeylessThing", href: "/x")
+  end
 end

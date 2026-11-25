@@ -42,6 +42,7 @@
       next unless i.is_a?(Hash)
       i = i.symbolize_keys
       next if i[:label].blank? || i[:href].blank?
+      i[:key] ||= i[:label].to_s.parameterize.underscore.to_sym
       if i[:group].to_s == "account"
         account_items.insert(account_items.index { |a| a[:key] == :settings }, i)
       else
