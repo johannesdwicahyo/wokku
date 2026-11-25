@@ -62,8 +62,7 @@
 %>
 <!DOCTYPE html>
 <html lang="<%= I18n.locale %>"
-      data-controller="theme"
-      data-theme-default-value="<%= cookies[:theme] %>">
+      style="color-scheme: dark">
   <head>
     <title><%= content_for(:title) || "Wokku" %></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -79,16 +78,16 @@
     <%= yield :head %>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <%# Brutalist redesign uses Inter Tight + JetBrains Mono.
-        Material Symbols Outlined feeds the ~30 icon ligatures across
+    <%# Text fonts (Geist) are self-hosted; only Material Symbols
+        comes from Google. Material Symbols Outlined feeds the ~30 icon ligatures across
         the dashboard (navbar menu/notifications/terminal, sidebar
         section icons, combobox expand_more, low-balance banner). The
         font was never loaded before, so all those spans showed their
         ligature names as literal text. %>
-    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
-    <link rel="icon" href="/icon.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+    <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css">
     <%= javascript_importmap_tags %>
@@ -96,7 +95,8 @@
   </head>
 
   <body class="bg-bg text-ink font-sans antialiased"
-        data-controller="confirm-dialog mobile-nav">
+        data-controller="confirm-dialog mobile-nav nav-loading"
+        data-action="turbo:visit@document->nav-loading#start turbo:load@document->nav-loading#stop turbo:fetch-request-error@document->nav-loading#stop">
     <% if user_signed_in? && current_user.billing_status == "suspended" %>
       <div class="border-b border-line bg-danger-soft px-4 py-2.5">
         <div class="flex items-center justify-center gap-2 text-xs text-ink">
@@ -153,7 +153,7 @@
           ) %>
 
       <%# Off-canvas backdrop (mobile only). %>
-      <div class="lg:hidden fixed inset-0 bg-ink/40 z-20 hidden"
+      <div class="lg:hidden fixed inset-0 bg-black/70 z-20 hidden"
            data-mobile-nav-target="overlay"
            data-action="click->mobile-nav#close"></div>
 

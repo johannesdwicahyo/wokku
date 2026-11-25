@@ -42,7 +42,7 @@ export default class extends Controller {
     const resourceLabel = this.resourceValue || "resource"
 
     const overlay = document.createElement("div")
-    overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-ink/60 backdrop-blur-sm p-4"
+    overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
     overlay.innerHTML = `
       <div class="bg-paper border-1.5 border-danger shadow-brutal max-w-md w-full">
         <div class="px-6 py-4 border-b border-rule-soft bg-danger-soft">

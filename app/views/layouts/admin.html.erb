@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="<%= I18n.locale %>"
-      data-controller="theme"
-      data-theme-default-value="<%= cookies[:theme] %>">
+      style="color-scheme: dark">
   <head>
     <title>Admin · Wokku</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,17 +10,18 @@
     <meta name="turbo-refresh-scroll" content="preserve">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
-    <link rel="icon" href="/icon.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+    <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
     <%= optional_partial "shared/analytics" %>
   </head>
 
   <body class="bg-bg text-ink font-sans antialiased"
-        data-controller="confirm-dialog mobile-nav">
+        data-controller="confirm-dialog mobile-nav nav-loading"
+        data-action="turbo:visit@document->nav-loading#start turbo:load@document->nav-loading#stop turbo:fetch-request-error@document->nav-loading#stop">
     <%
       # Overview + jobs UI are cloud-host admin routes; standalone admin
       # starts at servers.
@@ -56,7 +56,7 @@
           ) %>
 
       <%# Off-canvas backdrop (mobile only). %>
-      <div class="lg:hidden fixed inset-0 bg-ink/40 z-20 hidden"
+      <div class="lg:hidden fixed inset-0 bg-black/70 z-20 hidden"
            data-mobile-nav-target="overlay"
            data-action="click->mobile-nav#close"></div>
 

@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="<%= @docs_locale || 'en' %>"
-      data-controller="theme"
-      data-theme-default-value="<%= cookies[:theme] %>">
+      style="color-scheme: dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><%= docs_page_title %></title>
   <meta name="description" content="<%= @doc_summary || 'Wokku documentation — deploy and manage applications on your own servers.' %>">
   <%= csrf_meta_tags %>
-  <link rel="icon" href="/icon.png" type="image/png">
+  <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <%= csp_meta_tag %>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
 
   <%= stylesheet_link_tag :app %>
   <%= stylesheet_link_tag "docs", "data-turbo-track": "reload" %>

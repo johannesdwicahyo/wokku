@@ -1,6 +1,19 @@
 <% wrapper_tag = href ? :a : :span %>
-<%= content_tag(wrapper_tag, href: href, class: "inline-flex items-center gap-2.5 no-underline") do %>
-  <span class="inline-flex items-center justify-center font-sans font-extrabold tracking-tightest text-bg bg-ink rounded-md"
-        style="width: <%= size %>px; height: <%= size %>px; font-size: <%= (size * 0.62).round %>px;">w</span>
-  <span class="font-sans font-bold text-ink tracking-tightest" style="font-size: <%= (size * 0.58).round %>px;"><%= t('brand.name') %></span>
+<%= content_tag(wrapper_tag, href: href, class: "inline-flex items-center no-underline text-ink") do %>
+  <% if variant == :lockup %>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="20 64 664 128" height="<%= size %>" <%= a11y_attrs %> fill="currentColor"<% if svg_class %> class="<%= svg_class %>"<% end %>>
+      <% SQUARES.each_with_index do |(x, y), n| %><rect x="<%= x %>" y="<%= y %>" width="40" height="40" rx="10"<% if animated %> style="<%= seq_style(SEQ[n]) %>"<% end %>/><% end %>
+      <rect x="108" y="108" width="40" height="40" rx="10" fill="<%= LIVE %>"<% if animated %> style="<%= seq_style(LIVE_SEQ) %>"<% end %>/>
+      <%= render "shared/logo_wordmark_path" %>
+    </svg>
+  <% else %>
+    <% tile = variant == :tile %>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="<%= size %>" height="<%= size %>" <%= a11y_attrs %> fill="<%= tile ? "#FFFFFF" : "currentColor" %>"<% if svg_class %> class="<%= svg_class %>"<% end %>>
+      <% if tile %><rect width="256" height="256" rx="48" fill="#141414"/><% end %>
+      <g<% if tile %> transform="translate(128 128) scale(.9) translate(-128 -128)"<% end %>>
+        <% SQUARES.each_with_index do |(x, y), n| %><rect x="<%= x %>" y="<%= y %>" width="40" height="40" rx="10"<% if animated %> style="<%= seq_style(SEQ[n]) %>"<% end %>/><% end %>
+        <rect x="108" y="108" width="40" height="40" rx="10" fill="<%= LIVE %>"<% if animated %> style="<%= seq_style(LIVE_SEQ) %>"<% end %>/>
+      </g>
+    </svg>
+  <% end %>
 <% end %>

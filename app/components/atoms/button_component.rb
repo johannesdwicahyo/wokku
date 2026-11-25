@@ -1,18 +1,22 @@
 module Atoms
   class ButtonComponent < ApplicationComponent
+    SECONDARY = "bg-transparent text-ink border border-line-strong hover:border-ink"
+    GHOST     = "bg-transparent text-ink-soft border border-transparent hover:text-ink"
     VARIANTS = {
-      primary:         "bg-ink text-paper border-1.5 border-ink shadow-brutal hover:bg-ink/90",
-      outline:         "bg-paper text-ink border-1.5 border-ink shadow-brutal-sm hover:bg-bg-deep",
-      inverse:         "bg-paper text-ink border-1.5 border-ink shadow-brutal-sm hover:bg-bg-deep",
-      inverse_outline: "bg-transparent text-paper border-1.5 border-paper/40 hover:border-paper",
-      ghost:           "bg-transparent text-ink-soft border-1.5 border-transparent hover:text-ink hover:bg-bg-deep",
-      danger:          "bg-paper text-danger border-1.5 border-danger shadow-brutal-sm hover:bg-danger-soft"
+      primary:         "bg-live text-[#03140A] border border-live hover:bg-live-hover hover:border-live-hover",
+      secondary:       SECONDARY,
+      ghost:           GHOST,
+      danger:          "bg-transparent text-bad-text border border-danger hover:bg-danger-soft",
+      # Legacy names kept for existing callers: outline/inverse -> secondary, inverse_outline -> ghost.
+      outline:         SECONDARY,
+      inverse:         SECONDARY,
+      inverse_outline: GHOST
     }.freeze
 
     SIZES = {
-      sm: "px-3 py-1.5 text-xs",
-      md: "px-4 py-2 text-sm",
-      lg: "px-5 py-2.5 text-base"
+      sm: "px-3",
+      md: "px-4",
+      lg: "px-5"
     }.freeze
 
     def initialize(variant: :primary, size: :md, href: nil, type: "button", mono: false, **opts)
@@ -28,10 +32,11 @@ module Atoms
     end
 
     def classes
-      base = "inline-flex items-center justify-center gap-2 font-semibold cursor-pointer rounded-md transition-[transform,box-shadow,background-color] duration-75 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
-      font = @mono ? "font-mono font-normal" : ""
-      cx(base, VARIANTS[@variant], SIZES[@size], font, @opts[:class])
+      base = "inline-flex items-center justify-center gap-2 min-h-[38px] font-mono text-[11px] font-medium uppercase tracking-[.1em] cursor-pointer transition-colors duration-75"
+      cx(base, VARIANTS[@variant], SIZES[@size], @opts[:class])
     end
+
+    def primary? = @variant == :primary
 
     def tag_name
       @href ? :a : :button

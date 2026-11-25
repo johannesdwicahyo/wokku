@@ -12,5 +12,15 @@ en:
     save: "Save resources"
     none_attached: "No databases attached."
     browse: "Browse →"
+  status_light:
+    running: "Running"
+    deploying: "Deploying"
+    sleeping: "Sleeping"
+    crashed: "Crashed"
+    healthy: "Healthy"
+    stopped: "Stopped"
+    created: "Created"
   update_banner:
     available: "Wokku %{latest} is available (you run %{current}). To update, run on the server:"
+  loading:
+    default: "Loading"

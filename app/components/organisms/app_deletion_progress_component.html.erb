@@ -1,4 +1,4 @@
-<div id="<%= dom_id %>" class="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 backdrop-blur-sm px-4">
+<div id="<%= dom_id %>" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
   <div class="w-full max-w-md bg-paper border-1.5 border-ink rounded-md shadow-brutal-lg p-6" role="status" aria-live="polite">
     <h2 class="font-headline text-lg font-extrabold text-ink mb-1"><%= title %></h2>
     <p class="text-xs text-dim mb-4">
@@ -15,7 +15,7 @@
       <% steps.each do |s| %>
         <li class="flex items-center gap-2.5">
           <% if s[:state] == "running" %>
-            <span class="inline-block w-3.5 h-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin" aria-hidden="true"></span>
+            <%= render Atoms::LightsLoaderComponent.new(decorative: true, size: :sm) %>
           <% else %>
             <span class="w-3.5 text-center font-bold <%= icon_classes(s[:state]) %>" aria-hidden="true"><%= ICONS.fetch(s[:state], "·") %></span>
           <% end %>

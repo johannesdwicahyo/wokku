@@ -132,7 +132,7 @@
 
       <div class="pt-2">
         <button type="submit" data-deploy-button-target="button" data-app-name-check-target="submit" data-tour-target="confirm-deploy" class="w-full py-2.5 px-4 bg-ink text-bg font-mono text-sm font-bold border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer text-center disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2">
-          <span data-deploy-button-target="spinner" class="hidden w-4 h-4 border-2 border-bg/30 border-t-bg rounded-full animate-spin"></span>
+          <span data-deploy-button-target="spinner" class="hidden"><%= render Atoms::LightsLoaderComponent.new(decorative: true, size: :sm) %></span>
           <span data-deploy-button-target="label">Deploy <%= @template[:name] %></span>
         </button>
       </div>

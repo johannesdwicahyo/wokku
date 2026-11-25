@@ -1,4 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect x="16" y="16" width="480" height="480" rx="96" fill="#171717"/>
-  <text x="256" y="280" font-family="Inter, Inter Tight, system-ui, sans-serif" font-size="340" font-weight="800" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">w</text>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><rect width="256" height="256" rx="48" fill="#141414"/><g transform="translate(128 128) scale(.9) translate(-128 -128)"><g fill="#FFFFFF"><rect x="20" y="64" width="40" height="40" rx="10"/><rect x="196" y="64" width="40" height="40" rx="10"/><rect x="20" y="108" width="40" height="40" rx="10"/><rect x="196" y="108" width="40" height="40" rx="10"/><rect x="64" y="152" width="40" height="40" rx="10"/><rect x="152" y="152" width="40" height="40" rx="10"/></g><rect x="108" y="108" width="40" height="40" rx="10" fill="#22C55E"/></g></svg>

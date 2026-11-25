@@ -7,7 +7,7 @@ module Organisms
   #
   # The rail also owns the chrome that lived in ConsoleTopbarComponent
   # until U1: workspace switcher (top), app search, and the footer
-  # (docs/support links, theme + locale toggles, user block, version
+  # (docs/support links, locale toggle, user block, version
   # line). All chrome is optional (nil/[] defaults) so callers without
   # workspace/user context — the admin layout — render a plain rail with
   # the logo fallback and no footer.
