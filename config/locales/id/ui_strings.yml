@@ -42,3 +42,6 @@ id:
     available: "Wokku %{latest} sudah tersedia (kamu memakai %{current}). Untuk update, jalankan di server:"
   loading:
     default: "Memuat"
+  apps:
+    rack:
+      no_cpu: "Belum ada data CPU"
