@@ -60,4 +60,56 @@ RSpec.describe "control-room contrast" do
     render_inline(Molecules::BreadcrumbComponent.new(crumbs: [ [ "Apps", "/a" ], [ "demo", nil ] ]))
     expect(page).to have_css("span.text-dim[aria-hidden='true']", text: "/")
   end
+
+  # Task 6 guards ---------------------------------------------------------
+  it "no view/component uses the loud near-white border-ink (variant-prefixed hover/focus/data states aside)" do
+    # Allow-list: Atoms::ButtonComponent's :secondary hover state is deliberate.
+    allow = %w[app/components/atoms/button_component.rb]
+    offenders = Dir["#{root}/app/**/*.{erb,rb,js}"].flat_map do |f|
+      rel = f.delete_prefix("#{root}/")
+      next [] if allow.include?(rel)
+      File.read(f).lines.each_with_index.filter_map do |l, i|
+        "#{rel}:#{i + 1}" if l.match?(/(?<![\w:-])border(?:-[trblxy])?-ink(?![\w\/-])|border(?:-[trblxy])?-1\.5(?![\w.])/)
+      end
+    end
+    expect(offenders).to be_empty, "loud borders (use border-line / border-line-strong):\n#{offenders.join("\n")}"
+  end
+
+  it "no ButtonComponent call re-creates a primary look through classes:" do
+    offenders = Dir["#{root}/app/**/*.erb"].flat_map do |f|
+      File.read(f).lines.each_with_index.filter_map do |l, i|
+        next unless l.include?("ButtonComponent.new(") && l.include?("classes:")
+        "#{f.delete_prefix("#{root}/")}:#{i + 1}" if l.match?(/classes:.*\bbg-(?:live|ink)\b/)
+      end
+    end
+    expect(offenders).to be_empty
+  end
+
+  it "hand-rolled solid buttons use the live primary, not bg-ink" do
+    offenders = Dir["#{root}/app/**/*.{erb,rb,js}"].flat_map do |f|
+      File.read(f).lines.each_with_index.filter_map do |l, i|
+        next unless l.match?(/bg-ink text-(?:bg|paper)|text-bg bg-ink/)
+        next if l.match?(/'[^']*bg-ink|data-\[active|rounded-full|<div|flash_toast|lang_switch/)
+        next unless l.match?(/f\.submit|<button|button_to|className/)
+        "#{f.delete_prefix("#{root}/")}:#{i + 1}"
+      end
+    end
+    expect(offenders).to be_empty, offenders.join("\n")
+  end
+
+  it "static error pages are dark-token, with no external fonts" do
+    pages = Dir["#{root}/harness/public/*.html"]
+    expect(pages.map { |f| File.basename(f) }).to include("400.html", "404.html", "406-unsupported-browser.html", "422.html", "500.html")
+    pages.each do |f|
+      html = File.read(f)
+      expect(html).to include("#050605"), "#{f} lacks #050605"
+      expect(html).not_to match(/fonts\.(googleapis|gstatic)/), "#{f} loads external fonts"
+    end
+  end
+
+  it "the admin layout has no hard-coded English rail labels" do
+    layout = src("app/views/layouts/admin.html.erb")
+    expect(layout).not_to match(/label: "(?:Overview|Servers|Cloud credentials|Users|Settings|Jobs|← Back to dashboard)"/)
+    expect(layout).not_to include('crumbs: [ "Admin" ]')
+  end
 end

@@ -1,4 +1,4 @@
-<span class="inline-flex items-center gap-1.5 text-[11px] font-semibold capitalize px-2.5 py-[3px] border-1.5 border-ink rounded-full bg-paper text-ink whitespace-nowrap">
+<span class="inline-flex items-center gap-1.5 text-[11px] font-semibold capitalize px-2.5 py-[3px] border border-line rounded-full bg-paper text-ink whitespace-nowrap">
   <span class="w-1.5 h-1.5 rounded-full flex-shrink-0<%= " animate-[wk-pulse_2s_ease-in-out_infinite]" if status == "running" %>" style="background: <%= spec[:dot] %>"></span>
   <%= t("status_pill.#{status}", default: spec[:label]) %>
 </span>

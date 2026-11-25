@@ -8,7 +8,7 @@
     ← Back to Releases
   <% end %>
 
-  <div class="border-1.5 border-ink bg-paper p-6">
+  <div class="border border-line bg-paper p-6">
     <h1 class="font-mono text-lg font-semibold text-ink mb-1"># connect_github_repository</h1>
     <p class="font-mono text-sm text-dim mb-6">// select a repository to auto-deploy to <span class="text-ink"><%= @app.name %></span></p>
 
@@ -17,7 +17,7 @@
         <% @repos.each do |repo| %>
           <% selected = @selected_repo == repo.full_name %>
           <%= link_to dashboard_app_github_repos_path(@app, repo: repo.full_name),
-              class: "block p-3 border-1.5 transition font-mono #{selected ? 'bg-accent-soft border-accent' : 'bg-bg border-ink hover:bg-bg-deep'}" do %>
+              class: "block p-3 border transition font-mono #{selected ? 'bg-accent-soft border-accent' : 'bg-bg border-line-strong hover:bg-bg-deep'}" do %>
             <div class="flex items-center justify-between gap-3">
               <div>
                 <span class="text-sm font-medium text-ink"><%= repo.full_name %></span>
@@ -43,7 +43,7 @@
             <% @branches.each do |branch| %>
               <%= button_to dashboard_app_github_connect_path(@app, repo: @selected_repo, branch: branch),
                   method: :post,
-                  class: "w-full text-left p-2.5 border-1.5 border-ink bg-bg hover:border-accent transition font-mono" do %>
+                  class: "w-full text-left p-2.5 border border-line bg-bg hover:border-accent transition font-mono" do %>
                 <div class="flex items-center justify-between">
                   <span class="text-sm text-ink-soft"><%= branch %></span>
                   <span class="text-xs text-accent">Deploy →</span>

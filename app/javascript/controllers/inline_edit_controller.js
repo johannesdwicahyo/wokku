@@ -11,7 +11,7 @@ import { Controller } from "@hotwired/stimulus"
 //           data-action="keydown.esc->inline-edit#cancel">
 //       <input data-inline-edit-target="input">
 //       <button type="submit">Save</button>
-//       <button type="button" data-action="click->inline-edit#cancel">Cancel</button>
+//       <button type="button" data-action="click->inline-edit#cancel"><%= t("common.cancel") %></button>
 //     </form>
 //   </div>
 export default class extends Controller {

@@ -14,10 +14,10 @@
     the cloud image doesn't (its one-liner would die at the binary
     download after already hardening the host). %>
 <% if @server.heartbeat_at.blank? && File.file?(ENV["WOKKUD_BINARY_PATH"].to_s) %>
-  <div class="border-1.5 border-ink bg-warn-soft p-4 mb-6 font-mono">
+  <div class="border border-line bg-warn-soft p-4 mb-6 font-mono">
     <p class="text-xs font-semibold text-ink mb-2"># connect this server</p>
     <p class="text-[11px] text-dim mb-2">Run on the server as a sudo-capable user — it hardens the host (security updates, firewall, fail2ban) and installs the Wokku agent. Add <code>--no-harden</code> to skip hardening.</p>
-    <pre class="bg-bg border-1.5 border-ink p-2.5 text-[11px] overflow-x-auto select-all">curl -sSL <%= request.base_url %>/install/wokkud.sh | sudo bash -s -- <%= @server.ingest_token %></pre>
+    <pre class="bg-bg border border-line-strong p-2.5 text-[11px] overflow-x-auto select-all">curl -sSL <%= request.base_url %>/install/wokkud.sh | sudo bash -s -- <%= @server.ingest_token %></pre>
     <p class="text-[11px] text-dim mt-2">This page flips to connected on the first heartbeat (~30s after install).</p>
   </div>
 <% end %>
@@ -37,9 +37,9 @@
     <% end %>
   </div>
   <div class="flex items-center gap-2 flex-wrap font-mono">
-    <%= link_to "> terminal()", admin_server_terminal_path(@server), class: "inline-flex items-center px-3 py-1.5 border-1.5 border-ink bg-paper text-ink text-sm hover:bg-bg-deep transition" %>
-    <%= link_to "backups", edit_admin_server_backup_destination_path(@server), class: "inline-flex items-center px-3 py-1.5 border-1.5 border-ink bg-paper text-ink text-sm hover:bg-bg-deep transition" %>
-    <%= button_to "sync_now", sync_admin_server_path(@server), method: :post, class: "inline-flex items-center px-3 py-1.5 text-sm text-ink border-1.5 border-ink bg-paper hover:bg-bg-deep transition cursor-pointer" %>
+    <%= link_to "> terminal()", admin_server_terminal_path(@server), class: "inline-flex items-center px-3 py-1.5 border border-line-strong bg-paper text-ink text-sm hover:bg-bg-deep transition" %>
+    <%= link_to "backups", edit_admin_server_backup_destination_path(@server), class: "inline-flex items-center px-3 py-1.5 border border-line-strong bg-paper text-ink text-sm hover:bg-bg-deep transition" %>
+    <%= button_to "sync_now", sync_admin_server_path(@server), method: :post, class: "inline-flex items-center px-3 py-1.5 text-sm text-ink border border-line-strong bg-paper hover:bg-bg-deep transition cursor-pointer" %>
     <%= button_to "delete", admin_server_path(@server),
           method: :delete,
           form: {
@@ -56,7 +56,7 @@
 
 <%# Recovery card — shown when server can't connect %>
 <% if @server.auth_failed? || @server.unreachable? %>
-  <div class="mb-6 border-1.5 border-danger bg-danger-soft p-5">
+  <div class="mb-6 border border-danger bg-danger-soft p-5">
     <h3 class="font-mono text-sm font-bold text-ink mb-1">
       <% if @server.auth_failed? %>// SSH authentication failed<% else %>// server unreachable<% end %>
     </h3>
@@ -69,7 +69,7 @@
         Check that the server is online, the hostname is correct, and port <%= @server.port %> accepts SSH connections from Wokku's server.
       <% end %>
     </p>
-    <div class="border-1.5 border-ink bg-bg p-3 mb-3 font-mono">
+    <div class="border border-line bg-bg p-3 mb-3 font-mono">
       <p class="text-[10px] text-dim uppercase tracking-widest font-bold mb-2">Troubleshooting checklist</p>
       <ul class="text-xs text-ink-soft space-y-1.5">
         <% if @server.auth_failed? %>
@@ -86,8 +86,8 @@
       </ul>
     </div>
     <div class="flex flex-wrap items-center gap-2 font-mono">
-      <%= button_to "↻ retry_sync", sync_admin_server_path(@server), method: :post, class: "inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-bg bg-ink border-1.5 border-ink hover:bg-ink-soft transition cursor-pointer" %>
-      <%= link_to "edit_server", edit_admin_server_path(@server), class: "inline-flex items-center gap-1 px-3 py-1.5 text-xs text-ink border-1.5 border-ink hover:bg-bg-deep transition" %>
+      <%= button_to "↻ retry_sync", sync_admin_server_path(@server), method: :post, class: "inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold bg-live text-[#03140A] hover:bg-live-hover border border-live hover:bg-ink-soft transition cursor-pointer" %>
+      <%= link_to "edit_server", edit_admin_server_path(@server), class: "inline-flex items-center gap-1 px-3 py-1.5 text-xs text-ink border border-line-strong hover:bg-bg-deep transition" %>
       <a href="/docs/getting-started/connect-server" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-dim hover:text-accent transition">view docs ↗</a>
     </div>
   </div>
@@ -95,15 +95,15 @@
 
 <%# Host info row %>
 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3 font-mono">
-  <div class="border-1.5 border-ink bg-paper p-4">
+  <div class="border border-line bg-paper p-4">
     <p class="text-xs text-dim uppercase tracking-widest mb-1">Host</p>
     <p class="text-sm font-semibold text-ink"><%= @server.host %>:<%= @server.port %></p>
   </div>
-  <div class="border-1.5 border-ink bg-paper p-4">
+  <div class="border border-line bg-paper p-4">
     <p class="text-xs text-dim uppercase tracking-widest mb-1">SSH User</p>
     <p class="text-sm font-semibold text-ink"><%= @server.ssh_user %></p>
   </div>
-  <div class="border-1.5 border-ink bg-paper p-4">
+  <div class="border border-line bg-paper p-4">
     <p class="text-xs text-dim uppercase tracking-widest mb-1">Apps</p>
     <p class="text-sm font-semibold text-ink"><%= @apps.size %></p>
   </div>
@@ -119,7 +119,7 @@
   containers = @server.live_container_count
   collected = @server.live_metrics_at
 %>
-<div class="border-1.5 border-ink bg-paper p-5 mb-8 font-mono <%= 'opacity-60' unless fresh %>">
+<div class="border border-line bg-paper p-5 mb-8 font-mono <%= 'opacity-60' unless fresh %>">
   <div class="flex items-baseline justify-between mb-4">
     <p class="text-xs text-dim uppercase tracking-widest">Live Host Metrics</p>
     <p class="text-[11px] text-dim">
@@ -169,7 +169,7 @@
 <% if @apps.any? %>
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
     <% @apps.each do |app| %>
-      <%= link_to dashboard_app_path(app), class: "block border-1.5 border-ink bg-paper p-4 hover:bg-bg-deep transition cursor-pointer group font-mono" do %>
+      <%= link_to dashboard_app_path(app), class: "block border border-line-strong bg-paper p-4 hover:bg-bg-deep transition cursor-pointer group font-mono" do %>
         <div class="flex items-center justify-between">
           <span class="text-sm font-medium text-ink group-hover:text-accent transition"><%= app.name %></span>
           <% st = app.status %>
@@ -184,5 +184,5 @@
     <% end %>
   </div>
 <% else %>
-  <p class="font-mono text-sm text-dim border-1.5 border-ink bg-paper p-6 text-center">// no apps deployed to this server yet</p>
+  <p class="font-mono text-sm text-dim border border-line bg-paper p-6 text-center">// no apps deployed to this server yet</p>
 <% end %>

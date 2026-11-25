@@ -12,7 +12,7 @@
 
   <%# ── Seat usage banner (seats are billed: cloud only) ─────── %>
   <% if wokku_cloud? %>
-  <div class="border-1.5 border-ink bg-paper px-5 py-4 font-mono text-xs">
+  <div class="border border-line bg-paper px-5 py-4 font-mono text-xs">
     <div class="flex items-baseline justify-between gap-3">
       <div>
         <span class="text-[10px] text-dim uppercase tracking-widest">// seats</span>
@@ -43,7 +43,7 @@
 
   <%# ── Extra boxes ──────────────────────────────────────────── %>
   <% if @box_addons.present? && @box_addons.any? %>
-    <div class="border-1.5 border-ink bg-paper px-5 py-4 font-mono text-xs space-y-2">
+    <div class="border border-line bg-paper px-5 py-4 font-mono text-xs space-y-2">
       <p class="text-[10px] text-dim uppercase tracking-widest">// extra boxes</p>
       <% @box_addons.each do |addon| %>
         <div class="flex items-center justify-between gap-3 border-b border-rule-soft pb-2 last:border-b-0 last:pb-0">
@@ -51,7 +51,7 @@
             <%= addon.size.capitalize %> box — Rp<%= ActiveSupport::NumberHelper.number_to_delimited(addon.price_idr, delimiter: ".") %>/mo<%= " (cancels #{addon.ends_at.to_date})" if addon.canceled? %>
           </span>
           <% if !addon.canceled? && respond_to?(:dashboard_box_addon_path) %>
-            <%= button_to "Cancel", dashboard_box_addon_path(addon), method: :delete,
+            <%= button_to t("common.cancel"), dashboard_box_addon_path(addon), method: :delete,
                   data: { turbo_confirm: "Cancel this #{addon.size} box at the end of the cycle?" },
                   class: "text-[10px] uppercase tracking-widest px-2 py-1 border border-danger text-danger hover:bg-danger hover:text-paper" %>
           <% end %>
@@ -63,7 +63,7 @@
   <%# ── Add member form (admin only) ────────────────────────── %>
   <% if @is_admin %>
     <%= form_with url: dashboard_workspace_team_members_path(@workspace), method: :post, local: true,
-                  class: "border-1.5 border-ink bg-paper px-5 py-4 grid grid-cols-1 md:grid-cols-12 gap-3 font-mono text-xs items-end" do %>
+                  class: "border border-line bg-paper px-5 py-4 grid grid-cols-1 md:grid-cols-12 gap-3 font-mono text-xs items-end" do %>
       <label class="md:col-span-7">
         <span class="text-[10px] text-dim uppercase tracking-widest">add by email</span>
         <%= email_field_tag "team_membership[email]", "", required: true,
@@ -77,7 +77,7 @@
               class: "mt-1 w-full border border-dark-line bg-bg px-3 py-2 text-ink" %>
       </label>
       <div class="md:col-span-2">
-        <button type="submit" class="w-full px-3 py-2 border-1.5 border-ink bg-ink text-paper text-[10px] uppercase tracking-widest">
+        <button type="submit" class="w-full px-3 py-2 border border-live bg-live text-[#03140A] hover:bg-live-hover text-[10px] uppercase tracking-widest">
           add member
         </button>
       </div>
@@ -85,7 +85,7 @@
   <% end %>
 
   <%# ── Members table ──────────────────────────────────────── %>
-  <div class="border-1.5 border-ink bg-paper">
+  <div class="border border-line bg-paper">
     <div class="px-6 py-4 border-b border-rule-soft">
       <h2 class="font-mono text-base font-semibold text-ink"># members</h2>
       <p class="font-mono text-xs text-dim mt-1">// <%= @members.size %> total</p>

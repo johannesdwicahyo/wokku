@@ -2,7 +2,7 @@
     members load it through the audited show endpoint (Turbo frame). %>
 <% bucket = app.object_storage_bucket %>
 <% can_write = policy(app).update? %>
-<div class="bg-paper border-1.5 border-ink rounded-md mb-6 overflow-hidden" id="object-storage">
+<div class="bg-paper border border-line rounded-md mb-6 overflow-hidden" id="object-storage">
   <div class="px-6 py-4 border-b border-line flex items-center justify-between gap-3 flex-wrap">
     <div>
       <h2 class="font-headline text-base font-bold text-ink">Object storage</h2>
@@ -34,7 +34,7 @@
     <% if can_write %>
       <div class="px-6 py-4 border-t border-line flex items-center gap-3 flex-wrap">
         <%= form_with url: dashboard_app_object_storage_path(app), method: :patch, class: "flex items-center gap-2" do %>
-          <%= number_field_tag :quota_gb, bucket.quota_gb, min: 1, max: ObjectStorageBucket::MAX_QUOTA_GB, class: "w-24 bg-paper border-1.5 border-ink rounded-md px-2 py-1 text-sm", "aria-label": "Quota in GB" %>
+          <%= number_field_tag :quota_gb, bucket.quota_gb, min: 1, max: ObjectStorageBucket::MAX_QUOTA_GB, class: "w-24 bg-paper border border-line-strong rounded-md px-2 py-1 text-sm", "aria-label": "Quota in GB" %>
           <%= submit_tag "Set quota (GB)", class: Atoms::ButtonComponent.new(variant: :outline, size: :sm).classes %>
         <% end %>
         <%= button_to "Rotate keys", rotate_dashboard_app_object_storage_path(app), method: :post, data: { turbo_confirm: "Rotate keys? The app restarts with new credentials." }, class: Atoms::ButtonComponent.new(variant: :outline, size: :sm).classes %>

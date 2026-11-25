@@ -13,21 +13,21 @@
 
 <%# Database pages: the open-source edition has dedicated databases only. %>
 <% if @frontmatter["shared_dbs"] && !Addons::SharedProvisioner.feature_enabled? %>
-  <p data-dedicated-only-note class="mt-6 border-1.5 border-line bg-bg px-4 py-3 font-mono text-xs text-dim">
+  <p data-dedicated-only-note class="mt-6 border border-line bg-bg px-4 py-3 font-mono text-xs text-dim">
     <%= @docs_locale == "id" ? "Instalasi self-host hanya memakai database dedicated (container sendiri per database). Database shared adalah fitur wokku.cloud." : "Self-hosted installs use dedicated databases only (one container per database). Shared databases are a wokku.cloud feature." %>
   </p>
 <% end %>
 
 <%# Pages that walk through wokku.cloud's own sign-up/deploy flow. %>
 <% if @frontmatter["cloud_flow"] && !wokku_cloud? %>
-  <p data-cloud-flow-note class="mt-6 border-1.5 border-line bg-bg px-4 py-3 font-mono text-xs text-dim">
+  <p data-cloud-flow-note class="mt-6 border border-line bg-bg px-4 py-3 font-mono text-xs text-dim">
     <%= @docs_locale == "id" ? "Instalasi self-host: akun dibuat oleh admin kamu (atau lewat undangan tim), dan kamu deploy dari template atau repositori Git publik — git push hanya ada di wokku.cloud." : "On a self-hosted install: your admin creates accounts (or invites you to a team), and you deploy from a template or a public Git repository — git push is a wokku.cloud feature." %>
   </p>
 <% end %>
 
 <%# Pages that mix how-to with prices (frontmatter cloud_prices: true). %>
 <% if @frontmatter["cloud_prices"] && !wokku_cloud? %>
-  <p data-cloud-prices-note class="mt-6 border-1.5 border-line bg-bg px-4 py-3 font-mono text-xs text-dim">
+  <p data-cloud-prices-note class="mt-6 border border-line bg-bg px-4 py-3 font-mono text-xs text-dim">
     <%= @docs_locale == "id" ? "Harga di halaman ini berlaku untuk wokku.cloud. Instalasi self-host tidak punya tagihan." : "Prices on this page are wokku.cloud's. A self-hosted install has no billing." %>
   </p>
 <% end %>

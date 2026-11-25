@@ -18,7 +18,7 @@
 <% policy = @database.backup_policy %>
 <% tier = @database.service_tier %>
 <% last_completed = @database.backups.completed.order(created_at: :desc).first %>
-<div class="border-1.5 border-ink bg-paper rounded-md px-5 py-3 mb-6 flex flex-wrap items-center justify-between gap-3">
+<div class="border border-line bg-paper rounded-md px-5 py-3 mb-6 flex flex-wrap items-center justify-between gap-3">
   <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs">
     <%= render Atoms::TagComponent.new(tone: :dim) do %><%= tier&.name&.tr("_", " ")&.split(" ")&.map(&:capitalize)&.join(" ") || "—" %><% end %>
     <% if policy[:auto_backup] %>
@@ -47,10 +47,10 @@
 </div>
 
 <% if @backups.any? %>
-  <div class="bg-paper border-1.5 border-ink rounded-md shadow-brutal overflow-hidden">
+  <div class="bg-paper border border-line rounded-md shadow-brutal overflow-hidden">
     <table class="w-full text-[13.5px]">
       <thead>
-        <tr class="bg-bg border-b-1.5 border-ink text-[10.5px] font-bold uppercase tracking-[.06em] text-dim text-left">
+        <tr class="bg-bg border-b border-line text-[10.5px] font-bold uppercase tracking-[.06em] text-dim text-left">
           <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.backups.columns.date", default: "Date") %></th>
           <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.backups.columns.status", default: "Status") %></th>
           <th scope="col" class="px-3.5 py-2.5 font-bold"><%= t("dashboard.backups.columns.size", default: "Size") %></th>
@@ -94,7 +94,7 @@
                   <div data-controller="motion--drawer" class="inline-block">
                     <button data-action="motion--drawer#open"
                             type="button"
-                            class="inline-flex items-center justify-center gap-2 font-semibold cursor-pointer rounded-md transition-colors bg-transparent text-warn border-1.5 border-transparent hover:bg-bg-deep px-3 py-1.5 text-xs">
+                            class="inline-flex items-center justify-center gap-2 font-semibold cursor-pointer rounded-md transition-colors bg-transparent text-warn border border-transparent hover:bg-bg-deep px-3 py-1.5 text-xs">
                       Restore
                     </button>
                     <template data-motion--drawer-target="content">
@@ -109,14 +109,14 @@
                         </p>
                         <%= button_to "Yes, restore now", restore_dashboard_addon_backup_path(@database, backup),
                               method: :post,
-                              class: "w-full border-1.5 border-ink rounded-md bg-danger text-bg font-semibold text-sm px-4 py-3 shadow-brutal hover:bg-warn hover:text-ink transition cursor-pointer",
+                              class: "w-full border border-line rounded-md bg-danger text-bg font-semibold text-sm px-4 py-3 shadow-brutal hover:bg-warn hover:text-ink transition cursor-pointer",
                               data: {
                                 controller: "motion--optimistic-button",
                                 "motion--optimistic-button-pending-label-value": "restoring…"
                               } %>
                         <button data-action="motion--drawer#close"
                                 type="button"
-                                class="w-full border-1.5 border-ink rounded-md bg-paper text-ink font-semibold text-sm px-4 py-3 hover:bg-bg-deep transition cursor-pointer">
+                                class="w-full border border-line rounded-md bg-paper text-ink font-semibold text-sm px-4 py-3 hover:bg-bg-deep transition cursor-pointer">
                           Cancel
                         </button>
                       </div>

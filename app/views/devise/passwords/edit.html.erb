@@ -4,12 +4,12 @@
       <h1 class="font-headline text-2xl font-semibold tracking-tight text-ink"><%= t("auth.change_password") %></h1>
     </div>
 
-    <div class="border-1.5 border-ink bg-paper rounded-md p-6">
+    <div class="border border-line bg-paper rounded-md p-6">
       <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :put, class: "space-y-3" }) do |f| %>
         <%= f.hidden_field :reset_password_token %>
 
         <% if resource.errors.any? %>
-          <div class="border-1.5 border-danger bg-danger-soft rounded-md p-4">
+          <div class="border border-danger bg-danger-soft rounded-md p-4">
             <ul class="list-disc list-inside text-sm text-danger space-y-1">
               <% resource.errors.full_messages.each do |message| %>
                 <li><%= message %></li>
@@ -20,13 +20,13 @@
 
         <div>
           <%= f.label :password, t("auth.new_password"), class: "block text-xs font-semibold text-ink-soft mb-1" %>
-          <%= f.password_field :password, autofocus: true, autocomplete: "new-password", class: "w-full px-3 py-2.5 border-1.5 border-ink bg-bg rounded-md text-sm focus:outline-none focus:shadow-brutal-sm" %>
+          <%= f.password_field :password, autofocus: true, autocomplete: "new-password", class: "w-full px-3 py-2.5 border border-line-strong bg-bg rounded-md text-sm focus:outline-none focus:shadow-brutal-sm" %>
           <p class="mt-1 text-[11px] text-dim"><%= @minimum_password_length %> characters minimum</p>
         </div>
 
         <div>
           <%= f.label :password_confirmation, t("auth.confirm_password"), class: "block text-xs font-semibold text-ink-soft mb-1" %>
-          <%= f.password_field :password_confirmation, autocomplete: "new-password", class: "w-full px-3 py-2.5 border-1.5 border-ink bg-bg rounded-md text-sm focus:outline-none focus:shadow-brutal-sm" %>
+          <%= f.password_field :password_confirmation, autocomplete: "new-password", class: "w-full px-3 py-2.5 border border-line-strong bg-bg rounded-md text-sm focus:outline-none focus:shadow-brutal-sm" %>
         </div>
 
         <div>

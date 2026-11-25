@@ -1,8 +1,8 @@
-<% content_for(:title, "1 Click Deploy - Wokku") %>
+<% content_for(:title, "#{I18n.t("dashboard.templates.title")} - Wokku") %>
 
 <div class="mb-6">
   <h1 class="font-headline text-2xl font-extrabold tracking-tight text-ink mb-2"><%= t("dashboard.templates.title") %></h1>
-  <p class="text-sm text-dim">deploy production-ready stacks in seconds — pick from curated stacks or browse by use case</p>
+  <p class="text-sm text-dim"><%= I18n.t("sweep.templates_sub") %></p>
 </div>
 
 <%# Search + category quick-pills — live-filtered by the templates-search controller. %>
@@ -13,7 +13,7 @@
       <input type="text" name="q" placeholder="<%= t('dashboard.templates.search_placeholder') %>" value="<%= params[:q] %>"
              data-templates-search-target="input"
              data-action="input->templates-search#filter"
-             class="w-full pl-3 pr-10 py-2.5 bg-paper border-1.5 border-ink text-sm text-ink placeholder-dim focus:outline-none focus:border-ink"
+             class="w-full pl-3 pr-10 py-2.5 bg-paper border border-line-strong text-sm text-ink placeholder-dim focus:outline-none focus:border-ink"
              <%= "autofocus" if params[:q].present? %>>
       <% if params[:q].present? %>
         <%= link_to dashboard_templates_path,
@@ -25,10 +25,10 @@
 
   <div class="flex flex-wrap gap-1.5">
     <%= link_to t("dashboard.templates.all_templates"), dashboard_templates_path,
-                class: "px-3 py-1 text-[11px] font-semibold rounded-md transition #{params[:category].blank? && params[:q].blank? ? 'border-1.5 border-ink bg-ink text-paper' : 'border border-line bg-paper text-dim hover:bg-bg-deep'}" %>
+                class: "px-3 py-1 text-[11px] font-semibold rounded-md transition #{params[:category].blank? && params[:q].blank? ? 'border border-line bg-ink text-paper' : 'border border-line bg-paper text-dim hover:bg-bg-deep'}" %>
     <% @categories.each do |cat| %>
       <%= link_to cat["name"], dashboard_templates_path(category: cat["slug"]),
-                  class: "px-3 py-1 text-[11px] font-semibold rounded-md transition #{params[:category] == cat['slug'] ? 'border-1.5 border-ink bg-ink text-paper' : 'border border-line bg-paper text-dim hover:bg-bg-deep'}" %>
+                  class: "px-3 py-1 text-[11px] font-semibold rounded-md transition #{params[:category] == cat['slug'] ? 'border border-line bg-ink text-paper' : 'border border-line bg-paper text-dim hover:bg-bg-deep'}" %>
     <% end %>
   </div>
 </div>
@@ -67,16 +67,16 @@
   <% if @featured.any? %>
     <section class="mb-10">
       <div class="flex items-baseline justify-between mb-4">
-        <h2 class="text-base font-bold text-ink">featured</h2>
-        <span class="text-[10px] text-dim uppercase tracking-widest">curated picks</span>
+        <h2 class="text-base font-bold text-ink"><%= I18n.t("sweep.featured") %></h2>
+        <span class="text-[10px] text-dim uppercase tracking-widest"><%= I18n.t("sweep.curated_picks") %></span>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
         <% @featured.first(4).each do |t| %>
           <%= link_to dashboard_template_path(t[:slug]),
-                      class: "group relative overflow-hidden border-1.5 border-ink bg-paper shadow-brutal-sm hover:bg-bg-deep transition p-5 min-h-[180px] flex flex-col justify-between" do %>
+                      class: "group relative overflow-hidden border border-line bg-paper shadow-brutal-sm hover:bg-bg-deep transition p-5 min-h-[180px] flex flex-col justify-between" do %>
             <div>
               <div class="flex items-center justify-between mb-3">
-                <div class="w-12 h-12 border-1.5 border-ink bg-bg flex items-center justify-center">
+                <div class="w-12 h-12 border border-line bg-bg flex items-center justify-center">
                   <span class="text-2xl"><%= template_icon(t[:icon]) %></span>
                 </div>
                 <span class="text-[9px] font-bold text-dim uppercase tracking-widest">featured</span>
@@ -86,7 +86,7 @@
             </div>
             <div class="flex items-center justify-between mt-4 pt-3 border-t border-rule-soft">
               <span class="text-[10px] text-dim">From <%= template_total_label(t) %></span>
-              <span class="px-3 py-1 text-[10px] font-bold bg-ink text-bg">Deploy →</span>
+              <span class="px-3 py-1 text-[10px] font-bold bg-live text-[#03140A]">Deploy →</span>
             </div>
           <% end %>
         <% end %>

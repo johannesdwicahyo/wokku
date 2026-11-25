@@ -214,8 +214,8 @@ class DocsController < ApplicationController
       %(<div class="px-5 py-5" data-code-tabs-target="panel" data-id="#{t[:id]}" #{hidden}>#{t[:html]}</div>)
     end.join("\n")
     <<~HTML
-      <div class="mt-4 border-1.5 border-ink rounded-md overflow-hidden bg-paper shadow-brutal-sm" data-controller="code-tabs" data-code-tabs-default-value="#{first_id}">
-        <div class="flex border-b-1.5 border-ink bg-bg-deep" style="overflow-x: auto;">
+      <div class="mt-4 border border-line rounded-md overflow-hidden bg-paper shadow-brutal-sm" data-controller="code-tabs" data-code-tabs-default-value="#{first_id}">
+        <div class="flex border-b border-line bg-bg-deep" style="overflow-x: auto;">
           #{buttons}
         </div>
         #{panels}

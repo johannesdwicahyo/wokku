@@ -3,7 +3,7 @@
   <%# The fragment renders layout-free, so the controller's flash.now notice
       (Swarm-supervised health) must be surfaced here or it's never shown. %>
   <% if flash[:notice].present? %>
-    <div class="mb-6 px-4 py-3 border-1.5 border-ink bg-paper rounded-md text-sm text-ink"><%= flash[:notice] %></div>
+    <div class="mb-6 px-4 py-3 border border-line bg-paper rounded-md text-sm text-ink"><%= flash[:notice] %></div>
   <% end %>
   <div class="mb-6">
     <h2 class="font-headline text-base font-bold text-ink">Health checks</h2>
@@ -11,7 +11,7 @@
   </div>
 
   <% checks_disabled = @checks["checks_disabled"].to_s.strip == "true" %>
-  <div class="mb-6 flex items-center gap-3 px-4 py-3 border-1.5 rounded-md <%= checks_disabled ? 'border-danger bg-danger-soft' : 'border-success bg-success-soft' %>">
+  <div class="mb-6 flex items-center gap-3 px-4 py-3 border rounded-md <%= checks_disabled ? 'border-danger bg-danger-soft' : 'border-success bg-success-soft' %>">
     <span class="<%= checks_disabled ? 'text-danger' : 'text-success' %> font-bold"><%= checks_disabled ? "✕" : "✓" %></span>
     <div>
       <p class="text-sm font-semibold text-ink">Checks are currently <span class="<%= checks_disabled ? 'text-danger' : 'text-success' %>"><%= checks_disabled ? "disabled" : "enabled" %></span></p>
@@ -23,7 +23,7 @@
 
   <%= form_with url: dashboard_app_checks_path(@app), method: :patch, class: "space-y-6" do |f| %>
 
-    <div class="bg-paper border-1.5 border-ink rounded-md overflow-hidden">
+    <div class="bg-paper border border-line rounded-md overflow-hidden">
       <div class="px-6 py-4 border-b border-line">
         <h3 class="text-sm font-semibold text-ink">Enable health checks</h3>
         <p class="text-xs text-dim mt-1">When enabled, Wokku waits for your app to pass a health check before marking a deployment as successful.</p>
@@ -33,32 +33,32 @@
           <input type="hidden" name="checks_enabled" value="0">
           <input type="checkbox" name="checks_enabled" value="1"
                  <%= checks_disabled ? "" : "checked" %>
-                 class="w-4 h-4 border-1.5 border-ink rounded accent-accent cursor-pointer">
+                 class="w-4 h-4 border border-line rounded accent-accent cursor-pointer">
           <span class="text-sm text-ink">Enable health checks on deploy</span>
         </label>
       </div>
     </div>
 
-    <div class="bg-paper border-1.5 border-ink rounded-md overflow-hidden">
+    <div class="bg-paper border border-line rounded-md overflow-hidden">
       <div class="px-6 py-4 border-b border-line">
         <h3 class="text-sm font-semibold text-ink">Check path</h3>
         <p class="text-xs text-dim mt-1">The URL path Wokku will request to verify your app is healthy. Should return HTTP 2xx.</p>
       </div>
       <div class="px-6 py-4">
         <div class="flex items-center gap-2 flex-wrap">
-          <span class="text-xs text-dim bg-bg border-1.5 border-ink rounded-md px-2 py-1.5 font-mono">
+          <span class="text-xs text-dim bg-bg border border-line rounded-md px-2 py-1.5 font-mono">
             <%= @app.domains.first&.hostname ? "https://#{@app.domains.first.hostname}" : "http://your-app.example.com" %>
           </span>
           <input type="text" name="check_path"
                  value="<%= @checks['checks_path'] || '/' %>"
                  placeholder="/"
-                 class="flex-1 bg-paper border-1.5 border-ink rounded-md px-3 py-1.5 text-sm text-ink font-mono focus:outline-none focus:shadow-brutal-sm transition">
+                 class="flex-1 bg-paper border border-line-strong rounded-md px-3 py-1.5 text-sm text-ink font-mono focus:outline-none focus:shadow-brutal-sm transition">
         </div>
         <p class="text-[10px] text-dim mt-2">Example: <span class="text-ink-soft font-mono">/health</span> or <span class="text-ink-soft font-mono">/up</span></p>
       </div>
     </div>
 
-    <div class="bg-paper border-1.5 border-ink rounded-md overflow-hidden">
+    <div class="bg-paper border border-line rounded-md overflow-hidden">
       <div class="px-6 py-4 border-b border-line">
         <h3 class="text-sm font-semibold text-ink">Timing &amp; retry</h3>
         <p class="text-xs text-dim mt-1">Control how long Wokku waits before checking, how long each check can take, and how many retries are attempted.</p>
@@ -76,7 +76,7 @@
             </div>
             <div class="flex items-center gap-2">
               <input type="number" id="<%= name %>" name="<%= name %>" value="<%= val %>" min="<%= min %>" max="<%= max %>"
-                     class="w-20 bg-paper border-1.5 border-ink rounded-md px-3 py-1.5 text-sm text-ink text-center tabular-nums focus:outline-none focus:shadow-brutal-sm transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                     class="w-20 bg-paper border border-line-strong rounded-md px-3 py-1.5 text-sm text-ink text-center tabular-nums focus:outline-none focus:shadow-brutal-sm transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
               <span class="text-xs text-dim"><%= unit %></span>
             </div>
           </div>
@@ -85,7 +85,7 @@
     </div>
 
     <% if @checks.any? %>
-      <details class="bg-paper border-1.5 border-ink rounded-md overflow-hidden">
+      <details class="bg-paper border border-line rounded-md overflow-hidden">
         <summary class="px-6 py-3 text-xs text-dim cursor-pointer hover:text-ink transition select-none">▸ Raw report</summary>
         <div class="px-6 pb-4 pt-1">
           <div class="text-xs text-ink-soft space-y-1 font-mono">
@@ -102,7 +102,7 @@
 
     <div class="flex items-center gap-3">
       <%= f.submit "Save health check settings", class: Atoms::ButtonComponent.new(variant: :primary, size: :md).classes %>
-      <%= link_to "Cancel", dashboard_app_path(@app), class: Atoms::ButtonComponent.new(variant: :ghost, size: :md).classes %>
+      <%= link_to t("common.cancel"), dashboard_app_path(@app), class: Atoms::ButtonComponent.new(variant: :ghost, size: :md).classes %>
     </div>
 
   <% end %>

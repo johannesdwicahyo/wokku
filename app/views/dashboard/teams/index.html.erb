@@ -4,13 +4,13 @@
       <h1 class="font-mono text-2xl font-semibold tracking-tighter text-ink"># teams</h1>
       <p class="mt-1 font-mono text-sm text-dim">// manage your teams</p>
     </div>
-    <button data-action="click->slide-panel#open" class="inline-flex items-center px-4 py-2 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer">+ new_team</button>
+    <button data-action="click->slide-panel#open" class="inline-flex items-center px-4 py-2 bg-live text-[#03140A] hover:bg-live-hover font-mono text-sm border border-live  transition-all cursor-pointer">+ new_team</button>
   </div>
 
   <% if @teams.any? %>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <% @teams.each do |team| %>
-        <%= link_to dashboard_team_path(team), class: "block border-1.5 border-ink bg-paper p-5 hover:bg-bg-deep transition font-mono" do %>
+        <%= link_to dashboard_team_path(team), class: "block border border-line-strong bg-paper p-5 hover:bg-bg-deep transition font-mono" do %>
           <h3 class="text-base font-semibold text-ink mb-2"><%= team.name %></h3>
           <div class="flex items-center gap-4 text-sm text-dim">
             <span><%= team.users.size %> members</span>
@@ -21,11 +21,11 @@
       <% end %>
     </div>
   <% else %>
-    <div class="text-center py-16 border-1.5 border-ink bg-paper">
+    <div class="text-center py-16 border border-line bg-paper">
       <h3 class="font-mono text-lg font-medium text-ink">// no teams yet</h3>
       <p class="mt-2 font-mono text-sm text-dim">Create a team to start collaborating.</p>
       <div class="mt-6">
-        <button data-action="click->slide-panel#open" class="inline-flex items-center px-4 py-2 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer">+ new_team</button>
+        <button data-action="click->slide-panel#open" class="inline-flex items-center px-4 py-2 bg-live text-[#03140A] hover:bg-live-hover font-mono text-sm border border-live  transition-all cursor-pointer">+ new_team</button>
       </div>
     </div>
   <% end %>

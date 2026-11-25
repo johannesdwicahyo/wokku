@@ -1,5 +1,5 @@
 <%
-  inp = "w-full bg-bg border-1.5 border-ink px-3 py-2 font-mono text-sm text-ink placeholder-dim focus:outline-none focus:border-accent"
+  inp = "w-full bg-bg border border-line px-3 py-2 font-mono text-sm text-ink placeholder-dim focus:outline-none focus:border-accent"
   lbl = "block font-mono text-[10px] font-medium text-dim mb-1.5 uppercase tracking-widest"
 %>
 <div class="max-w-lg">
@@ -13,7 +13,7 @@
     <p class="mt-0.5 text-sm text-dim">// register it, then connect with one command</p>
   </div>
 
-  <div class="border-1.5 border-ink bg-paper p-6">
+  <div class="border border-line bg-paper p-6">
     <%= render "form", server: @server %>
   </div>
 </div>

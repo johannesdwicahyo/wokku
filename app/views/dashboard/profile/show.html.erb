@@ -27,14 +27,14 @@
   <div class="flex flex-col gap-6 min-w-0">
 
     <%# Account Info %>
-    <div class="border-1.5 border-ink bg-paper rounded-md overflow-hidden">
+    <div class="border border-line bg-paper rounded-md overflow-hidden">
       <div class="<%= card_head %>">
         <h3 class="<%= card_title %>"><%= t("dashboard.profile.account") %></h3>
         <%= link_to edit_dashboard_profile_path, class: "text-sm text-accent hover:underline" do %>Edit →<% end %>
       </div>
       <div class="p-6">
         <div class="flex items-center gap-4 mb-6">
-          <div class="w-14 h-14 border-1.5 border-ink bg-ink text-paper flex items-center justify-center text-xl font-bold rounded-md overflow-hidden">
+          <div class="w-14 h-14 border border-line bg-ink text-paper flex items-center justify-center text-xl font-bold rounded-md overflow-hidden">
             <% if current_user.avatar_url.present? %>
               <img src="<%= current_user.avatar_url %>" alt="Avatar" class="w-full h-full object-cover">
             <% else %>
@@ -44,7 +44,7 @@
           <div>
             <h3 class="text-sm font-semibold text-ink"><%= current_user.name.presence || current_user.email %></h3>
             <p class="text-xs text-dim"><%= current_user.email %></p>
-            <p class="text-[11px] text-dim mt-0.5">Member since <%= current_user.created_at.strftime("%B %Y") %> · <%= current_user.role.capitalize %></p>
+            <p class="text-[11px] text-dim mt-0.5"><%= t("sweep.member_since", date: l(current_user.created_at.to_date, format: "%b %Y")) %> · <%= current_user.role.capitalize %></p>
           </div>
         </div>
         <%
@@ -55,18 +55,18 @@
           stat_cols = show_servers ? "grid-cols-3" : "grid-cols-2"
         %>
         <div class="grid <%= stat_cols %> gap-3">
-          <div class="border-1.5 border-ink bg-bg p-3 text-center rounded-md">
-            <p class="<%= stat_label %>">Apps</p>
+          <div class="border border-line bg-bg p-3 text-center rounded-md">
+            <p class="<%= stat_label %>"><%= t("sweep.stat_apps") %></p>
             <span class="text-lg font-bold text-ink"><%= policy_scope(AppRecord).size %></span>
           </div>
           <% if show_servers %>
-            <div class="border-1.5 border-ink bg-bg p-3 text-center rounded-md">
-              <p class="<%= stat_label %>">Servers</p>
+            <div class="border border-line bg-bg p-3 text-center rounded-md">
+              <p class="<%= stat_label %>"><%= t("sweep.stat_servers") %></p>
               <span class="text-lg font-bold text-ink"><%= policy_scope(Server).size %></span>
             </div>
           <% end %>
-          <div class="border-1.5 border-ink bg-bg p-3 text-center rounded-md">
-            <p class="<%= stat_label %>">Since</p>
+          <div class="border border-line bg-bg p-3 text-center rounded-md">
+            <p class="<%= stat_label %>"><%= t("sweep.since") %></p>
             <span class="text-lg font-bold text-ink"><%= current_user.created_at.strftime("%b %Y") %></span>
           </div>
         </div>
@@ -74,7 +74,7 @@
     </div>
 
     <%# Preferences — language + currency (independent) %>
-    <div class="border-1.5 border-ink bg-paper rounded-md overflow-hidden">
+    <div class="border border-line bg-paper rounded-md overflow-hidden">
       <div class="px-6 py-4 border-b border-line">
         <h3 class="<%= card_title %>"><%= t("dashboard.profile.preferences", default: "Preferences") %></h3>
         <p class="text-xs text-dim mt-0.5"><%= wokku_cloud? ? t("dashboard.profile.preferences_hint", default: "Display language and billing currency can be set independently.") : t("dashboard.profile.preferences_hint_self_host") %></p>
@@ -87,7 +87,7 @@
               <%= u.select :locale,
                     [["English", "en"], ["Bahasa Indonesia", "id"]],
                     {},
-                    class: "w-full bg-paper text-ink border-1.5 border-ink rounded-md px-3 py-2 text-sm focus:outline-none focus:shadow-brutal-sm",
+                    class: "w-full bg-paper text-ink border border-line-strong rounded-md px-3 py-2 text-sm focus:outline-none focus:shadow-brutal-sm",
                     data: { controller: "auto-submit", action: "change->auto-submit#submit" } %>
             </div>
             <% if wokku_cloud? %><%# billing currency only exists where there is billing %>
@@ -96,13 +96,13 @@
               <% if Wokku::LaunchMode.idr_only? %>
                 <div class="flex items-center gap-2 h-[38px]">
                   <span class="text-sm text-ink font-bold">IDR (Rp)</span>
-                  <span class="text-[11px] text-dim">USD billing available after international expansion</span>
+                  <span class="text-[11px] text-dim"><%= t("sweep.usd_later") %></span>
                 </div>
               <% else %>
                 <%= u.select :currency,
                       [["USD ($)", "usd"], ["IDR (Rp)", "idr"]],
                       {},
-                      class: "w-full bg-paper text-ink border-1.5 border-ink rounded-md px-3 py-2 text-sm focus:outline-none focus:shadow-brutal-sm",
+                      class: "w-full bg-paper text-ink border border-line-strong rounded-md px-3 py-2 text-sm focus:outline-none focus:shadow-brutal-sm",
                       data: { controller: "auto-submit", action: "change->auto-submit#submit" } %>
               <% end %>
             </div>
@@ -113,7 +113,7 @@
     </div>
 
     <%# Resource Overview %>
-    <div class="border-1.5 border-ink bg-paper rounded-md overflow-hidden">
+    <div class="border border-line bg-paper rounded-md overflow-hidden">
       <div class="px-6 py-4 border-b border-line">
         <div class="flex items-center justify-between">
           <h3 class="<%= card_title %>"><%= t("dashboard.profile.resource_overview") %></h3>
@@ -140,18 +140,18 @@
       </div>
       <div class="p-6">
         <div class="grid grid-cols-3 gap-3">
-          <div class="border-1.5 border-ink bg-bg p-4 rounded-md">
-            <p class="<%= stat_label %>">Active Apps</p>
+          <div class="border border-line bg-bg p-4 rounded-md">
+            <p class="<%= stat_label %>"><%= t("sweep.active_apps") %></p>
             <span class="text-2xl font-bold text-ink"><%= running_app_count %></span>
             <p class="text-[11px] text-dim mt-1">of <%= total_app_count %> total</p>
           </div>
-          <div class="border-1.5 border-ink bg-bg p-4 rounded-md">
+          <div class="border border-line bg-bg p-4 rounded-md">
             <p class="<%= stat_label %>">Add-ons</p>
             <span class="text-2xl font-bold text-ink"><%= addon_count %></span>
             <p class="text-[11px] text-dim mt-1">databases &amp; services</p>
           </div>
-          <div class="border-1.5 border-ink bg-bg p-4 rounded-md">
-            <p class="<%= stat_label %>">Containers</p>
+          <div class="border border-line bg-bg p-4 rounded-md">
+            <p class="<%= stat_label %>"><%= t("sweep.containers") %></p>
             <span class="text-2xl font-bold text-ink"><%= dyno_count %></span>
             <p class="text-[11px] text-dim mt-1">running</p>
           </div>
@@ -160,10 +160,10 @@
     </div>
 
     <%# Recent Activity %>
-    <div class="border-1.5 border-ink bg-paper rounded-md overflow-hidden">
+    <div class="border border-line bg-paper rounded-md overflow-hidden">
       <div class="<%= card_head %>">
-        <h3 class="<%= card_title %>">Recent activity</h3>
-        <%= link_to dashboard_activities_path, class: "text-sm text-accent hover:underline" do %>View all →<% end %>
+        <h3 class="<%= card_title %>"><%= t("sweep.recent_activity") %></h3>
+        <%= link_to dashboard_activities_path, class: "text-sm text-accent hover:underline" do %><%= t("sweep.view_all") %><% end %>
       </div>
       <%
         recent = Activity.where(user: current_user).order(created_at: :desc).limit(5) rescue []
@@ -181,7 +181,7 @@
           <% end %>
         </div>
       <% else %>
-        <div class="px-6 py-6 text-center text-xs text-dim">No recent activity.</div>
+        <div class="px-6 py-6 text-center text-xs text-dim"><%= t("sweep.no_recent_activity") %></div>
       <% end %>
     </div>
   </div>
@@ -190,33 +190,33 @@
   <div class="flex flex-col gap-6">
 
     <%# Security — 2FA %>
-    <div class="border-1.5 border-ink bg-paper rounded-md overflow-hidden">
+    <div class="border border-line bg-paper rounded-md overflow-hidden">
       <div class="<%= card_head %>"><h3 class="<%= card_title %>"><%= t("dashboard.profile.security") %></h3></div>
       <div class="p-5">
         <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-semibold text-ink">Two-factor auth</span>
+          <span class="text-xs font-semibold text-ink"><%= t("sweep.two_factor") %></span>
           <% if current_user.respond_to?(:two_factor_enabled?) && current_user.two_factor_enabled? %>
-            <%= render Atoms::TagComponent.new(tone: :success) do %>Enabled<% end %>
+            <%= render Atoms::TagComponent.new(tone: :success) do %><%= t("sweep.enabled") %><% end %>
           <% else %>
-            <%= render Atoms::TagComponent.new(tone: :dim) do %>Disabled<% end %>
+            <%= render Atoms::TagComponent.new(tone: :dim) do %><%= t("sweep.disabled") %><% end %>
           <% end %>
         </div>
         <% if respond_to?(:dashboard_two_factor_path) %>
           <%= render Atoms::ButtonComponent.new(variant: :outline, size: :sm, href: dashboard_two_factor_path, class: "w-full") do %>
-            <%= current_user.respond_to?(:two_factor_enabled?) && current_user.two_factor_enabled? ? "Manage 2FA" : "Enable 2FA" %>
+            <%= current_user.respond_to?(:two_factor_enabled?) && current_user.two_factor_enabled? ? t("sweep.manage_2fa") : t("sweep.enable_2fa") %>
           <% end %>
         <% end %>
       </div>
     </div>
 
     <%# SSH Keys %>
-    <div class="border-1.5 border-ink bg-paper rounded-md overflow-hidden">
+    <div class="border border-line bg-paper rounded-md overflow-hidden">
       <div class="<%= card_head %>"><h3 class="<%= card_title %>"><%= t("dashboard.profile.ssh_keys") %></h3></div>
       <div class="p-5">
         <% if AppRecord.git_gateway_host %>
           <p class="text-xs text-dim mb-3">Add your SSH public key to enable <code class="font-mono text-accent">git push</code> deployments.</p>
         <% else %>
-          <p class="text-xs text-dim mb-3">Add your SSH public key for SSH access to your apps (dev sessions).</p>
+          <p class="text-xs text-dim mb-3"><%= t("sweep.ssh_hint") %></p>
         <% end %>
 
         <%= turbo_frame_tag "ssh_keys" do %>
@@ -225,8 +225,8 @@
 
         <% if (git_host = AppRecord.git_gateway_host) %>
         <div class="mt-4 pt-4 border-t border-line">
-          <div class="border-1.5 border-ink bg-bg p-3 rounded-md">
-            <p class="text-[10.5px] text-dim uppercase tracking-widest mb-1">Deploy command</p>
+          <div class="border border-line bg-bg p-3 rounded-md">
+            <p class="text-[10.5px] text-dim uppercase tracking-widest mb-1"><%= t("sweep.deploy_command") %></p>
             <code class="block font-mono text-xs text-ink-soft">git remote add wokku git@<%= git_host %>:APP_NAME</code>
             <code class="block font-mono text-xs text-ink-soft">git push wokku main</code>
           </div>
@@ -236,22 +236,22 @@
     </div>
 
     <%# API Tokens %>
-    <div class="border-1.5 border-ink bg-paper rounded-md overflow-hidden">
+    <div class="border border-line bg-paper rounded-md overflow-hidden">
       <div class="<%= card_head %>"><h3 class="<%= card_title %>"><%= t("dashboard.profile.api_tokens") %></h3></div>
       <div class="p-5">
-        <p class="text-xs text-dim mb-3">Use tokens to authenticate CLI, API, and MCP requests.</p>
+        <p class="text-xs text-dim mb-3"><%= t("sweep.tokens_hint") %></p>
 
         <%= turbo_frame_tag "api_tokens" do %>
           <%= render "dashboard/api_tokens/token_list", tokens: current_user.api_tokens.active.order(created_at: :desc), new_token: nil %>
         <% end %>
 
         <div class="mt-4 pt-4 border-t border-line space-y-2">
-          <div class="border-1.5 border-ink bg-bg p-3 rounded-md">
-            <span class="text-[10.5px] text-dim uppercase tracking-widest">API endpoint</span>
+          <div class="border border-line bg-bg p-3 rounded-md">
+            <span class="text-[10.5px] text-dim uppercase tracking-widest"><%= t("sweep.api_endpoint") %></span>
             <code class="block font-mono text-xs text-accent mt-1"><%= request.base_url %>/api/v1</code>
           </div>
-          <div class="border-1.5 border-ink bg-bg p-3 rounded-md">
-            <span class="text-[10.5px] text-dim uppercase tracking-widest">Auth header</span>
+          <div class="border border-line bg-bg p-3 rounded-md">
+            <span class="text-[10.5px] text-dim uppercase tracking-widest"><%= t("sweep.auth_header") %></span>
             <code class="block font-mono text-xs text-ink-soft mt-1">Authorization: Bearer <span class="text-accent">YOUR_TOKEN</span></code>
           </div>
         </div>
@@ -259,12 +259,12 @@
     </div>
 
     <%# Quick Links %>
-    <div class="border-1.5 border-ink bg-paper rounded-md overflow-hidden">
-      <div class="<%= card_head %>"><h3 class="<%= card_title %>">Quick links</h3></div>
+    <div class="border border-line bg-paper rounded-md overflow-hidden">
+      <div class="<%= card_head %>"><h3 class="<%= card_title %>"><%= t("sweep.quick_links") %></h3></div>
       <div class="divide-y divide-line">
-        <%= link_to dashboard_notifications_path, class: "block px-5 py-2.5 text-sm text-ink-soft hover:bg-bg-deep hover:text-ink transition-colors" do %>Notifications →<% end %>
-        <%= link_to dashboard_activities_path, class: "block px-5 py-2.5 text-sm text-ink-soft hover:bg-bg-deep hover:text-ink transition-colors" do %>Activity log →<% end %>
-        <a href="/docs" target="_blank" class="block px-5 py-2.5 text-sm text-ink-soft hover:bg-bg-deep hover:text-ink transition-colors">Documentation ↗</a>
+        <%= link_to dashboard_notifications_path, class: "block px-5 py-2.5 text-sm text-ink-soft hover:bg-bg-deep hover:text-ink transition-colors" do %><%= t("sweep.notifications_link") %><% end %>
+        <%= link_to dashboard_activities_path, class: "block px-5 py-2.5 text-sm text-ink-soft hover:bg-bg-deep hover:text-ink transition-colors" do %><%= t("sweep.activity_log_link") %><% end %>
+        <a href="/docs" target="_blank" class="block px-5 py-2.5 text-sm text-ink-soft hover:bg-bg-deep hover:text-ink transition-colors"><%= t("sweep.docs_link") %></a>
       </div>
     </div>
 

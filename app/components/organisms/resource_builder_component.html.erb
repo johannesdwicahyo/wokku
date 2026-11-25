@@ -6,13 +6,13 @@
     <% if sleeping_option? %>
       <button type="button" data-action="resource-builder#toggleSleeping" data-resource-builder-target="sleeping"
               aria-pressed="<%= sleeping %>"
-              class="px-2.5 py-1 text-xs border-1.5 rounded-md <%= sleeping ? 'border-accent bg-accent-soft' : 'border-line' %>"><%= helpers.wokku_cloud? ? "Sleeping (free)" : "Tiny" %></button>
+              class="px-2.5 py-1 text-xs border rounded-md <%= sleeping ? 'border-accent bg-accent-soft' : 'border-line' %>"><%= helpers.wokku_cloud? ? "Sleeping (free)" : "Tiny" %></button>
     <% end %>
     <% presets.each do |key, p| %>
       <button type="button" data-action="resource-builder#pick" data-resource-builder-target="preset"
               data-cpu="<%= p[:cpu] %>" data-memory-mb="<%= p[:memory_mb] %>" data-disk-gb="<%= p[:disk_gb] %>"
               aria-pressed="<%= preset_pressed?(p) %>"
-              class="px-2.5 py-1 text-xs border-1.5 border-line rounded-md aria-pressed:border-accent aria-pressed:bg-accent-soft"><%= key.split("-").map(&:capitalize).join("-") %></button>
+              class="px-2.5 py-1 text-xs border border-line rounded-md aria-pressed:border-accent aria-pressed:bg-accent-soft"><%= key.split("-").map(&:capitalize).join("-") %></button>
     <% end %>
   </div>
   <%# Only true of the fixed 256 MB size — shown while that size is on. %>
@@ -40,7 +40,7 @@
       <label class="block text-xs text-dim">Instances
         <input type="number" name="<%= field(:count) %>" value="<%= instances %>" min="0" max="10"
                data-resource-builder-target="count" data-action="input->resource-builder#input"
-               class="ml-2 w-16 border-1.5 border-dark-line rounded-md px-2 py-0.5 text-ink">
+               class="ml-2 w-16 border border-dark-line rounded-md px-2 py-0.5 text-ink">
       </label>
     <% end %>
   </div>

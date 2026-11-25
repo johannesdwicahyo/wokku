@@ -5,7 +5,7 @@ RSpec.describe Atoms::StatusPillComponent, type: :component do
     it "renders the outline-dot badge for running" do
       render_inline(described_class.new(status: "running"))
       expect(page).to have_text("Running")
-      expect(page).to have_css("span.border-ink.rounded-full")
+      expect(page).to have_css("span.border-line.rounded-full")
       expect(page).to have_css("span[style*='--color-success']")
     end
 

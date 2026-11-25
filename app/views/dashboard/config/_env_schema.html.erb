@@ -12,7 +12,7 @@
                         [:success, "All set"]
                       end %>
 
-<div class="bg-paper border-1.5 border-ink rounded-md mb-6 overflow-hidden" data-testid="env-schema-panel">
+<div class="bg-paper border border-line rounded-md mb-6 overflow-hidden" data-testid="env-schema-panel">
   <div class="px-6 py-4 border-b border-line flex items-center justify-between gap-3 flex-wrap">
     <div>
       <h2 class="font-headline text-base font-bold text-ink">app.json env</h2>
@@ -29,7 +29,7 @@
       <p class="text-xs text-dim mb-2 font-bold uppercase tracking-widest">Required, missing</p>
       <ul class="space-y-2">
         <% schema.missing_required.each do |entry| %>
-          <li class="text-sm border-1.5 border-danger bg-danger-soft rounded-md px-3 py-2 flex items-center justify-between gap-3">
+          <li class="text-sm border border-danger bg-danger-soft rounded-md px-3 py-2 flex items-center justify-between gap-3">
             <div class="min-w-0">
               <span class="text-ink font-bold font-mono"><%= entry[:key] %></span>
               <% if entry[:description].present? %>

@@ -1,6 +1,6 @@
 <%= form_with(model: team, url: dashboard_teams_path, class: "space-y-4") do |f| %>
   <% if team.errors.any? %>
-    <div class="border-1.5 border-danger bg-danger-soft p-3">
+    <div class="border border-danger bg-danger-soft p-3">
       <ul class="font-mono text-xs text-danger space-y-1">
         <% team.errors.full_messages.each do |msg| %>
           <li><%= msg %></li>
@@ -11,11 +11,11 @@
 
   <div>
     <%= f.label :name, class: "block font-mono text-[10px] font-medium text-dim mb-1.5 uppercase tracking-widest" %>
-    <%= f.text_field :name, class: "w-full bg-bg border-1.5 border-ink px-3 py-2 font-mono text-sm text-ink placeholder-dim focus:outline-none focus:border-accent", placeholder: "my-team" %>
+    <%= f.text_field :name, class: "w-full bg-bg border border-line-strong px-3 py-2 font-mono text-sm text-ink placeholder-dim focus:outline-none focus:border-accent", placeholder: "my-team" %>
   </div>
 
   <div class="flex items-center gap-3 pt-2">
-    <%= f.submit "Create Team", class: "flex-1 py-2 px-4 bg-ink text-bg font-mono text-sm font-semibold border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer text-center" %>
-    <button type="button" data-action="click->slide-panel#close" class="py-2 px-4 font-mono text-sm text-dim hover:text-ink transition cursor-pointer">Cancel</button>
+    <%= f.submit "Create Team", class: "flex-1 py-2 px-4 bg-live text-[#03140A] hover:bg-live-hover font-mono text-sm font-semibold border border-live  transition-all cursor-pointer text-center" %>
+    <button type="button" data-action="click->slide-panel#close" class="py-2 px-4 font-mono text-sm text-dim hover:text-ink transition cursor-pointer"><%= t("common.cancel") %></button>
   </div>
 <% end %>

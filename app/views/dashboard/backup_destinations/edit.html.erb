@@ -6,7 +6,7 @@
 <% content_for(:title, "Backup Settings — #{@server.name}") %>
 
 <%
-  input  = "w-full bg-bg border-1.5 border-ink text-ink font-mono text-sm px-3 py-2 focus:outline-none focus:border-accent"
+  input  = "w-full bg-bg border border-line text-ink font-mono text-sm px-3 py-2 focus:outline-none focus:border-accent"
   label  = "block font-mono text-[10px] text-dim uppercase tracking-widest mb-1"
 %>
 <div class="max-w-2xl mx-auto space-y-6">
@@ -14,12 +14,12 @@
     ← Back to <%= @server.name %>
   <% end %>
 
-  <div class="border-1.5 border-ink bg-paper p-6">
+  <div class="border border-line bg-paper p-6">
     <h1 class="font-mono text-lg font-semibold text-ink mb-1"># backup_destination</h1>
     <p class="font-mono text-sm text-dim mb-6">// S3-compatible storage for database backups. Supports AWS S3, Cloudflare R2, MinIO, Backblaze B2, DigitalOcean Spaces, and Wasabi.</p>
 
     <% if @destination.errors.any? %>
-      <div role="alert" class="mb-4 border-1.5 border-danger bg-danger/10 text-bad-text font-mono text-sm px-3 py-2">
+      <div role="alert" class="mb-4 border border-danger bg-danger/10 text-bad-text font-mono text-sm px-3 py-2">
         <% @destination.errors.full_messages.each do |m| %><p><%= m %></p><% end %>
       </div>
     <% end %>
@@ -68,13 +68,13 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <%= f.check_box :enabled, class: "border-1.5 border-ink text-accent focus:ring-accent" %>
+        <%= f.check_box :enabled, class: "border border-line text-accent focus:ring-accent" %>
         <%= f.label :enabled, "Enable automatic daily backups", class: "font-mono text-sm text-ink" %>
       </div>
 
       <div class="flex items-center gap-3 pt-2">
-        <%= f.submit "Save Backup Settings", class: "px-4 py-2 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer" %>
-        <%= link_to "Cancel", admin_server_path(@server), class: "font-mono text-sm text-dim hover:text-ink transition" %>
+        <%= f.submit "Save Backup Settings", class: "px-4 py-2 bg-live text-[#03140A] hover:bg-live-hover font-mono text-sm border border-live  transition-all cursor-pointer" %>
+        <%= link_to t("common.cancel"), admin_server_path(@server), class: "font-mono text-sm text-dim hover:text-ink transition" %>
       </div>
     <% end %>
   </div>

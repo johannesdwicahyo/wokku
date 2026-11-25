@@ -29,7 +29,7 @@ module ComboboxHelper
     content_tag :div, class: "relative", data: wrapper_data do
       hidden = hidden_field_tag(name, value, data: { "combobox-target": "input" }, required: required)
       trigger = content_tag :button, type: "button",
-        class: "w-full flex items-center justify-between rounded-md bg-paper border-1.5 border-ink px-3 py-2 text-sm hover:bg-bg-deep focus:outline-none focus:shadow-brutal-sm transition cursor-pointer",
+        class: "w-full flex items-center justify-between rounded-md bg-paper border border-line px-3 py-2 text-sm hover:bg-bg-deep focus:outline-none focus:shadow-brutal-sm transition cursor-pointer",
         data: { "combobox-target": "trigger", action: "click->combobox#toggle keydown->combobox#triggerKeydown" },
         id: id,
         "aria-haspopup": "listbox",
@@ -43,12 +43,12 @@ module ComboboxHelper
       end
 
       panel = content_tag :div,
-        class: "hidden absolute z-40 mt-1 w-full bg-paper border-1.5 border-ink rounded-md shadow-brutal-sm overflow-hidden",
+        class: "hidden absolute z-40 mt-1 w-full bg-paper border border-line rounded-md shadow-brutal-sm overflow-hidden",
         data: { "combobox-target": "panel" } do
         safe_join([
           content_tag(:div, class: "p-2 border-b border-line") do
             content_tag(:input, "", type: "text",
-              class: "w-full bg-bg border-1.5 border-line rounded px-3 py-1.5 text-sm text-ink placeholder-faint focus:outline-none focus:border-ink",
+              class: "w-full bg-bg border border-line rounded px-3 py-1.5 text-sm text-ink placeholder-faint focus:outline-none focus:border-ink",
               placeholder: "Search…",
               data: { "combobox-target": "search", action: "input->combobox#filter keydown->combobox#searchKeydown" })
           end,

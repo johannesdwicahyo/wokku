@@ -1,7 +1,7 @@
 <%
   apps ||= []
   default_type = (database.service_type.presence || "postgres")
-  text_input_classes = "w-full bg-bg border-1.5 border-ink px-3 py-2.5 font-mono text-sm text-ink placeholder-dim focus:outline-none focus:border-accent transition-colors"
+  text_input_classes = "w-full bg-bg border border-line px-3 py-2.5 font-mono text-sm text-ink placeholder-dim focus:outline-none focus:border-accent transition-colors"
   label_classes      = "block font-mono text-[10px] font-bold text-dim mb-1.5 uppercase tracking-widest"
 
   app_options = apps.map do |a|
@@ -18,7 +18,7 @@
                       "addon-tier-picker-engines-value": engine_payload.to_json,
                       "addon-tier-picker-plan-upgrade-url-value": (respond_to?(:dashboard_plan_path) ? dashboard_plan_path : "") }) do |f| %>
   <% if database.errors.any? %>
-    <div class="border-1.5 border-danger bg-danger-soft p-3">
+    <div class="border border-danger bg-danger-soft p-3">
       <ul class="font-mono text-xs text-danger space-y-1">
         <% database.errors.full_messages.each do |msg| %>
           <li><%= msg %></li>
@@ -33,7 +33,7 @@
       <%= combobox_tag "database_service[app_id]", app_options, value: database.app_records.first&.id, placeholder: "Select an app", required: true %>
       <p class="font-mono text-[11px] text-dim mt-1">The add-on will run on the same server as the app and be linked automatically.</p>
     <% else %>
-      <div class="border-1.5 border-ink bg-bg px-4 py-3 font-mono text-xs text-dim">
+      <div class="border border-line bg-bg px-4 py-3 font-mono text-xs text-dim">
         Create an app first — add-ons attach to apps.
       </div>
     <% end %>
@@ -58,7 +58,7 @@
     <label class="<%= label_classes %>">Mode</label>
     <%= hidden_field_tag "mode", "shared", data: { "addon-tier-picker-target": "tierInput" } %>
     <div class="grid grid-cols-1 gap-2" data-addon-tier-picker-target="cards">
-      <div class="font-mono text-xs text-dim px-3 py-2">Loading options…</div>
+      <div class="font-mono text-xs text-dim px-3 py-2"><%= t("common.loading_options") %></div>
     </div>
   </div>
 
@@ -82,7 +82,7 @@
   <% end %>
 
   <div class="flex items-center gap-2 pt-2">
-    <%= f.submit "Create Add-on", class: "flex-1 py-2.5 px-4 bg-ink text-bg font-mono text-sm border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer text-center disabled:opacity-50", disabled: apps.empty? %>
-    <button type="button" data-action="click->slide-panel#close" class="py-2.5 px-4 font-mono text-sm text-ink border-1.5 border-ink bg-paper hover:bg-bg-deep transition-colors cursor-pointer">Cancel</button>
+    <%= f.submit "Create Add-on", class: "flex-1 py-2.5 px-4 bg-live text-[#03140A] hover:bg-live-hover font-mono text-sm border border-live  transition-all cursor-pointer text-center disabled:opacity-50", disabled: apps.empty? %>
+    <button type="button" data-action="click->slide-panel#close" class="py-2.5 px-4 font-mono text-sm text-ink border border-line-strong bg-paper hover:bg-bg-deep transition-colors cursor-pointer"><%= t("common.cancel") %></button>
   </div>
 <% end %>

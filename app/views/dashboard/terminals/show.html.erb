@@ -30,7 +30,7 @@
           </div>
         </div>
 
-        <details class="border-1.5 border-ink bg-paper rounded-md">
+        <details class="border border-line bg-paper rounded-md">
           <summary class="flex items-center gap-2 px-3 py-2 cursor-pointer select-none">
             <span class="text-[11px] text-dim">This console runs inside your app's <span class="text-ink-soft font-medium">web</span> container. Run <span class="font-mono text-accent">ls</span>, <span class="font-mono text-accent">printenv</span>, or any binary your image provides — <span class="text-ink-soft">click for limits &amp; tips</span></span>
           </summary>
@@ -58,7 +58,7 @@
           </div>
         </details>
 
-        <div class="border-1.5 border-ink bg-paper rounded-md overflow-hidden"
+        <div class="border border-line bg-paper rounded-md overflow-hidden"
              data-controller="terminal"
              data-terminal-server-id-value="<%= @server.id %>"
              data-terminal-app-name-value="<%= @app.name %>">
@@ -89,7 +89,7 @@
       </div>
     </div>
 
-    <div class="border-1.5 border-ink bg-paper rounded-md overflow-hidden"
+    <div class="border border-line bg-paper rounded-md overflow-hidden"
          data-controller="terminal"
          data-terminal-server-id-value="<%= @server.id %>">
       <div data-terminal-target="container" class="h-[calc(100vh-220px)] min-h-[300px] w-full"></div>

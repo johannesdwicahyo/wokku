@@ -1,6 +1,6 @@
 <%= turbo_frame_tag "metrics_live", target: "_top" do %>
 <%# Processes %>
-<div class="bg-paper border-1.5 border-ink rounded-md mb-6 overflow-hidden">
+<div class="bg-paper border border-line rounded-md mb-6 overflow-hidden">
   <div class="px-6 py-4 border-b border-line flex items-center justify-between gap-3 flex-wrap">
     <div>
       <h2 class="font-headline text-base font-bold text-ink">Processes</h2>
@@ -61,15 +61,15 @@
     total_limit_mb = per_container_limit ? per_container_limit * @container_stats.size : nil
     mem_percent = total_limit_mb ? (total_mem_mb / total_limit_mb * 100).round(1) : total_mem_percent = @container_stats.sum { |s| s[:mem_percent] }
   %>
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-    <div class="bg-paper border-1.5 border-ink rounded-md p-5">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6 min-w-0">
+    <div class="bg-paper border border-line rounded-md p-5 min-w-0 overflow-hidden">
       <p class="text-[10px] text-dim uppercase tracking-widest font-bold mb-2">Total CPU</p>
       <div class="text-3xl font-semibold text-ink tracking-tighter tabular-nums"><%= "%.2f" % total_cpu %> <span class="text-dim text-base">%</span></div>
       <div class="mt-3 h-2 bg-bg border border-line rounded-full relative overflow-hidden">
         <div class="absolute inset-0 bg-accent" style="width: <%= [total_cpu, 100].min %>%"></div>
       </div>
     </div>
-    <div class="bg-paper border-1.5 border-ink rounded-md p-5">
+    <div class="bg-paper border border-line rounded-md p-5 min-w-0 overflow-hidden">
       <p class="text-[10px] text-dim uppercase tracking-widest font-bold mb-2">Memory usage</p>
       <div class="text-3xl font-semibold text-ink tracking-tighter tabular-nums">
         <%= "%.0f" % total_mem_mb %> <span class="text-dim text-base">MB<% if total_limit_mb %> / <%= total_limit_mb >= 1024 ? "#{(total_limit_mb / 1024.0).round(1)} GB" : "#{total_limit_mb} MB" %><% end %></span>
@@ -80,15 +80,15 @@
         </div>
       <% end %>
     </div>
-    <div class="bg-paper border-1.5 border-ink rounded-md p-5">
+    <div class="bg-paper border border-line rounded-md p-5 min-w-0 overflow-hidden">
       <p class="text-[10px] text-dim uppercase tracking-widest font-bold mb-2">Containers</p>
       <span class="text-3xl font-semibold text-ink tracking-tighter tabular-nums"><%= @container_stats.size %></span>
-      <p class="text-xs text-dim mt-2"><%= @container_stats.size %> running<%= per_container_limit ? " · #{per_container_limit} MB each" : "" %></p>
+      <p class="text-xs text-dim mt-2 break-words"><%= @container_stats.size %> running<%= per_container_limit ? " · #{per_container_limit} MB each" : "" %></p>
     </div>
   </div>
 
   <%# Per-Container Detail %>
-  <div class="bg-paper border-1.5 border-ink rounded-md mb-6 overflow-x-auto">
+  <div class="bg-paper border border-line rounded-md mb-6 overflow-x-auto">
     <div class="px-6 py-4 border-b border-line">
       <h2 class="font-headline text-base font-bold text-ink">Container resources</h2>
       <p class="text-xs text-dim mt-1">Live resource usage per container</p>
@@ -140,7 +140,7 @@
     </table>
   </div>
 <% else %>
-  <div class="bg-paper border-1.5 border-ink rounded-md p-6 mb-6 text-center">
+  <div class="bg-paper border border-line rounded-md p-6 mb-6 text-center">
     <p class="text-sm text-ink-soft">Unable to fetch container metrics.</p>
     <p class="text-xs text-dim mt-1">Ensure root SSH access is available on the server.</p>
   </div>

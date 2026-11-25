@@ -44,7 +44,7 @@ export default class extends Controller {
     const overlay = document.createElement("div")
     overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
     overlay.innerHTML = `
-      <div class="bg-paper border-1.5 border-danger shadow-brutal max-w-md w-full">
+      <div class="bg-paper border border-danger shadow-brutal max-w-md w-full">
         <div class="px-6 py-4 border-b border-rule-soft bg-danger-soft">
           <h3 class="font-mono text-base font-bold text-danger m-0"># delete ${escapeHtml(name)}?</h3>
           <p class="font-mono text-xs text-ink-soft mt-1">${escapeHtml(impact)}</p>
@@ -52,21 +52,21 @@ export default class extends Controller {
 
         <div class="px-6 py-5">
           <label class="block font-mono text-[11px] uppercase tracking-widest text-ink-soft mb-2">
-            Type <code class="font-mono normal-case tracking-normal text-danger bg-danger-soft border-1.5 border-danger px-1.5 py-0.5">${escapeHtml(name)}</code> to confirm
+            Type <code class="font-mono normal-case tracking-normal text-danger bg-danger-soft border border-danger px-1.5 py-0.5">${escapeHtml(name)}</code> to confirm
           </label>
           <input type="text"
                  data-confirm-input
-                 class="w-full border-1.5 border-ink bg-bg px-4 py-2.5 font-mono text-sm text-ink placeholder:text-dim focus:outline-none focus:ring-2 focus:ring-danger focus:border-danger transition"
+                 class="w-full border border-line bg-bg px-4 py-2.5 font-mono text-sm text-ink placeholder:text-dim focus:outline-none focus:ring-2 focus:ring-danger focus:border-danger transition"
                  autocomplete="off"
                  autofocus>
 
           <div class="flex items-center justify-end gap-2 mt-5">
             <button type="button" data-action="cancel"
-                    class="border-1.5 border-ink bg-paper text-ink font-mono text-[11px] uppercase tracking-widest px-4 py-2.5 shadow-brutal-sm hover:bg-bg-deep transition cursor-pointer">
+                    class="border border-line bg-paper text-ink font-mono text-[11px] uppercase tracking-widest px-4 py-2.5 shadow-brutal-sm hover:bg-bg-deep transition cursor-pointer">
               Cancel
             </button>
             <button type="button" data-action="confirm" disabled
-                    class="border-1.5 border-danger bg-danger-soft text-danger font-mono text-[11px] uppercase tracking-widest px-4 py-2.5 shadow-brutal hover:bg-danger hover:text-bg transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-danger-soft disabled:hover:text-danger">
+                    class="border border-danger bg-danger-soft text-danger font-mono text-[11px] uppercase tracking-widest px-4 py-2.5 shadow-brutal hover:bg-danger hover:text-bg transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-danger-soft disabled:hover:text-danger">
               Delete ${escapeHtml(resourceLabel)}
             </button>
           </div>

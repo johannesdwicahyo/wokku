@@ -20,7 +20,7 @@
 %>
 
 <%# Wokku Domain (auto-assigned) %>
-<div class="bg-paper border-1.5 border-ink rounded-md mb-6 overflow-hidden">
+<div class="bg-paper border border-line rounded-md mb-6 overflow-hidden">
   <div class="px-6 py-4 border-b border-line">
     <h2 class="font-headline text-base font-bold text-ink">Wokku domain</h2>
     <p class="text-xs text-dim mt-1">Your app is available at this auto-assigned URL</p>
@@ -45,7 +45,7 @@
 </div>
 
 <%# Custom Domains %>
-<div class="bg-paper border-1.5 border-ink rounded-md mb-6 overflow-hidden">
+<div class="bg-paper border border-line rounded-md mb-6 overflow-hidden">
   <div class="px-6 py-4 border-b border-line flex items-center justify-between gap-3 flex-wrap">
     <div>
       <h2 class="font-headline text-base font-bold text-ink">Custom domains</h2>
@@ -73,11 +73,11 @@
 <%= render layout: "dashboard/shared/slide_panel", locals: { title: "Add domain", subtitle: "Configure DNS at your registrar, then add the hostname below" } do %>
   <%# DNS spec forbids CNAME on apex/root domains — show both paths. %>
   <div class="space-y-3 mb-5 text-xs">
-    <div class="border-1.5 border-ink bg-bg rounded-md p-3">
+    <div class="border border-line bg-bg rounded-md p-3">
       <p class="text-[10px] text-dim uppercase tracking-widest font-bold mb-1">Subdomain (e.g. <code class="font-mono">app.example.com</code>)</p>
       <p class="text-ink-soft">Add a <span class="text-ink font-semibold">CNAME</span> → <span class="text-accent font-mono break-all"><%= wokku_domain&.hostname || fallback_hostname %></span></p>
     </div>
-    <div class="border-1.5 border-ink bg-bg rounded-md p-3">
+    <div class="border border-line bg-bg rounded-md p-3">
       <p class="text-[10px] text-dim uppercase tracking-widest font-bold mb-1">Root domain (e.g. <code class="font-mono">example.com</code>)</p>
       <p class="text-ink-soft">Add an <span class="text-ink font-semibold">A record</span> → <span class="text-accent font-mono"><%= @app.server&.host %></span></p>
       <p class="text-[10px] text-dim mt-1">Or <span class="font-medium">ALIAS</span>/<span class="font-medium">ANAME</span> to <span class="font-mono break-all"><%= wokku_domain&.hostname || fallback_hostname %></span> if your DNS provider supports CNAME flattening.</p>
@@ -88,11 +88,11 @@
   <%= form_with(model: @domain || Domain.new, url: dashboard_app_domains_path(@app), class: "space-y-4") do |f| %>
     <div>
       <%= f.label :hostname, class: "block text-xs font-semibold text-ink-soft mb-1" %>
-      <%= f.text_field :hostname, class: "w-full bg-paper border-1.5 border-ink text-ink font-mono text-sm rounded-md px-3 py-2 focus:outline-none focus:shadow-brutal-sm", placeholder: "app.example.com", autofocus: true %>
+      <%= f.text_field :hostname, class: "w-full bg-paper border border-line-strong text-ink font-mono text-sm rounded-md px-3 py-2 focus:outline-none focus:shadow-brutal-sm", placeholder: "app.example.com", autofocus: true %>
     </div>
     <div class="flex items-center gap-3">
       <%= f.submit "Add domain", class: Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>
-      <button type="button" data-action="click->slide-panel#close" class="<%= Atoms::ButtonComponent.new(variant: :ghost, size: :sm).classes %>">Cancel</button>
+      <button type="button" data-action="click->slide-panel#close" class="<%= Atoms::ButtonComponent.new(variant: :ghost, size: :sm).classes %>"><%= t("common.cancel") %></button>
     </div>
   <% end %>
 <% end %>

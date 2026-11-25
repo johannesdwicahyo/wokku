@@ -9,10 +9,10 @@
     <h1 class="font-headline text-2xl font-extrabold tracking-tight">Cloud credentials</h1>
     <p class="mt-0.5 text-sm text-dim">API keys used to provision servers across cloud providers (Hetzner, DigitalOcean, Linode)</p>
   </div>
-  <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, data: { action: "click->slide-panel#open" }) do %>+ Add provider<% end %>
+  <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, data: { action: "click->slide-panel#open" }) do %>Add provider<% end %>
 </div>
 
-<div class="bg-paper border-1.5 border-ink rounded-md shadow-brutal overflow-hidden">
+<div class="bg-paper border border-line rounded-md shadow-brutal overflow-hidden">
   <% if @credentials.any? %>
     <div class="divide-y divide-line">
       <% @credentials.each do |cred| %>
@@ -34,7 +34,7 @@
           <div data-controller="motion--drawer" class="inline-block">
             <button data-action="motion--drawer#open"
                     type="button"
-                    class="inline-flex items-center justify-center gap-2 font-semibold cursor-pointer rounded-md transition-colors bg-transparent text-warn border-1.5 border-transparent hover:bg-bg-deep px-3 py-1.5 text-xs">
+                    class="inline-flex items-center justify-center gap-2 font-semibold cursor-pointer rounded-md transition-colors bg-transparent text-warn border border-transparent hover:bg-bg-deep px-3 py-1.5 text-xs">
               Remove
             </button>
             <template data-motion--drawer-target="content">
@@ -50,14 +50,14 @@
                 <%= button_to "Yes, remove credential",
                       admin_cloud_credential_path(cred),
                       method: :delete,
-                      class: "w-full border-1.5 border-ink rounded-md bg-danger text-bg font-semibold text-sm px-4 py-3 shadow-brutal hover:bg-warn hover:text-ink transition cursor-pointer",
+                      class: "w-full border border-line rounded-md bg-danger text-bg font-semibold text-sm px-4 py-3 shadow-brutal hover:bg-warn hover:text-ink transition cursor-pointer",
                       data: {
                         controller: "motion--optimistic-button",
                         "motion--optimistic-button-pending-label-value": "removing…"
                       } %>
                 <button data-action="motion--drawer#close"
                         type="button"
-                        class="w-full border-1.5 border-ink rounded-md bg-paper text-ink font-semibold text-sm px-4 py-3 hover:bg-bg-deep transition cursor-pointer">
+                        class="w-full border border-line rounded-md bg-paper text-ink font-semibold text-sm px-4 py-3 hover:bg-bg-deep transition cursor-pointer">
                   Cancel
                 </button>
               </div>
@@ -79,7 +79,7 @@
             body: t("dashboard.cloud_credentials.empty_body")
           ) %>
       <div class="flex justify-center mt-4">
-        <%= render Atoms::ButtonComponent.new(variant: :primary, size: :md, data: { action: "click->slide-panel#open" }) do %>+ Add provider<% end %>
+        <%= render Atoms::ButtonComponent.new(variant: :primary, size: :md, data: { action: "click->slide-panel#open" }) do %>Add provider<% end %>
       </div>
     </div>
   <% end %>

@@ -136,6 +136,15 @@ id:
     legal: "© 2026 Wokku · wokku.cloud"
     license: "wokku · agpl-3.0"
   console:
+    admin:
+      crumb: "Admin"
+      overview: "Ringkasan"
+      servers: "Server"
+      cloud_credentials: "Kredensial cloud"
+      users: "Pengguna"
+      settings: "Pengaturan"
+      jobs: "Jobs"
+      back: "← Kembali ke dashboard"
     top:
       menu: "Buka command palette"
       region: "Region"
@@ -209,11 +218,11 @@ id:
       activity: "recent_activity"
       activity_window: "24 jam terakhir"
     app_tabs:
-      overview:    "overview"
+      overview:    "ringkasan"
       deploy:      "deploy"
       runtime:     "runtime"
       performance: "performa"
-      settings:    "settings"
+      settings:    "pengaturan"
     performance_tabs:
       metrics:  "metrics"
       requests: "requests"

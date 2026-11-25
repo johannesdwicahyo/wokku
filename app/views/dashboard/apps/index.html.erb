@@ -23,7 +23,7 @@
         <div class="flex items-center justify-between mb-5">
           <h1 class="font-headline text-2xl font-extrabold tracking-tight"><%= t("dashboard.apps.title") %></h1>
           <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, href: new_dashboard_app_path,
-                data: { action: "click->slide-panel#open" }) do %><%= t("dashboard.apps.new_app") %><% end %>
+                data: { action: "click->slide-panel#open" }) do %><%= t("dashboard.apps.new_app").delete_prefix("+ ") %><% end %>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
@@ -43,7 +43,7 @@
     <% end %>
 
     <%= render layout: "dashboard/shared/slide_panel",
-               locals: { title: "Create App", subtitle: "Deploy a new application to one of your servers", size: "lg" } do %>
+               locals: { title: t("sweep.create_app"), subtitle: t("sweep.create_app_sub"), size: "lg" } do %>
       <%= render "form", app: @app, servers: @servers %>
     <% end %>
   </div>

@@ -16,7 +16,7 @@
     <% end %>
   </div>
 
-  <div class="border-1.5 border-ink bg-paper rounded-md overflow-hidden">
+  <div class="border border-line bg-paper rounded-md overflow-hidden">
     <% if @linked_apps.any? %>
       <div class="divide-y divide-line">
         <% @linked_apps.each do |app| %>
@@ -40,7 +40,7 @@
         </div>
         <div class="flex items-center gap-2">
           <%= submit_tag "Link App", class: Atoms::ButtonComponent.new(variant: :primary, size: :md).classes %>
-          <button type="button" data-action="click->slide-panel#close" class="<%= Atoms::ButtonComponent.new(variant: :outline, size: :md).classes %>">Cancel</button>
+          <button type="button" data-action="click->slide-panel#close" class="<%= Atoms::ButtonComponent.new(variant: :outline, size: :md).classes %>"><%= t("common.cancel") %></button>
         </div>
       <% end %>
     <% end %>
@@ -54,7 +54,7 @@
     <% if Wokku.config.resource_builder? %>
       <%# Per-resource billing (spec 2026-09-24 §5.3): direct slider resize,
           replacing the legacy "go change your app's box" copy. %>
-      <div class="border-1.5 border-ink bg-paper rounded-md p-5">
+      <div class="border border-line bg-paper rounded-md p-5">
         <%= form_with url: resize_dashboard_addon_path(@database), method: :patch, class: "space-y-4",
                        data: { turbo_confirm: "Containers will restart with the new size." } do %>
           <%= render Organisms::ResourceBuilderComponent.new(
@@ -69,7 +69,7 @@
         <% end %>
       </div>
     <% else %>
-    <div class="border-1.5 border-ink bg-paper rounded-md p-5 text-sm text-ink-soft">
+    <div class="border border-line bg-paper rounded-md p-5 text-sm text-ink-soft">
       <p>Dedicated DB sizing follows your plan's box size. Change your app's box on the resources page, or upgrade your plan on
         <%= link_to "/dashboard/plan", (respond_to?(:dashboard_plan_path) ? dashboard_plan_path : "#"), class: "text-accent hover:underline" %>, to resize this database.</p>
     </div>

@@ -1,7 +1,7 @@
 <%# Validation errors for a re-rendered (422) form. Flash lives outside the
     app tab frame, so in-frame forms must show their own errors. %>
 <% if record&.errors&.any? %>
-  <div class="border-1.5 border-danger bg-danger-soft rounded-md p-3 mb-4" role="alert">
+  <div class="border border-danger bg-danger-soft rounded-md p-3 mb-4" role="alert">
     <p class="text-xs text-danger font-bold mb-1"><%= title %></p>
     <ul class="text-[11px] text-danger list-disc list-inside">
       <% record.errors.full_messages.each do |msg| %>

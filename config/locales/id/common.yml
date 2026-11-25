@@ -9,6 +9,7 @@ id:
     update: "Perbarui"
     search: "Cari"
     loading: "Memuat..."
+    loading_options: "Memuat opsi…"
     confirm: "Apakah kamu yakin?"
     yes: "Ya"
     no: "Tidak"

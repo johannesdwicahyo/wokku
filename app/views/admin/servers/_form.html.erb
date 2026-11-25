@@ -1,10 +1,10 @@
 <%
-  inp = "w-full bg-bg border-1.5 border-ink px-3 py-2 font-mono text-sm text-ink placeholder-dim focus:outline-none focus:border-accent"
+  inp = "w-full bg-bg border border-line px-3 py-2 font-mono text-sm text-ink placeholder-dim focus:outline-none focus:border-accent"
   lbl = "block font-mono text-[10px] font-medium text-dim mb-1.5 uppercase tracking-widest"
 %>
 <%= form_with(model: server, url: admin_servers_path, class: "space-y-4") do |f| %>
   <% if server.errors.any? %>
-    <div class="border-1.5 border-danger bg-danger-soft p-3">
+    <div class="border border-danger bg-danger-soft p-3">
       <ul class="font-mono text-xs text-danger space-y-1">
         <% server.errors.full_messages.each do |msg| %>
           <li><%= msg %></li>
@@ -27,29 +27,29 @@
     </p>
   </div>
 
-  <details class="border-1.5 border-ink bg-bg">
-    <summary class="px-3 py-2 font-mono text-[10px] font-medium text-dim uppercase tracking-widest cursor-pointer select-none">+ ssh extras (optional)</summary>
-    <div class="p-3 space-y-3 border-t-1.5 border-ink">
+  <details class="border border-line bg-bg">
+    <summary class="px-3 py-2 font-mono text-[10px] font-medium text-dim uppercase tracking-widest cursor-pointer select-none"><%= t("sweep.ssh_extras") %></summary>
+    <div class="p-3 space-y-3 border-t border-line">
       <p class="font-mono text-xs text-dim">
         Only used for direct host reads (log streaming, stat probes) — as
         <code>root</code>. Deploys never use SSH.
       </p>
       <div>
-        <%= f.label :port, "SSH Port", class: lbl %>
+        <%= f.label :port, t("sweep.ssh_port"), class: lbl %>
         <%= f.number_field :port, class: inp, value: server.port || 22 %>
       </div>
       <div>
-        <%= f.label :ssh_private_key, "Root SSH Private Key", class: lbl %>
+        <%= f.label :ssh_private_key, t("sweep.root_ssh_key"), class: lbl %>
         <%= f.text_area :ssh_private_key, class: "#{inp} text-xs", rows: 5, placeholder: "-----BEGIN OPENSSH PRIVATE KEY-----\n..." %>
-        <p class="mt-1 font-mono text-xs text-dim">Stored encrypted at rest</p>
+        <p class="mt-1 font-mono text-xs text-dim"><%= t("sweep.stored_encrypted") %></p>
       </div>
     </div>
   </details>
 
   <div class="flex items-center gap-3 pt-2">
-    <%= f.submit "Add Server", class: "flex-1 py-2 px-4 bg-ink text-bg font-mono text-sm font-semibold border-1.5 border-ink shadow-brutal-sm hover:shadow-brutal transition-all cursor-pointer text-center" %>
+    <%= f.submit "Add Server", class: "flex-1 py-2 px-4 bg-live text-[#03140A] hover:bg-live-hover font-mono text-sm font-semibold border border-live  transition-all cursor-pointer text-center" %>
     <%# Works in both homes: closes the index slide-panel instantly when
         that controller is present, and plain-navigates from /new. %>
-    <%= link_to "Cancel", admin_servers_path, data: { action: "click->slide-panel#close" }, class: "py-2 px-4 font-mono text-sm text-dim hover:text-ink transition cursor-pointer" %>
+    <%= link_to t("common.cancel"), admin_servers_path, data: { action: "click->slide-panel#close" }, class: "py-2 px-4 font-mono text-sm text-dim hover:text-ink transition cursor-pointer" %>
   </div>
 <% end %>

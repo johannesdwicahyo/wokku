@@ -3,11 +3,11 @@
     <div>
       <h1 class="font-headline text-2xl font-extrabold tracking-tight"><%= t("dashboard.servers.title") %></h1>
       <p class="mt-0.5 text-sm text-dim">
-        <% if @can_manage %>Manage your servers<% else %>Pick a server when deploying — read-only for non-admins<% end %>
+        <% if @can_manage %><%= t("sweep.manage_servers") %><% else %><%= t("sweep.pick_server") %><% end %>
       </p>
     </div>
     <% if @can_manage %>
-      <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, data: { action: "click->slide-panel#open" }) do %>+ <%= t("dashboard.servers.add_server") %><% end %>
+      <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, data: { action: "click->slide-panel#open" }) do %><%= t("dashboard.servers.add_server") %><% end %>
     <% end %>
   </div>
 
@@ -32,7 +32,7 @@
           pct_tone = pct.nil? ? "bg-dim" : (pct > 85 ? "bg-danger" : pct > 65 ? "bg-warn" : "bg-success")
           status_tone = { "connected" => :success, "unreachable" => :danger, "auth_failed" => :danger, "syncing" => :deploying }[server.status]
         %>
-        <%= link_to admin_server_path(server), class: "block bg-paper border-1.5 border-ink rounded-md shadow-brutal-sm hover:shadow-brutal transition-all p-4" do %>
+        <%= link_to admin_server_path(server), class: "block bg-paper border border-line-strong rounded-md shadow-brutal-sm hover:shadow-brutal transition-all p-4" do %>
           <div class="flex items-start justify-between gap-2 mb-3">
             <div class="min-w-0">
               <p class="text-sm font-bold text-ink truncate"><%= server.name %></p>
@@ -44,9 +44,9 @@
           <div class="space-y-2">
             <div>
               <div class="flex items-center justify-between text-[10px] text-dim mb-1">
-                <span class="uppercase tracking-widest font-semibold"><%= live ? "Memory (live)" : "Capacity" %></span>
+                <span class="uppercase tracking-widest font-semibold"><%= live ? t("sweep.memory_live") : t("sweep.capacity") %></span>
                 <span>
-                  <% if pct %><%= pct %>% (<%= allocated %>MB / <%= total %>MB)<% else %><%= allocated %>MB allocated<% end %>
+                  <% if pct %><%= pct %>% (<%= allocated %>MB / <%= total %>MB)<% else %><%= t("sweep.allocated", mb: allocated) %><% end %>
                 </span>
               </div>
               <div class="h-1.5 bg-bg border border-line rounded-full relative overflow-hidden">
@@ -69,7 +69,7 @@
 
             <div class="flex items-center justify-between text-[11px] text-dim">
               <span>
-                <%= server.app_records.size %> apps
+                <%= t("sweep.n_apps", count: server.app_records.size) %>
                 <% if cont_count %><span class="text-dim"> · <%= cont_count %> containers</span><% end %>
               </span>
               <span class="font-mono">:<%= server.port %></span>
@@ -79,12 +79,12 @@
       <% end %>
     </div>
   <% else %>
-    <div class="text-center py-16 bg-paper border-1.5 border-ink rounded-md shadow-brutal-sm">
+    <div class="text-center py-16 bg-paper border border-line rounded-md shadow-brutal-sm">
       <h3 class="text-sm font-medium text-ink-soft"><%= t("dashboard.servers.no_servers") %></h3>
       <% if @can_manage %>
         <p class="mt-1 text-xs text-dim">Connect your first server — one command, no SSH keys.</p>
         <div class="mt-4">
-          <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, data: { action: "click->slide-panel#open" }) do %>+ <%= t("dashboard.servers.add_server") %><% end %>
+          <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, data: { action: "click->slide-panel#open" }) do %><%= t("dashboard.servers.add_server") %><% end %>
         </div>
       <% else %>
         <p class="mt-1 text-xs text-dim">No platform servers available yet — check back soon.</p>
@@ -93,7 +93,7 @@
   <% end %>
 
   <% if @can_manage %>
-    <%= render layout: "dashboard/shared/slide_panel", locals: { title: t("dashboard.servers.add_server"), subtitle: "Register it, then connect with one command" } do %>
+    <%= render layout: "dashboard/shared/slide_panel", locals: { title: t("dashboard.servers.add_server"), subtitle: t("sweep.register_hint") } do %>
       <%= render "form", server: @server %>
     <% end %>
   <% end %>

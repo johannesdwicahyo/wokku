@@ -15,7 +15,7 @@
   <%= render "dashboard/config/env_schema", schema: @env_schema, app: @app if @env_schema && !@env_schema.set_keys.empty? || (@env_schema && (@env_schema.required.any? || @env_schema.recommended.any?)) %>
 
   <%# Config Vars List %>
-  <div class="bg-paper border-1.5 border-ink rounded-md mb-6 overflow-hidden">
+  <div class="bg-paper border border-line rounded-md mb-6 overflow-hidden">
     <div class="px-6 py-4 border-b border-line flex items-center justify-between gap-3 flex-wrap">
       <div>
         <h2 class="font-headline text-base font-bold text-ink">Config vars</h2>
@@ -64,22 +64,22 @@
   <%# Edit Modal (hidden by default) %>
   <div data-config-vars-target="editModal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
     <div class="absolute inset-0 bg-black/70" data-action="click->config-vars#closeEdit"></div>
-    <div class="relative bg-paper border-1.5 border-ink rounded-md shadow-brutal-lg w-full max-w-lg mx-4 p-6">
+    <div class="relative bg-paper border border-line rounded-md shadow-brutal-lg w-full max-w-lg mx-4 p-6">
       <h3 class="font-headline text-base font-bold text-ink mb-4">Edit config var</h3>
       <%= form_with(url: "", method: :patch, data: { config_vars_target: "editForm" }, class: "space-y-4") do |f| %>
         <div>
           <label class="block text-xs font-semibold text-ink-soft mb-1">Key</label>
           <input type="text" data-config-vars-target="editKey" disabled
-                 class="w-full bg-bg border-1.5 border-ink text-dim font-mono text-sm rounded-md px-3 py-2 cursor-not-allowed">
+                 class="w-full bg-bg border border-line-strong text-dim font-mono text-sm rounded-md px-3 py-2 cursor-not-allowed">
         </div>
         <div>
           <label class="block text-xs font-semibold text-ink-soft mb-1">Value</label>
           <textarea name="env_var[value]" data-config-vars-target="editValue" rows="3"
-                    class="w-full bg-paper border-1.5 border-ink text-ink font-mono text-sm rounded-md px-3 py-2 focus:outline-none focus:shadow-brutal-sm"></textarea>
+                    class="w-full bg-paper border border-line-strong text-ink font-mono text-sm rounded-md px-3 py-2 focus:outline-none focus:shadow-brutal-sm"></textarea>
         </div>
         <div class="flex justify-end gap-3">
           <button type="button" data-action="click->config-vars#closeEdit"
-                  class="<%= Atoms::ButtonComponent.new(variant: :ghost, size: :sm).classes %>">Cancel</button>
+                  class="<%= Atoms::ButtonComponent.new(variant: :ghost, size: :sm).classes %>"><%= t("common.cancel") %></button>
           <button type="submit" class="<%= Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>">Save</button>
         </div>
       <% end %>
@@ -91,15 +91,15 @@
     <%= form_with(model: new_var || EnvVar.new, url: dashboard_app_config_index_path(@app), class: "space-y-4") do |f| %>
       <div>
         <%= f.label :key, class: "block text-xs font-semibold text-ink-soft mb-1" %>
-        <%= f.text_field :key, class: "w-full bg-paper border-1.5 border-ink text-ink font-mono text-sm rounded-md px-3 py-2 focus:outline-none focus:shadow-brutal-sm", placeholder: "SECRET_KEY", autofocus: true %>
+        <%= f.text_field :key, class: "w-full bg-paper border border-line-strong text-ink font-mono text-sm rounded-md px-3 py-2 focus:outline-none focus:shadow-brutal-sm", placeholder: "SECRET_KEY", autofocus: true %>
       </div>
       <div>
         <%= f.label :value, class: "block text-xs font-semibold text-ink-soft mb-1" %>
-        <%= f.text_area :value, rows: 4, class: "w-full bg-paper border-1.5 border-ink text-ink font-mono text-sm rounded-md px-3 py-2 focus:outline-none focus:shadow-brutal-sm", placeholder: "value" %>
+        <%= f.text_area :value, rows: 4, class: "w-full bg-paper border border-line-strong text-ink font-mono text-sm rounded-md px-3 py-2 focus:outline-none focus:shadow-brutal-sm", placeholder: "value" %>
       </div>
       <div class="flex items-center gap-3">
         <%= f.submit "Add config var", class: Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>
-        <button type="button" data-action="click->slide-panel#close" class="<%= Atoms::ButtonComponent.new(variant: :ghost, size: :sm).classes %>">Cancel</button>
+        <button type="button" data-action="click->slide-panel#close" class="<%= Atoms::ButtonComponent.new(variant: :ghost, size: :sm).classes %>"><%= t("common.cancel") %></button>
       </div>
     <% end %>
   <% end %>

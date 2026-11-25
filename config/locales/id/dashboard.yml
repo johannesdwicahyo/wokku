@@ -186,6 +186,8 @@ id:
       title: "Pengaturan"
       subtitle: "Kelola akun, keamanan, kredensial API, dan tagihan kamu."
       subtitle_self_host: "Kelola akun, keamanan, dan kredensial API kamu."
+      language: "Bahasa"
+      preferences: "Preferensi"
       preferences_hint_self_host: "Pilih bahasa dashboard."
       account: "Akun"
       security: "Keamanan"
@@ -197,7 +199,7 @@ id:
       delete_account: "Hapus Akun"
       estimated_monthly: "Estimasi Bulanan"
     app_tabs:
-      overview:    "Overview"
+      overview:    "Ringkasan"
       deploy:      "Deploy"
       runtime:     "Runtime"
       performance: "Performa"

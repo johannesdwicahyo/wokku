@@ -15,7 +15,7 @@
       <% if domain.pending_action == "ssl_enable" %>
         <%= render "dashboard/shared/spinning_button",
             label: "Issuing SSL",
-            classes: "px-2 py-1 text-xs text-accent border-1.5 border-ink bg-bg-deep rounded-md" %>
+            classes: "px-2 py-1 text-xs text-accent border border-line bg-bg-deep rounded-md" %>
       <% elsif !domain.ssl_enabled? %>
         <%= button_to "Enable SSL", ssl_dashboard_app_domain_path(app, domain), method: :post,
             data: { turbo_submits_with: "Issuing SSL…" },
@@ -34,7 +34,7 @@
       wokku_target = (owned.find { |d| d.hostname.end_with?(".#{Wokku.config.canonical_domain}") } || owned.first)&.hostname ||
         "#{app.name}.#{Wokku.config.canonical_domain}"
     %>
-    <div class="mt-3 border-1.5 border-warn bg-warn-soft rounded-md px-4 py-3 text-xs">
+    <div class="mt-3 border border-warn bg-warn-soft rounded-md px-4 py-3 text-xs">
       <p class="text-[10px] uppercase tracking-widest text-warn font-bold mb-2">Add this DNS record at your registrar</p>
       <% if apex %>
         <p class="text-ink-soft">Add an <span class="text-ink font-bold">A record</span> for <span class="text-ink font-mono"><%= domain.hostname %></span> → <span class="text-accent font-mono select-all"><%= app.server&.host %></span></p>

@@ -186,6 +186,8 @@ en:
       title: "Settings"
       subtitle: "Manage your account, security, API credentials, and billing."
       subtitle_self_host: "Manage your account, security and API credentials."
+      language: "Language"
+      preferences: "Preferences"
       preferences_hint_self_host: "Choose the dashboard language."
       account: "Account"
       security: "Security"
