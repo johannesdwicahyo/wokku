@@ -17,7 +17,7 @@
           <b class="block font-medium truncate <%= bad ? "text-bad-text" : "text-ink" %>"><%= app.name %></b>
           <% if (n = note(app)) %><span class="block text-[12px] text-muted"><%= n %></span><% end %>
         </span>
-        <span class="hidden lg:block truncate text-[13px] text-body"><%= primary_domain(app) || "—" %></span>
+        <span class="hidden lg:block truncate text-[13px] text-ink-soft"><%= primary_domain(app) || "—" %></span>
         <span class="hidden lg:block font-mono text-[12px] text-muted"><%= box_label_for(app) %></span>
         <%= render Atoms::LightBarsComponent.new(values: sparks[app.id], label: cpu_label(app)) %>
         <span class="hidden lg:block text-right font-mono text-[12px] text-muted"><%= deployed_label(app) %></span>

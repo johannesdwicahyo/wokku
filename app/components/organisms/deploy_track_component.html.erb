@@ -17,7 +17,7 @@
             </div>
             <div class="flex gap-0.5 h-1.5" aria-hidden="true">
               <% 8.times do |n| %>
-                <i class="flex-1 rounded-[1px] <%= state == :done ? "bg-body" : (state == :run ? "bg-ink wk-scan" : "bg-dark-line") %>" <% if state == :run %>style="animation-delay:<%= n * 0.12 %>s"<% end %>></i>
+                <i class="flex-1 rounded-[1px] <%= state == :done ? "bg-ink-soft" : (state == :run ? "bg-ink wk-scan" : "bg-dark-line") %>" <% if state == :run %>style="animation-delay:<%= n * 0.12 %>s"<% end %>></i>
               <% end %>
             </div>
           </div>
@@ -27,7 +27,7 @@
         <p class="mt-3 font-mono text-[11px] text-muted"><%= t("apps.deploy_track.more", count: more) %></p>
       <% end %>
     </div>
-    <div class="min-w-0 border border-line bg-bg p-3 font-mono text-[12px] leading-relaxed text-body"
+    <div class="min-w-0 border border-line bg-bg p-3 font-mono text-[12px] leading-relaxed text-ink-soft"
          data-controller="deploy"
          data-deploy-deploy-id-value="<%= deploy.id %>"
          data-deploy-reload-frame-value="apps_list"
