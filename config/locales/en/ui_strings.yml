@@ -25,5 +25,16 @@ en:
   loading:
     default: "Loading"
   apps:
+    fleet:
+      summary:
+        one: "%{count} process: %{parts}"
+        other: "%{count} processes: %{parts}"
+      state:
+        running: "running"
+        deploying: "deploying"
+        sleeping: "sleeping"
+        crashed: "crashed"
+        stopped: "stopped"
+        created: "created"
     rack:
       no_cpu: "No CPU data yet"

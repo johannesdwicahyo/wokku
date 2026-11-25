@@ -43,5 +43,16 @@ id:
   loading:
     default: "Memuat"
   apps:
+    fleet:
+      summary:
+        one: "%{count} proses: %{parts}"
+        other: "%{count} proses: %{parts}"
+      state:
+        running: "berjalan"
+        deploying: "deploy"
+        sleeping: "tidur"
+        crashed: "crash"
+        stopped: "berhenti"
+        created: "dibuat"
     rack:
       no_cpu: "Belum ada data CPU"
