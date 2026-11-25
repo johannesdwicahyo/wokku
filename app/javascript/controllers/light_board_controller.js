@@ -11,25 +11,42 @@ export default class extends Controller {
 
   connect() {
     this.dpr = Math.min(window.devicePixelRatio || 1, 1.75)
-    this.reduced = matchMedia("(prefers-reduced-motion: reduce)").matches
+    this.mq = matchMedia("(prefers-reduced-motion: reduce)")
     this.visible = true
     this.g = this.element.getContext("2d")
     this.size()
     this.draw(0)
     this.resizer = new ResizeObserver(() => { this.size(); this.draw(performance.now() / 1000) })
     this.resizer.observe(this.element)
-    if (this.reduced) return
+    this.mq.addEventListener("change", this.motionChanged)
+    this.motionChanged()
+  }
+
+  disconnect() {
+    this.mq.removeEventListener("change", this.motionChanged)
+    this.resizer?.disconnect()
+    this.stopLoop()
+  }
+
+  get reduced() { return this.mq.matches }
+
+  // Reduced motion on: stop loop + observer, draw one static frame.
+  // Off: observe visibility and run the blink loop.
+  motionChanged = () => {
+    this.stopLoop()
+    if (this.reduced) return this.draw(0)
     this.io = new IntersectionObserver(([e]) => {
       this.visible = e.isIntersecting
+      cancelAnimationFrame(this.raf)
       if (this.visible) this.raf = requestAnimationFrame(this.loop)
     })
     this.io.observe(this.element)
     this.raf = requestAnimationFrame(this.loop)
   }
 
-  disconnect() {
-    this.resizer?.disconnect()
+  stopLoop() {
     this.io?.disconnect()
+    this.io = null
     cancelAnimationFrame(this.raf)
   }
 
