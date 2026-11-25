@@ -1,0 +1,100 @@
+<aside aria-label="<%= t("console.rail.sidebar") %>"
+       id="dashboard-sidebar"
+       data-mobile-nav-target="sidebar"
+       class="hidden lg:flex flex-col gap-[18px] shrink-0 w-[248px] sticky top-0 h-screen px-3.5 py-[18px] bg-bg-deep border-r border-line">
+  <%= render Atoms::LogoComponent.new(variant: :lockup, size: :sm, href: logo_href) %>
+
+  <% if show_switcher? %>
+    <div class="relative" data-controller="dropdown">
+      <button type="button" data-action="click->dropdown#toggle" aria-haspopup="true"
+              class="flex items-center gap-2.5 w-full p-2.5 text-left border border-line bg-bg cursor-pointer">
+        <span class="grid grid-cols-3 gap-0.5 w-7 h-7 p-1 shrink-0 bg-[#111511] border border-line-strong" aria-hidden="true">
+          <% team_mark(current_workspace.id || workspace_name(current_workspace)).each do |cell| %>
+            <i class="rounded-[1px] <%= cell_class(cell) %>"></i>
+          <% end %>
+        </span>
+        <span class="min-w-0 flex-1">
+          <b class="block truncate min-w-0 font-medium text-sm text-ink"><%= workspace_name(current_workspace) %></b>
+          <% if member_count %>
+            <span class="block truncate text-xs text-dim"><%= t("console.rail.team_sub", count: member_count) %></span>
+          <% end %>
+        </span>
+      </button>
+      <div data-dropdown-target="menu"
+           class="hidden absolute left-0 top-full mt-1 w-full bg-bg-deep border border-line-strong rounded z-50">
+        <p class="px-3 py-2 border-b border-line font-mono text-[11px] uppercase tracking-[.12em] text-dim"><%= t("console.rail.workspaces") %></p>
+        <% workspaces.each do |ws| %>
+          <% if ws.id == current_workspace.id %>
+            <div class="flex items-center justify-between px-3 py-2 bg-live/7 text-xs">
+              <span class="text-ink truncate"><%= workspace_name(ws) %></span>
+              <span class="font-mono text-[11px] text-live"><%= t("console.rail.current") %></span>
+            </div>
+          <% else %>
+            <%= button_to switch_dashboard_workspace_path(ws), method: :post,
+                  class: "w-full flex items-center justify-between px-3 py-2 text-xs text-ink-soft hover:bg-white/[.035] hover:text-ink cursor-pointer" do %>
+              <span class="truncate"><%= workspace_name(ws) %></span>
+              <span class="font-mono text-[11px] text-dim"><%= ws.kind %></span>
+            <% end %>
+          <% end %>
+        <% end %>
+        <% if workspace_new_path %>
+          <%= link_to t("console.rail.new_workspace"), workspace_new_path,
+                class: "block px-3 py-2 text-xs text-live border-t border-line hover:bg-white/[.035]" %>
+        <% end %>
+        <% if workspaces_index_path %>
+          <%= link_to t("console.rail.manage"), workspaces_index_path,
+                class: "block px-3 py-2 text-xs text-dim hover:bg-white/[.035] hover:text-ink" %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <% if search %>
+    <button type="button" data-command-menu-open
+            class="flex items-center justify-between w-full min-h-10 px-3 border border-line text-[13px] text-dim cursor-pointer hover:text-ink">
+      <span><%= t("console.rail.search") %></span>
+      <kbd class="font-mono text-[11px] border border-line-strong px-1.5 py-px">⌘K</kbd>
+    </button>
+  <% end %>
+
+  <nav class="flex flex-col gap-0.5 overflow-y-auto" aria-label="<%= t("console.rail.workspace") %>">
+    <span class="px-2.5 pt-2 pb-1.5 font-mono text-[11px] uppercase tracking-[.12em] text-dim"><%= t("console.rail.workspace") %></span>
+    <% workspace_items.each do |item| %>
+      <%= render Molecules::SidebarNavItemComponent.new(**item.slice(:label, :key, :href, :active, :count, :external)) %>
+    <% end %>
+  </nav>
+
+  <div class="mt-auto flex flex-col gap-0.5 pt-3 border-t border-line">
+    <nav class="flex flex-col gap-0.5" aria-label="<%= t("console.rail.account") %>">
+      <% account_items.each do |item| %>
+        <%= render Molecules::SidebarNavItemComponent.new(**item.slice(:label, :key, :href, :active, :count, :external)) %>
+      <% end %>
+    </nav>
+
+    <% if locale_toggle_path.present? %>
+      <div class="px-2.5 py-1.5">
+        <%= button_to locale.to_s.upcase, locale_toggle_path, method: :post, form_class: "contents",
+              title: t("console.rail.language"),
+              class: "h-7 px-2 grid place-items-center border border-line-strong rounded-sm font-mono text-[11px] text-dim hover:text-ink cursor-pointer" %>
+      </div>
+    <% end %>
+
+    <% if show_user? %>
+      <div class="flex items-center gap-2.5 p-2.5">
+        <span class="w-[26px] h-[26px] grid place-items-center shrink-0 bg-[#1A1F1A] border border-line-strong font-mono text-[11px]" aria-hidden="true"><%= user_initials %></span>
+        <span class="min-w-0 flex-1">
+          <b class="block truncate min-w-0 font-medium text-sm text-ink"><%= user_email %></b>
+          <span class="block truncate text-xs text-dim"><%= user_role %></span>
+        </span>
+        <% if sign_out_path %>
+          <%= link_to t("console.rail.sign_out"), sign_out_path, data: { turbo_method: :delete },
+                class: "text-xs text-dim hover:text-ink shrink-0" %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if version_line.present? %>
+      <div class="px-2.5 font-mono text-[11px] text-dim"><%= version_line %></div>
+    <% end %>
+  </div>
+</aside>
