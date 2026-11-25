@@ -54,5 +54,10 @@ id:
         crashed: "crash"
         stopped: "berhenti"
         created: "dibuat"
+    overview:
+      title: "Ringkasan"
+      fleet: "Armada · per proses"
+      running: "Berjalan"
+      deploying: "%{count} sedang deploy"
     rack:
       no_cpu: "Belum ada data CPU"

@@ -39,7 +39,7 @@ module Wokku
     end
 
     attr_accessor :tls, :billing
-    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder, :host_ssh_user, :control_plane_host, :openapi_path, :object_storage, :sidebar_extra_items, :addon_path_prefixes, :app_resource_sections, :object_storage_limits, :addons_index_sections, :object_storage_pricing_note
+    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder, :host_ssh_user, :control_plane_host, :openapi_path, :object_storage, :sidebar_extra_items, :addon_path_prefixes, :app_resource_sections, :object_storage_limits, :addons_index_sections, :apps_index_readouts, :object_storage_pricing_note
 
     # The OpenAPI file GET /api/v1/openapi.yaml serves. Engine default: its
     # own derived contract; the cloud points it at the cloud superset.
@@ -72,6 +72,13 @@ module Wokku
     # as app_resource_sections. Default adds none.
     def addons_index_sections
       @addons_index_sections || ->(_view, _team) { [] }
+    end
+
+    # Extension point for host apps: a callable taking the view context and the
+    # team, returning extra Overview readouts as [{ label:, value:, sub: }].
+    # Call via Organisms::AppsOverviewComponent.readouts_for (rescues + filters).
+    def apps_index_readouts
+      @apps_index_readouts || ->(_view, _team) { [] }
     end
 
     # Object-storage plan limits for a team: { free: Boolean, max_buckets:

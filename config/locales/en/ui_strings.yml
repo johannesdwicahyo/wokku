@@ -36,5 +36,10 @@ en:
         crashed: "crashed"
         stopped: "stopped"
         created: "created"
+    overview:
+      title: "Overview"
+      fleet: "Fleet · per process"
+      running: "Running"
+      deploying: "%{count} deploying"
     rack:
       no_cpu: "No CPU data yet"
