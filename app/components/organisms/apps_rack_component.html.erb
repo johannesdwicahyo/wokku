@@ -31,7 +31,7 @@
   </div>
   <% alerts.each do |app| %>
     <div class="flex flex-wrap items-center gap-3 px-[18px] py-3 border-t border-danger/30 bg-danger-soft text-[13px] text-bad-text">
-      <span class="w-2.5 h-2.5 bg-danger" aria-hidden="true"></span><%= alert_text(app) %>
+      <span class="w-2.5 h-2.5 bg-danger shrink-0" aria-hidden="true"></span><span class="min-w-0 flex-1 break-words"><%= alert_text(app) %></span>
       <%= link_to t("apps.rack.see_logs"), dashboard_app_logs_path(app), class: "ml-auto underline underline-offset-4" %>
     </div>
   <% end %>
