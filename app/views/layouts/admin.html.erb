@@ -64,7 +64,12 @@
           </div>
         </main>
       </div>
-      <%= render "dashboard/shared/command_menu", sidebar_groups: [ { label: nil, items: admin_nav + admin_account } ] %>
+      <%
+        admin_palette_nav = (admin_nav + admin_account).map { |i| { label: i[:label], href: i[:href] } }
+        admin_palette_nav << { label: t("console.rail.language"), href: dashboard_locale_path(locale: I18n.locale == :en ? :id : :en), method: "post" }
+        admin_palette_nav << { label: t("console.rail.sign_out"), href: destroy_user_session_path, method: "delete" }
+      %>
+      <%= render Organisms::CommandPaletteComponent.new(nav: admin_palette_nav) %>
     </div>
     <%= render Molecules::FlashToastComponent.new(flash: flash) %>
   </body>

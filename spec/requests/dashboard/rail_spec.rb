@@ -69,4 +69,25 @@ RSpec.describe "Dashboard rail", type: :request do
     expect(doc).to have_no_link("Support")
     expect(doc).to have_no_link("Billing")
   end
+
+  describe "command palette" do
+    def palette_value(name)
+      JSON.parse(page_at.find("[data-controller='command-menu']", visible: :all)["data-command-menu-#{name}-value"])
+    end
+
+    it "lists every rail destination plus Team, language and sign out under Go to" do
+      sign_in users(:one)
+      nav = palette_value("nav")
+      expect(nav.map { _1["href"] }).to include("/dashboard/apps", "/dashboard/addons", "/dashboard/profile", "/dashboard/workspaces")
+      expect(nav).to include(a_hash_including("href" => "/dashboard/locale?locale=id", "method" => "post"))
+      expect(nav).to include(a_hash_including("method" => "delete", "label" => "Sign out"))
+    end
+
+    it "includes the team's add-ons with a light state" do
+      user = users(:one)
+      create(:database_service, creator: user, name: "palette-db", status: :creating)
+      sign_in user
+      expect(palette_value("addons")).to include(a_hash_including("label" => "palette-db", "state" => "deploying"))
+    end
+  end
 end

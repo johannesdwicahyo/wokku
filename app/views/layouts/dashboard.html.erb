@@ -54,7 +54,25 @@
     Sentry.capture_exception(e, level: :warning) if defined?(Sentry)
   end
 
-  palette_groups = [ { label: nil, items: workspace_items + account_items } ]
+  # Palette "Go to": every rail destination plus what only the rail footer offers
+  # (Team, language, sign out) so a phone user (rail hidden) reaches everything.
+  palette_nav = (workspace_items + account_items).map { |i| { label: i[:label], href: i[:href] } }
+  palette_nav << { label: t("console.sidebar.items.team"), href: dashboard_workspaces_path }
+  palette_nav << { label: t("console.rail.language"), href: dashboard_locale_path(locale: I18n.locale == :en ? :id : :en), method: "post" }
+  palette_nav << { label: t("console.rail.sign_out"), href: destroy_user_session_path, method: "delete" }
+
+  # One cheap query, same scope the Add-ons index uses; empty without a team.
+  palette_addons = if current_team
+    policy_scope(DatabaseService).order(:name).limit(50).pluck(:id, :name, :status).map do |id, name, status|
+      { label: name, href: dashboard_addon_path(id), state: Organisms::CommandPaletteComponent.addon_state(status) }
+    end
+  else
+    []
+  end
+  palette_app = if defined?(@app) && @app.respond_to?(:persisted?) && @app.persisted?
+    { name: @app.name, open: dashboard_app_path(@app), deploy: deploy_dashboard_app_releases_path(@app),
+      restart: restart_dashboard_app_path(@app), stop: stop_dashboard_app_path(@app) }
+  end
 %>
 <!DOCTYPE html>
 <html lang="<%= I18n.locale %>"
@@ -152,7 +170,7 @@
       </div>
 
       <%= render "dashboard/shared/onboarding_tour" %>
-      <%= render "dashboard/shared/command_menu", sidebar_groups: palette_groups %>
+      <%= render Organisms::CommandPaletteComponent.new(nav: palette_nav, addons: palette_addons, app: palette_app, search_url: search_dashboard_apps_path) %>
 
       <%# Toast container — Turbo Stream broadcast target only.
           HTTP flash display is handled by FlashToastComponent below.
