@@ -1,14 +1,11 @@
-<%# target: "_top" — links in the table break out to a full-page visit
-    instead of navigating within this frame. Must match the placeholder. %>
+<%# target: "_top" — links in the rack break out to a full-page visit
+    instead of navigating within this frame. Must match the placeholder.
+    The live deploy log reloads this frame, so the track renders inside it
+    and the shell's frame keeps its src. %>
 <%= turbo_frame_tag "apps_list", target: "_top" do %>
-  <% strip = Molecules::AppsStatusStripComponent.new(apps: @apps, plan: @plan, box_usage: @box_usage) %>
-  <%= render strip %>
-  <div class="mt-5">
-    <%= render Organisms::AppsTableComponent.new(apps: @apps) %>
-  </div>
-  <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium text-dim mt-3 px-0.5">
-    <span><%= t("dashboard.apps.aggregates.total", count: @apps.size) %></span>
-    <span><%= t("dashboard.apps.aggregates.running", count: strip.state_counts["running"].to_i) %> · <%= t("dashboard.apps.aggregates.crashed", count: strip.state_counts["crashed"].to_i) %></span>
-    <% if Wokku.cloud? %><span><%= t("dashboard.apps.aggregates.boxes", used: strip.total_boxes_used, allowed: strip.total_boxes_allowed) %></span><% end %>
+  <div class="flex flex-col gap-5">
+    <%= render Organisms::AppsOverviewComponent.new(fleet: @fleet, running: @fleet_running, total: @fleet_total, deploying: @fleet_deploying, readouts: @readouts) %>
+    <%= render Organisms::DeployTrackComponent.new(deploy: @track_deploy, more: @track_more) %>
+    <%= render Organisms::AppsRackComponent.new(apps: @apps, stats: @stats, sparks: @sparks, last_deploys: @last_deploys, crashes: @crashes) %>
   </div>
 <% end %>

@@ -66,6 +66,14 @@ id:
         crashed: "crash"
         stopped: "berhenti"
         created: "dibuat"
+    side:
+      title:
+        one: "Database · %{count}"
+        other: "Database · %{count}"
+      new: "Baru"
+      empty: "Belum ada database"
+      all: "Semua add-on →"
+      usage: "%{used} dari %{total}"
     overview:
       title: "Ringkasan"
       fleet: "Armada · per proses"

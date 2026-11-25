@@ -48,6 +48,14 @@ en:
         crashed: "crashed"
         stopped: "stopped"
         created: "created"
+    side:
+      title:
+        one: "Databases · %{count}"
+        other: "Databases · %{count}"
+      new: "New"
+      empty: "No databases yet"
+      all: "All add-ons →"
+      usage: "%{used} of %{total}"
     overview:
       title: "Overview"
       fleet: "Fleet · per process"

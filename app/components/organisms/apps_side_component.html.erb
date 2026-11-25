@@ -1,0 +1,30 @@
+<%= render Molecules::PanelComponent.new(ticks: true) do %>
+  <div class="flex items-center justify-between px-[18px] py-3 border-b border-line font-mono text-[11px] uppercase tracking-[.12em] text-muted">
+    <h2 class="font-normal"><%= t("apps.side.title", count: total) %></h2>
+    <%= link_to t("apps.side.new"), helpers.dashboard_addons_path, data: { turbo_frame: "_top" }, class: "text-ink hover:underline" %>
+  </div>
+  <% if databases.empty? %>
+    <p class="px-[18px] py-4 text-[13px] text-muted"><%= t("apps.side.empty") %></p>
+  <% else %>
+    <ul class="flex flex-col">
+      <% databases.each do |db| %>
+        <li data-addon class="flex flex-col gap-1.5 px-[18px] py-3 border-b border-line last:border-b-0">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <%= render Atoms::StatusLightComponent.new(state: state(db)) %>
+            <%= link_to db.name, helpers.dashboard_addon_path(db), data: { turbo_frame: "_top" }, class: "min-w-0 truncate text-[13px] font-medium text-ink hover:underline" %>
+          </div>
+          <div class="pl-5 font-mono text-[11px] text-muted"><%= engine(db) %> · <%= db.size_label %></div>
+          <% if meter?(db) %>
+            <div class="pl-5 flex items-center gap-2 font-mono text-[11px] text-muted">
+              <%= render Atoms::LightMeterComponent.new(total: METER_SQUARES, on: meter_on(db), label: usage_text(db)) %>
+              <span><%= usage_text(db) %></span>
+            </div>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+    <% if more? %>
+      <%= link_to t("apps.side.all"), helpers.dashboard_addons_path, data: { turbo_frame: "_top" }, class: "block px-[18px] py-3 border-t border-line font-mono text-[11px] uppercase tracking-[.12em] text-ink hover:underline" %>
+    <% end %>
+  <% end %>
+<% end %>
