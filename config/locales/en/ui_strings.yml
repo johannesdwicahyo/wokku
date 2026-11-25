@@ -55,3 +55,24 @@ en:
       deploying: "%{count} deploying"
     rack:
       no_cpu: "No CPU data yet"
+      title:
+        one: "Apps · %{count}"
+        other: "Apps · %{count}"
+      sort: "Sort · last deploy"
+      cols:
+        app: "App"
+        domain: "Domain"
+        size: "Size"
+        cpu: "CPU · 1 h"
+        deployed: "Deployed"
+      note:
+        deploying: "deploying"
+        sleeping: "sleeping, wakes on visit"
+        crashed:
+          one: "crashed %{count}× in 10 min"
+          other: "crashed %{count}× in 10 min"
+      alert: "%{name} keeps exiting. Wokku is restarting it."
+      alert_reason: "%{name} keeps exiting with \"%{reason}\". Wokku is restarting it."
+      see_logs: "See logs"
+      never: "never"
+      failed: "failed"

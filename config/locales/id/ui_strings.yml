@@ -73,3 +73,24 @@ id:
       deploying: "%{count} sedang deploy"
     rack:
       no_cpu: "Belum ada data CPU"
+      title:
+        one: "App · %{count}"
+        other: "App · %{count}"
+      sort: "Urut · deploy terakhir"
+      cols:
+        app: "App"
+        domain: "Domain"
+        size: "Ukuran"
+        cpu: "CPU · 1 j"
+        deployed: "Deploy"
+      note:
+        deploying: "deploy"
+        sleeping: "tidur, bangun saat dikunjungi"
+        crashed:
+          one: "crash %{count}× dalam 10 mnt"
+          other: "crash %{count}× dalam 10 mnt"
+      alert: "%{name} terus berhenti. Wokku sedang me-restart-nya."
+      alert_reason: "%{name} terus berhenti dengan \"%{reason}\". Wokku sedang me-restart-nya."
+      see_logs: "Lihat log"
+      never: "belum pernah"
+      failed: "gagal"
