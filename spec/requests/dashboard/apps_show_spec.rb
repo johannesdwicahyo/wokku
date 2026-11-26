@@ -34,16 +34,51 @@ RSpec.describe "Dashboard::Apps#show overview", type: :request do
     expect(response.body).to include("Roll back")
   end
 
-  it "renders for a viewer without mutating buttons" do
+  MUTATORS = "button:not([type=button]), input[type=submit], [data-turbo-method]"
+
+  def mutators(html)
+    page = Capybara.string(html)
+    page.all("form").reject { |f| f[:action].to_s.include?("/dashboard/locale") }.flat_map { |f| f.all(MUTATORS).to_a } +
+      page.all("[data-turbo-method]").to_a
+  end
+
+  it "shows a member Roll back, Restart and scaling controls but a viewer none" do
+    populate(releases: 2, domains: 1, databases: 0, processes: 1)
+    get "/dashboard/apps/#{record.id}"
+    member_html = response.body
+    expect(member_html).to include("Roll back").and include("Restart")
+    expect(mutators(member_html)).not_to be_empty
+    expect(Capybara.string(member_html)).to have_css("#app_tab_content form button, #app_tab_content form input[type=submit]")
+
     viewer = User.create!(email: "viewer-show@example.com", password: "password123456")
     TeamMembership.create!(user: viewer, team: team, role: :viewer)
-    populate(releases: 2, domains: 1, databases: 0, processes: 1)
     sign_in viewer
     get "/dashboard/apps/#{record.id}"
     expect(response).to have_http_status(:success)
-    page = Capybara.string(response.body)
-    forms = page.all("form").reject { |f| f[:action].to_s.include?("/dashboard/locale") }
-    expect(forms.flat_map { |f| f.all("button[type=submit]").to_a }).to be_empty
+    expect(mutators(response.body)).to be_empty
+    expect(response.body).not_to include("Roll back")
+  end
+
+  describe "pricing seam" do
+    after { Wokku.config.pricing = nil }
+
+    def page_with_pricing(pricing)
+      Wokku.config.pricing = pricing
+      populate(releases: 2, domains: 1, databases: 1, processes: 2)
+      get "/dashboard/apps/#{record.id}"
+      Capybara.string(response.body)
+    end
+
+    it "shows no Rupiah on NullPricing" do
+      page = page_with_pricing(Wokku::Providers::NullPricing.new)
+      expect(page.find("#app_tab_content").text).not_to include("Rp")
+      expect(page.text).not_to include("Rp")
+    end
+
+    it "shows Rupiah when pricing returns a number" do
+      stub = Class.new(Wokku::Providers::NullPricing) { def monthly_idr(*, **) = 32_000 }.new
+      expect(page_with_pricing(stub).find("#app_tab_content").text).to include("Rp")
+    end
   end
 
   it "renders a brand-new app" do
@@ -73,6 +108,6 @@ RSpec.describe "Dashboard::Apps#show overview", type: :request do
     populate(releases: 2, domains: 1, databases: 1, processes: 2)
     get "/dashboard/apps/#{record.id}?locale=id"
     text = Capybara.string(response.body).find("#app_tab_content").text
-    %w[Processes Live\ logs Deploys Connected Domains Resources].each { |w| expect(text).not_to include(w) }
+    ["Processes", "Live logs", "Deploys", "Connected", "Domains", "Resources", "Roll back", "Restart", "Pause", "Metrics", "No deploys yet"].each { |w| expect(text).not_to include(w) }
   end
 end
