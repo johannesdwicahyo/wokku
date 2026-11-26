@@ -5,6 +5,7 @@ module Organisms
   # pre-fill; the sliders are the source of truth. Prices come from the
   # pricing seam and are hidden on OSS.
   class ResourceBuilderComponent < ApplicationComponent
+    include RupiahHelper
     def initialize(name:, shape:, presets:, instances: nil, disk: false, sleeping_option: false,
                    sleeping: false, min_disk_gb: 0, rails_hint: false, kind: :app)
       @name, @shape, @presets, @instances = name, shape, presets, instances
@@ -48,7 +49,6 @@ module Organisms
         default: "Prices change on %{date}: %{changes} (per month).")
     end
 
-    def idr(n) = "Rp#{n.to_i.to_s.reverse.scan(/\d{1,3}/).join('.').reverse}"
     def mem_label(mb) = mb >= 1024 ? "#{(mb / 1024.0).to_s.delete_suffix('.0')} GB" : "#{mb} MB"
 
     # A chip is pressed only when cpu+memory match AND, when this preset

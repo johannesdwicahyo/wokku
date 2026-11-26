@@ -3,14 +3,14 @@
     Turbo Frames requires the response to contain a <turbo-frame> with
     a matching id, otherwise it renders "Content missing". Wrap the
     rendered content so the frame matches. %>
-<%= turbo_frame_tag "app_logs_glance_#{app.id}" do %>
+<%= turbo_frame_tag (local_assigns[:frame_id] || "app_logs_glance_#{app.id}") do %>
   <% non_blank = lines.reject { |l| l.to_s.strip.empty? } %>
   <div class="border border-line bg-[#171717] text-[#9DEE9D] p-3 font-mono text-xs min-w-0 wrap-anywhere">
     <% if non_blank.any? %>
       <% non_blank.each do |l| %><div><%= l %></div><% end %>
     <% else %>
-      <div class="text-dim">// no recent log output</div>
+      <div class="text-dim">// <%= t("apps.glance.no_output") %></div>
     <% end %>
-    <div class="mt-2 text-dim">// <%= link_to "open full logs →", dashboard_app_logs_path(app), class: "text-accent", data: { turbo_frame: "_top" } %></div>
+    <div class="mt-2 text-dim">// <%= link_to t("apps.glance.open_full"), dashboard_app_logs_path(app), class: "text-accent", data: { turbo_frame: "_top" } %></div>
   </div>
 <% end %>

@@ -1,60 +1,21 @@
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-  <div class="md:col-span-2 space-y-4">
-    <div class="border border-line bg-paper p-5 rounded-md">
-      <div class="flex items-start justify-between gap-4">
-        <div>
-          <div class="text-[10.5px] uppercase tracking-widest text-ink-soft font-bold mb-2">Status</div>
-          <div class="flex items-center gap-3 mb-3">
-            <%= render Atoms::StatusPillComponent.new(status: app.display_status) %>
-            <a href="<%= display_url %>" target="_blank" class="font-mono text-sm text-accent hover:underline"><%= display_url.sub(%r{https?://}, "") %></a>
-          </div>
-          <div class="flex gap-2 flex-wrap">
-            <%= render Atoms::OptimisticButtonComponent.new(label: t("sweep.restart"), url: helpers.restart_dashboard_app_path(app), method: :post, pending_label: t("sweep.restarting"), kind: :primary) %>
-            <%= render Atoms::OptimisticButtonComponent.new(label: "stop",    url: helpers.stop_dashboard_app_path(app),    method: :post, pending_label: "stopping…",   kind: :secondary) %>
-            <%= link_to t("sweep.scale"), helpers.dashboard_app_scaling_path(app),
-                        class: Atoms::ButtonComponent.new(variant: :outline, size: :sm).classes %>
-          </div>
-        </div>
-        <div class="text-right">
-          <div class="text-[10.5px] uppercase tracking-widest text-dim font-bold"><%= t("sweep.memory") %></div>
-          <div class="font-headline text-2xl font-extrabold"
-               data-controller="motion--counter-tick"
-               data-motion--counter-tick-value-value="<%= memory_used_mb %>"><%= memory_used_mb %> <span class="text-sm text-dim font-medium">/ <%= memory_max_mb %> MB</span></div>
-          <div class="text-[10px] text-dim mt-1"><%= memory_pct %>% used</div>
-          <% if size_label %><div class="text-[10px] text-dim mt-0.5"><%= size_label %></div><% end %>
-        </div>
-      </div>
-    </div>
-
-    <%= render Molecules::RecentActivityCardComponent.new(events: recent_events) %>
-
-    <div class="border border-line bg-paper p-5 rounded-md">
-      <div class="text-[10.5px] uppercase tracking-widest text-ink-soft font-bold mb-3"><%= t("sweep.recent_logs") %></div>
-      <%= helpers.deferred_section "app_logs_glance_#{app.id}",
-            src: helpers.dashboard_app_logs_path(app, glance: true),
-            skeleton: :text %>
-    </div>
-
-    <%= render Molecules::RecentCrashesComponent.new(app: app) %>
+<div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-4">
+  <div class="min-w-0 space-y-4">
+    <%= render Organisms::AppStatusBoardComponent.new(app: app, stats: stats, current_release: current_release) %>
+    <%= render Organisms::AppMetricsPanelComponent.new(stats: stats) %>
+    <%= render Organisms::AppProcessesComponent.new(app: app, can_update: can_update) %>
+    <%= render Organisms::AppLiveLogComponent.new(app: app, process_types: process_types) %>
   </div>
 
-  <div class="space-y-4">
-    <% addons = app.database_services.order(:service_type, :created_at) %>
-    <% if addons.any? %>
-      <% addons.each do |addon| %>
-        <%= render Molecules::AddonSummaryCardComponent.new(database_service: addon) %>
-      <% end %>
-    <% else %>
-      <div class="border border-line border-dashed bg-paper p-4 text-xs text-dim rounded-md">
-        <div class="text-[10.5px] uppercase tracking-widest text-ink-soft font-bold mb-2"><%= t("resources.addons_title") %></div>
-        <%= t("resources.none_attached") %> <%= link_to t("resources.browse"), helpers.dashboard_addons_path, class: "text-accent hover:underline", data: { turbo_frame: "_top" } %>
-      </div>
-    <% end %>
-    <% if Wokku.config.object_storage? && (storage = app.object_storage_bucket) %>
+  <div class="min-w-0 space-y-4">
+    <%= render Organisms::AppDeploysTimelineComponent.new(app: app, releases: releases, current_release: current_release, can_update: can_update) %>
+    <%= render Organisms::AppConnectedComponent.new(app: app) %>
+    <%= render Organisms::AppDomainsPanelComponent.new(app: app, domains: domains) %>
+    <%= render Organisms::AppResourcesPanelComponent.new(app: app) %>
+    <% if storage %>
       <%= render Molecules::ObjectStorageCardComponent.new(bucket: storage) %>
     <% end %>
-    <% if addons.any? %>
-      <%= render Molecules::BackupsSummaryCardComponent.new(app: app, current_user: helpers.current_user) %>
+    <% if databases? %>
+      <%= render Molecules::BackupsSummaryCardComponent.new(app: app, current_user: helpers.current_user, can_update: can_update) %>
     <% end %>
   </div>
 </div>

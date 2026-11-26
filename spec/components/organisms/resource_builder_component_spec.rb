@@ -35,7 +35,7 @@ RSpec.describe Organisms::ResourceBuilderComponent, type: :component do
     render_inline(described_class.new(name: "p", shape: shape, presets: {}))
     root = page.find("[data-controller='resource-builder']")
     expect(JSON.parse(root["data-resource-builder-units-value"])).to eq("cpu" => 16_000, "memory_gb" => 24_000, "disk_gb" => 1_000)
-    expect(page).to have_css("[data-resource-builder-target='price']", text: "Rp32.000")
+    expect(page).to have_css("[data-resource-builder-target='price']", text: "Rp32,000")
   end
 
   it "offers the free sleeping option and disk with a floor" do
@@ -87,7 +87,7 @@ RSpec.describe Organisms::ResourceBuilderComponent, type: :component do
       allow(Wokku.config).to receive(:pricing).and_return(double(unit_prices: units, monthly_idr: 32_000, upcoming_change: change))
       render_inline(described_class.new(name: "p", shape: shape, presets: {}))
       note = page.find("[data-test='price-change']")
-      expect(note.text).to include("4 Nov 2026", "vCPU Rp16.000 → Rp20.000")
+      expect(note.text).to include("4 Nov 2026", "vCPU Rp16,000 → Rp20,000")
       expect(note.text).not_to include("RAM")
     end
   end

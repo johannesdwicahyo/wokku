@@ -1,0 +1,22 @@
+<%= render Molecules::PanelComponent.new(ticks: true) do %>
+  <div data-controller="live-log" data-live-log-url-value="<%= src %>"
+       data-live-log-label-pause-value="<%= t("apps.live_log.pause") %>"
+       data-live-log-label-resume-value="<%= t("apps.live_log.resume") %>">
+    <div class="flex flex-wrap items-center justify-between gap-2 px-[18px] py-3 border-b border-line font-mono text-[11px] uppercase tracking-[.12em] text-muted">
+      <h2 class="font-normal"><%= t("apps.live_log.title") %></h2>
+      <div role="toolbar" aria-label="<%= t("apps.live_log.filters") %>" class="flex flex-wrap items-center gap-2">
+        <% btn = "px-2 py-1 border border-line hover:text-ink aria-pressed:text-ink aria-pressed:border-live focus-visible:outline-2 focus-visible:outline-live" %>
+        <button type="button" class="<%= btn %>" aria-pressed="true" data-live-log-target="filter" data-process="" data-action="live-log#filter"><%= t("apps.live_log.all") %></button>
+        <% process_types.each do |type| %>
+          <button type="button" class="<%= btn %>" aria-pressed="false" data-live-log-target="filter" data-process="<%= type %>" data-action="live-log#filter"><%= type %></button>
+        <% end %>
+        <button type="button" class="<%= btn %>" data-live-log-target="pause" data-action="live-log#togglePause"><span data-live-log-target="pauseLabel"><%= t("apps.live_log.pause") %></span><span class="sr-only"> <%= t("apps.live_log.pause_sr") %></span></button>
+      </div>
+    </div>
+    <div role="log" aria-live="off" tabindex="0" data-live-log-target="box" class="h-72 overflow-y-auto px-[18px] py-3 font-mono text-xs text-muted min-w-0 wrap-anywhere focus-visible:outline-2 focus-visible:outline-live">
+      <%= helpers.turbo_frame_tag "app_live_log", src: src, loading: :lazy, data: { live_log_target: "frame" } do %>
+        <span class="text-dim"><%= t("apps.live_log.loading") %></span>
+      <% end %>
+    </div>
+  </div>
+<% end %>

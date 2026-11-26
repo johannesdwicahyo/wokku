@@ -6,7 +6,7 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = ["cpu", "memory", "disk", "count", "price", "preset", "sleeping", "sleepingField", "railsHint",
                     "sliders", "cpuLabel", "memoryLabel", "diskLabel"]
-  static values = { units: Object }
+  static values = { units: Object, delimiter: String }
 
   pick(event) {
     const b = event.currentTarget
@@ -41,6 +41,6 @@ export default class extends Controller {
     const u = this.unitsValue
     const monthly = this.sleepingFieldTarget.value === "1" ? 0
       : Math.round(count * (cpu * u.cpu + (mem / 1024) * u.memory_gb) + disk * u.disk_gb)
-    this.priceTarget.textContent = `Rp${monthly.toLocaleString("id-ID")}/month`
+    this.priceTarget.textContent = `Rp${monthly.toString().replace(/\B(?=(\d{3})+(?!\d))/g, this.hasDelimiterValue ? this.delimiterValue : ".")}/month`
   }
 }

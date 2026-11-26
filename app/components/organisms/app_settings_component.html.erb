@@ -1,6 +1,6 @@
 <div class="mb-5 inline-flex border border-line rounded-md overflow-hidden shadow-brutal-sm max-w-full overflow-x-auto">
   <% Organisms::AppSettingsComponent::SECTIONS.each do |s| %>
-    <%= link_to s.to_s.titleize, helpers.section_path(:settings, app, s),
+    <%= link_to t("dashboard.app_sections.#{s}"), helpers.section_path(:settings, app, s),
                 class: "px-3 py-1.5 text-xs font-semibold whitespace-nowrap border-r border-line last:border-r-0 transition-colors #{active == s ? 'bg-ink text-paper' : 'bg-paper text-dim hover:bg-bg-deep'}" %>
   <% end %>
 </div>

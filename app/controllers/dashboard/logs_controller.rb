@@ -2,11 +2,14 @@ module Dashboard
   class LogsController < BaseController
     before_action :set_app
 
+    LIVE_FRAME = "app_live_log".freeze
+
     def show
       authorize @app, :show?
       if params[:glance]
-        @lines = recent_log_lines(@app, limit: 5)
-        render partial: "dashboard/logs/glance", locals: { lines: @lines, app: @app }, layout: false
+        @lines = recent_log_lines(@app, limit: glance_limit, process: glance_process)
+        frame_id = params[:frame] == LIVE_FRAME ? LIVE_FRAME : nil
+        render partial: "dashboard/logs/glance", locals: { lines: @lines, app: @app, frame_id: frame_id }, layout: false
         return
       end
 
@@ -74,10 +77,36 @@ module Dashboard
       raw.dup.force_encoding(Encoding::UTF_8).scrub("?")
     end
 
-    def recent_log_lines(app, limit:)
-      raw = scrub_encoding(::Apps::LogReader.recent(app, lines: limit))
+    def glance_limit = params[:lines].to_s.match?(/\A\d+\z/) ? params[:lines].to_i.clamp(1, 200) : 5
+
+    # Must be one of the app's process types (same source as the processes rack), else ignored.
+    def glance_process
+      types = (@app.dyno_allocations.map(&:process_type) + @app.process_scales.map(&:process_type)).uniq
+      params[:process].to_s.presence_in(types)
+    end
+
+    FRESH_WINDOW = 2.minutes
+    ANSI = /\e\[[0-9;]*m/
+
+    # Persisted rows only while the newest matching one is fresh (no SSH);
+    # otherwise live LogReader, cached 15s (at most 4 SSH calls/min per app) so polling can't hammer the host.
+    def recent_log_lines(app, limit:, process: nil)
+      scope = Log.for_app(app)
+      if process
+        # Container naming: wokku-<app>-<proc>.<slot>.<task> (wokkud/internal/lifecycle/converge.go
+        # ServiceName; Hosts::ContainerNames), Dokku-era <app>.<proc>.<n>.
+        like = ->(base) { "#{Log.sanitize_sql_like(base)}.%" }
+        scope = scope.where("container LIKE ? OR container LIKE ?",
+                            like.("wokku-#{app.name}-#{process}"), like.("#{app.name}.#{process}"))
+      end
+      newest = scope.maximum(:ts)
+      return scope.recent.limit(limit).pluck(:line).reverse.map { |l| l.to_s.gsub(ANSI, "") } if newest && newest >= FRESH_WINDOW.ago
+
+      raw = Rails.cache.fetch([ "glance", app.id, process, limit ], expires_in: 15.seconds) do
+        scrub_encoding(process ? ::Apps::LogReader.recent(app, lines: limit, process: process) : ::Apps::LogReader.recent(app, lines: limit))
+      end
       return [] if raw.blank?
-      raw.gsub(/\e\[[0-9;]*m/, "").split("\n").last(limit)
+      raw.gsub(ANSI, "").split("\n").last(limit)
     rescue => e
       Rails.logger.warn "Failed to fetch glance logs for #{app.name}: #{e.message}"
       []

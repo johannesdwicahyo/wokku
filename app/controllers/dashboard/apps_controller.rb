@@ -38,15 +38,12 @@ module Dashboard
 
     def show
       authorize @app
-      @releases = @app.releases.includes(:deploy).order(version: :desc).limit(5)
-      # Preload app_records so the per-addon billing share can divide by
-      # link count without N+1 queries (shared addons split cost across
-      # the apps they're linked to).
-      @addons = @app.database_services.includes(:server, :app_records)
-      @domains = @app.domains
-      @env_vars = @app.env_vars.order(:key)
-      @current_allocation = defined?(DynoAllocation) ? @app.dyno_allocations.includes(:dyno_tier).find_by(process_type: "web") : nil
-      @preview_apps = @app.preview_apps.order(pr_number: :desc) unless @app.is_preview?
+      # Newest 20 (all with :deploy): enough to find the current release and a
+      # rollback target; header and timeline show only the newest few.
+      @releases = @app.releases.includes(:deploy).order(version: :desc).limit(20).to_a
+      @current_release = Organisms::AppHeaderComponent.current_release(@releases)
+      @domains = @app.domains.to_a
+      @stats = ::Apps::DetailStats.for(@app)
     end
 
     # Record panel: read-only drawer opened from an apps-table row. The

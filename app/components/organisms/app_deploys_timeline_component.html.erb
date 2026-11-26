@@ -1,0 +1,30 @@
+<%= render Molecules::PanelComponent.new(ticks: true) do %>
+  <div class="flex items-center justify-between px-[18px] py-3 border-b border-line font-mono text-[11px] uppercase tracking-[.12em] text-muted">
+    <h2 class="font-normal"><%= t("apps.timeline.title") %></h2>
+    <%= link_to t("apps.timeline.all"), helpers.dashboard_app_releases_path(app), class: "hover:text-ink" %>
+  </div>
+  <% if releases.empty? %>
+    <p class="px-[18px] py-4 text-[13px] text-muted"><%= t("apps.timeline.empty") %></p>
+  <% else %>
+    <ol class="flex flex-col">
+      <% releases.each do |r| %>
+        <li class="flex items-center gap-3 px-[18px] py-3 border-t border-line first:border-t-0" data-release="<%= r.version %>">
+          <span class="min-w-0 flex-1">
+            <b class="font-medium text-ink tabular-nums">v<%= r.version %></b>
+            <% if current?(r) %><span class="ml-2 font-mono text-[11px] uppercase tracking-[.12em] text-live"><%= t("apps.timeline.live") %></span><% end %>
+            <% if failed?(r) %><span class="ml-2 font-mono text-[11px] uppercase tracking-[.12em] text-bad-text"><%= t("apps.timeline.failed") %></span><% end %>
+            <span class="block text-[12px] text-muted tabular-nums truncate"><%= meta(r) %></span>
+          </span>
+          <% if can_roll_back?(r) %>
+            <%= helpers.button_to t("apps.timeline.roll_back"), helpers.rollback_dashboard_app_release_path(app, r), method: :post,
+                  class: Atoms::ButtonComponent.new(variant: :secondary, size: :sm).classes,
+                  form: { data: { turbo_confirm: t("dashboard.app_header.rollback_confirm", name: app.name, version: r.version) } },
+                  aria: { label: t("dashboard.app_header.rollback", version: r.version) } %>
+          <% elsif failed?(r) %>
+            <%= link_to t("apps.timeline.log"), helpers.dashboard_app_deploy_path(app, r.deploy), class: "font-mono text-[11px] uppercase tracking-[.12em] text-ink-soft hover:text-ink" %>
+          <% end %>
+        </li>
+      <% end %>
+    </ol>
+  <% end %>
+<% end %>
