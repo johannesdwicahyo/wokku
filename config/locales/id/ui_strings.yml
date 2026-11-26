@@ -121,6 +121,30 @@ id:
       alert_reason: "%{name} terus berhenti dengan \"%{reason}\". Wokku sedang me-restart-nya."
       see_logs: "Lihat log"
       never: "belum pernah"
+    timeline:
+      title: "Deploy"
+      all: "Semua"
+      empty: "Belum ada deploy"
+      live: "Live"
+      failed: "Gagal"
+      roll_back: "Rollback"
+      log: "Log"
+      duration: "%{seconds} dtk"
+    connected:
+      title: "Terhubung"
+      add: "Tambah"
+      empty: "Belum ada add-on terhubung"
+    domains:
+      title: "Domain"
+      add: "Tambah"
+      https: "HTTPS"
+      no_https: "Tanpa HTTPS"
+      pending_dns: "Menunggu DNS"
+    resources:
+      title: "Resource"
+      resize: "Ubah ukuran"
+      per_month: "%{price} / bulan"
+      billed_monthly: "Ditagih di invoice bulananmu"
     processes:
       title: "Proses"
       size: "Ukuran · %{size} per proses"

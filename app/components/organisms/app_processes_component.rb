@@ -5,6 +5,7 @@ module Organisms
   # state from the heartbeat (no SSH) and ± scaling that returns to the overview.
   class AppProcessesComponent < ApplicationComponent
     include ApplicationHelper
+    include RupiahHelper
 
     # {process_type => running task count} from heartbeat live_containers.
     def self.running_counts(app)
@@ -56,7 +57,5 @@ module Organisms
       Resources::ApplyChange.inherited_shape_for(app, alloc.process_type, @by_type)
     end
 
-    # Same Rupiah format as Organisms::ResourceBuilderComponent#idr.
-    def idr(n) = "Rp#{n.to_i.to_s.reverse.scan(/\d{1,3}/).join('.').reverse}"
   end
 end

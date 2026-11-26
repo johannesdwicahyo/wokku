@@ -1,0 +1,18 @@
+<%= render Molecules::PanelComponent.new(ticks: true) do %>
+  <div class="flex items-center justify-between px-[18px] py-3 border-b border-line font-mono text-[11px] uppercase tracking-[.12em] text-muted">
+    <h2 class="font-normal"><%= t("apps.domains.title") %></h2>
+    <%= link_to t("apps.domains.add"), helpers.dashboard_app_domains_path(app), class: "hover:text-ink" %>
+  </div>
+  <ul class="flex flex-col">
+    <% custom.each do |d| %>
+      <% label, tone = tag(d) %>
+      <li class="flex items-center justify-between gap-3 px-[18px] py-3 border-t border-line first:border-t-0">
+        <a href="https://<%= d.hostname %>" target="_blank" rel="noopener" class="min-w-0 truncate font-mono text-[13px] text-ink hover:underline"><%= d.hostname %></a>
+        <span class="font-mono text-[11px] uppercase tracking-[.12em] <%= tone %>"><%= label %></span>
+      </li>
+    <% end %>
+    <li class="flex items-center justify-between gap-3 px-[18px] py-3 border-t border-line first:border-t-0">
+      <a href="https://<%= platform %>" target="_blank" rel="noopener" class="min-w-0 truncate font-mono text-[13px] text-ink hover:underline"><%= platform %></a>
+    </li>
+  </ul>
+<% end %>

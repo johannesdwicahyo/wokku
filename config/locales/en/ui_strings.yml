@@ -103,6 +103,30 @@ en:
       alert_reason: "%{name} keeps exiting with \"%{reason}\". Wokku is restarting it."
       see_logs: "See logs"
       never: "never"
+    timeline:
+      title: "Deploys"
+      all: "All"
+      empty: "No deploys yet"
+      live: "Live"
+      failed: "Failed"
+      roll_back: "Roll back"
+      log: "Log"
+      duration: "%{seconds}s"
+    connected:
+      title: "Connected"
+      add: "Add"
+      empty: "No add-ons connected"
+    domains:
+      title: "Domains"
+      add: "Add"
+      https: "HTTPS"
+      no_https: "No HTTPS"
+      pending_dns: "Pending DNS"
+    resources:
+      title: "Resources"
+      resize: "Resize"
+      per_month: "%{price} / month"
+      billed_monthly: "Charged on your monthly invoice"
     processes:
       title: "Processes"
       size: "Size · %{size} each"

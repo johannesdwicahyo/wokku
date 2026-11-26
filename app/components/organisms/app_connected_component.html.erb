@@ -1,0 +1,22 @@
+<%= render Molecules::PanelComponent.new(ticks: true) do %>
+  <div class="flex items-center justify-between px-[18px] py-3 border-b border-line font-mono text-[11px] uppercase tracking-[.12em] text-muted">
+    <h2 class="font-normal"><%= t("apps.connected.title") %></h2>
+    <%= link_to t("apps.connected.add"), helpers.dashboard_app_resources_path(app), class: "hover:text-ink" %>
+  </div>
+  <% if links.empty? %>
+    <p class="px-[18px] py-4 text-[13px] text-muted"><%= t("apps.connected.empty") %></p>
+  <% else %>
+    <ul class="flex flex-col">
+      <% links.each do |link| %>
+        <% svc = link.database_service %>
+        <li class="flex items-center gap-3 px-[18px] py-3 border-t border-line first:border-t-0">
+          <%= render Atoms::StatusLightComponent.new(state: state(svc), label: svc.status.humanize, size: 10) %>
+          <span class="min-w-0 flex-1">
+            <b class="block font-medium text-ink truncate"><%= svc.name %></b>
+            <span class="block font-mono text-[11px] text-muted truncate"><%= svc.service_type %> · <%= env_var(link) %></span>
+          </span>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+<% end %>

@@ -1,0 +1,13 @@
+<%= render Molecules::PanelComponent.new(ticks: true) do %>
+  <div class="flex items-center justify-between px-[18px] py-3 border-b border-line font-mono text-[11px] uppercase tracking-[.12em] text-muted">
+    <h2 class="font-normal"><%= t("apps.resources.title") %></h2>
+    <%= link_to t("apps.resources.resize"), helpers.dashboard_app_resources_path(app), class: "hover:text-ink" %>
+  </div>
+  <div class="px-[18px] py-3.5">
+    <% if size_line %><p class="text-[13px] text-ink tabular-nums"><%= size_line %></p><% end %>
+    <% if (p = price) %>
+      <p class="mt-1 text-[12px] text-muted tabular-nums"><%= t("apps.resources.per_month", price: p) %></p>
+      <p class="text-[12px] text-muted"><%= t("apps.resources.billed_monthly") %></p>
+    <% end %>
+  </div>
+<% end %>

@@ -66,7 +66,7 @@ RSpec.describe Organisms::AppProcessesComponent, type: :component do
     expect(page.find("button[aria-label='Add one web process']")["data-turbo-confirm"]).to eq("Add one web process?")
     allow(Wokku.config.pricing).to receive(:monthly_idr).and_return(60_000)
     render_it
-    expect(page.find("button[aria-label='Add one web process']")["data-turbo-confirm"]).to eq("Add one web process? +Rp60.000/month")
+    expect(page.find("button[aria-label='Add one web process']")["data-turbo-confirm"]).to eq("Add one web process? +Rp60,000/month")
   end
 
   it "localizes under :id" do
