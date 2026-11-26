@@ -18,6 +18,7 @@ RSpec.describe Organisms::AppProcessesComponent, type: :component do
   before do
     alloc("worker", 1)
     alloc("web", 2)
+    app.process_scales.create!(process_type: "web", count: 2)
     app.update!(live_containers: [ { "process" => "web", "state" => "running" }, { "process" => "web", "state" => "running" },
                                    { "process" => "worker", "state" => "failed" } ])
   end
@@ -38,6 +39,21 @@ RSpec.describe Organisms::AppProcessesComponent, type: :component do
     expect(form["action"]).to eq("/dashboard/apps/#{app.id}/scaling")
     expect(form).to have_css("input[name='scaling[web]'][value='3']", visible: :all)
     expect(form).to have_css("input[name='return_to'][value='overview']", visible: :all)
+  end
+
+  it "treats a non-web type without a process_scales row as 0 and + posts 1" do
+    render_it
+    row = page.find("[data-process='worker']")
+    expect(row).to have_css("input[name='scaling[worker]'][value='1']", visible: :all)
+    expect(row.find("button[aria-label='Remove one worker process']")).to be_disabled
+  end
+
+  it "caps instance lights and shows +N" do
+    app.process_scales.find_by(process_type: "web").update!(count: 14)
+    render_it
+    row = page.find("[data-process='web']")
+    expect(row).to have_css("span.inline-block", count: 10)
+    expect(row).to have_text("+4")
   end
 
   it "renders no buttons for a viewer" do

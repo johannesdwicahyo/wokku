@@ -114,3 +114,5 @@ en:
       add_confirm: "Add one %{type} process?"
       add_confirm_price: "Add one %{type} process? +%{price}/month"
       scaling_updated: "Scaling updated."
+      tier_no_scaling: "%{tier} tier doesn't support horizontal scaling. Upgrade to Standard or higher."
+      scaling_failed: "Scaling failed: %{message}"

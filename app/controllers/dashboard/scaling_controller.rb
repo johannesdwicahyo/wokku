@@ -48,7 +48,7 @@ module Dashboard
           # Non-scalable tiers: only allow setting count to 0 or 1
           params[:scaling].each do |type, count|
             if count.to_i > 1
-              redirect_to after_scale_path, alert: "#{current_tier.name.capitalize} tier doesn't support horizontal scaling. Upgrade to Standard or higher."
+              redirect_to after_scale_path, alert: t("apps.processes.tier_no_scaling", tier: current_tier.name.capitalize)
               return
             end
           end
@@ -73,7 +73,7 @@ module Dashboard
     rescue Lifecycle::Ops::RunNotAllowed => e
       redirect_to after_scale_path, alert: e.message
     rescue => e
-      redirect_to after_scale_path, alert: "Scaling failed: #{e.message}"
+      redirect_to after_scale_path, alert: t("apps.processes.scaling_failed", message: e.message)
     end
 
     def change_tier

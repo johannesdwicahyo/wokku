@@ -28,10 +28,13 @@ module Organisms
     def running = @running ||= self.class.running_counts(app)
     def running_for(type) = running.fetch(type, 0)
 
-    # Desired count: process_scales is what converge reads; allocation count is the fallback.
+    MAX_LIGHTS = 10
+
+    # Desired count, same rule as billing (ApplyChange.team_allocations):
+    # the process_scales row, else web 1 / others 0.
     def desired(alloc)
       @scales ||= app.process_scales.index_by(&:process_type)
-      @scales[alloc.process_type]&.count || alloc.count
+      @scales[alloc.process_type]&.count || (alloc.process_type == "web" ? 1 : 0)
     end
 
     def size_label = (allocations.find { |a| a.process_type == "web" } || allocations.first)&.size_label

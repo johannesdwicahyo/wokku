@@ -14,10 +14,11 @@
           <b class="block font-medium text-ink truncate"><%= type %></b>
           <span class="block text-[12px] text-muted tabular-nums"><%= t("apps.processes.running", count: running_for(type)) %></span>
         </span>
-        <span class="flex gap-1" aria-hidden="true">
-          <% want.times do |i| %>
+        <span class="flex flex-wrap gap-1 max-w-[140px] items-center" aria-hidden="true">
+          <% [want, MAX_LIGHTS].min.times do |i| %>
             <span class="inline-block w-2.5 h-2.5 <%= i < running_for(type) ? "bg-live" : "border border-line-strong" %>"></span>
           <% end %>
+          <% if want > MAX_LIGHTS %><span class="font-mono text-[11px] text-muted">+<%= want - MAX_LIGHTS %></span><% end %>
         </span>
         <% if can_update? %>
           <span class="flex items-center gap-2">

@@ -132,3 +132,5 @@ id:
       add_confirm: "Tambah satu proses %{type}?"
       add_confirm_price: "Tambah satu proses %{type}? +%{price}/bulan"
       scaling_updated: "Skala diperbarui."
+      tier_no_scaling: "Tier %{tier} tidak mendukung penskalaan horizontal. Upgrade ke Standard atau lebih tinggi."
+      scaling_failed: "Penskalaan gagal: %{message}"
