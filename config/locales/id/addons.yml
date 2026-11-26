@@ -4,7 +4,7 @@ id:
       upgrade: "Upgrade ke Solo atau lebih tinggi untuk database dedicated"
       unavailable: "%{engine} dedicated belum tersedia di paketmu"
       shared:
-        label: "Shared"
+        label: "Bersama"
         default:
           kicker: "Gratis, sudah termasuk"
           description: "Tenant logis di container host per server. Tanpa biaya tambahan."
@@ -15,7 +15,7 @@ id:
           kicker: "Sudah termasuk"
           description: "Tenant logis di container host per server."
       dedicated:
-        label: "Dedicated"
+        label: "Khusus"
         default:
           kicker: "Paket berbayar"
           description: "Container sendiri. Memakai 1 dari 3 slot dedicated."

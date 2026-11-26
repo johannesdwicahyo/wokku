@@ -2,8 +2,7 @@
 <%# First-deploy chooser — shown on the apps landing (/dashboard/apps) when
     the user has zero apps. Migrated 2026-06-07 from the retired dashboard
     home (dashboard/dashboard/show.html.erb) so first-app onboarding lives
-    where users actually land. The slide-panel target is provided by the
-    apps/index.html.erb wrapper. %>
+    where users actually land. %>
 <%
   registry = TemplateRegistry.new
   curated  = %w[astro ghost n8n nextjs].select { |s| registry.find(s) }
@@ -22,9 +21,7 @@
     <% end %>
   </div>
   <div class="px-6 pb-5">
-    <button data-action="click->slide-panel#open" class="font-mono text-xs text-dim hover:text-ink underline">
-      <%= t("onboarding2.push_own") %>
-    </button>
+    <%= link_to t("onboarding2.push_own"), new_dashboard_app_path, class: "font-mono text-xs text-dim hover:text-ink underline" %>
     <p class="font-mono text-[11px] text-dim mt-2">// <%= t("onboarding2.building") %></p>
   </div>
 <% end %>

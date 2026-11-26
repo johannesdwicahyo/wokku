@@ -10,7 +10,7 @@
              data-action="input->app-name-check#check input->new-app#name">
       <span class="px-3 flex items-center border border-l-0 border-dark-line rounded-r-md font-mono text-xs text-muted">.<%= domain %></span>
     </div>
-    <p id="app_name_status" class="mt-1 text-xs text-muted" role="status" aria-live="polite" data-app-name-check-target="status"></p>
+    <p id="app_name_status" class="mt-1 text-xs <%= name_error ? "text-bad-text" : "text-muted" %>" role="status" aria-live="polite" data-app-name-check-target="status"><%= name_error %></p>
     <div class="mt-1.5 hidden flex-wrap gap-1.5" data-app-name-check-target="suggestions"></div>
   </div>
 
@@ -21,7 +21,7 @@
         <% if sleeping_option? %>
           <label class="<%= CARD %>">
             <input type="radio" name="size_preset" value="sleeping" class="sr-only" <%= "checked" if selected_key == "sleeping" %>
-                   data-sleeping="true" data-price="0" data-action="change->new-app#preset">
+                   data-sleeping="true" data-price="0" data-cpu="<%= presets["nano"][:cpu] %>" data-memory-mb="<%= presets["nano"][:memory_mb] %>" data-action="change->new-app#preset">
             <b class="text-sm text-ink font-semibold"><%= helpers.wokku_cloud? ? t("new_app.size.sleeping.title") : t("new_app.size.sleeping.tiny") %></b>
             <span class="text-xs text-muted"><%= t("new_app.size.sleeping.sub") %></span>
             <span class="text-xs text-ink-soft tabular-nums"><%= free_label %></span>

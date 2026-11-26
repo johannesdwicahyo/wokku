@@ -4,12 +4,16 @@ en:
     building: "Building %{url}…"
     errors:
       dedicated_failed: "App created, but dedicated %{engine} could not be provisioned: %{message}"
-      account_limit: "That size is over your account limit. Add credit on the Billing page to go higher."
+      account_limit: "That size is over your account limit."
       plan_quota: "Your %{plan} plan allows %{allowed} %{size} boxes; you already have %{used}. Upgrade or pick a smaller size."
       repo_required: "Choose a GitHub repository to deploy from."
       repo_url: "Repository must be a public https:// address (for example https://github.com/you/your-app)."
       addons_failed: "App created, but some add-ons could not be attached: %{list}"
       github_deploy: "The repository is connected, but the first deploy could not start. Push to the branch to deploy."
+      github_not_connected: "The app was created, but we couldn't connect the repository. Connect it again from the app's deploy settings."
+      repo_unverified: "We couldn't verify that repository for your GitHub installation. Pick it from the list, or reconnect GitHub."
+      server_required: "Choose a server."
+      addons_attaching: "Shared add-ons are being attached — they'll appear on the Resources page in a moment."
     source:
       legend: "Source"
       github: { title: "GitHub", sub: "Deploy on every push to a branch" }
@@ -20,7 +24,7 @@ en:
       loading_repos: "Loading your repositories…"
       choose_repo: "Choose a repository"
       branches_error: "Couldn't load branches. Pick the repository again."
-      repos_error: "Couldn't load your repositories. Try again, or use a public repo URL."
+      repos_error: "Couldn't load your repositories. Reload the page to try again."
       connect: "Connect GitHub"
       connect_hint: "Connect GitHub to pick a repository, or paste a public repo URL."
       repo_url: "Public repository URL"
@@ -38,6 +42,7 @@ en:
       checking: "Checking…"
       available: "✓ %{name} is available"
       taken: "✗ Name already taken"
+      reserved: "✗ That name is reserved"
       invalid: "Use lowercase letters, numbers, and hyphens. Must start with a letter."
       unreachable: "Couldn't reach server"
       try: "Try:"
@@ -59,6 +64,7 @@ en:
       remove: "Remove %{label}"
       limit: "You can add up to %{max} add-ons."
       existing_label: "Existing"
+      existing_dropped: "%{label} removed: existing add-ons belong to one server."
       none: "No add-ons yet."
       added: "%{label} added"
       removed: "%{label} removed"
@@ -66,6 +72,18 @@ en:
       unavailable: "%{engine} is not available: %{reason}"
       shortcuts: { small: "Small", standard: "Standard", large: "Large" }
       shape: "%{cpu} vCPU · %{memory} · %{disk} GB"
+    attach:
+      not_authorized: "Not authorized"
+      failed: "Couldn't attach add-on"
+      unknown_kind: "Unknown add-on kind"
+      shared_failed: "Couldn't attach shared %{engine}: %{status}."
+      unavailable: "Add-on not available"
+      create_failed: "Couldn't create add-on: %{message}."
+      invalid_input: "invalid input"
+    shape:
+      field: { cpu: "CPU", memory_mb: "memory (MB)", disk_gb: "disk (GB)" }
+      range: "%{field} must be %{min}–%{max} in steps of %{step}"
+      engine_min: "%{engine} needs at least %{floor} MB memory"
     page:
       title: "New app"
       intro: "Pick where the code comes from, name it, size it, and deploy."
@@ -73,7 +91,7 @@ en:
       name_size: "02 · Name and size"
       addons: "03 · Add-ons"
       server: "Server"
-      server_placeholder: "Search servers…"
+      server_placeholder: "Choose a server"
     summary:
       title: "04 · Summary"
       board_label: "App name: %{name}"

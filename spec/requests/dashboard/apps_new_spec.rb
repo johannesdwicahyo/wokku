@@ -90,10 +90,10 @@ RSpec.describe "GET /dashboard/apps/new", type: :request do
     expect(doc).to have_no_css("[data-controller=combobox]")
   end
 
-  it "renders the server combobox with several, and a frame for section 03" do
+  it "renders a native server select with several, and a frame for section 03" do
     scope_servers(create(:server, team: user.teams.first), create(:server, team: user.teams.first))
     get "/dashboard/apps/new"
-    expect(doc).to have_css("[data-controller=combobox][data-action='change->new-app#server']")
+    expect(doc).to have_css("select[name='app_record[server_id]'][data-action='change->new-app#server'] option", minimum: 3)
     expect(doc).to have_css("turbo-frame#new_app_addons[data-new-app-target=addonsFrame]")
   end
 end

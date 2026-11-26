@@ -34,7 +34,8 @@ RSpec.describe "POST /dashboard/apps (Phase 5 create flow)", type: :request do
         blank_row.merge(kind: "dedicated", engine: "postgres", cpu: "0.25", memory_mb: "512", disk_gb: "5")
       ])
     }.to have_enqueued_job(CreateAddonJob).once
-    expect(AppRecord.find_by!(name: "flowaddons").app_databases.count).to eq(2)
+    # The shared one attaches in AttachAddonsJob; only the dedicated row exists now.
+    expect(AppRecord.find_by!(name: "flowaddons").app_databases.count).to eq(1)
   end
 
   it "keeps the app and warns when an existing add-on is not attachable" do

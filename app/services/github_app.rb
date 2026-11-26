@@ -81,9 +81,15 @@ class GithubApp
   end
 
   def branches(repo_full_name)
-    client.branches(repo_full_name).map(&:name)
+    client.branches(repo_full_name, per_page: 100).map(&:name)
   rescue Octokit::NotFound
     []
+  end
+
+  def default_branch(repo_full_name)
+    client.repository(repo_full_name).default_branch
+  rescue Octokit::NotFound
+    nil
   end
 
   # Short-lived installation token (1h) — e.g. for `git fetch` of a private repo.

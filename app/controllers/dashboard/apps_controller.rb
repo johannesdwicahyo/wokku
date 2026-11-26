@@ -90,15 +90,20 @@ module Dashboard
 
     # live-validation field. Suggestions only computed when taken.
     def check_name
-      raw = params[:name].to_s.strip.downcase
-      sanitized = raw.gsub(/[^a-z0-9-]/, "").sub(/^-+/, "").sub(/-+$/, "")
+      raw = params[:name].to_s.strip
+      sanitized = raw.downcase.gsub(/[^a-z0-9-]/, "").sub(/^-+/, "").sub(/-+$/, "")
 
-      if sanitized.blank? || sanitized !~ /\A[a-z][a-z0-9-]*\z/
+      # create posts the name as typed: anything sanitizing would change is invalid there.
+      if sanitized != raw || sanitized !~ /\A[a-z][a-z0-9-]*\z/
         return render json: {
           available: false,
           reason: "invalid",
           message: t("new_app.name.invalid")
         }
+      end
+
+      if AppRecord::RESERVED_NAMES.include?(sanitized)
+        return render json: { available: false, reason: "reserved", message: t("new_app.name.reserved") }
       end
 
       if AppRecord.exists?(name: sanitized)
@@ -115,12 +120,24 @@ module Dashboard
 
     def create
       team = current_team
-      server = policy_scope(Server).find(params[:app_record][:server_id])
+      server = policy_scope(Server).find_by(id: params.dig(:app_record, :server_id))
+      unless server
+        @app = AppRecord.new
+        @app.errors.add(:base, t("new_app.errors.server_required"))
+        return render_new
+      end
 
       # Per-resource billing (spec 2026-09-24 §5.3): the builder posts
       # processes[web][...] instead of a box_size — skip the tier picker
       # entirely and size the app via Resources::ApplyChange after save.
       builder_mode = Wokku.config.resource_builder? && params[:processes].present?
+      processes = params[:processes]
+      # Without JS the preset cards post but never move the sliders: a chosen
+      # card wins over the builder fields ("custom" = the sliders).
+      if builder_mode && (preset = params[:size_preset].to_s).present? && preset != "custom"
+        web = preset == "sleeping" ? { sleeping: "1" } : Organisms::NewAppSizeComponent::PRESETS[preset]&.merge(sleeping: "0")
+        processes = { "web" => web.merge(count: 1) } if web
+      end
 
       # Bundle v2: box_size drives both the quota check and the DynoTier.
       # Falls back to "sleeping" (free tier) so hand-rolled POSTs without
@@ -158,7 +175,7 @@ module Dashboard
         github_repo = params[:github_repo].to_s.strip
         unless github_repo.match?(%r{\A[\w.-]+/[\w.-]+\z}) &&
                GithubApp.repo_owned_by_installation?(github_repo, current_user.github_installation_id)
-          @app.errors.add(:base, t("new_app.errors.repo_required"))
+          @app.errors.add(:base, t(github_repo.present? ? "new_app.errors.repo_unverified" : "new_app.errors.repo_required"))
           return render_new
         end
       elsif source.in?(%w[github repo_url]) || source.blank?
@@ -175,7 +192,7 @@ module Dashboard
         if builder_mode
           # Runs before any DNS/provisioning side effect: a refused size
           # un-creates the app and re-renders the form with the reason.
-          result = Resources::ApplyChange.call(app: @app, user: current_user, processes: params[:processes])
+          result = Resources::ApplyChange.call(app: @app, user: current_user, processes: processes)
           unless result.ok
             @app.destroy!
             @app.errors.add(:base, result.error)
@@ -221,35 +238,46 @@ module Dashboard
 
         # New-app add-ons. The deposit and deletion-pending gates that guard
         # the databases page are already before_actions on this action.
-        attach = Addons::AttachOnCreate.call(app: @app, user: current_user, items: addon_items)
-        if attach.failed.any?
-          flash[:warning] = t("new_app.errors.addons_failed",
-            list: attach.failed.map { |f| "#{f[:label]}: #{f[:error]}" }.join("; "))
-        end
+        # Dedicated/existing are DB rows + a queued job (fast) so they attach
+        # inline; shared ones wait on the host, so a job does them.
+        shared, now = addon_items.partition { |i| i[:kind] == "shared" }
+        attach = Addons::AttachOnCreate.call(app: @app, user: current_user, items: now)
+        flash[:warning] = t("new_app.errors.addons_failed", list: attach.failed.map { |f| "#{f[:label]}: #{f[:error]}" }.join("; ")) if attach.failed.any?
+        @attach_note = t("new_app.errors.addons_attaching") if shared.any?
 
         track("app.created", target: @app)
         fire_team_event(@app.team, "app_created", app_name: @app.name)
+        # Activation-funnel "started" signal on the user's first app, whatever the source.
+        if current_user.app_records.count == 1
+          flash[:posthog_event] = "first_deploy_started"
+          flash[:posthog_props] = { app: @app.name }
+        end
 
         if github_repo
-          deploy = start_github_deploy(github_repo, params[:github_branch].to_s.strip.presence || "main")
-          return redirect_to dashboard_app_deploy_path(@app, deploy), notice: t("new_app.created") if deploy
-          flash[:warning] = [ flash[:warning], t("new_app.errors.github_deploy") ].compact.join(" ")
+          branch = params[:github_branch].to_s.strip.presence || "main"
+          installation_id = current_user.github_installation_id
+          if !GithubRepos.connect(@app, github_repo, branch, installation_id: installation_id)
+            warn_flash(t("new_app.errors.github_not_connected"))
+          elsif shared.any?
+            # The job deploys once DATABASE_URL exists.
+            AttachAddonsJob.perform_later(@app.id, current_user.id, shared, { "repo" => github_repo, "branch" => branch })
+            shared = []
+          elsif (deploy = GithubRepos.start_deploy(@app, github_repo, branch, installation_id: installation_id))
+            return redirect_to dashboard_app_deploy_path(@app, deploy), notice: notice_for(t("new_app.created"))
+          else
+            warn_flash(t("new_app.errors.github_deploy"))
+          end
         end
+        AttachAddonsJob.perform_later(@app.id, current_user.id, shared) if shared.any?
 
         if repo_url
           @app.update_column(:git_repository_url, repo_url)
           deploy = @app.deploys.create!(status: :pending)
           @app.releases.create!(deploy: deploy, description: "Deploy from #{repo_url}".truncate(200))
           RepoUrlDeployJob.perform_later(app_id: @app.id, deploy_id: deploy.id, url: repo_url, branch: @app.deploy_branch.presence || "main")
-          return redirect_to dashboard_app_deploy_path(@app, deploy), notice: t("new_app.building", url: repo_url)
+          return redirect_to dashboard_app_deploy_path(@app, deploy), notice: notice_for(t("new_app.building", url: repo_url))
         end
-        # TODO: extract this first-app analytics guard to a shared concern at a 3rd callsite.
-        # Activation-funnel "started" signal — fires on the user's first app (generic create has no deploy queued yet; the template path does).
-        if current_user.app_records.count == 1
-          flash[:posthog_event] = "first_deploy_started"
-          flash[:posthog_props] = { app: @app.name }
-        end
-        redirect_to dashboard_app_path(@app), notice: t("new_app.created")
+        redirect_to dashboard_app_path(@app), notice: notice_for(t("new_app.created"))
       else
         render_new
       end
@@ -543,11 +571,23 @@ module Dashboard
       basic = Resources::Shape.new(**Organisms::NewAppSizeComponent::PRESETS["basic"])
       monthly = Wokku.config.pricing.monthly_idr(basic, instances: 1)
       @price_idr = monthly && (@sleeping_default ? 0 : monthly)
+      load_github_repos
+    end
+
+    # Server-rendered so the repo select isn't empty without JS. Failures
+    # degrade to an empty list with the error note (the JS retries lazily).
+    def load_github_repos
+      id = current_user.github_installation_id
+      return unless id.present? && GithubApp.configured?
+      @repos = GithubRepos.list(id).map(&:full_name)
+    rescue *GithubRepos::ERRORS => e
+      Rails.logger.warn("New app repo list: #{e.class}")
+      @repos, @repos_error = [], true
     end
 
     def render_new
       prepare_new_page(policy_scope(Server), params.dig(:app_record, :server_id))
-      web = params.dig(:processes, :web)
+      web = params[:processes].try(:[], :web) if params[:processes].respond_to?(:key?)
       if web.respond_to?(:key?)
         @sleeping = web[:sleeping].to_s == "1"
         cpu, mem = Float(web[:cpu].to_s, exception: false), Integer(web[:memory_mb].to_s, exception: false)
@@ -560,6 +600,10 @@ module Dashboard
       @github_repo, @github_branch = params[:github_repo].presence, params[:github_branch].presence
       @repo_url = params.dig(:app_record, :git_repository_url).presence
       @addon_rows = addon_rows
+      @name_error = if @app.errors.of_kind?(:name, :taken) then t("new_app.name.taken")
+      elsif @app.errors.of_kind?(:name, :exclusion) then t("new_app.name.reserved")
+      elsif @app.errors.include?(:name) then t("new_app.name.invalid")
+      end
       render :new, status: :unprocessable_entity
     end
 
@@ -581,23 +625,9 @@ module Dashboard
       end
     end
 
-    # Connect the repo (same code as GithubController#connect) and queue the
-    # first deploy the way a push webhook does. nil when GitHub can't be reached
-    # or the branch has no commit; the app itself stays created.
-    def start_github_deploy(repo, branch)
-      return unless @app.server&.connected? # like handle_push: no orphaned pending deploys
-      installation_id = current_user.github_installation_id
-      return unless GithubRepos.connect(@app, repo, branch, installation_id: installation_id)
-      sha = GithubRepos.head_sha(installation_id, repo, branch) or return
-      deploy = @app.deploys.create!(status: :pending, commit_sha: sha)
-      @app.releases.create!(version: (@app.releases.maximum(:version) || 0) + 1, deploy: deploy, description: "Deploy from #{repo}".truncate(200))
-      GithubDeployJob.perform_later(app_id: @app.id, deploy_id: deploy.id, repo_full_name: repo, branch: branch,
-                                    commit_sha: sha, installation_id: installation_id)
-      deploy
-    rescue Octokit::Error, Faraday::Error => e
-      Rails.logger.warn "New-app GitHub deploy for #{@app.name} failed: #{e.class}"
-      nil
-    end
+    def notice_for(base) = [ base, @attach_note ].compact.join(" ")
+
+    def warn_flash(msg) = flash[:warning] = [ flash[:warning], msg ].compact.join(" ")
 
     # Try a few stable variations before falling back to a random suffix.
     def name_suggestions(base, count: 3)

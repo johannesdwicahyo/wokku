@@ -47,7 +47,7 @@ module Addons
           key: key, label: engine[:label],
           modes: engine[:modes].map do |m|
             m.slice(:mode, :available, :unavailable_reason).merge(
-              env_var: env_var(key),
+              env_vars: env_vars(key, m[:mode]),
               shortcuts: m[:mode] == "dedicated" ? shortcuts(key) : []
             )
           end
@@ -55,9 +55,16 @@ module Addons
       end
     end
 
-    # Default env var an attach sets (DatabaseProvisioner.link! alias + "_URL";
-    # postgres also owns DATABASE_URL on an app that has none).
-    def self.env_var(engine) = engine == "postgres" ? "DATABASE_URL" : "#{engine.upcase}_URL"
+    # What an attach really writes on a new app, read off the provisioner's own
+    # naming (dedicated: <TYPE>_URL + postgres' DATABASE_URL; shared: tenant env).
+    def self.env_vars(engine, mode)
+      if mode == "dedicated"
+        DatabaseProvisioner.dedicated_env(AppRecord.new, DatabaseService.new(service_type: engine, dsn: "x")).keys
+      else
+        DatabaseProvisioner.shared_sql_env(engine, "x").keys.presence ||
+          DatabaseProvisioner::SHARED_TENANT_ENV_KEYS.fetch(engine) { [ "#{engine.upcase}_URL" ] }
+      end
+    end
 
     # A shortcut the engine's Shape rules reject (e.g. 256 MB mysql) is omitted.
     def self.shortcuts(engine)

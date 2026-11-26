@@ -12,11 +12,11 @@ module Organisms
     LABEL = "block font-mono text-[11px] uppercase tracking-[.12em] text-muted mb-1.5"
     FIELD = "w-full bg-paper border border-dark-line rounded-md px-3 py-2 text-sm text-ink"
 
-    def initialize(user:, repos: nil, source: nil, repo: nil, branch: nil, repo_url: nil)
-      @user, @repos, @repo, @branch, @repo_url = user, repos, repo, branch, repo_url
+    def initialize(user:, repos: nil, repos_error: false, source: nil, repo: nil, branch: nil, repo_url: nil)
+      @user, @repos, @repos_error, @repo, @branch, @repo_url = user, repos, repos_error, repo, branch, repo_url
       @source = source.presence&.to_s || (installed? ? "github" : "git")
     end
-    attr_reader :repos, :repo, :branch, :repo_url, :source
+    attr_reader :repos, :repos_error, :repo, :branch, :repo_url, :source
 
     def installed? = @user.github_installation_id.present?
     def checked?(key) = source == key

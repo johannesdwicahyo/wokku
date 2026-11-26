@@ -104,17 +104,26 @@ RSpec.describe "Dashboard::Github", type: :request do
       user.update!(github_installation_id: 7)
       repo = Struct.new(:full_name, :default_branch).new("acme/web", "main")
       allow(GithubRepos).to receive(:list).with(7).and_return([ repo ])
-      allow(GithubRepos).to receive(:branches).with(7, "acme/web").and_return(%w[main dev])
+      allow(GithubRepos).to receive(:branches_with_default).with(7, "acme/web").and_return([ %w[main dev], "main" ])
       get path
       expect(JSON.parse(response.body)["repos"]).to eq([ { "full_name" => "acme/web", "default_branch" => "main" } ])
       get path, params: { repo: "acme/web" }
-      expect(JSON.parse(response.body)["branches"]).to eq(%w[main dev])
+      expect(JSON.parse(response.body)).to eq("branches" => %w[main dev], "default_branch" => "main")
+    end
+
+    it "puts the default branch first and keeps it when the first page lacks it" do
+      sign_in user
+      user.update!(github_installation_id: 7)
+      gh = instance_double(GithubApp, branches: %w[dependabot/x feature], default_branch: "main")
+      allow(GithubApp).to receive(:new).with(7).and_return(gh)
+      get path, params: { repo: "acme/web" }
+      expect(JSON.parse(response.body)).to eq("branches" => %w[main dependabot/x feature], "default_branch" => "main")
     end
 
     it "rejects a malformed repo with 422 and never calls GitHub" do
       sign_in user
       user.update!(github_installation_id: 7)
-      expect(GithubRepos).not_to receive(:branches)
+      expect(GithubRepos).not_to receive(:branches_with_default)
       get path, params: { repo: "../../etc/passwd" }
       expect(response).to have_http_status(:unprocessable_entity)
     end
@@ -123,7 +132,7 @@ RSpec.describe "Dashboard::Github", type: :request do
       sign_in user
       user.update!(github_installation_id: 7)
       [ Octokit::InvalidRepository, Faraday::ConnectionFailed.new("x"), Faraday::TimeoutError.new ].each do |err|
-        allow(GithubRepos).to receive(:branches).and_raise(err)
+        allow(GithubRepos).to receive(:branches_with_default).and_raise(err)
         get path, params: { repo: "acme/web" }
         expect(response).to have_http_status(:bad_gateway)
         expect(JSON.parse(response.body)).to eq("error" => "github")

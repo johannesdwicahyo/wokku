@@ -55,7 +55,7 @@ RSpec.describe Organisms::NewAppAddonsComponent, type: :component do
     render_it
     expect(page).to have_css("[data-existing]", count: 1, visible: :all)
     expect(page).to have_css("[data-existing='#{ok.id}']", text: "team-pg", visible: :all)
-    expect(page.find("[data-existing]", visible: :all).text(:all)).to include("postgres · running")
+    expect(page.find("[data-existing]", visible: :all).text(:all)).to include("postgres · Running")
   end
 
   it "renders submitted items as rows with exactly the six hidden inputs, in order" do

@@ -18,24 +18,26 @@
     <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] items-start">
       <div class="space-y-6 min-w-0">
         <%= render Molecules::PanelComponent.new(label: t("new_app.page.source")) do %>
-          <div class="p-4"><%= render Organisms::NewAppSourceComponent.new(user: current_user, source: @source, repo: @github_repo, branch: @github_branch, repo_url: @repo_url) %></div>
+          <div class="p-4"><%= render Organisms::NewAppSourceComponent.new(user: current_user, source: @source, repos: @repos, repos_error: @repos_error, repo: @github_repo, branch: @github_branch, repo_url: @repo_url) %></div>
         <% end %>
 
         <%= render Molecules::PanelComponent.new(label: t("new_app.page.name_size")) do %>
           <div class="p-4 space-y-5">
             <% if @servers.size > 1 %>
               <div>
-                <span id="server_label" class="<%= Organisms::NewAppSourceComponent::LABEL %>"><%= t("new_app.page.server") %></span>
-                <%= combobox_tag "app_record[server_id]",
-                      @servers.map { |s| { value: s.id, label: s.name, description: s.host } },
-                      value: @server&.id, placeholder: t("new_app.page.server_placeholder"), required: true,
-                      data: { action: "change->new-app#server" } %>
+                <label for="app_record_server_id" class="<%= Organisms::NewAppSourceComponent::LABEL %>"><%= t("new_app.page.server") %></label>
+                <%# Native select: posts without JS, so server_id is never missing. %>
+                <select id="app_record_server_id" name="app_record[server_id]" required class="<%= Organisms::NewAppSourceComponent::FIELD %>"
+                        data-action="change->new-app#server">
+                  <option value=""><%= t("new_app.page.server_placeholder") %></option>
+                  <% @servers.each do |s| %><option value="<%= s.id %>" <%= "selected" if s.id == @server&.id %>><%= s.name %> · <%= s.host %></option><% end %>
+                </select>
               </div>
             <% else %>
               <%= hidden_field_tag "app_record[server_id]", @server&.id %>
             <% end %>
             <%= render Organisms::NewAppSizeComponent.new(sleeping: @sleeping, sleeping_option: true, shape: @shape,
-                  name: @app.name, box_quota: @box_quota, box_size: @box_size) %>
+                  name: @app.name, box_quota: @box_quota, box_size: @box_size, name_error: @name_error) %>
           </div>
         <% end %>
 

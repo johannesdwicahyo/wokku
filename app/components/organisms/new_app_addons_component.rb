@@ -47,10 +47,9 @@ module Organisms
 
     def price(shape) = (n = monthly(shape)) && idr(n)
 
-    # Shared MariaDB also sets DATABASE_URL (the attach code aliases it).
-    def env_text(engine, mode)
-      mode[:mode] == "shared" && engine[:key] == "mariadb" ? "#{mode[:env_var]}, DATABASE_URL" : mode[:env_var]
-    end
+    def env_text(_engine, mode) = mode[:env_vars].to_a.join(", ")
+
+    def existing_env(engine) = Addons::PickerOptions.env_vars(engine.to_s, "dedicated").join(", ")
 
     def mode_label(mode) = t("new_app.addons.#{mode}")
 
@@ -66,12 +65,12 @@ module Organisms
         mode = engine&.dig(:modes)&.find { |m| m[:mode] == "dedicated" } || {}
         shape = { cpu: item["cpu"].to_f, memory_mb: item["memory_mb"].to_i, disk_gb: item["disk_gb"].to_i }
         cost = monthly(shape)
-        NewAppAddonRowComponent.new(item: item, label: "#{label} · #{mode_label('dedicated')} · #{shape_text(shape)}", env: mode[:env_var].to_s,
+        NewAppAddonRowComponent.new(item: item, label: "#{label} · #{mode_label('dedicated')} · #{shape_text(shape)}", env: env_text(engine, mode),
                                     price_text: cost ? idr(cost) : "", price: cost.to_i)
       else
         db = existing.find { |d| d.id.to_s == item["database_service_id"].to_s }
         NewAppAddonRowComponent.new(item: item, label: "#{db&.name || item['database_service_id']} · #{t('new_app.addons.existing_label')}",
-                                    env: Addons::PickerOptions.env_var(item["engine"].to_s))
+                                    env: existing_env(item["engine"]))
       end
     end
   end

@@ -38,7 +38,7 @@
             <option value="<%= repo %>"><%= repo.presence || t("new_app.source.loading_repos") %></option>
           <% end %>
         </select>
-        <p class="mt-1 text-xs text-muted" role="status" aria-live="polite" data-new-app-target="repoStatus"></p>
+        <p class="mt-1 text-xs text-muted" role="status" aria-live="polite" data-new-app-target="repoStatus"><%= t("new_app.source.repos_error") if repos_error %></p>
       </div>
       <div>
         <label for="github_branch" class="<%= LABEL %>"><%= t("new_app.source.branch") %></label>

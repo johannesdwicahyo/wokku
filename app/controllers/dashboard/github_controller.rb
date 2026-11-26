@@ -35,7 +35,8 @@ module Dashboard
       if params[:repo].present?
         repo = params[:repo].to_s
         return render(json: { error: "repo" }, status: :unprocessable_entity) unless repo.match?(%r{\A[\w.-]+/[\w.-]+\z})
-        render json: { branches: GithubRepos.branches(id, repo) }
+        branches, default = GithubRepos.branches_with_default(id, repo)
+        render json: { branches: branches, default_branch: default }
       else
         render json: { repos: GithubRepos.list(id).map { |r| { full_name: r.full_name, default_branch: r.default_branch } } }
       end

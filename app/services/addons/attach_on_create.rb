@@ -65,12 +65,12 @@ module Addons
 
     # The never-raise contract lives here; the raw message stays in logs.
     def safe_attach(item)
-      return fail_with("Not authorized") unless Pundit.policy(@user, @app).update?
+      return fail_with(t("not_authorized")) unless Pundit.policy(@user, @app).update?
       attach(item)
     rescue => e
       Rails.logger.error("AttachOnCreate #{item[:kind]} failed: #{e.class}: #{e.message}")
       Sentry.capture_exception(e) if defined?(Sentry)
-      fail_with("Couldn't attach add-on")
+      fail_with(t("failed"))
     end
 
     def attach(item)
@@ -78,14 +78,14 @@ module Addons
       when "shared"    then attach_shared(item)
       when "dedicated" then attach_dedicated(item)
       when "existing"  then attach_existing(item)
-      else fail_with("Unknown add-on kind")
+      else fail_with(t("unknown_kind"))
       end
     end
 
     def attach_shared(item)
       status = Addons::SharedProvisioner.new(app: @app, engine: item[:engine]).call
       return { status: status } if %i[provisioned already_attached feature_disabled].include?(status)
-      fail_with("Couldn't attach shared #{item[:engine]}: #{status.inspect}.", status: status)
+      fail_with(t("shared_failed", engine: item[:engine], status: status.inspect), status: status)
     end
 
     def attach_dedicated(item)
@@ -114,9 +114,9 @@ module Addons
       end
 
       db = DatabaseService.new(attrs)
-      return fail_with("Not authorized") unless DatabaseServicePolicy.new(@user, db).create?
+      return fail_with(t("not_authorized")) unless DatabaseServicePolicy.new(@user, db).create?
       unless db.save
-        return fail_with("Couldn't create add-on: #{db.errors.full_messages.to_sentence.presence || 'invalid input'}.")
+        return fail_with(t("create_failed", message: db.errors.full_messages.to_sentence.presence || t("invalid_input")))
       end
 
       # Record-first: link now so deleting the app while the job is queued
@@ -134,7 +134,7 @@ module Addons
     def attach_existing(item)
       db = self.class.existing_candidates(user: @user, team: @app.team, server: @app.server)
                  .find { |d| d.id.to_s == item[:database_service_id].to_s }
-      return fail_with("Add-on not available") unless db
+      return fail_with(t("unavailable")) unless db
       link_row = DatabaseProvisioner.link!(@app, db)
       DatabaseProvisioner.write_link_env!(@app, db, link_row)
       restart_if_running
@@ -155,6 +155,12 @@ module Addons
 
     def fail_with(error, **extra) = { error: error, status: :failed, **extra }
 
-    def label(item) = item[:engine].presence || item[:database_service_id].to_s
+    def label(item)
+      return item[:engine] if item[:kind].to_s != "existing" && item[:engine].present?
+      DatabaseServicePolicy::Scope.new(@user, DatabaseService).resolve.find_by(id: item[:database_service_id])&.name ||
+        I18n.t("new_app.addons.existing_label")
+    end
+
+    def t(key, **opts) = I18n.t("new_app.attach.#{key}", **opts)
   end
 end

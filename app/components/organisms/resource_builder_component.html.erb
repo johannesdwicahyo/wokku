@@ -25,16 +25,16 @@
   <div data-resource-builder-target="sliders" class="space-y-3 <%= 'opacity-40 pointer-events-none' if sleeping %>">
     <label class="block text-xs text-dim">CPU <span class="text-ink font-medium tabular-nums" data-resource-builder-target="cpuLabel"><%= shape.cpu %> vCPU</span>
       <input type="range" name="<%= field(:cpu) %>" value="<%= shape.cpu %>" min="<%= grid(:cpu)[:min] %>" max="<%= grid(:cpu)[:max] %>" step="<%= grid(:cpu)[:step] %>"
-             data-resource-builder-target="cpu" data-action="input->resource-builder#input" class="w-full">
+             data-resource-builder-target="cpu" data-action="input->resource-builder#input" class="w-full accent-live">
     </label>
     <label class="block text-xs text-dim">RAM <span class="text-ink font-medium tabular-nums" data-resource-builder-target="memoryLabel"><%= mem_label(shape.memory_mb) %></span>
       <input type="range" name="<%= field(:memory_mb) %>" value="<%= shape.memory_mb %>" min="<%= grid(:memory_mb)[:min] %>" max="<%= grid(:memory_mb)[:max] %>" step="<%= grid(:memory_mb)[:step] %>"
-             data-resource-builder-target="memory" data-action="input->resource-builder#input" class="w-full">
+             data-resource-builder-target="memory" data-action="input->resource-builder#input" class="w-full accent-live">
     </label>
     <% if disk? %>
       <label class="block text-xs text-dim">Disk <span class="text-ink font-medium tabular-nums" data-resource-builder-target="diskLabel"><%= shape.disk_gb %> GB</span>
         <input type="range" name="<%= field(:disk_gb) %>" value="<%= shape.disk_gb %>" min="<%= min_disk_gb %>" max="<%= grid(:disk_gb)[:max] %>" step="<%= grid(:disk_gb)[:step] %>"
-               data-resource-builder-target="disk" data-action="input->resource-builder#input" class="w-full">
+               data-resource-builder-target="disk" data-action="input->resource-builder#input" class="w-full accent-live">
       </label>
     <% end %>
     <% if instances %>

@@ -123,11 +123,11 @@ RSpec.describe "Dashboard::Apps", type: :request do
       expect(body["reason"]).to eq("invalid")
     end
 
-    it "auto-sanitizes friendly typos and returns the cleaned name" do
+    it "flags a name sanitizing would change: create posts it as typed" do
       get check_name_dashboard_apps_path, params: { name: "My Cool App!" }
       body = JSON.parse(response.body)
-      expect(body["available"]).to be_truthy
-      expect(body["name"]).to eq("mycoolapp")
+      expect(body["available"]).to be(false)
+      expect(body["reason"]).to eq("invalid")
     end
   end
 end

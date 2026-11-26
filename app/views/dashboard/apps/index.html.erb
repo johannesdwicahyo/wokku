@@ -6,9 +6,7 @@
 <% end %>
 <%# record-panel scope wraps the whole page: row clicks anywhere inside
     (including inside the lazy "apps_list" frame) reach record-panel#show,
-    which opens the drawer below. Its own slide-panel scope is placed
-    FIRST so record-panel's querySelector('[data-controller~="slide-panel"]')
-    finds the drawer, not the "+ New app" panel's scope. %>
+    which opens the drawer below. "New app" is a plain link to /new. %>
 <div data-controller="record-panel">
   <div data-controller="slide-panel">
     <%= render layout: "dashboard/shared/slide_panel", locals: { chromeless: true, size: "lg" } do %>
@@ -16,29 +14,18 @@
     <% end %>
   </div>
 
-  <%# Slide-panel scope for the new-app form (the top bar's "New app" links
-      to /new; kept for slide-panel#open dispatchers). %>
-  <div data-controller="slide-panel">
-    <% if @has_apps %>
-      <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start">
-        <%# target: "_top" — rack links inside this frame must do full-page visits. %>
-        <%= deferred_section "apps_list",
-              src: sections_dashboard_apps_path(section: :list),
-              skeleton: :table, target: "_top" %>
-        <%= deferred_section "apps_side",
-              src: sections_dashboard_apps_path(section: :side),
-              skeleton: :card, target: "_top" %>
-      </div>
-    <% else %>
-      <%# Zero apps → first-deploy onboarding chooser (instant, no defer). %>
-      <%= render "dashboard/shared/first_deploy_chooser" %>
-    <% end %>
-
-    <%= render layout: "dashboard/shared/slide_panel",
-               locals: { title: t("sweep.create_app"), subtitle: t("sweep.create_app_sub"), size: "lg" } do %>
-      <div class="p-4">
-        <%= render Atoms::ButtonComponent.new(href: new_dashboard_app_path, target: "_top") do %><%= t("sweep.create_app") %><% end %>
-      </div>
-    <% end %>
-  </div>
+  <% if @has_apps %>
+    <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start">
+      <%# target: "_top" — rack links inside this frame must do full-page visits. %>
+      <%= deferred_section "apps_list",
+            src: sections_dashboard_apps_path(section: :list),
+            skeleton: :table, target: "_top" %>
+      <%= deferred_section "apps_side",
+            src: sections_dashboard_apps_path(section: :side),
+            skeleton: :card, target: "_top" %>
+    </div>
+  <% else %>
+    <%# Zero apps → first-deploy onboarding chooser (instant, no defer). %>
+    <%= render "dashboard/shared/first_deploy_chooser" %>
+  <% end %>
 </div>

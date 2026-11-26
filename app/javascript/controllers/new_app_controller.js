@@ -27,12 +27,24 @@ export default class extends Controller {
   }
 
   // Server changed: reload section 03 (existing add-ons are per server).
+  // Added shared/dedicated rows survive (re-appended once the frame loads); existing ones don't.
   server(event) {
-    if (this.hasAddonsFrameTarget) this.addonsFrameTarget.src = `${this.addonsFrameTarget.dataset.url}?server_id=${encodeURIComponent(event.target.value)}`
+    if (!this.hasAddonsFrameTarget) return
+    const existing = r => this.field(r, "kind") === "existing"
+    this.kept = this.rows().filter(r => !existing(r))
+    this.dropped = this.rows().filter(existing).map(r => r.querySelector("[data-slot=label]").textContent)
+    this.addonsFrameTarget.src = `${this.addonsFrameTarget.dataset.url}?server_id=${encodeURIComponent(event.target.value)}`
   }
 
   // The frame's content is replaced on reload: re-wire it.
-  addonsTargetConnected() { this.updateAddons(); this.totals() }
+  addonsTargetConnected() {
+    if (this.kept) {
+      this.kept.forEach(r => this.rowsTarget.appendChild(r))
+      if (this.dropped.length) this.announce("dropped", this.dropped.join(", "))
+      this.kept = null
+    }
+    this.updateAddons(); this.totals()
+  }
   draftBuilderTargetConnected(el) { el.querySelectorAll("input").forEach(i => i.setAttribute("form", "add-on-draft")) }
 
   // ---- 01 source ----
@@ -74,7 +86,7 @@ export default class extends Controller {
       if (!res.ok) throw new Error("branches")
       const data = await res.json()
       if (repo !== this.repoTarget.value) return // a newer pick won
-      const want = this.githubTarget.dataset.branch
+      const want = this.githubTarget.dataset.branch || data.default_branch // a submitted branch wins; else the repo's default
       this.branchTarget.replaceChildren(...(data.branches || []).map(b => Object.assign(new Option(b, b), { selected: b === want })))
       this.repoStatusTarget.textContent = ""
     } catch {
@@ -234,7 +246,7 @@ export default class extends Controller {
     this.draftBuilderTarget.classList.toggle("hidden", !custom)
     const d = this.draft()
     this.configEnvTarget.textContent = d?.env || ""
-    this.configPriceTarget.textContent = !d ? "" : d.mode === "shared" ? this.addonsTarget.dataset.free : d.price == null ? "" : formatIdr(d.price, this.delimiterValue)
+    if (this.hasConfigPriceTarget) this.configPriceTarget.textContent = !d ? "" : d.mode === "shared" ? this.addonsTarget.dataset.free : d.price == null ? "" : formatIdr(d.price, this.delimiterValue)
   }
 
   shapeText(s) {

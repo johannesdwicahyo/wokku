@@ -75,10 +75,10 @@ module Resources
       grid = GRID.filter_map do |key, g|
         v = public_send(key)
         next if v && v.between?(g[:min], g[:max]) && (v / g[:step].to_f % 1).zero?
-        "#{key.to_s.tr('_', ' ').sub('mb', '(MB)').sub('gb', '(GB)').sub('cpu', 'CPU')} must be #{g[:min]}–#{g[:max]} in steps of #{g[:step]}"
+        I18n.t("new_app.shape.range", field: I18n.t("new_app.shape.field.#{key}"), min: g[:min], max: g[:max], step: g[:step])
       end
       floor = ENGINE_MIN_MEMORY_MB[engine.to_s]
-      grid << "#{engine} needs at least #{floor} MB memory" if floor && memory_mb && memory_mb < floor
+      grid << I18n.t("new_app.shape.engine_min", engine: engine, floor: floor) if floor && memory_mb && memory_mb < floor
       grid
     end
 

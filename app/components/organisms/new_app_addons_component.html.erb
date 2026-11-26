@@ -1,5 +1,5 @@
 <div data-new-app-target="addons" data-units="<%= units&.to_json %>" data-max="<%= MAX %>"
-     data-free="<%= free_label %>" data-added="<%= t("new_app.addons.added", label: "%{label}") %>" data-removed="<%= t("new_app.addons.removed", label: "%{label}") %>"
+     data-free="<%= free_label %>" data-added="<%= t("new_app.addons.added", label: "%{label}") %>" data-removed="<%= t("new_app.addons.removed", label: "%{label}") %>" data-dropped="<%= t("new_app.addons.existing_dropped", label: "%{label}") %>"
      data-duplicate="<%= t("new_app.addons.duplicate", label: "%{label}") %>" data-unavailable="<%= t("new_app.addons.unavailable", engine: "%{engine}", reason: "%{reason}") %>"
      data-action="keydown.esc->new-app#escape" data-existing-label="<%= t("new_app.addons.existing_label") %>"
      data-shared-label="<%= t("new_app.addons.shared") %>" data-dedicated-label="<%= t("new_app.addons.dedicated") %>"
@@ -84,10 +84,12 @@
           <span class="<%= LABEL %>"><%= t("new_app.addons.env_var") %></span>
           <code class="block font-mono text-sm text-ink" data-new-app-target="configEnv"></code>
         </div>
-        <div>
-          <span class="<%= LABEL %>"><%= t("new_app.addons.price") %></span>
-          <span class="block text-sm text-ink tabular-nums" data-new-app-target="configPrice" aria-live="polite"></span>
-        </div>
+        <% if units %>
+          <div>
+            <span class="<%= LABEL %>"><%= t("new_app.addons.price") %></span>
+            <span class="block text-sm text-ink tabular-nums" data-new-app-target="configPrice" aria-live="polite"></span>
+          </div>
+        <% end %>
       </div>
       <%= render Atoms::ButtonComponent.new(variant: :primary, data: { action: "click->new-app#addAddon" }) do %><%= t("new_app.addons.add_to_app") %><% end %>
     </div>
@@ -101,9 +103,9 @@
       <div class="grid gap-2 sm:grid-cols-2">
         <% existing.each do |db| %>
           <button type="button" class="<%= CARD %> text-left" data-existing="<%= db.id %>" data-engine="<%= db.service_type %>" data-name="<%= db.name %>"
-                  data-env="<%= Addons::PickerOptions.env_var(db.service_type.to_s) %>" data-action="click->new-app#addExisting">
+                  data-env="<%= existing_env(db.service_type) %>" data-action="click->new-app#addExisting">
             <b class="text-sm text-ink font-semibold"><%= db.name %></b>
-            <span class="font-mono text-xs text-muted"><%= db.service_type %> · <%= db.status %></span>
+            <span class="font-mono text-xs text-muted"><%= db.service_type %> · <%= t("status_light.#{Organisms::CommandPaletteComponent.addon_state(db.status)}") %></span>
           </button>
         <% end %>
       </div>

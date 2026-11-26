@@ -32,12 +32,13 @@ module Organisms
     # shape: Resources::Shape of the current choice (default Basic); sleeping:
     # the Sleeping card is on; box_quota/box_size feed the legacy grid.
     def initialize(presets: PRESETS, shape: nil, sleeping: false, sleeping_option: true, name: nil,
-                   box_quota: nil, box_size: nil)
-      @presets, @sleeping, @sleeping_option, @name = presets, sleeping, sleeping_option, name
-      @shape = shape || Resources::Shape.new(**presets.fetch("basic", presets.values.first))
+                   box_quota: nil, box_size: nil, name_error: nil)
+      @presets, @sleeping, @sleeping_option, @name, @name_error = presets, sleeping, sleeping_option, name, name_error
+      # The sliders always show the selected card's shape (Sleeping = the Nano shape).
+      @shape = shape || Resources::Shape.new(**presets.fetch(sleeping ? "nano" : "basic", presets.values.first))
       @box_quota, @box_size = box_quota || {}, box_size
     end
-    attr_reader :presets, :shape, :sleeping, :name
+    attr_reader :presets, :shape, :sleeping, :name, :name_error
 
     def builder? = Wokku.config.resource_builder?
     def sleeping_option? = @sleeping_option

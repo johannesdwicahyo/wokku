@@ -20,7 +20,7 @@ export default class extends Controller {
 
   // Public: the New app size cards drive the sliders through this.
   applyShape(cpu, memoryMb, sleeping) {
-    if (!sleeping) { this.cpuTarget.value = cpu; this.memoryTarget.value = memoryMb }
+    this.cpuTarget.value = cpu; this.memoryTarget.value = memoryMb
     this.setSleeping(sleeping)
     this.input()
   }

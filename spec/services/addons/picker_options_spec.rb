@@ -138,10 +138,11 @@ RSpec.describe Addons::PickerOptions do
 
     it "lists postgres shared + dedicated with env var, dedicated carrying 3 shortcuts" do
       expect(modes("postgres").map { |m| m[:mode] }).to eq(%w[shared dedicated])
-      expect(modes("postgres").map { |m| m[:env_var] }.uniq).to eq(%w[DATABASE_URL])
+      expect(modes("postgres").map { |m| m[:env_vars] }).to eq([ %w[DATABASE_URL], %w[POSTGRES_URL DATABASE_URL] ])
       expect(modes("postgres").last[:shortcuts].map { |s| s[:key] }).to eq(%w[small standard large])
       expect(modes("postgres").first[:shortcuts]).to eq([])
-      expect(modes("redis").first[:env_var]).to eq("REDIS_URL")
+      expect(modes("redis").first[:env_vars]).to eq(%w[REDIS_URL])
+      expect(modes("mariadb").first[:env_vars]).to eq(%w[MARIADB_URL DATABASE_URL])
     end
 
     it "is dedicated-only when shared is off" do
@@ -152,7 +153,7 @@ RSpec.describe Addons::PickerOptions do
     it "offers mysql dedicated only, omitting the small shortcut its 512 MB floor rejects" do
       expect(modes("mysql").map { |m| m[:mode] }).to eq(%w[dedicated])
       expect(modes("mysql").first[:shortcuts].map { |s| s[:key] }).to eq(%w[standard large])
-      expect(modes("mysql").first[:env_var]).to eq("MYSQL_URL")
+      expect(modes("mysql").first[:env_vars]).to eq(%w[MYSQL_URL])
     end
 
     it "translates copy to Indonesian" do

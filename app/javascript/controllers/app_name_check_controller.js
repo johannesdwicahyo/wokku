@@ -14,7 +14,13 @@ export default class extends Controller {
 
   connect() {
     this.timer = null
-    this.lastValue = ""
+    // A re-rendered 422 arrives with its status already in the page: keep
+    // Create off until the name changes. Otherwise off until there is a name
+    // (JS-only: without JS the button stays enabled and the server validates).
+    const value = this.hasInputTarget ? this.inputTarget.value.trim() : ""
+    const flagged = this.hasStatusTarget && this.statusTarget.textContent.trim() !== ""
+    this.lastValue = flagged ? value : ""
+    this.setSubmit(value !== "" && !flagged)
   }
 
   check() {
@@ -26,7 +32,7 @@ export default class extends Controller {
     if (value.length === 0) {
       this.setStatus("", "neutral")
       this.clearSuggestions()
-      this.setSubmit(true)
+      this.setSubmit(false)
       return
     }
 
@@ -56,6 +62,7 @@ export default class extends Controller {
       }
     } catch (e) {
       this.setStatus(this.unreachableValue, "err")
+      this.setSubmit(true) // never block on our own outage; the server validates
     }
   }
 
