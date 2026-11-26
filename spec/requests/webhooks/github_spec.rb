@@ -51,10 +51,28 @@ RSpec.describe "Webhooks::GithubController", type: :request do
 
   context "push event" do
     let!(:deploy_app) { create(:app_record, github_repo_full_name: "owner/matching-repo", deploy_branch: "main") }
+    before { create(:team_membership, team: deploy_app.team, user: create(:user, github_installation_id: 42)) }
+
+    it "deploys only apps whose team owns the push's installation" do
+      other = create(:app_record, github_repo_full_name: "owner/matching-repo", deploy_branch: "main")
+      create(:team_membership, team: other.team, user: create(:user, github_installation_id: 99))
+      payload = { ref: "refs/heads/main",
+                  repository: { full_name: "owner/matching-repo" }, installation: { id: 42 },
+                  head_commit: { id: "abc123", message: "x" } }.to_json
+      expect { signed_post(payload, event: "push") }.to change(Deploy, :count).by(1)
+      expect(deploy_app.deploys.count).to eq(1)
+      expect(other.deploys.count).to eq(0)
+    end
+
+    it "deploys nothing when the push has no installation" do
+      payload = { ref: "refs/heads/main", repository: { full_name: "owner/matching-repo" },
+                  head_commit: { id: "abc123", message: "x" } }.to_json
+      expect { signed_post(payload, event: "push") }.not_to change(Deploy, :count)
+    end
 
     it "enqueues GithubDeployJob for matching app" do
       payload = { ref: "refs/heads/main",
-                  repository: { full_name: "owner/matching-repo" },
+                  repository: { full_name: "owner/matching-repo" }, installation: { id: 42 },
                   head_commit: { id: "abc123def456", message: "Fix bug" } }.to_json
       expect {
         signed_post(payload, event: "push")
@@ -64,7 +82,7 @@ RSpec.describe "Webhooks::GithubController", type: :request do
 
     it "creates Deploy and Release records" do
       payload = { ref: "refs/heads/main",
-                  repository: { full_name: "owner/matching-repo" },
+                  repository: { full_name: "owner/matching-repo" }, installation: { id: 42 },
                   head_commit: { id: "deadbeef1234", message: "feat: new feature" } }.to_json
       expect {
         signed_post(payload, event: "push")
@@ -74,7 +92,7 @@ RSpec.describe "Webhooks::GithubController", type: :request do
     it "skips an app whose deploys are locked" do
       deploy_app.update!(deploy_locked_at: Time.current)
       payload = { ref: "refs/heads/main",
-                  repository: { full_name: "owner/matching-repo" },
+                  repository: { full_name: "owner/matching-repo" }, installation: { id: 42 },
                   head_commit: { id: "deadbeef1234", message: "x" } }.to_json
       expect { signed_post(payload, event: "push") }.not_to change(Deploy, :count)
       expect(response).to have_http_status(:ok)
@@ -82,7 +100,7 @@ RSpec.describe "Webhooks::GithubController", type: :request do
 
     it "does not trigger for non-matching branch" do
       payload = { ref: "refs/heads/feature-branch",
-                  repository: { full_name: "owner/matching-repo" },
+                  repository: { full_name: "owner/matching-repo" }, installation: { id: 42 },
                   head_commit: { id: "abc123", message: "WIP" } }.to_json
       expect {
         signed_post(payload, event: "push")
@@ -111,6 +129,7 @@ RSpec.describe "Webhooks::GithubController", type: :request do
              git_provider: "github", git_repo_full_name: "owner/pr-test-repo",
              preview_enabled: true)
     end
+    before { create(:team_membership, team: team, user: create(:user, github_installation_id: 1)) }
 
     it "enqueues Preview::DeployJob for opened action" do
       payload = { action: "opened", number: 42,

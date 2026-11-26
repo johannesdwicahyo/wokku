@@ -266,6 +266,8 @@ id:
         duration: "Durasi"
         when: "Waktu"
         actions: "Aksi"
+    github:
+      repo_not_owned: "Repositori itu tidak ada di instalasi GitHub App kamu. Beri Wokku GitHub App akses ke repo itu di GitHub, lalu coba lagi."
     previews:
       heading: "Preview PR"
       columns:

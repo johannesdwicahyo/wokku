@@ -31,6 +31,12 @@ module Dashboard
       repo = params[:repo]
       branch = params[:branch] || "main"
 
+      # The repo must belong to the caller's own GitHub App installation, or
+      # anyone could bind another tenant's private repo and receive its code.
+      unless GithubApp.repo_owned_by_installation?(repo, current_user.github_installation_id)
+        return redirect_to dashboard_app_releases_path(@app), alert: t("dashboard.github.repo_not_owned")
+      end
+
       @app.update!(
         github_repo_full_name: repo,
         git_repository_url: "https://github.com/#{repo}.git",

@@ -3,7 +3,13 @@
 module Preview
   class EventDispatcher
     def self.handle(event)
-      parents_for(event).find_each { |parent| dispatch_for(parent, event) }
+      parents_for(event).find_each do |parent|
+        if event.provider.to_s == "github" && !parent.github_installation_linked?(event.installation_id)
+          Rails.logger.warn("GitHub webhook: skipping preview for #{parent.name} — PR installation is not its team's")
+          next
+        end
+        dispatch_for(parent, event)
+      end
     end
 
     # GitHub connect stores the repo in github_repo_full_name and never sets

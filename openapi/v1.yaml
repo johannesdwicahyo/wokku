@@ -1988,6 +1988,13 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
+        '403':
+          description: github_repo_not_owned - repo is not in the caller's GitHub
+            App installation
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
         '404':
           description: unknown app, or an app of a team the caller does not belong
             to

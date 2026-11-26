@@ -24,6 +24,13 @@ class AppRecord < ApplicationRecord
     update!(status: deploys.succeeded.exists? ? :crashed : :created)
   end
 
+  # Connect doesn't record which member linked the repo, so a GitHub event is
+  # trusted for this app only if its installation belongs to someone on the
+  # app's team (same rule as Preview::Comment::GithubAdapter).
+  def github_installation_linked?(installation_id)
+    installation_id.present? && team.users.exists?(github_installation_id: installation_id)
+  end
+
   # What lists show: a never-deployed app whose latest deploy failed is
   # "Deploy failed", not "Not deployed" (which hid the failure).
   def display_status

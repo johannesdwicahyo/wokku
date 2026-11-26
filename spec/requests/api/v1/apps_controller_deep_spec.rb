@@ -30,25 +30,37 @@ RSpec.describe "API::V1::AppsController (deep)", type: :request do
     expect(response).to have_http_status(:unprocessable_entity)
   end
 
-  it "github_connect stores repo + generates webhook secret" do
-    expect(app_record.github_repo_full_name).to be_nil
-    post "/api/v1/apps/#{app_record.id}/github_connect",
-      params: { repo: "owner/repo", branch: "develop" },
-      headers: headers
-    expect(response).to have_http_status(:success)
-    app_record.reload
-    expect(app_record.github_repo_full_name).to eq("owner/repo")
-    expect(app_record.deploy_branch).to eq("develop")
-    expect(app_record.git_repository_url).to eq("https://github.com/owner/repo.git")
-    expect(app_record.github_webhook_secret).to be_present
+  context "when the repo is in the caller's installation" do
+    before { allow(GithubApp).to receive(:repo_owned_by_installation?).and_return(true) }
+
+    it "github_connect stores repo + generates webhook secret" do
+      expect(app_record.github_repo_full_name).to be_nil
+      post "/api/v1/apps/#{app_record.id}/github_connect",
+        params: { repo: "owner/repo", branch: "develop" },
+        headers: headers
+      expect(response).to have_http_status(:success)
+      app_record.reload
+      expect(app_record.github_repo_full_name).to eq("owner/repo")
+      expect(app_record.deploy_branch).to eq("develop")
+      expect(app_record.git_repository_url).to eq("https://github.com/owner/repo.git")
+      expect(app_record.github_webhook_secret).to be_present
+    end
+
+    it "github_connect preserves existing webhook secret across reconnects" do
+      app_record.update!(github_webhook_secret: "preserve-me")
+      post "/api/v1/apps/#{app_record.id}/github_connect",
+        params: { repo: "owner/repo" },
+        headers: headers
+      expect(app_record.reload.github_webhook_secret).to eq("preserve-me")
+    end
   end
 
-  it "github_connect preserves existing webhook secret across reconnects" do
-    app_record.update!(github_webhook_secret: "preserve-me")
-    post "/api/v1/apps/#{app_record.id}/github_connect",
-      params: { repo: "owner/repo" },
-      headers: headers
-    expect(app_record.reload.github_webhook_secret).to eq("preserve-me")
+  it "github_connect refuses a repo outside the caller's installation" do
+    allow(GithubApp).to receive(:repo_owned_by_installation?).and_return(false)
+    post "/api/v1/apps/#{app_record.id}/github_connect", params: { repo: "victim/private" }, headers: headers
+    expect(response).to have_http_status(:forbidden)
+    expect(JSON.parse(response.body)["error_code"]).to eq("github_repo_not_owned")
+    expect(app_record.reload.github_repo_full_name).to be_nil
   end
 
   it "github_disconnect clears repo info" do

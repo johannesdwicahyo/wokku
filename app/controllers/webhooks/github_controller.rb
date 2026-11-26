@@ -33,6 +33,10 @@ module Webhooks
 
       apps.find_each do |app|
         next if app.deploy_locked_at? # `wokku lock` blocks every deploy path
+        unless app.github_installation_linked?(payload.dig("installation", "id"))
+          Rails.logger.warn("GitHub webhook: skipping deploy for #{app.name} — push installation is not its team's")
+          next
+        end
         # Skip apps whose server is unreachable to avoid creating orphaned
         # "pending" deploys that never resolve.
         unless app.server && app.server.connected?

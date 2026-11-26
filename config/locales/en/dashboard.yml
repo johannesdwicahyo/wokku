@@ -266,6 +266,8 @@ en:
         duration: "Duration"
         when: "When"
         actions: "Actions"
+    github:
+      repo_not_owned: "That repository isn't in your GitHub App installation. Grant the Wokku GitHub App access to it on GitHub, then try again."
     previews:
       heading: "PR previews"
       columns:

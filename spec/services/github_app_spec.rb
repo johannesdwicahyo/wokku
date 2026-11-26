@@ -113,4 +113,47 @@ RSpec.describe GithubApp do
       expect(github.repo("nonexistent/repo")).to be_nil
     end
   end
+
+  describe ".repo_owned_by_installation?" do
+    let(:url) { "https://api.github.com/repos/acme/api/installation" }
+
+    before do
+      allow(described_class).to receive(:configured?).and_return(true)
+      allow(described_class).to receive(:jwt).and_return("app-jwt")
+    end
+
+    def stub_installation(id)
+      stub_request(:get, url).with(headers: { "Authorization" => "Bearer app-jwt" })
+        .to_return(status: 200, headers: { "Content-Type" => "application/json" }, body: { id: id }.to_json)
+    end
+
+    it "is true when GitHub reports the repo under that installation" do
+      stub_installation(42)
+      expect(described_class.repo_owned_by_installation?("acme/api", 42)).to be(true)
+    end
+
+    it "is false when the repo belongs to another installation" do
+      stub_installation(99)
+      expect(described_class.repo_owned_by_installation?("acme/api", 42)).to be(false)
+    end
+
+    it "is false when the app isn't installed on the repo (404)" do
+      stub_request(:get, url).to_return(status: 404)
+      expect(described_class.repo_owned_by_installation?("acme/api", 42)).to be(false)
+    end
+
+    it "is false on a network error" do
+      stub_request(:get, url).to_raise(Faraday::ConnectionFailed.new("down"))
+      expect(described_class.repo_owned_by_installation?("acme/api", 42)).to be(false)
+    end
+
+    it "is false for a malformed name, no installation, or an unconfigured app" do
+      %w[../etc acme/.. acme acme/api/x].each do |bad|
+        expect(described_class.repo_owned_by_installation?(bad, 42)).to be(false)
+      end
+      expect(described_class.repo_owned_by_installation?("acme/api", nil)).to be(false)
+      allow(described_class).to receive(:configured?).and_return(false)
+      expect(described_class.repo_owned_by_installation?("acme/api", 42)).to be(false)
+    end
+  end
 end
