@@ -72,7 +72,7 @@ RSpec.describe "GET /dashboard/apps/new", type: :request do
 
       get "/dashboard/apps/new", params: { server_id: other.id }, headers: frame
       expect(response).to have_http_status(:ok)
-      expect(doc).to have_no_css("[data-existing]")
+      expect(Capybara.string(response.body)).to have_no_css("[data-existing]")
     end
   end
 
