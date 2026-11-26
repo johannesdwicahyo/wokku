@@ -61,11 +61,18 @@ RSpec.describe "GET /dashboard/apps/new", type: :request do
       expect(response.body).not_to include("<html")
     end
 
-    it "does not use another team's server" do
+    it "lists a running dedicated DB on the user's own server, not on another team's" do
+      own = create(:server, team: user.teams.first)
+      db = create(:database_service, server: own, creator: user, status: :running)
       other = create(:server, team: create(:team))
+      create(:database_service, server: other, creator: create(:user), status: :running)
+
+      get "/dashboard/apps/new", params: { server_id: own.id }, headers: frame
+      expect(doc).to have_css("[data-existing='#{db.id}']", count: 1)
+
       get "/dashboard/apps/new", params: { server_id: other.id }, headers: frame
       expect(response).to have_http_status(:ok)
-      expect(doc).to have_no_css("[data-existing-id]")
+      expect(doc).to have_no_css("[data-existing]")
     end
   end
 
