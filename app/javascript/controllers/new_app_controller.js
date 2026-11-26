@@ -154,8 +154,17 @@ export default class extends Controller {
     showBtn.setAttribute("aria-expanded", String(open))
     hideBtn.setAttribute("aria-expanded", "false")
     this.showNote("")
-    if (open) { this.backToEngines(); this.focusFirst(show) } else showBtn.focus()
+    if (open) { this.backToEngines(); this.focusFirst(show) } else this.focusTrigger(showBtn)
   }
+
+  // A full list disables the trigger (focus would drop to body): use the newest row's remove button.
+  closePanel(panel, btn) {
+    panel.classList.add("hidden")
+    btn.setAttribute("aria-expanded", "false")
+    this.focusTrigger(btn)
+  }
+
+  focusTrigger(btn) { if (btn.disabled) this.rows().at(-1)?.querySelector("button")?.focus(); else btn.focus() }
 
   focusFirst(scope) { scope.querySelector("button:not([disabled]), input:not([disabled])")?.focus() }
 
@@ -234,7 +243,7 @@ export default class extends Controller {
       return
     }
     this.appendRow({ kind: d.mode, engine: this.engine.key, ...(d.shape || {}) }, label, d.env, d.mode === "shared" ? a.free : d.price == null ? "" : formatIdr(d.price, this.delimiterValue), d.price || 0)
-    this.openCatalog()
+    this.closePanel(this.catalogTarget, this.openCatalogTarget)
   }
 
   addExisting(event) {
@@ -245,7 +254,7 @@ export default class extends Controller {
     }
     this.appendRow({ kind: "existing", engine: b.dataset.engine, database_service_id: b.dataset.existing },
       `${b.dataset.name} · ${this.addonsTarget.dataset.existingLabel}`, b.dataset.env, "", 0)
-    this.openExisting()
+    this.closePanel(this.existingPanelTarget, this.openExistingTarget)
   }
 
   appendRow(values, label, env, priceText, price) {

@@ -24,7 +24,7 @@
     <div class="grid gap-2 grid-cols-2 sm:grid-cols-3" data-new-app-target="engines">
       <% catalog.each do |engine| %>
         <% reason = unavailable_reason(engine) %>
-        <button type="button" class="<%= CARD.sub("cursor-pointer", "") %> text-left" data-engine="<%= engine[:key] %>" data-label="<%= engine[:label] %>"
+        <button type="button" class="<%= reason ? CARD.sub("cursor-pointer", "") : CARD %> text-left" data-engine="<%= engine[:key] %>" data-label="<%= engine[:label] %>"
                 <% if reason %>data-unavailable-reason="<%= reason %>" aria-disabled="true"<% end %> data-action="click->new-app#pickEngine">
           <b class="text-sm text-ink font-semibold"><%= engine[:label] %></b>
           <span class="font-mono text-xs text-muted"><%= engine[:modes].map { |m| mode_label(m[:mode]) }.join(" · ") %></span>
