@@ -134,6 +134,13 @@ id:
       title: "Terhubung"
       add: "Tambah"
       empty: "Belum ada add-on terhubung"
+    live_log:
+      title: "Log langsung"
+      filters: "Filter log"
+      all: "Semua"
+      pause: "Jeda"
+      resume: "Lanjut"
+      loading: "Memuat log…"
     domains:
       title: "Domain"
       add: "Tambah"

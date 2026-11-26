@@ -116,6 +116,13 @@ en:
       title: "Connected"
       add: "Add"
       empty: "No add-ons connected"
+    live_log:
+      title: "Live logs"
+      filters: "Log filters"
+      all: "All"
+      pause: "Pause"
+      resume: "Resume"
+      loading: "Loading logs…"
     domains:
       title: "Domains"
       add: "Add"

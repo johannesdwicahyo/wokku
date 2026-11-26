@@ -2,11 +2,14 @@ module Dashboard
   class LogsController < BaseController
     before_action :set_app
 
+    LIVE_FRAME = "app_live_log".freeze
+
     def show
       authorize @app, :show?
       if params[:glance]
-        @lines = recent_log_lines(@app, limit: 5)
-        render partial: "dashboard/logs/glance", locals: { lines: @lines, app: @app }, layout: false
+        @lines = recent_log_lines(@app, limit: glance_limit, process: glance_process)
+        frame_id = params[:frame] == LIVE_FRAME ? LIVE_FRAME : nil
+        render partial: "dashboard/logs/glance", locals: { lines: @lines, app: @app, frame_id: frame_id }, layout: false
         return
       end
 
@@ -74,8 +77,29 @@ module Dashboard
       raw.dup.force_encoding(Encoding::UTF_8).scrub("?")
     end
 
-    def recent_log_lines(app, limit:)
-      raw = scrub_encoding(::Apps::LogReader.recent(app, lines: limit))
+    def glance_limit = params[:lines].to_i.clamp(1, 200).then { |n| params[:lines].present? ? n : 5 }
+
+    # Must be one of the app's process types (same source as the processes rack), else ignored.
+    def glance_process
+      types = (@app.dyno_allocations.map(&:process_type) + @app.process_scales.map(&:process_type)).uniq
+      params[:process].to_s.presence_in(types)
+    end
+
+    # Persisted rows first (no SSH); live LogReader only when the app has none.
+    def recent_log_lines(app, limit:, process: nil)
+      persisted = Log.for_app(app)
+      if persisted.exists?
+        # Container naming: wokku-<app>-<proc>.<slot>.<task> (wokkud/internal/lifecycle/converge.go
+        # ServiceName; Hosts::ContainerNames), Dokku-era <app>.<proc>.<n>.
+        if process
+          like = ->(base) { "#{Log.sanitize_sql_like(base)}.%" }
+          persisted = persisted.where("container LIKE ? OR container LIKE ?",
+                                      like.("wokku-#{app.name}-#{process}"), like.("#{app.name}.#{process}"))
+        end
+        return persisted.recent.limit(limit).pluck(:line).reverse
+      end
+
+      raw = scrub_encoding(process ? ::Apps::LogReader.recent(app, lines: limit, process: process) : ::Apps::LogReader.recent(app, lines: limit))
       return [] if raw.blank?
       raw.gsub(/\e\[[0-9;]*m/, "").split("\n").last(limit)
     rescue => e

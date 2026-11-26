@@ -3,7 +3,7 @@
     Turbo Frames requires the response to contain a <turbo-frame> with
     a matching id, otherwise it renders "Content missing". Wrap the
     rendered content so the frame matches. %>
-<%= turbo_frame_tag "app_logs_glance_#{app.id}" do %>
+<%= turbo_frame_tag (local_assigns[:frame_id] || "app_logs_glance_#{app.id}") do %>
   <% non_blank = lines.reject { |l| l.to_s.strip.empty? } %>
   <div class="border border-line bg-[#171717] text-[#9DEE9D] p-3 font-mono text-xs min-w-0 wrap-anywhere">
     <% if non_blank.any? %>
