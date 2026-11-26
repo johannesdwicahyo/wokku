@@ -14,7 +14,7 @@ export default class extends Controller {
   static targets = ["source", "github", "repo", "repoStatus", "branch", "name", "size", "builder", "customHint",
                     "addons", "none", "rows", "rowTemplate", "openCatalog", "openExisting", "limit", "catalog",
                     "engines", "announce", "note", "config", "configName", "configEnv", "configPrice", "draftBuilder", "existingPanel",
-                    "boardWrap", "address", "sourceLabel", "appPrice", "addonPrice", "total"]
+                    "addonsFrame", "boardWrap", "address", "sourceLabel", "appPrice", "addonPrice", "total"]
   static values = { domain: String, delimiter: { type: String, default: "." } }
 
   connect() {
@@ -25,6 +25,15 @@ export default class extends Controller {
     this.updateAddons()
     this.totals()
   }
+
+  // Server changed: reload section 03 (existing add-ons are per server).
+  server(event) {
+    if (this.hasAddonsFrameTarget) this.addonsFrameTarget.src = `${this.addonsFrameTarget.dataset.url}?server_id=${encodeURIComponent(event.target.value)}`
+  }
+
+  // The frame's content is replaced on reload: re-wire it.
+  addonsTargetConnected() { this.updateAddons(); this.totals() }
+  draftBuilderTargetConnected(el) { el.querySelectorAll("input").forEach(i => i.setAttribute("form", "add-on-draft")) }
 
   // ---- 01 source ----
   source() {

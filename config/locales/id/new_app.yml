@@ -56,3 +56,19 @@ id:
       unavailable: "%{engine} tidak tersedia: %{reason}"
       shortcuts: { small: "Kecil", standard: "Standard", large: "Besar" }
       shape: "%{cpu} vCPU · %{memory} · %{disk} GB"
+    page:
+      title: "Aplikasi baru"
+      intro: "Pilih asal kode, beri nama, tentukan ukuran, lalu deploy."
+      source: "01 · Sumber"
+      name_size: "02 · Nama dan ukuran"
+      addons: "03 · Add-on"
+      server: "Server"
+      server_placeholder: "Cari server…"
+    summary:
+      title: "04 · Ringkasan"
+      board_label: "Nama aplikasi: %{name}"
+      app: "Aplikasi"
+      addons: "Add-on"
+      per_month: "Per bulan"
+      create: "Buat dan deploy"
+      note: "Deploy pertama memakan waktu sekitar satu menit."

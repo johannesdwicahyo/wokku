@@ -56,3 +56,19 @@ en:
       unavailable: "%{engine} is not available: %{reason}"
       shortcuts: { small: "Small", standard: "Standard", large: "Large" }
       shape: "%{cpu} vCPU · %{memory} · %{disk} GB"
+    page:
+      title: "New app"
+      intro: "Pick where the code comes from, name it, size it, and deploy."
+      source: "01 · Source"
+      name_size: "02 · Name and size"
+      addons: "03 · Add-ons"
+      server: "Server"
+      server_placeholder: "Search servers…"
+    summary:
+      title: "04 · Summary"
+      board_label: "App name: %{name}"
+      app: "App"
+      addons: "Add-ons"
+      per_month: "Per month"
+      create: "Create and deploy"
+      note: "First deploy takes about a minute."

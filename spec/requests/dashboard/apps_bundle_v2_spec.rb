@@ -154,7 +154,7 @@ RSpec.describe "Dashboard::Apps (Bundle v2 create)", type: :request do
   describe "new-app form shared add-on picker" do
     it "labels every offered shared engine (no blank checkbox)" do
       allow(Addons::SharedProvisioner).to receive(:feature_enabled?).and_return(true)
-      get new_dashboard_app_path
+      get dashboard_apps_path # old _form lives in the index slide panel until Task 6
       expect(response).to have_http_status(:ok)
 
       DatabaseService::SHARED_ENGINES.each do |engine|
