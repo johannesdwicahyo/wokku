@@ -121,3 +121,14 @@ id:
       alert_reason: "%{name} terus berhenti dengan \"%{reason}\". Wokku sedang me-restart-nya."
       see_logs: "Lihat log"
       never: "belum pernah"
+    processes:
+      title: "Proses"
+      size: "Ukuran · %{size} per proses"
+      running:
+        one: "%{count} berjalan"
+        other: "%{count} berjalan"
+      add: "Tambah satu proses %{type}"
+      remove: "Kurangi satu proses %{type}"
+      add_confirm: "Tambah satu proses %{type}?"
+      add_confirm_price: "Tambah satu proses %{type}? +%{price}/bulan"
+      scaling_updated: "Skala diperbarui."

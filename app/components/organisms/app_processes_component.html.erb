@@ -1,0 +1,38 @@
+<%= render Molecules::PanelComponent.new(ticks: true) do %>
+  <div class="flex items-center justify-between px-[18px] py-3 border-b border-line font-mono text-[11px] uppercase tracking-[.12em] text-muted">
+    <h2 class="font-normal"><%= t("apps.processes.title") %></h2>
+    <% if size_label %><span><%= t("apps.processes.size", size: size_label) %></span><% end %>
+  </div>
+  <div class="flex flex-col">
+    <% allocations.each do |alloc| %>
+      <% type = alloc.process_type %>
+      <% want = desired(alloc) %>
+      <% up = Atoms::ButtonComponent.new(variant: :secondary, size: :sm).classes %>
+      <div class="flex items-center gap-4 px-[18px] py-3.5 border-t border-line first:border-t-0" data-process="<%= type %>">
+        <%= render Atoms::StatusLightComponent.new(state: state_for(alloc), size: 10) %>
+        <span class="min-w-0 flex-1">
+          <b class="block font-medium text-ink truncate"><%= type %></b>
+          <span class="block text-[12px] text-muted tabular-nums"><%= t("apps.processes.running", count: running_for(type)) %></span>
+        </span>
+        <span class="flex gap-1" aria-hidden="true">
+          <% want.times do |i| %>
+            <span class="inline-block w-2.5 h-2.5 <%= i < running_for(type) ? "bg-live" : "border border-line-strong" %>"></span>
+          <% end %>
+        </span>
+        <% if can_update? %>
+          <span class="flex items-center gap-2">
+            <%= button_to "−", dashboard_app_scaling_path(app), method: :patch, params: scale_params(type, want - 1),
+                  disabled: want <= 0, class: "#{up} w-[38px] disabled:opacity-40 disabled:cursor-not-allowed",
+                  form_class: "inline", aria: { label: t("apps.processes.remove", type: type) } %>
+            <span class="min-w-6 text-center font-mono text-[13px] text-ink tabular-nums"><%= want %></span>
+            <%= button_to "+", dashboard_app_scaling_path(app), method: :patch, params: scale_params(type, want + 1),
+                  class: "#{up} w-[38px]", form_class: "inline",
+                  data: { turbo_confirm: confirm_for(alloc) }, aria: { label: t("apps.processes.add", type: type) } %>
+          </span>
+        <% else %>
+          <span class="font-mono text-[13px] text-ink tabular-nums"><%= want %></span>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

@@ -103,3 +103,14 @@ en:
       alert_reason: "%{name} keeps exiting with \"%{reason}\". Wokku is restarting it."
       see_logs: "See logs"
       never: "never"
+    processes:
+      title: "Processes"
+      size: "Size · %{size} each"
+      running:
+        one: "%{count} running"
+        other: "%{count} running"
+      add: "Add one %{type} process"
+      remove: "Remove one %{type} process"
+      add_confirm: "Add one %{type} process?"
+      add_confirm_price: "Add one %{type} process? +%{price}/month"
+      scaling_updated: "Scaling updated."

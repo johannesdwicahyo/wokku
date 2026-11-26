@@ -25,8 +25,8 @@ module Dashboard
         counts = params.require(:scaling).permit!.to_h
         result = Resources::ApplyChange.call(app: @app, user: current_user,
                                              processes: Resources::ApplyChange.processes_for_counts(@app, counts))
-        flash_kind = result.ok ? { notice: "Scaling updated." } : { alert: result.error }
-        return redirect_to dashboard_app_scaling_path(@app), **flash_kind
+        flash_kind = result.ok ? { notice: t("apps.processes.scaling_updated") } : { alert: result.error }
+        return redirect_to after_scale_path, **flash_kind
       end
 
       if defined?(DynoAllocation)
@@ -48,7 +48,7 @@ module Dashboard
           # Non-scalable tiers: only allow setting count to 0 or 1
           params[:scaling].each do |type, count|
             if count.to_i > 1
-              redirect_to dashboard_app_scaling_path(@app), alert: "#{current_tier.name.capitalize} tier doesn't support horizontal scaling. Upgrade to Standard or higher."
+              redirect_to after_scale_path, alert: "#{current_tier.name.capitalize} tier doesn't support horizontal scaling. Upgrade to Standard or higher."
               return
             end
           end
@@ -69,11 +69,11 @@ module Dashboard
         ps.update!(count: count)
       end
 
-      redirect_to dashboard_app_scaling_path(@app), notice: "Scaling updated."
+      redirect_to after_scale_path, notice: t("apps.processes.scaling_updated")
     rescue Lifecycle::Ops::RunNotAllowed => e
-      redirect_to dashboard_app_scaling_path(@app), alert: e.message
+      redirect_to after_scale_path, alert: e.message
     rescue => e
-      redirect_to dashboard_app_scaling_path(@app), alert: "Scaling failed: #{e.message}"
+      redirect_to after_scale_path, alert: "Scaling failed: #{e.message}"
     end
 
     def change_tier
@@ -143,6 +143,10 @@ module Dashboard
     end
 
     private
+
+    def after_scale_path
+      params[:return_to] == "overview" ? dashboard_app_path(@app) : dashboard_app_scaling_path(@app)
+    end
 
     def set_app
       @app = AppRecord.find(params[:app_id])
