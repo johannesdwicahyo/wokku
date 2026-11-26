@@ -54,6 +54,16 @@ RSpec.describe Molecules::BackupsSummaryCardComponent, type: :component do
     expect(page).not_to have_button("backup now")
   end
 
+  it "hides 'backup now' when the user cannot update, and localizes" do
+    db = db_with_policy(ServiceTier::BACKUP_POLICIES["standard"])
+    I18n.with_locale(:id) do
+      render_inline(described_class.new(app: app_with_db(db), current_user: nil, can_update: false))
+    end
+    expect(page).not_to have_css("form")
+    expect(page).to have_text("Harian · menyimpan 7 harian + 4 mingguan + 1 bulanan")
+    expect(page).to have_text("Belum ada backup")
+  end
+
   it "renders 'backup now' control when app has a primary_database" do
     db = db_with_policy(ServiceTier::BACKUP_POLICIES["basic"])
     render_inline(described_class.new(app: app_with_db(db), current_user: nil))

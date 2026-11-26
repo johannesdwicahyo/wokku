@@ -1,23 +1,23 @@
 <div class="border border-line bg-paper rounded-lg p-4">
-  <div class="text-[11px] font-medium text-dim normal-case tracking-normal mb-2">Backups</div>
+  <div class="text-[11px] font-medium text-dim normal-case tracking-normal mb-2"><%= t("apps.backups.title") %></div>
   <div class="text-sm">
     <% if last_backup %>
-      <b>Last: <%= time_ago(last_backup.created_at) %></b>
+      <b><%= t("apps.backups.last", ago: time_ago(last_backup.created_at)) %></b>
     <% elsif has_database %>
-      <b>No backups yet</b>
+      <b><%= t("apps.backups.none_yet") %></b>
     <% else %>
-      <b class="text-dim">No database attached</b>
+      <b class="text-dim"><%= t("apps.backups.no_database") %></b>
     <% end %>
   </div>
   <div class="text-[11px] text-dim mt-2"><%= policy_label %></div>
 
-  <% if has_database %>
+  <% if has_database && can_update? %>
     <div class="mt-3">
       <%= render Atoms::OptimisticButtonComponent.new(
-            label: "backup now",
+            label: t("apps.backups.backup_now"),
             url: helpers.backup_now_dashboard_app_path(app),
             method: :post,
-            pending_label: "queueing…",
+            pending_label: t("apps.backups.queueing"),
             kind: :secondary
           ) %>
     </div>

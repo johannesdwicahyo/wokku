@@ -15,7 +15,7 @@
       <%= render Molecules::ObjectStorageCardComponent.new(bucket: storage) %>
     <% end %>
     <% if databases? %>
-      <%= render Molecules::BackupsSummaryCardComponent.new(app: app, current_user: helpers.current_user) %>
+      <%= render Molecules::BackupsSummaryCardComponent.new(app: app, current_user: helpers.current_user, can_update: can_update) %>
     <% end %>
   </div>
 </div>

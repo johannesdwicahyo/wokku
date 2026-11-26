@@ -82,9 +82,11 @@
     <div>
       <h4 class="text-xs font-semibold text-ink-soft mb-1">Manual deploy</h4>
       <p class="text-[11.5px] text-dim mb-3">Trigger a rebuild of the current codebase on the server.</p>
-      <%= button_to "Deploy now", deploy_dashboard_app_releases_path(@app), method: :post,
-            data: { turbo_confirm: "Rebuild and deploy #{@app.name}?" },
-            class: Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>
+      <% if policy(@app).update? %>
+        <%= button_to "Deploy now", deploy_dashboard_app_releases_path(@app), method: :post,
+              data: { turbo_confirm: "Rebuild and deploy #{@app.name}?" },
+              class: Atoms::ButtonComponent.new(variant: :primary, size: :sm).classes %>
+      <% end %>
     </div>
   </div>
 </div>
@@ -145,10 +147,10 @@
             <td class="px-3.5 py-2.5 text-right">
               <%# Rollback button: only on succeeded releases that aren't already
                   the current one and whose deploy has a recorded commit SHA. %>
-              <% if release.deploy&.status == "succeeded" &&
+              <% if policy(@app).update? && release.deploy&.status == "succeeded" &&
                    release.id != @current_release_id &&
                    release.deploy.commit_sha.present? %>
-                <%= button_to "Rollback", rollback_dashboard_app_release_path(@app, release),
+                <%= button_to t("apps.timeline.roll_back"), rollback_dashboard_app_release_path(@app, release),
                       method: :post,
                       form: {
                         data: {

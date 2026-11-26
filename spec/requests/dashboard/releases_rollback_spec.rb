@@ -47,6 +47,21 @@ RSpec.describe "Dashboard::Releases rollback", type: :request do
       expect(response.body).to include("rollback")
     end
 
+    it "hides Deploy now and Rollback from a viewer" do
+      viewer = create(:user)
+      create(:team_membership, team: team, user: viewer, role: :viewer)
+      sign_in viewer
+      get "/dashboard/apps/#{target_app.id}/releases"
+      expect(response.body).not_to include("Deploy now")
+      expect(response.body).not_to include("/releases/#{r1.id}/rollback")
+    end
+
+    it "shows Deploy now and Roll back to a member" do
+      get "/dashboard/apps/#{target_app.id}/releases"
+      expect(response.body).to include("Deploy now")
+      expect(response.body).to include("Roll back")
+    end
+
     it "does NOT show a Rollback button for the current (newest succeeded) release" do
       get "/dashboard/apps/#{target_app.id}/releases"
       expect(response.body).not_to include("/releases/#{r2.id}/rollback")
