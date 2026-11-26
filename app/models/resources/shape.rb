@@ -31,6 +31,14 @@ module Resources
       }
     }.freeze
 
+    # Create-page size shortcuts for dedicated DBs (Phase 5 spec). Separate from
+    # SERVICE_PRESETS, which other pages use. Engines whose floor rejects one omit it.
+    DB_SHORTCUTS = {
+      "small"    => { cpu: 0.25, memory_mb: 256,  disk_gb: 1 },
+      "standard" => { cpu: 0.5,  memory_mb: 512,  disk_gb: 5 },
+      "large"    => { cpu: 1.0,  memory_mb: 1024, disk_gb: 10 }
+    }.freeze
+
     attr_reader :cpu, :memory_mb, :disk_gb
 
     def self.round_up(cpu:, memory_mb:, disk_gb: 0)

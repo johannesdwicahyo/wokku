@@ -1,0 +1,27 @@
+en:
+  addons:
+    picker:
+      upgrade: "Upgrade to Solo or higher for dedicated databases"
+      unavailable: "Dedicated %{engine} not yet available on your plan"
+      shared:
+        label: "Shared"
+        default:
+          kicker: "Free, included"
+          description: "Logical tenant on a per-server host container. Auto-attaches DATABASE_URL. No extra cost."
+        per_resource:
+          kicker: "Free, included"
+          description: "Logical tenant on a per-server host container. Auto-attaches DATABASE_URL. No extra cost."
+        self_host:
+          kicker: "Included"
+          description: "Logical tenant on a per-server host container. Auto-attaches DATABASE_URL."
+      dedicated:
+        label: "Dedicated"
+        default:
+          kicker: "Paid plan"
+          description: "Its own container. Consumes 1 of 3 dedicated slots."
+        per_resource:
+          kicker: "Pay per resource"
+          description: "Its own container. You choose CPU, memory and disk, billed per resource."
+        self_host:
+          kicker: "Own container"
+          description: "Its own container. You choose CPU, memory and disk."

@@ -1,0 +1,27 @@
+id:
+  addons:
+    picker:
+      upgrade: "Upgrade ke Solo atau lebih tinggi untuk database dedicated"
+      unavailable: "%{engine} dedicated belum tersedia di paketmu"
+      shared:
+        label: "Shared"
+        default:
+          kicker: "Gratis, sudah termasuk"
+          description: "Tenant logis di container host per server. DATABASE_URL terpasang otomatis. Tanpa biaya tambahan."
+        per_resource:
+          kicker: "Gratis, sudah termasuk"
+          description: "Tenant logis di container host per server. DATABASE_URL terpasang otomatis. Tanpa biaya tambahan."
+        self_host:
+          kicker: "Sudah termasuk"
+          description: "Tenant logis di container host per server. DATABASE_URL terpasang otomatis."
+      dedicated:
+        label: "Dedicated"
+        default:
+          kicker: "Paket berbayar"
+          description: "Container sendiri. Memakai 1 dari 3 slot dedicated."
+        per_resource:
+          kicker: "Bayar per resource"
+          description: "Container sendiri. Kamu pilih CPU, memori, dan disk, ditagih per resource."
+        self_host:
+          kicker: "Container sendiri"
+          description: "Container sendiri. Kamu pilih CPU, memori, dan disk."

@@ -62,4 +62,21 @@ RSpec.describe Resources::Shape do
       described_class::SERVICE_PRESETS.fetch(engine).each_value { |p| expect(described_class.new(**p)).to be_valid }
     end
   end
+
+  describe "DB_SHORTCUTS" do
+    it "holds the spec values" do
+      expect(described_class::DB_SHORTCUTS).to eq(
+        "small" => { cpu: 0.25, memory_mb: 256, disk_gb: 1 },
+        "standard" => { cpu: 0.5, memory_mb: 512, disk_gb: 5 },
+        "large" => { cpu: 1.0, memory_mb: 1024, disk_gb: 10 }
+      )
+    end
+
+    it "passes every engine except the 512 MB floors rejecting small" do
+      %w[postgres redis mariadb mysql mongodb].each do |engine|
+        ok = described_class::DB_SHORTCUTS.select { |_, v| described_class.new(**v).valid?(engine: engine) }.keys
+        expect(ok).to eq(%w[mysql mongodb].include?(engine) ? %w[standard large] : %w[small standard large])
+      end
+    end
+  end
 end
