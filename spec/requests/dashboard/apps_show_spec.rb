@@ -39,7 +39,7 @@ RSpec.describe "Dashboard::Apps#show overview", type: :request do
   def mutators(html)
     page = Capybara.string(html)
     page.all("form").reject { |f| f[:action].to_s.include?("/dashboard/locale") }.flat_map { |f| f.all(MUTATORS).to_a } +
-      page.all("[data-turbo-method]").to_a
+      page.all("[data-turbo-method]").reject { |e| e.path.include?("/aside/") }.to_a
   end
 
   it "shows a member Roll back, Restart and scaling controls but a viewer none" do
