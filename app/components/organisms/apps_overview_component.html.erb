@@ -1,0 +1,16 @@
+<%= render Molecules::PanelComponent.new(ticks: true) do %>
+  <section aria-label="<%= t("apps.overview.title") %>" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.15fr)_repeat(3,minmax(0,1fr))] [&>div]:min-w-0 [&>div]:flex [&>div]:flex-col [&>div]:gap-2 [&>div]:px-5 [&>div]:py-5 [&>div]:border-b [&>div]:border-line lg:[&>div]:border-b-0 lg:[&>div]:border-r lg:[&>div:last-child]:border-r-0">
+    <div>
+      <span class="font-mono text-[11px] uppercase tracking-[.12em] text-dim"><%= t("apps.overview.fleet") %></span>
+      <%= render Organisms::LightBoardComponent.new(mode: :fleet, data: fleet, label: board_label) %>
+    </div>
+    <%= render Molecules::ReadoutComponent.new(
+          label: t("apps.overview.running"),
+          value: safe_join([ running.to_s, content_tag(:small, " / #{total}", class: "text-dim text-[16px]") ]),
+          sub: (t("apps.overview.deploying", count: deploying) if deploying.to_i.positive?),
+          tone: :live) %>
+    <% readouts.each do |r| %>
+      <%= render Molecules::ReadoutComponent.new(label: r[:label], value: r[:value], sub: r[:sub]) %>
+    <% end %>
+  </section>
+<% end %>

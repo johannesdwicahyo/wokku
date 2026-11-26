@@ -42,3 +42,62 @@ id:
     available: "Wokku %{latest} sudah tersedia (kamu memakai %{current}). Untuk update, jalankan di server:"
   loading:
     default: "Memuat"
+  apps:
+    deploy_track:
+      title: "Deploy berjalan"
+      open_log: "Buka log"
+      started: "mulai %{ago}"
+      more:
+        one: "+%{count} lagi"
+        other: "+%{count} lagi"
+      stages:
+        push: "Push"
+        build: "Build"
+        release: "Release"
+        live: "Live"
+    fleet:
+      summary:
+        one: "%{count} proses: %{parts}"
+        other: "%{count} proses: %{parts}"
+      state:
+        running: "berjalan"
+        deploying: "deploy"
+        sleeping: "tidur"
+        crashed: "crash"
+        stopped: "berhenti"
+        created: "dibuat"
+    side:
+      title:
+        one: "Database · %{count}"
+        other: "Database · %{count}"
+      new: "Baru"
+      empty: "Belum ada database"
+      all: "Semua add-on →"
+      usage: "%{used} dari %{total}"
+    overview:
+      title: "Ringkasan"
+      fleet: "Armada · per proses"
+      running: "Berjalan"
+      deploying: "%{count} sedang deploy"
+    rack:
+      no_cpu: "Belum ada data CPU"
+      title:
+        one: "App · %{count}"
+        other: "App · %{count}"
+      sort: "Urut · deploy terakhir"
+      cols:
+        app: "App"
+        domain: "Domain"
+        size: "Ukuran"
+        cpu: "CPU · 1 j"
+        deployed: "Deploy"
+      note:
+        deploying: "deploy"
+        sleeping: "tidur, bangun saat dikunjungi"
+        crashed:
+          one: "crash %{count}× dalam 10 mnt"
+          other: "crash %{count}× dalam 10 mnt"
+      alert: "%{name} terus berhenti. Wokku sedang me-restart-nya."
+      alert_reason: "%{name} terus berhenti dengan \"%{reason}\". Wokku sedang me-restart-nya."
+      see_logs: "Lihat log"
+      never: "belum pernah"

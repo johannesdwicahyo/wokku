@@ -1,0 +1,1 @@
+<% if empty? %><span class="wk-bars text-muted" role="img" aria-label="<%= t("apps.rack.no_cpu") %>">—</span><% else %><span class="wk-bars inline-flex items-end gap-[2px] h-[18px]" role="img" aria-label="<%= label %>"><% values.each do |v| %><i class="block w-[3px] <%= bar_class(v) %>" style="height: <%= height(v) %>px"></i><% end %></span><% end %>

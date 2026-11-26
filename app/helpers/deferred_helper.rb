@@ -10,4 +10,13 @@ module DeferredHelper
       render(Molecules::SkeletonComponent.new(variant: skeleton))
     end
   end
+
+  # Seam (cloud) partials must not be able to 500 their host frame: log, report, skip.
+  def render_seam_partial(section)
+    render partial: section[:partial], locals: section[:locals] || {}
+  rescue StandardError => e
+    Rails.logger.error("seam partial #{section[:partial]} failed: #{e.class}: #{e.message}")
+    Sentry.capture_exception(e) if defined?(Sentry)
+    nil
+  end
 end

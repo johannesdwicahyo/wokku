@@ -5,7 +5,7 @@ module Dashboard
     include OnboardingTourable
     include Deferrable
 
-    deferred_sections :list, :activity, :panel_deploys, :panel_logs
+    deferred_sections :list, :side, :panel_deploys, :panel_logs
 
     rescue_from PlanEnforceable::AccountLimitError do |e|
       redirect_to new_dashboard_app_path, alert: e.message
@@ -24,7 +24,7 @@ module Dashboard
     def index
       # Instant shell: only the cheap existence check + the inline
       # "+ NEW APP" modal data. The heavy apps/box-usage/activity queries
-      # run in the deferred sections (load_list / load_activity).
+      # run in the deferred sections (load_list / load_side).
       @app       = AppRecord.new
       @servers   = policy_scope(Server)
       @has_apps  = policy_scope(AppRecord).main_apps.exists?
@@ -455,17 +455,26 @@ module Dashboard
     def load_list
       @apps = policy_scope(AppRecord).main_apps
                 .includes(:server, :team, :domains, dyno_allocations: :dyno_tier)
-                .order(created_at: :desc)
-      @plan = current_user.plan
-      @box_usage = compute_box_usage(@apps)
+                .order(created_at: :desc).to_a
+      @fleet = ::Apps::Fleet.for(@apps)
+      counts = ::Apps::Fleet.counts(@fleet)
+      @fleet_running = counts[:running].to_i
+      @fleet_total = counts.values.sum
+      @fleet_deploying = counts[:deploying].to_i
+      @readouts = Organisms::AppsOverviewComponent.readouts_for(view_context, current_team)
+      deploys = Deploy.in_progress_for(policy_scope(AppRecord).main_apps).to_a
+      @track_deploy = deploys.first
+      @track_more = [ deploys.size - 1, 0 ].max
+      @sparks = ::Apps::CpuSparks.for(@apps)
+      @last_deploys = Organisms::AppsRackComponent.last_deploys_for(@apps)
+      @crashes = Organisms::AppsRackComponent.crashes_for(@apps)
     end
 
-    def load_activity
-      app_ids = policy_scope(AppRecord).main_apps.pluck(:id)
-      @recent_activity = Activity.where(target_type: "AppRecord", target_id: app_ids)
-                                 .order(created_at: :desc).limit(10)
-    rescue StandardError
-      @recent_activity = []
+    def load_side
+      scope = policy_scope(DatabaseService)
+      @side_total = scope.count
+      @side_databases = scope.order(:name).limit(Organisms::AppsSideComponent::MAX).to_a
+      @side_sections = Organisms::AppsSideComponent.sections_for(view_context, current_team)
     end
 
     # Panel-section loaders. Re-scope from params[:app_id] (a query param on
@@ -491,17 +500,6 @@ module Dashboard
     rescue => e
       Rails.logger.warn "Failed to fetch panel logs for #{app.name}: #{e.message}"
       []
-    end
-
-    def compute_box_usage(apps)
-      usage = Hash.new(0)
-      apps.each do |app|
-        app.dyno_allocations.each do |alloc|
-          size = alloc.dyno_tier&.size_key
-          usage[size] += alloc.count if size
-        end
-      end
-      usage
     end
 
     def set_app

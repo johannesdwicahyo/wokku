@@ -45,7 +45,7 @@ module ApplicationHelper
   # The user-facing box vocabulary (sleeping/small/medium/large/xlarge) for
   # tier-backed allocations, or the "0.5 vCPU · 1 GB" shape label for
   # per-resource-shape allocations (dyno_tier nil) — see
-  # DynoAllocation#size_label. Shared by AppsTableComponent's SIZE column
+  # DynoAllocation#size_label. Shared by AppsRackComponent's size column
   # and the record panel so both stay in sync with one source of truth.
   def box_label_for(app)
     alloc = app.dyno_allocations.find { |d| d.process_type == "web" }

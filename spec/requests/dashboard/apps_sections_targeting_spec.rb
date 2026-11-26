@@ -28,3 +28,20 @@ RSpec.describe "Dashboard::Apps deferred section targeting", type: :request do
     expect(response.body).to match(/<turbo-frame[^>]*id="apps_list"[^>]*target="_top"/)
   end
 end
+
+RSpec.describe "Dashboard::Apps index shell", type: :request do
+  include Devise::Test::IntegrationHelpers
+
+  before { sign_in users(:one) }
+
+  it "renders apps_list and apps_side frames, no activity frame, no page h1" do
+    get dashboard_apps_path
+    expect(response.body).to include('id="apps_list"').and include('id="apps_side"')
+    expect(response.body).not_to include("apps_activity")
+  end
+
+  it "keeps src on the list frame so the deploy log's frame reload works" do
+    get dashboard_apps_path
+    expect(response.body).to match(/<turbo-frame[^>]*id="apps_list"[^>]*src="[^"]*sections\/list/).or match(/<turbo-frame[^>]*src="[^"]*sections\/list[^"]*"[^>]*id="apps_list"/)
+  end
+end

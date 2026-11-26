@@ -6,7 +6,7 @@ export default class extends Controller {
   // it to NaN, which made the ActionCable subscription params invalid
   // and the DeployChannel#subscribed callback raise RecordNotFound —
   // so no log line ever streamed back to the page.
-  static values = { deployId: String }
+  static values = { deployId: String, reloadFrame: String }
   static targets = ["output", "statusBadge"]
 
   connect() {
@@ -47,11 +47,22 @@ export default class extends Controller {
         this.outputTarget.textContent = ""
       }
       this.outputTarget.textContent += text
+      // Track on the apps overview: keep the box to the last 12 lines.
+      if (this.reloadFrameValue) {
+        this.outputTarget.textContent = this.outputTarget.textContent.replace(/\n$/, "").split("\n").slice(-12).join("\n")
+      }
       this.outputTarget.scrollTop = this.outputTarget.scrollHeight
     }
   }
 
   updateStatus(status) {
+    if (this.reloadFrameValue) {
+      // Only the list frame reloads (no lost scroll); fall back to the page.
+      const frame = document.getElementById(this.reloadFrameValue)
+      if (frame && typeof frame.reload === "function") frame.reload()
+      else window.location.reload()
+      return
+    }
     if (this.hasStatusBadgeTarget) {
       // Reload to render the canonical badge ERB so colors / icons /
       // sub-states stay in sync with the show view's case branches —

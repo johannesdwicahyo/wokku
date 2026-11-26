@@ -1,4 +1,5 @@
-<% content_for :title, "Apps" %>
+<% content_for :title, t("dashboard.apps.title") %>
+<h1 class="sr-only"><%= t("dashboard.apps.title") %></h1>
 <% if @deletion %>
   <%= turbo_stream_from ::Apps::DeletionProgress.stream(@deleting_id) %>
   <%= render Organisms::AppDeletionProgressComponent.new(app_id: @deleting_id, progress: @deletion) %>
@@ -15,27 +16,18 @@
     <% end %>
   </div>
 
-  <%# Slide-panel scope so the "+ NEW APP" button can dispatch
-      click->slide-panel#open (consistent with databases / admin/servers). %>
+  <%# Slide-panel scope for the new-app form (the top bar's "New app" links
+      to /new; kept for slide-panel#open dispatchers). %>
   <div data-controller="slide-panel">
     <% if @has_apps %>
-      <div>
-        <div class="flex items-center justify-between mb-5">
-          <h1 class="font-headline text-2xl font-extrabold tracking-tight"><%= t("dashboard.apps.title") %></h1>
-          <%= render Atoms::ButtonComponent.new(variant: :primary, size: :sm, href: new_dashboard_app_path,
-                data: { action: "click->slide-panel#open" }) do %><%= t("dashboard.apps.new_app") %><% end %>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
-          <%# target: "_top" — the table links inside this frame must do
-              full-page visits, not navigate within the frame. %>
-          <%= deferred_section "apps_list",
-                src: sections_dashboard_apps_path(section: :list),
-                skeleton: :table, target: "_top" %>
-          <%= deferred_section "apps_activity",
-                src: sections_dashboard_apps_path(section: :activity),
-                skeleton: :card %>
-        </div>
+      <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start">
+        <%# target: "_top" — rack links inside this frame must do full-page visits. %>
+        <%= deferred_section "apps_list",
+              src: sections_dashboard_apps_path(section: :list),
+              skeleton: :table, target: "_top" %>
+        <%= deferred_section "apps_side",
+              src: sections_dashboard_apps_path(section: :side),
+              skeleton: :card, target: "_top" %>
       </div>
     <% else %>
       <%# Zero apps → first-deploy onboarding chooser (instant, no defer). %>

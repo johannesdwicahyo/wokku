@@ -1,0 +1,38 @@
+<%= render Molecules::PanelComponent.new(ticks: true) do %>
+  <div class="flex items-center justify-between px-[18px] py-3 border-b border-line font-mono text-[11px] uppercase tracking-[.12em] text-muted">
+    <h2 class="font-normal"><%= t("apps.rack.title", count: apps.size) %></h2>
+    <span><%= t("apps.rack.sort") %></span>
+  </div>
+  <div class="hidden lg:grid <%= GRID %> gap-4 px-[18px] py-2.5 border-b border-line font-mono text-[11px] uppercase tracking-[.12em] text-muted" aria-hidden="true">
+    <span></span><span><%= t("apps.rack.cols.app") %></span><span><%= t("apps.rack.cols.domain") %></span><span><%= t("apps.rack.cols.size") %></span><span><%= t("apps.rack.cols.cpu") %></span><span class="text-right"><%= t("apps.rack.cols.deployed") %></span><span></span>
+  </div>
+  <div class="flex flex-col">
+    <% apps.each do |app| %>
+      <% bad = crashed?(app) %>
+      <%= link_to dashboard_app_path(app),
+            data: { rack_unit: app.name, action: "click->record-panel#show", record_panel_src_param: panel_dashboard_app_path(app) },
+            class: "grid #{GRID} gap-4 items-center px-[18px] py-3.5 border-t border-line first:border-t-0 hover:bg-white/[.025] transition-colors #{'bg-danger-soft' if bad}" do %>
+        <%= render Atoms::StatusLightComponent.new(state: app.status, size: 10) %>
+        <span class="min-w-0">
+          <b class="block font-medium truncate <%= bad ? "text-bad-text" : "text-ink" %>"><%= app.name %></b>
+          <% if (n = note(app)) %><span class="block text-[12px] text-muted"><%= n %></span><% end %>
+        </span>
+        <span class="hidden lg:block truncate text-[13px] text-ink-soft"><%= primary_domain(app) || "—" %></span>
+        <span class="hidden lg:block whitespace-nowrap truncate font-mono text-[12px] text-muted" title="<%= box_label_for(app) %>"><%= box_label_for(app) %></span>
+        <%= render Atoms::LightBarsComponent.new(values: sparks[app.id], label: cpu_label(app)) %>
+        <span class="hidden lg:block whitespace-nowrap truncate text-right font-mono text-[12px] text-muted" title="<%= deployed_label(app) %>"><%= deployed_label(app) %></span>
+        <span class="text-muted text-right" aria-hidden="true">›</span>
+      <% end %>
+    <% end %>
+    <%= link_to new_dashboard_app_path, data: { turbo_frame: "_top" },
+          class: "flex items-center gap-3 px-[18px] py-3.5 border-t border-dashed border-line-strong text-[13px] text-muted hover:text-ink" do %>
+      <span class="inline-block w-2.5 h-2.5 bg-live" aria-hidden="true"></span><%= t("dashboard.apps.new_app") %>
+    <% end %>
+  </div>
+  <% alerts.each do |app| %>
+    <div class="flex flex-wrap items-center gap-3 px-[18px] py-3 border-t border-danger/30 bg-danger-soft text-[13px] text-bad-text">
+      <span class="w-2.5 h-2.5 bg-danger shrink-0" aria-hidden="true"></span><span class="min-w-0 flex-1 break-words"><%= alert_text(app) %></span>
+      <%= link_to t("apps.rack.see_logs"), dashboard_app_logs_path(app), class: "ml-auto underline underline-offset-4" %>
+    </div>
+  <% end %>
+<% end %>
