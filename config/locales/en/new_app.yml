@@ -1,7 +1,9 @@
 en:
   new_app:
     created: "App created successfully."
+    building: "Building %{url}…"
     errors:
+      dedicated_failed: "App created, but dedicated %{engine} could not be provisioned: %{message}"
       account_limit: "That size is over your account limit. Add credit on the Billing page to go higher."
       plan_quota: "Your %{plan} plan allows %{allowed} %{size} boxes; you already have %{used}. Upgrade or pick a smaller size."
       repo_required: "Choose a GitHub repository to deploy from."

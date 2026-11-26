@@ -141,13 +141,4 @@ RSpec.describe "Dashboard::Apps (Bundle v2 create)", type: :request do
       end
     end
   end
-
-  # Read-path: the box picker must reflect REMAINING quota, not just whether
-  # the plan grants the size. Regression test for the "UI offers a size that
-  # create rejects" bug — a plan-granted size you've fully used must render
-  # disabled, matching enforce_plan_quota!.
-  describe "GET /dashboard/apps/new (box picker honors remaining quota)" do
-    before { allow(Addons::SharedProvisioner).to receive(:feature_enabled?).and_return(true) }
-
-  end
 end

@@ -25,13 +25,7 @@ module Dashboard
       # Instant shell: only the cheap existence check + the inline
       # "+ NEW APP" modal data. The heavy apps/box-usage/activity queries
       # run in the deferred sections (load_list / load_side).
-      @app       = AppRecord.new
-      @servers   = policy_scope(Server)
       @has_apps  = policy_scope(AppRecord).main_apps.exists?
-      # Per-size remaining-quota snapshot for the new-app modal's box picker.
-      # Shares one source of truth with enforce_plan_quota! so the form never
-      # offers a size that `create` would reject.
-      @box_quota = box_picker_state(current_user)
       @deleting_id = params[:deleting].presence
       @deletion = ::Apps::DeletionProgress.for(@deleting_id, current_user) if @deleting_id
     end
@@ -162,7 +156,8 @@ module Dashboard
       repo_url = nil
       if source == "github" && current_user.github_installation_id.present?
         github_repo = params[:github_repo].to_s.strip
-        unless github_repo.match?(%r{\A[\w.-]+/[\w.-]+\z})
+        unless github_repo.match?(%r{\A[\w.-]+/[\w.-]+\z}) &&
+               GithubApp.repo_owned_by_installation?(github_repo, current_user.github_installation_id)
           @app.errors.add(:base, t("new_app.errors.repo_required"))
           return render_new
         end
@@ -212,7 +207,7 @@ module Dashboard
           begin
             DatabaseServiceUpgrade.call(app: @app, user: current_user, engine: dedicated_db_engine)
           rescue UpgradeError => e
-            flash[:warning] = "App created, but dedicated #{dedicated_db_engine} could not be provisioned: #{e.message}"
+            flash[:warning] = t("new_app.errors.dedicated_failed", engine: dedicated_db_engine, message: e.message)
           end
         end
 
@@ -220,7 +215,7 @@ module Dashboard
           begin
             DatabaseServiceUpgrade.call(app: @app, user: current_user, engine: "redis")
           rescue UpgradeError => e
-            flash[:warning] = "App created, but dedicated Redis could not be provisioned: #{e.message}"
+            flash[:warning] = t("new_app.errors.dedicated_failed", engine: "Redis", message: e.message)
           end
         end
 
@@ -246,7 +241,7 @@ module Dashboard
           deploy = @app.deploys.create!(status: :pending)
           @app.releases.create!(deploy: deploy, description: "Deploy from #{repo_url}".truncate(200))
           RepoUrlDeployJob.perform_later(app_id: @app.id, deploy_id: deploy.id, url: repo_url, branch: @app.deploy_branch.presence || "main")
-          return redirect_to dashboard_app_deploy_path(@app, deploy), notice: "Building #{repo_url}…"
+          return redirect_to dashboard_app_deploy_path(@app, deploy), notice: t("new_app.building", url: repo_url)
         end
         # TODO: extract this first-app analytics guard to a shared concern at a 3rd callsite.
         # Activation-funnel "started" signal — fires on the user's first app (generic create has no deploy queued yet; the template path does).
@@ -571,6 +566,7 @@ module Dashboard
     # Posted add-on rows: six fields each, blanks for unused ones.
     def addon_rows
       Array(params[:addons]).filter_map do |r|
+        next unless r.respond_to?(:to_unsafe_h) || r.is_a?(Hash)
         r = r.respond_to?(:to_unsafe_h) ? r.to_unsafe_h : r.to_h
         row = r.slice(*ADDON_KEYS).transform_values(&:presence).compact
         row if row["kind"]
@@ -589,8 +585,9 @@ module Dashboard
     # first deploy the way a push webhook does. nil when GitHub can't be reached
     # or the branch has no commit; the app itself stays created.
     def start_github_deploy(repo, branch)
-      GithubRepos.connect(@app, repo, branch)
+      return unless @app.server&.connected? # like handle_push: no orphaned pending deploys
       installation_id = current_user.github_installation_id
+      return unless GithubRepos.connect(@app, repo, branch, installation_id: installation_id)
       sha = GithubRepos.head_sha(installation_id, repo, branch) or return
       deploy = @app.deploys.create!(status: :pending, commit_sha: sha)
       @app.releases.create!(version: (@app.releases.maximum(:version) || 0) + 1, deploy: deploy, description: "Deploy from #{repo}".truncate(200))

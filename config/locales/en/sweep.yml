@@ -69,7 +69,6 @@ en:
     templates_sub: "deploy production-ready stacks in seconds — pick from curated stacks or browse by use case"
     featured: "featured"
     curated_picks: "curated picks"
-    git_repo_label: "Public Git repository (optional)"
     advanced: "Advanced"
     create_app: "Create App"
     resize_anytime: "Resize anytime from the app's Resources page."

@@ -50,13 +50,12 @@ module Dashboard
       repo = params[:repo]
       branch = params[:branch] || "main"
 
-      # The repo must belong to the caller's own GitHub App installation, or
-      # anyone could bind another tenant's private repo and receive its code.
-      unless GithubApp.repo_owned_by_installation?(repo, current_user.github_installation_id)
+      # connect refuses (writes nothing) unless the repo belongs to the caller's
+      # own GitHub App installation: otherwise anyone could bind another
+      # tenant's private repo and receive its code.
+      unless GithubRepos.connect(@app, repo, branch, installation_id: current_user.github_installation_id)
         return redirect_to dashboard_app_releases_path(@app), alert: t("dashboard.github.repo_not_owned")
       end
-
-      GithubRepos.connect(@app, repo, branch)
 
       redirect_to dashboard_app_releases_path(@app), notice: "Connected to #{repo} (#{branch})"
     end

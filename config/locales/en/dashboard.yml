@@ -63,9 +63,6 @@ en:
       domains: "Domains"
       deploys: "Deploys"
       logs: "Logs"
-      box_size_label: "Box Size"
-      shared_addons_label: "Free Shared Add-ons"
-      dedicated_addons_label: "Dedicated Add-ons (Optional)"
       panel:
         open_full: "Open full page"
         close: "Close"

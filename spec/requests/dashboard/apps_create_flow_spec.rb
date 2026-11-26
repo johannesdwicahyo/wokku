@@ -47,6 +47,7 @@ RSpec.describe "POST /dashboard/apps (Phase 5 create flow)", type: :request do
 
   it "connects the repo and enqueues the first deploy for source=github" do
     user.update!(github_installation_id: 7)
+    allow(GithubApp).to receive(:repo_owned_by_installation?).and_return(true)
     allow(GithubRepos).to receive(:head_sha).with(7, "me/repo", "main").and_return("a" * 40)
     expect {
       post_app("flowgh", source: "github", github_repo: "me/repo", github_branch: "main",
@@ -55,6 +56,44 @@ RSpec.describe "POST /dashboard/apps (Phase 5 create flow)", type: :request do
     app = AppRecord.find_by!(name: "flowgh")
     expect(app.github_repo_full_name).to eq("me/repo")
     expect(response).to redirect_to(dashboard_app_deploy_path(app, app.deploys.first))
+  end
+
+  it "refuses a repo owned by another installation: 422, nothing connected" do
+    user.update!(github_installation_id: 7)
+    allow(GithubApp).to receive(:repo_owned_by_installation?).with("victim/private", 7).and_return(false)
+    post_app("flowvictim", source: "github", github_repo: "victim/private", github_branch: "main")
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(AppRecord.find_by(name: "flowvictim")).to be_nil
+  end
+
+  it "keeps the app and warns (no 500) when GitHub is misconfigured after save" do
+    user.update!(github_installation_id: 7)
+    allow(GithubApp).to receive(:repo_owned_by_installation?).and_return(true)
+    allow(GithubApp).to receive(:configured?).and_return(false)
+    post_app("flowmisconf", source: "github", github_repo: "me/repo", github_branch: "main")
+    expect(AppRecord.find_by!(name: "flowmisconf")).to be_present
+    expect(response).to redirect_to(dashboard_app_path(AppRecord.find_by!(name: "flowmisconf")))
+    expect(flash[:warning]).to be_present
+  end
+
+  it "rescues JWT/key errors in head_sha" do
+    allow(GithubApp).to receive(:configured?).and_return(true)
+    allow(GithubApp).to receive(:new).and_raise(OpenSSL::PKey::PKeyError)
+    expect(GithubRepos.head_sha(7, "me/repo", "main")).to be_nil
+  end
+
+  it "skips the first deploy with a warning when the server is disconnected" do
+    user.update!(github_installation_id: 7)
+    allow(GithubApp).to receive(:repo_owned_by_installation?).and_return(true)
+    allow_any_instance_of(Server).to receive(:connected?).and_return(false)
+    expect { post_app("flowdisc", source: "github", github_repo: "me/repo", github_branch: "main") }
+      .not_to have_enqueued_job(GithubDeployJob)
+    expect(flash[:warning]).to be_present
+  end
+
+  it "does not 500 on a non-hash addons param" do
+    post_app("flowjunk", source: "git", addons: "x")
+    expect(response).to redirect_to(dashboard_app_path(AppRecord.find_by!(name: "flowjunk")))
   end
 
   it "ignores hidden github fields when source=git" do
