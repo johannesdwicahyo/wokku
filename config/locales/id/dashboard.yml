@@ -267,6 +267,8 @@ id:
         when: "Waktu"
         actions: "Aksi"
     github:
+      install_connected: "GitHub terhubung."
+      install_refused: "Koneksi GitHub gagal. Pasang atau atur ulang Wokku GitHub App, lalu coba lagi dalam beberapa menit."
       repo_not_owned: "Repositori itu tidak ada di instalasi GitHub App kamu. Beri Wokku GitHub App akses ke repo itu di GitHub, lalu coba lagi."
     previews:
       heading: "Preview PR"

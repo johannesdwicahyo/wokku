@@ -6,8 +6,26 @@ RSpec.describe "Github::CallbacksController", type: :request do
   include Devise::Test::IntegrationHelpers
 
   let(:user) { users(:one) }
+  let(:json) { { "Content-Type" => "application/json" } }
 
-  before { sign_in user }
+  before do
+    sign_in user
+    allow(GithubApp).to receive(:configured?).and_return(true)
+    allow(GithubApp).to receive(:jwt).and_return("app-jwt")
+  end
+
+  def stub_installation(id, updated_at: 2.minutes.ago, login: "octocat")
+    stub_request(:get, "https://api.github.com/app/installations/#{id}")
+      .with(headers: { "Authorization" => "Bearer app-jwt" })
+      .to_return(status: 200, headers: json,
+                 body: { id: id, account: { login: login },
+                         created_at: 1.year.ago.iso8601, updated_at: updated_at.iso8601 }.to_json)
+  end
+
+  def expect_refused
+    expect(response).to redirect_to(dashboard_apps_path)
+    expect(flash[:alert]).to eq(I18n.t("dashboard.github.install_refused"))
+  end
 
   it "redirects to sign in when unauthenticated" do
     sign_out user
@@ -15,36 +33,87 @@ RSpec.describe "Github::CallbacksController", type: :request do
     expect(response).to be_redirect
   end
 
-  it "stores installation id when provided" do
+  it "saves a freshly created/updated installation with the account login" do
+    stub_installation(42)
+    get github_callback_path, params: { installation_id: "42" }
+    expect(response).to redirect_to(dashboard_apps_path)
+    expect(flash[:notice]).to eq(I18n.t("dashboard.github.install_connected"))
+    expect(user.reload.github_installation_id).to eq(42)
+    expect(user.github_username).to eq("octocat")
+  end
+
+  it "refuses an installation not touched in the last 15 minutes (guessed id)" do
+    stub_installation(42, updated_at: 20.minutes.ago)
+    expect { get github_callback_path, params: { installation_id: "42" } }
+      .not_to(change { user.reload.attributes })
+    expect_refused
+  end
+
+  it "refuses an installation id another Wokku user holds" do
+    create(:user, github_installation_id: 42)
+    stub_installation(42)
+    get github_callback_path, params: { installation_id: "42" }
+    expect_refused
+    expect(user.reload.github_installation_id).not_to eq(42)
+  end
+
+  it "lets the current user re-save their own installation" do
+    user.update!(github_installation_id: 42)
+    stub_installation(42)
+    get github_callback_path, params: { installation_id: "42" }
+    expect(flash[:notice]).to eq(I18n.t("dashboard.github.install_connected"))
+  end
+
+  it "refuses missing, non-numeric, zero and negative ids" do
+    [ nil, "abc", "0", "-5", "42abc" ].each do |bad|
+      get github_callback_path, params: { installation_id: bad }.compact
+      expect_refused
+    end
+    expect(user.reload.github_installation_id).to be_nil
+  end
+
+  it "refuses when GitHub errors (unknown installation)" do
+    stub_request(:get, "https://api.github.com/app/installations/42").to_return(status: 404)
+    get github_callback_path, params: { installation_id: "42" }
+    expect_refused
+    expect(user.reload.github_installation_id).to be_nil
+  end
+
+  it "refuses when the GitHub App isn't configured" do
     allow(GithubApp).to receive(:configured?).and_return(false)
-    get github_callback_path, params: { installation_id: "99999" }
-    expect(response).to redirect_to(dashboard_apps_path)
-    expect(user.reload.github_installation_id.to_i).to eq(99999)
-  end
-
-  it "persists fetched github username when GithubApp is configured" do
-    owner = OpenStruct.new(login: "octocat")
-    repo = OpenStruct.new(owner: owner)
-    repos = OpenStruct.new(repositories: [ repo ])
-    allow(GithubApp).to receive(:configured?).and_return(true)
-    allow_any_instance_of(GithubApp).to receive(:repos).and_return(repos)
-
     get github_callback_path, params: { installation_id: "42" }
-    expect(user.reload.github_username).to eq("octocat")
+    expect_refused
   end
 
-  it "swallows GithubApp errors and still persists installation_id" do
-    allow(GithubApp).to receive(:configured?).and_return(true)
-    allow_any_instance_of(GithubApp).to receive(:repos).and_raise(StandardError, "api down")
+  context "with a user-authorization code and OAuth configured" do
+    before do
+      stub_const("GithubApp::CLIENT_ID", "cid")
+      stub_const("GithubApp::CLIENT_SECRET", "csecret")
+      stub_request(:post, "https://github.com/login/oauth/access_token")
+        .to_return(status: 200, headers: json, body: { access_token: "user-token" }.to_json)
+    end
 
-    get github_callback_path, params: { installation_id: "42" }
-    expect(user.reload.github_installation_id.to_i).to eq(42)
-    expect(user.github_username).to be_nil
-  end
+    def stub_user_installations(*ids)
+      stub_request(:get, %r{\Ahttps://api.github.com/user/installations})
+        .with(headers: { "Authorization" => "token user-token" })
+        .to_return(status: 200, headers: json,
+                   body: { total_count: ids.size, installations: ids.map { |i| { id: i } } }.to_json)
+    end
 
-  it "shows alert when installation_id is missing" do
-    get github_callback_path
-    expect(response).to redirect_to(dashboard_apps_path)
-    expect(flash[:alert]).to match(/failed/i)
+    it "saves an installation the user can access, even if it is old" do
+      stub_installation(42, updated_at: 1.year.ago)
+      stub_user_installations(7, 42)
+      get github_callback_path, params: { installation_id: "42", code: "abc" }
+      expect(user.reload.github_installation_id).to eq(42)
+      expect(user.github_username).to eq("octocat")
+    end
+
+    it "refuses an installation the user can't access, even if it is fresh" do
+      stub_installation(42)
+      stub_user_installations(7)
+      get github_callback_path, params: { installation_id: "42", code: "abc" }
+      expect_refused
+      expect(user.reload.github_installation_id).to be_nil
+    end
   end
 end

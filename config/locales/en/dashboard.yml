@@ -267,6 +267,8 @@ en:
         when: "When"
         actions: "Actions"
     github:
+      install_connected: "GitHub connected."
+      install_refused: "GitHub connection failed. Install or configure the Wokku GitHub App again, then retry within a few minutes."
       repo_not_owned: "That repository isn't in your GitHub App installation. Grant the Wokku GitHub App access to it on GitHub, then try again."
     previews:
       heading: "PR previews"
