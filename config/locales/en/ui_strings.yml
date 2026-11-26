@@ -56,6 +56,27 @@ en:
       empty: "No databases yet"
       all: "All add-ons →"
       usage: "%{used} of %{total}"
+    detail:
+      delimiter: ","
+      none: "—"
+      board:
+        processes: "Processes · %{count} running"
+        release: "Release"
+        live_for: "live for %{duration}"
+        response: "Response · p95"
+        response_sub: "last hour"
+        errors: "Errors · 5xx"
+        errors_sub: "%{err} of %{req} requests"
+        label: "App status"
+      metrics:
+        title: "Metrics · last 24 h"
+        cpu: "CPU"
+        memory: "Memory"
+        requests: "Requests"
+        series: "%{name}, last 24 hours"
+        memory_now: "%{used} of %{limit} MB"
+        per_min: "%{n} / min"
+        now: "now"
     overview:
       title: "Overview"
       fleet: "Fleet · per process"

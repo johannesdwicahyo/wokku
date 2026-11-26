@@ -1,0 +1,16 @@
+<%= render Molecules::PanelComponent.new(label: t("apps.detail.metrics.title")) do %>
+  <div class="divide-y divide-line">
+    <% rows.each do |r| %>
+      <div class="px-5 py-4 flex flex-col gap-2">
+        <div class="flex items-baseline justify-between">
+          <span class="font-mono text-[11px] uppercase tracking-[.12em] text-dim"><%= r[:name] %></span>
+          <span class="text-ink tabular-nums text-[13px]"><%= r[:now] %></span>
+        </div>
+        <%= render Atoms::LightBarsComponent.new(values: r[:values], label: r[:label], max: r[:max]) %>
+        <div class="flex justify-between font-mono text-[11px] text-dim tabular-nums" aria-hidden="true">
+          <% ticks.each do |t| %><span><%= t %></span><% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>

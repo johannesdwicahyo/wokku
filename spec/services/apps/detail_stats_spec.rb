@@ -25,6 +25,16 @@ RSpec.describe Apps::DetailStats do
     expect(stats[:cpu_now]).to eq 40.0
   end
 
+  it "reports last_metric_at and drops stale memory for a stopped app" do
+    expect(described_class.for(app, now: now)[:last_metric_at]).to be_nil
+    metric(now - 3.hours, 40)
+    app.update_columns(status: AppRecord.statuses[:stopped], live_mem_used_mb: 99)
+    expect(described_class.for(app, now: now)[:last_metric_at]).to eq now - 3.hours
+    expect(described_class.for(app, now: now)[:mem_now_mb]).to be_nil
+    app.update_columns(status: AppRecord.statuses[:running])
+    expect(described_class.for(app, now: now)[:mem_now_mb]).to eq 99
+  end
+
   it "fills hours that only exist in MetricHourly" do
     MetricHourly.create!(app_record: app, hour_start: (now - 20.hours).beginning_of_hour, avg_cpu_percent: 12, sample_count: 5)
     expect(stats[:cpu][3]).to eq 12.0

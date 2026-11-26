@@ -74,6 +74,27 @@ id:
       empty: "Belum ada database"
       all: "Semua add-on →"
       usage: "%{used} dari %{total}"
+    detail:
+      delimiter: "."
+      none: "—"
+      board:
+        processes: "Proses · %{count} berjalan"
+        release: "Rilis"
+        live_for: "live selama %{duration}"
+        response: "Respons · p95"
+        response_sub: "satu jam terakhir"
+        errors: "Error · 5xx"
+        errors_sub: "%{err} dari %{req} permintaan"
+        label: "Status app"
+      metrics:
+        title: "Metrik · 24 jam terakhir"
+        cpu: "CPU"
+        memory: "Memori"
+        requests: "Permintaan"
+        series: "%{name}, 24 jam terakhir"
+        memory_now: "%{used} dari %{limit} MB"
+        per_min: "%{n} / mnt"
+        now: "sekarang"
     overview:
       title: "Ringkasan"
       fleet: "Armada · per proses"

@@ -15,13 +15,16 @@ module Apps
     def call
       start = @now.beginning_of_hour - (HOURS - 1).hours
       cpu, mem, limit = metric_series(start)
-      last = Metric.where(app_record_id: @app.id).order(recorded_at: :desc).pick(:cpu_percent, :memory_usage, :memory_limit)
+      last = Metric.where(app_record_id: @app.id).order(recorded_at: :desc).pick(:cpu_percent, :memory_usage, :memory_limit, :recorded_at)
       req, rpm_now, p95, hour_reqs, hour_5xx = request_stats(start)
-      mem_now = @app.live_mem_used_mb || (last && last[1] && (last[1] / MB).round)
+      fresh = last && last[3] && last[3] >= @now - 1.hour
+      # Heartbeat memory only counts while running; a stopped app must not show stale "now" numbers.
+      mem_now = (@app.running? && @app.live_mem_used_mb) || (fresh && last[1] && (last[1] / MB).round) || nil
       lim = limit || (last && last[2] && last[2] / MB)
       {
         cpu: cpu, mem: mem, req: req,
         cpu_now: last&.first&.to_f,
+        last_metric_at: last && last[3],
         mem_now_mb: mem_now&.to_i,
         mem_limit_mb: lim&.round,
         rpm_now: rpm_now,
