@@ -1,5 +1,12 @@
+<% if mode == :text %>
+<canvas class="block w-full h-16" role="img" aria-label="<%= label %>"
+        data-controller="light-board"
+        data-light-board-mode-value="text"
+        data-light-board-text-value="<%= data %>"></canvas>
+<% else %>
 <canvas class="block w-full h-16" aria-hidden="true"
         data-controller="light-board"
         data-light-board-mode-value="<%= mode %>"
         data-light-board-data-value="<%= data.to_json %>"></canvas>
 <span class="sr-only"><%= label %></span>
+<% end %>

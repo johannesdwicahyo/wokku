@@ -1,10 +1,13 @@
 module Organisms
-  # Canvas light board (Phase 3: fleet mode only). The canvas is decorative;
+  # Canvas light board (fleet mode; text mode = 5x7 dot-matrix of a name). The canvas is decorative;
   # `label` is the screen-reader summary. data-light-board-data-value is the
   # JSON of Apps::Fleet.for(apps) entries; the controller reads each `states`.
   class LightBoardComponent < ApplicationComponent
+    MODES = %i[fleet text].freeze
+
     def initialize(data:, label:, mode: :fleet)
-      @mode = mode
+      @mode = mode.to_sym
+      raise ArgumentError, "unknown light board mode: #{mode.inspect}" unless MODES.include?(@mode)
       @data = data
       @label = label
     end

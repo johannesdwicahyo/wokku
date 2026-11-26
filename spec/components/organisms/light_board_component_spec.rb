@@ -22,4 +22,18 @@ RSpec.describe Organisms::LightBoardComponent, type: :component do
   it "is empty for an empty fleet" do
     expect(described_class.fleet_label({})).to eq("")
   end
+
+  it "renders text mode as an img canvas with the name in a text value" do
+    render_inline(described_class.new(mode: :text, data: "my-app.1", label: "App name preview: my-app.1"))
+    canvas = page.find("canvas[data-controller='light-board']")
+    expect(canvas["data-light-board-mode-value"]).to eq("text")
+    expect(canvas["data-light-board-text-value"]).to eq("my-app.1")
+    expect(canvas["role"]).to eq("img")
+    expect(canvas["aria-label"]).to eq("App name preview: my-app.1")
+    expect(canvas["aria-hidden"]).to be_nil
+  end
+
+  it "rejects an unknown mode" do
+    expect { described_class.new(mode: :bogus, data: [], label: "x") }.to raise_error(ArgumentError)
+  end
 end

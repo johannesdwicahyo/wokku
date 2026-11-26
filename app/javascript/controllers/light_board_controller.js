@@ -6,8 +6,25 @@ import { Controller } from "@hotwired/stimulus"
 const C = { live: "34,197,94", ink: "238,241,236", muted: "142,150,141", bad: "240,68,56", dim: "93,101,92" }
 const MAX = 10, MIN = 4, MIN_H = 64, FRAME_MS = 100
 
+// 5x7 dot-matrix glyphs (text mode): 7 rows of 5 bits, MSB = left column.
+const GLYPHS = {
+  a: [0,0,14,1,15,17,15], b: [16,16,22,25,17,17,30], c: [0,0,14,16,16,17,14], d: [1,1,13,19,17,17,15],
+  e: [0,0,14,17,31,16,14], f: [6,9,8,28,8,8,8], g: [0,15,17,17,15,1,14], h: [16,16,22,25,17,17,17],
+  i: [4,0,12,4,4,4,14], j: [2,0,6,2,2,18,12], k: [16,16,18,20,24,20,18], l: [12,4,4,4,4,4,14],
+  m: [0,0,26,21,21,17,17], n: [0,0,22,25,17,17,17], o: [0,0,14,17,17,17,14], p: [0,30,17,17,30,16,16],
+  q: [0,15,17,17,15,1,1], r: [0,0,22,25,16,16,16], s: [0,0,15,16,14,1,30], t: [8,8,28,8,8,9,6],
+  u: [0,0,17,17,17,19,13], v: [0,0,17,17,17,10,4], w: [0,0,17,17,21,21,10], x: [0,0,17,10,4,10,17],
+  y: [0,17,17,17,15,1,14], z: [0,0,31,2,4,8,31],
+  0: [14,17,19,21,25,17,14], 1: [4,12,4,4,4,4,14], 2: [14,17,1,2,4,8,31], 3: [31,2,4,2,1,17,14],
+  4: [2,6,10,18,31,2,2], 5: [31,16,30,1,1,17,14], 6: [6,8,16,30,17,17,14], 7: [31,1,2,4,8,8,8],
+  8: [14,17,17,14,17,17,14], 9: [14,17,17,15,1,2,12],
+  "-": [0,0,0,31,0,0,0], ".": [0,0,0,0,0,12,12], "…": [0,0,0,0,0,0,21]
+}
+const BLANK = [0, 0, 0, 0, 0, 0, 0], T_MIN = 3, T_MAX = 10
+
 export default class extends Controller {
-  static values = { mode: String, data: Array }
+  // text mode reads `text` (String, <= 30 chars of [a-z0-9-.]); fleet reads `data`.
+  static values = { mode: String, data: Array, text: String }
 
   connect() {
     this.dpr = Math.min(window.devicePixelRatio || 1, 1.75)
@@ -28,6 +45,11 @@ export default class extends Controller {
     this.stopLoop()
   }
 
+  get isText() { return this.modeValue === "text" }
+
+  // Live re-draw when the name changes (text mode).
+  textValueChanged() { if (this.g && this.isText) this.draw(0) }
+
   get reduced() { return this.mq.matches }
 
   // Only deploying (blink) and crashed (blink) lights animate; a board of
@@ -40,7 +62,7 @@ export default class extends Controller {
   // Otherwise observe visibility and run the throttled loop.
   motionChanged = () => {
     this.stopLoop()
-    if (this.reduced || !this.animated) return this.draw(0)
+    if (this.isText || this.reduced || !this.animated) return this.draw(0)
     this.io = new IntersectionObserver(([e]) => {
       this.visible = e.isIntersecting
       cancelAnimationFrame(this.raf)
@@ -64,6 +86,13 @@ export default class extends Controller {
   // Grow the canvas (h-16 is a minimum) until every light fits at MIN size:
   // rows x (MIN + gap), so nothing is clipped.
   size() {
+    if (this.isText) {
+      this.element.style.height = ""
+      const r = this.element.getBoundingClientRect()
+      this.element.width = Math.round(r.width * this.dpr)
+      this.element.height = Math.round(r.height * this.dpr)
+      return
+    }
     const cell = MIN + 4
     const slots = this.slots()
     const cols = Math.max(Math.floor(this.element.getBoundingClientRect().width / cell), 1)
@@ -90,7 +119,38 @@ export default class extends Controller {
     return { s: MIN, groups }
   }
 
+  // Text mode: 5x7 dots on the same square grid; lit = live green, off = dim.
+  // Cell shrinks to fit the width; below T_MIN css px the text ends in "…".
+  drawText() {
+    const g = this.g, w = this.element.width, h = this.element.height, d = this.dpr
+    g.clearRect(0, 0, w, h)
+    let chars = [...this.textValue.toLowerCase()].slice(0, 30)
+    const fit = (n) => Math.min(Math.floor(w / (n * 6 - 1)), Math.floor(h / 7), T_MAX * d)
+    const maxN = Math.max(Math.floor((w / (T_MIN * d) + 1) / 6), 1)
+    if (chars.length > maxN) chars = [...chars.slice(0, maxN - 1), "…"]
+    if (!chars.length) return
+    const cell = fit(chars.length), sz = Math.max(cell - Math.max(Math.round(d), 1), 1)
+    const x0 = 0, y0 = Math.floor((h - cell * 7) / 2)
+    chars.forEach((ch, ci) => {
+      const rows = GLYPHS[ch] || BLANK
+      rows.forEach((bits, r) => {
+        for (let c = 0; c < 5; c++) {
+          const lit = (bits >> (4 - c)) & 1
+          const x = x0 + (ci * 6 + c) * cell, y = y0 + r * cell
+          g.shadowBlur = lit ? sz : 0
+          g.shadowColor = `rgba(${C.live},.8)`
+          g.fillStyle = lit ? `rgba(${C.live},1)` : `rgba(${C.dim},.35)`
+          g.beginPath()
+          g.roundRect ? g.roundRect(x, y, sz, sz, d) : g.rect(x, y, sz, sz)
+          g.fill()
+        }
+      })
+    })
+    g.shadowBlur = 0
+  }
+
   draw(t) {
+    if (this.isText) return this.drawText()
     const g = this.g, w = this.element.width, h = this.element.height
     g.clearRect(0, 0, w, h)
     const { s, groups } = this.layout(w, h)
