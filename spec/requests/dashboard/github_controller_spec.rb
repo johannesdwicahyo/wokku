@@ -111,6 +111,25 @@ RSpec.describe "Dashboard::Github", type: :request do
       expect(JSON.parse(response.body)["branches"]).to eq(%w[main dev])
     end
 
+    it "rejects a malformed repo with 422 and never calls GitHub" do
+      sign_in user
+      user.update!(github_installation_id: 7)
+      expect(GithubRepos).not_to receive(:branches)
+      get path, params: { repo: "../../etc/passwd" }
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it "answers 502 JSON on invalid repository and connection errors" do
+      sign_in user
+      user.update!(github_installation_id: 7)
+      [ Octokit::InvalidRepository, Faraday::ConnectionFailed.new("x"), Faraday::TimeoutError.new ].each do |err|
+        allow(GithubRepos).to receive(:branches).and_raise(err)
+        get path, params: { repo: "acme/web" }
+        expect(response).to have_http_status(:bad_gateway)
+        expect(JSON.parse(response.body)).to eq("error" => "github")
+      end
+    end
+
     it "answers 502 when GitHub errors" do
       sign_in user
       user.update!(github_installation_id: 7)

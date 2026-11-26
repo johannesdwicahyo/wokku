@@ -26,6 +26,7 @@ RSpec.describe Organisms::NewAppSizeComponent, type: :component do
   it "shows Rp only when pricing returns numbers" do
     render_inline(described_class.new)
     expect(page).to have_no_text("Rp")
+    expect(card("Sleeping")).to have_text("Included")
 
     allow(Wokku.config).to receive(:pricing).and_return(double(unit_prices: units, monthly_idr: 30_000))
     render_inline(described_class.new)

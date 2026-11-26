@@ -27,7 +27,7 @@
   <% if installed? %>
     <div class="grid gap-4 sm:grid-cols-2" data-new-app-target="github" data-url="<%= lazy_url %>"
          data-error="<%= t("new_app.source.repos_error") %>" data-loading="<%= t("new_app.source.loading_repos") %>"
-         data-choose="<%= t("new_app.source.choose_repo") %>" data-branch="<%= branch %>">
+         data-choose="<%= t("new_app.source.choose_repo") %>" data-branches-error="<%= t("new_app.source.branches_error") %>" data-branch="<%= branch %>">
       <div>
         <label for="github_repo" class="<%= LABEL %>"><%= t("new_app.source.repository") %></label>
         <select id="github_repo" name="github_repo" class="<%= FIELD %>" data-new-app-target="repo" data-action="change->new-app#repo">

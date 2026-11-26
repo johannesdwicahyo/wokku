@@ -43,6 +43,8 @@ module Organisms
     def sleeping_option? = @sleeping_option
     def domain = Wokku.config.canonical_domain
     def units = Wokku.config.pricing.unit_prices
+    # Unpriced (self-host): "Included", the picker's own copy; "Free" only when priced.
+    def free_label = units ? t("new_app.size.free") : t("addons.picker.shared.self_host.kicker")
 
     def mem(mb) = mb >= 1024 ? "#{(mb / 1024.0).to_s.delete_suffix('.0')} GB" : "#{mb} MB"
     def spec(p) = t("new_app.size.spec", cpu: p[:cpu].to_s.delete_suffix(".0"), memory: mem(p[:memory_mb]))

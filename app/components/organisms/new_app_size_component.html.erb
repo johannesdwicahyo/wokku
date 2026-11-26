@@ -24,7 +24,7 @@
                    data-sleeping="true" data-price="0" data-action="change->new-app#preset">
             <b class="text-sm text-ink font-semibold"><%= helpers.wokku_cloud? ? t("new_app.size.sleeping.title") : t("new_app.size.sleeping.tiny") %></b>
             <span class="text-xs text-muted"><%= t("new_app.size.sleeping.sub") %></span>
-            <span class="text-xs text-ink-soft tabular-nums"><%= t("new_app.size.free") %></span>
+            <span class="text-xs text-ink-soft tabular-nums"><%= free_label %></span>
           </label>
         <% end %>
         <% presets.each do |key, p| %>

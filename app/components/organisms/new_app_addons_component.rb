@@ -29,6 +29,10 @@ module Organisms
     end
 
     def units = builder.units
+    def free_label = units ? t("new_app.addons.free") : t("addons.picker.shared.self_host.kicker")
+    def unavailable_reason(engine)
+      engine[:modes].all? { |m| !m[:available] } ? engine[:modes].filter_map { |m| m[:unavailable_reason] }.first : nil
+    end
 
     def mem(mb) = mb >= 1024 ? "#{(mb / 1024.0).to_s.delete_suffix('.0')} GB" : "#{mb} MB"
 
@@ -36,11 +40,12 @@ module Organisms
       t("new_app.addons.shape", cpu: s[:cpu].to_s.delete_suffix(".0"), memory: mem(s[:memory_mb]), disk: s[:disk_gb])
     end
 
-    def price(shape)
-      n = Wokku.config.pricing.monthly_idr(Resources::Shape.new(**shape), instances: 1,
-            **ResourceBuilderComponent.kind_opts(:monthly_idr, :database))
-      idr(n) if n
+    def monthly(shape)
+      Wokku.config.pricing.monthly_idr(Resources::Shape.new(**shape), instances: 1,
+        **ResourceBuilderComponent.kind_opts(:monthly_idr, :database))
     end
+
+    def price(shape) = (n = monthly(shape)) && idr(n)
 
     # Shared MariaDB also sets DATABASE_URL (the attach code aliases it).
     def env_text(engine, mode)
@@ -56,12 +61,13 @@ module Organisms
       case item["kind"]
       when "shared"
         mode = engine&.dig(:modes)&.find { |m| m[:mode] == "shared" } || {}
-        NewAppAddonRowComponent.new(item: item, label: "#{label} · #{mode_label('shared')}", env: env_text(engine || {}, mode), price_text: t("new_app.addons.free"))
+        NewAppAddonRowComponent.new(item: item, label: "#{label} · #{mode_label('shared')}", env: env_text(engine || {}, mode), price_text: free_label)
       when "dedicated"
         mode = engine&.dig(:modes)&.find { |m| m[:mode] == "dedicated" } || {}
         shape = { cpu: item["cpu"].to_f, memory_mb: item["memory_mb"].to_i, disk_gb: item["disk_gb"].to_i }
+        cost = monthly(shape)
         NewAppAddonRowComponent.new(item: item, label: "#{label} · #{mode_label('dedicated')} · #{shape_text(shape)}", env: mode[:env_var].to_s,
-                                    price_text: price(shape).to_s, price: Wokku.config.pricing.monthly_idr(Resources::Shape.new(**shape), instances: 1, **ResourceBuilderComponent.kind_opts(:monthly_idr, :database)).to_i)
+                                    price_text: cost ? idr(cost) : "", price: cost.to_i)
       else
         db = existing.find { |d| d.id.to_s == item["database_service_id"].to_s }
         NewAppAddonRowComponent.new(item: item, label: "#{db&.name || item['database_service_id']} · #{t('new_app.addons.existing_label')}",

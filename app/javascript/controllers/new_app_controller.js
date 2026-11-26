@@ -13,7 +13,7 @@ import { monthlyIdr, formatIdr } from "controllers/pricing"
 export default class extends Controller {
   static targets = ["source", "github", "repo", "repoStatus", "branch", "name", "size", "builder", "customHint",
                     "addons", "none", "rows", "rowTemplate", "openCatalog", "openExisting", "limit", "catalog",
-                    "engines", "config", "configName", "configEnv", "configPrice", "draftBuilder", "existingPanel",
+                    "engines", "announce", "note", "config", "configName", "configEnv", "configPrice", "draftBuilder", "existingPanel",
                     "boardWrap", "address", "sourceLabel", "appPrice", "addonPrice", "total"]
   static values = { domain: String, delimiter: { type: String, default: "." } }
 
@@ -61,11 +61,15 @@ export default class extends Controller {
     const repo = this.repoTarget.value
     if (!repo) { this.branchTarget.replaceChildren(); return }
     try {
-      const data = await (await fetch(`${this.githubTarget.dataset.url}?repo=${encodeURIComponent(repo)}`, { headers: { Accept: "application/json" } })).json()
+      const res = await fetch(`${this.githubTarget.dataset.url}?repo=${encodeURIComponent(repo)}`, { headers: { Accept: "application/json" } })
+      if (!res.ok) throw new Error("branches")
+      const data = await res.json()
+      if (repo !== this.repoTarget.value) return // a newer pick won
       const want = this.githubTarget.dataset.branch
       this.branchTarget.replaceChildren(...(data.branches || []).map(b => Object.assign(new Option(b, b), { selected: b === want })))
+      this.repoStatusTarget.textContent = ""
     } catch {
-      this.repoStatusTarget.textContent = this.githubTarget.dataset.error
+      if (repo === this.repoTarget.value) this.repoStatusTarget.textContent = this.githubTarget.dataset.branchesError
     }
   }
 
@@ -124,31 +128,64 @@ export default class extends Controller {
   openCatalog() { this.togglePanel(this.catalogTarget, this.existingPanelTarget, this.openCatalogTarget, this.openExistingTarget) }
   openExisting() { this.togglePanel(this.existingPanelTarget, this.catalogTarget, this.openExistingTarget, this.openCatalogTarget) }
 
+  // Escape closes the open panel and hands focus back to its trigger.
+  escape(event) {
+    const open = [[this.catalogTarget, this.openCatalogTarget], [this.existingPanelTarget, this.openExistingTarget]]
+      .find(([panel]) => !panel.classList.contains("hidden"))
+    if (!open) return
+    event.stopPropagation()
+    open[0].classList.add("hidden")
+    open[1].setAttribute("aria-expanded", "false")
+    open[1].focus()
+  }
+
+  announce(key, label) {
+    this.announceTarget.textContent = this.addonsTarget.dataset[key].replace("%{label}", label)
+  }
+
+  showNote(text) {
+    this.noteTarget.textContent = text || ""
+    this.noteTarget.classList.toggle("hidden", !text)
+  }
+
   togglePanel(show, hide, showBtn, hideBtn) {
     const open = show.classList.toggle("hidden") === false
     hide.classList.add("hidden")
     showBtn.setAttribute("aria-expanded", String(open))
     hideBtn.setAttribute("aria-expanded", "false")
-    if (open) this.backToEngines()
+    this.showNote("")
+    if (open) { this.backToEngines(); this.focusFirst(show) } else showBtn.focus()
   }
+
+  focusFirst(scope) { scope.querySelector("button:not([disabled]), input:not([disabled])")?.focus() }
 
   backToEngines() {
     this.configTarget.classList.add("hidden")
     this.enginesTarget.classList.remove("hidden")
+    this.showNote("")
   }
+
+  back() { this.backToEngines(); this.enginesTarget.querySelector("button")?.focus() }
 
   pickEngine(event) {
     const b = event.currentTarget
+    if (b.dataset.unavailableReason) {
+      this.showNote(this.addonsTarget.dataset.unavailable.replace("%{engine}", b.dataset.label).replace("%{reason}", b.dataset.unavailableReason))
+      return
+    }
+    this.showNote("")
     this.engine = { key: b.dataset.engine, label: b.dataset.label }
     this.enginesTarget.classList.add("hidden")
     this.configTarget.classList.remove("hidden")
     this.configNameTarget.textContent = b.dataset.label
     this.configTarget.querySelectorAll("[data-engine-group]").forEach(g => { g.hidden = g.dataset.engineGroup !== b.dataset.engine })
     const g = this.group()
-    g.querySelector("input[name^=addon_mode_]:not(:disabled)")?.click()
+    const firstMode = g.querySelector("input[name^=addon_mode_]:not(:disabled)")
+    firstMode?.click()
     const sizes = g.querySelectorAll("input[name^=addon_size_]")
     ;(g.querySelector("input[name^=addon_size_][value=standard]") || sizes[0])?.click()
     this.configChanged()
+    firstMode?.focus()
   }
 
   group() { return this.configTarget.querySelector(`[data-engine-group="${this.engine.key}"]`) }
@@ -192,14 +229,20 @@ export default class extends Controller {
     if (!d) return
     const a = this.addonsTarget.dataset
     const label = d.mode === "shared" ? `${this.engine.label} · ${a.sharedLabel}` : `${this.engine.label} · ${a.dedicatedLabel} · ${this.shapeText(d.shape)}`
-    if (d.mode === "shared" && this.rows().some(r => this.field(r, "kind") === "shared" && this.field(r, "engine") === this.engine.key)) return
+    if (d.mode === "shared" && this.rows().some(r => this.field(r, "kind") === "shared" && this.field(r, "engine") === this.engine.key)) {
+      this.showNote(this.addonsTarget.dataset.duplicate.replace("%{label}", label))
+      return
+    }
     this.appendRow({ kind: d.mode, engine: this.engine.key, ...(d.shape || {}) }, label, d.env, d.mode === "shared" ? a.free : d.price == null ? "" : formatIdr(d.price, this.delimiterValue), d.price || 0)
     this.openCatalog()
   }
 
   addExisting(event) {
     const b = event.currentTarget
-    if (this.rows().some(r => this.field(r, "database_service_id") === b.dataset.existing)) return
+    if (this.rows().some(r => this.field(r, "database_service_id") === b.dataset.existing)) {
+      this.showNote(this.addonsTarget.dataset.duplicate.replace("%{label}", b.dataset.name))
+      return
+    }
     this.appendRow({ kind: "existing", engine: b.dataset.engine, database_service_id: b.dataset.existing },
       `${b.dataset.name} · ${this.addonsTarget.dataset.existingLabel}`, b.dataset.env, "", 0)
     this.openExisting()
@@ -217,11 +260,21 @@ export default class extends Controller {
     rm.setAttribute("aria-label", rm.dataset.remove.replace("%{label}", label))
     this.rowsTarget.appendChild(row)
     this.updateAddons()
+    this.announce("added", label)
   }
 
   removeAddon(event) {
-    event.currentTarget.closest("[data-new-app-row]").remove()
+    const row = event.currentTarget.closest("[data-new-app-row]")
+    const label = row.querySelector("[data-slot=label]").textContent
+    row.remove()
     this.updateAddons()
+    this.announce("removed", label)
+    this.focusAfterRemove()
+  }
+
+  focusAfterRemove() {
+    const next = this.rows().at(-1)?.querySelector("button")
+    ;(next || (this.openCatalogTarget.disabled ? this.openExistingTarget : this.openCatalogTarget)).focus()
   }
 
   rows() { return this.hasRowsTarget ? [...this.rowsTarget.querySelectorAll("[data-new-app-row]")] : [] }

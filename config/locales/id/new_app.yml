@@ -9,6 +9,7 @@ id:
       branch: "Branch"
       loading_repos: "Memuat repositorimu…"
       choose_repo: "Pilih repositori"
+      branches_error: "Branch gagal dimuat. Pilih repositori lagi."
       repos_error: "Repositorimu gagal dimuat. Coba lagi, atau pakai URL repositori publik."
       connect: "Hubungkan GitHub"
       connect_hint: "Hubungkan GitHub untuk memilih repositori, atau tempel URL repositori publik."
@@ -49,5 +50,9 @@ id:
       limit: "Kamu bisa menambah sampai %{max} add-on."
       existing_label: "Sudah ada"
       none: "Belum ada add-on."
+      added: "%{label} ditambahkan"
+      removed: "%{label} dihapus"
+      duplicate: "%{label} sudah ditambahkan."
+      unavailable: "%{engine} tidak tersedia: %{reason}"
       shortcuts: { small: "Kecil", standard: "Standard", large: "Besar" }
       shape: "%{cpu} vCPU · %{memory} · %{disk} GB"

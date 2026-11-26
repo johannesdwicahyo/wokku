@@ -33,11 +33,13 @@ module Dashboard
       id = current_user.github_installation_id
       return render(json: { repos: [], branches: [] }) unless id
       if params[:repo].present?
-        render json: { branches: GithubRepos.branches(id, params[:repo].to_s) }
+        repo = params[:repo].to_s
+        return render(json: { error: "repo" }, status: :unprocessable_entity) unless repo.match?(%r{\A[\w.-]+/[\w.-]+\z})
+        render json: { branches: GithubRepos.branches(id, repo) }
       else
         render json: { repos: GithubRepos.list(id).map { |r| { full_name: r.full_name, default_branch: r.default_branch } } }
       end
-    rescue Octokit::Error
+    rescue Octokit::Error, Octokit::InvalidRepository, Faraday::ConnectionFailed, Faraday::TimeoutError
       render json: { error: "github" }, status: :bad_gateway
     end
 

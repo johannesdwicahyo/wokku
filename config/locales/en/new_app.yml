@@ -9,6 +9,7 @@ en:
       branch: "Branch"
       loading_repos: "Loading your repositories…"
       choose_repo: "Choose a repository"
+      branches_error: "Couldn't load branches. Pick the repository again."
       repos_error: "Couldn't load your repositories. Try again, or use a public repo URL."
       connect: "Connect GitHub"
       connect_hint: "Connect GitHub to pick a repository, or paste a public repo URL."
@@ -49,5 +50,9 @@ en:
       limit: "You can add up to %{max} add-ons."
       existing_label: "Existing"
       none: "No add-ons yet."
+      added: "%{label} added"
+      removed: "%{label} removed"
+      duplicate: "%{label} is already added."
+      unavailable: "%{engine} is not available: %{reason}"
       shortcuts: { small: "Small", standard: "Standard", large: "Large" }
       shape: "%{cpu} vCPU · %{memory} · %{disk} GB"

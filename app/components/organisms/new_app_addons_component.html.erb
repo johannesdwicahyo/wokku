@@ -1,7 +1,10 @@
 <div data-new-app-target="addons" data-units="<%= units&.to_json %>" data-max="<%= MAX %>"
-     data-free="<%= t("new_app.addons.free") %>" data-existing-label="<%= t("new_app.addons.existing_label") %>"
+     data-free="<%= free_label %>" data-added="<%= t("new_app.addons.added", label: "%{label}") %>" data-removed="<%= t("new_app.addons.removed", label: "%{label}") %>"
+     data-duplicate="<%= t("new_app.addons.duplicate", label: "%{label}") %>" data-unavailable="<%= t("new_app.addons.unavailable", engine: "%{engine}", reason: "%{reason}") %>"
+     data-action="keydown.esc->new-app#escape" data-existing-label="<%= t("new_app.addons.existing_label") %>"
      data-shared-label="<%= t("new_app.addons.shared") %>" data-dedicated-label="<%= t("new_app.addons.dedicated") %>"
      data-shape-template="<%= t("new_app.addons.shape", cpu: "%{cpu}", memory: "%{memory}", disk: "%{disk}") %>">
+  <p class="sr-only" role="status" aria-live="polite" data-new-app-target="announce"></p>
   <p class="text-sm text-muted <%= "hidden" if @items.any? %>" data-new-app-target="none"><%= t("new_app.addons.none") %></p>
   <ul class="space-y-2 mb-3" data-new-app-target="rows">
     <% @items.each do |item| %><%= render row_for(item) %><% end %>
@@ -14,12 +17,15 @@
     <%= render Atoms::ButtonComponent.new(variant: :secondary, disabled: full?, "aria-expanded": "false", "aria-controls": "addon-existing",
           data: { action: "click->new-app#openExisting", new_app_target: "openExisting" }) do %><%= t("new_app.addons.existing") %><% end %>
   </div>
+  <p class="mt-2 text-xs text-warn hidden" role="status" data-new-app-target="note"></p>
   <p class="mt-2 text-xs text-muted <%= "hidden" unless full? %>" data-new-app-target="limit"><%= t("new_app.addons.limit", max: MAX) %></p>
 
   <div id="addon-catalog" class="mt-4 hidden" data-new-app-target="catalog">
     <div class="grid gap-2 grid-cols-2 sm:grid-cols-3" data-new-app-target="engines">
       <% catalog.each do |engine| %>
-        <button type="button" class="<%= CARD %> text-left" data-engine="<%= engine[:key] %>" data-label="<%= engine[:label] %>" data-action="click->new-app#pickEngine">
+        <% reason = unavailable_reason(engine) %>
+        <button type="button" class="<%= CARD.sub("cursor-pointer", "") %> text-left" data-engine="<%= engine[:key] %>" data-label="<%= engine[:label] %>"
+                <% if reason %>data-unavailable-reason="<%= reason %>" aria-disabled="true"<% end %> data-action="click->new-app#pickEngine">
           <b class="text-sm text-ink font-semibold"><%= engine[:label] %></b>
           <span class="font-mono text-xs text-muted"><%= engine[:modes].map { |m| mode_label(m[:mode]) }.join(" · ") %></span>
         </button>
@@ -30,7 +36,7 @@
       <div class="flex items-center justify-between">
         <b class="text-sm text-ink" data-new-app-target="configName"></b>
         <button type="button" class="font-mono text-[11px] uppercase tracking-[.1em] text-ink-soft hover:text-ink focus-visible:ring-2 focus-visible:ring-live rounded-md px-1"
-                data-action="click->new-app#backToEngines"><%= t("new_app.addons.back") %></button>
+                data-action="click->new-app#back"><%= t("new_app.addons.back") %></button>
       </div>
       <% catalog.each do |engine| %>
         <div class="space-y-4" hidden data-engine-group="<%= engine[:key] %>">
@@ -38,7 +44,7 @@
             <legend class="<%= LABEL %>"><%= t("new_app.addons.type") %></legend>
             <div class="grid gap-2 sm:grid-cols-2">
               <% engine[:modes].each do |m| %>
-                <label class="<%= CARD %> <%= "opacity-50 cursor-not-allowed" unless m[:available] %>">
+                <label class="<%= m[:available] ? CARD : CARD.sub("cursor-pointer", "") + " opacity-50 cursor-not-allowed" %>">
                   <input type="radio" form="add-on-draft" name="addon_mode_<%= engine[:key] %>" value="<%= m[:mode] %>" class="sr-only"
                          data-env="<%= env_text(engine, m) %>" <%= "disabled" unless m[:available] %> data-action="change->new-app#configChanged">
                   <b class="text-sm text-ink font-semibold"><%= mode_label(m[:mode]) %></b>

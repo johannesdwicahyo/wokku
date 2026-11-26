@@ -66,7 +66,7 @@ RSpec.describe Organisms::NewAppAddonsComponent, type: :component do
     names = rows.first.all("input[type=hidden]", visible: :all).map { |i| i[:name] }
     expect(names).to eq(%w[kind engine cpu memory_mb disk_gb database_service_id].map { |f| "addons[][#{f}]" })
     expect(rows.first).to have_text("PostgreSQL · Shared")
-    expect(rows.first).to have_text("Free")
+    expect(rows.first).to have_text("Included") # unpriced install
     expect(rows.last).to have_text("Redis · Dedicated · 0.25 vCPU · 256 MB · 1 GB")
     expect(rows.last.find("input[data-field=cpu]", visible: :all).value).to eq("0.25")
   end
@@ -82,6 +82,33 @@ RSpec.describe Organisms::NewAppAddonsComponent, type: :component do
     html = rendered_content
     tpl = html[/<template data-new-app-target="rowTemplate">.*?<\/template>/m]
     expect(tpl.scan("addons[][").size).to eq(6)
+  end
+
+  it "exposes aria wiring, a polite live region and a note slot" do
+    render_it
+    expect(page).to have_css("[role=status][aria-live=polite].sr-only[data-new-app-target=announce]", visible: :all)
+    expect(page).to have_css("button[aria-expanded=false][aria-controls=addon-catalog]", text: "Add an add-on")
+    expect(page).to have_css("button[aria-expanded=false][aria-controls=addon-existing]", text: "Use an existing one")
+    expect(page).to have_css("#addon-catalog", visible: :all)
+    expect(page).to have_css("#addon-existing", visible: :all)
+    addons = page.find("[data-new-app-target=addons]")
+    expect(addons["data-added"]).to eq("%{label} added")
+    expect(addons["data-removed"]).to eq("%{label} removed")
+    expect(addons["data-action"]).to include("keydown.esc->new-app#escape")
+    expect(page).to have_css("[data-new-app-target=note]", visible: :all)
+  end
+
+  it "shows Free for shared rows when pricing is present" do
+    allow(Wokku.config).to receive(:pricing).and_return(double(unit_prices: units, monthly_idr: 12_000))
+    render_it(items: [ { "kind" => "shared", "engine" => "redis" } ])
+    expect(page.find("[data-new-app-row]")).to have_text("Free")
+  end
+
+  it "flags an engine whose modes are all unavailable" do
+    allow(Addons::PickerOptions).to receive(:catalog).and_return([ { key: "mysql", label: "MySQL", modes: [
+      { mode: "dedicated", available: false, unavailable_reason: "Upgrade needed", env_var: "MYSQL_URL", shortcuts: [] } ] } ])
+    render_it
+    expect(page).to have_css("button[data-engine=mysql][data-unavailable-reason='Upgrade needed']", visible: :all)
   end
 
   it "speaks Indonesian" do
