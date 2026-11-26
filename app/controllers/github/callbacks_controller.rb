@@ -5,13 +5,13 @@ module Github
     FRESH_WINDOW = 15.minutes
 
     # GitHub redirects here after install/configure with ?installation_id=,
-    # which anyone can forge. Interim rule: accept only an installation the
-    # App can see that was created/updated in the last 15 minutes (proves a
-    # human just installed it) and that no other Wokku user holds.
-    # When the App has "Request user authorization (OAuth) during
-    # installation" on and GITHUB_APP_CLIENT_ID/SECRET are set, GitHub also
-    # sends ?code= and we verify properly against GET /user/installations.
-    # Follow-up: once that is live, require the code path and drop the window.
+    # which anyone can forge. With GITHUB_APP_CLIENT_ID/SECRET set (and the
+    # App's "Request user authorization (OAuth) during installation" on),
+    # GitHub also sends ?code= and we require the id in the user's
+    # GET /user/installations. Interim rule while OAuth isn't configured:
+    # accept only an installation the App can see that was created/updated in
+    # the last 15 minutes (a human just installed it) and that no other Wokku
+    # user holds. Follow-up: configure OAuth in prod, then drop the window.
     def create
       installation_id = params[:installation_id].to_s
       return refuse unless GithubApp.configured? && installation_id.match?(/\A[1-9]\d{0,18}\z/)
@@ -21,8 +21,8 @@ module Github
 
       installation = GithubApp.app_client.installation(installation_id)
       verified =
-        if params[:code].present? && GithubApp.oauth_configured?
-          GithubApp.user_installation_ids(params[:code]).include?(installation_id)
+        if GithubApp.oauth_configured?
+          params[:code].present? && GithubApp.user_installation_ids(params[:code]).include?(installation_id)
         else
           installation.updated_at.present? && installation.updated_at >= FRESH_WINDOW.ago
         end

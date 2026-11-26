@@ -22,6 +22,9 @@ module Dashboard
       end
     rescue Octokit::Error => e
       redirect_to dashboard_app_releases_path(@app), alert: "GitHub error: #{e.message}"
+    rescue Faraday::Error, JWT::EncodeError, OpenSSL::PKey::PKeyError => e
+      Rails.logger.warn("GitHub repos: #{e.class}")
+      redirect_to dashboard_app_releases_path(@app), alert: t("dashboard.github.unreachable")
     end
 
     def connect

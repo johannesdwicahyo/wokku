@@ -59,15 +59,29 @@ RSpec.describe "Webhooks::GithubController", type: :request do
       payload = { ref: "refs/heads/main",
                   repository: { full_name: "owner/matching-repo" }, installation: { id: 42 },
                   head_commit: { id: "abc123", message: "x" } }.to_json
-      expect { signed_post(payload, event: "push") }.to change(Deploy, :count).by(1)
-      expect(deploy_app.deploys.count).to eq(1)
-      expect(other.deploys.count).to eq(0)
+      expect { signed_post(payload, event: "push") }
+        .to have_enqueued_job(GithubDeployJob).with(hash_including(app_id: deploy_app.id)).exactly(:once)
+      expect(enqueued_jobs.count { |j| j["job_class"] == "GithubDeployJob" }).to eq(1)
+      expect(other.deploys.pluck(:status)).to eq([ "failed" ])
+    end
+
+    it "records the skip as a failed release the app's owner sees" do
+      other = create(:app_record, github_repo_full_name: "owner/matching-repo", deploy_branch: "main")
+      payload = { ref: "refs/heads/main",
+                  repository: { full_name: "owner/matching-repo" }, installation: { id: 42 },
+                  head_commit: { id: "abc123", message: "x" } }.to_json
+      expect { signed_post(payload, event: "push") }.not_to have_enqueued_job(GithubDeployJob).with(hash_including(app_id: other.id))
+      release = other.releases.sole
+      expect(release.description).to eq(I18n.t("dashboard.github.deploy_skipped"))
+      expect(release.deploy).to have_attributes(status: "failed", commit_sha: "abc123",
+                                                build_error: I18n.t("dashboard.github.deploy_skipped"))
     end
 
     it "deploys nothing when the push has no installation" do
       payload = { ref: "refs/heads/main", repository: { full_name: "owner/matching-repo" },
                   head_commit: { id: "abc123", message: "x" } }.to_json
-      expect { signed_post(payload, event: "push") }.not_to change(Deploy, :count)
+      expect { signed_post(payload, event: "push") }.not_to have_enqueued_job(GithubDeployJob)
+      expect(deploy_app.deploys.pluck(:status)).to eq([ "failed" ])
     end
 
     it "enqueues GithubDeployJob for matching app" do

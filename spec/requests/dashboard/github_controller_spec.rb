@@ -21,6 +21,15 @@ RSpec.describe "Dashboard::Github", type: :request do
     expect(response.body).to include("Install the GitHub App")
   end
 
+  it "repos shows an alert instead of a 500 when GitHub is unreachable" do
+    sign_in user
+    user.update!(github_installation_id: 42)
+    allow_any_instance_of(GithubApp).to receive(:repos).and_raise(Faraday::ConnectionFailed, "down")
+    get "/dashboard/apps/#{app_record.id}/github/repos"
+    expect(response).to redirect_to("/dashboard/apps/#{app_record.id}/releases")
+    expect(flash[:alert]).to be_present
+  end
+
   it "redirects to login when not authenticated on connect" do
     post "/dashboard/apps/#{app_record.id}/github/connect", params: { repo: "owner/repo", branch: "main" }
     expect(response).to have_http_status(:redirect)

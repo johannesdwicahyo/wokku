@@ -31,7 +31,8 @@ class GithubApp
       token = Octokit::Client.new.exchange_code_for_token(code, CLIENT_ID, CLIENT_SECRET).access_token
       return [] if token.blank?
 
-      Octokit::Client.new(access_token: token).find_user_installations(per_page: 100).installations.map { |i| i.id.to_i }
+      result = Octokit::Client.new(access_token: token, auto_paginate: true).find_user_installations(per_page: 100)
+      Array(result[:installations]).map { |i| i[:id].to_i }
     end
 
     def verify_webhook_signature(payload, signature, secret = WEBHOOK_SECRET)

@@ -108,6 +108,33 @@ RSpec.describe "Github::CallbacksController", type: :request do
       expect(user.github_username).to eq("octocat")
     end
 
+    it "requires the code once OAuth is configured (no 15-minute fallback)" do
+      stub_installation(42)
+      get github_callback_path, params: { installation_id: "42" }
+      expect_refused
+      expect(user.reload.github_installation_id).to be_nil
+    end
+
+    it "refuses when the user-installations response has no installations" do
+      stub_installation(42)
+      stub_request(:get, %r{\Ahttps://api.github.com/user/installations})
+        .to_return(status: 200, headers: json, body: { message: "odd" }.to_json)
+      get github_callback_path, params: { installation_id: "42", code: "abc" }
+      expect_refused
+    end
+
+    it "follows pagination past the first 100 installations" do
+      stub_installation(42)
+      page2 = "https://api.github.com/user/installations?page=2&per_page=100"
+      stub_request(:get, "https://api.github.com/user/installations?per_page=100")
+        .to_return(status: 200, headers: json.merge("Link" => %(<#{page2}>; rel="next")),
+                   body: { total_count: 2, installations: [ { id: 7 } ] }.to_json)
+      stub_request(:get, page2)
+        .to_return(status: 200, headers: json, body: { total_count: 2, installations: [ { id: 42 } ] }.to_json)
+      get github_callback_path, params: { installation_id: "42", code: "abc" }
+      expect(user.reload.github_installation_id).to eq(42)
+    end
+
     it "refuses an installation the user can't access, even if it is fresh" do
       stub_installation(42)
       stub_user_installations(7)
