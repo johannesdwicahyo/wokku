@@ -36,7 +36,9 @@
 
     <%= render layout: "dashboard/shared/slide_panel",
                locals: { title: t("sweep.create_app"), subtitle: t("sweep.create_app_sub"), size: "lg" } do %>
-      <%= render "form", app: @app, servers: @servers %>
+      <div class="p-4">
+        <%= render Atoms::ButtonComponent.new(href: new_dashboard_app_path, target: "_top") do %><%= t("sweep.create_app") %><% end %>
+      </div>
     <% end %>
   </div>
 </div>

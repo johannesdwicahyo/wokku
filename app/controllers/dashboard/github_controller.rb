@@ -56,12 +56,7 @@ module Dashboard
         return redirect_to dashboard_app_releases_path(@app), alert: t("dashboard.github.repo_not_owned")
       end
 
-      @app.update!(
-        github_repo_full_name: repo,
-        git_repository_url: "https://github.com/#{repo}.git",
-        deploy_branch: branch,
-        github_webhook_secret: SecureRandom.hex(20)
-      )
+      GithubRepos.connect(@app, repo, branch)
 
       redirect_to dashboard_app_releases_path(@app), notice: "Connected to #{repo} (#{branch})"
     end

@@ -1,5 +1,13 @@
 id:
   new_app:
+    created: "Aplikasi berhasil dibuat."
+    errors:
+      account_limit: "Ukuran itu melebihi batas akunmu. Tambah saldo di halaman Billing untuk naik lebih tinggi."
+      plan_quota: "Paket %{plan} kamu mengizinkan %{allowed} box %{size}; kamu sudah punya %{used}. Upgrade atau pilih ukuran lebih kecil."
+      repo_required: "Pilih repositori GitHub untuk di-deploy."
+      repo_url: "Repositori harus berupa alamat https:// publik (contoh https://github.com/kamu/aplikasimu)."
+      addons_failed: "Aplikasi dibuat, tetapi beberapa add-on tidak bisa dipasang: %{list}"
+      github_deploy: "Repositori terhubung, tetapi deploy pertama tidak bisa dimulai. Push ke branch untuk deploy."
     source:
       legend: "Sumber"
       github: { title: "GitHub", sub: "Deploy setiap kali kamu push ke sebuah branch" }

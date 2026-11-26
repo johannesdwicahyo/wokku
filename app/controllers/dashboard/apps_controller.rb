@@ -8,12 +8,12 @@ module Dashboard
     deferred_sections :list, :side, :panel_deploys, :panel_logs
 
     rescue_from PlanEnforceable::AccountLimitError do |e|
-      redirect_to new_dashboard_app_path, alert: e.message
+      redirect_to new_dashboard_app_path, alert: t("new_app.errors.account_limit")
     end
 
     rescue_from PlanEnforceable::PlanQuotaError do |e|
       redirect_to new_dashboard_app_path,
-        alert: "Your #{current_user.plan.name} plan allows #{e.allowed} #{e.size} boxes; you already have #{e.requested - 1}. Upgrade or pick a smaller size."
+        alert: t("new_app.errors.plan_quota", plan: current_user.plan.name, allowed: e.allowed, size: e.size, used: e.requested - 1)
     end
 
     before_action :run_onboarding_waypoints, only: [ :index ]
@@ -68,17 +68,7 @@ module Dashboard
 
     def new
       @app = AppRecord.new
-      @servers = policy_scope(Server)
-      @plan = current_user.current_plan
-      @box_quota = box_picker_state(current_user)
-      # Headroom (nil or > 0, may be Infinity) only sets the Sleeping DEFAULT;
-      # the card is always offered (as the old form did).
-      rem = @box_quota.dig("sleeping", :remaining)
-      @sleeping_default = rem.nil? || rem.to_f > 0
-      @server = @servers.find { |s| s.id.to_s == params[:server_id].to_s } || (@servers.first if @servers.size == 1)
-      basic = Resources::Shape.new(**Organisms::NewAppSizeComponent::PRESETS["basic"])
-      monthly = Wokku.config.pricing.monthly_idr(basic, instances: 1)
-      @price_idr = monthly && (@sleeping_default ? 0 : monthly)
+      prepare_new_page(@servers = policy_scope(Server), params[:server_id])
       # Server change reloads section 03 only.
       render partial: "new_addons", layout: false if turbo_frame_request?
     end
@@ -164,12 +154,24 @@ module Dashboard
       end
       authorize @app
 
-      repo_url = params.dig(:app_record, :git_repository_url).to_s.strip.presence
-      if repo_url && !RepoUrlDeployJob.valid_url?(repo_url)
-        @app.errors.add(:base, "Repository must be a public https:// address (for example https://github.com/you/your-app).")
-        @servers  = policy_scope(Server)
-        @has_apps = policy_scope(AppRecord).main_apps.exists?
-        return render :index, status: :unprocessable_entity
+      # Hidden source panels still submit their fields: branch on `source` only.
+      # A user without a GitHub installation sees the public-URL field inside
+      # the "github" panel, so that counts as the repo_url source too.
+      source = params[:source].to_s
+      github_repo = nil
+      repo_url = nil
+      if source == "github" && current_user.github_installation_id.present?
+        github_repo = params[:github_repo].to_s.strip
+        unless github_repo.match?(%r{\A[\w.-]+/[\w.-]+\z})
+          @app.errors.add(:base, t("new_app.errors.repo_required"))
+          return render_new
+        end
+      elsif source.in?(%w[github repo_url]) || source.blank?
+        repo_url = params.dig(:app_record, :git_repository_url).to_s.strip.presence
+        if repo_url && !RepoUrlDeployJob.valid_url?(repo_url)
+          @app.errors.add(:base, t("new_app.errors.repo_url"))
+          return render_new
+        end
       end
 
       enforce_plan_quota!(current_user, size: box_size, additional: 1) unless builder_mode
@@ -182,9 +184,7 @@ module Dashboard
           unless result.ok
             @app.destroy!
             @app.errors.add(:base, result.error)
-            @servers  = policy_scope(Server)
-            @has_apps = policy_scope(AppRecord).main_apps.exists?
-            return render :index, status: :unprocessable_entity
+            return render_new
           end
         else
           # Derive the DynoTier from box_size (Bundle v2 mapping).
@@ -224,8 +224,22 @@ module Dashboard
           end
         end
 
+        # New-app add-ons. The deposit and deletion-pending gates that guard
+        # the databases page are already before_actions on this action.
+        attach = Addons::AttachOnCreate.call(app: @app, user: current_user, items: addon_items)
+        if attach.failed.any?
+          flash[:warning] = t("new_app.errors.addons_failed",
+            list: attach.failed.map { |f| "#{f[:label]}: #{f[:error]}" }.join("; "))
+        end
+
         track("app.created", target: @app)
         fire_team_event(@app.team, "app_created", app_name: @app.name)
+
+        if github_repo
+          deploy = start_github_deploy(github_repo, params[:github_branch].to_s.strip.presence || "main")
+          return redirect_to dashboard_app_deploy_path(@app, deploy), notice: t("new_app.created") if deploy
+          flash[:warning] = [ flash[:warning], t("new_app.errors.github_deploy") ].compact.join(" ")
+        end
 
         if repo_url
           @app.update_column(:git_repository_url, repo_url)
@@ -240,11 +254,9 @@ module Dashboard
           flash[:posthog_event] = "first_deploy_started"
           flash[:posthog_props] = { app: @app.name }
         end
-        redirect_to dashboard_app_path(@app), notice: "App created successfully."
+        redirect_to dashboard_app_path(@app), notice: t("new_app.created")
       else
-        @servers   = policy_scope(Server)
-        @has_apps  = policy_scope(AppRecord).main_apps.exists?
-        render :index, status: :unprocessable_entity
+        render_new
       end
     end
 
@@ -518,6 +530,76 @@ module Dashboard
       # :dedicated_db_engine and :add_dedicated_redis are controller-only params —
       # they're not AppRecord columns and are handled directly in #create.
       params.require(:app_record).permit(:name, :deploy_branch, :box_size, enabled_shared_engines: [])
+    end
+
+    ADDON_KEYS = %w[kind engine cpu memory_mb disk_gb database_service_id].freeze
+
+    # Shared by #new and the 422 re-render of #create (which also keeps the
+    # submitted choices in ivars the view hands to the section components).
+    def prepare_new_page(servers, server_id)
+      @servers = servers
+      @plan = current_user.current_plan
+      @box_quota = box_picker_state(current_user)
+      # Headroom (nil or > 0, may be Infinity) only sets the Sleeping DEFAULT;
+      # the card is always offered (as the old form did).
+      rem = @box_quota.dig("sleeping", :remaining)
+      @sleeping_default = @sleeping = rem.nil? || rem.to_f > 0
+      @server = @servers.find { |s| s.id.to_s == server_id.to_s } || (@servers.first if @servers.size == 1)
+      basic = Resources::Shape.new(**Organisms::NewAppSizeComponent::PRESETS["basic"])
+      monthly = Wokku.config.pricing.monthly_idr(basic, instances: 1)
+      @price_idr = monthly && (@sleeping_default ? 0 : monthly)
+    end
+
+    def render_new
+      prepare_new_page(policy_scope(Server), params.dig(:app_record, :server_id))
+      web = params.dig(:processes, :web)
+      if web.respond_to?(:key?)
+        @sleeping = web[:sleeping].to_s == "1"
+        cpu, mem = Float(web[:cpu].to_s, exception: false), Integer(web[:memory_mb].to_s, exception: false)
+        @shape = Resources::Shape.new(cpu: cpu, memory_mb: mem) if cpu && mem
+      else
+        @sleeping = false
+      end
+      @box_size = params.dig(:app_record, :box_size).presence
+      @source = params[:source].presence
+      @github_repo, @github_branch = params[:github_repo].presence, params[:github_branch].presence
+      @repo_url = params.dig(:app_record, :git_repository_url).presence
+      @addon_rows = addon_rows
+      render :new, status: :unprocessable_entity
+    end
+
+    # Posted add-on rows: six fields each, blanks for unused ones.
+    def addon_rows
+      Array(params[:addons]).filter_map do |r|
+        r = r.respond_to?(:to_unsafe_h) ? r.to_unsafe_h : r.to_h
+        row = r.slice(*ADDON_KEYS).transform_values(&:presence).compact
+        row if row["kind"]
+      end
+    end
+
+    def addon_items
+      addon_rows.map do |r|
+        item = { kind: r["kind"], engine: r["engine"], database_service_id: r["database_service_id"] }.compact
+        item[:shape] = { cpu: r["cpu"], memory_mb: r["memory_mb"], disk_gb: r["disk_gb"] }.compact if r["kind"] == "dedicated"
+        item
+      end
+    end
+
+    # Connect the repo (same code as GithubController#connect) and queue the
+    # first deploy the way a push webhook does. nil when GitHub can't be reached
+    # or the branch has no commit; the app itself stays created.
+    def start_github_deploy(repo, branch)
+      GithubRepos.connect(@app, repo, branch)
+      installation_id = current_user.github_installation_id
+      sha = GithubRepos.head_sha(installation_id, repo, branch) or return
+      deploy = @app.deploys.create!(status: :pending, commit_sha: sha)
+      @app.releases.create!(version: (@app.releases.maximum(:version) || 0) + 1, deploy: deploy, description: "Deploy from #{repo}".truncate(200))
+      GithubDeployJob.perform_later(app_id: @app.id, deploy_id: deploy.id, repo_full_name: repo, branch: branch,
+                                    commit_sha: sha, installation_id: installation_id)
+      deploy
+    rescue Octokit::Error, Faraday::Error => e
+      Rails.logger.warn "New-app GitHub deploy for #{@app.name} failed: #{e.class}"
+      nil
     end
 
     # Try a few stable variations before falling back to a random suffix.

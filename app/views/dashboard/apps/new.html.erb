@@ -1,6 +1,7 @@
 <%# Phase 5 create page: sections 01-03 left, sticky summary right. POST goes
     to AppsController#create (params contract in Task 4 notes). %>
-<% source_key = current_user.github_installation_id.present? ? "github" : "git" %>
+<% source_key = (@source.presence || (current_user.github_installation_id.present? ? "github" : "git")) %>
+<% source_key = "git" unless %w[github git].include?(source_key) %>
 <% content_for :title, t("new_app.page.title") %>
 <div class="container py-6">
   <header class="mb-6">
@@ -17,7 +18,7 @@
     <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] items-start">
       <div class="space-y-6 min-w-0">
         <%= render Molecules::PanelComponent.new(label: t("new_app.page.source")) do %>
-          <div class="p-4"><%= render Organisms::NewAppSourceComponent.new(user: current_user) %></div>
+          <div class="p-4"><%= render Organisms::NewAppSourceComponent.new(user: current_user, source: @source, repo: @github_repo, branch: @github_branch, repo_url: @repo_url) %></div>
         <% end %>
 
         <%= render Molecules::PanelComponent.new(label: t("new_app.page.name_size")) do %>
@@ -33,8 +34,8 @@
             <% else %>
               <%= hidden_field_tag "app_record[server_id]", @server&.id %>
             <% end %>
-            <%= render Organisms::NewAppSizeComponent.new(sleeping: @sleeping_default, sleeping_option: true,
-                  box_quota: @box_quota) %>
+            <%= render Organisms::NewAppSizeComponent.new(sleeping: @sleeping, sleeping_option: true, shape: @shape,
+                  name: @app.name, box_quota: @box_quota, box_size: @box_size) %>
           </div>
         <% end %>
 
