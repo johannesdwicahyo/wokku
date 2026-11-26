@@ -86,9 +86,10 @@ module Dashboard
     end
 
     FRESH_WINDOW = 2.minutes
+    ANSI = /\e\[[0-9;]*m/
 
     # Persisted rows only while the newest matching one is fresh (no SSH);
-    # otherwise live LogReader, cached 4s so polling can't hammer the host.
+    # otherwise live LogReader, cached 15s (at most 4 SSH calls/min per app) so polling can't hammer the host.
     def recent_log_lines(app, limit:, process: nil)
       scope = Log.for_app(app)
       if process
@@ -99,13 +100,13 @@ module Dashboard
                             like.("wokku-#{app.name}-#{process}"), like.("#{app.name}.#{process}"))
       end
       newest = scope.maximum(:ts)
-      return scope.recent.limit(limit).pluck(:line).reverse if newest && newest >= FRESH_WINDOW.ago
+      return scope.recent.limit(limit).pluck(:line).reverse.map { |l| l.to_s.gsub(ANSI, "") } if newest && newest >= FRESH_WINDOW.ago
 
-      raw = Rails.cache.fetch([ "glance", app.id, process, limit ], expires_in: 4.seconds) do
+      raw = Rails.cache.fetch([ "glance", app.id, process, limit ], expires_in: 15.seconds) do
         scrub_encoding(process ? ::Apps::LogReader.recent(app, lines: limit, process: process) : ::Apps::LogReader.recent(app, lines: limit))
       end
       return [] if raw.blank?
-      raw.gsub(/\e\[[0-9;]*m/, "").split("\n").last(limit)
+      raw.gsub(ANSI, "").split("\n").last(limit)
     rescue => e
       Rails.logger.warn "Failed to fetch glance logs for #{app.name}: #{e.message}"
       []

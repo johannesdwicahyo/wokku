@@ -86,6 +86,26 @@ RSpec.describe "Dashboard::Logs live glance", type: :request do
       2.times { get path, params: { glance: true } }
     end
 
+    it "re-uses the live fallback for 15 s, then re-reads" do
+      allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
+      expect(Apps::LogReader).to receive(:recent).twice.and_return("live-line")
+      get path, params: { glance: true }
+      travel(10.seconds) { get path, params: { glance: true } }
+      travel(20.seconds) { get path, params: { glance: true } }
+    end
+
+    it "strips ANSI from persisted lines" do
+      seed("web", "\e[31mred\e[0m")
+      get path, params: { glance: true }
+      expect(response.body).to include("red0")
+      expect(response.body).not_to include("[31m")
+    end
+
+    it "localizes the empty state and link under :id" do
+      html = I18n.with_locale(:id) { ApplicationController.render(partial: "dashboard/logs/glance", locals: { lines: [], app: app_record }) }
+      expect(html).to include("belum ada output log").and include("buka log lengkap")
+    end
+
     it "defaults lines for a non-numeric value" do
       seed("web", "w", n: 8)
       get path, params: { glance: true, lines: "abc" }

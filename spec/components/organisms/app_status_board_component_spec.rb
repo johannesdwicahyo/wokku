@@ -33,6 +33,16 @@ RSpec.describe Organisms::AppStatusBoardComponent, type: :component do
     end
   end
 
+  it "agrees with the processes rack: desired 3, heartbeat 2 running" do
+    real = create(:app_record, status: :running)
+    DynoAllocation.create!(app_record: real, process_type: "web", count: 3, cpu: 0.5, memory_mb: 512)
+    real.process_scales.create!(process_type: "web", count: 3)
+    real.update!(live_containers: [ { "process" => "web", "state" => "running" }, { "process" => "web", "state" => "running" } ])
+    render_inline(described_class.new(app: real.reload, stats: stats, current_release: release))
+    expect(page).to have_text("Processes · 2 running")
+    expect(page).to have_text("3 processes: 2 running, 1 deploying")
+  end
+
   it "shows — for every missing value" do
     empty = { p95_ms: nil, err_5xx_pct: nil, err_5xx_hour: 0, req_hour: 0 }
     render_inline(described_class.new(app: app, stats: empty, current_release: nil))

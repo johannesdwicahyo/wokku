@@ -134,12 +134,34 @@ id:
       title: "Terhubung"
       add: "Tambah"
       empty: "Belum ada add-on terhubung"
+    glance:
+      no_output: "belum ada output log"
+      open_full: "buka log lengkap →"
+    backups:
+      title: "Backup"
+      none_yet: "Belum ada backup"
+      no_database: "Belum ada database terhubung"
+      last: "Terakhir: %{ago}"
+      on_demand: "Hanya sesuai permintaan"
+      keeps: "Harian · menyimpan %{parts}"
+      unit:
+        daily:
+          one: "%{count} harian"
+          other: "%{count} harian"
+        weekly:
+          one: "%{count} mingguan"
+          other: "%{count} mingguan"
+        monthly:
+          one: "%{count} bulanan"
+          other: "%{count} bulanan"
+      backup_now: "backup sekarang"
+      queueing: "mengantre…"
     live_log:
       title: "Log langsung"
       filters: "Filter log"
       all: "Semua"
       pause: "Jeda"
-      pause_label: "Jeda log langsung"
+      pause_sr: "log langsung"
       resume: "Lanjut"
       loading: "Memuat log…"
     domains:
@@ -162,6 +184,9 @@ id:
       add: "Tambah satu proses %{type}"
       remove: "Kurangi satu proses %{type}"
       add_confirm: "Tambah satu proses %{type}?"
+      empty: "Belum ada proses"
+      remove_confirm: "Hentikan semua proses %{type}?"
+      remove_confirm_web: "Hentikan semua proses web? Aplikasi berhenti melayani trafik."
       add_confirm_price: "Tambah satu proses %{type}? +%{price}/bulan"
       scaling_updated: "Skala diperbarui."
       tier_no_scaling: "Tier %{tier} tidak mendukung penskalaan horizontal. Upgrade ke Standard atau lebih tinggi."

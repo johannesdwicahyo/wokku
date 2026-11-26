@@ -1,6 +1,12 @@
+<% active = active_tab %>
+<% unless active == :overview %>
+  <p class="mb-2 flex items-center gap-2 font-mono text-[13px]">
+    <%= render Atoms::StatusLightComponent.new(state: app.display_status) %>
+    <%= link_to app.name, helpers.dashboard_app_path(app), class: "text-ink hover:underline truncate" %>
+  </p>
+<% end %>
 <nav aria-label="<%= t("dashboard.app_header.tabs_label") %>" class="mb-5 border-b border-line overflow-x-auto">
   <ul class="flex gap-1 min-w-max">
-    <% active = active_tab %>
     <% TABS.each do |t| %>
       <li>
         <%= link_to tab_label(t), tab_href(t),

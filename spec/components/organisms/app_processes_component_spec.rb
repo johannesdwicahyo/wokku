@@ -31,6 +31,24 @@ RSpec.describe Organisms::AppProcessesComponent, type: :component do
     expect(page).to have_text("Size · 0.5 vCPU · 512 MB each")
   end
 
+  it "confirms before the minus takes a type to zero" do
+    app.process_scales.create!(process_type: "worker", count: 1)
+    render_it
+    expect(page.find("[data-process='worker'] button[aria-label='Remove one worker process']")["data-turbo-confirm"]).to eq("Stop all worker processes?")
+    expect(page.find("[data-process='web'] button[aria-label='Remove one web process']")["data-turbo-confirm"]).to be_nil
+    app.process_scales.find_by(process_type: "web").update!(count: 1)
+    render_it
+    expect(page.find("[data-process='web'] button[aria-label='Remove one web process']")["data-turbo-confirm"]).to eq("Stop all web processes? The app stops serving traffic.")
+  end
+
+  it "shows an empty line with no allocations" do
+    app.dyno_allocations.destroy_all
+    render_it
+    expect(page).to have_text("No processes yet")
+    I18n.with_locale(:id) { render_it }
+    expect(page).to have_text("Belum ada proses")
+  end
+
   it "disables minus at zero and posts return_to overview" do
     app.process_scales.create!(process_type: "worker", count: 0)
     render_it

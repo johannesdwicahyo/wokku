@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 // Polls the live-log turbo frame. Skips while paused, hidden, or off screen.
 export default class extends Controller {
-  static targets = ["frame", "filter", "pause", "box"]
+  static targets = ["frame", "filter", "pauseLabel", "box"]
   static values = { url: String, interval: { type: Number, default: 5000 }, process: String, labelPause: String, labelResume: String }
 
   connect() {
@@ -57,8 +57,7 @@ export default class extends Controller {
 
   togglePause() {
     this.paused = !this.paused
-    this.pauseTarget.setAttribute("aria-pressed", String(this.paused))
-    this.pauseTarget.textContent = this.paused ? this.labelResumeValue : this.labelPauseValue
+    this.pauseLabelTarget.textContent = this.paused ? this.labelResumeValue : this.labelPauseValue
   }
 
   atBottom() {

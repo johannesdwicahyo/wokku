@@ -45,6 +45,8 @@ module Organisms
       running_for(alloc.process_type).positive? ? :running : :deploying
     end
 
+    def remove_confirm(type) = t(type == "web" ? "apps.processes.remove_confirm_web" : "apps.processes.remove_confirm", type: type)
+
     def scale_params(type, count) = { scaling: { type => count }, return_to: "overview" }
 
     def confirm_for(alloc)

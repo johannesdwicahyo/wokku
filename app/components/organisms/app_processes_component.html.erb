@@ -1,9 +1,12 @@
 <%= render Molecules::PanelComponent.new(ticks: true) do %>
-  <div class="flex items-center justify-between px-[18px] py-3 border-b border-line font-mono text-[11px] uppercase tracking-[.12em] text-muted">
+  <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-[18px] py-3 border-b border-line font-mono text-[11px] uppercase tracking-[.12em] text-muted">
     <h2 class="font-normal"><%= t("apps.processes.title") %></h2>
     <% if size_label %><span><%= t("apps.processes.size", size: size_label) %></span><% end %>
   </div>
   <div class="flex flex-col">
+    <% if allocations.empty? %>
+      <p class="px-[18px] py-3.5 text-[13px] text-muted"><%= t("apps.processes.empty") %></p>
+    <% end %>
     <% allocations.each do |alloc| %>
       <% type = alloc.process_type %>
       <% want = desired(alloc) %>
@@ -23,7 +26,7 @@
         <% if can_update? %>
           <span class="flex items-center gap-2">
             <%= button_to "−", dashboard_app_scaling_path(app), method: :patch, params: scale_params(type, want - 1),
-                  disabled: want <= 0, class: "#{up} w-[38px] disabled:opacity-40 disabled:cursor-not-allowed",
+                  disabled: want <= 0, data: (want == 1 ? { turbo_confirm: remove_confirm(type) } : {}), class: "#{up} w-[38px] disabled:opacity-40 disabled:cursor-not-allowed",
                   form_class: "inline", aria: { label: t("apps.processes.remove", type: type) } %>
             <span class="min-w-6 text-center font-mono text-[13px] text-ink tabular-nums"><%= want %></span>
             <%= button_to "+", dashboard_app_scaling_path(app), method: :patch, params: scale_params(type, want + 1),

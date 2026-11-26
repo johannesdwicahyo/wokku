@@ -10,7 +10,22 @@ module Organisms
     attr_reader :app, :stats
 
     def none = t("apps.detail.none")
-    def fleet = (@fleet ||= Apps::Fleet.for([ app ]))
+    # Same desired/running numbers as the processes rack (AppProcessesComponent);
+    # apps with no allocations fall back to the app-status fleet.
+    def rack = (@rack ||= Organisms::AppProcessesComponent.new(app: app, can_update: false))
+
+    def fleet
+      @fleet ||= if app.dyno_allocations.to_a.empty?
+        Apps::Fleet.for([ app ])
+      else
+        idle = %i[stopped crashed sleeping created].include?(app.status&.to_sym) ? app.status.to_sym : :deploying
+        states = rack.allocations.flat_map do |a|
+          up = [ rack.running_for(a.process_type), rack.desired(a) ].min
+          Array.new(up, :running) + Array.new(rack.desired(a) - up, idle)
+        end
+        [ { app_id: app.id, name: app.name, states: states.presence || [ :stopped ] } ]
+      end
+    end
     def count = Apps::Fleet.counts(fleet)[:running].to_i
     def board_label = Organisms::LightBoardComponent.fleet_label(Apps::Fleet.counts(fleet))
 

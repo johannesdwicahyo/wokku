@@ -29,6 +29,12 @@ RSpec.describe Organisms::AppMetricsPanelComponent, type: :component do
     expect(page).to have_css("[aria-label='Memory, last 24 hours'] i[style='height: 3px']", count: 24) # 100/512*18
   end
 
+  it "scales memory bars to the series max when there is no limit" do
+    render_panel(stats.merge(mem_limit_mb: nil, mem: Array.new(24) { |i| i == 3 ? 200.0 : 100.0 }))
+    heights = page.all("[aria-label='Memory, last 24 hours'] i").map { |i| i["style"] }
+    expect(heights.uniq.size).to be > 1
+  end
+
   it "shows — for CPU now when the last sample is stale" do
     render_panel(stats.merge(last_metric_at: now - 3.hours))
     expect(page.text).not_to include("41 %")

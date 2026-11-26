@@ -25,13 +25,8 @@ module Organisms
     def counts = allocations.filter_map { |a| "#{desired(a)} #{a.process_type}" if desired(a).positive? }.join(" + ")
 
     def size_line
-      s = web&.shape
       return unless web
       parts = [ web.size_label ]
-      if s
-        parts << "#{s.cpu.to_s.delete_suffix('.0')} vCPU"
-        parts << (s.memory_mb >= 1024 ? "#{(s.memory_mb / 1024.0).to_s.delete_suffix('.0')} GB" : "#{s.memory_mb} MB")
-      end
       parts << counts if counts.present?
       parts.join(" · ")
     end
@@ -43,7 +38,8 @@ module Organisms
         next 0 if a.sleeping? || desired(a).zero?
         Wokku.config.pricing.monthly_idr(Resources::ApplyChange.inherited_shape_for(app, a.process_type, @by_type), instances: desired(a))
       end
-      idr(prices.sum) unless prices.any?(&:nil?)
+      # Hidden when unpriced (NullPricing) or when nothing is billable (total 0).
+      idr(prices.sum) unless prices.any?(&:nil?) || prices.sum.zero?
     end
   end
 end

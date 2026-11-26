@@ -26,6 +26,13 @@ RSpec.describe Organisms::AppTabsComponent, type: :component do
     expect(page.all("a[aria-current='page']").map(&:text)).to eq([ "Domains" ])
   end
 
+  it "shows the app name linking to the overview except on overview" do
+    render_tabs(active_tab: :metrics)
+    expect(page).to have_link(app.name, href: "/dashboard/apps/#{app.id}")
+    render_tabs(active_tab: :overview)
+    expect(page).not_to have_link(app.name)
+  end
+
   it "makes in-tab links and forms navigate the whole page" do
     render_tabs
     expect(page).to have_css("turbo-frame#app_tab_content[target='_top']")

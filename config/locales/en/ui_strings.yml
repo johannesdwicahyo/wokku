@@ -116,12 +116,34 @@ en:
       title: "Connected"
       add: "Add"
       empty: "No add-ons connected"
+    glance:
+      no_output: "no recent log output"
+      open_full: "open full logs →"
+    backups:
+      title: "Backups"
+      none_yet: "No backups yet"
+      no_database: "No database attached"
+      last: "Last: %{ago}"
+      on_demand: "On-demand only"
+      keeps: "Daily · keeps %{parts}"
+      unit:
+        daily:
+          one: "%{count} daily"
+          other: "%{count} daily"
+        weekly:
+          one: "%{count} weekly"
+          other: "%{count} weekly"
+        monthly:
+          one: "%{count} monthly"
+          other: "%{count} monthly"
+      backup_now: "backup now"
+      queueing: "queueing…"
     live_log:
       title: "Live logs"
       filters: "Log filters"
       all: "All"
       pause: "Pause"
-      pause_label: "Pause live log"
+      pause_sr: "live log"
       resume: "Resume"
       loading: "Loading logs…"
     domains:
@@ -144,6 +166,9 @@ en:
       add: "Add one %{type} process"
       remove: "Remove one %{type} process"
       add_confirm: "Add one %{type} process?"
+      empty: "No processes yet"
+      remove_confirm: "Stop all %{type} processes?"
+      remove_confirm_web: "Stop all web processes? The app stops serving traffic."
       add_confirm_price: "Add one %{type} process? +%{price}/month"
       scaling_updated: "Scaling updated."
       tier_no_scaling: "%{tier} tier doesn't support horizontal scaling. Upgrade to Standard or higher."

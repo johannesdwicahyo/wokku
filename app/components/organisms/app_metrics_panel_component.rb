@@ -15,7 +15,7 @@ module Organisms
 
     def rows
       s = @stats
-      limit = s[:mem_limit_mb].to_i.positive? ? s[:mem_limit_mb] : 1
+      limit = s[:mem_limit_mb].to_i.positive? ? s[:mem_limit_mb] : [ Array(s[:mem]).compact.max.to_f, 1 ].max
       req_max = [ Array(s[:req]).compact.max.to_f, 1 ].max
       [
         row(:cpu, s[:cpu], 100, (fresh? && s[:cpu_now]) ? "#{s[:cpu_now].round} %" : none),
