@@ -141,27 +141,4 @@ RSpec.describe "Dashboard::Apps (Bundle v2 create)", type: :request do
       end
     end
   end
-
-  # Read-path: the box picker must reflect REMAINING quota, not just whether
-  # the plan grants the size. Regression test for the "UI offers a size that
-  # create rejects" bug — a plan-granted size you've fully used must render
-  # disabled, matching enforce_plan_quota!.
-  describe "GET /dashboard/apps/new (box picker honors remaining quota)" do
-    before { allow(Addons::SharedProvisioner).to receive(:feature_enabled?).and_return(true) }
-
-  end
-
-  describe "new-app form shared add-on picker" do
-    it "labels every offered shared engine (no blank checkbox)" do
-      allow(Addons::SharedProvisioner).to receive(:feature_enabled?).and_return(true)
-      get new_dashboard_app_path
-      expect(response).to have_http_status(:ok)
-
-      DatabaseService::SHARED_ENGINES.each do |engine|
-        expect(response.body).to include(%(value="#{engine}"))
-      end
-      expect(response.body).to include("MariaDB", "Shared relational DB (MySQL-compatible)")
-      expect(response.body).not_to match(%r{value="mariadb"[^>]*>\s*<span[^>]*>\s*</span>})
-    end
-  end
 end

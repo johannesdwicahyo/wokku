@@ -81,10 +81,22 @@ RSpec.describe GithubApp do
       github = described_class.new(123)
       github.define_singleton_method(:client) do
         mock = Object.new
-        mock.define_singleton_method(:branches) { |_repo| raise Octokit::NotFound }
+        mock.define_singleton_method(:branches) { |_repo, **_opts| raise Octokit::NotFound }
         mock
       end
       expect(github.branches("nonexistent/repo")).to eq([])
+    end
+
+    it "reads the repository's default branch, nil when it is gone" do
+      github = described_class.new(123)
+      github.define_singleton_method(:client) do
+        Object.new.tap { |m| m.define_singleton_method(:repository) { |_r| Struct.new(:default_branch).new("trunk") } }
+      end
+      expect(github.default_branch("a/b")).to eq("trunk")
+      github.define_singleton_method(:client) do
+        Object.new.tap { |m| m.define_singleton_method(:repository) { |_r| raise Octokit::NotFound } }
+      end
+      expect(github.default_branch("a/b")).to be_nil
     end
   end
 

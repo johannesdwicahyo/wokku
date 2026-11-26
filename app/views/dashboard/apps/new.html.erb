@@ -1,17 +1,54 @@
-<%# Standalone Create App page. Kept as a direct-link fallback;
-    the apps index opens the same form inside a modal via the
-    "+ NEW APP" button. %>
-<div class="container py-6 max-w-xl">
-  <div class="mb-6">
-    <a href="<%= dashboard_apps_path %>"
-       class="font-mono text-[11px] uppercase tracking-widest text-ink-soft hover:text-ink">
-      ← back to apps
-    </a>
-    <h1 class="mt-2 font-headline text-2xl font-extrabold text-ink"><%= t("dashboard.apps.create_app") %></h1>
-    <p class="mt-1 font-mono text-xs text-ink-soft">// deploy a new application to one of your servers</p>
-  </div>
+<%# Phase 5 create page: sections 01-03 left, sticky summary right. POST goes
+    to AppsController#create (params contract in Task 4 notes). %>
+<% source_key = (@source.presence || (current_user.github_installation_id.present? ? "github" : "git")) %>
+<% source_key = "git" unless %w[github git].include?(source_key) %>
+<% content_for :title, t("new_app.page.title") %>
+<div class="container py-6">
+  <header class="mb-6">
+    <h1 class="font-headline text-2xl font-extrabold text-ink"><%= t("new_app.page.title") %></h1>
+    <p class="mt-1 text-sm text-muted"><%= t("new_app.page.intro") %></p>
+  </header>
 
-  <div class="border border-line bg-paper p-6">
-    <%= render "form", app: @app, servers: @servers %>
-  </div>
+  <%= form_with(model: @app, url: dashboard_apps_path, data: Organisms::NewAppSizeComponent.root_data) do |f| %>
+    <% if @app.errors.any? %>
+      <div class="mb-4 border border-danger bg-danger-soft rounded-md p-3" role="alert">
+        <ul class="text-xs text-bad-text space-y-1"><% @app.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %></ul>
+      </div>
+    <% end %>
+    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] items-start">
+      <div class="space-y-6 min-w-0">
+        <%= render Molecules::PanelComponent.new(label: t("new_app.page.source")) do %>
+          <div class="p-4"><%= render Organisms::NewAppSourceComponent.new(user: current_user, source: @source, repos: @repos, repos_error: @repos_error, repo: @github_repo, branch: @github_branch, repo_url: @repo_url) %></div>
+        <% end %>
+
+        <%= render Molecules::PanelComponent.new(label: t("new_app.page.name_size")) do %>
+          <div class="p-4 space-y-5">
+            <% if @servers.size > 1 %>
+              <div>
+                <label for="app_record_server_id" class="<%= Organisms::NewAppSourceComponent::LABEL %>"><%= t("new_app.page.server") %></label>
+                <%# Native select: posts without JS, so server_id is never missing. %>
+                <select id="app_record_server_id" name="app_record[server_id]" required class="<%= Organisms::NewAppSourceComponent::FIELD %>"
+                        data-action="change->new-app#server">
+                  <option value=""><%= t("new_app.page.server_placeholder") %></option>
+                  <% @servers.each do |s| %><option value="<%= s.id %>" <%= "selected" if s.id == @server&.id %>><%= s.name %> · <%= s.host %></option><% end %>
+                </select>
+              </div>
+            <% else %>
+              <%= hidden_field_tag "app_record[server_id]", @server&.id %>
+            <% end %>
+            <%= render Organisms::NewAppSizeComponent.new(sleeping: @sleeping, sleeping_option: true, shape: @shape,
+                  name: @app.name, box_quota: @box_quota, box_size: @box_size, name_error: @name_error) %>
+          </div>
+        <% end %>
+
+        <%= render Molecules::PanelComponent.new(label: t("new_app.page.addons")) do %>
+          <div class="p-4">
+            <%= render "new_addons" %>
+          </div>
+        <% end %>
+      </div>
+
+      <%= render Organisms::NewAppSummaryComponent.new(app_name: @app.name, source: t("new_app.source.#{source_key}.title"), price_idr: @price_idr) %>
+    </div>
+  <% end %>
 </div>

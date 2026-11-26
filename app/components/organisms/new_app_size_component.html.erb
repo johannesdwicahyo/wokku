@@ -1,0 +1,63 @@
+<div data-new-app-target="size" data-units="<%= units&.to_json %>">
+  <div class="mb-5">
+    <label for="app_record_name" class="<%= LABEL %>"><%= t("new_app.size.name") %></label>
+    <div class="flex items-stretch">
+      <input id="app_record_name" type="text" name="app_record[name]" value="<%= name %>" maxlength="30" required
+             autocomplete="off" spellcheck="false" pattern="[a-z][a-z0-9\-]*" placeholder="my-app"
+             aria-describedby="app_name_status"
+             class="min-w-0 flex-1 bg-paper border border-dark-line rounded-l-md px-3 py-2 text-sm text-ink"
+             data-app-name-check-target="input" data-new-app-target="name"
+             data-action="input->app-name-check#check input->new-app#name">
+      <span class="px-3 flex items-center border border-l-0 border-dark-line rounded-r-md font-mono text-xs text-muted">.<%= domain %></span>
+    </div>
+    <p id="app_name_status" class="mt-1 text-xs <%= name_error ? "text-bad-text" : "text-muted" %>" role="status" aria-live="polite" data-app-name-check-target="status"><%= name_error %></p>
+    <div class="mt-1.5 hidden flex-wrap gap-1.5" data-app-name-check-target="suggestions"></div>
+  </div>
+
+  <% if builder? %>
+    <fieldset class="border-0 p-0 m-0">
+      <legend class="<%= LABEL %>"><%= t("new_app.size.legend") %></legend>
+      <div class="grid gap-2 grid-cols-2 sm:grid-cols-5">
+        <% if sleeping_option? %>
+          <label class="<%= CARD %>">
+            <input type="radio" name="size_preset" value="sleeping" class="sr-only" <%= "checked" if selected_key == "sleeping" %>
+                   data-sleeping="true" data-price="0" data-cpu="<%= presets["nano"][:cpu] %>" data-memory-mb="<%= presets["nano"][:memory_mb] %>" data-action="change->new-app#preset">
+            <b class="text-sm text-ink font-semibold"><%= helpers.wokku_cloud? ? t("new_app.size.sleeping.title") : t("new_app.size.sleeping.tiny") %></b>
+            <span class="text-xs text-muted"><%= t("new_app.size.sleeping.sub") %></span>
+            <span class="text-xs text-ink-soft tabular-nums"><%= free_label %></span>
+          </label>
+        <% end %>
+        <% presets.each do |key, p| %>
+          <label class="<%= CARD %>">
+            <input type="radio" name="size_preset" value="<%= key %>" class="sr-only" <%= "checked" if selected_key == key %>
+                   data-cpu="<%= p[:cpu] %>" data-memory-mb="<%= p[:memory_mb] %>" data-action="change->new-app#preset">
+            <b class="text-sm text-ink font-semibold"><%= t("new_app.size.presets.#{key}", default: key.humanize) %></b>
+            <span class="text-xs text-muted"><%= spec(p) %></span>
+            <% if (pr = price(p)) %><span class="text-xs text-ink-soft tabular-nums"><%= pr %></span><% end %>
+          </label>
+        <% end %>
+      </div>
+      <p class="mt-2 text-xs text-muted <%= "hidden" if selected_key %>" data-new-app-target="customHint"><%= t("new_app.size.custom_hint") %></p>
+    </fieldset>
+    <div class="mt-4" data-new-app-target="builder" data-action="resource-builder:changed->new-app#shape">
+      <%= render Organisms::ResourceBuilderComponent.new(
+            name: "processes[web]", shape: shape, presets: {}, instances: nil, sleeping: sleeping) %>
+    </div>
+  <% else %>
+    <fieldset class="border-0 p-0 m-0" data-controller="box-size">
+      <legend class="<%= LABEL %>"><%= t("new_app.size.box_label") %></legend>
+      <input type="hidden" name="app_record[box_size]" value="<%= default_box_size %>" data-box-size-target="input">
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+        <% BOX_SIZES.each do |size| %>
+          <% tier = box_tier(size) %>
+          <button type="button" data-box-size="<%= size %>" data-action="box-size#select" <%= "disabled" if capped?(size) %>
+                  aria-pressed="<%= size == default_box_size %>"
+                  class="text-left border border-line rounded-md p-3 aria-pressed:border-live aria-pressed:bg-accent-soft focus-visible:ring-2 focus-visible:ring-live disabled:opacity-50 disabled:cursor-not-allowed">
+            <span class="block text-sm text-ink font-semibold uppercase"><%= size %></span>
+            <% if tier %><span class="block text-xs text-muted"><%= mem(tier.memory_mb) %></span><% end %>
+          </button>
+        <% end %>
+      </div>
+    </fieldset>
+  <% end %>
+</div>

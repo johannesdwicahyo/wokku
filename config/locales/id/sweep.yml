@@ -69,7 +69,6 @@ id:
     templates_sub: "deploy stack siap produksi dalam hitungan detik — pilih stack pilihan atau cari berdasarkan kebutuhan"
     featured: "unggulan"
     curated_picks: "pilihan kurasi"
-    git_repo_label: "Repository Git publik (opsional)"
     advanced: "Lanjutan"
     create_app: "Buat app"
     resize_anytime: "Ubah ukuran kapan saja dari halaman Resources app."

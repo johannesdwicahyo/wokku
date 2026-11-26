@@ -5,10 +5,32 @@ import { Controller } from "@hotwired/stimulus"
 // suggestion chips. Disables submit while invalid/taken.
 export default class extends Controller {
   static targets = ["input", "status", "suggestions", "submit"]
+  // Localized by the server (new_app.name.*); English defaults keep older forms working.
+  static values = {
+    checking: { type: String, default: "Checking…" },
+    unreachable: { type: String, default: "Couldn't reach server" },
+    try: { type: String, default: "Try:" }
+  }
 
   connect() {
     this.timer = null
-    this.lastValue = ""
+    // Turbo re-enables the submitter after a 422 and may keep this button across the re-render
+    // (no reconnect), so re-apply the server-rendered state once the body is rendered.
+    this.onRender = () => this.sync()
+    document.addEventListener("turbo:render", this.onRender)
+    this.sync()
+  }
+
+  disconnect() { document.removeEventListener("turbo:render", this.onRender) }
+
+  sync() {
+    // A re-rendered 422 arrives with its status already in the page: keep
+    // Create off until the name changes. Otherwise off until there is a name
+    // (JS-only: without JS the button stays enabled and the server validates).
+    const value = this.hasInputTarget ? this.inputTarget.value.trim() : ""
+    const flagged = this.hasStatusTarget && this.statusTarget.textContent.trim() !== ""
+    this.lastValue = flagged ? value : ""
+    this.setSubmit(value !== "" && !flagged)
   }
 
   check() {
@@ -20,11 +42,11 @@ export default class extends Controller {
     if (value.length === 0) {
       this.setStatus("", "neutral")
       this.clearSuggestions()
-      this.setSubmit(true)
+      this.setSubmit(false)
       return
     }
 
-    this.setStatus("Checking…", "neutral")
+    this.setStatus(this.checkingValue, "neutral")
     this.timer = setTimeout(() => this.fetchStatus(value), 300)
   }
 
@@ -36,7 +58,7 @@ export default class extends Controller {
       const data = await res.json()
 
       if (data.available) {
-        this.setStatus(`✓ ${data.name} is available`, "ok")
+        this.setStatus(data.message || `✓ ${data.name} is available`, "ok")
         this.clearSuggestions()
         this.setSubmit(true)
       } else if (data.reason === "invalid") {
@@ -44,12 +66,13 @@ export default class extends Controller {
         this.clearSuggestions()
         this.setSubmit(false)
       } else {
-        this.setStatus("✗ Name already taken", "err")
+        this.setStatus(data.message || "✗ Name already taken", "err")
         this.renderSuggestions(data.suggestions || [])
         this.setSubmit(false)
       }
     } catch (e) {
-      this.setStatus("Couldn't reach server", "err")
+      this.setStatus(this.unreachableValue, "err")
+      this.setSubmit(true) // never block on our own outage; the server validates
     }
   }
 
@@ -63,7 +86,7 @@ export default class extends Controller {
 
     const label = document.createElement("span")
     label.className = "text-[10px] text-faint self-center mr-1"
-    label.textContent = "Try:"
+    label.textContent = this.tryValue
     this.suggestionsTarget.appendChild(label)
 
     list.forEach(name => {

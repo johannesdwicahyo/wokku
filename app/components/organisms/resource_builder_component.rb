@@ -31,12 +31,14 @@ module Organisms
     # `kind:` is only passed when kind is non-default AND the provider's
     # method accepts it (older host providers predate it). Doubles/mocks
     # with a rest signature count as accepting.
-    def kind_opts(meth)
-      return {} if @kind == :app
+    def self.kind_opts(meth, kind)
+      return {} if kind == :app
       params = Wokku.config.pricing.method(meth).parameters
       accepts = params.any? { |t, n| (t == :key || t == :keyreq) && n == :kind } || params.any? { |t, _| t == :keyrest }
-      accepts ? { kind: @kind } : {}
+      accepts ? { kind: kind } : {}
     end
+
+    def kind_opts(meth) = self.class.kind_opts(meth, @kind)
 
     UNIT_LABELS = { "cpu" => "vCPU", "memory_gb" => "RAM GB", "disk_gb" => "disk GB" }.freeze
 

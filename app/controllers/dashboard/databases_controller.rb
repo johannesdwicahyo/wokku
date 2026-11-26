@@ -71,88 +71,52 @@ module Dashboard
       # mirrors Heroku where add-ons live on an app's Resources tab and
       # the underlying infra is opaque to end users.
       app = policy_scope(AppRecord).find(params[:database_service][:app_id])
-      server = app.server
 
       # Bundle v2 (backlog 2.8) — unified picker posts `mode=shared|dedicated`.
-      # Shared mode bypasses the create-row-then-async-job flow entirely
-      # and routes through Addons::SharedProvisioner, which is idempotent
-      # and synchronous (logical tenant on the host container).
+      # All attach logic lives in Addons::AttachOnCreate (shared with New app).
       mode = (params[:mode] || params[:database_service][:tier_name]).to_s.presence
+      dp = database_params
+      engine = dp[:service_type].to_s
+      item =
+        if mode == "shared"
+          { kind: "shared", engine: engine }
+        else
+          shape = ({ cpu: params[:cpu], memory_mb: params[:memory_mb], disk_gb: params[:disk_gb] } if mode == "dedicated" && Wokku.config.resource_builder? && params[:cpu].present?)
+          { kind: "dedicated", engine: engine, name: dp[:name], tier_name: dp[:tier_name], shape: shape }
+        end
+      outcome = Addons::AttachOnCreate.call(app: app, user: current_user, items: [ item ]).outcomes.first
+      db = outcome[:db]
+
       if mode == "shared"
-        engine = params[:database_service][:service_type].to_s
-        result = Addons::SharedProvisioner.new(app: app, engine: engine).call
-        case result
+        case outcome[:status]
         when :provisioned
           track("database.shared_attached", target: app, metadata: { engine: engine })
-          redirect_to dashboard_app_resources_path(app), notice: "Shared #{engine} attached to #{app.name}." and return
+          redirect_to dashboard_app_resources_path(app), notice: "Shared #{engine} attached to #{app.name}."
         when :already_attached
-          redirect_to dashboard_app_resources_path(app), notice: "Shared #{engine} is already attached." and return
+          redirect_to dashboard_app_resources_path(app), notice: "Shared #{engine} is already attached."
         when :feature_disabled
-          redirect_to dashboard_addons_path, alert: "Shared engines are not enabled on this install." and return
+          redirect_to dashboard_addons_path, alert: "Shared engines are not enabled on this install."
         else
-          redirect_to dashboard_addons_path, alert: "Couldn't attach shared #{engine}: #{result.inspect}." and return
+          redirect_to dashboard_addons_path, alert: outcome[:error]
         end
-      end
-
-      attrs = database_params.except(:app_id).merge(server: server, status: :creating, creator: current_user)
-      attrs[:tier_name] = "basic" if attrs[:tier_name].blank?
-
-      # Per-resource billing (spec 2026-09-24 §5.3): the builder's dedicated
-      # panel posts bare cpu/memory_mb/disk_gb (ResourceBuilderComponent
-      # name: "") instead of picking a tier. Same enforcer + capacity checks
-      # ResizeService runs, via the shared Resources::ApplyChange helper.
-      if mode == "dedicated" && Wokku.config.resource_builder? && params[:cpu].present?
-        shape = Resources::Shape.new(cpu: params[:cpu], memory_mb: params[:memory_mb], disk_gb: params[:disk_gb])
-        engine = attrs[:service_type]
-        unless shape.valid?(engine: engine)
-          redirect_to dashboard_addons_path, alert: shape.errors(engine: engine).join(", ")
-          return
-        end
-        check = Resources::ApplyChange.check_new_shape(team: app.team, server: server, shape: shape)
-        unless check.ok
-          redirect_to dashboard_addons_path, alert: check.error
-          return
-        end
-        attrs.merge!(cpu: shape.cpu, memory_mb: shape.memory_mb, disk_gb: shape.disk_gb)
-      end
-
-      # Stuck error/creating rows from a prior failed attempt hold the
-      # unique (server_id, name) slot and block retries with a useless
-      # "name already taken". Sweep them before saving — the row never
-      # made it past provisioning, so there's nothing to preserve.
-      if attrs[:name].present?
-        DatabaseService.where(server: server, name: attrs[:name], status: [ :error, :creating ])
-                       .where("created_at < ?", 5.minutes.ago)
-                       .destroy_all
-      end
-
-      @database = DatabaseService.new(attrs)
-      authorize @database
-
-      unless @database.save
-        redirect_to dashboard_addons_path, alert: "Couldn't create add-on: #{@database.errors.full_messages.to_sentence.presence || 'invalid input'}."
         return
       end
 
-      # Record-first: link now so deleting the app while the job is queued or
-      # mid-provision tears this row down too, instead of orphaning it.
-      DatabaseProvisioner.link!(app, @database)
+      if outcome[:error]
+        redirect_to dashboard_addons_path, alert: outcome[:error]
+        return
+      end
 
-      # Provisioning happens async — the agent may need to pull a multi-MB
-      # docker image, which can blow past kamal-proxy's 30s response
-      # timeout. The DB row stays in status=:creating; CreateAddonJob
-      # flips it to :running on success or marks it :error on failure.
-      CreateAddonJob.perform_later(@database.id, app.id)
-      track("database.create_queued", target: @database, metadata: { tier: @database.tier_name, app: app.name })
+      track("database.create_queued", target: db, metadata: { tier: db.tier_name, app: app.name })
 
       # Send the user back to the app's resources page — it gives them
-      # context (they just added an addon to this app).
+      # context (they just added an addon to this app). Provisioning is async
+      # (CreateAddonJob flips the row to :running or :error).
       redirect_to dashboard_app_resources_path(app),
-        notice: "#{@database.service_type.capitalize} #{@database.name} is provisioning — this can take a minute or two for image pulls."
+        notice: "#{db.service_type.capitalize} #{db.name} is provisioning — this can take a minute or two for image pulls."
     rescue ActiveRecord::RecordNotFound
       redirect_to dashboard_addons_path, alert: "Pick an app first."
     rescue => e
-      @database&.update(status: :error)
       redirect_to dashboard_addons_path, alert: "Failed to create add-on: #{e.message}"
     end
 
@@ -242,10 +206,7 @@ module Dashboard
       link_row = @database.app_databases.find_or_create_by!(app_record: app) do |ad|
         ad.alias_name = @database.shared? ? "DATABASE" : @database.service_type.upcase
       end
-      if @database.dsn.present?
-        env = @database.shared? ? { "#{link_row.alias_name}_URL" => @database.dsn } : DatabaseProvisioner.dedicated_env(app, @database)
-        ::Apps::EnvWriter.set(app, env)
-      end
+      DatabaseProvisioner.write_link_env!(app, @database, link_row)
       # dokku's `<plugin>:link` restarted the app so the new env took
       # effect — converge (restart: true) is the wokkud equivalent.
       restart_for_env(app)

@@ -83,4 +83,68 @@ RSpec.describe "Dashboard::Github", type: :request do
     expect(response).to have_http_status(:redirect)
     expect(app_record.reload.github_repo_full_name).to be_nil
   end
+
+  describe "GET repo_list (New app form)" do
+    let(:path) { "/dashboard/github/repo_list" }
+
+    it "requires sign in" do
+      get path
+      expect(response).to have_http_status(:redirect)
+    end
+
+    it "returns empty lists without an installation" do
+      sign_in user
+      user.update!(github_installation_id: nil)
+      get path
+      expect(JSON.parse(response.body)).to eq("repos" => [], "branches" => [])
+    end
+
+    it "lists the installation's repos and a repo's branches through GithubRepos" do
+      sign_in user
+      user.update!(github_installation_id: 7)
+      repo = Struct.new(:full_name, :default_branch).new("acme/web", "main")
+      allow(GithubRepos).to receive(:list).with(7).and_return([ repo ])
+      allow(GithubRepos).to receive(:branches_with_default).with(7, "acme/web").and_return([ %w[main dev], "main" ])
+      get path
+      expect(JSON.parse(response.body)["repos"]).to eq([ { "full_name" => "acme/web", "default_branch" => "main" } ])
+      get path, params: { repo: "acme/web" }
+      expect(JSON.parse(response.body)).to eq("branches" => %w[main dev], "default_branch" => "main")
+    end
+
+    it "puts the default branch first and keeps it when the first page lacks it" do
+      sign_in user
+      user.update!(github_installation_id: 7)
+      gh = instance_double(GithubApp, branches: %w[dependabot/x feature], default_branch: "main")
+      allow(GithubApp).to receive(:new).with(7).and_return(gh)
+      get path, params: { repo: "acme/web" }
+      expect(JSON.parse(response.body)).to eq("branches" => %w[main dependabot/x feature], "default_branch" => "main")
+    end
+
+    it "rejects a malformed repo with 422 and never calls GitHub" do
+      sign_in user
+      user.update!(github_installation_id: 7)
+      expect(GithubRepos).not_to receive(:branches_with_default)
+      get path, params: { repo: "../../etc/passwd" }
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it "answers 502 JSON on invalid repository and connection errors" do
+      sign_in user
+      user.update!(github_installation_id: 7)
+      [ Octokit::InvalidRepository, Faraday::ConnectionFailed.new("x"), Faraday::TimeoutError.new ].each do |err|
+        allow(GithubRepos).to receive(:branches_with_default).and_raise(err)
+        get path, params: { repo: "acme/web" }
+        expect(response).to have_http_status(:bad_gateway)
+        expect(JSON.parse(response.body)).to eq("error" => "github")
+      end
+    end
+
+    it "answers 502 when GitHub errors" do
+      sign_in user
+      user.update!(github_installation_id: 7)
+      allow(GithubRepos).to receive(:list).and_raise(Octokit::Error)
+      get path
+      expect(response).to have_http_status(:bad_gateway)
+    end
+  end
 end

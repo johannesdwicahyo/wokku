@@ -11,8 +11,7 @@ module Addons
   #   shared    — logical tenant on a per-server host container,
   #               included free with every paid plan. Provisioned by
   #               Addons::SharedProvisioner.
-  #   dedicated — its own dokku-<engine> container, sized by the
-  #               user's plan box size. Consumes one of 3 dedicated
+  #   dedicated — its own dokku-<engine> container, you size it. Consumes one of 3 dedicated
   #               slots on Pro/Team. Provisioned by DatabaseProvisioner.
   #
   # Some engines only support one mode for now — mongodb only has a
@@ -33,34 +32,46 @@ module Addons
       # snapshot-API work). Re-add on real demand.
     ].freeze
 
-    MODE_COPY = {
-      "shared" => {
-        label:       "Shared",
-        kicker:      "Free, included",
-        description: "Logical tenant on a per-server host container. Auto-attaches DATABASE_URL. No extra cost."
-      },
-      "dedicated" => {
-        label:       "Dedicated",
-        kicker:      "Paid plan",
-        description: "Its own container, sized by your plan's box. Consumes 1 of 3 dedicated slots."
-      }
-    }.freeze
-
-    # Per-resource billing: dedicated is sized in the builder and checked at
-    # create (Resources::ApplyChange.check_new_shape), not gated by plan.
-    PER_RESOURCE_DEDICATED_COPY = {
-      kicker:      "Pay per resource",
-      description: "Its own container. You choose CPU, memory and disk, billed per resource."
-    }.freeze
-
-    # Self-host has no prices or plans: describe what you get, not what it costs.
-    SELF_HOST_COPY = {
-      "shared"    => { kicker: "Included", description: "Logical tenant on a per-server host container. Auto-attaches DATABASE_URL." },
-      "dedicated" => { kicker: "Own container", description: "Its own container. You choose CPU, memory and disk." }
-    }.freeze
+    # Copy lives in config/locales/*/addons.yml (addons.picker.*).
+    SHORTCUT_KEYS = Resources::Shape::DB_SHORTCUTS.keys.freeze
 
     def self.for_user(user)
       new(user).call
+    end
+
+    # Typed list for the create page: engines -> modes -> env var + valid
+    # size shortcuts. Built from for_user.
+    def self.catalog(user)
+      for_user(user).map do |key, engine|
+        {
+          key: key, label: engine[:label],
+          modes: engine[:modes].map do |m|
+            m.slice(:mode, :available, :unavailable_reason).merge(
+              env_vars: env_vars(key, m[:mode]),
+              shortcuts: m[:mode] == "dedicated" ? shortcuts(key) : []
+            )
+          end
+        }
+      end
+    end
+
+    # What an attach really writes on a new app, read off the provisioner's own
+    # naming (dedicated: <TYPE>_URL + postgres' DATABASE_URL; shared: tenant env).
+    def self.env_vars(engine, mode)
+      if mode == "dedicated"
+        DatabaseProvisioner.dedicated_env(AppRecord.new, DatabaseService.new(service_type: engine, dsn: "x")).keys
+      else
+        DatabaseProvisioner.shared_sql_env(engine, "x").keys.presence ||
+          DatabaseProvisioner::SHARED_TENANT_ENV_KEYS.fetch(engine) { [ "#{engine.upcase}_URL" ] }
+      end
+    end
+
+    # A shortcut the engine's Shape rules reject (e.g. 256 MB mysql) is omitted.
+    def self.shortcuts(engine)
+      Resources::Shape::DB_SHORTCUTS.filter_map do |k, v|
+        shape = Resources::Shape.new(**v)
+        { key: k, shape: shape.to_h } if shape.valid?(engine: engine)
+      end
     end
 
     def initialize(user)
@@ -86,11 +97,18 @@ module Addons
     private
 
     def mode_entry(engine, mode)
-      base = MODE_COPY.fetch(mode).dup
-      base.merge!(PER_RESOURCE_DEDICATED_COPY) if mode == "dedicated" && Wokku.config.resource_builder?
-      base.merge!(SELF_HOST_COPY.fetch(mode)) unless Wokku.cloud?
+      copy = if !Wokku.cloud? then "self_host"
+      elsif mode == "dedicated" && Wokku.config.resource_builder? then "per_resource"
+      else "default"
+      end
+      t = ->(k) { I18n.t("addons.picker.#{k}") }
       avail = availability(engine, mode)
-      base.merge(mode: mode, available: avail[:ok], unavailable_reason: avail[:reason])
+      {
+        label: t.("#{mode}.label"),
+        kicker: t.("#{mode}.#{copy}.kicker"),
+        description: t.("#{mode}.#{copy}.description"),
+        mode: mode, available: avail[:ok], unavailable_reason: avail[:reason]
+      }
     end
 
     def availability(engine, mode)
@@ -103,9 +121,9 @@ module Addons
         if Wokku.config.resource_builder?
           { ok: true, reason: nil }
         elsif @plan.nil? || @plan.free?
-          { ok: false, reason: "Upgrade to Solo or higher for dedicated databases" }
+          { ok: false, reason: I18n.t("addons.picker.upgrade") }
         elsif !@plan.offers_dedicated?(engine)
-          { ok: false, reason: "Dedicated #{engine} not yet available on your plan" }
+          { ok: false, reason: I18n.t("addons.picker.unavailable", engine: engine) }
         else
           { ok: true, reason: nil }
         end

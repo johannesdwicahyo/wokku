@@ -1,0 +1,30 @@
+<aside class="lg:sticky lg:top-6" aria-labelledby="new-app-summary">
+  <%= render Molecules::PanelComponent.new do %>
+    <div class="p-4 space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 id="new-app-summary" class="<%= Organisms::NewAppSourceComponent::LABEL %> !mb-0"><%= t("new_app.summary.title") %></h2>
+        <span class="text-xs text-ink-soft" data-new-app-target="sourceLabel"><%= source_label %></span>
+      </div>
+      <div data-new-app-target="boardWrap" data-label="<%= board_label %>">
+        <%= render Organisms::LightBoardComponent.new(mode: :text, data: name, label: t("new_app.summary.board_label", name: name)) %>
+      </div>
+      <p class="font-mono text-xs text-ink-soft break-all" data-new-app-target="address"><%= address %></p>
+      <% if priced? %>
+        <dl class="space-y-1 text-xs text-muted">
+          <div class="flex justify-between"><dt><%= t("new_app.summary.app") %></dt><dd class="tabular-nums" data-new-app-target="appPrice"><%= total %></dd></div>
+          <div class="flex justify-between"><dt><%= t("new_app.summary.addons") %></dt><dd class="tabular-nums" data-new-app-target="addonPrice"><%= idr(0) %></dd></div>
+        </dl>
+        <div class="flex items-baseline justify-between border-t border-line pt-3">
+          <span class="<%= Organisms::NewAppSourceComponent::LABEL %> !mb-0"><%= t("new_app.summary.per_month") %></span>
+          <span class="text-lg text-ink font-semibold tabular-nums" data-new-app-target="total"><%= total %></span>
+        </div>
+      <% end %>
+      <%= render Atoms::ButtonComponent.new(type: "submit", class: "w-full", data: { app_name_check_target: "submit" }) do %><%= t("new_app.summary.create") %><% end %>
+      <p class="text-xs text-muted">
+        <%= t("new_app.summary.note") %>
+        <%# Cloud overlay supplies note_priced (billing copy); the engine carries none. %>
+        <% if priced? %><%= t("new_app.summary.note_priced", default: "") %><% end %>
+      </p>
+    </div>
+  <% end %>
+</aside>

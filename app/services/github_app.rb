@@ -1,4 +1,7 @@
 class GithubApp
+  # Page renders list repos synchronously: fail fast (well under the 30 s proxy).
+  # A fresh hash each time: Octokit mutates what it is given.
+  def self.connection_options = Octokit::Default.connection_options.deep_merge(request: { open_timeout: 3, timeout: 5 })
   APP_ID = ENV["GITHUB_APP_ID"]
   PRIVATE_KEY = ENV["GITHUB_APP_PRIVATE_KEY"]
   WEBHOOK_SECRET = ENV["GITHUB_WEBHOOK_SECRET"]
@@ -23,7 +26,7 @@ class GithubApp
 
     # Authenticated as the App itself (JWT), not as an installation.
     def app_client
-      Octokit::Client.new(bearer_token: jwt)
+      Octokit::Client.new(bearer_token: jwt, connection_options: connection_options)
     end
 
     # Installation ids the user who authorized `code` can access.
@@ -71,7 +74,7 @@ class GithubApp
   end
 
   def client
-    @client ||= Octokit::Client.new(access_token: installation_token)
+    @client ||= Octokit::Client.new(access_token: installation_token, connection_options: self.class.connection_options)
   end
 
   # GET /installation/repositories: authenticates as the installation (its
@@ -81,9 +84,15 @@ class GithubApp
   end
 
   def branches(repo_full_name)
-    client.branches(repo_full_name).map(&:name)
+    client.branches(repo_full_name, per_page: 100).map(&:name)
   rescue Octokit::NotFound
     []
+  end
+
+  def default_branch(repo_full_name)
+    client.repository(repo_full_name).default_branch
+  rescue Octokit::NotFound
+    nil
   end
 
   # Short-lived installation token (1h) — e.g. for `git fetch` of a private repo.

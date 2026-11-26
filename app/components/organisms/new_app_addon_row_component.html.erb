@@ -1,0 +1,11 @@
+<li class="flex items-center gap-3 border border-line rounded-md px-3 py-2" data-new-app-row data-price="<%= price %>">
+  <% FIELDS.each do |f| %><input type="hidden" name="addons[][<%= f %>]" value="<%= value(f) %>" data-field="<%= f %>"><% end %>
+  <div class="min-w-0 flex-1">
+    <span class="block text-sm text-ink truncate" data-slot="label"><%= label %></span>
+    <span class="block font-mono text-xs text-muted truncate" data-slot="env"><%= env %></span>
+  </div>
+  <span class="text-xs text-ink-soft tabular-nums" data-slot="price"><%= price_text %></span>
+  <button type="button" data-action="click->new-app#removeAddon" data-remove="<%= t("new_app.addons.remove", label: "%{label}") %>"
+          aria-label="<%= t("new_app.addons.remove", label: label) %>"
+          class="min-h-[38px] min-w-[38px] text-muted hover:text-ink focus-visible:ring-2 focus-visible:ring-live rounded-md">×</button>
+</li>

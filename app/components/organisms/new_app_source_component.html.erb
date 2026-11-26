@@ -1,0 +1,60 @@
+<fieldset class="border-0 p-0 m-0" data-new-app-target="source">
+  <legend class="<%= LABEL %>"><%= t("new_app.source.legend") %></legend>
+  <div class="grid gap-2 sm:grid-cols-3">
+    <% [ [ "github", t("new_app.source.github.title"), t("new_app.source.github.sub") ],
+         [ "git", t("new_app.source.git.title"), nil ] ].each do |key, title, sub| %>
+      <label class="<%= CARD %>">
+        <input type="radio" name="source" value="<%= key %>" class="sr-only" <%= "checked" if checked?(key) %>
+               data-label="<%= title %>" data-action="change->new-app#source">
+        <b class="text-sm text-ink font-semibold"><%= title %></b>
+        <% if key == "git" %>
+          <code class="font-mono text-xs text-ink-soft"><%= t("new_app.source.git.sub") %></code>
+        <% else %>
+          <span class="text-xs text-muted"><%= sub %></span>
+        <% end %>
+      </label>
+    <% end %>
+    <%# A link card, not an option: templates deploy through the gallery. %>
+    <%= link_to helpers.dashboard_templates_path, class: "#{CARD} hover:border-line-strong focus-visible:ring-2 focus-visible:ring-live" do %>
+      <b class="text-sm text-ink font-semibold"><%= t("new_app.source.template.title") %></b>
+      <span class="text-xs text-muted"><%= t("new_app.source.template.sub") %></span>
+      <span class="font-mono text-[11px] uppercase tracking-[.1em] text-live"><%= t("new_app.source.template.cta") %> →</span>
+    <% end %>
+  </div>
+</fieldset>
+
+<div class="mt-4 <%= "hidden" unless checked?("github") %>" data-new-app-source-panel="github">
+  <% if installed? %>
+    <div class="grid gap-4 sm:grid-cols-2" data-new-app-target="github" data-url="<%= lazy_url %>"
+         data-error="<%= t("new_app.source.repos_error") %>" data-loading="<%= t("new_app.source.loading_repos") %>"
+         data-choose="<%= t("new_app.source.choose_repo") %>" data-branches-error="<%= t("new_app.source.branches_error") %>" data-branch="<%= branch %>">
+      <div>
+        <label for="github_repo" class="<%= LABEL %>"><%= t("new_app.source.repository") %></label>
+        <select id="github_repo" name="github_repo" class="<%= FIELD %>" data-new-app-target="repo" data-action="change->new-app#repo">
+          <% if repos %>
+            <option value=""><%= t("new_app.source.choose_repo") %></option>
+            <% repos.each do |r| %><option value="<%= r %>" <%= "selected" if r == repo %>><%= r %></option><% end %>
+          <% else %>
+            <option value="<%= repo %>"><%= repo.presence || t("new_app.source.loading_repos") %></option>
+          <% end %>
+        </select>
+        <p class="mt-1 text-xs text-muted" role="status" aria-live="polite" data-new-app-target="repoStatus"><%= t("new_app.source.repos_error") if repos_error %></p>
+      </div>
+      <div>
+        <label for="github_branch" class="<%= LABEL %>"><%= t("new_app.source.branch") %></label>
+        <select id="github_branch" name="github_branch" class="<%= FIELD %>" data-new-app-target="branch">
+          <option value="<%= branch %>"><%= branch.presence || t("new_app.source.default_branch") %></option>
+        </select>
+      </div>
+    </div>
+  <% else %>
+    <p class="text-sm text-ink-soft mb-3"><%= t("new_app.source.connect_hint") %></p>
+    <%= render Atoms::ButtonComponent.new(variant: :secondary, href: connect_url, target: "_top") do %><%= t("new_app.source.connect") %><% end %>
+    <div class="mt-4">
+      <label for="repo_url" class="<%= LABEL %>"><%= t("new_app.source.repo_url") %></label>
+      <input id="repo_url" type="url" name="app_record[git_repository_url]" value="<%= repo_url %>" placeholder="https://github.com/owner/repo" class="<%= FIELD %>">
+    </div>
+  <% end %>
+</div>
+
+<p class="mt-4 text-sm text-ink-soft <%= "hidden" unless checked?("git") %>" data-new-app-source-panel="git"><%= t("new_app.source.git.hint") %></p>

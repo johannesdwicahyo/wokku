@@ -12,19 +12,36 @@ module Dashboard
         return
       end
 
-      github = GithubApp.new(current_user.github_installation_id)
-      @repos = github.repos(per_page: 50)&.repositories || []
+      id = current_user.github_installation_id
+      @repos = GithubRepos.list(id)
       @branches = []
 
       if params[:repo].present?
         @selected_repo = params[:repo]
-        @branches = github.branches(params[:repo])
+        @branches = GithubRepos.branches(id, params[:repo])
       end
     rescue Octokit::Error => e
       redirect_to dashboard_app_releases_path(@app), alert: "GitHub error: #{e.message}"
     rescue Faraday::Error, JWT::EncodeError, OpenSSL::PKey::PKeyError => e
       Rails.logger.warn("GitHub repos: #{e.class}")
       redirect_to dashboard_app_releases_path(@app), alert: t("dashboard.github.unreachable")
+    end
+
+    # JSON for the New app form: repos, or one repo's branches (?repo=owner/name).
+    # Scoped to the signed-in user's own installation.
+    def list
+      id = current_user.github_installation_id
+      return render(json: { repos: [], branches: [] }) unless id
+      if params[:repo].present?
+        repo = params[:repo].to_s
+        return render(json: { error: "repo" }, status: :unprocessable_entity) unless repo.match?(%r{\A[\w.-]+/[\w.-]+\z})
+        branches, default = GithubRepos.branches_with_default(id, repo)
+        render json: { branches: branches, default_branch: default }
+      else
+        render json: { repos: GithubRepos.list(id).map { |r| { full_name: r.full_name, default_branch: r.default_branch } } }
+      end
+    rescue Octokit::Error, Octokit::InvalidRepository, Faraday::ConnectionFailed, Faraday::TimeoutError
+      render json: { error: "github" }, status: :bad_gateway
     end
 
     def connect
@@ -34,18 +51,12 @@ module Dashboard
       repo = params[:repo]
       branch = params[:branch] || "main"
 
-      # The repo must belong to the caller's own GitHub App installation, or
-      # anyone could bind another tenant's private repo and receive its code.
-      unless GithubApp.repo_owned_by_installation?(repo, current_user.github_installation_id)
+      # connect refuses (writes nothing) unless the repo belongs to the caller's
+      # own GitHub App installation: otherwise anyone could bind another
+      # tenant's private repo and receive its code.
+      unless GithubRepos.connect(@app, repo, branch, installation_id: current_user.github_installation_id)
         return redirect_to dashboard_app_releases_path(@app), alert: t("dashboard.github.repo_not_owned")
       end
-
-      @app.update!(
-        github_repo_full_name: repo,
-        git_repository_url: "https://github.com/#{repo}.git",
-        deploy_branch: branch,
-        github_webhook_secret: SecureRandom.hex(20)
-      )
 
       redirect_to dashboard_app_releases_path(@app), notice: "Connected to #{repo} (#{branch})"
     end

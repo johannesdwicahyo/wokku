@@ -42,15 +42,14 @@ RSpec.describe "Dashboard::Apps", type: :request do
   describe "POST create — validation failure" do
     before { sign_in users(:one) }
 
-    it "re-renders the index shell (grid, not empty-state) on invalid name" do
+    it "re-renders the new-app page on invalid name" do
       # Blank name fails the presence validation; server lookup succeeds.
       post "/dashboard/apps", params: {
         app_record: { name: "", deploy_branch: "main", server_id: servers(:one).id }
       }
       expect(response).to have_http_status(:unprocessable_entity)
-      # The grid shell should render (deferred section placeholders), not the
-      # zero-app empty-state chooser — because @has_apps is now set correctly.
-      expect(response.body).to include('id="apps_list"')
+      expect(response.body).to include('data-controller="new-app app-name-check"')
+      expect(response.body).to include("app_record[name]")
     end
   end
 
@@ -87,6 +86,20 @@ RSpec.describe "Dashboard::Apps", type: :request do
   describe "GET check_name" do
     before { sign_in users(:one) }
 
+    it "answers in Indonesian under locale id" do
+      get check_name_dashboard_apps_path, params: { name: "fresh-id-name", locale: "id" }
+      expect(JSON.parse(response.body)["message"]).to eq("✓ fresh-id-name tersedia")
+      get check_name_dashboard_apps_path, params: { name: app_records(:one).name, locale: "id" }
+      expect(JSON.parse(response.body)["message"]).to eq("✗ Nama sudah dipakai")
+      get check_name_dashboard_apps_path, params: { name: "1bad", locale: "id" }
+      expect(JSON.parse(response.body)["message"]).to start_with("Pakai huruf kecil")
+    end
+
+    it "answers in English by default" do
+      get check_name_dashboard_apps_path, params: { name: "fresh-en-name" }
+      expect(JSON.parse(response.body)["message"]).to eq("✓ fresh-en-name is available")
+    end
+
     it "returns available true for an unused name" do
       get check_name_dashboard_apps_path, params: { name: "totally-fresh-name" }
       body = JSON.parse(response.body)
@@ -110,11 +123,11 @@ RSpec.describe "Dashboard::Apps", type: :request do
       expect(body["reason"]).to eq("invalid")
     end
 
-    it "auto-sanitizes friendly typos and returns the cleaned name" do
+    it "flags a name sanitizing would change: create posts it as typed" do
       get check_name_dashboard_apps_path, params: { name: "My Cool App!" }
       body = JSON.parse(response.body)
-      expect(body["available"]).to be_truthy
-      expect(body["name"]).to eq("mycoolapp")
+      expect(body["available"]).to be(false)
+      expect(body["reason"]).to eq("invalid")
     end
   end
 end

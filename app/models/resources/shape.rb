@@ -31,6 +31,14 @@ module Resources
       }
     }.freeze
 
+    # Create-page size shortcuts for dedicated DBs (Phase 5 spec). Separate from
+    # SERVICE_PRESETS, which other pages use. Engines whose floor rejects one omit it.
+    DB_SHORTCUTS = {
+      "small"    => { cpu: 0.25, memory_mb: 256,  disk_gb: 1 },
+      "standard" => { cpu: 0.5,  memory_mb: 512,  disk_gb: 5 },
+      "large"    => { cpu: 1.0,  memory_mb: 1024, disk_gb: 10 }
+    }.freeze
+
     attr_reader :cpu, :memory_mb, :disk_gb
 
     def self.round_up(cpu:, memory_mb:, disk_gb: 0)
@@ -67,10 +75,10 @@ module Resources
       grid = GRID.filter_map do |key, g|
         v = public_send(key)
         next if v && v.between?(g[:min], g[:max]) && (v / g[:step].to_f % 1).zero?
-        "#{key.to_s.tr('_', ' ').sub('mb', '(MB)').sub('gb', '(GB)').sub('cpu', 'CPU')} must be #{g[:min]}–#{g[:max]} in steps of #{g[:step]}"
+        I18n.t("new_app.shape.range", field: I18n.t("new_app.shape.field.#{key}"), min: g[:min], max: g[:max], step: g[:step])
       end
       floor = ENGINE_MIN_MEMORY_MB[engine.to_s]
-      grid << "#{engine} needs at least #{floor} MB memory" if floor && memory_mb && memory_mb < floor
+      grid << I18n.t("new_app.shape.engine_min", engine: engine, floor: floor) if floor && memory_mb && memory_mb < floor
       grid
     end
 

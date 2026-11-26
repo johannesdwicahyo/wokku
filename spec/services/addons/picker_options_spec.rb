@@ -98,7 +98,7 @@ RSpec.describe Addons::PickerOptions do
       shared = described_class.for_user(free_user)["postgres"][:modes].find { |m| m[:mode] == "shared" }
       expect(shared[:label]).to eq("Shared")
       expect(shared[:kicker]).to eq("Free, included")
-      expect(shared[:description]).to match(/auto-attaches DATABASE_URL/i)
+      expect(shared[:description]).to match(/logical tenant/i)
     end
   end
 
@@ -128,6 +128,40 @@ RSpec.describe Addons::PickerOptions do
       modes = described_class.for_user(free_user)["postgres"][:modes]
       expect(modes.map { |m| m[:kicker] }).to eq([ "Own container" ])
       expect(modes.map { |m| m[:description] }.join).not_to match(/free|cost|billed|plan|paid/i)
+    end
+  end
+
+  describe ".catalog" do
+    before { allow(Wokku.config).to receive(:resource_builder?).and_return(true) }
+
+    def modes(engine) = described_class.catalog(free_user).find { |e| e[:key] == engine }[:modes]
+
+    it "lists postgres shared + dedicated with env var, dedicated carrying 3 shortcuts" do
+      expect(modes("postgres").map { |m| m[:mode] }).to eq(%w[shared dedicated])
+      expect(modes("postgres").map { |m| m[:env_vars] }).to eq([ %w[DATABASE_URL], %w[POSTGRES_URL DATABASE_URL] ])
+      expect(modes("postgres").last[:shortcuts].map { |s| s[:key] }).to eq(%w[small standard large])
+      expect(modes("postgres").first[:shortcuts]).to eq([])
+      expect(modes("redis").first[:env_vars]).to eq(%w[REDIS_URL])
+      expect(modes("mariadb").first[:env_vars]).to eq(%w[MARIADB_URL DATABASE_URL])
+    end
+
+    it "is dedicated-only when shared is off" do
+      allow(Addons::SharedProvisioner).to receive(:feature_enabled?).and_return(false)
+      expect(modes("postgres").map { |m| m[:mode] }).to eq(%w[dedicated])
+    end
+
+    it "offers mysql dedicated only, omitting the small shortcut its 512 MB floor rejects" do
+      expect(modes("mysql").map { |m| m[:mode] }).to eq(%w[dedicated])
+      expect(modes("mysql").first[:shortcuts].map { |s| s[:key] }).to eq(%w[standard large])
+      expect(modes("mysql").first[:env_vars]).to eq(%w[MYSQL_URL])
+    end
+
+    it "translates copy to Indonesian" do
+      allow(Wokku).to receive(:cloud?).and_return(true)
+      I18n.with_locale(:id) do
+        expect(modes("postgres").first).to include(unavailable_reason: nil)
+        expect(described_class.for_user(free_user)["postgres"][:modes].last[:kicker]).to eq("Bayar per resource")
+      end
     end
   end
 end
