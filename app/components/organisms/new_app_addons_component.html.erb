@@ -1,5 +1,5 @@
 <div data-new-app-target="addons" data-units="<%= units&.to_json %>" data-max="<%= MAX %>"
-     data-free="<%= free_label %>" data-added="<%= t("new_app.addons.added", label: "%{label}") %>" data-removed="<%= t("new_app.addons.removed", label: "%{label}") %>" data-dropped="<%= t("new_app.addons.existing_dropped", label: "%{label}") %>"
+     data-free="<%= free_label %>" data-added="<%= t("new_app.addons.added", label: "%{label}") %>" data-removed="<%= t("new_app.addons.removed", label: "%{label}") %>" data-env-clash="<%= t("new_app.addons.env_clash", vars: "%{vars}") %>" data-dropped="<%= t("new_app.addons.existing_dropped", label: "%{label}") %>"
      data-duplicate="<%= t("new_app.addons.duplicate", label: "%{label}") %>" data-unavailable="<%= t("new_app.addons.unavailable", engine: "%{engine}", reason: "%{reason}") %>"
      data-action="keydown.esc->new-app#escape" data-existing-label="<%= t("new_app.addons.existing_label") %>"
      data-shared-label="<%= t("new_app.addons.shared") %>" data-dedicated-label="<%= t("new_app.addons.dedicated") %>"
@@ -18,6 +18,7 @@
           data: { action: "click->new-app#openExisting", new_app_target: "openExisting" }) do %><%= t("new_app.addons.existing") %><% end %>
   </div>
   <p class="mt-2 text-xs text-warn hidden" role="status" data-new-app-target="note"></p>
+  <p class="mt-2 text-xs text-warn hidden" role="status" data-new-app-target="envNote"></p>
   <p class="mt-2 text-xs text-muted <%= "hidden" unless full? %>" data-new-app-target="limit"><%= t("new_app.addons.limit", max: MAX) %></p>
 
   <div id="addon-catalog" class="mt-4 hidden" data-new-app-target="catalog">

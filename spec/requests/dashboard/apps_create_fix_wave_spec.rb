@@ -23,6 +23,8 @@ RSpec.describe "New app fix wave", type: :request do
     post "/dashboard/apps", params: { app_record: { name: name, server_id: server.id }, processes: { web: web }, source: "git" }.merge(extra)
   end
 
+  RSpec::Matchers.define_negated_matcher :not_have_enqueued_job, :have_enqueued_job
+
   def web_alloc(app) = app.dyno_allocations.find_by(process_type: "web")
 
   describe "size_preset (no JS)" do
@@ -206,6 +208,86 @@ RSpec.describe "New app fix wave", type: :request do
       get "/dashboard/apps"
       expect(doc).to have_link(href: "/dashboard/apps/new")
       expect(response.body).not_to include("click->slide-panel#open")
+    end
+  end
+
+  describe "round 2" do
+    before { allow(RepoUrlDeployJob).to receive(:valid_url?).and_return(true) }
+
+    it "repo URL + shared add-ons: pending deploy exists, the job (not create) enqueues the build" do
+      expect {
+        post_app("urlshared", source: "repo_url", app_record: { name: "urlshared", server_id: server.id, git_repository_url: "https://example.com/r.git" },
+                              addons: [ blank_row.merge(kind: "shared", engine: "postgres") ])
+      }.to have_enqueued_job(AttachAddonsJob).and(not_have_enqueued_job(RepoUrlDeployJob))
+      app = AppRecord.find_by!(name: "urlshared")
+      expect(app.deploys.pending.count).to eq(1)
+      expect(response).to redirect_to(dashboard_app_deploy_path(app, app.deploys.first))
+      job = enqueued_jobs.find { |j| j["job_class"] == "AttachAddonsJob" }
+      expect(job["arguments"][4]).to include("deploy_id" => app.deploys.first.id, "url" => "https://example.com/r.git")
+    end
+
+    it "repo URL without shared add-ons enqueues the build directly" do
+      expect {
+        post_app("urlplain", source: "repo_url", app_record: { name: "urlplain", server_id: server.id, git_repository_url: "https://example.com/r.git" })
+      }.to have_enqueued_job(RepoUrlDeployJob).and(not_have_enqueued_job(AttachAddonsJob))
+    end
+
+    it "GET new rescues a Faraday timeout and shows the error note" do
+      user.update!(github_installation_id: 7)
+      allow(GithubApp).to receive(:configured?).and_return(true)
+      allow(GithubRepos).to receive(:list).and_raise(Faraday::TimeoutError)
+      get "/dashboard/apps/new"
+      expect(response).to have_http_status(:ok)
+      expect(doc).to have_text("Reload the page to try again")
+    end
+
+    it "the listing client has short timeouts and keeps Octokit's default headers" do
+      opts = GithubApp.connection_options
+      expect(opts[:request]).to include(open_timeout: 3, timeout: 5)
+      expect(opts[:headers]).to be_present
+    end
+
+    it "blank branch (no JS) deploys the repo's default branch, not main" do
+      user.update!(github_installation_id: 7)
+      allow(GithubApp).to receive(:repo_owned_by_installation?).and_return(true)
+      allow(GithubApp).to receive(:configured?).and_return(true)
+      allow_any_instance_of(GithubApp).to receive(:default_branch).with("me/repo").and_return("master")
+      expect(GithubRepos).to receive(:start_deploy).with(anything, "me/repo", "master", installation_id: 7)
+      post_app("nojsbranch", source: "github", github_repo: "me/repo", github_branch: "")
+      expect(AppRecord.find_by!(name: "nojsbranch").deploy_branch).to eq("master")
+    end
+
+    it "keeps the typed name on the server-required 422" do
+      post "/dashboard/apps", params: { app_record: { name: "typed-name", server_id: "" }, processes: { web: web } }
+      expect(doc).to have_css("input#app_record_name[value='typed-name']")
+    end
+
+    it "preselects the first server and Create is never server-less" do
+      other = create(:server, team: user.teams.first)
+      allow_any_instance_of(Dashboard::AppsController).to receive(:policy_scope).and_wrap_original do |m, s|
+        s == Server ? Server.where(id: [ server.id, other.id ]).order(:id) : m.call(s)
+      end
+      get "/dashboard/apps/new"
+      expect(doc).to have_css("select[name='app_record[server_id]'] option[selected]", count: 1)
+    end
+
+    {
+      "Sleeping with Nano sliders when there is headroom" => [ { remaining: 1, provisionable: true }, "sleeping", "0.25", "256" ],
+      "Basic with Basic sliders when there is none" => [ { remaining: 0, provisionable: false }, "basic", "0.5", "512" ]
+    }.each do |title, (quota, card, cpu, mem)|
+      it "preselects #{title}" do
+        allow_any_instance_of(Dashboard::AppsController).to receive(:box_picker_state).and_return({ "sleeping" => quota })
+        get "/dashboard/apps/new"
+        expect(doc).to have_css("input[name=size_preset][value=#{card}][checked]", visible: :all)
+        expect(doc).to have_css("input[name='processes[web][cpu]'][value='#{cpu}']", visible: :all)
+        expect(doc).to have_css("input[name='processes[web][memory_mb]'][value='#{mem}']", visible: :all)
+      end
+    end
+
+    it "renders the env-clash note slot with localized copy" do
+      get "/dashboard/apps/new"
+      expect(doc).to have_css("[data-new-app-target=envNote]", visible: :all)
+      expect(response.body).to include("More than one add-on sets")
     end
   end
 end

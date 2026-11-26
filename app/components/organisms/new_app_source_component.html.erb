@@ -43,7 +43,7 @@
       <div>
         <label for="github_branch" class="<%= LABEL %>"><%= t("new_app.source.branch") %></label>
         <select id="github_branch" name="github_branch" class="<%= FIELD %>" data-new-app-target="branch">
-          <% if branch.present? %><option value="<%= branch %>"><%= branch %></option><% end %>
+          <option value="<%= branch %>"><%= branch.presence || t("new_app.source.default_branch") %></option>
         </select>
       </div>
     </div>

@@ -14,7 +14,7 @@ export default class extends Controller {
   static targets = ["source", "github", "repo", "repoStatus", "branch", "name", "size", "builder", "customHint",
                     "addons", "none", "rows", "rowTemplate", "openCatalog", "openExisting", "limit", "catalog",
                     "engines", "announce", "note", "config", "configName", "configEnv", "configPrice", "draftBuilder", "existingPanel",
-                    "addonsFrame", "boardWrap", "address", "sourceLabel", "appPrice", "addonPrice", "total"]
+                    "addonsFrame", "envNote", "boardWrap", "address", "sourceLabel", "appPrice", "addonPrice", "total"]
   static values = { domain: String, delimiter: { type: String, default: "." } }
 
   connect() {
@@ -314,6 +314,7 @@ export default class extends Controller {
     if (!this.hasAddonsTarget) return
     const n = this.rows().length, full = n >= parseInt(this.addonsTarget.dataset.max, 10)
     this.noneTarget.classList.toggle("hidden", n > 0)
+    this.envClash()
     this.limitTarget.classList.toggle("hidden", !full)
     ;[this.openCatalogTarget, this.openExistingTarget].forEach(b => {
       b.disabled = full
@@ -322,6 +323,15 @@ export default class extends Controller {
     })
     if (full) { this.catalogTarget.classList.add("hidden"); this.existingPanelTarget.classList.add("hidden") }
     this.totals()
+  }
+
+  // Two rows setting the same env var: say so, don't block.
+  envClash() {
+    const seen = new Set(), dup = new Set()
+    this.rows().forEach(r => r.querySelector("[data-slot=env]").textContent.split(",").map(v => v.trim()).filter(Boolean)
+      .forEach(v => { if (seen.has(v)) dup.add(v); seen.add(v) }))
+    this.envNoteTarget.textContent = dup.size ? this.addonsTarget.dataset.envClash.replace("%{vars}", [...dup].join(", ")) : ""
+    this.envNoteTarget.classList.toggle("hidden", !dup.size)
   }
 
   // ---- summary ----

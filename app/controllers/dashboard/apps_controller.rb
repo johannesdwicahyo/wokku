@@ -122,7 +122,7 @@ module Dashboard
       team = current_team
       server = policy_scope(Server).find_by(id: params.dig(:app_record, :server_id))
       unless server
-        @app = AppRecord.new
+        @app = AppRecord.new(name: params.dig(:app_record, :name).to_s)
         @app.errors.add(:base, t("new_app.errors.server_required"))
         return render_new
       end
@@ -254,7 +254,7 @@ module Dashboard
         end
 
         if github_repo
-          branch = params[:github_branch].to_s.strip.presence || "main"
+          branch = params[:github_branch].to_s.strip.presence || default_branch_of(github_repo, current_user.github_installation_id)
           installation_id = current_user.github_installation_id
           if !GithubRepos.connect(@app, github_repo, branch, installation_id: installation_id)
             warn_flash(t("new_app.errors.github_not_connected"))
@@ -268,15 +268,21 @@ module Dashboard
             warn_flash(t("new_app.errors.github_deploy"))
           end
         end
-        AttachAddonsJob.perform_later(@app.id, current_user.id, shared) if shared.any?
 
         if repo_url
           @app.update_column(:git_repository_url, repo_url)
           deploy = @app.deploys.create!(status: :pending)
           @app.releases.create!(deploy: deploy, description: "Deploy from #{repo_url}".truncate(200))
-          RepoUrlDeployJob.perform_later(app_id: @app.id, deploy_id: deploy.id, url: repo_url, branch: @app.deploy_branch.presence || "main")
+          branch = @app.deploy_branch.presence || "main"
+          if shared.any? # the job starts the build once DATABASE_URL exists
+            AttachAddonsJob.perform_later(@app.id, current_user.id, shared, nil, { "deploy_id" => deploy.id, "url" => repo_url, "branch" => branch })
+            shared = []
+          else
+            RepoUrlDeployJob.perform_later(app_id: @app.id, deploy_id: deploy.id, url: repo_url, branch: branch)
+          end
           return redirect_to dashboard_app_deploy_path(@app, deploy), notice: notice_for(t("new_app.building", url: repo_url))
         end
+        AttachAddonsJob.perform_later(@app.id, current_user.id, shared) if shared.any?
         redirect_to dashboard_app_path(@app), notice: notice_for(t("new_app.created"))
       else
         render_new
@@ -567,7 +573,8 @@ module Dashboard
       # the card is always offered (as the old form did).
       rem = @box_quota.dig("sleeping", :remaining)
       @sleeping_default = @sleeping = rem.nil? || rem.to_f > 0
-      @server = @servers.find { |s| s.id.to_s == server_id.to_s } || (@servers.first if @servers.size == 1)
+      # Preselect the first server so Create never starts with none picked.
+      @server = @servers.find { |s| s.id.to_s == server_id.to_s } || @servers.first
       basic = Resources::Shape.new(**Organisms::NewAppSizeComponent::PRESETS["basic"])
       monthly = Wokku.config.pricing.monthly_idr(basic, instances: 1)
       @price_idr = monthly && (@sleeping_default ? 0 : monthly)
@@ -623,6 +630,14 @@ module Dashboard
         item[:shape] = { cpu: r["cpu"], memory_mb: r["memory_mb"], disk_gb: r["disk_gb"] }.compact if r["kind"] == "dedicated"
         item
       end
+    end
+
+    # A blank branch (no JS) means the repo's own default, not a guessed "main".
+    def default_branch_of(repo, installation_id)
+      return "main" unless GithubApp.configured?
+      GithubApp.new(installation_id).default_branch(repo).presence || "main"
+    rescue *GithubRepos::ERRORS
+      "main"
     end
 
     def notice_for(base) = [ base, @attach_note ].compact.join(" ")

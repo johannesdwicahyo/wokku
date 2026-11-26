@@ -21,6 +21,7 @@ en:
       template: { title: "Template", sub: "n8n, Ghost, Umami and more", cta: "Browse templates" }
       repository: "Repository"
       branch: "Branch"
+      default_branch: "Default branch"
       loading_repos: "Loading your repositories…"
       choose_repo: "Choose a repository"
       branches_error: "Couldn't load branches. Pick the repository again."
@@ -65,6 +66,7 @@ en:
       limit: "You can add up to %{max} add-ons."
       existing_label: "Existing"
       existing_dropped: "%{label} removed: existing add-ons belong to one server."
+      env_clash: "More than one add-on sets %{vars}. Only one value is kept."
       none: "No add-ons yet."
       added: "%{label} added"
       removed: "%{label} removed"

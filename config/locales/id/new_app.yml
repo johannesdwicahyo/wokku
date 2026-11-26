@@ -21,6 +21,7 @@ id:
       template: { title: "Template", sub: "n8n, Ghost, Umami dan lainnya", cta: "Lihat template" }
       repository: "Repositori"
       branch: "Branch"
+      default_branch: "Branch default"
       loading_repos: "Memuat repositorimu…"
       choose_repo: "Pilih repositori"
       branches_error: "Branch gagal dimuat. Pilih repositori lagi."
@@ -65,6 +66,7 @@ id:
       limit: "Kamu bisa menambah sampai %{max} add-on."
       existing_label: "Sudah ada"
       existing_dropped: "%{label} dihapus: add-on yang sudah ada terikat pada satu server."
+      env_clash: "Lebih dari satu add-on mengatur %{vars}. Hanya satu nilai yang dipakai."
       none: "Belum ada add-on."
       added: "%{label} ditambahkan"
       removed: "%{label} dihapus"

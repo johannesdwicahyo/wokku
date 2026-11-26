@@ -24,4 +24,11 @@ RSpec.describe AttachAddonsJob do
       .to change { Activity.where(action: "app.addon_attach_failed", target_id: app.id).count }.by(1)
     expect(Activity.find_by(action: "app.addon_attach_failed").metadata).to include("label" => "postgres", "error" => "boom")
   end
+
+  it "starts the repo-URL build after attaching" do
+    allow(Addons::AttachOnCreate).to receive(:call).and_return(Addons::AttachOnCreate::Result.new(attached: [], failed: [], outcomes: []))
+    expect {
+      described_class.perform_now(app.id, user.id, items, nil, { "deploy_id" => "d1", "url" => "https://x.test/r.git", "branch" => "main" })
+    }.to have_enqueued_job(RepoUrlDeployJob).with(app_id: app.id, deploy_id: "d1", url: "https://x.test/r.git", branch: "main")
+  end
 end

@@ -1,4 +1,7 @@
 class GithubApp
+  # Page renders list repos synchronously: fail fast (well under the 30 s proxy).
+  # A fresh hash each time: Octokit mutates what it is given.
+  def self.connection_options = Octokit::Default.connection_options.deep_merge(request: { open_timeout: 3, timeout: 5 })
   APP_ID = ENV["GITHUB_APP_ID"]
   PRIVATE_KEY = ENV["GITHUB_APP_PRIVATE_KEY"]
   WEBHOOK_SECRET = ENV["GITHUB_WEBHOOK_SECRET"]
@@ -23,7 +26,7 @@ class GithubApp
 
     # Authenticated as the App itself (JWT), not as an installation.
     def app_client
-      Octokit::Client.new(bearer_token: jwt)
+      Octokit::Client.new(bearer_token: jwt, connection_options: connection_options)
     end
 
     # Installation ids the user who authorized `code` can access.
@@ -71,7 +74,7 @@ class GithubApp
   end
 
   def client
-    @client ||= Octokit::Client.new(access_token: installation_token)
+    @client ||= Octokit::Client.new(access_token: installation_token, connection_options: self.class.connection_options)
   end
 
   # GET /installation/repositories: authenticates as the installation (its
