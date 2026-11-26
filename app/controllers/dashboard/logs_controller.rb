@@ -77,7 +77,7 @@ module Dashboard
       raw.dup.force_encoding(Encoding::UTF_8).scrub("?")
     end
 
-    def glance_limit = params[:lines].to_i.clamp(1, 200).then { |n| params[:lines].present? ? n : 5 }
+    def glance_limit = params[:lines].to_s.match?(/\A\d+\z/) ? params[:lines].to_i.clamp(1, 200) : 5
 
     # Must be one of the app's process types (same source as the processes rack), else ignored.
     def glance_process
@@ -85,21 +85,25 @@ module Dashboard
       params[:process].to_s.presence_in(types)
     end
 
-    # Persisted rows first (no SSH); live LogReader only when the app has none.
+    FRESH_WINDOW = 2.minutes
+
+    # Persisted rows only while the newest matching one is fresh (no SSH);
+    # otherwise live LogReader, cached 4s so polling can't hammer the host.
     def recent_log_lines(app, limit:, process: nil)
-      persisted = Log.for_app(app)
-      if persisted.exists?
+      scope = Log.for_app(app)
+      if process
         # Container naming: wokku-<app>-<proc>.<slot>.<task> (wokkud/internal/lifecycle/converge.go
         # ServiceName; Hosts::ContainerNames), Dokku-era <app>.<proc>.<n>.
-        if process
-          like = ->(base) { "#{Log.sanitize_sql_like(base)}.%" }
-          persisted = persisted.where("container LIKE ? OR container LIKE ?",
-                                      like.("wokku-#{app.name}-#{process}"), like.("#{app.name}.#{process}"))
-        end
-        return persisted.recent.limit(limit).pluck(:line).reverse
+        like = ->(base) { "#{Log.sanitize_sql_like(base)}.%" }
+        scope = scope.where("container LIKE ? OR container LIKE ?",
+                            like.("wokku-#{app.name}-#{process}"), like.("#{app.name}.#{process}"))
       end
+      newest = scope.maximum(:ts)
+      return scope.recent.limit(limit).pluck(:line).reverse if newest && newest >= FRESH_WINDOW.ago
 
-      raw = scrub_encoding(process ? ::Apps::LogReader.recent(app, lines: limit, process: process) : ::Apps::LogReader.recent(app, lines: limit))
+      raw = Rails.cache.fetch([ "glance", app.id, process, limit ], expires_in: 4.seconds) do
+        scrub_encoding(process ? ::Apps::LogReader.recent(app, lines: limit, process: process) : ::Apps::LogReader.recent(app, lines: limit))
+      end
       return [] if raw.blank?
       raw.gsub(/\e\[[0-9;]*m/, "").split("\n").last(limit)
     rescue => e

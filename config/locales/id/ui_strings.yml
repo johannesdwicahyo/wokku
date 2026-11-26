@@ -139,6 +139,7 @@ id:
       filters: "Filter log"
       all: "Semua"
       pause: "Jeda"
+      pause_label: "Jeda log langsung"
       resume: "Lanjut"
       loading: "Memuat log…"
     domains:

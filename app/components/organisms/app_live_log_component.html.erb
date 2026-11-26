@@ -10,10 +10,10 @@
         <% process_types.each do |type| %>
           <button type="button" class="<%= btn %>" aria-pressed="false" data-live-log-target="filter" data-process="<%= type %>" data-action="live-log#filter"><%= type %></button>
         <% end %>
-        <button type="button" class="<%= btn %>" aria-pressed="false" data-live-log-target="pause" data-action="live-log#togglePause"><%= t("apps.live_log.pause") %></button>
+        <button type="button" class="<%= btn %>" aria-pressed="false" data-live-log-target="pause" aria-label="<%= t("apps.live_log.pause_label") %>" data-action="live-log#togglePause"><%= t("apps.live_log.pause") %></button>
       </div>
     </div>
-    <div role="log" aria-live="polite" tabindex="0" data-live-log-target="box" class="h-72 overflow-y-auto px-[18px] py-3 font-mono text-xs text-muted min-w-0 wrap-anywhere focus-visible:outline-2 focus-visible:outline-live">
+    <div role="log" aria-live="off" tabindex="0" data-live-log-target="box" class="h-72 overflow-y-auto px-[18px] py-3 font-mono text-xs text-muted min-w-0 wrap-anywhere focus-visible:outline-2 focus-visible:outline-live">
       <%= helpers.turbo_frame_tag "app_live_log", src: src, loading: :lazy, data: { live_log_target: "frame" } do %>
         <span class="text-dim"><%= t("apps.live_log.loading") %></span>
       <% end %>

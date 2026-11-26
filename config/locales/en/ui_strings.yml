@@ -121,6 +121,7 @@ en:
       filters: "Log filters"
       all: "All"
       pause: "Pause"
+      pause_label: "Pause live log"
       resume: "Resume"
       loading: "Loading logs…"
     domains:

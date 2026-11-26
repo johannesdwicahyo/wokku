@@ -12,9 +12,9 @@ RSpec.describe "Dashboard::Logs live glance", type: :request do
   # Naming pinned: wokkud/internal/lifecycle/converge.go:292 ServiceName =
   # "wokku-<app>-<proc>"; Swarm task containers are "<service>.<slot>.<task>"
   # (app/services/hosts/container_names.rb header).
-  def seed(proc, line, n: 1)
+  def seed(proc, line, n: 1, ago: 0)
     n.times do |i|
-      Log.create!(server: app_record.server, app_record: app_record, ts: Time.current + i,
+      Log.create!(server: app_record.server, app_record: app_record, ts: ago.seconds.ago + i,
                   container: "wokku-#{app_record.name}-#{proc}.1.abc#{i}", line: "#{line}#{i}")
     end
   end
@@ -63,5 +63,44 @@ RSpec.describe "Dashboard::Logs live glance", type: :request do
     sign_in viewer
     get path, params: { glance: true }
     expect(response).to have_http_status(:success)
+  end
+
+  describe "freshness and cache" do
+    it "falls back to LogReader when persisted rows are stale" do
+      seed("web", "old", ago: 600)
+      expect(Apps::LogReader).to receive(:recent).and_return("live-line")
+      get path, params: { glance: true }
+      expect(response.body).to include("live-line")
+    end
+
+    it "does not call LogReader when rows are fresh" do
+      seed("web", "fresh")
+      expect(Apps::LogReader).not_to receive(:recent)
+      get path, params: { glance: true }
+      expect(response.body).to include("fresh0")
+    end
+
+    it "caches the live fallback for a few seconds" do
+      allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
+      expect(Apps::LogReader).to receive(:recent).once.and_return("live-line")
+      2.times { get path, params: { glance: true } }
+    end
+
+    it "defaults lines for a non-numeric value" do
+      seed("web", "w", n: 8)
+      get path, params: { glance: true, lines: "abc" }
+      expect(response.body.scan(/<div>w\d+<\/div>/).size).to eq(5)
+    end
+
+    it "escapes LIKE wildcards in the app name" do
+      other = app_records(:one)
+      app_record.update_column(:name, "my_app")
+      other.update_column(:name, "myXapp")
+      Log.create!(server: app_record.server, app_record: app_record, ts: Time.current, container: "wokku-myXapp-web.1.a", line: "leak")
+      Log.create!(server: app_record.server, app_record: app_record, ts: Time.current, container: "wokku-my_app-web.1.a", line: "mine")
+      get path, params: { glance: true, process: "web" }
+      expect(response.body).to include("mine")
+      expect(response.body).not_to include("leak")
+    end
   end
 end
