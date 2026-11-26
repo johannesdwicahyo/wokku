@@ -29,10 +29,44 @@ RSpec.describe "GET /dashboard/apps/new", type: :request do
     expect(doc).to have_no_text("Per month")
   end
 
-  it "has no English chrome under :id" do
-    get "/dashboard/apps/new", headers: { "Accept-Language" => "id" }, params: { locale: :id }
-    skip "locale not switched" unless doc.has_text?("Ringkasan")
-    ["Name and size", "Add-ons", "Summary", "Create and deploy"].each { |t| expect(response.body).not_to include(t) }
+  it "has no English page chrome under :id" do
+    get "/dashboard/apps/new", params: { locale: :id }
+    expect(doc).to have_text("Ringkasan")
+    ["Name and size", "Create and deploy", "04 · Summary"].each { |t| expect(response.body).not_to include(t) }
+  end
+
+  it "offers the Sleeping card but does not preselect it with zero headroom" do
+    allow_any_instance_of(Dashboard::AppsController).to receive(:box_picker_state)
+      .and_return({ "sleeping" => { remaining: 0, provisionable: false } })
+    get "/dashboard/apps/new"
+    expect(doc).to have_css("input[name=size_preset][value=sleeping]", visible: :all)
+    expect(doc).to have_no_css("input[name=size_preset][value=sleeping][checked]", visible: :all)
+  end
+
+  it "renders the box grid in legacy mode" do
+    allow(Wokku.config).to receive(:resource_builder?).and_return(false)
+    get "/dashboard/apps/new"
+    expect(doc).to have_css("button[data-box-size]")
+    expect(doc).to have_no_css("input[name=size_preset]", visible: :all)
+  end
+
+  describe "server frame reload" do
+    let(:frame) { { "Turbo-Frame" => "new_app_addons" } }
+
+    it "renders only section 03, and a bogus server_id has no existing rows" do
+      get "/dashboard/apps/new", params: { server_id: "nope" }, headers: frame
+      expect(response).to have_http_status(:ok)
+      expect(doc).to have_css("turbo-frame#new_app_addons")
+      expect(doc).to have_no_css("html form, canvas[data-light-board-mode-value=text]")
+      expect(response.body).not_to include("<html")
+    end
+
+    it "does not use another team's server" do
+      other = create(:server, team: create(:team))
+      get "/dashboard/apps/new", params: { server_id: other.id }, headers: frame
+      expect(response).to have_http_status(:ok)
+      expect(doc).to have_no_css("[data-existing-id]")
+    end
   end
 
   def scope_servers(*servers)

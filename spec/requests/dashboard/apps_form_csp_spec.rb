@@ -23,6 +23,6 @@ RSpec.describe "New-app form without inline handlers", type: :request do
     doc = Capybara.string(response.body)
     expect(doc).to have_css("button[data-box-size][aria-pressed='true']", count: 1)
     expect(doc).to have_css("button[data-box-size][aria-pressed='false']")
-    expect(doc).to have_no_css("button[data-box-size][aria-pressed='false'].border-live")
+    expect(doc).to have_css("button[data-box-size][aria-pressed='true'][class*='aria-pressed:border-live']")
   end
 end

@@ -1,0 +1,4 @@
+<%# Section 03. Changing server reloads this frame (existing add-ons are per server). %>
+<%= turbo_frame_tag "new_app_addons", data: { new_app_target: "addonsFrame", url: new_dashboard_app_path } do %>
+  <%= render Organisms::NewAppAddonsComponent.new(user: current_user, server: @server) %>
+<% end %>

@@ -71,6 +71,16 @@ module Dashboard
       @servers = policy_scope(Server)
       @plan = current_user.current_plan
       @box_quota = box_picker_state(current_user)
+      # Headroom (nil or > 0, may be Infinity) only sets the Sleeping DEFAULT;
+      # the card is always offered (as the old form did).
+      rem = @box_quota.dig("sleeping", :remaining)
+      @sleeping_default = rem.nil? || rem.to_f > 0
+      @server = @servers.find { |s| s.id.to_s == params[:server_id].to_s } || (@servers.first if @servers.size == 1)
+      basic = Resources::Shape.new(**Organisms::NewAppSizeComponent::PRESETS["basic"])
+      monthly = Wokku.config.pricing.monthly_idr(basic, instances: 1)
+      @price_idr = monthly && (@sleeping_default ? 0 : monthly)
+      # Server change reloads section 03 only.
+      render partial: "new_addons", layout: false if turbo_frame_request?
     end
 
     # GET /dashboard/apps/check_name?name=foo

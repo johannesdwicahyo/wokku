@@ -1,16 +1,6 @@
 <%# Phase 5 create page: sections 01-03 left, sticky summary right. POST goes
     to AppsController#create (params contract in Task 4 notes). %>
-<%
-  # Quota headroom -> Sleeping offered and preselected (mirrors the old form;
-  # nil box_quota defaults to headroom). rem can be Float::INFINITY: compare, never .to_i.
-  rem = (@box_quota || {}).dig("sleeping", :remaining)
-  headroom = rem.nil? || rem.to_f > 0
-  server = @servers.find { |s| s.id.to_s == params[:server_id].to_s } || (@servers.first if @servers.size == 1)
-  basic = Resources::Shape.new(**Organisms::NewAppSizeComponent::PRESETS["basic"])
-  monthly = Wokku.config.pricing.monthly_idr(basic, instances: 1)
-  price = monthly && (headroom ? 0 : monthly)
-  source_key = current_user.github_installation_id.present? ? "github" : "git"
-%>
+<% source_key = current_user.github_installation_id.present? ? "github" : "git" %>
 <% content_for :title, t("new_app.page.title") %>
 <div class="container py-6">
   <header class="mb-6">
@@ -37,28 +27,25 @@
                 <span id="server_label" class="<%= Organisms::NewAppSourceComponent::LABEL %>"><%= t("new_app.page.server") %></span>
                 <%= combobox_tag "app_record[server_id]",
                       @servers.map { |s| { value: s.id, label: s.name, description: s.host } },
-                      value: server&.id, placeholder: t("new_app.page.server_placeholder"), required: true,
+                      value: @server&.id, placeholder: t("new_app.page.server_placeholder"), required: true,
                       data: { action: "change->new-app#server" } %>
               </div>
             <% else %>
-              <%= hidden_field_tag "app_record[server_id]", server&.id %>
+              <%= hidden_field_tag "app_record[server_id]", @server&.id %>
             <% end %>
-            <%= render Organisms::NewAppSizeComponent.new(sleeping: headroom, sleeping_option: headroom,
+            <%= render Organisms::NewAppSizeComponent.new(sleeping: @sleeping_default, sleeping_option: true,
                   box_quota: @box_quota) %>
           </div>
         <% end %>
 
         <%= render Molecules::PanelComponent.new(label: t("new_app.page.addons")) do %>
           <div class="p-4">
-            <%# Changing server reloads this frame (existing add-ons are per server). %>
-            <%= turbo_frame_tag "new_app_addons", data: { new_app_target: "addonsFrame", url: new_dashboard_app_path } do %>
-              <%= render Organisms::NewAppAddonsComponent.new(user: current_user, server: server) %>
-            <% end %>
+            <%= render "new_addons" %>
           </div>
         <% end %>
       </div>
 
-      <%= render Organisms::NewAppSummaryComponent.new(app_name: @app.name, source: t("new_app.source.#{source_key}.title"), price_idr: price) %>
+      <%= render Organisms::NewAppSummaryComponent.new(app_name: @app.name, source: t("new_app.source.#{source_key}.title"), price_idr: @price_idr) %>
     </div>
   <% end %>
 </div>
