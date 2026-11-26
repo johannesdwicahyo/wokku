@@ -29,6 +29,13 @@ class RollbackArtifactResolver
     end
   end
 
+  # Cheap, no-I/O check for render paths (header button): is any artifact
+  # RECORDED on the deploy? Liveness (registry/archive store) is still only
+  # verified by .call at click time in #rollback.
+  def self.recorded?(deploy)
+    deploy.present? && (deploy.image_ref.present? || deploy.archive_key.present?)
+  end
+
   def self.call(app_record:, release:, target_deploy:)
     new(app_record: app_record, release: release, target_deploy: target_deploy).call
   end

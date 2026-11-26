@@ -1,18 +1,15 @@
-<div class="mb-5">
-  <div class="flex items-center gap-3 flex-wrap">
-    <div class="text-[13px] text-dim whitespace-nowrap">
-      <%= link_to "Apps", helpers.dashboard_apps_path, class: "hover:text-ink hover:underline" %>
-      <span class="mx-1">/</span>
-      <span class="text-ink font-semibold"><%= app.name %></span>
-    </div>
-    <div class="inline-flex border border-line rounded-md overflow-hidden shadow-brutal-sm max-w-full overflow-x-auto">
-      <% TABS.each do |t| %>
+<nav aria-label="<%= t("dashboard.app_header.tabs_label") %>" class="mb-5 border-b border-line overflow-x-auto">
+  <ul class="flex gap-1 min-w-max">
+    <% active = active_tab %>
+    <% TABS.each do |t| %>
+      <li>
         <%= link_to tab_label(t), tab_href(t),
-              class: "px-4 py-[7px] text-[13px] font-semibold whitespace-nowrap border-r border-line last:border-r-0 transition-colors #{t == active_tab ? 'bg-ink text-paper' : 'bg-paper text-dim hover:bg-bg-deep'}" %>
-      <% end %>
-    </div>
-  </div>
-</div>
+              "aria-current": (t == active ? "page" : nil),
+              class: "block px-3.5 py-2.5 text-[13px] font-semibold whitespace-nowrap border-b-2 -mb-px transition-colors #{t == active ? 'border-live text-ink' : 'border-transparent text-dim hover:text-ink'}" %>
+      </li>
+    <% end %>
+  </ul>
+</nav>
 
 <%# target: "_top" — links and forms in a tab navigate the whole page, so the
     URL updates, flash messages (rendered outside this frame) show, and pages

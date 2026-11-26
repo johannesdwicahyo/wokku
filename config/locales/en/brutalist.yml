@@ -218,12 +218,6 @@ en:
       view_all: "view all →"
       activity: "recent_activity"
       activity_window: "last 24h"
-    app_tabs:
-      overview:    "overview"
-      deploy:      "deploy"
-      runtime:     "runtime"
-      performance: "performance"
-      settings:    "settings"
     performance_tabs:
       metrics:  "metrics"
       requests: "requests"

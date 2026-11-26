@@ -1,0 +1,47 @@
+<header class="mb-5 flex flex-wrap items-start justify-between gap-4">
+  <div class="min-w-0">
+    <div class="flex items-center gap-3">
+      <%= render Atoms::StatusLightComponent.new(state: app.display_status) %>
+      <h1 class="text-[22px] font-semibold text-ink truncate"><%= app.name %></h1>
+    </div>
+    <div class="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px]">
+      <% hostnames.each do |host| %>
+        <a href="https://<%= host %>" class="text-ink-soft hover:text-ink hover:underline" target="_blank" rel="noopener"><%= host %></a>
+      <% end %>
+    </div>
+    <p class="mt-1 font-mono text-[11px] text-dim">
+      <%= github? ? t("dashboard.app_header.from_github", repo: app.github_repo_full_name, branch: branch) : t("dashboard.app_header.git_push") %>
+    </p>
+  </div>
+
+  <% if can_update %>
+    <div class="flex flex-wrap items-center gap-2">
+      <%= helpers.button_to t("dashboard.app_header.restart"), helpers.restart_dashboard_app_path(app),
+            method: :post, class: Atoms::ButtonComponent.new(variant: :secondary).classes,
+            form: { data: { turbo_confirm: t("dashboard.app_header.restart_confirm", name: app.name) } } %>
+      <% if (target = rollback_target) %>
+        <%= helpers.button_to t("dashboard.app_header.rollback", version: target.version),
+              helpers.rollback_dashboard_app_release_path(app, target),
+              method: :post, class: Atoms::ButtonComponent.new(variant: :secondary).classes,
+              form: { data: { turbo_confirm: t("dashboard.app_header.rollback_confirm", name: app.name, version: target.version) } } %>
+      <% end %>
+      <% if show_deploy? %>
+        <%= helpers.button_to t("dashboard.app_header.deploy_branch", branch: branch),
+              helpers.deploy_dashboard_app_releases_path(app),
+              method: :post, class: Atoms::ButtonComponent.new(variant: :primary).classes %>
+      <% end %>
+      <details class="relative">
+        <summary aria-label="<%= t("dashboard.app_header.more") %>" class="<%= Atoms::ButtonComponent.new(variant: :secondary).classes %> list-none">⋯</summary>
+        <div class="absolute right-0 z-20 mt-1 min-w-[180px] border border-line-strong bg-paper p-1 flex flex-col">
+          <%= helpers.button_to (running? ? t("dashboard.app_header.stop") : t("dashboard.app_header.start")),
+                (running? ? helpers.stop_dashboard_app_path(app) : helpers.start_dashboard_app_path(app)),
+                method: :post, class: "w-full text-left px-3 py-2 text-[13px] text-ink-soft hover:text-ink" %>
+          <%= helpers.button_to t("dashboard.app_header.maintenance"), helpers.toggle_maintenance_dashboard_app_path(app),
+                method: :post, class: "w-full text-left px-3 py-2 text-[13px] text-ink-soft hover:text-ink" %>
+          <a href="https://<%= hostnames.first %>" target="_blank" rel="noopener" class="px-3 py-2 text-[13px] text-ink-soft hover:text-ink"><%= t("dashboard.app_header.open_app") %></a>
+          <%= link_to t("dashboard.app_header.settings"), helpers.dashboard_app_checks_path(app), class: "px-3 py-2 text-[13px] text-ink-soft hover:text-ink" %>
+        </div>
+      </details>
+    </div>
+  <% end %>
+</header>
