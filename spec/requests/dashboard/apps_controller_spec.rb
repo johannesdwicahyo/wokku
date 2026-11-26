@@ -87,6 +87,20 @@ RSpec.describe "Dashboard::Apps", type: :request do
   describe "GET check_name" do
     before { sign_in users(:one) }
 
+    it "answers in Indonesian under locale id" do
+      get check_name_dashboard_apps_path, params: { name: "fresh-id-name", locale: "id" }
+      expect(JSON.parse(response.body)["message"]).to eq("✓ fresh-id-name tersedia")
+      get check_name_dashboard_apps_path, params: { name: app_records(:one).name, locale: "id" }
+      expect(JSON.parse(response.body)["message"]).to eq("✗ Nama sudah dipakai")
+      get check_name_dashboard_apps_path, params: { name: "1bad", locale: "id" }
+      expect(JSON.parse(response.body)["message"]).to start_with("Pakai huruf kecil")
+    end
+
+    it "answers in English by default" do
+      get check_name_dashboard_apps_path, params: { name: "fresh-en-name" }
+      expect(JSON.parse(response.body)["message"]).to eq("✓ fresh-en-name is available")
+    end
+
     it "returns available true for an unused name" do
       get check_name_dashboard_apps_path, params: { name: "totally-fresh-name" }
       body = JSON.parse(response.body)

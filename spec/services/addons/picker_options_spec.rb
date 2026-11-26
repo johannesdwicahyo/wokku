@@ -98,7 +98,7 @@ RSpec.describe Addons::PickerOptions do
       shared = described_class.for_user(free_user)["postgres"][:modes].find { |m| m[:mode] == "shared" }
       expect(shared[:label]).to eq("Shared")
       expect(shared[:kicker]).to eq("Free, included")
-      expect(shared[:description]).to match(/auto-attaches DATABASE_URL/i)
+      expect(shared[:description]).to match(/logical tenant/i)
     end
   end
 

@@ -116,4 +116,16 @@ RSpec.describe Addons::AttachOnCreate do
     expect(DatabaseService.where(server: server).count).to eq(1)
     expect(app.app_databases.count).to eq(0)
   end
+
+  describe ".existing_candidates" do
+    it "returns exactly what attach accepts: dedicated, running, same server, team-owned" do
+      ok = create(:database_service, server: server, creator: user, status: :running)
+      create(:database_service, server: create(:server), creator: user, status: :running)
+      create(:database_service, server: server, creator: user, status: :stopped)
+      shared = create(:database_service, server: server, creator: user, status: :running)
+      shared.update_column(:shared, true)
+      expect(described_class.existing_candidates(user: user, team: team, server: server)).to eq([ ok ])
+      expect(described_class.existing_candidates(user: user, team: team, server: nil)).to eq([])
+    end
+  end
 end

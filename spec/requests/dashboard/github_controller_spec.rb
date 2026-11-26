@@ -83,4 +83,40 @@ RSpec.describe "Dashboard::Github", type: :request do
     expect(response).to have_http_status(:redirect)
     expect(app_record.reload.github_repo_full_name).to be_nil
   end
+
+  describe "GET repo_list (New app form)" do
+    let(:path) { "/dashboard/github/repo_list" }
+
+    it "requires sign in" do
+      get path
+      expect(response).to have_http_status(:redirect)
+    end
+
+    it "returns empty lists without an installation" do
+      sign_in user
+      user.update!(github_installation_id: nil)
+      get path
+      expect(JSON.parse(response.body)).to eq("repos" => [], "branches" => [])
+    end
+
+    it "lists the installation's repos and a repo's branches through GithubRepos" do
+      sign_in user
+      user.update!(github_installation_id: 7)
+      repo = Struct.new(:full_name, :default_branch).new("acme/web", "main")
+      allow(GithubRepos).to receive(:list).with(7).and_return([ repo ])
+      allow(GithubRepos).to receive(:branches).with(7, "acme/web").and_return(%w[main dev])
+      get path
+      expect(JSON.parse(response.body)["repos"]).to eq([ { "full_name" => "acme/web", "default_branch" => "main" } ])
+      get path, params: { repo: "acme/web" }
+      expect(JSON.parse(response.body)["branches"]).to eq(%w[main dev])
+    end
+
+    it "answers 502 when GitHub errors" do
+      sign_in user
+      user.update!(github_installation_id: 7)
+      allow(GithubRepos).to receive(:list).and_raise(Octokit::Error)
+      get path
+      expect(response).to have_http_status(:bad_gateway)
+    end
+  end
 end

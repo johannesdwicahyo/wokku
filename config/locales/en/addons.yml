@@ -7,13 +7,13 @@ en:
         label: "Shared"
         default:
           kicker: "Free, included"
-          description: "Logical tenant on a per-server host container. Auto-attaches DATABASE_URL. No extra cost."
+          description: "Logical tenant on a per-server host container. No extra cost."
         per_resource:
           kicker: "Free, included"
-          description: "Logical tenant on a per-server host container. Auto-attaches DATABASE_URL. No extra cost."
+          description: "Logical tenant on a per-server host container. No extra cost."
         self_host:
           kicker: "Included"
-          description: "Logical tenant on a per-server host container. Auto-attaches DATABASE_URL."
+          description: "Logical tenant on a per-server host container."
       dedicated:
         label: "Dedicated"
         default:

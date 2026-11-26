@@ -12,19 +12,33 @@ module Dashboard
         return
       end
 
-      github = GithubApp.new(current_user.github_installation_id)
-      @repos = github.repos(per_page: 50)&.repositories || []
+      id = current_user.github_installation_id
+      @repos = GithubRepos.list(id)
       @branches = []
 
       if params[:repo].present?
         @selected_repo = params[:repo]
-        @branches = github.branches(params[:repo])
+        @branches = GithubRepos.branches(id, params[:repo])
       end
     rescue Octokit::Error => e
       redirect_to dashboard_app_releases_path(@app), alert: "GitHub error: #{e.message}"
     rescue Faraday::Error, JWT::EncodeError, OpenSSL::PKey::PKeyError => e
       Rails.logger.warn("GitHub repos: #{e.class}")
       redirect_to dashboard_app_releases_path(@app), alert: t("dashboard.github.unreachable")
+    end
+
+    # JSON for the New app form: repos, or one repo's branches (?repo=owner/name).
+    # Scoped to the signed-in user's own installation.
+    def list
+      id = current_user.github_installation_id
+      return render(json: { repos: [], branches: [] }) unless id
+      if params[:repo].present?
+        render json: { branches: GithubRepos.branches(id, params[:repo].to_s) }
+      else
+        render json: { repos: GithubRepos.list(id).map { |r| { full_name: r.full_name, default_branch: r.default_branch } } }
+      end
+    rescue Octokit::Error
+      render json: { error: "github" }, status: :bad_gateway
     end
 
     def connect

@@ -16,6 +16,20 @@ module Addons
 
     def self.call(app:, user:, items:) = new(app: app, user: user, items: items).call
 
+    # The one rule for "attach an existing DB": dedicated, running, same server,
+    # and every linked app is in `team` (unlinked: its creator is a team member).
+    # Shared tenants would share credentials and quota; cross-team links are refused.
+    # The create form's list and #attach_existing both read this.
+    def self.existing_candidates(user:, team:, server:)
+      return [] unless server && team
+      DatabaseServicePolicy::Scope.new(user, DatabaseService).resolve
+        .where(server_id: server.id, shared: false, status: :running)
+        .select do |db|
+          teams = db.app_records.pluck(:team_id)
+          teams.any? ? teams.all?(team.id) : team.users.exists?(id: db.creator_id)
+        end
+    end
+
     def initialize(app:, user:, items:)
       @app = app
       @user = user
@@ -117,21 +131,14 @@ module Addons
       { status: :queued, db: db }
     end
 
-    # Dedicated, running, same team and server only: shared tenants would share
-    # credentials and quota across apps, and cross-team links are refused.
     def attach_existing(item)
-      db = DatabaseServicePolicy::Scope.new(@user, DatabaseService).resolve
-             .find_by(id: item[:database_service_id], server_id: @app.server_id, shared: false, status: :running)
-      return fail_with("Add-on not available") unless db && same_team?(db)
+      db = self.class.existing_candidates(user: @user, team: @app.team, server: @app.server)
+                 .find { |d| d.id.to_s == item[:database_service_id].to_s }
+      return fail_with("Add-on not available") unless db
       link_row = DatabaseProvisioner.link!(@app, db)
       DatabaseProvisioner.write_link_env!(@app, db, link_row)
       restart_if_running
       { status: :linked, db: db }
-    end
-
-    def same_team?(db)
-      teams = db.app_records.pluck(:team_id)
-      teams.any? ? teams.all?(@app.team_id) : @app.team.users.exists?(id: db.creator_id)
     end
 
     def restart_if_running

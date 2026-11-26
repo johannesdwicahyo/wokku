@@ -34,6 +34,7 @@ Rails.application.routes.draw do
     get "/", to: redirect("/dashboard/apps"), as: :root
     get "/deploy",       to: redirect("/dashboard/apps/new")
     resources :templates, only: [ :index, :show, :create ]
+    get "github/repo_list", to: "github#list", as: :github_repo_list
     patch "onboarding/skip", to: "onboarding#skip", as: :onboarding_skip
     resources :apps do
       collection do

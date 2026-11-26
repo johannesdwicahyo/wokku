@@ -1,0 +1,53 @@
+id:
+  new_app:
+    source:
+      legend: "Sumber"
+      github: { title: "GitHub", sub: "Deploy setiap kali kamu push ke sebuah branch" }
+      git: { title: "git push", sub: "git push wokku main", hint: "Setelah app dibuat, kami tunjukkan remote yang perlu kamu tambahkan dan perintah push-nya." }
+      template: { title: "Template", sub: "n8n, Ghost, Umami dan lainnya", cta: "Lihat template" }
+      repository: "Repositori"
+      branch: "Branch"
+      loading_repos: "Memuat repositorimu…"
+      choose_repo: "Pilih repositori"
+      repos_error: "Repositorimu gagal dimuat. Coba lagi, atau pakai URL repositori publik."
+      connect: "Hubungkan GitHub"
+      connect_hint: "Hubungkan GitHub untuk memilih repositori, atau tempel URL repositori publik."
+      repo_url: "URL repositori publik"
+    size:
+      legend: "Ukuran"
+      name: "Nama app"
+      sleeping: { title: "Sleeping", tiny: "Mini", sub: "Tidur saat tidak dipakai" }
+      free: "Gratis"
+      custom: "Kustom"
+      custom_hint: "Ukuran kustom: geser slider di bawah"
+      presets: { nano: "Nano", basic: "Basic", standard: "Standard", large: "Large" }
+      spec: "%{cpu} vCPU · %{memory}"
+      box_label: "Ukuran box"
+    name:
+      checking: "Memeriksa…"
+      available: "✓ %{name} tersedia"
+      taken: "✗ Nama sudah dipakai"
+      invalid: "Pakai huruf kecil, angka, dan tanda hubung. Harus diawali huruf."
+      unreachable: "Server tidak terjangkau"
+      try: "Coba:"
+    addons:
+      add: "Tambah add-on"
+      existing: "Pakai yang sudah ada"
+      existing_hint: "Pasang sesuatu yang sudah dijalankan timmu di server ini. App mendapat koneksinya sendiri; tidak ada yang disalin."
+      existing_none: "Belum ada yang bisa dipasang. Database dedicated yang berjalan di server ini muncul di sini."
+      type: "Tipe"
+      size: "Ukuran"
+      env_var: "Variabel environment"
+      price: "Harga"
+      free: "Gratis"
+      shared: "Shared"
+      dedicated: "Dedicated"
+      custom: "Kustom"
+      add_to_app: "Tambahkan ke app"
+      back: "Kembali"
+      remove: "Hapus %{label}"
+      limit: "Kamu bisa menambah sampai %{max} add-on."
+      existing_label: "Sudah ada"
+      none: "Belum ada add-on."
+      shortcuts: { small: "Kecil", standard: "Standard", large: "Besar" }
+      shape: "%{cpu} vCPU · %{memory} · %{disk} GB"

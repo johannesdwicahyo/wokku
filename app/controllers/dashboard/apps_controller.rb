@@ -103,7 +103,7 @@ module Dashboard
         return render json: {
           available: false,
           reason: "invalid",
-          message: "Use lowercase letters, numbers, and hyphens. Must start with a letter."
+          message: t("new_app.name.invalid")
         }
       end
 
@@ -111,10 +111,11 @@ module Dashboard
         render json: {
           available: false,
           reason: "taken",
+          message: t("new_app.name.taken"),
           suggestions: name_suggestions(sanitized)
         }
       else
-        render json: { available: true, name: sanitized }
+        render json: { available: true, name: sanitized, message: t("new_app.name.available", name: sanitized) }
       end
     end
 

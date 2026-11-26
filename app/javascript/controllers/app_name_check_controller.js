@@ -5,6 +5,12 @@ import { Controller } from "@hotwired/stimulus"
 // suggestion chips. Disables submit while invalid/taken.
 export default class extends Controller {
   static targets = ["input", "status", "suggestions", "submit"]
+  // Localized by the server (new_app.name.*); English defaults keep older forms working.
+  static values = {
+    checking: { type: String, default: "Checking…" },
+    unreachable: { type: String, default: "Couldn't reach server" },
+    try: { type: String, default: "Try:" }
+  }
 
   connect() {
     this.timer = null
@@ -24,7 +30,7 @@ export default class extends Controller {
       return
     }
 
-    this.setStatus("Checking…", "neutral")
+    this.setStatus(this.checkingValue, "neutral")
     this.timer = setTimeout(() => this.fetchStatus(value), 300)
   }
 
@@ -36,7 +42,7 @@ export default class extends Controller {
       const data = await res.json()
 
       if (data.available) {
-        this.setStatus(`✓ ${data.name} is available`, "ok")
+        this.setStatus(data.message || `✓ ${data.name} is available`, "ok")
         this.clearSuggestions()
         this.setSubmit(true)
       } else if (data.reason === "invalid") {
@@ -44,12 +50,12 @@ export default class extends Controller {
         this.clearSuggestions()
         this.setSubmit(false)
       } else {
-        this.setStatus("✗ Name already taken", "err")
+        this.setStatus(data.message || "✗ Name already taken", "err")
         this.renderSuggestions(data.suggestions || [])
         this.setSubmit(false)
       }
     } catch (e) {
-      this.setStatus("Couldn't reach server", "err")
+      this.setStatus(this.unreachableValue, "err")
     }
   }
 
@@ -63,7 +69,7 @@ export default class extends Controller {
 
     const label = document.createElement("span")
     label.className = "text-[10px] text-faint self-center mr-1"
-    label.textContent = "Try:"
+    label.textContent = this.tryValue
     this.suggestionsTarget.appendChild(label)
 
     list.forEach(name => {

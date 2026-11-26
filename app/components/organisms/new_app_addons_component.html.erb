@@ -1,0 +1,106 @@
+<div data-new-app-target="addons" data-units="<%= units&.to_json %>" data-max="<%= MAX %>"
+     data-free="<%= t("new_app.addons.free") %>" data-existing-label="<%= t("new_app.addons.existing_label") %>"
+     data-shared-label="<%= t("new_app.addons.shared") %>" data-dedicated-label="<%= t("new_app.addons.dedicated") %>"
+     data-shape-template="<%= t("new_app.addons.shape", cpu: "%{cpu}", memory: "%{memory}", disk: "%{disk}") %>">
+  <p class="text-sm text-muted <%= "hidden" if @items.any? %>" data-new-app-target="none"><%= t("new_app.addons.none") %></p>
+  <ul class="space-y-2 mb-3" data-new-app-target="rows">
+    <% @items.each do |item| %><%= render row_for(item) %><% end %>
+  </ul>
+  <template data-new-app-target="rowTemplate"><%= render Organisms::NewAppAddonRowComponent.new %></template>
+
+  <div class="flex flex-wrap gap-2">
+    <%= render Atoms::ButtonComponent.new(variant: :secondary, disabled: full?, "aria-expanded": "false", "aria-controls": "addon-catalog",
+          data: { action: "click->new-app#openCatalog", new_app_target: "openCatalog" }) do %><span aria-hidden="true">+</span> <%= t("new_app.addons.add") %><% end %>
+    <%= render Atoms::ButtonComponent.new(variant: :secondary, disabled: full?, "aria-expanded": "false", "aria-controls": "addon-existing",
+          data: { action: "click->new-app#openExisting", new_app_target: "openExisting" }) do %><%= t("new_app.addons.existing") %><% end %>
+  </div>
+  <p class="mt-2 text-xs text-muted <%= "hidden" unless full? %>" data-new-app-target="limit"><%= t("new_app.addons.limit", max: MAX) %></p>
+
+  <div id="addon-catalog" class="mt-4 hidden" data-new-app-target="catalog">
+    <div class="grid gap-2 grid-cols-2 sm:grid-cols-3" data-new-app-target="engines">
+      <% catalog.each do |engine| %>
+        <button type="button" class="<%= CARD %> text-left" data-engine="<%= engine[:key] %>" data-label="<%= engine[:label] %>" data-action="click->new-app#pickEngine">
+          <b class="text-sm text-ink font-semibold"><%= engine[:label] %></b>
+          <span class="font-mono text-xs text-muted"><%= engine[:modes].map { |m| mode_label(m[:mode]) }.join(" · ") %></span>
+        </button>
+      <% end %>
+    </div>
+
+    <div class="mt-3 hidden border border-line rounded-md p-4 space-y-4" data-new-app-target="config">
+      <div class="flex items-center justify-between">
+        <b class="text-sm text-ink" data-new-app-target="configName"></b>
+        <button type="button" class="font-mono text-[11px] uppercase tracking-[.1em] text-ink-soft hover:text-ink focus-visible:ring-2 focus-visible:ring-live rounded-md px-1"
+                data-action="click->new-app#backToEngines"><%= t("new_app.addons.back") %></button>
+      </div>
+      <% catalog.each do |engine| %>
+        <div class="space-y-4" hidden data-engine-group="<%= engine[:key] %>">
+          <fieldset class="border-0 p-0 m-0">
+            <legend class="<%= LABEL %>"><%= t("new_app.addons.type") %></legend>
+            <div class="grid gap-2 sm:grid-cols-2">
+              <% engine[:modes].each do |m| %>
+                <label class="<%= CARD %> <%= "opacity-50 cursor-not-allowed" unless m[:available] %>">
+                  <input type="radio" form="add-on-draft" name="addon_mode_<%= engine[:key] %>" value="<%= m[:mode] %>" class="sr-only"
+                         data-env="<%= env_text(engine, m) %>" <%= "disabled" unless m[:available] %> data-action="change->new-app#configChanged">
+                  <b class="text-sm text-ink font-semibold"><%= mode_label(m[:mode]) %></b>
+                  <% unless m[:available] %><span class="text-xs text-muted"><%= m[:unavailable_reason] %></span><% end %>
+                </label>
+              <% end %>
+            </div>
+          </fieldset>
+          <% if engine[:modes].any? { |m| m[:mode] == "dedicated" } %>
+            <fieldset class="border-0 p-0 m-0" data-size-group>
+              <legend class="<%= LABEL %>"><%= t("new_app.addons.size") %></legend>
+              <div class="grid gap-2 grid-cols-2 sm:grid-cols-4">
+                <% engine[:modes].find { |m| m[:mode] == "dedicated" }[:shortcuts].each do |s| %>
+                  <label class="<%= CARD %>">
+                    <input type="radio" form="add-on-draft" name="addon_size_<%= engine[:key] %>" value="<%= s[:key] %>" class="sr-only"
+                           data-cpu="<%= s[:shape][:cpu] %>" data-memory-mb="<%= s[:shape][:memory_mb] %>" data-disk-gb="<%= s[:shape][:disk_gb] %>"
+                           data-action="change->new-app#configChanged">
+                    <b class="text-sm text-ink font-semibold"><%= t("new_app.addons.shortcuts.#{s[:key]}") %></b>
+                    <span class="text-xs text-muted"><%= shape_text(s[:shape]) %></span>
+                    <% if (pr = price(s[:shape])) %><span class="text-xs text-ink-soft tabular-nums"><%= pr %></span><% end %>
+                  </label>
+                <% end %>
+                <label class="<%= CARD %>">
+                  <input type="radio" form="add-on-draft" name="addon_size_<%= engine[:key] %>" value="custom" class="sr-only" data-custom="true" data-action="change->new-app#configChanged">
+                  <b class="text-sm text-ink font-semibold"><%= t("new_app.addons.custom") %></b>
+                </label>
+              </div>
+            </fieldset>
+          <% end %>
+        </div>
+      <% end %>
+
+      <div class="hidden" data-new-app-target="draftBuilder" data-action="resource-builder:changed->new-app#configChanged"><%= render builder %></div>
+
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div>
+          <span class="<%= LABEL %>"><%= t("new_app.addons.env_var") %></span>
+          <code class="block font-mono text-sm text-ink" data-new-app-target="configEnv"></code>
+        </div>
+        <div>
+          <span class="<%= LABEL %>"><%= t("new_app.addons.price") %></span>
+          <span class="block text-sm text-ink tabular-nums" data-new-app-target="configPrice" aria-live="polite"></span>
+        </div>
+      </div>
+      <%= render Atoms::ButtonComponent.new(variant: :primary, data: { action: "click->new-app#addAddon" }) do %><%= t("new_app.addons.add_to_app") %><% end %>
+    </div>
+  </div>
+
+  <div id="addon-existing" class="mt-4 hidden" data-new-app-target="existingPanel">
+    <p class="text-xs text-muted mb-2"><%= t("new_app.addons.existing_hint") %></p>
+    <% if existing.empty? %>
+      <p class="text-sm text-muted"><%= t("new_app.addons.existing_none") %></p>
+    <% else %>
+      <div class="grid gap-2 sm:grid-cols-2">
+        <% existing.each do |db| %>
+          <button type="button" class="<%= CARD %> text-left" data-existing="<%= db.id %>" data-engine="<%= db.service_type %>" data-name="<%= db.name %>"
+                  data-env="<%= Addons::PickerOptions.env_var(db.service_type.to_s) %>" data-action="click->new-app#addExisting">
+            <b class="text-sm text-ink font-semibold"><%= db.name %></b>
+            <span class="font-mono text-xs text-muted"><%= db.service_type %> · <%= db.status %></span>
+          </button>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,53 @@
+en:
+  new_app:
+    source:
+      legend: "Source"
+      github: { title: "GitHub", sub: "Deploy on every push to a branch" }
+      git: { title: "git push", sub: "git push wokku main", hint: "After you create the app, we show the remote to add and the exact push command." }
+      template: { title: "Template", sub: "n8n, Ghost, Umami and more", cta: "Browse templates" }
+      repository: "Repository"
+      branch: "Branch"
+      loading_repos: "Loading your repositories…"
+      choose_repo: "Choose a repository"
+      repos_error: "Couldn't load your repositories. Try again, or use a public repo URL."
+      connect: "Connect GitHub"
+      connect_hint: "Connect GitHub to pick a repository, or paste a public repo URL."
+      repo_url: "Public repository URL"
+    size:
+      legend: "Size"
+      name: "App name"
+      sleeping: { title: "Sleeping", tiny: "Tiny", sub: "Sleeps when idle" }
+      free: "Free"
+      custom: "Custom"
+      custom_hint: "Custom size: move a slider below"
+      presets: { nano: "Nano", basic: "Basic", standard: "Standard", large: "Large" }
+      spec: "%{cpu} vCPU · %{memory}"
+      box_label: "Box size"
+    name:
+      checking: "Checking…"
+      available: "✓ %{name} is available"
+      taken: "✗ Name already taken"
+      invalid: "Use lowercase letters, numbers, and hyphens. Must start with a letter."
+      unreachable: "Couldn't reach server"
+      try: "Try:"
+    addons:
+      add: "Add an add-on"
+      existing: "Use an existing one"
+      existing_hint: "Attach something your team already runs on this server. The app gets its own connection; nothing is copied."
+      existing_none: "Nothing to attach yet. Running dedicated databases on this server show up here."
+      type: "Type"
+      size: "Size"
+      env_var: "Environment variable"
+      price: "Price"
+      free: "Free"
+      shared: "Shared"
+      dedicated: "Dedicated"
+      custom: "Custom"
+      add_to_app: "Add to app"
+      back: "Back"
+      remove: "Remove %{label}"
+      limit: "You can add up to %{max} add-ons."
+      existing_label: "Existing"
+      none: "No add-ons yet."
+      shortcuts: { small: "Small", standard: "Standard", large: "Large" }
+      shape: "%{cpu} vCPU · %{memory} · %{disk} GB"

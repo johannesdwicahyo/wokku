@@ -7,13 +7,13 @@ id:
         label: "Shared"
         default:
           kicker: "Gratis, sudah termasuk"
-          description: "Tenant logis di container host per server. DATABASE_URL terpasang otomatis. Tanpa biaya tambahan."
+          description: "Tenant logis di container host per server. Tanpa biaya tambahan."
         per_resource:
           kicker: "Gratis, sudah termasuk"
-          description: "Tenant logis di container host per server. DATABASE_URL terpasang otomatis. Tanpa biaya tambahan."
+          description: "Tenant logis di container host per server. Tanpa biaya tambahan."
         self_host:
           kicker: "Sudah termasuk"
-          description: "Tenant logis di container host per server. DATABASE_URL terpasang otomatis."
+          description: "Tenant logis di container host per server."
       dedicated:
         label: "Dedicated"
         default:

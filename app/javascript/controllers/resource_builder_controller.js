@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { monthlyIdr, formatIdr } from "controllers/pricing"
 
 // Live label + price for the per-resource builder. Units come from the
 // server's pricing seam (IDR/month); the formula mirrors
@@ -14,6 +15,13 @@ export default class extends Controller {
     this.memoryTarget.value = b.dataset.memoryMb
     if (this.hasDiskTarget && b.dataset.diskGb) this.diskTarget.value = Math.max(b.dataset.diskGb, this.diskTarget.min)
     this.setSleeping(false)
+    this.input()
+  }
+
+  // Public: the New app size cards drive the sliders through this.
+  applyShape(cpu, memoryMb, sleeping) {
+    if (!sleeping) { this.cpuTarget.value = cpu; this.memoryTarget.value = memoryMb }
+    this.setSleeping(sleeping)
     this.input()
   }
 
@@ -37,10 +45,10 @@ export default class extends Controller {
     this.presetTargets.forEach(p => p.setAttribute("aria-pressed",
       this.sleepingFieldTarget.value !== "1" && parseFloat(p.dataset.cpu) === cpu && parseInt(p.dataset.memoryMb, 10) === mem &&
       (!p.dataset.diskGb || !this.hasDiskTarget || parseInt(p.dataset.diskGb, 10) === disk)))
+    const sleeping = this.sleepingFieldTarget.value === "1"
+    const monthly = this.hasUnitsValue && !sleeping ? monthlyIdr(this.unitsValue, { cpu, memoryMb: mem, diskGb: disk, count }) : 0
+    this.dispatch("changed", { detail: { cpu, memoryMb: mem, diskGb: disk, count, sleeping, monthly } })
     if (!this.hasPriceTarget || !this.hasUnitsValue) return
-    const u = this.unitsValue
-    const monthly = this.sleepingFieldTarget.value === "1" ? 0
-      : Math.round(count * (cpu * u.cpu + (mem / 1024) * u.memory_gb) + disk * u.disk_gb)
-    this.priceTarget.textContent = `Rp${monthly.toString().replace(/\B(?=(\d{3})+(?!\d))/g, this.hasDelimiterValue ? this.delimiterValue : ".")}/month`
+    this.priceTarget.textContent = `${formatIdr(monthly, this.hasDelimiterValue ? this.delimiterValue : ".")}/month`
   }
 }
