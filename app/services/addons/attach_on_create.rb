@@ -25,8 +25,8 @@ module Addons
     def call
       result = Result.new(attached: [], failed: [], outcomes: [])
       @items.each do |raw|
-        item = raw.to_h.symbolize_keys
-        outcome = attach(item)
+        item = normalize(raw)
+        outcome = safe_attach(item)
         result.outcomes << outcome.merge(item: item)
         if outcome[:error]
           result.failed << { label: label(item), error: outcome[:error] }
@@ -38,6 +38,26 @@ module Addons
     end
 
     private
+
+    ITEM_KEYS = %i[kind engine name tier_name alias_name database_service_id].freeze
+
+    def normalize(raw)
+      raw = raw.to_unsafe_h if raw.respond_to?(:to_unsafe_h) # ponytail: keys whitelisted below
+      h = raw.to_h.symbolize_keys.slice(*ITEM_KEYS)
+      shape = raw.to_h.symbolize_keys[:shape]
+      h[:shape] = shape.to_h.symbolize_keys.slice(:cpu, :memory_mb, :disk_gb) if shape.present?
+      h
+    end
+
+    # The never-raise contract lives here; the raw message stays in logs.
+    def safe_attach(item)
+      return fail_with("Not authorized") unless Pundit.policy(@user, @app).update?
+      attach(item)
+    rescue => e
+      Rails.logger.error("AttachOnCreate #{item[:kind]} failed: #{e.class}: #{e.message}")
+      Sentry.capture_exception(e) if defined?(Sentry)
+      fail_with("Couldn't attach add-on")
+    end
 
     def attach(item)
       case item[:kind].to_s
@@ -80,32 +100,44 @@ module Addons
       end
 
       db = DatabaseService.new(attrs)
+      return fail_with("Not authorized") unless DatabaseServicePolicy.new(@user, db).create?
       unless db.save
         return fail_with("Couldn't create add-on: #{db.errors.full_messages.to_sentence.presence || 'invalid input'}.")
       end
 
+      # Record-first: link now so deleting the app while the job is queued
+      # tears this row down too, instead of orphaning it.
       begin
-        # Record-first: link now so deleting the app while the job is queued
-        # tears this row down too, instead of orphaning it.
         DatabaseProvisioner.link!(@app, db)
         CreateAddonJob.perform_later(db.id, @app.id)
-      rescue => e
+      rescue
         db.update(status: :error)
-        return fail_with("Failed to create add-on: #{e.message}", db: db)
+        raise
       end
       { status: :queued, db: db }
-    rescue => e
-      fail_with("Failed to create add-on: #{e.message}")
     end
 
+    # Dedicated, running, same team and server only: shared tenants would share
+    # credentials and quota across apps, and cross-team links are refused.
     def attach_existing(item)
       db = DatabaseServicePolicy::Scope.new(@user, DatabaseService).resolve
-             .find_by(id: item[:database_service_id], server_id: @app.server_id)
-      return fail_with("Add-on not available") unless db
-      DatabaseProvisioner.link!(@app, db)
+             .find_by(id: item[:database_service_id], server_id: @app.server_id, shared: false, status: :running)
+      return fail_with("Add-on not available") unless db && same_team?(db)
+      link_row = DatabaseProvisioner.link!(@app, db)
+      DatabaseProvisioner.write_link_env!(@app, db, link_row)
+      restart_if_running
       { status: :linked, db: db }
+    end
+
+    def same_team?(db)
+      teams = db.app_records.pluck(:team_id)
+      teams.any? ? teams.all?(@app.team_id) : @app.team.users.exists?(id: db.creator_id)
+    end
+
+    def restart_if_running
+      ::Apps::Restarter.restart(@app) if @app.running?
     rescue => e
-      fail_with("Failed to attach add-on: #{e.message}")
+      Rails.logger.warn "Restart after attach failed for #{@app.name}: #{e.message}"
     end
 
     # Same convention as DatabaseProvisioner#default_name; suffix on collision.

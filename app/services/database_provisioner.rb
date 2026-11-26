@@ -264,6 +264,15 @@ class DatabaseProvisioner
     app.app_databases.find_or_create_by!(database_service: db) { |ad| ad.alias_name = alias_name }
   end
 
+  # Env write shared by the databases page's "connect an app" and
+  # Addons::AttachOnCreate: <alias>_URL for shared tenants, dedicated_env
+  # otherwise. No-op without a DSN. Caller decides about restarting.
+  def self.write_link_env!(app, db, link_row)
+    return if db.dsn.blank?
+    env = db.shared? ? { "#{link_row.alias_name}_URL" => db.dsn } : dedicated_env(app, db)
+    ::Apps::EnvWriter.set(app, env)
+  end
+
   # Public entry for provisioning a row someone else already created
   # (CreateAddonJob) — same ops stanza as the fresh-create path.
   def provision_existing!(db)

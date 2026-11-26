@@ -206,10 +206,7 @@ module Dashboard
       link_row = @database.app_databases.find_or_create_by!(app_record: app) do |ad|
         ad.alias_name = @database.shared? ? "DATABASE" : @database.service_type.upcase
       end
-      if @database.dsn.present?
-        env = @database.shared? ? { "#{link_row.alias_name}_URL" => @database.dsn } : DatabaseProvisioner.dedicated_env(app, @database)
-        ::Apps::EnvWriter.set(app, env)
-      end
+      DatabaseProvisioner.write_link_env!(app, @database, link_row)
       # dokku's `<plugin>:link` restarted the app so the new env took
       # effect — converge (restart: true) is the wokkud equivalent.
       restart_for_env(app)
