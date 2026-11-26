@@ -1,5 +1,6 @@
 <%# app/components/organisms/resource_builder_component.html.erb %>
 <div data-controller="resource-builder"
+     data-resource-builder-delimiter-value="<%= t("number.format.delimiter") %>"
      <% if units %>data-resource-builder-units-value="<%= units.to_json %>"<% end %>
      class="space-y-4">
   <div class="flex flex-wrap gap-2">

@@ -16,6 +16,7 @@ export default class extends Controller {
     this.onStart = () => { this.busy = true }
     this.frameTarget.addEventListener("turbo:frame-load", this.onLoad)
     this.frameTarget.addEventListener("turbo:fetch-request-error", this.onLoad)
+    this.frameTarget.addEventListener("turbo:frame-missing", this.onLoad)
     this.frameTarget.addEventListener("turbo:before-fetch-request", this.onStart)
     this.onScroll = () => { this.stuck = this.atBottom() }
     this.stuck = true
@@ -27,6 +28,7 @@ export default class extends Controller {
     this.observer?.disconnect()
     this.frameTarget.removeEventListener("turbo:frame-load", this.onLoad)
     this.frameTarget.removeEventListener("turbo:fetch-request-error", this.onLoad)
+    this.frameTarget.removeEventListener("turbo:frame-missing", this.onLoad)
     this.frameTarget.removeEventListener("turbo:before-fetch-request", this.onStart)
     this.boxTarget.removeEventListener("scroll", this.onScroll)
   }
