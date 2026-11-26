@@ -52,7 +52,7 @@ RSpec.describe Organisms::AppProcessesComponent, type: :component do
     app.process_scales.find_by(process_type: "web").update!(count: 14)
     render_it
     row = page.find("[data-process='web']")
-    expect(row).to have_css("span.inline-block", count: 10)
+    expect(row).to have_css("span[aria-hidden] > span.inline-block", count: 10)
     expect(row).to have_text("+4")
   end
 
