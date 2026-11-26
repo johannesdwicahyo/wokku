@@ -14,6 +14,16 @@ export default class extends Controller {
 
   connect() {
     this.timer = null
+    // Turbo re-enables the submitter after a 422 and may keep this button across the re-render
+    // (no reconnect), so re-apply the server-rendered state once the body is rendered.
+    this.onRender = () => this.sync()
+    document.addEventListener("turbo:render", this.onRender)
+    this.sync()
+  }
+
+  disconnect() { document.removeEventListener("turbo:render", this.onRender) }
+
+  sync() {
     // A re-rendered 422 arrives with its status already in the page: keep
     // Create off until the name changes. Otherwise off until there is a name
     // (JS-only: without JS the button stays enabled and the server validates).
