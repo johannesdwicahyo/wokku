@@ -23,6 +23,13 @@ RSpec.describe Preview::EventDispatcher do
       .to have_enqueued_job(Preview::DeployJob).with(parent.id, instance_of(Hash))
   end
 
+  it "skips a parent whose team doesn't own the PR's installation" do
+    foreign = Preview::PrEvent.new(provider: :github, action: :opened, pr_number: 7,
+                                   branch: "feat/x", sha: "abc", repo_full_name: "octo/repo",
+                                   title: "x", installation_id: 99, author: "u")
+    expect { described_class.handle(foreign) }.not_to have_enqueued_job(Preview::DeployJob)
+  end
+
   it "is no-op when parent has preview_enabled=false" do
     parent.update!(preview_enabled: false)
     expect { described_class.handle(event) }.not_to have_enqueued_job(Preview::DeployJob)

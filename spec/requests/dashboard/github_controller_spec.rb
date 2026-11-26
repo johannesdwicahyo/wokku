@@ -21,16 +21,54 @@ RSpec.describe "Dashboard::Github", type: :request do
     expect(response.body).to include("Install the GitHub App")
   end
 
+  it "repos shows an alert instead of a 500 when GitHub is unreachable" do
+    sign_in user
+    user.update!(github_installation_id: 42)
+    allow_any_instance_of(GithubApp).to receive(:repos).and_raise(Faraday::ConnectionFailed, "down")
+    get "/dashboard/apps/#{app_record.id}/github/repos"
+    expect(response).to redirect_to("/dashboard/apps/#{app_record.id}/releases")
+    expect(flash[:alert]).to be_present
+  end
+
   it "redirects to login when not authenticated on connect" do
     post "/dashboard/apps/#{app_record.id}/github/connect", params: { repo: "owner/repo", branch: "main" }
     expect(response).to have_http_status(:redirect)
   end
 
-  it "connect updates app and redirects when authenticated" do
-    sign_in user
-    post "/dashboard/apps/#{app_record.id}/github/connect", params: { repo: "owner/repo", branch: "main" }
-    expect(response).to have_http_status(:redirect)
-    expect(app_record.reload.github_repo_full_name).to eq("owner/repo")
+  describe "connect ownership" do
+    before do
+      user.update!(github_installation_id: 42)
+      allow(GithubApp).to receive(:configured?).and_return(true)
+      allow(GithubApp).to receive(:jwt).and_return("app-jwt")
+      sign_in user
+    end
+
+    def stub_installation(**response)
+      stub_request(:get, "https://api.github.com/repos/owner/repo/installation")
+        .to_return(**response)
+    end
+
+    it "links a repo in the user's own installation" do
+      stub_installation(status: 200, headers: { "Content-Type" => "application/json" }, body: { id: 42 }.to_json)
+      post "/dashboard/apps/#{app_record.id}/github/connect", params: { repo: "owner/repo", branch: "main" }
+      expect(response).to redirect_to("/dashboard/apps/#{app_record.id}/releases")
+      expect(app_record.reload.github_repo_full_name).to eq("owner/repo")
+    end
+
+    it "refuses a repo owned by another installation" do
+      stub_installation(status: 200, headers: { "Content-Type" => "application/json" }, body: { id: 99 }.to_json)
+      post "/dashboard/apps/#{app_record.id}/github/connect", params: { repo: "owner/repo", branch: "main" }
+      expect(response).to redirect_to("/dashboard/apps/#{app_record.id}/releases")
+      expect(flash[:alert]).to eq(I18n.t("dashboard.github.repo_not_owned"))
+      expect(app_record.reload.github_repo_full_name).to be_nil
+    end
+
+    it "refuses when GitHub errors" do
+      stub_installation(status: 500)
+      post "/dashboard/apps/#{app_record.id}/github/connect", params: { repo: "owner/repo", branch: "main" }
+      expect(flash[:alert]).to eq(I18n.t("dashboard.github.repo_not_owned"))
+      expect(app_record.reload.github_repo_full_name).to be_nil
+    end
   end
 
   it "redirects to login when not authenticated on disconnect" do

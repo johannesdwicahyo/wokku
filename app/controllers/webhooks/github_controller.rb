@@ -33,6 +33,11 @@ module Webhooks
 
       apps.find_each do |app|
         next if app.deploy_locked_at? # `wokku lock` blocks every deploy path
+        unless app.github_installation_linked?(payload.dig("installation", "id"))
+          Rails.logger.warn("GitHub webhook: skipping deploy for #{app.name} — push installation is not its team's")
+          record_skipped_deploy(app, commit_sha)
+          next
+        end
         # Skip apps whose server is unreachable to avoid creating orphaned
         # "pending" deploys that never resolve.
         unless app.server && app.server.connected?
@@ -63,6 +68,14 @@ module Webhooks
       end
 
       head :ok
+    end
+
+    # Shows up on the app's Releases page as a failed release, so the owner
+    # learns why pushes stopped deploying.
+    def record_skipped_deploy(app, commit_sha)
+      message = I18n.with_locale(app.creator&.locale.presence || I18n.default_locale) { I18n.t("dashboard.github.deploy_skipped") }
+      deploy = app.deploys.create!(status: :failed, commit_sha: commit_sha, build_error: message, log: message, finished_at: Time.current)
+      app.releases.create!(deploy: deploy, description: message)
     end
 
     def handle_pull_request(payload)

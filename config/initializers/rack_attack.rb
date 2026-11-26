@@ -94,6 +94,16 @@ class Rack::Attack
     req.ip if req.path.start_with?("/api/") && !%w[/api/v1/auth/login /api/v1/auth/apple /api/v1/auth/mobile/token].include?(wokku_path(req))
   end
 
+  # GitHub App install callback: stops brute-forcing installation ids into
+  # the 15-minute adoption window (Github::CallbacksController).
+  throttle("github_callback/ip", limit: 20, period: 10.minutes) do |req|
+    req.ip if wokku_path(req) == "/github/callback"
+  end
+
+  throttle("github_callback/user", limit: 10, period: 10.minutes) do |req|
+    req.session["warden.user.user.key"]&.dig(0, 0)&.to_s if wokku_path(req) == "/github/callback"
+  end
+
   # Webhook endpoints.
   throttle("webhooks/ip", limit: 30, period: 1.minute) do |req|
     req.ip if req.path.start_with?("/webhooks/")

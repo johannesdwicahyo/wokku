@@ -216,6 +216,9 @@ module Api
         branch = params[:branch] || "main"
 
         return render_api_error(:invalid_params, message: "repo is required", status: :unprocessable_entity) if repo.blank?
+        unless GithubApp.repo_owned_by_installation?(repo, current_user.github_installation_id)
+          return render_api_error(:github_repo_not_owned)
+        end
 
         app.update!(
           github_repo_full_name: repo,

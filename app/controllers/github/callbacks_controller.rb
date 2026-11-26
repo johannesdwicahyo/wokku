@@ -2,30 +2,43 @@ module Github
   class CallbacksController < ApplicationController
     before_action :authenticate_user!
 
-    def create
-      installation_id = params[:installation_id]
+    FRESH_WINDOW = 15.minutes
 
-      if installation_id.present?
-        current_user.update!(
-          github_installation_id: installation_id,
-          github_username: fetch_github_username(installation_id)
-        )
-        redirect_to dashboard_apps_path, notice: "GitHub connected successfully!"
-      else
-        redirect_to dashboard_apps_path, alert: "GitHub connection failed."
-      end
+    # GitHub redirects here after install/configure with ?installation_id=,
+    # which anyone can forge. With GITHUB_APP_CLIENT_ID/SECRET set (and the
+    # App's "Request user authorization (OAuth) during installation" on),
+    # GitHub also sends ?code= and we require the id in the user's
+    # GET /user/installations. Interim rule while OAuth isn't configured:
+    # accept only an installation the App can see that was created/updated in
+    # the last 15 minutes (a human just installed it) and that no other Wokku
+    # user holds. Follow-up: configure OAuth in prod, then drop the window.
+    def create
+      installation_id = params[:installation_id].to_s
+      return refuse unless GithubApp.configured? && installation_id.match?(/\A[1-9]\d{0,18}\z/)
+
+      installation_id = installation_id.to_i
+      return refuse if User.where(github_installation_id: installation_id).where.not(id: current_user.id).exists?
+
+      installation = GithubApp.app_client.installation(installation_id)
+      verified =
+        if GithubApp.oauth_configured?
+          params[:code].present? && GithubApp.user_installation_ids(params[:code]).include?(installation_id)
+        else
+          installation.updated_at.present? && installation.updated_at >= FRESH_WINDOW.ago
+        end
+      return refuse unless verified
+
+      current_user.update!(github_installation_id: installation_id, github_username: installation.account&.login)
+      redirect_to dashboard_apps_path, notice: t("dashboard.github.install_connected")
+    rescue Octokit::Error, Faraday::Error, JWT::EncodeError, OpenSSL::PKey::PKeyError, ArgumentError => e
+      Rails.logger.warn("GitHub callback: refused installation #{installation_id}: #{e.class}")
+      refuse
     end
 
     private
 
-    def fetch_github_username(installation_id)
-      return nil unless GithubApp.configured?
-      github = GithubApp.new(installation_id)
-      result = github.repos(per_page: 1)
-      result&.repositories&.first&.owner&.login
-    rescue => e
-      Rails.logger.warn("GithubApp: Failed to fetch username: #{e.message}")
-      nil
+    def refuse
+      redirect_to dashboard_apps_path, alert: t("dashboard.github.install_refused")
     end
   end
 end

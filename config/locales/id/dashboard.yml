@@ -266,6 +266,12 @@ id:
         duration: "Durasi"
         when: "Waktu"
         actions: "Aksi"
+    github:
+      deploy_skipped: "Dilewati: instalasi GitHub yang mengirim push ini tidak terhubung ke tim app ini. Hubungkan ulang GitHub."
+      unreachable: "GitHub sedang tidak bisa dihubungi. Coba lagi sebentar lagi."
+      install_connected: "GitHub terhubung."
+      install_refused: "Koneksi GitHub gagal. Pasang atau atur ulang Wokku GitHub App, lalu coba lagi dalam beberapa menit."
+      repo_not_owned: "Repositori itu tidak ada di instalasi GitHub App kamu. Beri Wokku GitHub App akses ke repo itu di GitHub, lalu coba lagi."
     previews:
       heading: "Preview PR"
       columns:

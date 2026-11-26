@@ -22,6 +22,9 @@ module Dashboard
       end
     rescue Octokit::Error => e
       redirect_to dashboard_app_releases_path(@app), alert: "GitHub error: #{e.message}"
+    rescue Faraday::Error, JWT::EncodeError, OpenSSL::PKey::PKeyError => e
+      Rails.logger.warn("GitHub repos: #{e.class}")
+      redirect_to dashboard_app_releases_path(@app), alert: t("dashboard.github.unreachable")
     end
 
     def connect
@@ -30,6 +33,12 @@ module Dashboard
 
       repo = params[:repo]
       branch = params[:branch] || "main"
+
+      # The repo must belong to the caller's own GitHub App installation, or
+      # anyone could bind another tenant's private repo and receive its code.
+      unless GithubApp.repo_owned_by_installation?(repo, current_user.github_installation_id)
+        return redirect_to dashboard_app_releases_path(@app), alert: t("dashboard.github.repo_not_owned")
+      end
 
       @app.update!(
         github_repo_full_name: repo,
