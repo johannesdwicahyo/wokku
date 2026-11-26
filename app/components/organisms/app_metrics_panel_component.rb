@@ -20,7 +20,7 @@ module Organisms
       [
         row(:cpu, s[:cpu], 100, (fresh? && s[:cpu_now]) ? "#{s[:cpu_now].round} %" : none),
         row(:memory, s[:mem], limit, s[:mem_now_mb] && s[:mem_limit_mb] ? t("apps.detail.metrics.memory_now", used: s[:mem_now_mb], limit: s[:mem_limit_mb]) : none),
-        row(:requests, s[:req], req_max, s[:rpm_now] ? t("apps.detail.metrics.per_min", n: s[:rpm_now]) : none)
+        row(:requests, s[:req], req_max, s[:rpm_now] ? t("apps.detail.metrics.per_min", n: helpers.number_with_precision(s[:rpm_now], precision: 1)) : none)
       ]
     end
 

@@ -75,7 +75,6 @@ id:
       all: "Semua add-on →"
       usage: "%{used} dari %{total}"
     detail:
-      delimiter: "."
       none: "—"
       board:
         processes: "Proses · %{count} berjalan"

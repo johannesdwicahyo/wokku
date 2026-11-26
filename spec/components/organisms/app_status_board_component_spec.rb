@@ -19,7 +19,17 @@ RSpec.describe Organisms::AppStatusBoardComponent, type: :component do
   it "localizes under :id with dotted delimiters" do
     I18n.with_locale(:id) do
       render_inline(described_class.new(app: app, stats: stats, current_release: release))
-      expect(page.text).to include("3 dari 14.920 permintaan").and include("Proses")
+      expect(page.text).to include("3 dari 14.920 permintaan").and include("Proses").and include("0,02 %")
+    end
+  end
+
+  it "counts only running processes" do
+    app.status = :stopped
+    render_inline(described_class.new(app: app, stats: stats, current_release: release))
+    expect(page).to have_text("Processes · 0 running")
+    I18n.with_locale(:id) do
+      render_inline(described_class.new(app: app, stats: stats, current_release: release))
+      expect(page).to have_text("Proses · 0 berjalan")
     end
   end
 

@@ -57,7 +57,6 @@ en:
       all: "All add-ons →"
       usage: "%{used} of %{total}"
     detail:
-      delimiter: ","
       none: "—"
       board:
         processes: "Processes · %{count} running"

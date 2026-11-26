@@ -17,6 +17,13 @@ RSpec.describe Organisms::AppMetricsPanelComponent, type: :component do
     expect(page.text).to include("11:00").and include("23:00").and include("now")
   end
 
+  it "formats decimals per locale" do
+    I18n.with_locale(:id) do
+      render_panel(stats)
+      expect(page.text).to include("5,0 / mnt")
+    end
+  end
+
   it "scales memory bars to the limit" do
     render_panel(stats)
     expect(page).to have_css("[aria-label='Memory, last 24 hours'] i[style='height: 3px']", count: 24) # 100/512*18

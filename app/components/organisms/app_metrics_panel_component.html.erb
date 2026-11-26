@@ -8,7 +8,7 @@
         </div>
         <%= render Atoms::LightBarsComponent.new(values: r[:values], label: r[:label], max: r[:max]) %>
         <div class="flex justify-between font-mono text-[11px] text-dim tabular-nums" aria-hidden="true">
-          <% ticks.each do |t| %><span><%= t %></span><% end %>
+          <% ticks.each do |tick| %><span><%= tick %></span><% end %>
         </div>
       </div>
     <% end %>

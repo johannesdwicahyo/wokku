@@ -10,8 +10,8 @@ module Organisms
     attr_reader :app, :stats
 
     def none = t("apps.detail.none")
-    def fleet = Apps::Fleet.for([ app ])
-    def count = fleet.first[:states].size
+    def fleet = (@fleet ||= Apps::Fleet.for([ app ]))
+    def count = Apps::Fleet.counts(fleet)[:running].to_i
     def board_label = Organisms::LightBoardComponent.fleet_label(Apps::Fleet.counts(fleet))
 
     def release_value = @release ? "v#{@release.version}" : none
@@ -23,13 +23,13 @@ module Organisms
 
     def p95 = stats[:p95_ms] && "#{stats[:p95_ms].round} ms"
 
-    def err_pct = stats[:err_5xx_pct] && "#{stats[:err_5xx_pct]} %"
+    def err_pct = stats[:err_5xx_pct] && "#{helpers.number_with_precision(stats[:err_5xx_pct], precision: 2, strip_insignificant_zeros: true)} %"
 
     def err_sub
       return unless stats[:err_5xx_pct]
       t("apps.detail.board.errors_sub", err: delimit(stats[:err_5xx_hour]), req: delimit(stats[:req_hour]))
     end
 
-    def delimit(n) = ActiveSupport::NumberHelper.number_to_delimited(n.to_i, delimiter: t("apps.detail.delimiter"))
+    def delimit(n) = helpers.number_with_delimiter(n.to_i)
   end
 end
