@@ -14,7 +14,7 @@
       <span class="normal-case tracking-normal text-[12px]"><%= t("dashboard.databases.unlinked_hint") %></span>
     </div>
     <%= render "dashboard/databases/addon_rack_head" %>
-    <div id="orphan_addons" class="flex flex-col"><%= render partial: "dashboard/databases/addon_card", collection: orphans, as: :addon %></div>
+    <div id="orphan_addons" class="flex flex-col"><%= render_rows(orphans, "orphan") %></div>
   <% end %>
 <% end %>
 
@@ -25,7 +25,7 @@
       <span><%= t("dashboard.databases.count", count: dbs.size) %></span>
     </div>
     <%= render "dashboard/databases/addon_rack_head" %>
-    <div class="flex flex-col"><%= render partial: "dashboard/databases/addon_card", collection: dbs, as: :addon %></div>
+    <div class="flex flex-col"><%= render_rows(dbs, title.parameterize) %></div>
   <% end %>
 <% end %>
 

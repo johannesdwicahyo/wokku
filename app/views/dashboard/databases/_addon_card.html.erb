@@ -3,7 +3,7 @@
     replace/insert target (DatabaseService#broadcast_status_change /
     #broadcast_card_insert / #broadcast_card_remove); dom_id stays the id. %>
 <% grid = Organisms::AddonsRackComponent::GRID %>
-<div id="<%= dom_id(addon) %>" data-rack-unit="<%= addon.name %>" class="border-t border-line first:border-t-0 hover:bg-white/[.025] transition-colors <%= 'bg-danger-soft' if addon.status == 'error' %>">
+<div id="<%= local_assigns[:row_id] || dom_id(addon) %>" data-rack-unit="<%= addon.name %>" class="border-t border-line first:border-t-0 hover:bg-white/[.025] transition-colors <%= 'bg-danger-soft' if addon.status == 'error' %>">
   <div class="grid <%= grid %> gap-4 items-center px-[18px] py-3.5">
     <%= render Atoms::StatusLightComponent.new(state: Organisms::AddonsRackComponent.light_state(addon.status), size: 10) %>
     <span class="min-w-0">

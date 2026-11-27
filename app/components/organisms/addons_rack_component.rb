@@ -34,15 +34,26 @@ module Organisms
 
     def by_app? = @group_by == "app"
 
-    # [[title, [dbs]], ...] — by app, a db shows under each app it is linked to.
+    # [[title, [dbs]], ...]. Orphans live in their own section, so they are
+    # left out here; by app, a db shows under each app it is linked to.
     def groups
+      dbs = @databases - orphans
       if by_app?
-        linked = @apps.filter_map { |a| (dbs = @databases.select { |d| d.app_records.include?(a) }).any? && [ a.name, dbs ] }
-        unlinked = @databases.select { |d| d.app_records.none? }
-        unlinked.any? ? linked + [ [ t("dashboard.databases.rack.unlinked"), unlinked ] ] : linked
+        @apps.filter_map { |a| (list = dbs.select { |d| d.app_records.include?(a) }).any? && [ a.name, list ] }
       else
-        @databases.group_by(&:service_type).map { |type, dbs| [ type.to_s.titleize, dbs ] }
+        dbs.group_by(&:service_type).map { |type, list| [ type.to_s.titleize, list ] }
       end
+    end
+
+    # Turbo broadcasts (replace/remove) hit only the first element with
+    # dom_id(addon), so only the first rendering of a db carries the bare id;
+    # repeats (by-app, db linked to several apps) get a scoped one.
+    def render_rows(dbs, scope)
+      @seen ||= Set.new
+      safe_join(dbs.map do |db|
+        id = @seen.add?(db.id) ? nil : "#{helpers.dom_id(db)}_#{scope}"
+        render(partial: "dashboard/databases/addon_card", locals: { addon: db, row_id: id })
+      end)
     end
 
     def toggle_class(pressed)
@@ -51,7 +62,7 @@ module Organisms
     end
 
     def meter_on(bucket) = bucket.quota_gb.to_f.positive? ? (bucket.used_gb.to_f / bucket.quota_gb * 10).ceil : 0
-    def meter_tone(bucket) = meter_on(bucket) >= 8 ? :warn : :ink
+    def meter_tone(bucket) = bucket.quota_gb.to_f.positive? && bucket.used_gb.to_f / bucket.quota_gb >= 0.8 ? :warn : :ink
     def bucket_light(bucket) = bucket.status.to_s == "ready" ? :running : (bucket.status.to_s == "error" ? :crashed : :deploying)
   end
 end
