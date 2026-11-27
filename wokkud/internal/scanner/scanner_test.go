@@ -224,7 +224,7 @@ func TestScanSucceedsWithIsolatedPinnedCommand(t *testing.T) {
 		}
 	}
 	if strings.Contains(scan, "--disable-analyzers") {
-		t.Errorf("jar analysis must stay on when the Java DB exists: %s", scan)
+		t.Errorf("--disable-analyzers is not a v0.76.2 CLI flag: %s", scan)
 	}
 	if strings.Contains(scan, "docker.sock") || strings.Contains(scan, ref) {
 		t.Errorf("scanner must not get the docker socket or the registry ref: %s", scan)
@@ -256,16 +256,22 @@ func TestScanSucceedsWithIsolatedPinnedCommand(t *testing.T) {
 	}
 }
 
-// Without a Java DB, --skip-java-db-update fails on a JAR image's first run,
-// so jar analysis is switched off instead and the rest of the image scans.
-func TestScanWithoutJavaDBDisablesJarAnalyzer(t *testing.T) {
+// v0.76.2 has no CLI flag to disable the jar analyzer: the scan always
+// passes --skip-java-db-update, Java DB or not. A JAR image without one
+// fails with "Java DB update failed" → db_unavailable.
+func TestScanWithoutJavaDB(t *testing.T) {
 	f, r := scan(t, &host{downloaded: now.Add(-time.Hour), local: true}, nil)
 	if r.Status != "succeeded" {
 		t.Fatalf("%+v", r)
 	}
-	scan := strings.Join(f.find("--input"), " ")
-	if !strings.Contains(scan, "--disable-analyzers jar") || strings.Contains(scan, "--skip-java-db-update") {
-		t.Fatalf("scan args: %s", scan)
+	args := strings.Join(f.find("--input"), " ")
+	if !strings.Contains(args, "--skip-java-db-update") || strings.Contains(args, "--disable-analyzers") {
+		t.Fatalf("scan args: %s", args)
+	}
+	_, r = scan(t, &host{downloaded: now.Add(-time.Hour), local: true,
+		fail: map[string]error{"--input": errors.New("docker run: exit status 1: FATAL Java DB update failed: --skip-java-db-update cannot be specified on the first run")}}, nil)
+	if r.ErrorCode != "db_unavailable" {
+		t.Fatalf("%+v", r)
 	}
 }
 

@@ -221,7 +221,7 @@ func (w *Worker) scan(ctx context.Context, id, ref string) control.ImageScanRepo
 	if w.Busy() {
 		return failed("timeout", "aborted: a build started on this host")
 	}
-	out, err := w.runNamed(ctx, "wokku-trivy-scan-"+id, scanArgs("wokku-trivy-scan-"+id, tar, !w.db.javaDownloadedAt.IsZero())...)
+	out, err := w.runNamed(ctx, "wokku-trivy-scan-"+id, scanArgs("wokku-trivy-scan-"+id, tar)...)
 	if err != nil {
 		code := ""                                // Rails records an unlisted code as "unknown"
 		if strings.Contains(err.Error(), " DB") { // e.g. "--skip-db-update cannot be specified on the first run"
@@ -288,7 +288,7 @@ func failed(code, msg string) control.ImageScanReport {
 // DB (~1 GB) when it is a week old or missing — at most one attempt an hour.
 // A failed refresh with a DB already cached scans against the stale one (the
 // report carries db_updated_at); with no vulnerability DB at all it's
-// db_unavailable. A missing Java DB only switches jar analysis off (scanArgs).
+// db_unavailable. Without a Java DB only JAR images fail (see scanArgs).
 func (w *Worker) ensureDB(ctx context.Context, id string) error {
 	if w.db.downloadedAt.IsZero() {
 		w.db = w.readDB(ctx, id)
@@ -372,21 +372,18 @@ func hardened(name string) []string {
 }
 
 // scanArgs: the image arrives as a read-only `docker save` tar — no docker
-// socket, no registry, no network inside the scanner. Without a cached Java
-// DB, `--skip-java-db-update` makes Trivy fail on the first JAR it meets
-// (it can't download one offline), so jar analysis is off instead.
-func scanArgs(name, tar string, javaDB bool) []string {
-	args := append(hardened(name), "--network", "none",
+// socket, no registry, no network inside the scanner. Trivy opens the Java
+// DB lazily, only for images with JARs, so without one non-JAR images still
+// scan and JAR images fail "Java DB update failed" (→ db_unavailable).
+// (v0.76.2 has no CLI flag to turn the jar analyzer off.)
+func scanArgs(name, tar string) []string {
+	return append(hardened(name), "--network", "none",
 		"-v", cacheVolume+":"+cacheDir+":ro",
 		"-v", tar+":/scan/image.tar:ro",
 		TrivyImage, "image", "--input", "/scan/image.tar",
-		"--skip-db-update", "--offline-scan",
+		"--skip-db-update", "--skip-java-db-update", "--offline-scan",
 		"--cache-backend", "memory", "--cache-dir", cacheDir,
 		"--format", "json", "--quiet", "--scanners", "vuln")
-	if javaDB {
-		return append(args, "--skip-java-db-update")
-	}
-	return append(args, "--disable-analyzers", "jar")
 }
 
 // runNamed force-removes the named container before and after: killing the
