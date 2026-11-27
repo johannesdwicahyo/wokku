@@ -73,9 +73,9 @@ func buildkitdConfig(pushRef string) string {
 	return cfg
 }
 
-// buildEnv is the allowlist every build subprocess gets — never wokkud's
+// BuildEnv is the allowlist every build subprocess gets — never wokkud's
 // own env, which carries WOKKUD_TOKEN (security F-08).
-func buildEnv(environ []string) []string {
+func BuildEnv(environ []string) []string {
 	keep := map[string]bool{"PATH": true, "HOME": true, "DOCKER_CONFIG": true, "DOCKER_HOST": true, "TMPDIR": true, "LANG": true}
 	var out []string
 	for _, kv := range environ {
@@ -92,7 +92,7 @@ func buildEnv(environ []string) []string {
 func ensureBuilder(ctx context.Context, pushRef string) error {
 	run := func(args ...string) error {
 		cmd := exec.CommandContext(ctx, args[0], args[1:]...)
-		cmd.Env = buildEnv(os.Environ())
+		cmd.Env = BuildEnv(os.Environ())
 		if out, err := cmd.CombinedOutput(); err != nil {
 			return fmt.Errorf("%s: %v: %s", strings.Join(args[:min(3, len(args))], " "), err, strings.TrimSpace(string(out)))
 		}

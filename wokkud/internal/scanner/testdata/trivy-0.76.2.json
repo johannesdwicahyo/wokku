@@ -1,0 +1,123 @@
+{
+  "SchemaVersion": 2,
+  "Trivy": {
+    "Version": "0.76.2"
+  },
+  "ReportID": "019acb5e-0d3c-7a52-9a0e-5b7f2d0c6a11",
+  "CreatedAt": "2026-11-27T03:10:44.512309871Z",
+  "ArtifactName": "/scan/image.tar",
+  "ArtifactType": "container_image",
+  "Metadata": {
+    "Size": 131072000,
+    "OS": {
+      "Family": "debian",
+      "Name": "12.8"
+    },
+    "ImageID": "sha256:3f1c2b0a9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a",
+    "DiffIDs": [
+      "sha256:0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c"
+    ],
+    "RepoTags": [
+      "127.0.0.1:5000/wokku/blog:7f0c1d2e-3a4b-4c5d-8e6f-7a8b9c0d1e2f"
+    ]
+  },
+  "Results": [
+    {
+      "Target": "/scan/image.tar (debian 12.8)",
+      "Class": "os-pkgs",
+      "Type": "debian",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2026-0001",
+          "PkgID": "libssl3@3.0.15-1~deb12u1",
+          "PkgName": "libssl3",
+          "InstalledVersion": "3.0.15-1~deb12u1",
+          "FixedVersion": "3.0.16-1~deb12u1",
+          "Status": "fixed",
+          "SeveritySource": "nvd",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-0001",
+          "Title": "openssl: buffer overread in X.509 name checks",
+          "Severity": "HIGH",
+          "CVSS": {
+            "nvd": {"V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N", "V3Score": 7.5},
+            "redhat": {"V3Score": 5.9}
+          }
+        },
+        {
+          "VulnerabilityID": "CVE-2026-0002",
+          "PkgName": "zlib1g",
+          "InstalledVersion": "1:1.2.13.dfsg-1",
+          "Status": "affected",
+          "Title": "zlib: heap overflow in inflateGetHeader",
+          "Severity": "CRITICAL",
+          "CVSS": {
+            "nvd": {"V3Score": 9.8}
+          }
+        },
+        {
+          "VulnerabilityID": "CVE-2026-0003",
+          "PkgName": "libc6",
+          "InstalledVersion": "2.36-9+deb12u9",
+          "FixedVersion": "2.36-9+deb12u10",
+          "Status": "fixed",
+          "Title": "glibc: stack buffer overflow in iconv with crafted ISO-2022-CN-EXT input when converting between character sets in long-running daemons that accept untrusted charset names from the network peer",
+          "Severity": "HIGH",
+          "CVSS": {
+            "nvd": {"V3Score": 8.8}
+          }
+        },
+        {
+          "VulnerabilityID": "CVE-2025-9999",
+          "PkgName": "perl-base",
+          "InstalledVersion": "5.36.0-7+deb12u1",
+          "Status": "will_not_fix",
+          "Title": "perl: low-impact regex denial of service",
+          "Severity": "LOW"
+        },
+        {
+          "VulnerabilityID": "CVE-2025-1234",
+          "PkgName": "coreutils",
+          "InstalledVersion": "9.1-1",
+          "Status": "affected",
+          "Severity": "UNKNOWN"
+        }
+      ]
+    },
+    {
+      "Target": "app/Gemfile.lock",
+      "Class": "lang-pkgs",
+      "Type": "bundler",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "GHSA-abcd-1234-efgh",
+          "PkgName": "rack",
+          "InstalledVersion": "3.1.8",
+          "FixedVersion": "3.1.12, 3.0.14",
+          "Status": "fixed",
+          "Title": "Rack has a possible denial of service in multipart parsing",
+          "Severity": "MEDIUM",
+          "CVSS": {
+            "ghsa": {"V3Score": 5.3}
+          }
+        },
+        {
+          "VulnerabilityID": "CVE-2026-0004",
+          "PkgName": "nokogiri",
+          "InstalledVersion": "1.16.0",
+          "FixedVersion": "1.16.5",
+          "Status": "fixed",
+          "Title": "nokogiri: use-after-free in libxml2",
+          "Severity": "HIGH",
+          "CVSS": {
+            "ghsa": {"V3Score": 7.5}
+          }
+        }
+      ]
+    },
+    {
+      "Target": "app/node_modules",
+      "Class": "lang-pkgs",
+      "Type": "node-pkg"
+    }
+  ]
+}

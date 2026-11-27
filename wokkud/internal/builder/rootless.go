@@ -121,7 +121,7 @@ func ensureRootlessBuilder(ctx context.Context, run func(...string) error, pushR
 	image := rootlessImageTag(dockerfile)
 	if run("docker", "image", "inspect", image) != nil {
 		cmd := exec.CommandContext(ctx, "docker", "build", "-q", "-t", image, "-")
-		cmd.Env = buildEnv(os.Environ())
+		cmd.Env = BuildEnv(os.Environ())
 		cmd.Stdin = strings.NewReader(dockerfile)
 		if out, err := cmd.CombinedOutput(); err != nil {
 			return fmt.Errorf("build %s: %v: %s", image, err, strings.TrimSpace(string(out)))
