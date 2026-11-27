@@ -3,7 +3,7 @@ class CreateImageScans < ActiveRecord::Migration[8.1]
     create_table :image_scans, id: :uuid do |t|
       t.references :app_record, type: :uuid, null: false, index: false, foreign_key: { on_delete: :cascade }
       t.references :deploy, type: :uuid, foreign_key: { on_delete: :nullify }
-      t.references :server, type: :uuid, null: false, foreign_key: { on_delete: :cascade }
+      t.references :server, type: :uuid, null: false, index: false, foreign_key: { on_delete: :cascade } # (server_id, status) below covers it
       t.string :image_ref, null: false
       t.integer :trigger, null: false, default: 0
       t.integer :status, null: false, default: 0

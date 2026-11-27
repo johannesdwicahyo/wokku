@@ -2787,13 +2787,6 @@ CREATE INDEX index_image_scans_on_deploy_id ON public.image_scans USING btree (d
 
 
 --
--- Name: index_image_scans_on_server_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_image_scans_on_server_id ON public.image_scans USING btree (server_id);
-
-
---
 -- Name: index_image_scans_on_server_id_and_status; Type: INDEX; Schema: public; Owner: -
 --
 

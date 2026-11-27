@@ -32,11 +32,20 @@ module Api
             error: ok ? nil : params[:error].to_s.first(500).presence,
             finished_at: Time.current
           )
-          ImageScans::AfterReport.call(@scan) if ok
+          after_report if ok
           head :ok
         end
 
         private
+
+        # The report is stored; narration/alerting trouble must not 500 it
+        # (wokkud doesn't retry, and the scan would look lost).
+        def after_report
+          ImageScans::AfterReport.call(@scan)
+        rescue StandardError => e
+          Rails.logger.warn("[ImageScans] after report #{@scan.id}: #{e.class}: #{e.message}")
+          Sentry.capture_exception(e, extra: { image_scan_id: @scan.id }) if defined?(Sentry)
+        end
 
         def set_scan
           @scan = ImageScan.find_by(id: params[:id])

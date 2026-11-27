@@ -20,7 +20,7 @@ class ImageScan < ApplicationRecord
     return if image_ref.blank?
     # findings jsonb is not loaded here (overview); the findings page reloads it.
     scans = where(app_record: app_record, image_ref: image_ref).where.not(status: :skipped)
-      .select(column_names - %w[findings]).order(id: :desc).limit(KEEP_PER_APP).to_a
+      .select(column_names - %w[findings]).order(created_at: :desc, id: :desc).limit(KEEP_PER_APP).to_a
     scans.find(&:succeeded?) || scans.first
   end
 end

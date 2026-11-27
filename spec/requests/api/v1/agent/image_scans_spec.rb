@@ -73,6 +73,21 @@ RSpec.describe "Api::V1::Agent::ImageScans" do
       expect(scan.reload.counts).to include("high" => 0, "low" => 0, "critical" => 3)
     end
 
+    it "still returns 200 and still notifies when the deploy-log broadcast raises" do
+      allow(Wokku.config).to receive(:image_scans?).and_return(true)
+      deploy = create(:deploy, :succeeded, app_record: app_record, image_ref: scan.image_ref)
+      Release.create!(app_record: app_record, deploy: deploy, version: 1)
+      scan.update!(trigger: :deploy, deploy: deploy)
+      create(:notification, team: app_record.team, events: [ "image_scan_critical" ])
+      allow(DeployChannel).to receive(:broadcast_to).and_raise(StandardError, "cable down")
+      expect {
+        post "/api/v1/agent/image_scans/#{scan.id}/report", headers: headers,
+             params: { status: "succeeded", counts: { critical: 1 }, findings: [ { id: "CVE-1", severity: "CRITICAL" } ] }.to_json
+      }.to have_enqueued_job(NotifyJob)
+      expect(response).to have_http_status(:ok)
+      expect(scan.reload).to be_succeeded
+    end
+
     it "drops a report for a deleted app with 200" do
       id = scan.id
       app_record.destroy!

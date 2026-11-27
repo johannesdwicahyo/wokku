@@ -4,9 +4,10 @@ module ImageScans
   # notifies on NEW critical vulnerabilities. Idempotent: a repeated call (late
   # report path) finds the log line present / notified_at claimed and no-ops.
   class AfterReport
+    # Alert first: a deploy-log/broadcast failure must never lose it.
     def self.call(scan)
-      append_deploy_log(scan)
       notify_new_critical(scan)
+      append_deploy_log(scan)
     end
 
     def self.append_deploy_log(scan)
@@ -31,7 +32,7 @@ module ImageScans
       return unless current && current.image_ref == scan.image_ref
 
       prev = ImageScan.where(app_record_id: app.id, status: :succeeded).where("id <> ? AND created_at < ?", scan.id, scan.created_at)
-                      .order(created_at: :desc).first
+                      .order(created_at: :desc, id: :desc).first
       new_ids = critical_ids(scan) - (prev ? critical_ids(prev) : [])
       return if new_ids.empty?
       return unless ImageScan.where(id: scan.id, notified_at: nil).update_all(notified_at: Time.current) == 1
