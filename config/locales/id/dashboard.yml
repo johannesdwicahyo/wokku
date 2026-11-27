@@ -187,7 +187,7 @@ id:
       preferences: "Preferensi"
       preferences_hint_self_host: "Pilih bahasa dashboard."
       account: "Akun"
-      security: "Kerentanan"
+      security: "Keamanan"
       ssh_keys: "SSH Keys"
       api_tokens: "Token API"
       resource_overview: "Ikhtisar Resource"
@@ -239,7 +239,7 @@ id:
       vitals:   "Vitals"
     settings_tabs:
       profile: "Profil"
-      security: "Kerentanan"
+      security: "Keamanan"
       notifications: "Notifikasi"
       account: "Akun"
       billing: "Tagihan"

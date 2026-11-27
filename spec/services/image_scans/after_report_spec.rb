@@ -17,6 +17,12 @@ RSpec.describe ImageScans::AfterReport do
     expect(DeployChannel).to have_received(:broadcast_to).once
   end
 
+  it "is idempotent" do
+    s = scan(:deploy, deploy.id)
+    2.times { described_class.call(s) }
+    expect(deploy.reload.log.scan("Image scan:").size).to eq 1
+  end
+
   it "ignores nightly scans" do
     described_class.call(scan(:nightly, nil))
     expect(deploy.reload.log).to eq("built\n")

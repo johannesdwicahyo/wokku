@@ -9,9 +9,9 @@ module Dashboard
       releases = @app.releases.includes(:deploy).order(version: :desc).limit(20).to_a
       image = Organisms::AppHeaderComponent.current_release(releases)&.deploy&.image_ref
       @scan = ImageScan.for_image(@app, image)
-      @scan = nil unless @scan&.succeeded?
+      @scan = ImageScan.find(@scan.id) if @scan&.succeeded?
       @fixable_only = params[:fixable] == "1"
-      @findings = (@scan&.findings || [])
+      @findings = (@scan&.succeeded? && @scan.findings) || []
       @findings = @findings.select { |f| f["fixed"].present? } if @fixable_only
     end
   end

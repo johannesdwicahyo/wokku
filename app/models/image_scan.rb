@@ -18,7 +18,9 @@ class ImageScan < ApplicationRecord
   # one. One query. nil when the image has never been scanned.
   def self.for_image(app_record, image_ref)
     return if image_ref.blank?
-    scans = where(app_record: app_record, image_ref: image_ref).where.not(status: :skipped).order(id: :desc).limit(MAX_FINDINGS).to_a
+    # findings jsonb is not loaded here (overview); the findings page reloads it.
+    scans = where(app_record: app_record, image_ref: image_ref).where.not(status: :skipped)
+      .select(column_names - %w[findings]).order(id: :desc).limit(KEEP_PER_APP).to_a
     scans.find(&:succeeded?) || scans.first
   end
 end

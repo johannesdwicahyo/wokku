@@ -54,6 +54,29 @@ RSpec.describe "Dashboard::ImageScans", type: :request do
     expect(response).to have_http_status(:ok)
   end
 
+  it "refuses another team's user" do
+    scan!("127.0.0.1:5000/x/shop:2")
+    sign_in create(:user)
+    get dashboard_app_image_scan_path(record)
+    expect(response).not_to have_http_status(:ok)
+  end
+
+  it "shows Scanning… while pending and the failure copy when failed" do
+    scan!("127.0.0.1:5000/x/shop:2", status: :pending, findings: [])
+    get dashboard_app_image_scan_path(record)
+    expect(response.body).to include("Scanning…")
+    ImageScan.delete_all
+    scan!("127.0.0.1:5000/x/shop:2", status: :failed, findings: [])
+    get dashboard_app_image_scan_path(record)
+    expect(response.body).to include("Scan failed · retry tonight")
+  end
+
+  it "does not link malformed advisory ids" do
+    scan!("127.0.0.1:5000/x/shop:2", findings: [ findings[0].merge("id" => "CVE-evil") ])
+    get dashboard_app_image_scan_path(record)
+    expect(response.body).not_to include("avd.aquasec.com")
+  end
+
   it "redirects when the feature is off" do
     allow(Wokku.config).to receive(:image_scans?).and_return(false)
     get dashboard_app_image_scan_path(record)
@@ -64,7 +87,8 @@ RSpec.describe "Dashboard::ImageScans", type: :request do
     it "shows the current image's scan, absent when disabled" do
       scan!("127.0.0.1:5000/x/shop:2")
       get dashboard_app_path(record)
-      expect(response.body).to include("Security · image", "1 fixable").or include("Security · image")
+      expect(response.body).to include("Security · image")
+      expect(Nokogiri::HTML(response.body).text.squish).to include("1 High")
       allow(Wokku.config).to receive(:image_scans?).and_return(false)
       get dashboard_app_path(record)
       expect(response.body).not_to include("Security · image")
