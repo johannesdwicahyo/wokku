@@ -12,4 +12,13 @@ class ImageScan < ApplicationRecord
 
   enum :trigger, { deploy: 0, nightly: 1 }, prefix: :via
   enum :status, { pending: 0, claimed: 1, succeeded: 2, failed: 3, skipped: 4 }
+
+  # What the app page shows for the CURRENT image only (superseded images'
+  # scans are history): the newest succeeded scan, else the newest live/failed
+  # one. One query. nil when the image has never been scanned.
+  def self.for_image(app_record, image_ref)
+    return if image_ref.blank?
+    scans = where(app_record: app_record, image_ref: image_ref).where.not(status: :skipped).order(id: :desc).limit(MAX_FINDINGS).to_a
+    scans.find(&:succeeded?) || scans.first
+  end
 end

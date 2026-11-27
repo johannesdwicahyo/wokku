@@ -1,6 +1,6 @@
 module Organisms
   class AppSettingsComponent < ApplicationComponent
-    SECTIONS = %i[domains checks scheduled_tasks transfer danger].freeze
+    SECTIONS = %i[domains checks security scheduled_tasks transfer danger].freeze
 
     def initialize(app:, active: :domains)
       @app    = app

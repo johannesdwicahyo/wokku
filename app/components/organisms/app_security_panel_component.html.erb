@@ -1,0 +1,27 @@
+<%= render Molecules::PanelComponent.new(ticks: true) do %>
+  <div class="flex items-center justify-between px-[18px] py-3 border-b border-line font-mono text-[11px] uppercase tracking-[.12em] text-muted">
+    <h2 class="font-normal"><%= t("apps.security.title") %></h2>
+    <% if scan&.succeeded? %><%= link_to t("apps.security.view"), helpers.dashboard_app_image_scan_path(app), class: "hover:text-ink" %><% end %>
+  </div>
+  <div class="px-[18px] py-3.5 text-[13px] text-ink">
+    <% if scan.nil? %>
+      <p class="text-muted"><%= t("apps.security.none") %></p>
+    <% elsif scan.succeeded? %>
+      <% if clean? %>
+        <p><%= t("apps.security.clean") %></p>
+      <% else %>
+        <ul class="flex flex-wrap gap-x-4 gap-y-1.5 tabular-nums">
+          <% Organisms::AppSecurityPanelComponent::LIGHTS.each_key do |sev| %>
+            <li class="inline-flex items-center gap-1.5"><span class="<%= light_class(sev) %>" aria-hidden="true"></span><%= count(sev) %> <span class="text-muted"><%= t("apps.security.#{sev}") %></span></li>
+          <% end %>
+        </ul>
+        <p class="mt-2 text-[12px] text-muted tabular-nums"><%= t("apps.security.fixable", count: count("fixable")) %></p>
+      <% end %>
+      <p class="mt-1 text-[12px] text-muted"><%= t("apps.security.scanned", ago: helpers.time_ago_in_words(scan.updated_at), version: scan.scanner_version.presence || "—") %></p>
+    <% elsif scan.failed? %>
+      <p class="text-muted"><%= t("apps.security.failed") %></p>
+    <% else %>
+      <p class="text-muted"><%= t("apps.security.scanning") %></p>
+    <% end %>
+  </div>
+<% end %>

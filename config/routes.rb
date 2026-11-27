@@ -100,6 +100,7 @@ Rails.application.routes.draw do
         post :change_tier
       end
       resource :checks, only: [ :show, :update ], controller: "checks"
+      resource :image_scan, only: :show
       resource :terminal, only: [ :show ], controller: "terminals"
       resource :preview_settings, only: %i[update]
       resources :previews, only: %i[index destroy], controller: "preview_management"
