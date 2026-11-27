@@ -119,6 +119,20 @@ id:
       count:
         one: "%{count} add-on"
         other: "%{count} add-on"
+      rack:
+        group_label: "Kelompokkan add-on"
+        unlinked: "Belum terhubung"
+        cols:
+          backups: "Backup"
+        backups:
+          none: "tidak di-backup"
+          nightly: "setiap malam"
+          manual: "manual"
+        retry: "Coba lagi"
+        destroy: "Hapus"
+        destroy_confirm: "Hapus %{name}? Tidak bisa dibatalkan."
+        open: "Buka %{name}"
+        used_meter: "Pemakaian storage %{name}"
       new_addon_title: "Database baru"
       new_addon_subtitle: "Sediakan database atau layanan"
       empty_body: "Tambah database, cache, dan layanan untuk aplikasimu."

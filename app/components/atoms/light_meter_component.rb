@@ -1,6 +1,6 @@
 module Atoms
   class LightMeterComponent < ApplicationComponent
-    TONES = { ink: "bg-ink", live: "bg-live" }.freeze
+    TONES = { ink: "bg-ink", live: "bg-live", warn: "bg-warn" }.freeze
 
     def initialize(total:, on:, label:, tone: :ink)
       @total = total

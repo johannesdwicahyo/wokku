@@ -7,7 +7,7 @@ import { monthlyIdr, formatIdr } from "controllers/pricing"
 export default class extends Controller {
   static targets = ["cpu", "memory", "disk", "count", "price", "preset", "sleeping", "sleepingField", "railsHint",
                     "sliders", "cpuLabel", "memoryLabel", "diskLabel"]
-  static values = { units: Object, delimiter: String }
+  static values = { units: Object, delimiter: String, suffix: { type: String, default: "/month" } }
 
   pick(event) {
     const b = event.currentTarget
@@ -49,6 +49,6 @@ export default class extends Controller {
     const monthly = this.hasUnitsValue && !sleeping ? monthlyIdr(this.unitsValue, { cpu, memoryMb: mem, diskGb: disk, count }) : 0
     this.dispatch("changed", { detail: { cpu, memoryMb: mem, diskGb: disk, count, sleeping, monthly } })
     if (!this.hasPriceTarget || !this.hasUnitsValue) return
-    this.priceTarget.textContent = `${formatIdr(monthly, this.hasDelimiterValue ? this.delimiterValue : ".")}/month`
+    this.priceTarget.textContent = `${formatIdr(monthly, this.hasDelimiterValue ? this.delimiterValue : ".")}${this.suffixValue}`
   }
 }

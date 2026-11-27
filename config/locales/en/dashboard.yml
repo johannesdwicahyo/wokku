@@ -119,6 +119,20 @@ en:
       count:
         one: "%{count} add-on"
         other: "%{count} add-ons"
+      rack:
+        group_label: "Group add-ons"
+        unlinked: "Unlinked"
+        cols:
+          backups: "Backups"
+        backups:
+          none: "not backed up"
+          nightly: "nightly"
+          manual: "manual"
+        retry: "Retry"
+        destroy: "Destroy"
+        destroy_confirm: "Destroy %{name}? Cannot be undone."
+        open: "Open %{name}"
+        used_meter: "%{name} storage used"
       new_addon_title: "New database"
       new_addon_subtitle: "Provision a database or service"
       empty_body: "Add databases, caches, and services for your apps."

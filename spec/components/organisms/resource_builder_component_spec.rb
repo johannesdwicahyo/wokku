@@ -38,6 +38,16 @@ RSpec.describe Organisms::ResourceBuilderComponent, type: :component do
     expect(page).to have_css("[data-resource-builder-target='price']", text: "Rp32,000")
   end
 
+  it "gives the controller a localized price suffix" do
+    allow(Wokku.config).to receive(:pricing).and_return(double(unit_prices: { "cpu" => 1 }, monthly_idr: 1))
+    render_inline(described_class.new(name: "p", shape: shape, presets: {}))
+    expect(page.find("[data-controller='resource-builder']")["data-resource-builder-suffix-value"]).to eq("/month")
+    I18n.with_locale(:id) do
+      render_inline(described_class.new(name: "p", shape: shape, presets: {}))
+      expect(page.find("[data-controller='resource-builder']")["data-resource-builder-suffix-value"]).to eq("/bulan")
+    end
+  end
+
   it "offers the free sleeping option and disk with a floor" do
     allow(Wokku).to receive(:cloud?).and_return(true) # "(free)" is cloud copy
     render_inline(described_class.new(name: "p", shape: Resources::Shape.new(cpu: 0.25, memory_mb: 512, disk_gb: 10), presets: {}, disk: true, min_disk_gb: 10, sleeping_option: true))
