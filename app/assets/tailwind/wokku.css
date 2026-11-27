@@ -376,3 +376,12 @@ select:focus-visible {
   .is-loading .wk-logo-anim rect { animation: none !important; }
   .wk-lights-sq { animation: wk-lights-fade 2s ease-in-out infinite alternate !important; animation-duration: 2s !important; animation-iteration-count: infinite !important; animation-delay: 0s !important; opacity: 1; }
 }
+
+/* Light field poster: static dot pattern shown before the canvas first draws. */
+.wk-light-poster {
+  background-color: var(--color-bg);
+  background-image:
+    radial-gradient(ellipse at 50% 40%, color-mix(in srgb, var(--color-live) 10%, transparent), transparent 60%),
+    radial-gradient(circle, color-mix(in srgb, var(--color-ink) 22%, transparent) 1px, transparent 1.5px);
+  background-size: 100% 100%, 18px 18px;
+}
