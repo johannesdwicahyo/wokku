@@ -109,11 +109,14 @@ func (f *fake) count(sub string) int {
 	return n
 }
 
-func versionJSON(downloaded time.Time, java bool) []byte {
+func versionJSON(downloaded time.Time, java bool, javaDownloaded time.Time) []byte {
 	db := map[string]any{"UpdatedAt": "2026-11-27T00:00:00Z", "DownloadedAt": downloaded.Format(time.RFC3339)}
 	v := map[string]any{"Version": "0.76.2", "VulnerabilityDB": db}
 	if java {
-		v["JavaDB"] = db
+		if javaDownloaded.IsZero() {
+			javaDownloaded = downloaded
+		}
+		v["JavaDB"] = map[string]any{"UpdatedAt": "2026-11-26T00:00:00Z", "DownloadedAt": javaDownloaded.Format(time.RFC3339)}
 	}
 	b, _ := json.Marshal(v)
 	return b
@@ -123,7 +126,8 @@ func versionJSON(downloaded time.Time, java bool) []byte {
 type host struct {
 	downloaded time.Time
 	java       bool
-	local      bool // image already in the local store
+	javaAt     time.Time // Java DB DownloadedAt; zero: same as downloaded
+	local      bool      // image already in the local store
 	fail       map[string]error
 }
 
@@ -139,7 +143,7 @@ func (h *host) respond(ctx context.Context, args []string) ([]byte, error) {
 		h.local = true
 		return nil, nil
 	case strings.Contains(joined, " version --format json"):
-		return versionJSON(h.downloaded, h.java), nil
+		return versionJSON(h.downloaded, h.java, h.javaAt), nil
 	case strings.Contains(joined, "image inspect") && strings.Contains(joined, ref):
 		if !h.local {
 			return nil, errors.New("No such image")
@@ -266,7 +270,7 @@ func TestScanWithoutJavaDBDisablesJarAnalyzer(t *testing.T) {
 }
 
 func TestStaleDBRefreshesBothDBsWithNetwork(t *testing.T) {
-	f, _ := scan(t, &host{downloaded: now.Add(-25 * time.Hour), java: true, local: true}, nil)
+	f, _ := scan(t, &host{downloaded: now.Add(-25 * time.Hour), java: true, javaAt: now.Add(-8 * 24 * time.Hour), local: true}, nil)
 	for _, flag := range []string{"--download-db-only", "--download-java-db-only"} {
 		dl := strings.Join(f.find(flag), " ")
 		if dl == "" || strings.Contains(dl, "--network none") || !strings.Contains(dl, "wokku-trivy-cache:/root/.cache/trivy ") ||
@@ -462,5 +466,36 @@ func TestWorkerSkipsWhileBusy(t *testing.T) {
 	defer w.mu.Unlock()
 	if w.inFlight["scan-1"] {
 		t.Fatal("skipped id must be released so the next heartbeat re-delivers it")
+	}
+}
+
+// The Java DB (~1 GB) refreshes weekly, the vulnerability DB daily.
+func TestJavaDBRefreshesWeekly(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		db, java       time.Duration // age; java < 0: no Java DB
+		wantDB, wantJV bool
+	}{
+		{"db stale, java 3 days", 25 * time.Hour, 3 * 24 * time.Hour, true, false},
+		{"db fresh, java 8 days", time.Hour, 8 * 24 * time.Hour, false, true},
+		{"db fresh, java missing", time.Hour, -1, false, true},
+		{"both fresh", time.Hour, 6 * 24 * time.Hour, false, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			h := &host{downloaded: now.Add(-tc.db), local: true, java: tc.java >= 0}
+			if tc.java >= 0 {
+				h.javaAt = now.Add(-tc.java)
+			}
+			f, r := scan(t, h, nil)
+			if r.Status != "succeeded" {
+				t.Fatalf("%+v", r)
+			}
+			if got := f.find("--download-db-only") != nil; got != tc.wantDB {
+				t.Errorf("vuln DB download = %v", got)
+			}
+			if got := f.find("--download-java-db-only") != nil; got != tc.wantJV {
+				t.Errorf("Java DB download = %v", got)
+			}
+		})
 	}
 }

@@ -37,6 +37,7 @@ const (
 	cacheVolume    = "wokku-trivy-cache"
 	cacheDir       = "/root/.cache/trivy"
 	dbMaxAge       = 24 * time.Hour
+	javaDBMaxAge   = 7 * 24 * time.Hour
 	refreshBackoff = time.Hour
 	cleanupTimeout = 30 * time.Second
 	diskHeadroom   = 2 << 30 // free space needed on top of the image size
@@ -78,7 +79,9 @@ type dbInfo struct {
 	version      string
 	updatedAt    string
 	downloadedAt time.Time
-	javaDB       bool
+	// From `trivy version --format json`'s JavaDB block (v0.76.2 prints it
+	// when the Java DB is cached); zero when absent.
+	javaDownloadedAt time.Time
 }
 
 func NewWorker(ctx context.Context, client *control.Client, busy func() bool) *Worker {
@@ -218,7 +221,7 @@ func (w *Worker) scan(ctx context.Context, id, ref string) control.ImageScanRepo
 	if w.Busy() {
 		return failed("timeout", "aborted: a build started on this host")
 	}
-	out, err := w.runNamed(ctx, "wokku-trivy-scan-"+id, scanArgs("wokku-trivy-scan-"+id, tar, w.db.javaDB)...)
+	out, err := w.runNamed(ctx, "wokku-trivy-scan-"+id, scanArgs("wokku-trivy-scan-"+id, tar, !w.db.javaDownloadedAt.IsZero())...)
 	if err != nil {
 		code := ""                                // Rails records an unlisted code as "unknown"
 		if strings.Contains(err.Error(), " DB") { // e.g. "--skip-db-update cannot be specified on the first run"
@@ -281,16 +284,18 @@ func failed(code, msg string) control.ImageScanReport {
 	return control.ImageScanReport{Status: "failed", ErrorCode: code, Error: msg}
 }
 
-// ensureDB refreshes the vulnerability DB and the Java DB when the DB is
-// older than 24 h, at most one attempt an hour. A failed refresh with a DB
-// already cached scans against the stale one (the report carries
-// db_updated_at); with no DB at all it's db_unavailable. A missing Java DB
-// only switches jar analysis off (scanArgs).
+// ensureDB refreshes the vulnerability DB when it is 24 h old and the Java
+// DB (~1 GB) when it is a week old or missing — at most one attempt an hour.
+// A failed refresh with a DB already cached scans against the stale one (the
+// report carries db_updated_at); with no vulnerability DB at all it's
+// db_unavailable. A missing Java DB only switches jar analysis off (scanArgs).
 func (w *Worker) ensureDB(ctx context.Context, id string) error {
 	if w.db.downloadedAt.IsZero() {
 		w.db = w.readDB(ctx, id)
 	}
-	if w.now().Sub(w.db.downloadedAt) < dbMaxAge {
+	needDB := w.now().Sub(w.db.downloadedAt) >= dbMaxAge
+	needJava := w.now().Sub(w.db.javaDownloadedAt) >= javaDBMaxAge // zero time: missing
+	if !needDB && !needJava {
 		return nil
 	}
 	if !w.lastRefresh.IsZero() && w.now().Sub(w.lastRefresh) < refreshBackoff {
@@ -307,15 +312,18 @@ func (w *Worker) ensureDB(ctx context.Context, id string) error {
 			"image", flag, "--cache-dir", cacheDir, "--quiet")...)
 		return err
 	}
-	if err := download("--download-db-only"); err != nil {
-		if w.db.downloadedAt.IsZero() {
-			return err
+	if needDB {
+		if err := download("--download-db-only"); err != nil {
+			if w.db.downloadedAt.IsZero() {
+				return err
+			}
+			log.Printf("wokkud: trivy DB refresh failed, scanning with the DB from %s: %v", w.db.updatedAt, err)
 		}
-		log.Printf("wokkud: trivy DB refresh failed, scanning with the DB from %s: %v", w.db.updatedAt, err)
-		return nil
 	}
-	if err := download("--download-java-db-only"); err != nil {
-		log.Printf("wokkud: trivy Java DB refresh failed: %v", err)
+	if needJava {
+		if err := download("--download-java-db-only"); err != nil {
+			log.Printf("wokkud: trivy Java DB refresh failed: %v", err)
+		}
 	}
 	w.db = w.readDB(ctx, id)
 	if w.db.downloadedAt.IsZero() {
@@ -343,8 +351,12 @@ func (w *Worker) readDB(ctx context.Context, id string) dbInfo {
 	if json.Unmarshal(out, &v) != nil || v.VulnerabilityDB == nil {
 		return dbInfo{}
 	}
-	return dbInfo{version: v.Version, updatedAt: v.VulnerabilityDB.UpdatedAt.UTC().Format(time.RFC3339),
-		downloadedAt: v.VulnerabilityDB.DownloadedAt, javaDB: v.JavaDB != nil}
+	info := dbInfo{version: v.Version, updatedAt: v.VulnerabilityDB.UpdatedAt.UTC().Format(time.RFC3339),
+		downloadedAt: v.VulnerabilityDB.DownloadedAt}
+	if v.JavaDB != nil {
+		info.javaDownloadedAt = v.JavaDB.DownloadedAt
+	}
+	return info
 }
 
 // hardened is the shared `docker run` prefix: read-only rootfs, no caps, no
