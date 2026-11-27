@@ -7,9 +7,10 @@ RSpec.describe ImageScan do
 
   def scan(status) = described_class.create!(app_record: app_record, server: app_record.server, image_ref: "r/x:1", status: status)
 
-  it "allows only one pending-or-claimed scan per app" do
+  it "allows only one pending scan per app, alongside a claimed one" do
+    scan(:claimed)
     scan(:pending)
-    expect { scan(:claimed) }.to raise_error(ActiveRecord::RecordNotUnique)
+    expect { scan(:pending) }.to raise_error(ActiveRecord::RecordNotUnique)
   end
 
   it "allows many terminal scans" do

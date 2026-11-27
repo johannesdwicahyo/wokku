@@ -13,6 +13,14 @@ RSpec.describe ImageScanJanitorJob do
     expect(ImageScan.count).to eq(10)
   end
 
+  it "deletes skipped rows and does not count them toward the 10 kept" do
+    10.times { |i| scan(created_at: i.hours.ago) }
+    skipped = scan(status: :skipped)
+    described_class.perform_now
+    expect(ImageScan.where(id: skipped.id)).to be_empty
+    expect(ImageScan.count).to eq(10)
+  end
+
   it "times out claims older than 15 minutes" do
     stuck = scan(status: :claimed, claimed_at: 20.minutes.ago)
     described_class.perform_now

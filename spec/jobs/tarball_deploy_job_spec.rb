@@ -283,14 +283,19 @@ RSpec.describe TarballDeployJob, "image scan hook", type: :job do
     allow_any_instance_of(Hosts::Ssh).to receive(:run_raw).and_return("")
   end
 
-  it "enqueues a scan exactly once on success" do
-    expect(ImageScans::Enqueue).to receive(:call).once.with(app: app, deploy: deploy, trigger: :deploy)
+  it "queues a pending scan with the deploy's recorded image_ref" do
+    allow(Wokku.config).to receive(:image_scans?).and_return(true)
     described_class.perform_now(app_id: app.id, deploy_id: deploy.id)
+    deploy.reload
+    expect(deploy.image_ref).to be_present
+    expect(ImageScan.pending.count).to eq(1)
+    expect(ImageScan.pending.first.image_ref).to eq(deploy.image_ref)
   end
 
   it "does not fail the deploy if the scan enqueue is broken" do
     allow(Wokku.config).to receive(:image_scans?).and_return(true)
     allow(ImageScan).to receive(:create!).and_raise("boom")
+    expect(Rails.logger).to receive(:warn).with(/Enqueue/).at_least(:once)
     described_class.perform_now(app_id: app.id, deploy_id: deploy.id)
     expect(deploy.reload.status).to eq("succeeded")
   end

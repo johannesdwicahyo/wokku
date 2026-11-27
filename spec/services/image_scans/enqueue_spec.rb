@@ -29,6 +29,11 @@ RSpec.describe ImageScans::Enqueue do
       expect(ImageScan.pending.count).to eq(1)
     end
 
+    it "creates a new pending scan while another is claimed" do
+      call.update!(status: :claimed, claimed_at: Time.current)
+      expect(call).to be_pending
+    end
+
     it "is nil for a blank image_ref" do
       expect(call(create(:deploy, app_record: app_record, image_ref: nil))).to be_nil
     end

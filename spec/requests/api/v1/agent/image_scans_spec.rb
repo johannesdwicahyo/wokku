@@ -49,8 +49,28 @@ RSpec.describe "Api::V1::Agent::ImageScans" do
     it "records a failure, mapping unknown error codes" do
       post "/api/v1/agent/image_scans/#{scan.id}/report", headers: headers, params: { status: "failed", error_code: "weird", error: "x" }.to_json
       expect(scan.reload).to have_attributes(status: "failed", error_code: "unknown")
+      scan.update!(status: :claimed)
       post "/api/v1/agent/image_scans/#{scan.id}/report", headers: headers, params: { status: "failed", error_code: "oom" }.to_json
       expect(scan.reload.error_code).to eq("oom")
+    end
+
+    it "is 409 for a pending scan" do
+      scan.update!(status: :pending)
+      post "/api/v1/agent/image_scans/#{scan.id}/report", headers: headers, params: { status: "succeeded" }.to_json
+      expect(response).to have_http_status(:conflict)
+    end
+
+    it "accepts a late report on a scan the janitor timed out" do
+      scan.update!(status: :failed, error_code: "timeout")
+      post "/api/v1/agent/image_scans/#{scan.id}/report", headers: headers, params: { status: "succeeded", counts: { high: 1 } }.to_json
+      expect(response).to have_http_status(:ok)
+      expect(scan.reload).to be_succeeded
+    end
+
+    it "does not 500 on non-scalar counts" do
+      post "/api/v1/agent/image_scans/#{scan.id}/report", headers: headers, params: { status: "succeeded", counts: { high: { a: 1 }, low: [ 1 ], critical: "3" } }.to_json
+      expect(response).to have_http_status(:ok)
+      expect(scan.reload.counts).to include("high" => 0, "low" => 0, "critical" => 3)
     end
 
     it "drops a report for a deleted app with 200" do
@@ -63,6 +83,11 @@ RSpec.describe "Api::V1::Agent::ImageScans" do
   end
 
   describe "heartbeat" do
+    it "has no pending_image_scan_ids when the feature is off" do
+      post "/api/v1/agent/heartbeat", headers: headers, params: { vitals: { cpu: 1 } }.to_json
+      expect(response.parsed_body).not_to have_key("pending_image_scan_ids")
+    end
+
     it "lists at most one pending scan id, only for that server" do
       other_app = create(:app_record, server: server)
       ImageScan.create!(app_record: other_app, server: server, image_ref: "r/y:1")

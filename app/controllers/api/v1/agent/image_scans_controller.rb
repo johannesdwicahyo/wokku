@@ -16,6 +16,10 @@ module Api
         end
 
         def report
+          # Claimed scans, plus ones the janitor already timed out (late report).
+          late = @scan.failed? && @scan.error_code == "timeout"
+          return head :conflict unless @scan.claimed? || late
+
           ok = params[:status] == "succeeded"
           code = params[:error_code].to_s
           @scan.update!(
@@ -46,7 +50,7 @@ module Api
           raw = params[:counts]
           return {} unless raw.respond_to?(:to_unsafe_h)
 
-          %w[critical high medium low unknown fixable].index_with { |k| raw[k].to_i.clamp(0, 1_000_000) }
+          %w[critical high medium low unknown fixable].index_with { |k| Integer(raw[k], exception: false).to_i.clamp(0, 1_000_000) }
         end
 
         def findings_param

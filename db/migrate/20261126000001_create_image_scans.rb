@@ -1,7 +1,7 @@
 class CreateImageScans < ActiveRecord::Migration[8.1]
   def change
     create_table :image_scans, id: :uuid do |t|
-      t.references :app_record, type: :uuid, null: false, foreign_key: { on_delete: :cascade }
+      t.references :app_record, type: :uuid, null: false, index: false, foreign_key: { on_delete: :cascade }
       t.references :deploy, type: :uuid, foreign_key: { on_delete: :nullify }
       t.references :server, type: :uuid, null: false, foreign_key: { on_delete: :cascade }
       t.string :image_ref, null: false
@@ -18,8 +18,8 @@ class CreateImageScans < ActiveRecord::Migration[8.1]
       t.timestamps
     end
     add_index :image_scans, [ :app_record_id, :created_at ], order: { created_at: :desc }, name: "index_image_scans_on_app_and_created_at"
-    # statuses: pending=0, claimed=1
-    add_index :image_scans, :app_record_id, unique: true, where: "status IN (0, 1)", name: "index_image_scans_one_active_per_app"
+    # status 0 = pending: one queued scan per app (a claimed one may coexist with the next)
+    add_index :image_scans, :app_record_id, unique: true, where: "status = 0", name: "index_image_scans_one_active_per_app"
     add_index :image_scans, [ :server_id, :status ]
   end
 end

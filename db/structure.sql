@@ -2779,13 +2779,6 @@ CREATE INDEX index_image_scans_on_app_and_created_at ON public.image_scans USING
 
 
 --
--- Name: index_image_scans_on_app_record_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_image_scans_on_app_record_id ON public.image_scans USING btree (app_record_id);
-
-
---
 -- Name: index_image_scans_on_deploy_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2810,7 +2803,7 @@ CREATE INDEX index_image_scans_on_server_id_and_status ON public.image_scans USI
 -- Name: index_image_scans_one_active_per_app; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_image_scans_one_active_per_app ON public.image_scans USING btree (app_record_id) WHERE (status = ANY (ARRAY[0, 1]));
+CREATE UNIQUE INDEX index_image_scans_one_active_per_app ON public.image_scans USING btree (app_record_id) WHERE (status = 0);
 
 
 --
