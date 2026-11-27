@@ -105,7 +105,7 @@ class NotifyJob < ApplicationJob
     color = slack_color_for(event)
     message = build_message(deploy, event, context)
     fields = deploy_fields(deploy)
-    dashboard_url = dashboard_link_for(deploy)
+    dashboard_url = dashboard_link_for(deploy, event, context)
 
     if color || fields.any? || dashboard_url
       payload = {
@@ -137,7 +137,7 @@ class NotifyJob < ApplicationJob
     message = build_message(deploy, event, context)
     color_hex = discord_color_for(event)
     fields = deploy_fields(deploy).map { |f| { name: f[:title], value: f[:value].to_s, inline: true } }
-    dashboard_url = dashboard_link_for(deploy)
+    dashboard_url = dashboard_link_for(deploy, event, context)
 
     payload = {
       username: "Wokku",
@@ -187,7 +187,9 @@ class NotifyJob < ApplicationJob
     out
   end
 
-  def dashboard_link_for(deploy)
+  def dashboard_link_for(deploy, event = nil, context = nil)
+    # Engine carries no cloud URL for this event: findings link or none.
+    return ImageScans::Message.link(context&.dig("app_id") || context&.dig(:app_id)) if event == "image_scan_critical"
     return nil unless deploy&.app_record
     "#{self.class.base_url || "https://wokku.cloud"}/dashboard/apps/#{deploy.app_record.id}/releases"
   end

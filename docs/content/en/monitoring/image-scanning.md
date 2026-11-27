@@ -19,6 +19,8 @@ Image scanning is off by default. To enable it:
 1. In a Rails initializer, set `c.image_scans = true` inside `Wokku.configure`.
 2. On each host, add `WOKKUD_IMAGE_SCAN=1` to `/etc/wokkud/env` and restart wokkud.
 
+You need both: with only the first, apps on a host without `WOKKUD_IMAGE_SCAN=1` stay at "Scanning…", because nothing on that host picks their scans up.
+
 Optional caps for the scanner container: `WOKKUD_SCAN_MEMORY` (default `2g`), `WOKKUD_SCAN_PIDS` (`512`) and `WOKKUD_SCAN_CPUS` (`2`).
 
 ## Resources, disk and bandwidth
@@ -26,7 +28,7 @@ Optional caps for the scanner container: `WOKKUD_SCAN_MEMORY` (default `2g`), `W
 - One scan runs at a time per host, never while a build is running, and each scan times out after 5 minutes.
 - The scanner runs in its own throwaway container with no network, a read-only filesystem and all capabilities dropped.
 - Vulnerability databases live in the `wokku-trivy-cache` Docker volume. The main database refreshes daily; the Java database refreshes weekly and takes about 1 GB. Refreshing is the only step that uses the network.
-- If the host is more than 85% full, the scan fails with `disk_full` instead of filling the disk.
+- If the host's disk is 85% or more used, or has less free space than the image size plus 2 GiB, the scan fails with `disk_full` instead of filling the disk. A database refresh is skipped below 1 GiB free (4 GiB for the Java database) and tried again later.
 - After each deploy the image is scanned, and every night images whose last scan is older than 20 hours are scanned again.
 
 ## Read the Security panel

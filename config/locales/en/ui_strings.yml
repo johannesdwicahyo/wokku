@@ -34,9 +34,15 @@ en:
       fixable: "%{count} fixable"
       scanned: "Scanned %{ago} ago · Trivy %{version}"
       view: "View findings"
-      notify_critical: "%{app}: %{count} new critical vulnerabilities in the deployed image (%{ids}). Findings: %{url}"
-      notify_critical_no_link: "%{app}: %{count} new critical vulnerabilities in the deployed image (%{ids}). See the Security tab of the app."
-      notify_critical_subject: "[Wokku] %{app}: %{count} new critical vulnerabilities"
+      notify_critical:
+        one: "%{app}: %{count} new critical vulnerability in the deployed image (%{ids}). Findings: %{url}"
+        other: "%{app}: %{count} new critical vulnerabilities in the deployed image (%{ids}). Findings: %{url}"
+      notify_critical_no_link:
+        one: "%{app}: %{count} new critical vulnerability in the deployed image (%{ids}). See the Security tab of the app."
+        other: "%{app}: %{count} new critical vulnerabilities in the deployed image (%{ids}). See the Security tab of the app."
+      notify_critical_subject:
+        one: "[Wokku] %{app}: %{count} new critical vulnerability"
+        other: "[Wokku] %{app}: %{count} new critical vulnerabilities"
       notify_critical_title: "New critical vulnerabilities"
       notify_critical_label: "New critical image vulnerabilities"
       critical: "Critical"

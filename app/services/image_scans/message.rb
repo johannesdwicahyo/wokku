@@ -9,12 +9,12 @@ module ImageScans
       g = ->(k) { c[k] || c[k.to_sym] }
       url = link(g.("app_id"))
       I18n.t(url ? "apps.security.notify_critical" : "apps.security.notify_critical_no_link",
-             locale: locale(c), app: g.("app_name"), count: g.("count"), ids: g.("ids"), url: url)
+             locale: locale(c), app: g.("app_name"), count: g.("count").to_i, ids: g.("ids"), url: url)
     end
 
     def subject(context)
       c = context || {}
-      I18n.t("apps.security.notify_critical_subject", locale: locale(c), app: c["app_name"] || c[:app_name], count: c["count"] || c[:count])
+      I18n.t("apps.security.notify_critical_subject", locale: locale(c), app: c["app_name"] || c[:app_name], count: (c["count"] || c[:count]).to_i)
     end
 
     def title(context) = I18n.t("apps.security.notify_critical_title", locale: locale(context || {}))

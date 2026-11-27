@@ -52,9 +52,15 @@ id:
       fixable: "%{count} bisa diperbaiki"
       scanned: "Dipindai %{ago} lalu · Trivy %{version}"
       view: "Lihat temuan"
-      notify_critical: "%{app}: %{count} kerentanan kritis baru di image yang berjalan (%{ids}). Temuan: %{url}"
-      notify_critical_no_link: "%{app}: %{count} kerentanan kritis baru di image yang berjalan (%{ids}). Lihat tab Keamanan aplikasi."
-      notify_critical_subject: "[Wokku] %{app}: %{count} kerentanan kritis baru"
+      notify_critical:
+        one: "%{app}: %{count} kerentanan kritis baru di image yang berjalan (%{ids}). Temuan: %{url}"
+        other: "%{app}: %{count} kerentanan kritis baru di image yang berjalan (%{ids}). Temuan: %{url}"
+      notify_critical_no_link:
+        one: "%{app}: %{count} kerentanan kritis baru di image yang berjalan (%{ids}). Lihat tab Kerentanan aplikasi."
+        other: "%{app}: %{count} kerentanan kritis baru di image yang berjalan (%{ids}). Lihat tab Kerentanan aplikasi."
+      notify_critical_subject:
+        one: "[Wokku] %{app}: %{count} kerentanan kritis baru"
+        other: "[Wokku] %{app}: %{count} kerentanan kritis baru"
       notify_critical_title: "Kerentanan kritis baru"
       notify_critical_label: "Kerentanan kritis baru di image"
       critical: "Kritis"

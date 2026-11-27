@@ -23,6 +23,15 @@ RSpec.describe "Dashboard::Notifications", type: :request do
       get "/dashboard/notifications"
       expect(response).to have_http_status(:ok)
     end
+
+    it "offers the image_scan_critical event only when image scans are on" do
+      allow(Wokku.config).to receive(:image_scans?).and_return(false)
+      get "/dashboard/notifications"
+      expect(response.body).not_to include('value="image_scan_critical"')
+      allow(Wokku.config).to receive(:image_scans?).and_return(true)
+      get "/dashboard/notifications"
+      expect(response.body).to include('value="image_scan_critical"')
+    end
   end
 
   describe "POST /dashboard/notifications (create)" do

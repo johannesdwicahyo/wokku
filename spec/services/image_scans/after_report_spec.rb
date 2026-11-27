@@ -62,6 +62,20 @@ RSpec.describe ImageScans::AfterReport do
       expect(ImageScans::Message.body(ctx)).not_to include("http")
     end
 
+    it "pluralizes the count and names the app's Kerentanan tab in id" do
+      stub_const("ENV", ENV.to_h.except("APP_URL"))
+      one = { "app_id" => app_record.id, "app_name" => "shop", "count" => 1, "ids" => "CVE-1", "locale" => "en" }
+      expect(ImageScans::Message.body(one)).to include("1 new critical vulnerability in")
+      expect(ImageScans::Message.subject(one)).to eq "[Wokku] shop: 1 new critical vulnerability"
+      expect(ImageScans::Message.subject(one.merge("count" => "2"))).to eq "[Wokku] shop: 2 new critical vulnerabilities"
+      expect(ImageScans::Message.body(one.merge("locale" => "id"))).to include("tab Kerentanan")
+      %w[en id].each do |loc|
+        %w[notify_critical notify_critical_no_link notify_critical_subject].each do |key|
+          expect(I18n.t("apps.security.#{key}", locale: loc)).to include(:one, :other)
+        end
+      end
+    end
+
     it "uses the team owner's locale" do
       app_record.team.owner.update_column(:locale, "id")
       described_class.call(crit("CVE-1"))
