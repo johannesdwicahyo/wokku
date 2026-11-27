@@ -15,8 +15,10 @@ class LocalesController < ApplicationController
   def back_path
     uri = URI.parse(request.referer.to_s)
     return root_path unless uri.host == request.host && uri.path.present?
+    # collapse leading slashes: "//evil.com" would be a protocol-relative redirect
+    path = "/" + uri.path.sub(%r{\A/+}, "")
     query = Rack::Utils.parse_query(uri.query).except("locale")
-    query.empty? ? uri.path : "#{uri.path}?#{query.to_query}"
+    query.empty? ? path : "#{path}?#{query.to_query}"
   rescue URI::InvalidURIError
     root_path
   end

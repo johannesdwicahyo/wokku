@@ -41,4 +41,9 @@ RSpec.describe "LocalesController", type: :request do
     post "/locale", params: { locale: "en" }, headers: { "Referer" => "https://evil.example/?a=1" }
     expect(response).to redirect_to("/")
   end
+
+  it "collapses leading slashes in the referer path instead of raising" do
+    post "/locale", params: { locale: "en" }, headers: { "Referer" => "http://www.example.com//evil.com/x" }
+    expect(response).to redirect_to("/evil.com/x")
+  end
 end
