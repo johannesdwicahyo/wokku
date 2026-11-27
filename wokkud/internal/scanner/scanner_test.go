@@ -97,25 +97,58 @@ func (f *fake) find(sub string) []string {
 	return nil
 }
 
-func versionJSON(downloaded time.Time) []byte {
-	b, _ := json.Marshal(map[string]any{"Version": "0.76.2", "VulnerabilityDB": map[string]any{
-		"UpdatedAt": "2026-11-27T00:00:00Z", "DownloadedAt": downloaded.Format(time.RFC3339)}})
+func (f *fake) count(sub string) int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	n := 0
+	for _, c := range f.calls {
+		if strings.Contains(strings.Join(c, " "), sub) {
+			n++
+		}
+	}
+	return n
+}
+
+func versionJSON(downloaded time.Time, java bool) []byte {
+	db := map[string]any{"UpdatedAt": "2026-11-27T00:00:00Z", "DownloadedAt": downloaded.Format(time.RFC3339)}
+	v := map[string]any{"Version": "0.76.2", "VulnerabilityDB": db}
+	if java {
+		v["JavaDB"] = db
+	}
+	b, _ := json.Marshal(v)
 	return b
 }
 
-// happy answers like a host with a fresh DB and the image in the local store.
-func happy(t *testing.T, downloaded time.Time) func(context.Context, []string) ([]byte, error) {
-	fixture, _ := os.ReadFile("testdata/trivy-0.76.2.json")
-	return func(ctx context.Context, args []string) ([]byte, error) {
-		joined := strings.Join(args, " ")
-		switch {
-		case strings.Contains(joined, " version --format json"):
-			return versionJSON(downloaded), nil
-		case strings.Contains(joined, "--input"):
-			return fixture, nil
+// host is a scriptable docker host: fresh DBs, the image in the local store.
+type host struct {
+	downloaded time.Time
+	java       bool
+	local      bool // image already in the local store
+	fail       map[string]error
+}
+
+func (h *host) respond(ctx context.Context, args []string) ([]byte, error) {
+	joined := strings.Join(args, " ")
+	for sub, err := range h.fail {
+		if strings.Contains(joined, sub) {
+			return nil, err
 		}
-		return nil, nil
 	}
+	switch {
+	case strings.Contains(joined, "docker pull -q "+ref):
+		h.local = true
+		return nil, nil
+	case strings.Contains(joined, " version --format json"):
+		return versionJSON(h.downloaded, h.java), nil
+	case strings.Contains(joined, "image inspect") && strings.Contains(joined, ref):
+		if !h.local {
+			return nil, errors.New("No such image")
+		}
+		return []byte("1000000\n"), nil
+	case strings.Contains(joined, "--input"):
+		return os.ReadFile("testdata/trivy-0.76.2.json")
+	}
+	return nil, nil
 }
 
 type controlPlane struct {
@@ -144,33 +177,50 @@ func newControlPlane(t *testing.T, timeout int) *controlPlane {
 	return cp
 }
 
-func newTestWorker(cp *controlPlane, f *fake, now time.Time) *Worker {
+var now = time.Date(2026, 11, 27, 12, 0, 0, 0, time.UTC)
+
+func newTestWorker(cp *controlPlane, f *fake) *Worker {
 	w := newWorker(control.New(cp.srv.URL, "tok", "test"), func() bool { return false })
 	w.run = f.run
 	w.now = func() time.Time { return now }
+	w.statfs = func(string) (uint64, uint64, error) { return 100 << 30, 200 << 30, nil } // 100 of 200 GiB free
 	return w
 }
 
-func TestScanSucceedsWithIsolatedPinnedCommand(t *testing.T) {
-	now := time.Date(2026, 11, 27, 12, 0, 0, 0, time.UTC)
+// scan runs one claimed scan against h and returns the single report.
+func scan(t *testing.T, h *host, tweak func(*Worker)) (*fake, control.ImageScanReport) {
+	t.Helper()
 	cp := newControlPlane(t, 300)
-	f := &fake{respond: happy(t, now.Add(-time.Hour))}
-	w := newTestWorker(cp, f, now)
+	f := &fake{respond: h.respond}
+	w := newTestWorker(cp, f)
+	if tweak != nil {
+		tweak(w)
+	}
 	w.scanOne(context.Background(), "scan-1")
-
-	if len(cp.reports) != 1 || cp.reports[0].Status != "succeeded" || cp.reports[0].Counts["critical"] != 1 || len(cp.reports[0].Findings) != 7 {
+	if len(cp.reports) != 1 {
 		t.Fatalf("reports %+v", cp.reports)
 	}
-	if r := cp.reports[0]; r.ScannerVersion != "0.76.2" || r.DBUpdatedAt != "2026-11-27T00:00:00Z" {
+	return f, cp.reports[0]
+}
+
+func TestScanSucceedsWithIsolatedPinnedCommand(t *testing.T) {
+	f, r := scan(t, &host{downloaded: now.Add(-time.Hour), java: true, local: true}, nil)
+	if r.Status != "succeeded" || r.Counts["critical"] != 1 || len(r.Findings) != 7 {
+		t.Fatalf("report %+v", r)
+	}
+	if r.ScannerVersion != "0.76.2" || r.DBUpdatedAt != "2026-11-27T00:00:00Z" {
 		t.Fatalf("meta %+v", r)
 	}
 	scan := strings.Join(f.find("--input"), " ")
-	for _, want := range []string{"--network none", "--read-only", "--cap-drop ALL", "--security-opt no-new-privileges",
-		"--memory 2g", "--pids-limit 512", "--cpus 2", "--tmpfs /tmp", "wokku-trivy-cache:/root/.cache/trivy:ro",
-		":/scan/image.tar:ro", TrivyImage + " image", "--skip-db-update", "--offline-scan", "--format json", "--quiet", "--scanners vuln"} {
+	for _, want := range []string{"--name wokku-trivy-scan-scan-1 ", "--network none", "--read-only", "--cap-drop ALL", "--security-opt no-new-privileges",
+		"--memory 2g", "--pids-limit 512", "--cpus 2", "--tmpfs /tmp:rw,size=1g", "wokku-trivy-cache:/root/.cache/trivy:ro",
+		":/scan/image.tar:ro", TrivyImage + " image", "--skip-db-update", "--skip-java-db-update", "--offline-scan", "--format json", "--quiet", "--scanners vuln"} {
 		if !strings.Contains(scan, want) {
 			t.Errorf("scan command missing %q: %s", want, scan)
 		}
+	}
+	if strings.Contains(scan, "--disable-analyzers") {
+		t.Errorf("jar analysis must stay on when the Java DB exists: %s", scan)
 	}
 	if strings.Contains(scan, "docker.sock") || strings.Contains(scan, ref) {
 		t.Errorf("scanner must not get the docker socket or the registry ref: %s", scan)
@@ -186,6 +236,15 @@ func TestScanSucceedsWithIsolatedPinnedCommand(t *testing.T) {
 	if f.find("--download-db-only") != nil {
 		t.Error("fresh DB must not be refreshed")
 	}
+	if f.find("docker rmi") != nil {
+		t.Error("an image that was already local must not be removed")
+	}
+	if v := strings.Join(f.find(" version "), " "); !strings.Contains(v, "--name wokku-trivy-version-scan-1 ") {
+		t.Errorf("version container not named: %s", v)
+	}
+	if f.find("rm -f wokku-trivy-version-scan-1") == nil {
+		t.Error("version container not cleaned up")
+	}
 	if save := f.find("docker save"); save == nil {
 		t.Error("image must be docker-saved to a tar")
 	} else if _, err := os.Stat(save[3]); !os.IsNotExist(err) {
@@ -193,50 +252,127 @@ func TestScanSucceedsWithIsolatedPinnedCommand(t *testing.T) {
 	}
 }
 
-func TestStaleDBIsRefreshedWithNetwork(t *testing.T) {
-	now := time.Date(2026, 11, 27, 12, 0, 0, 0, time.UTC)
-	cp := newControlPlane(t, 300)
-	f := &fake{respond: happy(t, now.Add(-25*time.Hour))}
-	w := newTestWorker(cp, f, now)
-	w.scanOne(context.Background(), "scan-1")
+// Without a Java DB, --skip-java-db-update fails on a JAR image's first run,
+// so jar analysis is switched off instead and the rest of the image scans.
+func TestScanWithoutJavaDBDisablesJarAnalyzer(t *testing.T) {
+	f, r := scan(t, &host{downloaded: now.Add(-time.Hour), local: true}, nil)
+	if r.Status != "succeeded" {
+		t.Fatalf("%+v", r)
+	}
+	scan := strings.Join(f.find("--input"), " ")
+	if !strings.Contains(scan, "--disable-analyzers jar") || strings.Contains(scan, "--skip-java-db-update") {
+		t.Fatalf("scan args: %s", scan)
+	}
+}
 
-	dl := strings.Join(f.find("--download-db-only"), " ")
-	if dl == "" || strings.Contains(dl, "--network none") || !strings.Contains(dl, "wokku-trivy-cache:/root/.cache/trivy ") || !strings.Contains(dl, TrivyImage) {
-		t.Fatalf("refresh command: %q", dl)
+func TestStaleDBRefreshesBothDBsWithNetwork(t *testing.T) {
+	f, _ := scan(t, &host{downloaded: now.Add(-25 * time.Hour), java: true, local: true}, nil)
+	for _, flag := range []string{"--download-db-only", "--download-java-db-only"} {
+		dl := strings.Join(f.find(flag), " ")
+		if dl == "" || strings.Contains(dl, "--network none") || !strings.Contains(dl, "wokku-trivy-cache:/root/.cache/trivy ") ||
+			!strings.Contains(dl, TrivyImage) || !strings.Contains(dl, "--name wokku-trivy-db-scan-1 ") || !strings.Contains(dl, "--cache-dir /root/.cache/trivy --quiet") {
+			t.Errorf("%s command: %q", flag, dl)
+		}
+	}
+}
+
+func TestJavaDBRefreshFailureOnlyLogs(t *testing.T) {
+	_, r := scan(t, &host{downloaded: now.Add(-25 * time.Hour), local: true,
+		fail: map[string]error{"--download-java-db-only": errors.New("boom")}}, nil)
+	if r.Status != "succeeded" {
+		t.Fatalf("%+v", r)
+	}
+}
+
+func TestRefreshBacksOffForAnHour(t *testing.T) {
+	cp := newControlPlane(t, 300)
+	h := &host{downloaded: now.Add(-25 * time.Hour), java: true, local: true, fail: map[string]error{"--download-db-only": errors.New("no egress")}}
+	f := &fake{respond: h.respond}
+	w := newTestWorker(cp, f)
+	w.scanOne(context.Background(), "scan-1")
+	w.scanOne(context.Background(), "scan-2")
+	if n := f.count("--download-db-only"); n != 1 {
+		t.Fatalf("refresh attempts within the hour: %d", n)
+	}
+	w.now = func() time.Time { return now.Add(61 * time.Minute) }
+	w.scanOne(context.Background(), "scan-3")
+	if n := f.count("--download-db-only"); n != 2 {
+		t.Fatalf("refresh not retried after the hour: %d", n)
+	}
+	for _, r := range cp.reports {
+		if r.Status != "succeeded" { // stale DB still scans
+			t.Fatalf("%+v", r)
+		}
 	}
 }
 
 func TestNoDBAndRefreshFailsIsDBUnavailable(t *testing.T) {
-	cp := newControlPlane(t, 300)
-	f := &fake{respond: func(ctx context.Context, args []string) ([]byte, error) {
-		if strings.Contains(strings.Join(args, " "), " version ") || strings.Contains(strings.Join(args, " "), "--download-db-only") {
-			return nil, errors.New("boom")
-		}
-		return nil, nil
-	}}
-	newTestWorker(cp, f, time.Now()).scanOne(context.Background(), "scan-1")
-	if len(cp.reports) != 1 || cp.reports[0].ErrorCode != "db_unavailable" {
-		t.Fatalf("%+v", cp.reports)
+	_, r := scan(t, &host{local: true, fail: map[string]error{" version ": errors.New("boom"), "--download-db-only": errors.New("boom")}}, nil)
+	if r.ErrorCode != "db_unavailable" {
+		t.Fatalf("%+v", r)
+	}
+}
+
+func TestPulledImageIsRemovedAfterTheScan(t *testing.T) {
+	f, r := scan(t, &host{downloaded: now.Add(-time.Hour), java: true}, nil)
+	if r.Status != "succeeded" || f.find("docker pull -q "+ref) == nil {
+		t.Fatalf("%+v", r)
+	}
+	if rmi := f.find("docker rmi"); strings.Join(rmi, " ") != "docker rmi "+ref {
+		t.Fatalf("rmi: %v", rmi)
+	}
+}
+
+func TestDiskPrecheck(t *testing.T) {
+	for name, fs := range map[string][2]uint64{
+		"under size+2GiB": {2 << 30, 200 << 30}, // 2 GiB free < 1 MB + 2 GiB
+		"85% used":        {29 << 30, 200 << 30},
+	} {
+		t.Run(name, func(t *testing.T) {
+			f, r := scan(t, &host{downloaded: now.Add(-time.Hour), java: true, local: true}, func(w *Worker) {
+				w.statfs = func(string) (uint64, uint64, error) { return fs[0], fs[1], nil }
+			})
+			if r.ErrorCode != "disk_full" || f.find("docker save") != nil {
+				t.Fatalf("%+v", r)
+			}
+		})
 	}
 }
 
 func TestTimeoutMapsToTimeout(t *testing.T) {
-	now := time.Now()
 	cp := newControlPlane(t, 1)
-	h := happy(t, now)
+	h := &host{downloaded: now, java: true, local: true}
 	f := &fake{respond: func(ctx context.Context, args []string) ([]byte, error) {
 		if strings.Contains(strings.Join(args, " "), "--input") {
 			<-ctx.Done()
 			return nil, ctx.Err()
 		}
-		return h(ctx, args)
+		return h.respond(ctx, args)
 	}}
-	newTestWorker(cp, f, now).scanOne(context.Background(), "scan-1")
+	newTestWorker(cp, f).scanOne(context.Background(), "scan-1")
 	if len(cp.reports) != 1 || cp.reports[0].Status != "failed" || cp.reports[0].ErrorCode != "timeout" {
 		t.Fatalf("%+v", cp.reports)
 	}
-	if f.find("rm -f wokku-trivy-scan") == nil {
+	if f.find("rm -f wokku-trivy-scan-scan-1") == nil {
 		t.Error("a timed-out scan container must be force-removed")
+	}
+}
+
+func TestBuildStartingMidScanAborts(t *testing.T) {
+	busy := false
+	h := &host{downloaded: now.Add(-time.Hour), java: true, local: true}
+	f, r := scan(t, h, func(w *Worker) {
+		w.Busy = func() bool { return busy }
+		inner := w.run
+		w.run = func(ctx context.Context, args ...string) ([]byte, error) {
+			if args[1] == "save" {
+				busy = true // a build claimed while we were saving
+			}
+			return inner(ctx, args...)
+		}
+	})
+	if r.ErrorCode != "timeout" || f.find("--input") != nil {
+		t.Fatalf("scan ran alongside a build: %+v", r)
 	}
 }
 
@@ -246,59 +382,65 @@ func (e exitErr) Error() string { return "exit" }
 func (e exitErr) ExitCode() int { return int(e) }
 
 func TestErrorCodes(t *testing.T) {
-	now := time.Now()
 	for _, tc := range []struct {
 		name, match, want string
 		err               error
+		local             bool
 	}{
-		{"oom", "--input", "oom", exitErr(137)},
-		{"pull", "docker pull", "pull_failed", errors.New("connection refused")},
-		{"missing", "docker pull", "image_missing", errors.New("manifest unknown")},
-		{"save", "docker save", "image_missing", errors.New("no such image")},
+		{"oom", "--input", "oom", exitErr(137), true},
+		{"pull", "docker pull -q " + ref, "pull_failed", errors.New("connection refused"), false},
+		{"missing", "docker pull -q " + ref, "image_missing", errors.New("manifest unknown"), false},
+		{"save", "docker save", "image_missing", errors.New("no such image"), true},
+		{"save enospc", "docker save", "disk_full", errors.New("write /tmp/x: no space left on device"), true},
+		{"scan enospc", "--input", "disk_full", errors.New("docker run: exit status 1: no space left on device"), true},
+		{"trivy image pull", "docker pull -q " + TrivyImage, "pull_failed", errors.New("toomanyrequests"), true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			cp := newControlPlane(t, 300)
-			h := happy(t, now)
-			f := &fake{respond: func(ctx context.Context, args []string) ([]byte, error) {
-				j := strings.Join(args, " ")
-				if strings.Contains(j, "image inspect") {
-					return nil, errors.New("not local")
-				}
-				if strings.Contains(j, tc.match) {
-					return nil, tc.err
-				}
-				return h(ctx, args)
-			}}
-			newTestWorker(cp, f, now).scanOne(context.Background(), "scan-1")
-			if len(cp.reports) != 1 || cp.reports[0].ErrorCode != tc.want {
-				t.Fatalf("%+v", cp.reports)
+			fail := map[string]error{tc.match: tc.err}
+			if tc.name == "trivy image pull" {
+				fail["image inspect "+TrivyImage] = errors.New("No such image")
+			}
+			_, r := scan(t, &host{downloaded: now.Add(-time.Hour), java: true, local: tc.local, fail: fail}, nil)
+			if r.ErrorCode != tc.want {
+				t.Fatalf("%+v", r)
 			}
 		})
 	}
 	t.Run("parse", func(t *testing.T) {
 		cp := newControlPlane(t, 300)
-		h := happy(t, now)
+		h := &host{downloaded: now, java: true, local: true}
 		f := &fake{respond: func(ctx context.Context, args []string) ([]byte, error) {
 			if strings.Contains(strings.Join(args, " "), "--input") {
 				return []byte("{garbage"), nil
 			}
-			return h(ctx, args)
+			return h.respond(ctx, args)
 		}}
-		newTestWorker(cp, f, now).scanOne(context.Background(), "scan-1")
+		newTestWorker(cp, f).scanOne(context.Background(), "scan-1")
 		if len(cp.reports) != 1 || cp.reports[0].ErrorCode != "parse_failed" {
 			t.Fatalf("%+v", cp.reports)
 		}
 	})
 }
 
+func TestErrorTextIsFirstStderrLine(t *testing.T) {
+	_, r := scan(t, &host{downloaded: now.Add(-time.Hour), java: true, local: true,
+		fail: map[string]error{"--input": errors.New("docker run: exit status 1: FATAL scan error\n  stack line\n  more")}}, nil)
+	if r.Error != "docker run: exit status 1: FATAL scan error" {
+		t.Fatalf("%q", r.Error)
+	}
+}
+
 func TestRefOutsideLoopbackRegistryIsRefused(t *testing.T) {
-	for _, bad := range []string{"docker.io/library/nginx:1", "--help", "127.0.0.1:5000"} {
+	for _, bad := range []string{"docker.io/library/nginx:1", "--help", "127.0.0.1:5000", "127.0.0.1:5000/wokku/blog",
+		"127.0.0.1:5000/Wokku/blog:1", "127.0.0.1:5000/wokku/blog:1 --rm", "127.0.0.1:5000/wokku/blog@sha256:abc"} {
 		if rep, ok := checkRef(bad); ok || rep.ErrorCode != "image_missing" {
 			t.Errorf("%q accepted", bad)
 		}
 	}
-	if _, ok := checkRef(ref); !ok {
-		t.Error("loopback ref refused")
+	for _, good := range []string{ref, "127.0.0.1:5000/wokku/blog@sha256:" + strings.Repeat("a", 64)} {
+		if _, ok := checkRef(good); !ok {
+			t.Errorf("%q refused", good)
+		}
 	}
 }
 

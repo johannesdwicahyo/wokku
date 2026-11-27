@@ -430,8 +430,8 @@ func (c *Client) ClaimImageScan(id string) (*ImageScanJob, error) {
 	return job, nil
 }
 
-// ReportImageScan retries 3x like ReportBuild. A 409 (no longer claimed)
-// is final — retrying can't change it.
+// ReportImageScan retries 3x like ReportBuild. 404/409/410/422 are final
+// (scan gone, no longer claimed, rejected) — retrying can't change them.
 func (c *Client) ReportImageScan(id string, r ImageScanReport) error {
 	var err error
 	for attempt := 0; attempt < 3; attempt++ {
@@ -440,7 +440,7 @@ func (c *Client) ReportImageScan(id string, r ImageScanReport) error {
 		}
 		_, err = c.post("/api/v1/agent/image_scans/"+id+"/report", r)
 		var he *httpError
-		if err == nil || (errors.As(err, &he) && he.status == 409) {
+		if err == nil || (errors.As(err, &he) && (he.status == 404 || he.status == 409 || he.status == 410 || he.status == 422)) {
 			return err
 		}
 	}
