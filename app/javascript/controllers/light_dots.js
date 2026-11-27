@@ -14,6 +14,15 @@ const FONT = {
   K: ["10001","10010","10100","11000","10100","10010","10001"], O: ["01110","10001","10001","10001","10001","10001","01110"],
   G: ["01111","10000","10000","10011","10001","10001","01111"], C: ["01110","10001","10000","10000","10000","10001","01110"],
   Y: ["10001","10001","01010","00100","00100","00100","00100"], M: ["10001","11011","10101","10101","10001","10001","10001"],
+  F: ["11111","10000","10000","11110","10000","10000","10000"], J: ["00111","00010","00010","00010","00010","10010","01100"],
+  Q: ["01110","10001","10001","10001","10101","10010","01101"], W: ["10001","10001","10001","10101","10101","11011","10001"],
+  X: ["10001","10001","01010","00100","01010","10001","10001"], Z: ["11111","00001","00010","00100","01000","10000","11111"],
+  0: ["01110","10001","10011","10101","11001","10001","01110"], 1: ["00100","01100","00100","00100","00100","00100","01110"],
+  2: ["01110","10001","00001","00010","00100","01000","11111"], 3: ["11111","00010","00100","00010","00001","10001","01110"],
+  4: ["00010","00110","01010","10010","11111","00010","00010"], 5: ["11111","10000","11110","00001","00001","10001","01110"],
+  6: ["00110","01000","10000","11110","10001","10001","01110"], 7: ["11111","00001","00010","00100","01000","01000","01000"],
+  8: ["01110","10001","10001","01110","10001","10001","01110"], 9: ["01110","10001","10001","01111","00001","00010","01100"],
+  "-": ["00000","00000","00000","11111","00000","00000","00000"],
   ".": ["00000","00000","00000","00000","00000","01100","01100"], " ": ["000","000","000","000","000","000","000"]
 }
 
@@ -36,10 +45,14 @@ function sprite(c) {
   return cv
 }
 
+// Alpha-quantised fillStyle strings, built once per colour (no per-frame string churn).
+const Q = 24
+const fills = (c) => Array.from({ length: Q + 1 }, (_, i) => `rgba(${c},${i / Q})`)
+
 export function readPalette(el) {
   const s = getComputedStyle(el)
   const live = rgb(s.getPropertyValue("--color-live")).join(","), ink = rgb(s.getPropertyValue("--color-ink")).join(",")
-  return { live, ink, glowLive: sprite(live), glowInk: sprite(ink) }
+  return { live, ink, glowLive: sprite(live), glowInk: sprite(ink), fillLive: fills(live), fillInk: fills(ink) }
 }
 
 const RIPPLES = 6, RIPPLE_LIFE = 2.2, RIPPLE_SPEED = 14 // cells / second
@@ -87,6 +100,7 @@ export class DotBoard {
     this.cell = cell; this.ox = ox; this.oy = oy
     g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = "source-over"; g.clearRect(0, 0, W, H)
     g.globalCompositeOperation = "lighter"
+    let delta = 0
     for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
       const i = y * cols + x
       let tv = tgt[i]
@@ -96,10 +110,13 @@ export class DotBoard {
         const dx = x - rip[k], dy = y - rip[k + 1], d = Math.sqrt(dx * dx + dy * dy) - age * RIPPLE_SPEED
         tv = Math.max(tv, Math.exp(-d * d / 3) * (1 - age / RIPPLE_LIFE) * 0.7)
       }
+      const dv = Math.abs(tv - cur[i])
+      if (dv > delta) delta = dv
       cur[i] += (tv - cur[i]) * ease
       const b = cur[i], px = ox + x * cell + (cell - sz) / 2, py = oy + y * cell + (cell - sz) / 2
       const lit = green[i] && b > 0.3
-      g.fillStyle = `rgba(${lit ? pal.live : pal.ink},${Math.max(0.06, lit ? b : b * 0.95)})`
+      const a = Math.max(0.06, lit ? b : b * 0.95)
+      g.fillStyle = (lit ? pal.fillLive : pal.fillInk)[Math.min(Q, Math.round(a * Q))]
       g.beginPath()
       g.roundRect ? g.roundRect(px, py, sz, sz, sz * 0.22) : g.rect(px, py, sz, sz)
       g.fill()
@@ -110,5 +127,6 @@ export class DotBoard {
         g.globalAlpha = 1
       }
     }
+    return delta // largest remaining gap to target; ~0 means settled
   }
 }

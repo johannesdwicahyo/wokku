@@ -3,11 +3,10 @@ module Organisms
   # (light-wall Stimulus controller). Purely decorative: the real closing copy is
   # HTML laid over it, so the canvas is aria-hidden.
   class LightWallComponent < ApplicationComponent
-    def initialize(label: nil, text: "PUSH.")
-      @label = label
+    def initialize(text: "PUSH.")
       @text = text
     end
 
-    attr_reader :label, :text
+    attr_reader :text
   end
 end
