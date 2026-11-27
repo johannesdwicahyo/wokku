@@ -15,6 +15,7 @@ class PushNotificationService
     "deploy_succeeded" => "deploy",
     "deploy_failed" => "deploy",
     "app_crashed" => "alert",
+    "image_scan_critical" => "alert",
     "backup_completed" => "backup",
     "backup_failed" => "alert",
     "resource_high_cpu" => "alert",
@@ -45,7 +46,7 @@ class PushNotificationService
     return if apns.empty?
 
     begin
-      Push::Apns.new.deliver(apns, title: TITLES[@event] || @event.titleize, body: build_body(subject_app),
+      Push::Apns.new.deliver(apns, title: title, body: build_body(subject_app),
                                    category: CATEGORIES[@event] || "default", data: push_data)
     rescue StandardError => e
       Rails.logger.warn("APNs push failed: #{e.class}")
@@ -97,6 +98,8 @@ class PushNotificationService
     @subject_app = @deploy&.app_record || ((id = context_value("app_id")) && AppRecord.find_by(id: id))
   end
 
+  def title = @event == "image_scan_critical" ? ImageScans::Message.title(@context) : (TITLES[@event] || @event.titleize)
+
   def context_value(key) = @context[key] || @context[key.to_sym]
 
   def build_notification(device_token)
@@ -104,7 +107,7 @@ class PushNotificationService
 
     Expo::Push::Notification.new
       .to(device_token.token)
-      .title(TITLES[@event] || @event.titleize)
+      .title(title)
       .body(build_body(app))
       .data(push_data)
       .sound("default")
@@ -121,6 +124,8 @@ class PushNotificationService
       "#{app_name} deployed successfully#{commit ? " (#{commit})" : ""}#{version ? " v#{version}" : ""}"
     when "deploy_failed"
       "#{app_name} deploy failed#{commit ? " (#{commit})" : ""}"
+    when "image_scan_critical"
+      ImageScans::Message.body(@context)
     when "app_crashed"
       "#{app_name} has crashed"
     when "backup_completed"

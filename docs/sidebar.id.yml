@@ -103,6 +103,8 @@
       path: monitoring/notifications
     - title: Log Audit
       path: monitoring/audit-log
+    - title: Pemindaian Image
+      path: monitoring/image-scanning
 
 - title: Panduan How-To
   icon: lightbulb

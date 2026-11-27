@@ -15,9 +15,10 @@
   <% else %>
     <div class="wk-header">
       <h1>// <%= @event %>()</h1>
-      <h2><%= @app_name %> · <%= @event.humanize %></h2>
+      <h2><%= @event == "image_scan_critical" ? ImageScans::Message.title(@context) : "#{@app_name} · #{@event.humanize}" %></h2>
     </div>
     <div class="wk-body">
+      <% if @event == "image_scan_critical" %><p><%= ImageScans::Message.body(@context) %></p><% end %>
       <% if @context["reason_message"].present? %>
         <p><%= @context["reason_message"] %></p>
       <% end %>

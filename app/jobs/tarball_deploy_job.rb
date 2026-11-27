@@ -55,6 +55,7 @@ class TarballDeployJob < ApplicationJob
     deploy.update!(status: :succeeded, log: log, finished_at: Time.current)
     app.update!(status: :running)
     Deploys::RecordRollbackArtifact.call(deploy: deploy)
+    ImageScans::Enqueue.call(app: app, deploy: deploy.reload, trigger: :deploy) # after RecordRollbackArtifact sets image_ref
     PostDeploySetupJob.perform_later(app.id)
     Activity.log(user: app.creator, team: app.team, action: "app.deployed", target: app, metadata: { archive_key: deploy.archive_key }) rescue nil
     DeployChannel.broadcast_to(deploy, { type: "status", data: "succeeded" })

@@ -63,6 +63,7 @@ type HeartbeatResponse struct {
 	PendingLifecycleOpIDs []string `json:"pending_lifecycle_op_ids"`
 	RouterConfigVersion   string   `json:"router_config_version"`
 	CronConfigVersion     string   `json:"cron_config_version"`
+	PendingImageScanIDs   []string `json:"pending_image_scan_ids"`
 }
 
 // TaskState is one Swarm task's state slice, riding the heartbeat REQUEST
@@ -379,6 +380,71 @@ func (c *Client) reportOp(path, status string, result any, errMsg, errCode strin
 		}
 	}
 	return fmt.Errorf("op report dropped after retries: %w", err)
+}
+
+// ImageScanJob is a Trivy scan of an already-pushed image, claimed off the
+// heartbeat's pending_image_scan_ids.
+type ImageScanJob struct {
+	ID             string `json:"-"`
+	ImageRef       string `json:"image_ref"`
+	TimeoutSeconds int    `json:"timeout_seconds"`
+}
+
+// ImageScanFinding is one reported vulnerability (at most 50 per scan).
+type ImageScanFinding struct {
+	ID        string `json:"id"`
+	Package   string `json:"package"`
+	Installed string `json:"installed"`
+	Fixed     string `json:"fixed"`
+	Severity  string `json:"severity"`
+	Title     string `json:"title"`
+}
+
+// ImageScanReport is the report body: counts + top findings only, never
+// the raw scanner output.
+type ImageScanReport struct {
+	Status         string             `json:"status"` // "succeeded" | "failed"
+	Counts         map[string]int     `json:"counts,omitempty"`
+	Findings       []ImageScanFinding `json:"findings,omitempty"`
+	ScannerVersion string             `json:"scanner_version,omitempty"`
+	DBUpdatedAt    string             `json:"db_updated_at,omitempty"`
+	ErrorCode      string             `json:"error_code,omitempty"`
+	Error          string             `json:"error,omitempty"`
+}
+
+// ClaimImageScan mirrors ClaimBuild: 404 (not this server) / 409 (not
+// pending) / 410 → (nil, nil).
+func (c *Client) ClaimImageScan(id string) (*ImageScanJob, error) {
+	body, err := c.post("/api/v1/agent/image_scans/"+id+"/claim", map[string]any{})
+	if err != nil {
+		var he *httpError
+		if errors.As(err, &he) && (he.status == 404 || he.status == 409 || he.status == 410) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	job := &ImageScanJob{ID: id}
+	if err := json.Unmarshal(body, job); err != nil {
+		return nil, err
+	}
+	return job, nil
+}
+
+// ReportImageScan retries 3x like ReportBuild. 404/409/410/422 are final
+// (scan gone, no longer claimed, rejected) — retrying can't change them.
+func (c *Client) ReportImageScan(id string, r ImageScanReport) error {
+	var err error
+	for attempt := 0; attempt < 3; attempt++ {
+		if attempt > 0 {
+			time.Sleep(c.backoffBase << (attempt - 1))
+		}
+		_, err = c.post("/api/v1/agent/image_scans/"+id+"/report", r)
+		var he *httpError
+		if err == nil || (errors.As(err, &he) && (he.status == 404 || he.status == 409 || he.status == 410 || he.status == 422)) {
+			return err
+		}
+	}
+	return fmt.Errorf("image scan report dropped after retries: %w", err)
 }
 
 type httpError struct {

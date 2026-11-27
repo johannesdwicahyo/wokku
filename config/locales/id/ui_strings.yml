@@ -43,6 +43,41 @@ id:
   loading:
     default: "Memuat"
   apps:
+    security:
+      title: "Kerentanan · image"
+      scanning: "Sedang memindai…"
+      failed: "Pemindaian gagal · dicoba lagi malam ini"
+      none: "Pemindaian pertama setelah deploy berikutnya"
+      clean: "Tidak ada kerentanan yang diketahui di image"
+      fixable: "%{count} bisa diperbaiki"
+      scanned: "Dipindai %{ago} lalu · Trivy %{version}"
+      view: "Lihat temuan"
+      notify_critical:
+        one: "%{app}: %{count} kerentanan kritis baru di image yang berjalan (%{ids}). Temuan: %{url}"
+        other: "%{app}: %{count} kerentanan kritis baru di image yang berjalan (%{ids}). Temuan: %{url}"
+      notify_critical_no_link:
+        one: "%{app}: %{count} kerentanan kritis baru di image yang berjalan (%{ids}). Lihat tab Kerentanan aplikasi."
+        other: "%{app}: %{count} kerentanan kritis baru di image yang berjalan (%{ids}). Lihat tab Kerentanan aplikasi."
+      notify_critical_subject:
+        one: "[Wokku] %{app}: %{count} kerentanan kritis baru"
+        other: "[Wokku] %{app}: %{count} kerentanan kritis baru"
+      notify_critical_title: "Kerentanan kritis baru"
+      notify_critical_label: "Kerentanan kritis baru di image"
+      critical: "Kritis"
+      high: "Tinggi"
+      medium: "Sedang"
+      low: "Rendah"
+      unknown: "Tidak diketahui"
+      fixable_only: "Hanya yang bisa diperbaiki"
+      show_all: "Tampilkan semua"
+      empty_filtered: "Tidak ada temuan yang bisa diperbaiki."
+      showing_top: "Menampilkan %{count} temuan terparah."
+      col_severity: "Tingkat"
+      col_id: "ID"
+      col_package: "Paket"
+      col_version: "Terpasang → perbaikan"
+      col_title: "Judul"
+      no_fix: "belum ada perbaikan"
     deploy_track:
       title: "Deploy berjalan"
       open_log: "Buka log"

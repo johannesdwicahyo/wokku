@@ -26,6 +26,7 @@ module ApplicationHelper
   SETTINGS_SECTION_PATHS = ->(app) { {
     domains:         -> { Rails.application.routes.url_helpers.dashboard_app_domains_path(app) },
     checks:          -> { Rails.application.routes.url_helpers.dashboard_app_checks_path(app) },
+    security:        -> { Rails.application.routes.url_helpers.dashboard_app_image_scan_path(app) },
     scheduled_tasks: -> { Rails.application.routes.url_helpers.dashboard_app_scheduled_tasks_path(app) },
     transfer:        -> { Rails.application.routes.url_helpers.transfer_dashboard_app_path(app) },
     danger:          -> { Rails.application.routes.url_helpers.danger_dashboard_app_path(app) }

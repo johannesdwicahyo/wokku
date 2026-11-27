@@ -100,6 +100,7 @@ Rails.application.routes.draw do
         post :change_tier
       end
       resource :checks, only: [ :show, :update ], controller: "checks"
+      resource :image_scan, only: :show
       resource :terminal, only: [ :show ], controller: "terminals"
       resource :preview_settings, only: %i[update]
       resources :previews, only: %i[index destroy], controller: "preview_management"
@@ -393,6 +394,10 @@ Rails.application.routes.draw do
         post "builds/:id/claim",  to: "builds#claim",  as: :build_claim
         post "builds/:id/log",    to: "builds#log",    as: :build_log
         post "builds/:id/report", to: "builds#report", as: :build_report
+
+        # Tier 0 image scans: wokkud claims a pending scan and reports counts.
+        post "image_scans/:id/claim",  to: "image_scans#claim",  as: :image_scan_claim
+        post "image_scans/:id/report", to: "image_scans#report", as: :image_scan_report
 
         # Track B B3: declarative cron sync + fire-time env fetch. wokkud
         # GETs cron/config when the heartbeat's cron_config_version differs

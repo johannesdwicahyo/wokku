@@ -583,6 +583,32 @@ CREATE TABLE public.feedback_entries (
 
 
 --
+-- Name: image_scans; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.image_scans (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    app_record_id uuid NOT NULL,
+    deploy_id uuid,
+    server_id uuid NOT NULL,
+    image_ref character varying NOT NULL,
+    trigger integer DEFAULT 0 NOT NULL,
+    status integer DEFAULT 0 NOT NULL,
+    counts jsonb DEFAULT '{}'::jsonb NOT NULL,
+    findings jsonb DEFAULT '[]'::jsonb NOT NULL,
+    scanner_version character varying,
+    db_updated_at timestamp(6) without time zone,
+    error_code character varying,
+    error character varying,
+    claimed_at timestamp(6) without time zone,
+    finished_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    notified_at timestamp(6) without time zone
+);
+
+
+--
 -- Name: incidents; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2059,6 +2085,14 @@ ALTER TABLE ONLY public.feedback_entries
 
 
 --
+-- Name: image_scans image_scans_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.image_scans
+    ADD CONSTRAINT image_scans_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: incidents incidents_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2736,6 +2770,34 @@ CREATE UNIQUE INDEX index_app_records_on_swarm_port ON public.app_records USING 
 --
 
 CREATE INDEX index_app_records_on_team_id ON public.app_records USING btree (team_id);
+
+
+--
+-- Name: index_image_scans_on_app_and_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_image_scans_on_app_and_created_at ON public.image_scans USING btree (app_record_id, created_at DESC);
+
+
+--
+-- Name: index_image_scans_on_deploy_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_image_scans_on_deploy_id ON public.image_scans USING btree (deploy_id);
+
+
+--
+-- Name: index_image_scans_on_server_id_and_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_image_scans_on_server_id_and_status ON public.image_scans USING btree (server_id, status);
+
+
+--
+-- Name: index_image_scans_one_active_per_app; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_image_scans_one_active_per_app ON public.image_scans USING btree (app_record_id) WHERE (status = 0);
 
 
 --
@@ -3916,6 +3978,30 @@ ALTER TABLE ONLY public.app_transfers
 
 
 --
+-- Name: image_scans fk_rails_3fd903465c; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.image_scans
+    ADD CONSTRAINT fk_rails_3fd903465c FOREIGN KEY (deploy_id) REFERENCES public.deploys(id) ON DELETE SET NULL;
+
+
+--
+-- Name: image_scans fk_rails_6482ff4575; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.image_scans
+    ADD CONSTRAINT fk_rails_6482ff4575 FOREIGN KEY (app_record_id) REFERENCES public.app_records(id) ON DELETE CASCADE;
+
+
+--
+-- Name: image_scans fk_rails_a220c71f12; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.image_scans
+    ADD CONSTRAINT fk_rails_a220c71f12 FOREIGN KEY (server_id) REFERENCES public.servers(id) ON DELETE CASCADE;
+
+
+--
 -- Name: vitals_hourly_rollups fk_rails_0bb0430151; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4682,6 +4768,8 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261127000001'),
+('20261126000001'),
 ('20261125000001'),
 ('20261122000001'),
 ('20261121000002'),

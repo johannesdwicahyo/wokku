@@ -34,6 +34,11 @@ module Api
             op_ids = @server.pending_service_ops.pluck(:id)
             payload[:pending_service_op_ids] = op_ids if op_ids.any?
           end
+          # Tier 0 image scans: at most one per beat (wokkud scans serially).
+          if Wokku.config.image_scans?
+            scan_id = ImageScan.where(server_id: @server.id, status: :pending).order(:created_at).pick(:id)
+            payload[:pending_image_scan_ids] = [ scan_id ] if scan_id
+          end
           # Phase B5a: lifecycle-op pickup. Gate on the pending ops themselves,
           # not on any flagged app — evict flips wokkud_lifecycle off BEFORE
           # issuing stack.remove, so a flag-gate would never announce the

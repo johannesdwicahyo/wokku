@@ -572,3 +572,44 @@ func TestPostLifecycleOpLog(t *testing.T) {
 		t.Fatalf("payload %+v", got)
 	}
 }
+
+func TestImageScanClaimRefusedAndReport409IsFinal(t *testing.T) {
+	var reports atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/v1/agent/heartbeat":
+			w.Write([]byte(`{"pending_image_scan_ids":["s1"]}`))
+		case "/api/v1/agent/image_scans/s1/report":
+			reports.Add(1)
+			w.WriteHeader(http.StatusConflict)
+		default:
+			w.WriteHeader(http.StatusConflict)
+		}
+	}))
+	defer srv.Close()
+
+	c := New(srv.URL, "tok", "0.1.0")
+	c.backoffBase = time.Millisecond
+	if resp, err := c.PostHeartbeat(vitals.Vitals{}, nil); err != nil || len(resp.PendingImageScanIDs) != 1 {
+		t.Fatalf("heartbeat: %v %+v", err, resp)
+	}
+	if job, err := c.ClaimImageScan("s1"); job != nil || err != nil {
+		t.Fatalf("409 claim: %v %v", job, err)
+	}
+	if err := c.ReportImageScan("s1", ImageScanReport{Status: "failed"}); err == nil || reports.Load() != 1 {
+		t.Fatalf("409 report must fail once without retries: %v, %d calls", err, reports.Load())
+	}
+	for _, code := range []int{404, 410, 422} {
+		var calls atomic.Int32
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			calls.Add(1)
+			w.WriteHeader(code)
+		}))
+		c := New(srv.URL, "tok", "0.1.0")
+		c.backoffBase = time.Millisecond
+		if err := c.ReportImageScan("s1", ImageScanReport{Status: "failed"}); err == nil || calls.Load() != 1 {
+			t.Errorf("%d must be final: %v, %d calls", code, err, calls.Load())
+		}
+		srv.Close()
+	}
+}

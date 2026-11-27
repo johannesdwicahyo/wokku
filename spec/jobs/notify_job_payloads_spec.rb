@@ -81,4 +81,28 @@ RSpec.describe NotifyJob, "Slack/Discord rich payloads" do
       expect(body[:embeds].first[:color]).to eq(0x3b82f6)
     end
   end
+
+  describe "image_scan_critical links" do
+    let(:ctx) { { "app_id" => target_app.id, "app_name" => "wicara", "count" => 1, "ids" => "CVE-1", "locale" => "en" } }
+
+    before do
+      [ slack_notification, discord_notification ].each { |n| n.update!(events: [ "image_scan_critical" ]) }
+    end
+
+    def links(env)
+      stub_const("ENV", env)
+      slack = capture_payload { described_class.new.perform(slack_notification.id, "image_scan_critical", deploy.id, ctx) }
+      discord = capture_payload { described_class.new.perform(discord_notification.id, "image_scan_critical", deploy.id, ctx) }
+      [ slack[:attachments]&.first&.dig(:title_link), discord[:embeds].first[:url] ]
+    end
+
+    it "links to the findings page when APP_URL is set" do
+      expect(links(ENV.to_h.merge("APP_URL" => "https://x.test")))
+        .to all(eq("https://x.test/dashboard/apps/#{target_app.id}/image_scan"))
+    end
+
+    it "has no link (no wokku.cloud fallback) when APP_URL is unset" do
+      expect(links(ENV.to_h.except("APP_URL"))).to eq([ nil, nil ])
+    end
+  end
 end

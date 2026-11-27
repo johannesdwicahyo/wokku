@@ -11,6 +11,9 @@
     <%= render Organisms::AppConnectedComponent.new(app: app) %>
     <%= render Organisms::AppDomainsPanelComponent.new(app: app, domains: domains) %>
     <%= render Organisms::AppResourcesPanelComponent.new(app: app) %>
+    <% if Wokku.config.image_scans? %>
+      <%= render Organisms::AppSecurityPanelComponent.new(app: app, scan: ImageScan.for_image(app, current_release&.deploy&.image_ref)) %>
+    <% end %>
     <% if storage %>
       <%= render Molecules::ObjectStorageCardComponent.new(bucket: storage) %>
     <% end %>

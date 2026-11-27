@@ -214,6 +214,7 @@ en:
       logs: "Logs"
       domains: "Domains"
       checks: "Checks"
+      security: "Security"
       scheduled_tasks: "Scheduled Tasks"
       transfer: "Transfer"
       danger: "Danger"

@@ -103,6 +103,8 @@
       path: monitoring/notifications
     - title: Audit Log
       path: monitoring/audit-log
+    - title: Image Scanning
+      path: monitoring/image-scanning
 
 - title: How-To Guides
   icon: lightbulb

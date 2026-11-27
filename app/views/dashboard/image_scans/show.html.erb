@@ -1,0 +1,48 @@
+<% content_for :title, "#{@app.name} · #{t('dashboard.app_sections.security')}" %>
+<%= render Organisms::AppTabsComponent.new(app: @app, active_tab: :settings) do %>
+<%= render Organisms::AppSettingsComponent.new(app: @app, active: :security) do %>
+  <%= render Molecules::PanelComponent.new(ticks: true) do %>
+    <div class="flex items-center justify-between px-[18px] py-3 border-b border-line font-mono text-[11px] uppercase tracking-[.12em] text-muted">
+      <h2 class="font-normal"><%= t("apps.security.title") %></h2>
+      <% if @scan&.succeeded? %>
+        <%= link_to (@fixable_only ? t("apps.security.show_all") : t("apps.security.fixable_only")),
+              dashboard_app_image_scan_path(@app, fixable: (@fixable_only ? nil : 1)), class: "hover:text-ink" %>
+      <% end %>
+    </div>
+    <% if !@scan&.succeeded? %>
+      <p class="px-[18px] py-3.5 text-[13px] text-muted"><%= t("apps.security.#{@scan.nil? ? 'none' : (@scan.failed? ? 'failed' : 'scanning')}") %></p>
+    <% elsif @findings.empty? %>
+      <p class="px-[18px] py-3.5 text-[13px] text-ink"><%= @fixable_only ? t("apps.security.empty_filtered") : t("apps.security.clean") %></p>
+    <% else %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-[13px] text-ink">
+          <thead class="text-left text-[11px] uppercase tracking-[.1em] text-muted">
+            <tr>
+              <% %w[severity id package version title].each do |c| %><th class="px-[18px] py-2 font-normal"><%= t("apps.security.col_#{c}") %></th><% end %>
+            </tr>
+          </thead>
+          <tbody>
+            <% @findings.each do |f| %>
+              <% sev = f["severity"].to_s.downcase %>
+              <tr class="border-t border-rule-soft align-top">
+                <td class="px-[18px] py-2 whitespace-nowrap">
+                  <span class="wk-light inline-block w-2.5 h-2.5 mr-1.5 <%= Organisms::AppSecurityPanelComponent::LIGHTS[sev] || "bg-dark-line" %>" aria-hidden="true"></span><%= t("apps.security.#{sev}", default: sev.capitalize) %>
+                </td>
+                <td class="px-[18px] py-2 font-mono text-[12px]">
+                  <% if f["id"].to_s.match?(/\A(?:CVE-\d{4}-\d+|GHSA(?:-[0-9a-z]{4}){3})\z/i) %>
+                    <%= link_to f["id"], "https://avd.aquasec.com/nvd/#{f["id"].to_s.downcase}", target: "_blank", rel: "noopener noreferrer", class: "hover:underline" %>
+                  <% else %><%= f["id"] %><% end %>
+                </td>
+                <td class="px-[18px] py-2"><%= f["package"] %></td>
+                <td class="px-[18px] py-2 font-mono text-[12px] whitespace-nowrap"><%= f["installed"] %> → <%= f["fixed"].presence || t("apps.security.no_fix") %></td>
+                <td class="px-[18px] py-2 text-muted"><%= f["title"] %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <p class="px-[18px] py-2.5 border-t border-rule-soft text-[12px] text-muted"><%= t("apps.security.scanned", ago: time_ago_in_words(@scan.updated_at), version: @scan.scanner_version.presence || "—") %><% if @scan.findings.size >= ImageScan::MAX_FINDINGS %> · <%= t("apps.security.showing_top", count: ImageScan::MAX_FINDINGS) %><% end %></p>
+    <% end %>
+  <% end %>
+<% end %>
+<% end %>

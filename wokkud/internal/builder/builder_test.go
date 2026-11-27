@@ -129,7 +129,7 @@ func TestBuildkitdConfig(t *testing.T) {
 
 // F-08: the build must not inherit wokkud's control-plane token.
 func TestBuildEnvDropsSecrets(t *testing.T) {
-	got := buildEnv([]string{"PATH=/usr/bin", "HOME=/root", "WOKKUD_TOKEN=secret", "WOKKUD_URL=https://x", "DOCKER_CONFIG=/root/.docker"})
+	got := BuildEnv([]string{"PATH=/usr/bin", "HOME=/root", "WOKKUD_TOKEN=secret", "WOKKUD_URL=https://x", "DOCKER_CONFIG=/root/.docker"})
 	want := []string{"PATH=/usr/bin", "HOME=/root", "DOCKER_CONFIG=/root/.docker"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v", got)

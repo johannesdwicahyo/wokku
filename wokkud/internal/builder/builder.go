@@ -133,7 +133,7 @@ func Run(ctx context.Context, client *control.Client, job *control.BuildJob) {
 	var buildArgs []string
 	if _, err := os.Stat(filepath.Join(src, "Dockerfile")); err != nil {
 		plan := exec.CommandContext(ctx, "nixpacks", "plan", src)
-		plan.Env = buildEnv(os.Environ())
+		plan.Env = BuildEnv(os.Environ())
 		out, err := plan.Output()
 		if err == nil {
 			buildArgs, err = planBuildArgs(out)
@@ -147,7 +147,7 @@ func Run(ctx context.Context, client *control.Client, job *control.BuildJob) {
 	for _, args := range buildCommands(src, job.PushRef, formation["web"], buildArgs) {
 		cmd := exec.CommandContext(ctx, args[0], args[1:]...)
 		cmd.Dir = src
-		cmd.Env = buildEnv(os.Environ())
+		cmd.Env = BuildEnv(os.Environ())
 		cmd.Stdout = sink
 		cmd.Stderr = sink
 		if err := cmd.Run(); err != nil {

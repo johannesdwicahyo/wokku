@@ -13,6 +13,11 @@ RSpec.describe Organisms::SettingsTabsComponent, type: :component do
     expect(page).not_to have_link("Admin")
   end
 
+  it "keeps the account security tab as Keamanan in Indonesian" do
+    I18n.with_locale(:id) { render_inline(described_class.new(active_tab: :profile)) { "body" } }
+    expect(page).to have_link("Keamanan", href: "/dashboard/two_factor")
+  end
+
   it "shows the Admin tab when show_admin" do
     render_inline(described_class.new(active_tab: :profile, show_admin: true)) { "body" }
     expect(page).to have_link("Admin", href: "/admin/servers")

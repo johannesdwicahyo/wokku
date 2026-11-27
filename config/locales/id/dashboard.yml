@@ -213,6 +213,7 @@ id:
       scaling: "Scaling"
       logs: "Log"
       domains: "Domain"
+      security: "Kerentanan"
       checks: "Pengecekan"
       scheduled_tasks: "Tugas terjadwal"
       transfer: "Transfer"

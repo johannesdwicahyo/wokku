@@ -7,7 +7,11 @@ You'll receive notifications for the events you subscribed to.
 
 Manage rules: <%= dashboard_notifications_url %>
 <% else %>
+<% if @event == "image_scan_critical" %>
+<%= ImageScans::Message.body(@context) %>
+<% else %>
 <%= @app_name %> — <%= @event.humanize %>
+<% end %>
 <% if @context["reason_message"].present? %>
 <%= @context["reason_message"] %>
 <% end %>

@@ -28,6 +28,9 @@ class NotifyJob < ApplicationJob
     end
   end
 
+  # Configured public base URL, nil when none (callers omit links then).
+  def self.base_url = ENV["APP_URL"].presence
+
   private
 
   def build_message(deploy, event, context = nil)
@@ -51,6 +54,8 @@ class NotifyJob < ApplicationJob
       "#{app_name} has crashed"
     when "app_auto_stopped"
       "#{app_name} was auto-stopped after crash-looping — deploy a fix to restart it"
+    when "image_scan_critical"
+      ImageScans::Message.body(context)
     when "backup_completed"
       "#{app_name} backup completed"
     when "backup_failed"
@@ -100,7 +105,7 @@ class NotifyJob < ApplicationJob
     color = slack_color_for(event)
     message = build_message(deploy, event, context)
     fields = deploy_fields(deploy)
-    dashboard_url = dashboard_link_for(deploy)
+    dashboard_url = dashboard_link_for(deploy, event, context)
 
     if color || fields.any? || dashboard_url
       payload = {
@@ -132,7 +137,7 @@ class NotifyJob < ApplicationJob
     message = build_message(deploy, event, context)
     color_hex = discord_color_for(event)
     fields = deploy_fields(deploy).map { |f| { name: f[:title], value: f[:value].to_s, inline: true } }
-    dashboard_url = dashboard_link_for(deploy)
+    dashboard_url = dashboard_link_for(deploy, event, context)
 
     payload = {
       username: "Wokku",
@@ -152,7 +157,7 @@ class NotifyJob < ApplicationJob
   def slack_color_for(event)
     case event
     when "deploy_succeeded", "app_created", "app_recovered", "scheduled_task_recovered"        then "good"     # green
-    when "deploy_failed", "app_crashed", "backup_failed", "resource_high_cpu", "resource_high_memory", "app_down", "scheduled_task_failing" then "danger"   # red
+    when "deploy_failed", "app_crashed", "image_scan_critical", "backup_failed", "resource_high_cpu", "resource_high_memory", "app_down", "scheduled_task_failing" then "danger"   # red
     when "deploy_started"                          then "#3b82f6"  # blue
     when "app_deleted", "daily_debit_summary"      then "warning"  # yellow
     end
@@ -161,7 +166,7 @@ class NotifyJob < ApplicationJob
   def discord_color_for(event)
     case event
     when "deploy_succeeded", "app_created", "app_recovered", "scheduled_task_recovered"        then 0x22c55e # green
-    when "deploy_failed", "app_crashed", "backup_failed", "resource_high_cpu", "resource_high_memory", "app_down", "scheduled_task_failing" then 0xef4444 # red
+    when "deploy_failed", "app_crashed", "image_scan_critical", "backup_failed", "resource_high_cpu", "resource_high_memory", "app_down", "scheduled_task_failing" then 0xef4444 # red
     when "deploy_started"                          then 0x3b82f6 # blue
     when "app_deleted", "daily_debit_summary"      then 0xeab308 # yellow
     end
@@ -182,10 +187,11 @@ class NotifyJob < ApplicationJob
     out
   end
 
-  def dashboard_link_for(deploy)
+  def dashboard_link_for(deploy, event = nil, context = nil)
+    # Engine carries no cloud URL for this event: findings link or none.
+    return ImageScans::Message.link(context&.dig("app_id") || context&.dig(:app_id)) if event == "image_scan_critical"
     return nil unless deploy&.app_record
-    base = ENV["APP_URL"].presence || "https://wokku.cloud"
-    "#{base}/dashboard/apps/#{deploy.app_record.id}/releases"
+    "#{self.class.base_url || "https://wokku.cloud"}/dashboard/apps/#{deploy.app_record.id}/releases"
   end
 
   def send_telegram(notification, deploy, event, context = nil)

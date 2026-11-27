@@ -22,6 +22,7 @@ import (
 	"wokku.cloud/wokkud/internal/lifecycle"
 	"wokku.cloud/wokkud/internal/registry"
 	"wokku.cloud/wokkud/internal/router"
+	"wokku.cloud/wokkud/internal/scanner"
 	"wokku.cloud/wokkud/internal/services"
 	"wokku.cloud/wokkud/internal/vitals"
 )
@@ -62,6 +63,13 @@ func main() {
 	// busy-guard — the exact race this ticker exists to prevent. install.sh
 	// now deletes that cron file on upgrade; this ticker is the only GC path.
 	go registry.RunGCTicker(ctx, registry.GCInterval(), builds.Busy, registry.HostExec{})
+
+	// Image-scan duty (Security Scan Tier 0): offline Trivy scans of pushed
+	// images, one at a time, never while a build runs. Opt-in per host.
+	var scans *scanner.Worker
+	if os.Getenv("WOKKUD_IMAGE_SCAN") == "1" {
+		scans = scanner.NewWorker(ctx, client, builds.Busy)
+	}
 
 	// Cron duty (Track B B3): declarative schedule sync + one-off container
 	// fires. Never nil — a missing docker binary degrades per-fire inside
@@ -107,7 +115,7 @@ func main() {
 	ticker := time.NewTicker(cfg.Interval)
 	defer ticker.Stop()
 	for {
-		beat(ctx, mon, client, builds, rtr, svcs, lc, cronSched)
+		beat(ctx, mon, client, builds, rtr, svcs, lc, cronSched, scans)
 		select {
 		case <-ctx.Done():
 			log.Println("wokkud: shutting down")
@@ -117,7 +125,7 @@ func main() {
 	}
 }
 
-func beat(ctx context.Context, mon *dockermon.Monitor, client *control.Client, builds *builder.Executor, rtr *router.Manager, svcs *services.Executor, lc *lifecycle.Executor, cronSched *cronrun.Scheduler) {
+func beat(ctx context.Context, mon *dockermon.Monitor, client *control.Client, builds *builder.Executor, rtr *router.Manager, svcs *services.Executor, lc *lifecycle.Executor, cronSched *cronrun.Scheduler, scans *scanner.Worker) {
 	dockerStatus := "down"
 	if mon != nil {
 		dockerStatus = mon.PingStatus(ctx)
@@ -152,6 +160,11 @@ func beat(ctx context.Context, mon *dockermon.Monitor, client *control.Client, b
 	if lc != nil {
 		for _, id := range resp.PendingLifecycleOpIDs {
 			lc.Enqueue(id)
+		}
+	}
+	if scans != nil {
+		for _, id := range resp.PendingImageScanIDs {
+			scans.Enqueue(id)
 		}
 	}
 	rtr.Sync(ctx, resp.RouterConfigVersion)
