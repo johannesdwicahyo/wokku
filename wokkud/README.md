@@ -14,6 +14,10 @@ for Caddy.
 - `WOKKUD_TOKEN` — the host's ingest token (shown when you connect a
   server in the dashboard)
 - `WOKKUD_INTERVAL` — heartbeat cadence (default 15s)
+- `WOKKUD_IMAGE_SCAN` — set to `1` to run Trivy image vulnerability scans on this host (off by default; also needs `c.image_scans = true` on the control plane). Scans run in a throwaway container (no network, read-only, all caps dropped) one at a time, never during a build, and fail as `disk_full` above 85% disk used
+- `WOKKUD_SCAN_MEMORY` / `WOKKUD_SCAN_PIDS` / `WOKKUD_SCAN_CPUS` — scanner caps (defaults `2g` / `512` / `2`)
+
+The scanner caches its vulnerability databases in the `wokku-trivy-cache` Docker volume (DB refreshed daily, Java DB weekly, about 1 GB). See the "Image scanning" docs guide.
 
 ## Develop
     go test ./... && go vet ./...

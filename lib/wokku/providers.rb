@@ -126,7 +126,8 @@ module Wokku
     end
 
     # Tier 0 image vulnerability scans on every deploy. Off until a host
-    # app (or self-host admin) opts in.
+    # app (or self-host admin) opts in: `c.image_scans = true` in a
+    # Wokku.configure initializer, plus WOKKUD_IMAGE_SCAN=1 on each host's wokkud.
     def image_scans?
       @image_scans || false
     end
