@@ -33,6 +33,26 @@ RSpec.describe Organisms::LightBoardComponent, type: :component do
     expect(canvas["aria-hidden"]).to be_nil
   end
 
+  it "renders story mode: controller wrapper, decorative canvas target, caption targets, sr-only label" do
+    render_inline(described_class.new(mode: :story, label: "Push, build, live",
+      data: { steps: %w[PUSH BUILD LIVE], status_labels: { live: "aktif" }, repo: "toko · main@abc" }))
+    root = page.find("div[data-controller='light-board']")
+    expect(root["data-light-board-mode-value"]).to eq("story")
+    story = JSON.parse(root["data-light-board-story-value"])
+    expect(story["steps"]).to eq(%w[PUSH BUILD LIVE])
+    expect(story["status_labels"]["live"]).to eq("aktif")
+    expect(page).to have_css("canvas[aria-hidden='true'][data-light-board-target='canvas']")
+    expect(page).to have_css("[data-light-board-target='left']", text: "toko · main@abc")
+    expect(page).to have_css("[data-light-board-target='right']", text: "aktif")
+    expect(page).to have_css("span.sr-only", text: "Push, build, live")
+  end
+
+  it "defaults story data to English" do
+    render_inline(described_class.new(mode: :story, label: "x"))
+    story = JSON.parse(page.find("div[data-controller='light-board']")["data-light-board-story-value"])
+    expect(story["steps"]).to eq(%w[PUSH BUILD LIVE])
+  end
+
   it "rejects an unknown mode" do
     expect { described_class.new(mode: :bogus, data: [], label: "x") }.to raise_error(ArgumentError)
   end

@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { DotBoard, readPalette } from "controllers/light_dots"
 
 // Fleet board: one rounded square per process, grouped by app (one-square gap).
 // Value `data` = Apps::Fleet entries ([{ states: [...] }]). Colours mirror the
@@ -20,21 +21,28 @@ const GLYPHS = {
   8: [14,17,17,14,17,17,14], 9: [14,17,17,15,1,2,12],
   "-": [0,0,0,31,0,0,0], ".": [0,0,0,0,0,12,12], "…": [0,0,0,0,0,0,21]
 }
+// Story mode (landing): PUSH -> BUILD (progress bar) -> LIVE (pulsing green), looping.
+const S_COLS = 50, S_ROWS = 17, S_PUSH = 1.8, S_BUILD = 3.2, S_LIVE = 3.5, S_CYCLE = S_PUSH + S_BUILD + S_LIVE
+const S_LABELS = { push: "receiving · git push", build: "building · {pct}%", live: "live · toko-kopi.wokku.app" }
 const BLANK = [0, 0, 0, 0, 0, 0, 0], T_MIN = 3, T_MAX = 10
 
 export default class extends Controller {
   // text mode reads `text` (String, <= 30 chars of [a-z0-9-.]); fleet reads `data`.
-  static values = { mode: String, data: Array, text: String }
+  // story mode reads `data` = { steps: [push, build, live], status_labels: { push, build ("{pct}"), live } }
+  // and, when present, a `left` / `right` caption target (outside the canvas).
+  static targets = ["canvas", "left", "right"]
+  static values = { mode: String, data: { type: Array, default: [] }, text: String, story: Object }
 
   connect() {
     this.dpr = Math.min(window.devicePixelRatio || 1, 1.75)
     this.mq = matchMedia("(prefers-reduced-motion: reduce)")
     this.visible = true
-    this.g = this.element.getContext("2d")
+    this.g = this.cv.getContext("2d")
+    if (this.isStory) this.initStory()
     this.size()
     this.draw(0)
     this.resizer = new ResizeObserver(() => { this.size(); this.draw(performance.now() / 1000) })
-    this.resizer.observe(this.element)
+    this.resizer.observe(this.cv)
     this.mq.addEventListener("change", this.motionChanged)
     this.motionChanged()
   }
@@ -46,6 +54,8 @@ export default class extends Controller {
   }
 
   get isText() { return this.modeValue === "text" }
+  get isStory() { return this.modeValue === "story" }
+  get cv() { return this.hasCanvasTarget ? this.canvasTarget : this.element }
 
   // Live re-draw when the name changes (text mode).
   textValueChanged() { if (this.g && this.isText) this.draw(0) }
@@ -62,13 +72,14 @@ export default class extends Controller {
   // Otherwise observe visibility and run the throttled loop.
   motionChanged = () => {
     this.stopLoop()
+    if (this.isStory) return this.storyMotion()
     if (this.isText || this.reduced || !this.animated) return this.draw(0)
     this.io = new IntersectionObserver(([e]) => {
       this.visible = e.isIntersecting
       cancelAnimationFrame(this.raf)
       if (this.visible) this.raf = requestAnimationFrame(this.loop)
     })
-    this.io.observe(this.element)
+    this.io.observe(this.cv)
     this.raf = requestAnimationFrame(this.loop)
   }
 
@@ -86,21 +97,21 @@ export default class extends Controller {
   // Grow the canvas (h-16 is a minimum) until every light fits at MIN size:
   // rows x (MIN + gap), so nothing is clipped.
   size() {
-    if (this.isText) {
-      this.element.style.height = ""
-      const r = this.element.getBoundingClientRect()
-      this.element.width = Math.round(r.width * this.dpr)
-      this.element.height = Math.round(r.height * this.dpr)
+    if (this.isText || this.isStory) {
+      this.cv.style.height = ""
+      const r = this.cv.getBoundingClientRect()
+      this.cv.width = Math.round(r.width * this.dpr)
+      this.cv.height = Math.round(r.height * this.dpr)
       return
     }
     const cell = MIN + 4
     const slots = this.slots()
-    const cols = Math.max(Math.floor(this.element.getBoundingClientRect().width / cell), 1)
+    const cols = Math.max(Math.floor(this.cv.getBoundingClientRect().width / cell), 1)
     const need = Math.ceil(slots / cols) * cell
-    this.element.style.height = need > MIN_H ? `${need}px` : ""
-    const r = this.element.getBoundingClientRect()
-    this.element.width = Math.round(r.width * this.dpr)
-    this.element.height = Math.round(r.height * this.dpr)
+    this.cv.style.height = need > MIN_H ? `${need}px` : ""
+    const r = this.cv.getBoundingClientRect()
+    this.cv.width = Math.round(r.width * this.dpr)
+    this.cv.height = Math.round(r.height * this.dpr)
   }
 
   slots() {
@@ -122,7 +133,7 @@ export default class extends Controller {
   // Text mode: 5x7 dots on the same square grid; lit = live green, off = dim.
   // Cell shrinks to fit the width; below T_MIN css px the text ends in "…".
   drawText() {
-    const g = this.g, w = this.element.width, h = this.element.height, d = this.dpr
+    const g = this.g, w = this.cv.width, h = this.cv.height, d = this.dpr
     g.clearRect(0, 0, w, h)
     let chars = [...this.textValue.toLowerCase()].slice(0, 30)
     const fit = (n) => Math.min(Math.floor(w / (n * 6 - 1)), Math.floor(h / 7), T_MAX * d)
@@ -150,8 +161,9 @@ export default class extends Controller {
   }
 
   draw(t) {
+    if (this.isStory) return this.drawStory()
     if (this.isText) return this.drawText()
-    const g = this.g, w = this.element.width, h = this.element.height
+    const g = this.g, w = this.cv.width, h = this.cv.height
     g.clearRect(0, 0, w, h)
     const { s, groups } = this.layout(w, h)
     const cell = (s + 4) * this.dpr, sz = s * this.dpr
@@ -185,5 +197,63 @@ export default class extends Controller {
     g.roundRect ? g.roundRect(x, y, sz, sz, 2 * this.dpr) : g.rect(x, y, sz, sz)
     g.fill()
     g.shadowBlur = 0
+  }
+
+  // ---- story mode ----
+  initStory() {
+    const d = this.storyValue
+    this.steps = d.steps || ["PUSH", "BUILD", "LIVE"]
+    this.labels = { ...S_LABELS, ...(d.status_labels || {}) }
+    this.pal = readPalette(this.cv)
+    this.board = new DotBoard(S_COLS, S_ROWS)
+    this.sT = S_PUSH + S_BUILD + 0.5 // first frame is the finished LIVE frame
+    this.key = null
+  }
+
+  // Reduced motion: the final LIVE frame, no loop. Otherwise one rAF loop while visible.
+  storyMotion() {
+    this.sT = S_PUSH + S_BUILD + 0.5
+    if (this.reduced) return this.drawStory(true)
+    this.t0 = null
+    this.io = new IntersectionObserver(([e]) => {
+      this.visible = e.isIntersecting
+      cancelAnimationFrame(this.raf)
+      if (this.visible) { this.t0 = null; this.raf = requestAnimationFrame(this.storyLoop) }
+    })
+    this.io.observe(this.cv)
+    this.raf = requestAnimationFrame(this.storyLoop)
+  }
+
+  storyLoop = (now) => {
+    if (this.t0 == null) this.t0 = now
+    this.sT = (now - this.t0) / 1000
+    this.drawStory()
+    if (this.visible) this.raf = requestAnimationFrame(this.storyLoop)
+  }
+
+  drawStory(snap = false) {
+    const b = this.board, u = this.sT % S_CYCLE
+    const step = u < S_PUSH ? 0 : u < S_PUSH + S_BUILD ? 1 : 2
+    const n = step === 1 ? Math.round(((u - S_PUSH) / S_BUILD) * 40) : 0
+    const key = step * 100 + n
+    const first = this.key === null
+    if (key !== this.key) { // re-stamp only when the picture changes
+      this.key = key
+      b.clear()
+      b.stamp(this.steps[step] || "", step === 1 ? 2 : 3)
+      if (step === 1) for (let c = 5; c < 5 + n && c < 45; c++) { b.tgt[12 * S_COLS + c] = 1; b.tgt[13 * S_COLS + c] = 1 }
+      if (step === 2) for (let i = 0; i < b.green.length; i++) if (b.tgt[i]) b.green[i] = 1
+      this.caption(step === 1 ? this.labels.build.replace("{pct}", Math.round((n / 40) * 100)) : step === 0 ? this.labels.push : this.labels.live)
+    }
+    if (step === 2) { // lit pulse
+      const p = 0.78 + 0.22 * Math.sin(this.sT * 4)
+      for (let i = 0; i < b.green.length; i++) if (b.green[i]) b.tgt[i] = p
+    }
+    if (snap || first) b.snap()
+    b.draw(this.g, this.cv.width, this.cv.height, this.sT, this.pal, this.reduced ? 1 : 0.14)
+  }
+
+  caption(text) {
+    if (this.hasRightTarget && this.rightTarget.textContent !== text) this.rightTarget.textContent = text
   }
 }
