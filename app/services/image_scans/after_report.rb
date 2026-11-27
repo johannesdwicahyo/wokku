@@ -37,9 +37,8 @@ module ImageScans
       return unless ImageScan.where(id: scan.id, notified_at: nil).update_all(notified_at: Time.current) == 1
 
       team = app.team
-      url = "#{ENV["APP_URL"].presence || "https://wokku.cloud"}#{Rails.application.routes.url_helpers.dashboard_app_image_scan_path(app)}"
       context = { "app_id" => app.id, "app_name" => app.name, "count" => new_ids.size, "ids" => new_ids.first(3).join(", "),
-                  "url" => url, "locale" => I18n.locale.to_s }
+                  "locale" => (team.owner&.locale.presence || I18n.default_locale).to_s }
       team.notifications.where(app_record_id: [ nil, app.id ]).find_each do |n|
         next unless n.events.include?("image_scan_critical")
         NotifyJob.perform_later(n.id, "image_scan_critical", scan.deploy_id || current.id, context)
@@ -47,6 +46,7 @@ module ImageScans
       Activity.log(user: team.owner, team: team, action: "app.image_scan.critical", target: app,
                    metadata: { count: new_ids.size, ids: new_ids.first(3), image_ref: scan.image_ref })
     rescue StandardError => e
+      ImageScan.where(id: scan.id).update_all(notified_at: nil) # let a retry notify
       Rails.logger.warn("[ImageScans::AfterReport] notify #{scan.id}: #{e.class}: #{e.message}")
     end
 

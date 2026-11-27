@@ -13,6 +13,8 @@ class NotificationMailer < ApplicationMailer
                 "[Wokku] Test notification — channel is working"
     elsif event == "daily_debit_summary"
                 "[Wokku] Daily usage — #{Date.yesterday.strftime('%b %-d, %Y')}"
+    elsif event == "image_scan_critical"
+                ImageScans::Message.subject(@context)
     elsif event == "app_created"
                 "[Wokku] #{@app_name} created"
     elsif event == "app_deleted"

@@ -28,6 +28,9 @@ class NotifyJob < ApplicationJob
     end
   end
 
+  # Configured public base URL, nil when none (callers omit links then).
+  def self.base_url = ENV["APP_URL"].presence
+
   private
 
   def build_message(deploy, event, context = nil)
@@ -52,9 +55,7 @@ class NotifyJob < ApplicationJob
     when "app_auto_stopped"
       "#{app_name} was auto-stopped after crash-looping — deploy a fix to restart it"
     when "image_scan_critical"
-      ctx = context || {}
-      I18n.t("apps.security.notify_critical", locale: ctx["locale"] || ctx[:locale] || I18n.default_locale,
-             app: app_name, count: ctx["count"] || ctx[:count], ids: ctx["ids"] || ctx[:ids], url: ctx["url"] || ctx[:url])
+      ImageScans::Message.body(context)
     when "backup_completed"
       "#{app_name} backup completed"
     when "backup_failed"
@@ -188,8 +189,7 @@ class NotifyJob < ApplicationJob
 
   def dashboard_link_for(deploy)
     return nil unless deploy&.app_record
-    base = ENV["APP_URL"].presence || "https://wokku.cloud"
-    "#{base}/dashboard/apps/#{deploy.app_record.id}/releases"
+    "#{self.class.base_url || "https://wokku.cloud"}/dashboard/apps/#{deploy.app_record.id}/releases"
   end
 
   def send_telegram(notification, deploy, event, context = nil)

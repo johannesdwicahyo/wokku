@@ -49,8 +49,46 @@ RSpec.describe ImageScans::AfterReport do
       s = crit("CVE-1", "CVE-2")
       expect { 2.times { described_class.call(s) } }.to have_enqueued_job(NotifyJob).once.with(notification.id, "image_scan_critical", app_deploy.id, hash_including("count" => 2, "ids" => "CVE-1, CVE-2"))
       expect(Activity.where(action: "app.image_scan.critical").count).to eq 1
-      msg = NotifyJob.new.send(:build_message, nil, "image_scan_critical", enqueued_jobs.last[:args].last)
-      expect(msg).to include(app_record.name, "2", "/dashboard/apps/#{app_record.id}/image_scan")
+      ctx = enqueued_jobs.last[:args].last
+      msg = NotifyJob.new.send(:build_message, nil, "image_scan_critical", ctx)
+      expect(msg).to include(app_record.name, "2")
+    end
+
+    it "links to the findings page when APP_URL is set, omits the link otherwise" do
+      ctx = { "app_id" => app_record.id, "app_name" => "shop", "count" => 1, "ids" => "CVE-1", "locale" => "en" }
+      stub_const("ENV", ENV.to_h.merge("APP_URL" => "https://x.test"))
+      expect(ImageScans::Message.body(ctx)).to include("https://x.test/dashboard/apps/#{app_record.id}/image_scan")
+      stub_const("ENV", ENV.to_h.except("APP_URL"))
+      expect(ImageScans::Message.body(ctx)).not_to include("http")
+    end
+
+    it "uses the team owner's locale" do
+      app_record.team.owner.update_column(:locale, "id")
+      described_class.call(crit("CVE-1"))
+      ctx = enqueued_jobs.last[:args].last
+      expect(ctx["locale"]).to eq "id"
+      expect(ImageScans::Message.body(ctx)).to include("kerentanan kritis")
+    end
+
+    it "renders email and push in en and id" do
+      %w[en id].each do |loc|
+        ctx = { "app_id" => app_record.id, "app_name" => "shop", "count" => 2, "ids" => "CVE-1, CVE-2", "locale" => loc }
+        mail = NotificationMailer.deploy_notification(create(:notification, team: app_record.team, channel: :email, events: [ "image_scan_critical" ], config: { "email" => "o@example.com" }), nil, "image_scan_critical", ctx)
+        expect(mail.subject).to eq ImageScans::Message.subject(ctx)
+        expect(mail.subject).to include(loc == "id" ? "kritis baru" : "new critical")
+        expect(mail.text_part.body.to_s).to include("CVE-1, CVE-2")
+        svc = PushNotificationService.new(notification, nil, "image_scan_critical", ctx)
+        expect(svc.send(:build_body, nil)).to eq ImageScans::Message.body(ctx)
+        expect(svc.send(:title)).to eq ImageScans::Message.title(ctx)
+      end
+      expect(ImageScans::Message.title("locale" => "id")).to eq "Kerentanan kritis baru"
+    end
+
+    it "resets notified_at when enqueueing fails" do
+      allow(NotifyJob).to receive(:perform_later).and_raise("boom")
+      s = crit("CVE-1")
+      described_class.call(s)
+      expect(s.reload.notified_at).to be_nil
     end
 
     it "does not notify when the same ids reappear" do

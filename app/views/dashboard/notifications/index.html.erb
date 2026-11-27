@@ -156,7 +156,7 @@
             <% [ "deploy_started", "deploy_succeeded", "deploy_failed", "app_crashed", "app_auto_stopped", "app_down", "app_recovered", "image_scan_critical", "backup_failed", "domain_added", "app_created", "app_deleted", "daily_debit_summary", "scheduled_task_failing", "scheduled_task_recovered" ].each do |event| %>
               <label class="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" name="notification[events][]" value="<%= event %>" class="border border-dark-line text-accent focus:ring-accent">
-                <span class="text-xs text-ink-soft"><%= event == "app_down" ? "App down (uptime check)" : event == "app_recovered" ? "App recovered" : event == "image_scan_critical" ? "New critical image vulnerabilities" : event == "scheduled_task_failing" ? "Scheduled task failing (3× in a row)" : event == "scheduled_task_recovered" ? "Scheduled task recovered" : event.humanize %></span>
+                <span class="text-xs text-ink-soft"><%= event == "app_down" ? "App down (uptime check)" : event == "app_recovered" ? "App recovered" : event == "image_scan_critical" ? t("apps.security.notify_critical_label") : event == "scheduled_task_failing" ? "Scheduled task failing (3× in a row)" : event == "scheduled_task_recovered" ? "Scheduled task recovered" : event.humanize %></span>
               </label>
             <% end %>
           </div>
