@@ -39,7 +39,7 @@ module Wokku
     end
 
     attr_accessor :tls, :billing
-    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder, :host_ssh_user, :control_plane_host, :openapi_path, :object_storage, :sidebar_extra_items, :addon_path_prefixes, :app_resource_sections, :object_storage_limits, :addons_index_sections, :apps_index_readouts, :apps_index_side_sections, :object_storage_pricing_note
+    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder, :host_ssh_user, :control_plane_host, :openapi_path, :object_storage, :sidebar_extra_items, :addon_path_prefixes, :app_resource_sections, :object_storage_limits, :addons_index_sections, :apps_index_readouts, :apps_index_side_sections, :object_storage_pricing_note, :image_scans
 
     # The OpenAPI file GET /api/v1/openapi.yaml serves. Engine default: its
     # own derived contract; the cloud points it at the cloud superset.
@@ -123,6 +123,12 @@ module Wokku
     # has no plans, so it's on; the cloud flips it with its billing launch.
     def resource_builder?
       @resource_builder.nil? ? true : @resource_builder
+    end
+
+    # Tier 0 image vulnerability scans on every deploy. Off until a host
+    # app (or self-host admin) opts in.
+    def image_scans?
+      @image_scans || false
     end
 
     def dns_provider

@@ -267,3 +267,31 @@ RSpec.describe TarballDeployJob, type: :job do
     end
   end
 end
+
+RSpec.describe TarballDeployJob, "image scan hook", type: :job do
+  let(:app) { create(:app_record) }
+  let(:deploy) { create(:deploy, app_record: app, archive_key: "deploy-archives/#{app.id}/x.tar.gz") }
+
+  before do
+    allow(DeployChannel).to receive(:broadcast_to).and_return(nil)
+    allow(Wokku.config).to receive(:backup_store).and_return(instance_double(Wokku::Providers::LocalBackupStore, presigned_get: "https://x"))
+    allow(PostDeploySetupJob).to receive(:perform_later)
+    app.server.update!(wokkud_builds_enabled: true)
+    app.server.update_columns(heartbeat_at: Time.current, heartbeat_status: "ok", vitals: { "registry" => "ok" })
+    deploy.update!(build_picked_up_at: Time.current, build_finished_at: Time.current)
+    allow(Lifecycle::Ops).to receive(:converge!)
+    allow_any_instance_of(Hosts::Ssh).to receive(:run_raw).and_return("")
+  end
+
+  it "enqueues a scan exactly once on success" do
+    expect(ImageScans::Enqueue).to receive(:call).once.with(app: app, deploy: deploy, trigger: :deploy)
+    described_class.perform_now(app_id: app.id, deploy_id: deploy.id)
+  end
+
+  it "does not fail the deploy if the scan enqueue is broken" do
+    allow(Wokku.config).to receive(:image_scans?).and_return(true)
+    allow(ImageScan).to receive(:create!).and_raise("boom")
+    described_class.perform_now(app_id: app.id, deploy_id: deploy.id)
+    expect(deploy.reload.status).to eq("succeeded")
+  end
+end

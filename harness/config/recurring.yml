@@ -93,3 +93,13 @@ production:
     class: DiskUsageWarningJob
     schedule: every hour
     queue: default
+
+  image_scan_nightly:
+    class: ImageScanNightlyJob
+    schedule: every day at 1am
+    queue: default
+
+  image_scan_janitor:
+    class: ImageScanJanitorJob
+    schedule: every 10 minutes
+    queue: default
