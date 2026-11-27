@@ -3,7 +3,7 @@
 # at most MAX_FINDINGS findings; raw scanner output is never kept.
 class ImageScan < ApplicationRecord
   MAX_FINDINGS = 50
-  ERROR_CODES = %w[pull_failed db_unavailable timeout oom parse_failed image_missing].freeze
+  ERROR_CODES = %w[pull_failed db_unavailable timeout oom parse_failed image_missing disk_full].freeze
   KEEP_PER_APP = 10
 
   belongs_to :app_record
