@@ -30,4 +30,15 @@ RSpec.describe "LocalesController", type: :request do
     post "/locale", params: { locale: "id" }
     expect(response).to be_redirect
   end
+
+  it "drops ?locale= from the referer but keeps other params" do
+    post "/locale", params: { locale: "en" }, headers: { "Referer" => "http://www.example.com/?locale=id&utm_source=x" }
+    expect(response).to redirect_to("/?utm_source=x")
+    expect(cookies[:locale]).to eq("en")
+  end
+
+  it "ignores a cross-host referer" do
+    post "/locale", params: { locale: "en" }, headers: { "Referer" => "https://evil.example/?a=1" }
+    expect(response).to redirect_to("/")
+  end
 end
