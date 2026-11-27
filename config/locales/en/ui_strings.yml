@@ -6,6 +6,7 @@ en:
     apps:
       new_app: "New app"
   resources:
+    month: "month"
     addons_title: "Databases"
     addons_sub: "Databases, caches, and services attached to this app"
     add: "+ Add"

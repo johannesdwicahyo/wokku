@@ -1,0 +1,55 @@
+<% if @databases.any? %>
+  <div role="group" aria-label="<%= t("dashboard.databases.rack.group_label") %>" class="inline-flex self-start border border-dark-line rounded overflow-hidden">
+    <%= button_to t("dashboard.databases.by_type"), dashboard_addons_path, method: :get, params: { group: "type" }, form_class: "contents",
+          class: toggle_class(!by_app?), aria: { pressed: !by_app? } %>
+    <%= button_to t("dashboard.databases.by_app"), dashboard_addons_path, method: :get, params: { group: "app" }, form_class: "contents",
+          class: "border-l border-dark-line #{toggle_class(by_app?)}", aria: { pressed: by_app? } %>
+  </div>
+<% end %>
+
+<% if orphans.any? %>
+  <%= render Molecules::PanelComponent.new(ticks: true) do %>
+    <div class="flex flex-wrap items-baseline gap-x-3 px-[18px] py-3 border-b border-line font-mono text-[11px] uppercase tracking-[.12em] text-muted">
+      <h2 class="font-normal"><%= t("dashboard.databases.unlinked") %> · <%= orphans.size %></h2>
+      <span class="normal-case tracking-normal text-[12px]"><%= t("dashboard.databases.unlinked_hint") %></span>
+    </div>
+    <%= render "dashboard/databases/addon_rack_head" %>
+    <div id="orphan_addons" class="flex flex-col"><%= render_rows(orphans, "orphan") %></div>
+  <% end %>
+<% end %>
+
+<% groups.each do |title, dbs| %>
+  <%= render Molecules::PanelComponent.new(ticks: true) do %>
+    <div class="flex items-center justify-between px-[18px] py-3 border-b border-line font-mono text-[11px] uppercase tracking-[.12em] text-muted">
+      <h2 class="font-normal"><%= title %></h2>
+      <span><%= t("dashboard.databases.count", count: dbs.size) %></span>
+    </div>
+    <%= render "dashboard/databases/addon_rack_head" %>
+    <div class="flex flex-col"><%= render_rows(dbs, title.parameterize) %></div>
+  <% end %>
+<% end %>
+
+<% if buckets.any? %>
+  <%= render Molecules::PanelComponent.new(ticks: true) do %>
+    <div class="flex flex-wrap items-baseline gap-x-3 px-[18px] py-3 border-b border-line font-mono text-[11px] uppercase tracking-[.12em] text-muted">
+      <h2 class="font-normal"><%= t("dashboard.databases.object_storage") %></h2>
+      <span class="normal-case tracking-normal text-[12px]"><%= t("dashboard.databases.object_storage_hint") %></span>
+    </div>
+    <div class="<%= HEAD %> <%= BUCKET_GRID %>" aria-hidden="true">
+      <span></span><span><%= t("dashboard.databases.columns.bucket") %></span><span><%= t("dashboard.databases.columns.used") %></span><span><%= t("dashboard.databases.columns.app") %></span>
+    </div>
+    <div class="flex flex-col">
+      <% buckets.each do |bucket| %>
+        <div data-bucket="<%= bucket.name %>" class="grid <%= BUCKET_GRID %> gap-4 items-center px-[18px] py-3.5 border-t border-line first:border-t-0">
+          <%= render Atoms::StatusLightComponent.new(state: bucket_light(bucket), size: 10) %>
+          <b class="font-medium text-ink truncate font-mono text-[13px]"><%= bucket.name %></b>
+          <span class="flex items-center gap-3 font-mono text-[12px] text-muted tabular-nums">
+            <%= render Atoms::LightMeterComponent.new(total: 10, on: meter_on(bucket), tone: meter_tone(bucket), label: t("dashboard.databases.rack.used_meter", name: bucket.name)) %>
+            <span class="whitespace-nowrap"><%= number_with_precision(bucket.used_gb, precision: 1) %> / <%= bucket.quota_gb %> GB</span>
+          </span>
+          <%= link_to bucket.app_record.name, dashboard_app_resources_path(bucket.app_record), class: "truncate text-[13px] text-ink-soft hover:text-ink hover:underline" %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

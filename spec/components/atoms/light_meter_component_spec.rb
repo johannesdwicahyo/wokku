@@ -15,4 +15,9 @@ RSpec.describe Atoms::LightMeterComponent, type: :component do
     render_inline(described_class.new(total: 3, on: 1, tone: :live, label: "x"))
     expect(page).to have_css("span.on.bg-live")
   end
+
+  it "uses the warn tone" do
+    render_inline(described_class.new(total: 3, on: 1, tone: :warn, label: "x"))
+    expect(page).to have_css("span.on.bg-warn")
+  end
 end
