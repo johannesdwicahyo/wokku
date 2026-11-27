@@ -200,7 +200,7 @@ func scan(t *testing.T, h *host, tweak func(*Worker)) (*fake, control.ImageScanR
 	if tweak != nil {
 		tweak(w)
 	}
-	w.scanOne(context.Background(), "scan-1")
+	w.process(context.Background(), "scan-1")
 	if len(cp.reports) != 1 {
 		t.Fatalf("reports %+v", cp.reports)
 	}
@@ -299,13 +299,13 @@ func TestRefreshBacksOffForAnHour(t *testing.T) {
 	h := &host{downloaded: now.Add(-25 * time.Hour), java: true, local: true, fail: map[string]error{"--download-db-only": errors.New("no egress")}}
 	f := &fake{respond: h.respond}
 	w := newTestWorker(cp, f)
-	w.scanOne(context.Background(), "scan-1")
-	w.scanOne(context.Background(), "scan-2")
+	w.process(context.Background(), "scan-1")
+	w.process(context.Background(), "scan-2")
 	if n := f.count("--download-db-only"); n != 1 {
 		t.Fatalf("refresh attempts within the hour: %d", n)
 	}
 	w.now = func() time.Time { return now.Add(61 * time.Minute) }
-	w.scanOne(context.Background(), "scan-3")
+	w.process(context.Background(), "scan-3")
 	if n := f.count("--download-db-only"); n != 2 {
 		t.Fatalf("refresh not retried after the hour: %d", n)
 	}
@@ -359,7 +359,7 @@ func TestTimeoutMapsToTimeout(t *testing.T) {
 		}
 		return h.respond(ctx, args)
 	}}
-	newTestWorker(cp, f).scanOne(context.Background(), "scan-1")
+	newTestWorker(cp, f).process(context.Background(), "scan-1")
 	if len(cp.reports) != 1 || cp.reports[0].Status != "failed" || cp.reports[0].ErrorCode != "timeout" {
 		t.Fatalf("%+v", cp.reports)
 	}
@@ -425,7 +425,7 @@ func TestErrorCodes(t *testing.T) {
 			}
 			return h.respond(ctx, args)
 		}}
-		newTestWorker(cp, f).scanOne(context.Background(), "scan-1")
+		newTestWorker(cp, f).process(context.Background(), "scan-1")
 		if len(cp.reports) != 1 || cp.reports[0].ErrorCode != "parse_failed" {
 			t.Fatalf("%+v", cp.reports)
 		}
@@ -503,5 +503,119 @@ func TestJavaDBRefreshesWeekly(t *testing.T) {
 				t.Errorf("Java DB download = %v", got)
 			}
 		})
+	}
+}
+
+// I3: the DB refresh happens before the claim, under its own long context,
+// never inside the claimed scan's 5-minute timeout.
+func TestRefreshRunsBeforeTheClaimUnderItsOwnContext(t *testing.T) {
+	cp := newControlPlane(t, 300)
+	h := &host{downloaded: now.Add(-25 * time.Hour), java: true, javaAt: now.Add(-8 * 24 * time.Hour), local: true}
+	var bad []string
+	f := &fake{respond: func(ctx context.Context, args []string) ([]byte, error) {
+		joined := strings.Join(args, " ")
+		if strings.Contains(joined, "--download-") {
+			cp.mu.Lock()
+			claimed := cp.claims
+			cp.mu.Unlock()
+			dl, ok := ctx.Deadline()
+			if claimed != 0 || !ok || time.Until(dl) < 10*time.Minute {
+				bad = append(bad, joined)
+			}
+		}
+		return h.respond(ctx, args)
+	}}
+	newTestWorker(cp, f).process(context.Background(), "scan-1")
+	if f.count("--download-") != 2 || len(bad) != 0 {
+		t.Fatalf("downloads %d, inside the claim / short context: %v", f.count("--download-"), bad)
+	}
+	if len(cp.reports) != 1 || cp.reports[0].Status != "succeeded" {
+		t.Fatalf("%+v", cp.reports)
+	}
+}
+
+func TestRefreshTimeoutDoesNotFailTheScan(t *testing.T) {
+	h := &host{downloaded: now.Add(-25 * time.Hour), java: true, local: true}
+	_, r := scan(t, h, func(w *Worker) {
+		w.refreshTimeout = 20 * time.Millisecond
+		w.run = func(ctx context.Context, args ...string) ([]byte, error) {
+			if strings.Contains(strings.Join(args, " "), "--download-db-only") {
+				<-ctx.Done()
+				return nil, ctx.Err()
+			}
+			return h.respond(ctx, args)
+		}
+	})
+	if r.Status != "succeeded" { // stale DB still scans
+		t.Fatalf("%+v", r)
+	}
+}
+
+// 3.5 of 20 GiB free (82.5% used): enough for the scan and a 1 GiB main-DB
+// refresh, not for the Java DB's 4 GiB.
+func TestRefreshSkippedWithoutDiskHeadroom(t *testing.T) {
+	low := func(w *Worker) {
+		w.statfs = func(string) (uint64, uint64, error) { return 7 << 29, 20 << 30, nil }
+	}
+	f, r := scan(t, &host{downloaded: now.Add(-25 * time.Hour), java: true, javaAt: now.Add(-8 * 24 * time.Hour), local: true}, low)
+	if r.Status != "succeeded" || f.find("--download-java-db-only") != nil || f.find("--download-db-only") == nil {
+		t.Fatalf("java download with 3.5 GiB free: %v, main: %v, %+v", f.find("--download-java-db-only") != nil, f.find("--download-db-only") != nil, r)
+	}
+	full := func(w *Worker) {
+		w.statfs = func(string) (uint64, uint64, error) { return 1 << 29, 200 << 30, nil }
+	}
+	f, r = scan(t, &host{downloaded: now.Add(-25 * time.Hour), java: true, local: true}, full)
+	if f.find("--download-") != nil || r.ErrorCode != "disk_full" {
+		t.Fatalf("refresh on a full disk: %+v", r)
+	}
+}
+
+// I2: Trivy downloads the compressed layer into TMPDIR before unpacking; the
+// download runs point it at the cache volume (rw), never the 1 GiB tmpfs.
+func TestDownloadRunsUseTheVolumeAsTempDir(t *testing.T) {
+	f, _ := scan(t, &host{downloaded: now.Add(-25 * time.Hour), java: true, javaAt: now.Add(-8 * 24 * time.Hour), local: true}, nil)
+	for _, flag := range []string{"--download-db-only", "--download-java-db-only"} {
+		dl := strings.Join(f.find(flag), " ")
+		for _, want := range []string{"-e TMPDIR=/root/.cache/trivy/.tmp", "wokku-trivy-cache:/root/.cache/trivy ", "--entrypoint sh",
+			`mkdir -p "$TMPDIR" && exec trivy "$@"`, TrivyImage} {
+			if !strings.Contains(dl, want) {
+				t.Errorf("%s missing %q: %s", flag, want, dl)
+			}
+		}
+	}
+	if scan := strings.Join(f.find("--input"), " "); strings.Contains(scan, "TMPDIR") || !strings.Contains(scan, "--tmpfs /tmp:rw,size=1g") {
+		t.Errorf("scan run temp dir changed: %s", scan)
+	}
+}
+
+// M6: no update notices / telemetry from any trivy image run. (`trivy
+// version` takes only global flags in v0.76.2 and phones nothing home.)
+func TestTrivyRunsSkipVersionCheckAndTelemetry(t *testing.T) {
+	f, _ := scan(t, &host{downloaded: now.Add(-25 * time.Hour), java: true, javaAt: now.Add(-8 * 24 * time.Hour), local: true}, nil)
+	for _, sub := range []string{"--download-db-only", "--download-java-db-only", "--input"} {
+		c := strings.Join(f.find(sub), " ")
+		if !strings.Contains(c, "--skip-version-check") || !strings.Contains(c, "--disable-telemetry") {
+			t.Errorf("%s: %s", sub, c)
+		}
+	}
+	if v := strings.Join(f.find(" version "), " "); strings.Contains(v, "--skip-version-check") {
+		t.Errorf("trivy version rejects scan flags: %s", v)
+	}
+}
+
+// M1: a crash mid-scan leaves wokkud-scan-* tars in TMPDIR; a new worker
+// removes them.
+func TestNewWorkerRemovesLeftoverTempDirs(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("TMPDIR", tmp)
+	left, _ := os.MkdirTemp(tmp, "wokkud-scan-")
+	os.WriteFile(left+"/image.tar", []byte("x"), 0o600)
+	keep, _ := os.MkdirTemp(tmp, "other-")
+	newWorker(nil, func() bool { return false })
+	if _, err := os.Stat(left); !os.IsNotExist(err) {
+		t.Errorf("leftover scan dir kept: %v", err)
+	}
+	if _, err := os.Stat(keep); err != nil {
+		t.Errorf("unrelated dir removed: %v", err)
 	}
 }

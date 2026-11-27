@@ -40,7 +40,14 @@ const (
 	javaDBMaxAge   = 7 * 24 * time.Hour
 	refreshBackoff = time.Hour
 	cleanupTimeout = 30 * time.Second
-	diskHeadroom   = 2 << 30 // free space needed on top of the image size
+	refreshTimeout = 20 * time.Minute
+	diskHeadroom   = 2 << 30           // free space needed on top of the image size
+	dbHeadroom     = 1 << 30           // free space for a main-DB refresh (~80 MiB layer + unpacked)
+	javaHeadroom   = 4 << 30           // ~960 MiB layer, downloaded then unpacked
+	dockerRoot     = "/var/lib/docker" // where the cache volume lives
+	// Download runs' TMPDIR, on the cache volume: Trivy writes the compressed
+	// layer there before unpacking — too big for the 1 GiB /tmp tmpfs.
+	downloadTmp    = cacheDir + "/.tmp"
 	maxDiskUsedPct = 85
 	defaultTimeout = 300
 	maxFindings    = 50
@@ -71,8 +78,9 @@ type Worker struct {
 	inFlight map[string]bool
 
 	// owned by the work goroutine
-	db          dbInfo
-	lastRefresh time.Time
+	db             dbInfo
+	lastRefresh    time.Time
+	refreshTimeout time.Duration
 }
 
 type dbInfo struct {
@@ -91,8 +99,13 @@ func NewWorker(ctx context.Context, client *control.Client, busy func() bool) *W
 }
 
 func newWorker(client *control.Client, busy func() bool) *Worker {
+	// A crash mid-scan leaves its image tar behind; nothing else is running yet.
+	leftovers, _ := filepath.Glob(filepath.Join(os.TempDir(), "wokkud-scan-*"))
+	for _, dir := range leftovers {
+		os.RemoveAll(dir)
+	}
 	return &Worker{Busy: busy, client: client, run: execRun, now: time.Now, statfs: statfs,
-		queue: make(chan string, 16), inFlight: map[string]bool{}}
+		queue: make(chan string, 16), inFlight: map[string]bool{}, refreshTimeout: refreshTimeout}
 }
 
 func (w *Worker) Enqueue(id string) {
@@ -114,15 +127,27 @@ func (w *Worker) work(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case id := <-w.queue:
-			// A build is running: drop the id unclaimed; it stays pending and
-			// the next heartbeat (15 s) re-delivers it.
-			if !w.Busy() {
-				w.scanOne(ctx, id)
-			}
+			w.process(ctx, id)
 			w.mu.Lock()
 			delete(w.inFlight, id)
 			w.mu.Unlock()
 		}
+	}
+}
+
+// process refreshes the DBs if due — before the claim, so a slow download
+// never eats the scan's timeout and the id stays pending meanwhile — then
+// claims and scans. A build running at either point drops the id unclaimed;
+// it stays pending and the next heartbeat (15 s) re-delivers it. The refresh
+// is due at most once an hour (backoff), so it delays a queued id by at most
+// one refresh (≤ 20 min) and never starves it.
+func (w *Worker) process(ctx context.Context, id string) {
+	if w.Busy() {
+		return
+	}
+	w.refreshDB(ctx, unsafeName.ReplaceAllString(id, ""))
+	if !w.Busy() {
+		w.scanOne(ctx, id)
 	}
 }
 
@@ -184,8 +209,8 @@ func (w *Worker) scan(ctx context.Context, id, ref string) control.ImageScanRepo
 			return fail("pull_failed", err)
 		}
 	}
-	if err := w.ensureDB(ctx, id); err != nil {
-		return fail("db_unavailable", err)
+	if w.db.downloadedAt.IsZero() { // the refresh before the claim found/fetched none
+		return failed("db_unavailable", "no trivy vulnerability DB cached yet")
 	}
 
 	size, err := w.imageSize(ctx, ref)
@@ -203,7 +228,7 @@ func (w *Worker) scan(ctx context.Context, id, ref string) control.ImageScanRepo
 			return fail("image_missing", err)
 		}
 	}
-	if err := w.checkDisk(size); err != nil {
+	if err := w.checkDisk(os.TempDir(), size+diskHeadroom); err != nil {
 		return fail("disk_full", err)
 	}
 	dir, err := os.MkdirTemp("", "wokkud-scan-")
@@ -253,15 +278,16 @@ func (w *Worker) imageSize(ctx context.Context, ref string) (uint64, error) {
 	return size, nil
 }
 
-// checkDisk: the tar lands in TMPDIR, as big as the image. Refuse when it
-// wouldn't fit with 2 GiB to spare, or the disk is already 85% used.
-func (w *Worker) checkDisk(size uint64) error {
-	free, total, err := w.statfs(os.TempDir())
+// checkDisk refuses when path's filesystem has less than need bytes free or
+// is already 85% used. The scan's tar lands in TMPDIR (need = image size +
+// 2 GiB); DB downloads land in the cache volume under the docker root.
+func (w *Worker) checkDisk(path string, need uint64) error {
+	free, total, err := w.statfs(path)
 	if err != nil {
-		return fmt.Errorf("statfs %s: %w", os.TempDir(), err)
+		return fmt.Errorf("statfs %s: %w", path, err)
 	}
-	if free < size+diskHeadroom || (total > 0 && (total-free)*100/total >= maxDiskUsedPct) {
-		return fmt.Errorf("not enough disk for a %d-byte image: %d of %d bytes free", size, free, total)
+	if free < need || (total > 0 && (total-free)*100/total >= maxDiskUsedPct) {
+		return fmt.Errorf("not enough disk on %s: need %d bytes, %d of %d free", path, need, free, total)
 	}
 	return nil
 }
@@ -284,52 +310,62 @@ func failed(code, msg string) control.ImageScanReport {
 	return control.ImageScanReport{Status: "failed", ErrorCode: code, Error: msg}
 }
 
-// ensureDB refreshes the vulnerability DB when it is 24 h old and the Java
-// DB (~1 GB) when it is a week old or missing — at most one attempt an hour.
-// A failed refresh with a DB already cached scans against the stale one (the
-// report carries db_updated_at); with no vulnerability DB at all it's
-// db_unavailable. Without a Java DB only JAR images fail (see scanArgs).
-func (w *Worker) ensureDB(ctx context.Context, id string) error {
+// refreshDB refreshes the vulnerability DB when it is 24 h old and the Java
+// DB (~1 GB) when it is a week old or missing — at most one attempt an hour,
+// under its own 20-minute context, and only with disk headroom (1 GiB main
+// DB, 4 GiB Java DB). Failures only log: the scan uses whatever is cached (a
+// stale DB still scans, the report carries db_updated_at); with no
+// vulnerability DB at all the scan is db_unavailable. Without a Java DB only
+// JAR images fail (see scanArgs).
+func (w *Worker) refreshDB(parent context.Context, id string) {
+	ctx, cancel := context.WithTimeout(parent, w.refreshTimeout)
+	defer cancel()
 	if w.db.downloadedAt.IsZero() {
 		w.db = w.readDB(ctx, id)
 	}
 	needDB := w.now().Sub(w.db.downloadedAt) >= dbMaxAge
 	needJava := w.now().Sub(w.db.javaDownloadedAt) >= javaDBMaxAge // zero time: missing
-	if !needDB && !needJava {
-		return nil
+	if (!needDB && !needJava) || (!w.lastRefresh.IsZero() && w.now().Sub(w.lastRefresh) < refreshBackoff) {
+		return
 	}
-	if !w.lastRefresh.IsZero() && w.now().Sub(w.lastRefresh) < refreshBackoff {
-		if w.db.downloadedAt.IsZero() {
-			return errors.New("no trivy DB yet; last download attempt under an hour ago")
-		}
-		return nil
+	diskPath := dockerRoot
+	if _, _, err := w.statfs(diskPath); err != nil { // docker root elsewhere: best guess
+		diskPath = os.TempDir()
 	}
-	w.lastRefresh = w.now()
-	// The only networked runs: default bridge network, their own container.
+	// The only networked runs: default bridge network, their own container,
+	// the cache volume read-write and TMPDIR on it (re-created each run, so a
+	// killed download's partial layer never piles up).
 	name := "wokku-trivy-db-" + id
-	download := func(flag string) error {
-		_, err := w.runNamed(ctx, name, append(hardened(name), "-v", cacheVolume+":"+cacheDir, TrivyImage,
-			"image", flag, "--cache-dir", cacheDir, "--quiet")...)
-		return err
+	ran := false
+	download := func(flag string, need uint64) {
+		if w.Busy() { // a build claimed meanwhile: the next scan retries
+			return
+		}
+		if err := w.checkDisk(diskPath, need); err != nil {
+			log.Printf("wokkud: trivy %s skipped: %v", flag, err)
+			return
+		}
+		w.lastRefresh, ran = w.now(), true
+		_, err := w.runNamed(ctx, name, append(hardened(name), "-v", cacheVolume+":"+cacheDir,
+			"-e", "TMPDIR="+downloadTmp, "--entrypoint", "sh", TrivyImage,
+			"-c", `rm -rf "$TMPDIR" && mkdir -p "$TMPDIR" && exec trivy "$@"`, "trivy",
+			"image", flag, "--cache-dir", cacheDir, "--quiet", "--skip-version-check", "--disable-telemetry")...)
+		if err != nil {
+			log.Printf("wokkud: trivy %s failed (DB from %q stays in use): %v", flag, w.db.updatedAt, err)
+		}
 	}
 	if needDB {
-		if err := download("--download-db-only"); err != nil {
-			if w.db.downloadedAt.IsZero() {
-				return err
-			}
-			log.Printf("wokkud: trivy DB refresh failed, scanning with the DB from %s: %v", w.db.updatedAt, err)
-		}
+		download("--download-db-only", dbHeadroom)
 	}
 	if needJava {
-		if err := download("--download-java-db-only"); err != nil {
-			log.Printf("wokkud: trivy Java DB refresh failed: %v", err)
-		}
+		download("--download-java-db-only", javaHeadroom)
 	}
-	w.db = w.readDB(ctx, id)
-	if w.db.downloadedAt.IsZero() {
-		return errors.New("trivy DB missing after refresh")
+	if !ran {
+		return
 	}
-	return nil
+	if info := w.readDB(ctx, id); !info.downloadedAt.IsZero() {
+		w.db = info
+	}
 }
 
 // readDB asks the pinned Trivy for its version and the cached DBs' metadata
@@ -383,7 +419,7 @@ func scanArgs(name, tar string) []string {
 		TrivyImage, "image", "--input", "/scan/image.tar",
 		"--skip-db-update", "--skip-java-db-update", "--offline-scan",
 		"--cache-backend", "memory", "--cache-dir", cacheDir,
-		"--format", "json", "--quiet", "--scanners", "vuln")
+		"--format", "json", "--quiet", "--scanners", "vuln", "--skip-version-check", "--disable-telemetry")
 }
 
 // runNamed force-removes the named container before and after: killing the
