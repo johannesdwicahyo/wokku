@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { readPalette } from "controllers/light_dots"
 
 // Hero light field: a perspective grid of server lights with a slow wave,
 // data "packets" running down columns, and the Wokku mark floating above.
@@ -7,24 +8,7 @@ const ROWS = 46, Z0 = 2.2, DZ = 0.9
 // The mark: 7 lights on a 5x3 grid (index 3 = the green centre).
 const LOGO = [[0, 0], [4, 0], [0, 1], [2, 1], [4, 1], [1, 2], [3, 2]]
 
-// "#22C55E" / "rgb(34, 197, 94)" -> [34, 197, 94]
-function rgb(v) {
-  v = v.trim()
-  if (v[0] === "#") {
-    if (v.length === 4) v = "#" + [...v.slice(1)].map((c) => c + c).join("")
-    return [1, 3, 5].map((i) => parseInt(v.slice(i, i + 2), 16))
-  }
-  return (v.match(/[\d.]+/g) || [0, 0, 0]).slice(0, 3).map(Number)
-}
-
-function sprite(c) {
-  const cv = document.createElement("canvas")
-  cv.width = cv.height = 64
-  const g = cv.getContext("2d"), r = g.createRadialGradient(32, 32, 0, 32, 32, 32)
-  r.addColorStop(0, `rgba(${c},0.9)`); r.addColorStop(0.25, `rgba(${c},0.35)`); r.addColorStop(1, `rgba(${c},0)`)
-  g.fillStyle = r; g.fillRect(0, 0, 64, 64)
-  return cv
-}
+const LEVELS = 16 // alpha quantised to 1/16 steps; one batched fill per (colour, level)
 
 export default class extends Controller {
   static values = { logo: { type: Boolean, default: true }, density: { type: String, default: "normal" } }
@@ -38,7 +22,13 @@ export default class extends Controller {
     this.size()
     this.seedField()
     this.draw(0, 0) // first frame, synchronously
-    this.resizer = new ResizeObserver(() => { this.size(); this.seedField(); this.draw(this.t || 0, 0) })
+    // The initial RO callback duplicates the draw above: skip it.
+    let first = true
+    this.resizer = new ResizeObserver(() => {
+      if (first) { first = false; return }
+      this.dirty = true
+      if (this.visible) this.refit()
+    })
     this.resizer.observe(this.element)
     this.mq.addEventListener("change", this.motionChanged)
     this.motionChanged()
@@ -53,11 +43,15 @@ export default class extends Controller {
   get reduced() { return this.mq.matches }
 
   readTokens() {
-    const s = getComputedStyle(this.element), v = (n) => s.getPropertyValue(n)
-    this.bg = v("--color-bg").trim()
-    const live = rgb(v("--color-live")).join(","), ink = rgb(v("--color-ink")).join(",")
-    this.live = live; this.ink = ink
-    this.glowLive = sprite(live); this.glowInk = sprite(ink)
+    this.bg = getComputedStyle(this.element).getPropertyValue("--color-bg").trim()
+    const p = readPalette(this.element)
+    this.live = p.live; this.ink = p.ink; this.glowLive = p.glowLive; this.glowInk = p.glowInk
+    // fillStyle tables, built once: index = alpha level 1..LEVELS
+    this.inkStyles = []; this.liveStyles = []
+    for (let l = 0; l <= LEVELS; l++) {
+      this.inkStyles.push(`rgba(${this.ink},${l / LEVELS})`)
+      this.liveStyles.push(`rgba(${this.live},${l / LEVELS})`)
+    }
   }
 
   size() {
@@ -66,12 +60,30 @@ export default class extends Controller {
     this.H = this.element.height = Math.max(1, Math.round(r.height * this.dpr))
   }
 
-  // Dot count: halved on phones (< 640 css px) and for density "low".
-  seedField() {
+  // Dot columns: halved on phones (< 640 css px) and for density "low".
+  colsFor() {
     const small = this.element.getBoundingClientRect().width < 640
-    this.cols = (small ? 36 : 72) / (this.densityValue === "low" ? 2 : 1)
-    this.seed = Array.from({ length: this.cols * ROWS }, Math.random)
+    return (small ? 36 : 72) / (this.densityValue === "low" ? 2 : 1)
+  }
+
+  // Resize while visible: always re-size the canvas, reseed only when the column
+  // count changes (so URL-bar resizes on phones do not flicker).
+  refit() {
+    this.dirty = false
+    this.size()
+    if (this.colsFor() !== this.cols) this.seedField()
+    this.draw(this.t || 0, 0)
+  }
+
+  seedField() {
+    this.cols = this.colsFor()
+    const n = this.cols * ROWS
+    this.seed = Array.from({ length: n }, Math.random)
     this.packets = Array.from({ length: 26 }, () => this.packet(Z0 + Math.random() * ROWS * DZ))
+    // per-frame scratch, allocated once per seed
+    this.pk = new Float32Array(n); this.pg = new Uint8Array(n)
+    this.head = new Int32Array(LEVELS * 2); this.next = new Int32Array(n)
+    this.dx = new Float32Array(n); this.dy = new Float32Array(n); this.dw = new Float32Array(n); this.dh = new Float32Array(n)
   }
 
   packet(z) {
@@ -85,7 +97,10 @@ export default class extends Controller {
     this.io = new IntersectionObserver(([e]) => {
       this.visible = e.isIntersecting
       cancelAnimationFrame(this.raf)
-      if (this.visible) { this.last = null; this.raf = requestAnimationFrame(this.loop) }
+      if (this.visible) {
+        if (this.dirty) this.refit()
+        this.last = null; this.raf = requestAnimationFrame(this.loop)
+      }
     })
     this.io.observe(this.element)
     this.raf = requestAnimationFrame(this.loop)
@@ -122,33 +137,42 @@ export default class extends Controller {
     hz.addColorStop(0, `rgba(${this.live},0)`); hz.addColorStop(0.75, `rgba(${this.live},0.07)`); hz.addColorStop(1, `rgba(${this.live},0)`)
     g.fillStyle = hz; g.fillRect(0, horizon - H * 0.25, W, H * 0.33)
 
+    // Packets advance, then are rasterised once into a per-cell intensity grid
+    // so each dot does an O(1) read instead of scanning every packet.
+    const pk = this.pk, pg = this.pg, head = this.head, next = this.next
+    pk.fill(0); pg.fill(0); head.fill(-1)
     this.packets.forEach((p, i) => {
       p.z -= p.v * dt
-      if (p.z < Z0 - 1) this.packets[i] = this.packet(Z0 + ROWS * DZ)
+      if (p.z < Z0 - 1) { p = this.packets[i] = this.packet(Z0 + ROWS * DZ) }
+      // rows with -0.6 < z_r - p.z < 6
+      const r0 = Math.max(0, Math.ceil((p.z - 0.6 - Z0) / DZ + 1e-9)), r1 = Math.min(ROWS - 1, Math.floor((p.z + 6 - Z0) / DZ - 1e-9))
+      for (let r = r0; r <= r1; r++) {
+        const d = Z0 + r * DZ - p.z
+        const a = d < 0 ? 1 + d / 0.6 : Math.max(0, 1 - d / 6), k = r * cols + p.c
+        pk[k] += a * 0.9
+        if (p.green && a > 0.2) pg[k] = 1
+      }
     })
     g.globalCompositeOperation = "lighter"
     // Dots are wider apart when there are fewer columns, so the field keeps its width.
-    const spread = 72 / cols
+    const spread = 72 / cols, seed = this.seed
+    let n = 0
     for (let r = ROWS - 1; r >= 0; r--) {
       const z = Z0 + r * DZ, s = F / z, fog = Math.max(0, 1 - z / (Z0 + ROWS * DZ)), y = horizon + camH * s
       if (y > H + 20) continue
-      const size = 0.34 * s * spread, hgt = size * Math.min(0.9, 0.25 + (camH / z) * 1.4) / spread
+      const size = 0.34 * s * spread, hgt = Math.max(1, size * Math.min(0.9, 0.25 + (camH / z) * 1.4) / spread)
       for (let c = 0; c < cols; c++) {
         const x = W / 2 + (c - cols / 2 + 0.5) * spread * s
         if (x < -size || x > W + size) continue
-        const sd = this.seed[r * cols + c]
+        const k = r * cols + c, sd = seed[k]
         let b = 0.05 + 0.05 * Math.sin(t * 0.8 + sd * 20) + (sd > 0.985 ? 0.35 + 0.3 * Math.sin(t * 3 + sd * 50) : 0)
-        b += Math.max(0, Math.sin(c * 0.35 * spread - t * 1.6 + r * 0.12) * Math.sin(r * 0.2 + t * 0.7)) * 0.08
-        let green = false
-        for (const P of this.packets) {
-          if (P.c !== c) continue
-          const d = z - P.z
-          if (d > -0.6 && d < 6) { const a = d < 0 ? 1 + d / 0.6 : Math.max(0, 1 - d / 6); b += a * 0.9; if (P.green && a > 0.2) green = true }
-        }
+        b += Math.max(0, Math.sin(c * 0.35 * spread - t * 1.6 + r * 0.12) * Math.sin(r * 0.2 + t * 0.7)) * 0.08 + pk[k]
+        const green = pg[k] === 1
         b = Math.min(1.2, b) * fog
         if (b < 0.02) continue
-        g.fillStyle = `rgba(${green ? this.live : this.ink},${Math.min(1, b)})`
-        this.box(x - size / 2, y - hgt / 2, size, Math.max(1, hgt), Math.min(size, hgt) * 0.25)
+        const bucket = (green ? LEVELS : 0) + Math.max(1, Math.ceil(Math.min(1, b) * LEVELS)) - 1
+        this.dx[n] = x - size / 2; this.dy[n] = y - hgt / 2; this.dw[n] = size; this.dh[n] = hgt
+        next[n] = head[bucket]; head[bucket] = n; n++
         if (b > 0.45) {
           const gs = size * 3.2 * b
           g.globalAlpha = Math.min(1, (b - 0.4) * 1.2)
@@ -156,6 +180,19 @@ export default class extends Controller {
           g.globalAlpha = 1
         }
       }
+    }
+    // One fill per (colour, level); additive blending makes draw order irrelevant.
+    for (let bk = 0; bk < LEVELS * 2; bk++) {
+      if (head[bk] < 0) continue
+      const lvl = (bk % LEVELS) + 1
+      g.fillStyle = bk < LEVELS ? this.inkStyles[lvl] : this.liveStyles[lvl]
+      g.beginPath()
+      for (let i = head[bk]; i >= 0; i = next[i]) {
+        const w = this.dw[i], h = this.dh[i]
+        if (w < 3 || h < 3) g.rect(this.dx[i], this.dy[i], w, h) // tiny far dots: plain rects
+        else g.roundRect ? g.roundRect(this.dx[i], this.dy[i], w, h, Math.min(w, h) * 0.25) : g.rect(this.dx[i], this.dy[i], w, h)
+      }
+      g.fill()
     }
     if (this.logoValue) this.drawLogo(t, F, horizon)
   }
