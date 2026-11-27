@@ -52,6 +52,7 @@ id:
       fixable: "%{count} bisa diperbaiki"
       scanned: "Dipindai %{ago} lalu · Trivy %{version}"
       view: "Lihat temuan"
+      notify_critical: "%{app}: %{count} kerentanan kritis baru di image yang berjalan (%{ids}). Temuan: %{url}"
       critical: "Kritis"
       high: "Tinggi"
       medium: "Sedang"

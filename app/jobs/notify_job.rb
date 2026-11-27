@@ -51,6 +51,10 @@ class NotifyJob < ApplicationJob
       "#{app_name} has crashed"
     when "app_auto_stopped"
       "#{app_name} was auto-stopped after crash-looping — deploy a fix to restart it"
+    when "image_scan_critical"
+      ctx = context || {}
+      I18n.t("apps.security.notify_critical", locale: ctx["locale"] || ctx[:locale] || I18n.default_locale,
+             app: app_name, count: ctx["count"] || ctx[:count], ids: ctx["ids"] || ctx[:ids], url: ctx["url"] || ctx[:url])
     when "backup_completed"
       "#{app_name} backup completed"
     when "backup_failed"
@@ -152,7 +156,7 @@ class NotifyJob < ApplicationJob
   def slack_color_for(event)
     case event
     when "deploy_succeeded", "app_created", "app_recovered", "scheduled_task_recovered"        then "good"     # green
-    when "deploy_failed", "app_crashed", "backup_failed", "resource_high_cpu", "resource_high_memory", "app_down", "scheduled_task_failing" then "danger"   # red
+    when "deploy_failed", "app_crashed", "image_scan_critical", "backup_failed", "resource_high_cpu", "resource_high_memory", "app_down", "scheduled_task_failing" then "danger"   # red
     when "deploy_started"                          then "#3b82f6"  # blue
     when "app_deleted", "daily_debit_summary"      then "warning"  # yellow
     end
@@ -161,7 +165,7 @@ class NotifyJob < ApplicationJob
   def discord_color_for(event)
     case event
     when "deploy_succeeded", "app_created", "app_recovered", "scheduled_task_recovered"        then 0x22c55e # green
-    when "deploy_failed", "app_crashed", "backup_failed", "resource_high_cpu", "resource_high_memory", "app_down", "scheduled_task_failing" then 0xef4444 # red
+    when "deploy_failed", "app_crashed", "image_scan_critical", "backup_failed", "resource_high_cpu", "resource_high_memory", "app_down", "scheduled_task_failing" then 0xef4444 # red
     when "deploy_started"                          then 0x3b82f6 # blue
     when "app_deleted", "daily_debit_summary"      then 0xeab308 # yellow
     end

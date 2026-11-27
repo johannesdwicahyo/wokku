@@ -603,7 +603,8 @@ CREATE TABLE public.image_scans (
     claimed_at timestamp(6) without time zone,
     finished_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    notified_at timestamp(6) without time zone
 );
 
 
@@ -4774,6 +4775,7 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261127000001'),
 ('20261126000001'),
 ('20261125000001'),
 ('20261122000001'),
