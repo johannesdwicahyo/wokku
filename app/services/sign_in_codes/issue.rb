@@ -60,7 +60,11 @@ module SignInCodes
     # under 24 h old. A code locks within its 10-minute life, so created_at
     # stands in for the lock time (off by at most 10 minutes).
     def self.paused?(email)
-      locks = SignInCode.locked.where(email: email, created_at: (2 * PAUSE_FOR).ago..).order(created_at: :desc).pluck(:created_at)
+      # Only delivered codes count: dummy rows still lock (so they answer
+      # exactly like real ones) but must not let an attacker keep a victim
+      # paused without the victim ever getting a code.
+      locks = SignInCode.locked.where(email: email, created_at: (2 * PAUSE_FOR).ago..)
+                        .where.not(code_digest: SignInCode::UNMATCHABLE).order(created_at: :desc).pluck(:created_at)
       latest = locks.first
       latest.present? && latest > PAUSE_FOR.ago && locks.count { |t| t > latest - PAUSE_FOR } >= PAUSE_AFTER_LOCKS
     end

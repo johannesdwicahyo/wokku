@@ -120,6 +120,14 @@ RSpec.describe SignInCodes::Verify, type: :model do
     Wokku.configure { |c| c.email_signup_guard = nil; c.open_registration = true }
   end
 
+  it "answers a dummy (undelivered) row exactly like a real code: 5 x :invalid, then :locked" do
+    code_for(user.email)
+    SignInCode.create!(email: "ghost@example.com", code_digest: SignInCode::UNMATCHABLE, expires_at: 10.minutes.from_now)
+    seq = ->(email) { Array.new(6) { verify(email, "000000").error } }
+    expect(seq.("ghost@example.com")).to eq(seq.(user.email))
+    expect(seq.("ghost@example.com").uniq).to eq([ :locked ])
+  end
+
   it "signs a new user in even if the welcome mail can't be queued" do
     allow(OnboardingMailer).to receive(:welcome).and_raise(StandardError, "queue down")
     code = code_for("new-person@example.com")

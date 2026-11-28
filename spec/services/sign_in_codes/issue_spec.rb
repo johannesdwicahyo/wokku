@@ -182,6 +182,23 @@ RSpec.describe SignInCodes::Issue, type: :model do
       expect(ActionMailer::Base.deliveries.tap { perform_enqueued_jobs }).to be_empty
     end
 
+    it "never pauses on locked dummy (undelivered) rows" do
+      3.times { |i| SignInCode.create!(email: user.email, code_digest: SignInCode::UNMATCHABLE, expires_at: 1.hour.from_now, attempts: 5, created_at: (i + 1).hours.ago) }
+      issue
+      expect(sent_codes.size).to eq(1)
+    end
+
+    it "pauses a real victim only on delivered codes that ended locked" do
+      lock_code(3.hours.ago)
+      lock_code(2.hours.ago)
+      SignInCode.create!(email: user.email, code_digest: SignInCode::UNMATCHABLE, expires_at: 1.hour.from_now, attempts: 5, created_at: 1.hour.ago)
+      issue
+      expect(sent_codes.size).to eq(1)
+      expect(SignInCodes::Issue.paused?(user.email)).to be(false)
+      lock_code(1.minute.ago)
+      expect(SignInCodes::Issue.paused?(user.email)).to be(true)
+    end
+
     it "is not triggered by two locks" do
       lock_code(3.hours.ago)
       lock_code(2.hours.ago)
