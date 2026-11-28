@@ -32,7 +32,7 @@ RSpec.describe "Email sign-in code UI", type: :request do
       expect(form.text).to include("Email me a sign-in code")
       expect(response.body).not_to include("user[password]")
       expect(response.body).not_to include("turnstile")
-      expect(response.body).to include("The same code creates your free account") if Wokku.respond_to?(:cloud?) && Wokku.cloud?
+      expect(html.at_css("canvas")["data-light-wall-pulse-form-value"]).to eq("signin-form")
     end
   end
 
@@ -121,6 +121,39 @@ RSpec.describe "Email sign-in code UI", type: :request do
       expect(body).to include("Pakai email lain")
       expect(body).not_to match(/We sent|Use a different|Send a new|Sign in\b/)
     end
+  end
+
+  it "never nests a form, and verify has no _method" do
+    Wokku.configure { |c| c.email_sign_in = true }
+    pages = [ -> { get new_user_session_path } ]
+    pages.each(&:call)
+    doc = Nokogiri::HTML5(response.body)
+    expect(doc.css("form form")).to be_empty
+    post users_sign_in_codes_path, params: { email: "nest@example.com" }
+    get users_sign_in_code_path
+    doc = Nokogiri::HTML5(response.body)
+    expect(doc.css("form form")).to be_empty
+    expect(doc.at_css("form#signin-form input[name=_method]")).to be_nil
+    expect(doc.at_css("label[for=code]")).to be_present
+    expect(doc.at_css("form#signin-form input#code")).to be_present
+  end
+
+  it "keeps non-code alerts top-level, not on the email field" do
+    Wokku.configure { |c| c.email_sign_in = true }
+    get "/dashboard/apps"
+    follow_redirect! while response.redirect?
+    expect(html.at_css("[role=alert]")).to be_present
+    expect(html.at_css("input[type=email]")["aria-invalid"]).not_to eq("true")
+  end
+
+  it "does not mark the code field invalid for the cooldown notice" do
+    Wokku.configure { |c| c.email_sign_in = true }
+    post users_sign_in_codes_path, params: { email: "cool@example.com" }
+    post resend_users_sign_in_code_path
+    follow_redirect!
+    expect(response.body).to include("Wait")
+    expect(html.at_css("input[name=code]")["aria-invalid"]).not_to eq("true")
+    expect(html.at_css("#code-error")).to be_nil
   end
 
   it "has no English on step 1 in id" do

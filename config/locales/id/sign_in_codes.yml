@@ -8,8 +8,3 @@ id:
     locked: "Terlalu banyak percobaan. Kirim kode baru."
     show:
       title: "Cek email kamu"
-      sent_to: "Kami mengirim kode 6 digit ke %{email}."
-      code_label: "Kode masuk"
-      submit: "Masuk"
-      resend: "Kirim kode baru"
-      different_email: "Pakai email lain"

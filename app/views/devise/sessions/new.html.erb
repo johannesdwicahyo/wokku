@@ -7,7 +7,7 @@
     <p class="text-ink-soft text-base mt-1.5 mb-0"><%= t("signin.sub") %></p>
   </div>
 
-  <%= render "devise/shared/auth_flash", skip_alert: email_code %>
+  <%= render "devise/shared/auth_flash" %>
 
   <%# Providers only when the operator configured their credentials (cloud sets
       them all; a fresh self-host sets none and gets the password form). %>
@@ -21,7 +21,7 @@
   <% end %>
 
   <% if email_code %>
-    <% error = flash[:alert] %>
+    <% error = @email_error %>
     <% if providers.any? %>
       <div class="flex items-center gap-3.5 font-mono text-[11px] uppercase tracking-[.12em] text-muted before:content-[''] before:flex-1 before:h-px before:bg-line after:content-[''] after:flex-1 after:h-px after:bg-line"><%= t("signin.code.or") %></div>
     <% end %>
@@ -36,7 +36,7 @@
       <% if site_key.present? %>
         <div class="cf-turnstile" data-sitekey="<%= site_key %>" data-theme="dark" data-language="<%= I18n.locale %>"></div>
         <%# Rendered here, not in the layout head: only the sign-in page loads it. %>
-        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer nonce="<%= content_security_policy_nonce %>"></script>
       <% end %>
       <%= f.button t("signin.code.send"), type: "submit",
             class: Atoms::ButtonComponent.new(variant: :primary, class: "w-full h-[50px]").classes %>

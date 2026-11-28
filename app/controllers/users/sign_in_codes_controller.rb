@@ -36,7 +36,7 @@ class Users::SignInCodesController < DeviseController
   def verify
     result = SignInCodes::Verify.call(email: @email, code: params[:code], ip: request.remote_ip)
     if result.error
-      flash.now[:alert] = t(result.error == :locked ? "sign_in_codes.locked" : "sign_in_codes.mismatch")
+      @code_error = t(result.error == :locked ? "sign_in_codes.locked" : "sign_in_codes.mismatch")
       return render :show, status: :unprocessable_content
     end
 
@@ -92,7 +92,7 @@ class Users::SignInCodesController < DeviseController
   end
 
   def render_step_one(message, email)
-    flash.now[:alert] = message
+    @email_error = message
     self.resource = resource_class.new(email: email)
     render "devise/sessions/new", status: :unprocessable_content
   end
