@@ -1,0 +1,33 @@
+<div class="min-h-screen grid grid-cols-1 min-[960px]:grid-cols-[minmax(0,560px)_minmax(0,1fr)] bg-bg text-ink font-sans">
+  <section class="flex flex-col px-5 py-[22px] min-[960px]:pl-14 min-[960px]:pr-7 min-[960px]:py-7 min-[960px]:border-r border-line bg-paper">
+    <header class="flex items-center justify-between">
+      <a href="<%= helpers.root_path %>" aria-label="<%= t("signin.home") %>" class="inline-flex focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-live">
+        <%= render Atoms::LogoComponent.new(variant: :mark, size: :sm, decorative: true) %>
+      </a>
+      <%= render Molecules::LangSwitchComponent.new %>
+    </header>
+    <main class="my-auto w-full max-w-[400px] flex flex-col gap-[22px] py-10">
+      <%= content %>
+    </main>
+    <footer class="flex flex-wrap justify-between gap-4 font-mono text-[11px] uppercase tracking-[.12em] text-muted">
+      <span><%= t("footer.legal") %></span>
+      <% if footer_links.any? %>
+        <span>
+          <% footer_links.each_with_index do |(label, href), i| %><%= " · " if i.positive? %><%= link_to label, href, class: "no-underline hover:text-ink" %><% end %>
+        </span>
+      <% end %>
+    </footer>
+  </section>
+  <aside aria-hidden="true" class="hidden min-[960px]:block relative overflow-hidden min-h-[420px]">
+    <div class="absolute inset-0"><%= render Organisms::LightWallComponent.new(logo: true, pulse_form: FORM_ID) %></div>
+    <div class="absolute inset-0 pointer-events-none bg-[radial-gradient(70%_60%_at_50%_55%,transparent_0%,color-mix(in_srgb,var(--color-bg)_55%,transparent)_70%,color-mix(in_srgb,var(--color-bg)_90%,transparent)_100%)]"></div>
+    <div class="absolute top-[42px] left-12 flex flex-col gap-1 font-mono text-[11px] uppercase tracking-[.12em] text-muted">
+      <% if region %><span><%= t("console.top.region") %> <b class="font-medium text-ink"><%= region %></b></span><% end %>
+      <span data-controller="clock" data-clock-zone-value="<%= ZONE %>"><b class="font-medium text-ink" data-clock-target="time"><%= clock_text %></b> WIB</span>
+    </div>
+    <div class="absolute left-14 right-14 bottom-16 max-w-[520px]">
+      <p class="text-[26px] leading-[1.3] tracking-[-.02em] text-ink m-0 mb-3.5"><%= t("signin.quote") %></p>
+      <code class="font-mono text-[12px] tracking-[.04em] text-muted">git push wokku main</code>
+    </div>
+  </aside>
+</div>

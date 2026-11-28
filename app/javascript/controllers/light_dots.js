@@ -55,6 +55,15 @@ export function readPalette(el) {
   return { live, ink, glowLive: sprite(live), glowInk: sprite(ink), fillLive: fills(live), fillInk: fills(ink) }
 }
 
+// The Wokku mark: 7 lights on a 5x3 grid (index 3 = the green centre).
+export const LOGO = [[0, 0], [4, 0], [0, 1], [2, 1], [4, 1], [1, 2], [3, 2]]
+
+// Board indices of the mark's 7 lights (`step` cells per light, centred, integer origin).
+export function logoCells(cols, rows, step = 2) {
+  const x0 = Math.floor((cols - (4 * step + 1)) / 2), y0 = Math.floor((rows - (2 * step + 1)) / 2)
+  return LOGO.map(([cx, cy]) => (y0 + cy * step) * cols + x0 + cx * step)
+}
+
 const RIPPLES = 6, RIPPLE_LIFE = 2.2, RIPPLE_SPEED = 14 // cells / second
 
 export class DotBoard {
@@ -66,6 +75,7 @@ export class DotBoard {
     this.rip = new Float32Array(RIPPLES * 3).fill(-1e9) // x, y, t0
     this.ri = 0
     this.cell = 1; this.ox = 0; this.oy = 0
+    this.fixedCell = 0; this.ratio = 0.78 // fixedCell > 0: square cells of that many canvas px from the top-left (sign-in field)
   }
 
   clear() { this.tgt.fill(0); this.green.fill(0) }
@@ -95,8 +105,9 @@ export class DotBoard {
 
   draw(g, W, H, t, pal, ease = 0.14) {
     const { cols, rows, cur, tgt, green, rip } = this
-    const cell = Math.min(W / cols, H / rows), sz = cell * 0.78
-    const ox = (W - cell * cols) / 2, oy = (H - cell * rows) / 2
+    const fixed = this.fixedCell > 0
+    const cell = fixed ? this.fixedCell : Math.min(W / cols, H / rows), sz = cell * this.ratio
+    const ox = fixed ? 0 : (W - cell * cols) / 2, oy = fixed ? 0 : (H - cell * rows) / 2
     this.cell = cell; this.ox = ox; this.oy = oy
     g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = "source-over"; g.clearRect(0, 0, W, H)
     g.globalCompositeOperation = "lighter"

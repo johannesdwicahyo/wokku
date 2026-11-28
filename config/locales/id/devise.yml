@@ -1,0 +1,23 @@
+# Sign-in messages Devise shows on the sign-in page (flash). Everything else
+# falls back to English (config/locales/devise.en.yml).
+id:
+  devise:
+    failure:
+      already_authenticated: "Kamu sudah masuk."
+      inactive: "Akun kamu belum aktif."
+      invalid: "%{authentication_keys} atau kata sandi salah."
+      locked: "Akun kamu dikunci."
+      account_deleted: "Akun ini sudah dihapus."
+      abuse_suspended: "Akun ini ditangguhkan karena melanggar Ketentuan Layanan."
+      last_attempt: "Tinggal satu percobaan lagi sebelum akun kamu dikunci."
+      not_found_in_database: "%{authentication_keys} atau kata sandi salah."
+      timeout: "Sesi kamu habis. Silakan masuk lagi untuk melanjutkan."
+      unauthenticated: "Kamu perlu masuk atau daftar dulu sebelum melanjutkan."
+      unconfirmed: "Kamu perlu mengonfirmasi alamat email kamu dulu sebelum melanjutkan."
+    omniauth_callbacks:
+      failure: "Tidak bisa masuk lewat %{kind} karena \"%{reason}\"."
+      success: "Berhasil masuk lewat akun %{kind}."
+    sessions:
+      signed_in: "Berhasil masuk."
+      signed_out: "Berhasil keluar."
+      already_signed_out: "Berhasil keluar."

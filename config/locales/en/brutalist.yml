@@ -96,12 +96,21 @@ en:
   signin:
     email_label: Email
     password_label: Password
-    submit: sign_in()
-    title: "One step from deploying"
-    sub: "// free · no card · live in ~60s"
-    sub_self_host: "// sign in to deploy"
+    submit: "Sign in"
+    title: "Sign in to Wokku"
+    sub: "Your apps are waiting."
     reassure: "We only read your email — no access to your repos or code."
     continue_with: "Continue with %{provider}"
+    new_account: "New to Wokku? Signing in creates your free account. No card needed."
+    quote: "Push your code. It's live in Jakarta."
+    home: "Wokku home"
+    legal_html: "By signing in, you agree to our %{terms} and %{privacy}."
+    terms: "Terms"
+    privacy: "Privacy Policy"
+    footer:
+      status: "Status"
+      privacy: "Privacy"
+      terms: "Terms"
   footer:
     tagline: "Open-source PaaS. Built in Bali for Indonesian developers."
     status_ok: "All systems operational"

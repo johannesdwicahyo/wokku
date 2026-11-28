@@ -1,3 +1,5 @@
 <canvas class="wk-light-poster block w-full h-full" aria-hidden="true"
         data-controller="light-wall"
-        data-light-wall-text-value="<%= text %>"></canvas>
+        data-light-wall-text-value="<%= text %>"<% if logo %>
+        data-light-wall-logo-value="true"<% end %><% if pulse_form %>
+        data-light-wall-pulse-form-value="<%= pulse_form %>"<% end %>></canvas>

@@ -385,3 +385,17 @@ select:focus-visible {
     radial-gradient(circle, color-mix(in srgb, var(--color-ink) 22%, transparent) 1px, transparent 1.5px);
   background-size: 100% 100%, 18px 18px;
 }
+
+/* Sign-in / 2FA text input (control-room auth shell). */
+.auth-input {
+  width: 100%;
+  min-width: 0;
+  padding: 13px 14px;
+  font-size: 16px;
+  color: var(--color-ink);
+  background: var(--color-bg);
+  border: 1px solid var(--color-dark-line);
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+@media (prefers-reduced-motion: reduce) { .auth-input { transition: none; } }

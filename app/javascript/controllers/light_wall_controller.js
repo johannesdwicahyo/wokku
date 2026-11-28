@@ -1,12 +1,13 @@
 import { Controller } from "@hotwired/stimulus"
-import { DotBoard, readPalette } from "controllers/light_dots"
+import { DotBoard, logoCells, readPalette } from "controllers/light_dots"
 
 // Closing light wall: a 64x30 board spelling `text`, with ripples that spread from
 // the pointer / touch. Decorative (aria-hidden). Canvas 2D, no libraries.
 const COLS = 64, ROWS = 30
+const FIELD_CELL = 26, FIELD_SIZE = 0.62 // logo mode: CSS px per cell, square size as a share of it
 
 export default class extends Controller {
-  static values = { text: { type: String, default: "PUSH." } }
+  static values = { text: { type: String, default: "PUSH." }, logo: Boolean, pulseForm: String }
 
   connect() {
     this.dpr = Math.min(window.devicePixelRatio || 1, 1.75)
@@ -16,22 +17,50 @@ export default class extends Controller {
     this.host = this.element.parentElement || this.element
     this.pal = readPalette(this.element)
     this.board = new DotBoard(COLS, ROWS)
-    const last = this.board.stamp(this.textValue, 7)
-    // the final glyph (the dot) in green
-    for (let i = 0; i < this.board.tgt.length; i++) if (this.board.tgt[i] && i % COLS >= last) this.board.green[i] = 1
+    this.ready = 0
+    if (this.logoValue) { this.size(); this.board.snap() }
+    else {
+      const last = this.board.stamp(this.textValue, 7)
+      // the final glyph (the dot) in green
+      for (let i = 0; i < this.board.tgt.length; i++) if (this.board.tgt[i] && i % COLS >= last) this.board.green[i] = 1
+    }
     this.board.snap()
-    this.size()
+    if (!this.logoValue) this.size()
     this.draw(0, 1) // a finished frame, synchronously
     this.resizer = new ResizeObserver(() => { this.size(); this.draw(this.t || 0, 1) })
     this.resizer.observe(this.element)
     this.mq.addEventListener("change", this.motionChanged)
+    // sign-in mode: only the input event and checkValidity() are used, never a value
+    // resolved lazily on each input so a Turbo re-render of the form keeps working
+    if (this.hasPulseFormValue) document.addEventListener("input", this.typed, { passive: true })
     this.motionChanged()
   }
 
   disconnect() {
     this.mq.removeEventListener("change", this.motionChanged)
     this.resizer?.disconnect()
+    document.removeEventListener("input", this.typed)
     this.stopLoop()
+  }
+
+  // The mark sits centred, 1 cell per light; brightness and the green centre follow `ready`.
+  setReady(ready) {
+    const b = this.board
+    this.ready = ready
+    logoCells(b.cols, b.rows, 1).forEach((k, i) => {
+      b.tgt[k] = 0.35 + 0.65 * ready
+      b.green[k] = i === 3 && ready > 0.5 ? 1 : 0
+    })
+  }
+
+  typed = (e) => {
+    const form = document.getElementById(this.pulseFormValue)
+    if (!(form instanceof HTMLFormElement) || !form.contains(e.target)) return
+    this.setReady(form.checkValidity() ? 1 : 0)
+    if (this.reduced) { this.board.snap(); return this.draw(0, 1) }
+    const b = this.board, t = performance.now() / 1000
+    b.ripple(Math.random() * b.cols, Math.random() * b.rows, t)
+    this.settled = false
   }
 
   get reduced() { return this.mq.matches }
@@ -40,6 +69,21 @@ export default class extends Controller {
     const r = this.element.getBoundingClientRect()
     this.element.width = Math.max(1, Math.round(r.width * this.dpr))
     this.element.height = Math.max(1, Math.round(r.height * this.dpr))
+    if (this.logoValue) this.fitField()
+  }
+
+  // Logo mode: a field of 26 CSS px cells covering the canvas. The board is rebuilt only
+  // when the cell count changes (a resize), never per frame.
+  fitField() {
+    const cell = FIELD_CELL * this.dpr
+    const cols = Math.ceil(this.element.width / cell) + 1, rows = Math.ceil(this.element.height / cell) + 1
+    if (cols !== this.board.cols || rows !== this.board.rows) {
+      this.board = new DotBoard(cols, rows)
+      this.setReady(this.ready)
+      this.board.snap()
+    }
+    this.board.fixedCell = cell
+    this.board.ratio = FIELD_SIZE
   }
 
   draw(t, ease) {
