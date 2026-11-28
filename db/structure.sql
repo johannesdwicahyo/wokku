@@ -1155,6 +1155,22 @@ CREATE TABLE public.service_tiers (
 
 
 --
+-- Name: sign_in_codes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.sign_in_codes (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    email character varying NOT NULL,
+    code_digest character varying NOT NULL,
+    expires_at timestamp(6) without time zone NOT NULL,
+    attempts integer DEFAULT 0 NOT NULL,
+    consumed_at timestamp(6) without time zone,
+    ip character varying,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
 -- Name: solid_queue_blocked_executions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2298,6 +2314,14 @@ ALTER TABLE ONLY public.service_ops
 
 ALTER TABLE ONLY public.service_tiers
     ADD CONSTRAINT service_tiers_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sign_in_codes sign_in_codes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sign_in_codes
+    ADD CONSTRAINT sign_in_codes_pkey PRIMARY KEY (id);
 
 
 --
@@ -3519,6 +3543,13 @@ CREATE INDEX index_service_ops_on_server_id_and_status ON public.service_ops USI
 --
 
 CREATE UNIQUE INDEX index_service_tiers_on_service_type_and_name ON public.service_tiers USING btree (service_type, name);
+
+
+--
+-- Name: index_sign_in_codes_on_email_and_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_sign_in_codes_on_email_and_created_at ON public.sign_in_codes USING btree (email, created_at);
 
 
 --
@@ -4768,6 +4799,7 @@ ALTER TABLE ONLY public.dyno_allocations
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261128000001'),
 ('20261127000001'),
 ('20261126000001'),
 ('20261125000001'),

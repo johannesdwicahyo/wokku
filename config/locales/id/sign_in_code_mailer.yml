@@ -1,0 +1,7 @@
+id:
+  sign_in_code_mailer:
+    code:
+      subject: "Kode masuk Wokku kamu: %{code}"
+      intro: "Kode masuk Wokku kamu:"
+      validity: "Berlaku sekali, selama 10 menit."
+      ignore: "Kalau kamu tidak memintanya, abaikan email ini."

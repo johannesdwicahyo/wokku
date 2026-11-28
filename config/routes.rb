@@ -18,6 +18,15 @@ Rails.application.routes.draw do
   # 2FA step of a web sign-in (Users::TwoFactorChallengesController).
   get  "/users/two_factor", to: "users/two_factor_challenges#show", as: :users_two_factor
   post "/users/two_factor", to: "users/two_factor_challenges#create"
+  # Email sign-in code (Users::SignInCodesController); 404 unless
+  # Wokku.config.email_sign_in.
+  devise_scope :user do
+    post "/users/sign_in/code", to: "users/sign_in_codes#create", as: :users_sign_in_codes
+    get  "/users/sign_in/code", to: "users/sign_in_codes#show", as: :users_sign_in_code
+    delete "/users/sign_in/code", to: "users/sign_in_codes#destroy"
+    post "/users/sign_in/code/verify", to: "users/sign_in_codes#verify", as: :verify_users_sign_in_code
+    post "/users/sign_in/code/resend", to: "users/sign_in_codes#resend", as: :resend_users_sign_in_code
+  end
   get "mobile/auth/start", to: "mobile/auth#start", as: :mobile_auth_start
   post "mobile/auth/confirm", to: "mobile/auth#confirm", as: :mobile_auth_confirm
   # Registrations are OAuth-only — redirect any lingering /users/sign_up links

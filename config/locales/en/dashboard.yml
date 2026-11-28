@@ -194,6 +194,7 @@ en:
       categories: "Categories"
       all_templates: "All Templates"
     profile:
+      email_change_support: "To change your sign-in email, contact support."
       title: "Settings"
       subtitle: "Manage your account, security, API credentials, and billing."
       subtitle_self_host: "Manage your account, security and API credentials."

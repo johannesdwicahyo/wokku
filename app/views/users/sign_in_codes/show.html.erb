@@ -1,0 +1,43 @@
+<%# Step 2 of email sign-in. The pending email comes from the session. %>
+<% remaining = [ session[:sign_in_code_resend_at].to_i - Time.current.to_i, 0 ].max %>
+<% error = @code_error %>
+<%= render Organisms::AuthShellComponent.new do %>
+  <div>
+    <h1 class="text-[38px] font-normal tracking-[-.04em] leading-[1.05] m-0"><%= t("sign_in_codes.show.title") %></h1>
+    <p class="text-ink-soft text-base mt-1.5 mb-0"><%= t("signin.code.sent_html", email: tag.b(@email, class: "font-medium text-ink")) %></p>
+  </div>
+
+  <%= render "devise/shared/auth_flash" %>
+
+  <div class="flex justify-between items-baseline">
+    <%= label_tag :code, t("signin.code.code_label"), class: "font-mono text-[11px] uppercase tracking-[.12em] text-muted" %>
+    <%= button_to t("signin.code.different"), users_sign_in_code_path, method: :delete, form: { data: { turbo: false }, class: "m-0" },
+          class: "text-[13px] text-muted hover:text-ink bg-transparent border-0 p-0 cursor-pointer underline underline-offset-[3px]" %>
+  </div>
+
+  <%= form_with url: verify_users_sign_in_code_path, method: :post, id: "signin-form", data: { turbo: false }, class: "flex flex-col gap-[22px]" do |f| %>
+    <div class="flex flex-col gap-2">
+      <div class="code-cells">
+        <%= f.text_field :code, inputmode: "numeric", autocomplete: "one-time-code", maxlength: 6, pattern: "[0-9]{6}",
+              required: true, autofocus: true, class: "code-input",
+              "aria-invalid": error.present?, "aria-describedby": (error.present? ? "code-error" : nil) %>
+      </div>
+      <% if error.present? %><span id="code-error" role="alert" class="text-[13px] text-bad-text"><%= error %></span><% end %>
+    </div>
+    <%= f.button t("signin.code.verify"), type: "submit",
+          class: Atoms::ButtonComponent.new(variant: :primary, class: "w-full h-[50px]").classes %>
+  <% end %>
+
+  <%# JS off: the button is always there and the server enforces the cooldown. %>
+  <div data-controller="sign-in-code" data-sign-in-code-remaining-value="<%= remaining %>"
+       data-sign-in-code-template-value="<%= t("signin.code.resend_in", n: "%{n}") %>">
+    <p class="font-mono text-[12px] text-muted m-0" data-sign-in-code-target="status" hidden></p>
+    <%= button_to t("signin.code.resend"), resend_users_sign_in_code_path, method: :post, data: { turbo: false },
+          form: { data: { turbo: false, sign_in_code_target: "action" } },
+          class: "font-mono text-[12px] uppercase tracking-[.12em] text-ink underline underline-offset-[3px] bg-transparent border-0 p-0 cursor-pointer" %>
+  </div>
+
+  <% if wokku_cloud? %>
+    <p class="text-[15px] text-ink-soft m-0"><%= t("signin.new_account_code") %></p>
+  <% end %>
+<% end %>

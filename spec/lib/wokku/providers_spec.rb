@@ -83,6 +83,11 @@ RSpec.describe Wokku::Providers do
     Wokku.configure { |c| c.open_registration = true } # cloud test default
   end
 
+  it "defaults email sign-in off and the sign-up guard to allow" do
+    expect(Wokku.config.email_sign_in).to be(false)
+    expect(Wokku.config.email_signup_guard.call(email: "a@b.co", ip: "1.1.1.1")).to be(true)
+  end
+
   it "defaults require_admin_2fa off (self-host optional; env opt-in; cloud sets true at boot)" do
     expect(Wokku.config.require_admin_2fa).to be(false)
     Wokku.configure { |c| c.require_admin_2fa = true }

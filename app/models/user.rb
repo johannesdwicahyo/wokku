@@ -312,6 +312,18 @@ class User < ApplicationRecord
       return new # unpersisted — triggers the failure redirect
     end
 
+    # Open registration with email sign-in: an account made by a code links
+    # instead of failing the email uniqueness check below. Both emails must
+    # be verified (a self-edited email could be a planted victim address, as
+    # in from_apple). Never re-links an account that already has a provider.
+    if Wokku.config.email_sign_in && email.present? && oauth_email_verified?(auth) && !exists?(provider: auth.provider, uid: auth.uid)
+      candidate = find_by(email: email)
+      if candidate && candidate.provider.blank? && candidate.email_provider_verified
+        candidate.update_columns(provider: auth.provider, uid: auth.uid, email_provider_verified: true)
+        return candidate
+      end
+    end
+
     where(provider: auth.provider, uid: auth.uid).first_or_create do |user|
       user.email = email
       user.email_provider_verified = true

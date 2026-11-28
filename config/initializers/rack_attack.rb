@@ -66,6 +66,56 @@ class Rack::Attack
     req.session["two_factor_user_id"]&.to_s if wokku_path(req) == "/users/two_factor" && req.post?
   end
 
+  # Email sign-in code (Users::SignInCodesController). Per-email keys go
+  # through SignInCode.normalize so case/whitespace variants share a bucket.
+  # A resend counts as a request, keyed on the session's pending email.
+  def self.sign_in_code_request?(req)
+    req.post? && %w[/users/sign_in/code /users/sign_in/code/resend].include?(wokku_path(req))
+  end
+
+  def self.sign_in_code_verify?(req)
+    req.post? && wokku_path(req) == "/users/sign_in/code/verify"
+  end
+
+  def self.sign_in_code_email(email)
+    SignInCode.normalize(email).presence if email.is_a?(String)
+  end
+
+  throttle("sign_in_code/request/ip", limit: 10, period: 10.minutes) do |req|
+    req.ip if sign_in_code_request?(req)
+  end
+
+  # Form body only (req.POST), the same source the controller reads.
+  def self.sign_in_code_request_email(req)
+    return unless sign_in_code_request?(req)
+    sign_in_code_email(wokku_path(req).end_with?("/resend") ? req.session["sign_in_code_email"] : req.POST["email"])
+  end
+
+  throttle("sign_in_code/request/email", limit: 3, period: 10.minutes) do |req|
+    sign_in_code_request_email(req)
+  end
+
+  # Email + IP: one IP can't grind one address all day, but a flood can't
+  # lock the victim out for 24 h either (the per-email 3/10 min, Issue's
+  # cap and the 30-min human-check bound handle victim-wide floods).
+  throttle("sign_in_code/request/email/day", limit: 10, period: 1.day) do |req|
+    email = sign_in_code_request_email(req)
+    "#{email}|#{req.ip}" if email
+  end
+
+  throttle("sign_in_code/verify/ip", limit: 20, period: 10.minutes) do |req|
+    req.ip if sign_in_code_verify?(req)
+  end
+
+  throttle("sign_in_code/verify/email", limit: 10, period: 10.minutes) do |req|
+    sign_in_code_email(req.session["sign_in_code_email"]) if sign_in_code_verify?(req)
+  end
+
+  # The only email-wide guess cap: 30 tries/day ~ 1.1 %/year to hit a code.
+  throttle("sign_in_code/verify/email/day", limit: 30, period: 1.day) do |req|
+    sign_in_code_email(req.session["sign_in_code_email"]) if sign_in_code_verify?(req)
+  end
+
   # Fail2Ban: ban an IP for 1h after 20 failed API logins in 10m. The filter
   # is invoked manually from AuthController#login on failed auth.
   blocklist("fail2ban/api_login") do |req|
@@ -114,9 +164,32 @@ class Rack::Attack
     req.params["t"] if wokku_path(req) == "/vitals/ingest" && req.post? && req.params["t"].present?
   end
 
+  # Sign-in-code pages are browser forms: answer with a localized page
+  # (locale as Localizable picks it for a signed-out visitor). The middleware
+  # runs before any controller, so it can't render a view.
+  def self.sign_in_code_throttled_page(req)
+    locale = [ req.cookies["locale"], req.get_header("HTTP_ACCEPT_LANGUAGE").to_s[/[a-z]{2}/] ]
+               .find { |l| I18n.available_locales.map(&:to_s).include?(l) } || I18n.default_locale
+    I18n.with_locale(locale) do
+      esc = ->(key) { ERB::Util.html_escape(I18n.t(key)) }
+      <<~HTML
+        <!DOCTYPE html>
+        <html lang="#{locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>#{esc.("sign_in_codes.throttled")}</title></head>
+        <body style="font-family:system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:0 1.5rem;line-height:1.5">
+        <p>#{esc.("sign_in_codes.throttled")}</p><p><a href="/users/sign_in">#{esc.("nav.sign_in")}</a></p>
+        </body></html>
+      HTML
+    end
+  end
+
   self.throttled_responder = ->(req) {
     match_data = req.env["rack.attack.match_data"] || {}
     retry_after = match_data[:period]
+    if wokku_path(req).start_with?("/users/sign_in/code")
+      return [ 429, { "Content-Type" => "text/html; charset=utf-8", "Retry-After" => retry_after.to_s }, [ sign_in_code_throttled_page(req) ] ]
+    end
+
     [
       429,
       { "Content-Type" => "application/json", "Retry-After" => retry_after.to_s },
