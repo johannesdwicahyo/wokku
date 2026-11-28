@@ -6,7 +6,7 @@ module SignInCodes
   # same rules (and with the same post-create effects) as OAuth sign-up.
   # The caller still signs in through sign_in_with_two_factor.
   #
-  # An unknown/closed/inactive account answers :invalid, same as a wrong
+  # An unknown/closed/inactive/unverified-email account answers :invalid, same as a wrong
   # code (no enumeration).
   class Verify
     Result = Data.define(:user, :error, :new_user) do
@@ -36,7 +36,7 @@ module SignInCodes
       return Result.new(error: error) if error
 
       user, new_user = find_or_create(email)
-      return Result.new(error: :invalid) unless user&.active_for_authentication?
+      return Result.new(error: :invalid) unless user && Issue.may_sign_in?(user)
 
       # Same post-create effects as Users::OmniauthCallbacksController#finish_sign_in.
       _team, first_time = user.ensure_personal_team!

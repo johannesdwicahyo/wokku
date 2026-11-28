@@ -5,6 +5,8 @@ require "rails_helper"
 RSpec.describe SignInCodes::Verify, type: :model do
   let(:user) { users(:one) }
 
+  before { user.update_columns(email_provider_verified: true) }
+
   def code_for(email, code: "123456", **attrs)
     SignInCode.create!(email: email, code_digest: SignInCode.digest(email, code), expires_at: 10.minutes.from_now, **attrs)
     code
@@ -59,6 +61,12 @@ RSpec.describe SignInCodes::Verify, type: :model do
     expect(verify(user.email, code)).to have_attributes(user: nil, error: :invalid)
   end
 
+  it "never signs into an existing user whose email isn't provider-verified, even with the right code" do
+    user.update_columns(email_provider_verified: false)
+    code = code_for(user.email)
+    expect { expect(verify(user.email, code)).to have_attributes(user: nil, error: :invalid) }.not_to change(User, :count)
+  end
+
   it "rejects a non-6-digit code" do
     code_for(user.email)
     expect(verify(user.email, "12345").error).to eq(:invalid)
@@ -99,6 +107,7 @@ RSpec.describe SignInCodes::Verify, type: :model do
       expect { expect(verify("boss@example.com", code).error).to eq(:invalid) }.not_to change(User, :count)
 
       stub_const("User::ADMIN_EMAIL", users(:admin).email)
+      users(:admin).update_columns(email_provider_verified: true)
       code = code_for(users(:admin).email)
       expect(verify(users(:admin).email, code).user).to eq(users(:admin))
     end

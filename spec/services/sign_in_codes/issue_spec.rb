@@ -19,7 +19,10 @@ RSpec.describe SignInCodes::Issue, type: :model do
 
   def code_in(mail) = mail.subject[/\d{6}\z/]
 
-  before { ActionMailer::Base.deliveries.clear }
+  before do
+    ActionMailer::Base.deliveries.clear
+    user.update_columns(email_provider_verified: true)
+  end
 
   it "stores only the digest, never the plain code, valid for 10 minutes" do
     freeze_time do
@@ -121,6 +124,13 @@ RSpec.describe SignInCodes::Issue, type: :model do
       Wokku.configure { |c| c.email_signup_guard = nil }
     end
 
+    it "existing user whose email isn't provider-verified (a self-edited, possibly planted email)" do
+      user.update_columns(email_provider_verified: false)
+      expect(issue.status).to eq(:sent)
+      expect(SignInCode.sole.code_digest).to eq(SignInCode::UNMATCHABLE)
+      expect(sent_codes).to be_empty
+    end
+
     it "the admin email without a seeded admin" do
       stub_const("User::ADMIN_EMAIL", "boss@example.com")
       expect(issue("boss@example.com").status).to eq(:sent)
@@ -129,6 +139,7 @@ RSpec.describe SignInCodes::Issue, type: :model do
   end
 
   it "mails a new email on open registration and the seeded admin" do
+    users(:admin).update_columns(email_provider_verified: true)
     issue("new-person@example.com")
     issue(users(:admin).email)
     expect(sent_codes.size).to eq(2)

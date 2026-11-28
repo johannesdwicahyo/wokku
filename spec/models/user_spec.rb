@@ -243,6 +243,27 @@ RSpec.describe User do
     context "with open registration and an existing unlinked account (email-code user)" do
       let!(:code_user) { create(:user, email: "coder@example.com", email_provider_verified: true) }
 
+      around do |ex|
+        Wokku.configure { |c| c.email_sign_in = true }
+        ex.run
+      ensure
+        Wokku.configure { |c| c.email_sign_in = nil }
+      end
+
+      it "does not link an account whose stored email isn't provider-verified (planted email)" do
+        code_user.update_columns(email_provider_verified: false)
+        result = User.from_omniauth(auth_hash(uid: "gh-plant", email: code_user.email))
+        expect(result).not_to be_persisted
+        expect(code_user.reload.provider).to be_blank
+      end
+
+      it "does not link at all with email sign-in off (as before the flag)" do
+        Wokku.configure { |c| c.email_sign_in = false }
+        result = User.from_omniauth(auth_hash(uid: "gh-off", email: code_user.email))
+        expect(result).not_to be_persisted
+        expect(code_user.reload.provider).to be_blank
+      end
+
       it "links it on a verified GitHub email" do
         result = nil
         expect { result = User.from_omniauth(auth_hash(uid: "gh-code", email: "Coder@example.com")) }.not_to change(User, :count)

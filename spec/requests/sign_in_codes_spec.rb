@@ -6,6 +6,8 @@ RSpec.describe "Email sign-in code", type: :request do
   include Devise::Test::IntegrationHelpers
 
   let(:user) { users(:one) }
+  before { user.update_columns(email_provider_verified: true) }
+
   let(:siteverify) { "https://challenges.cloudflare.com/turnstile/v0/siteverify" }
 
   around do |ex|
@@ -151,6 +153,7 @@ RSpec.describe "Email sign-in code", type: :request do
 
     it "sends an admin with TOTP to the 2FA challenge, not signed in yet" do
       admin = users(:admin)
+      admin.update_columns(email_provider_verified: true)
       request_code(admin.email, code: "424242")
       verify("424242")
       expect(response).to redirect_to(users_two_factor_path)
@@ -180,6 +183,25 @@ RSpec.describe "Email sign-in code", type: :request do
       verify("424242")
       expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include(CGI.escapeHTML(I18n.t("sign_in_codes.locked")))
+    end
+  end
+
+  describe "planted email (a GitHub user sets their profile email to a future victim's)" do
+    it "mails nothing for that email and never signs in, even with a matching code" do
+      attacker = create(:user, provider: "github", uid: "gh-attacker", email_provider_verified: true)
+      sign_in attacker
+      patch "/dashboard/profile", params: { user: { email: "victim@example.com" } }
+      expect(attacker.reload).to have_attributes(email: "victim@example.com", email_provider_verified: false)
+      sign_out attacker
+
+      expect { request_code("victim@example.com") }.not_to have_enqueued_mail(SignInCodeMailer, :code)
+      expect(SignInCode.sole.code_digest).to eq(SignInCode::UNMATCHABLE)
+
+      allow_any_instance_of(SignInCode).to receive(:matches?).and_return(true) # as if the guess were right
+      verify("424242")
+      expect(response).to have_http_status(:unprocessable_content)
+      get "/dashboard/apps"
+      expect(response).to redirect_to(new_user_session_path)
     end
   end
 

@@ -35,7 +35,7 @@ module SignInCodes
       end
 
       user = User.find_by(email: email)
-      may_sign_in = user ? user.active_for_authentication? : may_sign_up?(email, ip)
+      may_sign_in = user ? may_sign_in?(user) : may_sign_up?(email, ip)
       paused = may_sign_in && paused?(email)
       deliver = may_sign_in && !paused
       notify = paused && user.present? && !SignInCode.where(email: email, notice_sent_at: PAUSE_FOR.ago..).exists?
@@ -75,6 +75,13 @@ module SignInCodes
                         .where.not(code_digest: SignInCode::UNMATCHABLE).order(created_at: :desc).pluck(:created_at)
       latest = locks.first
       latest.present? && latest > PAUSE_FOR.ago && locks.count { |t| t > latest - PAUSE_FOR } >= PAUSE_AFTER_LOCKS
+    end
+
+    # An existing account takes a code only when its email came from a
+    # provider (or a code): a self-edited email may be a planted victim
+    # address, so it must never receive or accept a code (from_apple rule).
+    def self.may_sign_in?(user)
+      user.active_for_authentication? && user.email_provider_verified?
     end
 
     # Same rule as User.from_omniauth: the admin email is never created.
