@@ -401,11 +401,26 @@ select:focus-visible {
 @media (prefers-reduced-motion: reduce) { .auth-input { transition: none; } }
 
 /* Sign-in code: one input over a 6-cell background (paste + autofill work).
-   Letter pitch = a sixth of the width, via container query units. */
-.code-cells { container-type: inline-size; }
-.code-input {
-  width: 100%;
+   Letter pitch = a sixth of the cell width, via container query units. The
+   wrapper owns the border, cells and focus ring and clips the input, which is
+   a half-pitch wider than the cells so the trailing letter-spacing never
+   overflows (an overflowing input scrolls and shifts the digits off their cells). */
+.code-cells {
+  container-type: inline-size;
+  overflow: clip; /* not hidden: the caret past the last cell must not scroll it */
   height: 56px;
+  box-sizing: border-box;
+  background-color: var(--color-bg);
+  background-image: linear-gradient(90deg, transparent calc(100% - 1px), var(--color-dark-line) 0);
+  background-size: calc(100% / 6) 100%;
+  border: 1px solid var(--color-dark-line);
+  transition: border-color .2s, box-shadow .2s;
+}
+.code-cells:focus-within { border-color: var(--color-live); box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15); }
+.code-input,
+.code-input:focus-visible {
+  width: calc(100cqw + 100cqw / 12 - .5ch);
+  height: 100%;
   box-sizing: border-box;
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 24px;
@@ -413,9 +428,8 @@ select:focus-visible {
   caret-color: var(--color-live);
   letter-spacing: calc(100cqw / 6 - 1ch);
   padding: 0 0 0 calc(100cqw / 12 - .5ch);
-  background-color: var(--color-bg);
-  background-image: linear-gradient(90deg, transparent calc(100% - 1px), var(--color-dark-line) 0);
-  background-size: calc(100% / 6) 100%;
-  border: 1px solid var(--color-dark-line);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
   outline: none;
 }
