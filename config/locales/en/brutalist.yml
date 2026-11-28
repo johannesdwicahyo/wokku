@@ -527,12 +527,13 @@ en:
     sidebar:
       label: "// docs"
     toc:
-      label: "// on this page"
+      label: "On this page"
       shortcuts: "// shortcuts"
       search: "Search docs"
       cmdbar: "Command bar"
     pager:
       previous: "Previous"
+      label: "Previous and next"
       next: "Next"
     header:
       edited_at: "Updated %{when}"
@@ -545,6 +546,18 @@ en:
       whatsapp: "WhatsApp"
     copy:
       copy: "Copy"
+      copied: "Copied"
+    top:
+      docs: "Docs"
+      sections: "Docs sections"
+      guides: "Guides"
+      api: "API reference"
+      cli: "CLI"
+      changelog: "Changelog"
+      search: "Search docs"
+      dashboard: "Dashboard"
+      sign_in: "Sign in"
+      toggle_sidebar: "Toggle sidebar"
     beta_banner:
       tag: "Public Beta"
       body: "actively shipping — found a rough edge? tell us"

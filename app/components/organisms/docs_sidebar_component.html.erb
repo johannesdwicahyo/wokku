@@ -1,21 +1,16 @@
-<aside class="sticky top-[100px] h-[calc(100vh-128px)] overflow-y-auto py-10 pr-2"
-       data-controller="docs-sidebar">
-  <div class="text-[10px] text-dim tracking-widest uppercase mb-3"><%= t("docs.sidebar.label", default: "Docs") %></div>
-
+<nav class="docs-side" aria-label="<%= t("docs.top.guides") %>" data-controller="docs-sidebar">
   <% sidebar.each do |section| %>
     <details class="cat" <%= "open" if section_open?(section) %>>
-      <summary class="flex items-center gap-2 px-3 py-1.5 text-[11px] text-dim tracking-widest uppercase select-none cursor-pointer">
-        <span class="caret">▸</span><span><%= section["title"] %></span>
-      </summary>
-      <div class="mt-1 mb-3">
+      <summary><span><%= section["title"] %></span></summary>
+      <ul>
         <% section["items"].each do |item| %>
-          <%= render Molecules::DocsNavLinkComponent.new(
+          <li><%= render Molecules::DocsNavLinkComponent.new(
                 label: item["title"],
                 href: "/docs/#{item['path']}",
                 active: active?(item)
-              ) %>
+              ) %></li>
         <% end %>
-      </div>
+      </ul>
     </details>
   <% end %>
-</aside>
+</nav>

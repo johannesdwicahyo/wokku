@@ -1,4 +1,7 @@
-<div class="my-6 border <%= border_class %> rounded-md flex gap-3.5 px-4 py-3.5" style="<%= style %>">
-  <span class="text-[11px] font-medium normal-case tracking-normal <%= text_class %> shrink-0 mt-0.5"><%= eyebrow %></span>
-  <div class="font-sans text-[14.5px] leading-relaxed m-0 text-ink"><%= content %></div>
+<div class="doc-callout doc-callout-<%= tone %>" role="note" style="<%= style %>">
+  <span class="doc-callout__ic" aria-hidden="true"></span>
+  <div class="doc-callout__body">
+    <span class="doc-callout__label"><%= eyebrow %></span>
+    <%= content %>
+  </div>
 </div>

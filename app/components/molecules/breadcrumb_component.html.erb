@@ -1,11 +1,11 @@
-<nav class="text-xs text-dim mb-6 flex items-center gap-2 flex-wrap" aria-label="Breadcrumb">
+<nav class="font-mono text-[11px] uppercase tracking-[.12em] text-muted mb-[18px] flex items-center gap-2 flex-wrap" aria-label="Breadcrumb">
   <% crumbs.each_with_index do |(label, href), i| %>
     <% if i.positive? %><span class="text-dim" aria-hidden="true">/</span><% end %>
     <% last = i == crumbs.size - 1 %>
     <% if href && !last %>
       <%= link_to label, href, class: "no-underline hover:text-ink" %>
     <% else %>
-      <span class="<%= 'text-accent' if last %>"><%= label %></span>
+      <span class="<%= "text-ink" if last %>"><%= label %></span>
     <% end %>
   <% end %>
 </nav>

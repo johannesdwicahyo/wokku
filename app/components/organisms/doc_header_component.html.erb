@@ -1,19 +1,15 @@
-<%# Doc article header: eyebrow → title → summary → badge row (schdl). %>
-<div class="mb-2 text-[11px] text-dim tracking-widest uppercase"><%= eyebrow %></div>
-<h1 class="font-headline font-semibold tracking-tighter text-ink m-0" style="font-size: 48px; line-height: 1.05;">
-  <%= title %>
-</h1>
+<%# Doc article header: eyebrow → title → summary → meta row. %>
+<% if eyebrow.present? %><div class="docs-label mb-2"><%= eyebrow %></div><% end %>
+<h1 class="docs-title"><%= title %></h1>
 
 <% if summary.present? %>
-  <p class="mt-5 font-sans text-lg leading-relaxed text-ink-soft"><%= summary.html_safe %></p>
+  <p class="docs-summary"><%= summary.html_safe %></p>
 <% end %>
 
-<div class="mt-7 flex items-center gap-3 flex-wrap pb-7 border-b border-line-soft">
+<div class="docs-meta">
   <% badges.each do |b| %>
     <%= render Atoms::TagComponent.new(tone: b[:tone]) do %><%= b[:label] %><% end %>
   <% end %>
-  <div class="ml-auto text-[11px] text-dim">
-    <%= t('docs.header.edited_at', when: edited) %> ·
-    <%= link_to "#{t('docs.header.edit_on_github')} ↗", source, class: "hover:text-ink", style: "color:var(--color-dim);" %>
-  </div>
+  <% if edited.present? %><span><%= t("docs.header.edited_at", when: edited) %></span><% end %>
+  <%= link_to "#{t('docs.header.edit_on_github')} ↗", source %>
 </div>

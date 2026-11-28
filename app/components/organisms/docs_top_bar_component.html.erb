@@ -1,0 +1,37 @@
+<header data-docs-top-bar class="sticky top-0 z-30 flex items-center gap-5 min-h-[60px] px-4 lg:px-5 border-b border-line bg-bg/90 backdrop-blur-md">
+  <a href="/docs" class="flex items-center gap-2.5 no-underline shrink-0">
+    <%= render Atoms::LogoComponent.new(variant: :mark, size: :sm) %>
+    <span class="font-mono text-[11px] uppercase tracking-[.12em] text-ink border-l border-line-strong pl-2.5"><%= t("docs.top.docs") %></span>
+  </a>
+  <nav aria-label="<%= t("docs.top.sections") %>" class="hidden min-[900px]:flex gap-0.5">
+    <% tabs.each do |key, label, href| %>
+      <a href="<%= href %>" <%= 'aria-current="page"'.html_safe if current?(key) %>
+         class="font-mono text-[11px] uppercase tracking-[.12em] no-underline px-2.5 pt-5 pb-[18px] border-b-2 <%= current?(key) ? "text-ink border-live" : "text-muted border-transparent hover:text-ink" %>"><%= label %></a>
+    <% end %>
+  </nav>
+  <div class="ml-auto flex items-center gap-2.5">
+    <div class="relative" data-controller="docs-search">
+      <button type="button" data-action="docs-search#open" data-docs-search-target="trigger"
+              aria-expanded="false" aria-keyshortcuts="Meta+K Control+K /" aria-label="<%= t("docs.top.search") %>"
+              class="flex items-center gap-6 min-h-9 px-2.5 border border-line-strong bg-transparent text-muted text-[13px] cursor-pointer hover:text-ink">
+        <span class="hidden min-[900px]:inline"><%= t("docs.top.search") %></span>
+        <kbd class="docs-kbd">⌘K</kbd>
+      </button>
+      <div hidden data-docs-search-target="panel"
+           class="absolute right-0 top-full mt-2 w-[min(22rem,calc(100vw-2rem))] bg-paper border border-line-strong z-40">
+        <input type="search" placeholder="<%= t("docs.top.search") %>…" aria-label="<%= t("docs.top.search") %>"
+               autocomplete="off"
+               class="w-full bg-bg border-0 border-b border-dark-line px-3 py-2.5 text-sm text-ink placeholder:text-muted"
+               data-docs-search-target="input"
+               data-action="input->docs-search#search keydown->docs-search#navigate">
+        <div class="hidden" data-docs-search-target="results"></div>
+      </div>
+    </div>
+    <%= render Molecules::LangSwitchComponent.new(current: locale) %>
+    <% if signed_in? %>
+      <%= render Atoms::ButtonComponent.new(href: helpers.dashboard_root_path, size: :sm) do %><%= t("docs.top.dashboard") %><% end %>
+    <% else %>
+      <%= render Atoms::ButtonComponent.new(href: helpers.new_user_session_path, size: :sm) do %><%= t("docs.top.sign_in") %><% end %>
+    <% end %>
+  </div>
+</header>

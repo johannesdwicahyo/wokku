@@ -74,7 +74,7 @@ RSpec.describe "DocsController", type: :request do
 
   it "renders the table of contents controller" do
     get "/docs/getting-started/sign-up"
-    expect(response.body).to include("data-controller=\"docs-toc\"")
+    expect(response.body).to include("data-controller=\"docs-scrollspy\"")
   end
 
   it "loads every sidebar page" do

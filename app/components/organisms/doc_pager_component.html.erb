@@ -1,19 +1,16 @@
-<div class="mt-16 grid grid-cols-2 gap-3 pt-8 border-t border-line-soft">
+<nav class="docs-pager" aria-label="<%= t("docs.pager.label") %>">
   <% if prev_item %>
-    <%= link_to "/docs/#{prev_item['path']}",
-                class: "block border border-line rounded-md p-4 bg-paper no-underline hover:bg-bg-deep transition-colors" do %>
-      <div class="text-[10px] text-dim tracking-widest uppercase">← <%= t("docs.pager.previous", default: "Previous") %></div>
-      <div class="text-sm text-ink mt-1.5"><%= prev_item["title"] %></div>
+    <%= link_to "/docs/#{prev_item['path']}" do %>
+      <span class="docs-label">← <%= t("docs.pager.previous") %></span>
+      <b><%= prev_item["title"] %></b>
     <% end %>
   <% else %>
     <span></span>
   <% end %>
-
   <% if next_item %>
-    <%= link_to "/docs/#{next_item['path']}",
-                class: "block border border-line rounded-md p-4 bg-paper no-underline hover:bg-bg-deep transition-colors text-right" do %>
-      <div class="text-[10px] text-dim tracking-widest uppercase"><%= t("docs.pager.next", default: "Next") %> →</div>
-      <div class="text-sm text-ink mt-1.5"><%= next_item["title"] %></div>
+    <%= link_to "/docs/#{next_item['path']}", class: "is-next" do %>
+      <span class="docs-label"><%= t("docs.pager.next") %> →</span>
+      <b><%= next_item["title"] %></b>
     <% end %>
   <% end %>
-</div>
+</nav>

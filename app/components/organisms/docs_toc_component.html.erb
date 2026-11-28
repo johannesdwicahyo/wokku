@@ -1,29 +1,11 @@
-<aside class="sticky top-[100px] h-[calc(100vh-128px)] overflow-y-auto py-10"
-       data-controller="docs-toc">
-  <div class="text-[10px] text-dim tracking-widest uppercase mb-3"><%= t('docs.toc.label') %></div>
-
-  <nav class="flex flex-col gap-0" data-docs-toc-target="nav">
-    <% items.each do |item| %>
-      <a href="#<%= item[:id] %>"
-         class="toc-link <%= 'is-h3' if item[:level] == 3 %>"
-         data-docs-toc-target="link"
-         data-id="<%= item[:id] %>"><%= item[:label] || item[:text] %></a>
+<aside class="docs-toc" aria-labelledby="docs-toc-label">
+  <span id="docs-toc-label" class="docs-label"><%= t("docs.toc.label") %></span>
+  <ol data-controller="docs-scrollspy">
+    <% items.each_with_index do |item, i| %>
+      <li><a href="#<%= item[:id] %>"
+             class="toc-link <%= 'is-h3' if item[:level] == 3 %>"
+             data-docs-scrollspy-target="link"
+             <%= 'aria-current="true"'.html_safe if i.zero? %>><%= item[:label] || item[:text] %></a></li>
     <% end %>
-  </nav>
-
-  <%# Shortcuts card — only lists hotkeys that are actually wired up
-      in app/javascript/controllers/docs_search_controller.js. The
-      `⌘K` command-bar idea from the design ships when a real command
-      palette lands. %>
-  <div class="mt-10 px-3.5 py-3.5 border border-line rounded-md bg-bg-deep">
-    <div class="text-[10px] text-dim tracking-widest uppercase"><%= t('docs.toc.shortcuts') %></div>
-    <div class="mt-2 text-xs text-ink-soft flex items-center gap-1.5">
-      <%= render Atoms::KbdComponent.new('/') %>
-      <span class="ml-1"><%= t('docs.toc.search') %></span>
-    </div>
-    <div class="mt-1.5 text-xs text-ink-soft flex items-center gap-1.5">
-      <%= render Atoms::KbdComponent.new('Esc') %>
-      <span class="ml-1"><%= t('docs.toc.close_search', default: 'close search') %></span>
-    </div>
-  </div>
+  </ol>
 </aside>

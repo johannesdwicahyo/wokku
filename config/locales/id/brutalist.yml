@@ -527,12 +527,13 @@ id:
     sidebar:
       label: "// docs"
     toc:
-      label: "// di halaman ini"
+      label: "Di halaman ini"
       shortcuts: "// shortcut"
       search: "Cari docs"
       cmdbar: "Command bar"
     pager:
       previous: "Sebelumnya"
+      label: "Sebelumnya dan berikutnya"
       next: "Berikutnya"
     header:
       edited_at: "Diupdate %{when}"
@@ -545,6 +546,18 @@ id:
       whatsapp: "WhatsApp"
     copy:
       copy: "Salin"
+      copied: "Tersalin"
+    top:
+      docs: "Docs"
+      sections: "Bagian docs"
+      guides: "Panduan"
+      api: "Referensi API"
+      cli: "CLI"
+      changelog: "Changelog"
+      search: "Cari docs"
+      dashboard: "Dashboard"
+      sign_in: "Masuk"
+      toggle_sidebar: "Buka/tutup sidebar"
     beta_banner:
       tag: "Public Beta"
       body: "lagi ship aktif — nemu yang nggak smooth? kabari"

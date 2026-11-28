@@ -10,14 +10,15 @@ class LocalesController < ApplicationController
 
   private
 
-  # Same-host referer path with ?locale= dropped (it would override the cookie
-  # in Localizable#set_locale); every other query param is kept.
+  # Same-host referer path with ?locale= (Localizable#set_locale) and the
+  # docs' ?lang= (DocsController#resolve_locale) dropped, since either would
+  # override the cookie; every other query param is kept.
   def back_path
     uri = URI.parse(request.referer.to_s)
     return root_path unless uri.host == request.host && uri.path.present?
     # collapse leading slashes: "//evil.com" would be a protocol-relative redirect
     path = "/" + uri.path.sub(%r{\A/+}, "")
-    query = Rack::Utils.parse_query(uri.query).except("locale")
+    query = Rack::Utils.parse_query(uri.query).except("locale", "lang")
     query.empty? ? path : "#{path}?#{query.to_query}"
   rescue URI::InvalidURIError
     root_path
