@@ -281,8 +281,74 @@ RSpec.describe User do
       it "never re-links an account that already has a provider" do
         code_user.update_columns(provider: "google_oauth2", uid: "g-1")
         result = User.from_omniauth(auth_hash(uid: "gh-other", email: code_user.email))
-        expect(result).not_to be_persisted
+        expect(result).to eq(code_user)
         expect(code_user.reload).to have_attributes(provider: "google_oauth2", uid: "g-1")
+      end
+    end
+
+    context "with open registration and an account from another provider (cross-provider sign-in)" do
+      let!(:gh_user) do
+        create(:user, email: "dev@example.com", email_provider_verified: true).tap do |u|
+          u.update_columns(provider: "github", uid: "gh-dev", github_username: "devgh", avatar_url: "http://gh-img", name: "GH Name")
+        end
+      end
+      let(:google) do
+        auth_hash(provider: "google_oauth2", uid: "g-dev", email: "Dev@example.com", name: "Google Name",
+                  raw_info: { "email_verified" => true })
+      end
+
+      around do |ex|
+        Wokku.configure { |c| c.email_sign_in = true }
+        ex.run
+      ensure
+        Wokku.configure { |c| c.email_sign_in = nil }
+      end
+
+      it "returns the GitHub account for a Google sign-in with the same verified email, unchanged" do
+        before = gh_user.reload.attributes
+        result = nil
+        expect { result = User.from_omniauth(google) }.not_to change(User, :count)
+        expect(result).to eq(gh_user)
+        expect(gh_user.reload.attributes).to eq(before)
+      end
+
+      it "returns the same account again on a second Google sign-in" do
+        first = User.from_omniauth(google)
+        expect(User.from_omniauth(google)).to eq(first)
+        expect(gh_user.reload).to have_attributes(provider: "github", uid: "gh-dev")
+      end
+
+      it "returns a Google account for a GitHub sign-in with the same email" do
+        gh_user.update_columns(provider: "google_oauth2", uid: "g-orig")
+        result = User.from_omniauth(auth_hash(uid: "gh-new", email: gh_user.email))
+        expect(result).to eq(gh_user)
+        expect(gh_user.reload).to have_attributes(provider: "google_oauth2", uid: "g-orig")
+      end
+
+      it "refuses an unverified Google email and creates nothing" do
+        result = nil
+        expect {
+          result = User.from_omniauth(auth_hash(provider: "google_oauth2", uid: "g-dev", email: gh_user.email,
+                                                raw_info: { "email_verified" => false }))
+        }.not_to change(User, :count)
+        expect(result).not_to be_persisted
+      end
+
+      it "refuses an account whose email isn't provider-verified (self-edited)" do
+        gh_user.update_columns(email_provider_verified: false)
+        expect(User.from_omniauth(google)).not_to be_persisted
+        expect(User.from_omniauth(auth_hash(provider: "gitlab", uid: "gl-1", email: gh_user.email))).not_to be_persisted
+      end
+
+      it "refuses a second identity from the same provider (as before)" do
+        expect(User.from_omniauth(auth_hash(uid: "gh-other", email: gh_user.email))).not_to be_persisted
+        expect(gh_user.reload.uid).to eq("gh-dev")
+      end
+
+      it "does nothing new with email sign-in off (failure, as before)" do
+        Wokku.configure { |c| c.email_sign_in = false }
+        expect { expect(User.from_omniauth(google)).not_to be_persisted }.not_to change(User, :count)
+        expect(gh_user.reload).to have_attributes(provider: "github", uid: "gh-dev")
       end
     end
 
