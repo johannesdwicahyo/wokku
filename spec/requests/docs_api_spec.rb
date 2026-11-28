@@ -22,8 +22,9 @@ RSpec.describe "Docs API reference", type: :request do
     expect(body["paths"]).not_to include("/api/v1/apps/{id}/dokku")
   end
 
-  it "uses the canonical origin for servers (ignoring a spoofed host) and stays publicly cacheable" do
-    allow(Wokku.config).to receive(:canonical_domain).and_return("wokku.example")
+  it "uses the control-plane host (not the apps domain) for servers (ignoring a spoofed host) and stays publicly cacheable" do
+    allow(Wokku.config).to receive(:canonical_domain).and_return("apps.example")
+    allow(Wokku.config).to receive(:control_plane_host).and_return("wokku.example")
     get "/docs/api/apps.json", headers: { "X-Forwarded-Host" => "evil.example" }
     expect(JSON.parse(response.body)["servers"]).to eq([ { "url" => "https://wokku.example" } ])
     expect(response.headers["Cache-Control"]).to include("public")
@@ -31,7 +32,7 @@ RSpec.describe "Docs API reference", type: :request do
   end
 
   it "falls back to the request origin with a private response when no canonical domain is set" do
-    allow(Wokku.config).to receive(:canonical_domain).and_return("localhost")
+    allow(Wokku.config).to receive(:control_plane_host).and_return("localhost")
     get "/docs/api/apps.json"
     expect(JSON.parse(response.body)["servers"]).to eq([ { "url" => "http://www.example.com" } ])
     expect(response.headers["Cache-Control"]).to include("private")

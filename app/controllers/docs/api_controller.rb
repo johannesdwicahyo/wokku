@@ -32,9 +32,9 @@ module Docs
 
     private
 
-    # nil when no canonical domain is configured (the engine default is "localhost").
+    # The dashboard / API host (control_plane_host, which falls back to canonical_domain); nil when it is the engine default "localhost".
     def canonical_origin
-      domain = Wokku.config.canonical_domain.to_s
+      domain = Wokku.config.control_plane_host.to_s
       "https://#{domain}" unless domain.blank? || domain == "localhost"
     end
 
