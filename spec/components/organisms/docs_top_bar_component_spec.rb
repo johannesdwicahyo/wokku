@@ -23,6 +23,11 @@ RSpec.describe Organisms::DocsTopBarComponent, type: :component do
     expect(page).to have_link("Sign in", href: "/users/sign_in")
   end
 
+  it "localizes the empty-search message, keeping the query placeholder for the controller" do
+    I18n.with_locale(:id) { render_inline(described_class.new(active: :guides, locale: :id)) }
+    expect(page.find("[data-controller='docs-search']")["data-docs-search-empty-value"]).to eq('Tidak ada hasil untuk "%{query}"')
+  end
+
   it "shows Dashboard when signed in" do
     signed_in(true)
     render_inline(described_class.new(active: :guides, locale: :en))

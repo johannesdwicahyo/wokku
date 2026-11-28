@@ -10,7 +10,7 @@
     <% end %>
   </nav>
   <div class="ml-auto flex items-center gap-2.5">
-    <div class="relative" data-controller="docs-search">
+    <div class="relative" data-controller="docs-search" data-docs-search-empty-value="<%= t("docs.top.no_results", query: "%{query}") %>">
       <button type="button" data-action="docs-search#open" data-docs-search-target="trigger"
               aria-expanded="false" aria-keyshortcuts="Meta+K Control+K /" aria-label="<%= t("docs.top.search") %>"
               class="flex items-center gap-6 min-h-9 px-2.5 border border-line-strong bg-transparent text-muted text-[13px] cursor-pointer hover:text-ink">

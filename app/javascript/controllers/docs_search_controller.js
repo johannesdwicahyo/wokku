@@ -2,6 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = ["input", "results", "trigger", "panel"]
+  static values = { empty: { type: String, default: "No results for \"%{query}\"" } }
 
   connect() {
     this.index = null
@@ -88,7 +89,7 @@ export default class extends Controller {
     if (!results.length) {
       const empty = document.createElement("div")
       empty.className = "docs-search-empty"
-      empty.textContent = `No results for "${query}"`
+      empty.textContent = this.emptyValue.replace("%{query}", query)
       this.resultsTarget.appendChild(empty)
       this.resultsTarget.classList.remove("hidden")
       return

@@ -560,6 +560,7 @@ en:
       cli: "CLI"
       changelog: "Changelog"
       search: "Search docs"
+      no_results: "No results for \"%{query}\""
       dashboard: "Dashboard"
       sign_in: "Sign in"
       toggle_sidebar: "Toggle sidebar"

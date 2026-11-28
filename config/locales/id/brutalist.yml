@@ -560,6 +560,7 @@ id:
       cli: "CLI"
       changelog: "Changelog"
       search: "Cari docs"
+      no_results: "Tidak ada hasil untuk \"%{query}\""
       dashboard: "Dashboard"
       sign_in: "Masuk"
       toggle_sidebar: "Buka/tutup sidebar"
