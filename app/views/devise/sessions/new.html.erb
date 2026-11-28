@@ -1,3 +1,5 @@
+<% email_code = Wokku.config.email_sign_in %>
+<% site_key = Wokku.config.turnstile_site_key if email_code %>
 <%= render Organisms::AuthShellComponent.new do %>
   <% providers = Molecules::OauthButtonComponent::ORDER & configured_oauth_providers %>
   <div>
@@ -5,7 +7,7 @@
     <p class="text-ink-soft text-base mt-1.5 mb-0"><%= t("signin.sub") %></p>
   </div>
 
-  <%= render "devise/shared/auth_flash" %>
+  <%= render "devise/shared/auth_flash", skip_alert: email_code %>
 
   <%# Providers only when the operator configured their credentials (cloud sets
       them all; a fresh self-host sets none and gets the password form). %>
@@ -16,7 +18,30 @@
       <% end %>
     </div>
     <p class="text-[13px] text-muted m-0"><%= t("signin.reassure") %></p>
-  <% else %>
+  <% end %>
+
+  <% if email_code %>
+    <% error = flash[:alert] %>
+    <% if providers.any? %>
+      <div class="flex items-center gap-3.5 font-mono text-[11px] uppercase tracking-[.12em] text-muted before:content-[''] before:flex-1 before:h-px before:bg-line after:content-[''] after:flex-1 after:h-px after:bg-line"><%= t("signin.code.or") %></div>
+    <% end %>
+    <%= form_with url: users_sign_in_codes_path, method: :post, id: "signin-form", data: { turbo: false }, class: "flex flex-col gap-[22px]" do |f| %>
+      <div class="flex flex-col gap-2">
+        <%= f.label :email, t("signin.code.email_label"), class: "font-mono text-[11px] uppercase tracking-[.12em] text-muted" %>
+        <%= f.email_field :email, value: resource&.email, autofocus: providers.none?, autocomplete: "email", required: true,
+              placeholder: t("signin.code.email_placeholder"), class: "auth-input",
+              "aria-invalid": error.present?, "aria-describedby": (error.present? ? "email-error" : nil) %>
+        <% if error.present? %><span id="email-error" role="alert" class="text-[13px] text-bad-text"><%= error %></span><% end %>
+      </div>
+      <% if site_key.present? %>
+        <div class="cf-turnstile" data-sitekey="<%= site_key %>" data-theme="dark" data-language="<%= I18n.locale %>"></div>
+        <%# Rendered here, not in the layout head: only the sign-in page loads it. %>
+        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+      <% end %>
+      <%= f.button t("signin.code.send"), type: "submit",
+            class: Atoms::ButtonComponent.new(variant: :primary, class: "w-full h-[50px]").classes %>
+    <% end %>
+  <% elsif providers.none? %>
     <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: { id: "signin-form", class: "flex flex-col gap-[22px]" }) do |f| %>
       <div class="flex flex-col gap-2">
         <%= f.label :email, t("signin.email_label"), class: "font-mono text-[11px] uppercase tracking-[.12em] text-muted" %>
@@ -32,7 +57,7 @@
   <% end %>
 
   <% if wokku_cloud? %>
-    <p class="text-[15px] text-ink-soft m-0"><%= t("signin.new_account") %></p>
+    <p class="text-[15px] text-ink-soft m-0"><%= t(email_code ? "signin.new_account_code" : "signin.new_account") %></p>
   <% end %>
 
   <% if respond_to?(:terms_path) && respond_to?(:privacy_path) %>

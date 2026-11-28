@@ -399,3 +399,23 @@ select:focus-visible {
   transition: border-color .2s, box-shadow .2s;
 }
 @media (prefers-reduced-motion: reduce) { .auth-input { transition: none; } }
+
+/* Sign-in code: one input over a 6-cell background (paste + autofill work).
+   Letter pitch = a sixth of the width, via container query units. */
+.code-cells { container-type: inline-size; }
+.code-input {
+  width: 100%;
+  height: 56px;
+  box-sizing: border-box;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 24px;
+  color: var(--color-ink);
+  caret-color: var(--color-live);
+  letter-spacing: calc(100cqw / 6 - 1ch);
+  padding: 0 0 0 calc(100cqw / 12 - .5ch);
+  background-color: var(--color-bg);
+  background-image: linear-gradient(90deg, transparent calc(100% - 1px), var(--color-dark-line) 0);
+  background-size: calc(100% / 6) 100%;
+  border: 1px solid var(--color-dark-line);
+  outline: none;
+}
