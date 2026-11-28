@@ -1,22 +1,49 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["input", "results"]
+  static targets = ["input", "results", "trigger", "panel"]
+  static values = { empty: { type: String, default: "No results for \"%{query}\"" } }
 
   connect() {
     this.index = null
     this.selectedIndex = -1
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "/" && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
+    this.onKeydown = (e) => {
+      const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName) ||
+                     document.activeElement.isContentEditable
+      if ((e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
-        this.inputTarget.focus()
+        this.open()
+      } else if (e.key === "/" && !typing) {
+        e.preventDefault()
+        this.open()
+      } else if (e.key === "Escape" && !this.panelTarget.hidden) {
+        this.dismiss()
       }
-      if (e.key === "Escape") {
-        this.close()
-        this.inputTarget.blur()
-      }
-    })
+    }
+    this.onClickOutside = (e) => {
+      if (!this.panelTarget.hidden && !this.element.contains(e.target)) this.dismiss(false)
+    }
+    document.addEventListener("keydown", this.onKeydown)
+    document.addEventListener("click", this.onClickOutside)
+  }
+
+  disconnect() {
+    document.removeEventListener("keydown", this.onKeydown)
+    document.removeEventListener("click", this.onClickOutside)
+  }
+
+  open() {
+    this.panelTarget.hidden = false
+    this.triggerTarget.setAttribute("aria-expanded", "true")
+    this.inputTarget.focus()
+  }
+
+  // Esc / outside click: close the panel; Esc returns focus to the button.
+  dismiss(refocus = true) {
+    this.close()
+    this.panelTarget.hidden = true
+    this.triggerTarget.setAttribute("aria-expanded", "false")
+    if (refocus) this.triggerTarget.focus()
   }
 
   async search() {
@@ -24,7 +51,7 @@ export default class extends Controller {
     if (query.length < 2) { this.close(); return }
 
     if (!this.index) {
-      const res = await fetch("/docs/search-index.json")
+      const res = await fetch(`/docs/search-index.json?lang=${encodeURIComponent(document.documentElement.lang || "en")}`)
       this.index = await res.json()
     }
 
@@ -62,7 +89,7 @@ export default class extends Controller {
     if (!results.length) {
       const empty = document.createElement("div")
       empty.className = "docs-search-empty"
-      empty.textContent = `No results for "${query}"`
+      empty.textContent = this.emptyValue.replace("%{query}", query)
       this.resultsTarget.appendChild(empty)
       this.resultsTarget.classList.remove("hidden")
       return

@@ -1,0 +1,29 @@
+# API reference groups (/docs/api/:key): each group's OpenAPI tags, in the
+# order Redoc lists them. A tag not listed here lands in "apps" (see
+# Docs::ApiSlice.unmapped_tags). The cloud-only `cloud` tag is split by path
+# in Docs::ApiSlice. `intro` (markdown) is the fallback group intro, used
+# when Wokku.config.docs_api_group_intros gives none.
+- key: apps
+  title: { en: "Apps and deploys", id: "Aplikasi dan deploy" }
+  tags: [apps, deploys, releases, config, ps, dynos, dyno_tiers, runs, logs, previews, buildpacks, checks, scheduled_tasks, storage, servers, templates, activities, incidents, alert_mutes, notifications, doctor, ai]
+  intro: 'Create, configure, deploy, scale and roll back apps, plus logs, releases, one-off runs, scheduled tasks, previews, servers and templates. Send `Authorization: Bearer <token>` with every call (see [API authentication](/docs/api/authentication)). Example: `curl -H "Authorization: Bearer $WOKKU_TOKEN" https://<host>/api/v1/apps`'
+- key: addons
+  title: { en: "Add-ons", id: "Add-on" }
+  tags: [addons, databases, backups]
+  intro: 'Databases and their backups: provision, link to an app, resize, import a dump, back up and restore, and turn an app''s shared add-ons on or off. Send `Authorization: Bearer <token>` with every call (see [API authentication](/docs/api/authentication)). Example: `curl -H "Authorization: Bearer $WOKKU_TOKEN" https://<host>/api/v1/databases`'
+- key: domains
+  title: { en: "Domains", id: "Domain" }
+  tags: [domains, tunnels]
+  intro: 'Add custom domains to an app, remove them, and queue an SSL certificate for each. Send `Authorization: Bearer <token>` with every call (see [API authentication](/docs/api/authentication)). Example: `curl -H "Authorization: Bearer $WOKKU_TOKEN" https://<host>/api/v1/apps/<app>/domains`'
+- key: email-storage
+  title: { en: "Email and storage", id: "Email dan penyimpanan" }
+  tags: [object_storage]
+  intro: 'An app''s object storage bucket: enable it, change its quota, rotate its keys, or delete it. Send `Authorization: Bearer <token>` with every call (see [API authentication](/docs/api/authentication)). Example: `curl -H "Authorization: Bearer $WOKKU_TOKEN" https://<host>/api/v1/apps/<app>/object_storage`'
+- key: team-billing
+  title: { en: "Team and billing", id: "Tim dan tagihan" }
+  tags: [teams, team_members, billing, account]
+  intro: 'Teams and their members, and your own account. Send `Authorization: Bearer <token>` with every call (see [API authentication](/docs/api/authentication)). Example: `curl -H "Authorization: Bearer $WOKKU_TOKEN" https://<host>/api/v1/teams`'
+- key: auth
+  title: { en: "Auth and tokens", id: "Autentikasi dan token" }
+  tags: [auth, auth_tokens, devices, dev_sessions, github, ssh_keys, meta]
+  intro: 'Get and manage API tokens, check who you are, and manage SSH keys, push devices, dev sessions and GitHub access. Sign-in calls hand out a token; every other call needs `Authorization: Bearer <token>` (see [API authentication](/docs/api/authentication)). Example: `curl -H "Authorization: Bearer $WOKKU_TOKEN" https://<host>/api/v1/auth/whoami`'

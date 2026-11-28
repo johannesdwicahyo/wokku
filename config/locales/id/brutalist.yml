@@ -524,15 +524,11 @@ id:
       cta_primary: "> install_app_pertama()"
 
   docs:
-    sidebar:
-      label: "// docs"
     toc:
-      label: "// di halaman ini"
-      shortcuts: "// shortcut"
-      search: "Cari docs"
-      cmdbar: "Command bar"
+      label: "Di halaman ini"
     pager:
       previous: "Sebelumnya"
+      label: "Sebelumnya dan berikutnya"
       next: "Berikutnya"
     header:
       edited_at: "Diupdate %{when}"
@@ -545,6 +541,30 @@ id:
       whatsapp: "WhatsApp"
     copy:
       copy: "Salin"
+      copied: "Tersalin"
+    callout:
+      note: "Catatan"
+      warn: "Hati-hati"
+      success: "Tips"
+      danger: "Bahaya"
+    top:
+      docs: "Docs"
+      sections: "Bagian docs"
+      guides: "Panduan"
+      api: "Referensi API"
+      cli: "CLI"
+      changelog: "Changelog"
+      search: "Cari docs"
+      no_results: "Tidak ada hasil untuk \"%{query}\""
+      dashboard: "Dashboard"
+      sign_in: "Masuk"
+      toggle_sidebar: "Buka/tutup sidebar"
+    api:
+      title: "Referensi API"
+      groups: "Grup API"
+      loading: "Memuat referensi API…"
+      failed: "Referensi API gagal dimuat. Unduh file OpenAPI:"
+      needs_js: "Referensi ini butuh JavaScript. Unduh file OpenAPI:"
     beta_banner:
       tag: "Public Beta"
       body: "lagi ship aktif — nemu yang nggak smooth? kabari"

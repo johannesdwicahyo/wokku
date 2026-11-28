@@ -222,6 +222,10 @@ Rails.application.routes.draw do
   get "/v.js", to: "vitals_script#show"
   get "/docs", to: "docs#show", as: :docs
   get "/docs/search-index.json", to: "docs#search_index", as: :docs_search_index
+  # API reference groups; other /docs/api/<page> paths stay guides.
+  get "/docs/api", to: "docs/api#index", as: :docs_api
+  get "/docs/api/:group(.:format)", to: "docs/api#show", as: :docs_api_group,
+      constraints: { group: Regexp.union(Docs::ApiSlice::KEYS), format: /html|json/ }
   get "/docs/*path", to: "docs#show", as: :docs_page
 
   get "up" => "rails/health#show", as: :rails_health_check

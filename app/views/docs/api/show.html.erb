@@ -1,0 +1,25 @@
+<% @doc_title = "#{@group[:title]} · #{t("docs.api.title")}" %>
+<% content_for :head do %>
+  <%= tag.script(src: "https://cdn.jsdelivr.net/npm/redoc@2.1.5/bundles/redoc.standalone.js",
+                 integrity: "sha384-0GrsyTQc9Oqd8h+b2dbc4XdR2T/DYpy0tLNNstyx+LBMUyiBbcWPbEs9aRmUcaxD",
+                 crossorigin: "anonymous", defer: true, data: { redoc_script: true }, nonce: content_security_policy_nonce) %>
+<% end %>
+
+<nav class="docs-api-groups" data-docs-api-groups aria-label="<%= t("docs.api.groups") %>">
+  <% @groups.each do |g| %>
+    <a href="<%= docs_api_group_path(g[:key], lang: params[:lang].presence) %>" <%= 'aria-current="page"'.html_safe if g[:key] == @group[:key] %>><i aria-hidden="true"></i><%= g[:title] %></a>
+  <% end %>
+</nav>
+
+<main id="redoc" class="docs-api" data-controller="redoc"
+      data-redoc-url-value="<%= docs_api_group_path(@group[:key], format: :json) %>"
+      data-redoc-failed-value="<%= t("docs.api.failed") %>">
+  <noscript>
+    <p class="docs-api__note"><%= t("docs.api.needs_js") %> <a href="/api/v1/openapi.yaml">/api/v1/openapi.yaml</a></p>
+  </noscript>
+  <p class="docs-api__note" role="status" hidden data-redoc-target="status"><%= t("docs.api.loading") %></p>
+  <%# The intro is the no-JS / loading view; once mounted, Redoc shows the same text from the slice's info.description. %>
+  <% if @group[:intro_md].present? %>
+    <div class="prose-doc" data-docs-api-intro><%= sanitize Commonmarker.to_html(@group[:intro_md]) %></div>
+  <% end %>
+</main>

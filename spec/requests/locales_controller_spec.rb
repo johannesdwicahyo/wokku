@@ -37,6 +37,13 @@ RSpec.describe "LocalesController", type: :request do
     expect(cookies[:locale]).to eq("en")
   end
 
+  # Docs pages pin their language with ?lang=, which beats the cookie, so the
+  # docs top bar's EN/ID switch would do nothing if it were kept.
+  it "drops the docs ?lang= too" do
+    post "/locale", params: { locale: "id" }, headers: { "Referer" => "http://www.example.com/docs/cli/install?lang=en" }
+    expect(response).to redirect_to("/docs/cli/install")
+  end
+
   it "ignores a cross-host referer" do
     post "/locale", params: { locale: "en" }, headers: { "Referer" => "https://evil.example/?a=1" }
     expect(response).to redirect_to("/")

@@ -524,15 +524,11 @@ en:
       cta_primary: "> install_first_app()"
 
   docs:
-    sidebar:
-      label: "// docs"
     toc:
-      label: "// on this page"
-      shortcuts: "// shortcuts"
-      search: "Search docs"
-      cmdbar: "Command bar"
+      label: "On this page"
     pager:
       previous: "Previous"
+      label: "Previous and next"
       next: "Next"
     header:
       edited_at: "Updated %{when}"
@@ -545,6 +541,30 @@ en:
       whatsapp: "WhatsApp"
     copy:
       copy: "Copy"
+      copied: "Copied"
+    callout:
+      note: "Note"
+      warn: "Careful"
+      success: "Tip"
+      danger: "Danger"
+    top:
+      docs: "Docs"
+      sections: "Docs sections"
+      guides: "Guides"
+      api: "API reference"
+      cli: "CLI"
+      changelog: "Changelog"
+      search: "Search docs"
+      no_results: "No results for \"%{query}\""
+      dashboard: "Dashboard"
+      sign_in: "Sign in"
+      toggle_sidebar: "Toggle sidebar"
+    api:
+      title: "API reference"
+      groups: "API groups"
+      loading: "Loading the API reference…"
+      failed: "The API reference could not load. Download the OpenAPI file:"
+      needs_js: "This reference needs JavaScript. Download the OpenAPI file:"
     beta_banner:
       tag: "Public Beta"
       body: "actively shipping — found a rough edge? tell us"

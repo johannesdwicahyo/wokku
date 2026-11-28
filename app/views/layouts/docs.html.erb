@@ -17,48 +17,26 @@
   <%= javascript_importmap_tags %>
   <%= optional_partial "shared/open_graph" %>
   <%= optional_partial "shared/analytics" %>
+  <%= yield :head %>
 </head>
 <body class="bg-bg text-ink font-sans antialiased">
 
-  <%# Brutalist site nav — matches landing/pricing so the header stays
-      consistent across all public surfaces. Lang/theme toggles live
-      inside SiteNav. %>
-  <%# The marketing site nav is cloud chrome; a standalone engine shows
-      a minimal docs masthead instead. %>
-  <% if defined?(Organisms::SiteNavComponent) %>
-    <%= render Organisms::SiteNavComponent.new(active: :docs) %>
+  <%= render Organisms::DocsTopBarComponent.new(active: @docs_tab || (@path.to_s.start_with?("cli/") ? :cli : :guides), locale: @docs_locale || I18n.locale) %>
+
+  <% if @sidebar.nil? %>
+    <%# Full-width pages (API reference) bring their own layout. %>
+    <%= yield %>
   <% else %>
-    <div class="border-b border-line-soft px-8 py-3"><a href="/" class="font-sans text-sm font-bold">wokku</a></div>
-  <% end %>
-
-  <%# Docs sub-bar: breadcrumb path + search. Language toggle lives in
-      SiteNavComponent (top right) — no duplicate here. %>
-  <div class="border-y border-line-soft bg-bg/95 backdrop-blur-sm sticky top-0 z-20">
-    <div class="max-w-[1440px] mx-auto flex items-center justify-between h-12 px-8 gap-4">
-      <a href="/docs" class="text-xs text-dim hover:text-ink transition uppercase tracking-widest">~/docs</a>
-
-      <div class="relative" data-controller="docs-search">
-        <input type="text"
-               placeholder="Search docs..."
-               class="w-64 bg-paper border border-dark-line rounded-md px-3 py-1.5 text-xs text-ink placeholder:text-dim focus:outline-none focus:shadow-brutal-sm"
-               data-docs-search-target="input"
-               data-action="input->docs-search#search keydown->docs-search#navigate">
-        <kbd class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-dim border border-line-soft rounded px-1.5 py-0.5 pointer-events-none bg-bg-deep">/</kbd>
-        <div class="absolute top-full right-0 mt-2 w-80 bg-paper border border-line rounded-md shadow-brutal-sm overflow-hidden hidden" data-docs-search-target="results"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="max-w-[1440px] mx-auto px-8 grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_220px] gap-12" data-controller="dropdown">
-    <%# Mobile sidebar toggle: the sidebar is hidden below lg until opened. %>
-    <button class="lg:hidden fixed bottom-4 right-4 z-40 bg-ink text-bg rounded-full w-12 h-12 flex items-center justify-center shadow-brutal text-lg"
+  <div class="docs-grid" data-controller="dropdown">
+    <%# Phones: the sidebar is hidden below lg until opened. %>
+    <button type="button" class="lg:hidden fixed bottom-4 right-4 z-40 bg-bg border border-line-strong text-ink w-12 h-12 flex items-center justify-center text-lg"
             data-action="click->dropdown#toggle"
-            aria-label="Toggle sidebar">≡</button>
-    <div class="hidden lg:block" data-dropdown-target="menu">
+            aria-label="<%= t("docs.top.toggle_sidebar") %>">≡</button>
+    <div class="hidden lg:block docs-grid__side" data-dropdown-target="menu">
       <%= render Organisms::DocsSidebarComponent.new(sidebar: @sidebar, active_path: @path) %>
     </div>
 
-    <main class="py-10 max-w-[760px] mx-auto w-full lg:mx-0">
+    <main class="docs-main">
       <%= yield %>
     </main>
 
@@ -66,6 +44,7 @@
       <%= render Organisms::DocsTocComponent.new(items: @toc) %>
     <% end %>
   </div>
+  <% end %>
 
     <%= render "shared/addon_scripts" %>
   </body>

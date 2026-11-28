@@ -1,4 +1,1 @@
-<a href="<%= href %>" class="doc-link <%= 'is-active' if active %>">
-  <span class="marker"><%= active ? '›' : ' ' %></span>
-  <span><%= label %></span>
-</a>
+<a href="<%= href %>" class="doc-link <%= 'is-active' if active %>"<%= ' aria-current="page"'.html_safe if active %>><%= label %></a>

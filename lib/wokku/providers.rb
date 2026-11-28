@@ -39,13 +39,21 @@ module Wokku
     end
 
     attr_accessor :tls, :billing
-    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder, :host_ssh_user, :control_plane_host, :openapi_path, :object_storage, :sidebar_extra_items, :addon_path_prefixes, :app_resource_sections, :object_storage_limits, :addons_index_sections, :apps_index_readouts, :apps_index_side_sections, :object_storage_pricing_note, :image_scans, :email_sign_in, :email_signup_guard, :turnstile_site_key, :turnstile_secret_key
+    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder, :host_ssh_user, :control_plane_host, :openapi_path, :object_storage, :sidebar_extra_items, :addon_path_prefixes, :app_resource_sections, :object_storage_limits, :addons_index_sections, :apps_index_readouts, :apps_index_side_sections, :object_storage_pricing_note, :image_scans, :email_sign_in, :email_signup_guard, :turnstile_site_key, :turnstile_secret_key, :docs_api_group_intros, :docs_api_hidden_operations
 
     # The OpenAPI file GET /api/v1/openapi.yaml serves. Engine default: its
     # own derived contract; the cloud points it at the cloud superset.
     def openapi_path
       @openapi_path || Wokku::Engine.root.join("openapi/v1.yaml")
     end
+
+    # Optional { "<group key>" => markdown } intros for the /docs/api groups
+    # (config/docs_api_groups.yml). Default nil: the engine's own default intro.
+    attr_reader :docs_api_group_intros
+
+    # operationIds the API reference omits (on top of *.dokku, tunnel_authorize.*
+    # and x-internal). The operations stay in openapi.yaml.
+    def docs_api_hidden_operations = Array(@docs_api_hidden_operations)
 
     # Extension point for host apps: a callable taking the view context and
     # returning extra rail items (label:, key:, href:, active:, count:; optional

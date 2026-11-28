@@ -21,7 +21,8 @@ class DocsController < ApplicationController
     "workspaces/switching" => "workspaces/personal-vs-org",
     "teams/permissions" => "teams/members",
     "mobile/notifications" => "mobile/download",
-    "getting-started/connect-server" => "oss/connect-server"
+    "getting-started/connect-server" => "oss/connect-server",
+    "cli" => "cli/install" # the docs top bar's CLI tab
   }.freeze
 
   # Pages hidden (404, not in sidebar/search) until their feature is on.
@@ -40,6 +41,7 @@ class DocsController < ApplicationController
     end
 
     @docs_locale = resolve_locale
+    I18n.locale = @docs_locale # chrome labels follow the page language (?lang=)
     @path = params[:path] || "getting-started/first-deploy"
     @sidebar = load_sidebar(@docs_locale)
 
@@ -159,23 +161,36 @@ class DocsController < ApplicationController
     highlight_code_blocks(html)
   end
 
+  # Every fenced block → `.doc-code` with a Copy button (copy-code
+  # controller; `hidden` until JS runs). `doc-pre` marks a wrapped block so
+  # the outer pass doesn't re-wrap blocks already rendered inside callouts/tabs.
   def highlight_code_blocks(html)
     formatter = Rouge::Formatters::HTML.new
-    html.gsub(%r{<pre lang="(\w+)"[^>]*><code>(.*?)</code></pre>}m) do
+    html.gsub(%r{<pre(?![^>]*doc-pre)(?: lang="([\w+-]+)")?[^>]*><code>(.*?)</code></pre>}m) do
       lang = $1
-      code = $2.gsub(/<span[^>]*>/, "").gsub("</span>", "")
-      code = CGI.unescapeHTML(code)
-      lexer = Rouge::Lexer.find(lang) || Rouge::Lexers::PlainText.new
-      highlighted = formatter.format(lexer.lex(code))
-      %(<div class="docs-code-block code-block"><div class="docs-code-lang">#{lang}</div><pre><code>#{highlighted}</code></pre></div>)
+      code = CGI.unescapeHTML($2.gsub(/<span[^>]*>/, "").gsub("</span>", ""))
+      lexer = (lang && Rouge::Lexer.find(lang)) || Rouge::Lexers::PlainText.new
+      code_block_html(lang, formatter.format(lexer.lex(code)))
     end
   end
 
+  def code_block_html(lang, highlighted)
+    %(<div class="doc-code docs-code-block" data-controller="copy-code" data-copy-code-copied-value="#{ERB::Util.h(I18n.t("docs.copy.copied"))}">) +
+      %(<div class="doc-code__bar"><span class="docs-code-lang">#{ERB::Util.h(lang)}</span>) +
+      %(<button type="button" class="doc-copy" hidden data-copy-code-target="button" data-action="copy-code#copy">#{ERB::Util.h(I18n.t("docs.copy.copy"))}</button>) +
+      %(<span class="sr-only" aria-live="polite" data-copy-code-target="status"></span></div>) +
+      %(<pre class="doc-pre"><code>#{highlighted}</code></pre></div>)
+  end
+
   # Pre-processor: `:::callout note\n...\n:::` → CalloutComponent.
-  # Tones: note | warn | success | danger.
+  # Tones: note | warn | success | danger; the guides write `tip` and
+  # `warning`, which used to fall through to a green "Note".
+  CALLOUT_ALIASES = { tip: :success, warning: :warn }.freeze
+
   def preprocess_callouts(content)
     content.gsub(/:::callout(?:\s+(\w+))?\n(.*?):::/m) do
       tone = ($1 || "note").to_sym
+      tone = CALLOUT_ALIASES.fetch(tone, tone)
       tone = :note unless %i[note warn success danger].include?(tone)
       body = render_markdown($2.strip)
       # with_content, not a block: controller render drops a block, which
