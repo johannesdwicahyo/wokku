@@ -17,11 +17,16 @@
   <%= javascript_importmap_tags %>
   <%= optional_partial "shared/open_graph" %>
   <%= optional_partial "shared/analytics" %>
+  <%= yield :head %>
 </head>
 <body class="bg-bg text-ink font-sans antialiased">
 
-  <%= render Organisms::DocsTopBarComponent.new(active: @path.to_s.start_with?("cli/") ? :cli : :guides, locale: @docs_locale || I18n.locale) %>
+  <%= render Organisms::DocsTopBarComponent.new(active: @docs_tab || (@path.to_s.start_with?("cli/") ? :cli : :guides), locale: @docs_locale || I18n.locale) %>
 
+  <% if @sidebar.nil? %>
+    <%# Full-width pages (API reference) bring their own layout. %>
+    <%= yield %>
+  <% else %>
   <div class="docs-grid" data-controller="dropdown">
     <%# Phones: the sidebar is hidden below lg until opened. %>
     <button type="button" class="lg:hidden fixed bottom-4 right-4 z-40 bg-bg border border-line-strong text-ink w-12 h-12 flex items-center justify-center text-lg"
@@ -39,6 +44,7 @@
       <%= render Organisms::DocsTocComponent.new(items: @toc) %>
     <% end %>
   </div>
+  <% end %>
 
     <%= render "shared/addon_scripts" %>
   </body>

@@ -177,6 +177,8 @@
       path: api/authentication
     - title: API Reference
       path: api/endpoints
+    - title: Full API reference
+      path: api
 
 - title: Troubleshooting
   icon: help

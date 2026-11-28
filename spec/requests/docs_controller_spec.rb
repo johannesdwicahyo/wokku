@@ -67,6 +67,7 @@ RSpec.describe "DocsController", type: :request do
     %w[en id].each do |locale|
       YAML.load_file(Wokku::Engine.root.join("docs/sidebar.#{locale}.yml")).flat_map { |s| s["items"] }.each do |item|
         get "/docs/#{item["path"]}", params: { lang: locale }
+        follow_redirect! if item["path"] == "api" # → the first API reference group
         expect(response).to have_http_status(:success), "#{locale} sidebar → #{item["path"]} gave #{response.status}"
       end
     end
@@ -84,6 +85,7 @@ RSpec.describe "DocsController", type: :request do
     sidebar.each do |section|
       section["items"].each do |item|
         get "/docs/#{item['path']}"
+        follow_redirect! if item["path"] == "api"
         expect(response).to have_http_status(:success), "Failed to load /docs/#{item['path']}"
       end
     end

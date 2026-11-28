@@ -563,6 +563,12 @@ en:
       dashboard: "Dashboard"
       sign_in: "Sign in"
       toggle_sidebar: "Toggle sidebar"
+    api:
+      title: "API reference"
+      groups: "API groups"
+      loading: "Loading the API reference…"
+      failed: "The API reference could not load. Download the OpenAPI file:"
+      needs_js: "This reference needs JavaScript. Download the OpenAPI file:"
     beta_banner:
       tag: "Public Beta"
       body: "actively shipping — found a rough edge? tell us"

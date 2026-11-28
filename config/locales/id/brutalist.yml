@@ -563,6 +563,12 @@ id:
       dashboard: "Dashboard"
       sign_in: "Masuk"
       toggle_sidebar: "Buka/tutup sidebar"
+    api:
+      title: "Referensi API"
+      groups: "Grup API"
+      loading: "Memuat referensi API…"
+      failed: "Referensi API gagal dimuat. Unduh file OpenAPI:"
+      needs_js: "Referensi ini butuh JavaScript. Unduh file OpenAPI:"
     beta_banner:
       tag: "Public Beta"
       body: "lagi ship aktif — nemu yang nggak smooth? kabari"

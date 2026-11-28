@@ -1,0 +1,22 @@
+# API reference groups (/docs/api/:key): each group's OpenAPI tags, in the
+# order Redoc lists them. A tag not listed here lands in "apps" (see
+# Docs::ApiSlice.unmapped_tags). The cloud-only `cloud` tag is split by path
+# in Docs::ApiSlice.
+- key: apps
+  title: { en: "Apps and deploys", id: "Aplikasi dan deploy" }
+  tags: [apps, deploys, releases, config, ps, dynos, dyno_tiers, runs, logs, previews, buildpacks, checks, scheduled_tasks, storage, servers, templates, activities, incidents, alert_mutes, notifications, doctor, ai]
+- key: addons
+  title: { en: "Add-ons", id: "Add-on" }
+  tags: [addons, databases, backups]
+- key: domains
+  title: { en: "Domains", id: "Domain" }
+  tags: [domains, tunnels]
+- key: email-storage
+  title: { en: "Email and storage", id: "Email dan penyimpanan" }
+  tags: [object_storage]
+- key: team-billing
+  title: { en: "Team and billing", id: "Tim dan tagihan" }
+  tags: [teams, team_members, billing, account]
+- key: auth
+  title: { en: "Auth and tokens", id: "Autentikasi dan token" }
+  tags: [auth, auth_tokens, devices, dev_sessions, github, ssh_keys, meta]

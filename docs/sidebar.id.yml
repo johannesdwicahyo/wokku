@@ -177,6 +177,8 @@
       path: api/authentication
     - title: Referensi API
       path: api/endpoints
+    - title: Referensi API lengkap
+      path: api
 
 - title: Pemecahan Masalah
   icon: help
