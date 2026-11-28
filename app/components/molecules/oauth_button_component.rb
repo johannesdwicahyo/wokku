@@ -42,7 +42,7 @@ module Molecules
     end
 
     def button_classes
-      Atoms::ButtonComponent.new(variant: wide ? :primary : :secondary, class: "w-full h-[46px] text-[12px]").classes
+      Atoms::ButtonComponent.new(variant: wide ? :primary : :secondary, class: "w-full h-[46px]").classes
     end
   end
 end

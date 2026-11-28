@@ -394,12 +394,8 @@ select:focus-visible {
   font-size: 16px;
   color: var(--color-ink);
   background: var(--color-bg);
-  border: 1px solid var(--color-line-strong);
+  border: 1px solid var(--color-dark-line);
   outline: none;
   transition: border-color .2s, box-shadow .2s;
-}
-.auth-input:focus-visible {
-  border-color: var(--color-live);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-live) 25%, transparent);
 }
 @media (prefers-reduced-motion: reduce) { .auth-input { transition: none; } }

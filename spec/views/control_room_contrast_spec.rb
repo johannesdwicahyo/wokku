@@ -7,6 +7,11 @@ require "rails_helper"
 RSpec.describe "control-room contrast" do
   def src(path) = File.read(File.expand_path("../../#{path}", __dir__))
 
+  it ".auth-input border uses the 3:1 dark-line token, not line-strong" do
+    rule = src("app/assets/tailwind/wokku.css")[/^\.auth-input \{.*?^\}/m]
+    expect(rule).to match(/border:[^;]*--color-dark-line/)
+  end
+
   it "log glance prefix is not drawn in the page colour" do
     expect(src("app/views/dashboard/logs/_glance.html.erb")).not_to match(/text-bg\b/)
   end
