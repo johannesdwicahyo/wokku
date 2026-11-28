@@ -15,10 +15,6 @@ id:
     get_started: "Coba Gratis"
   hero:
     eyebrow: "// VPS yang nggak gigit balik"
-    headline_pre: "Berhenti"
-    headline_strike: "ngurusin"
-    headline_post: "server."
-    headline_b: "AI kamu bisa deploy ini."
     body: "Hosting app managed untuk vibecoder, freelancer, dan agensi. Bayar sesuai CPU & RAM yang dipakai, mulai Rp15rb/bulan — harga jelas dalam Rupiah. Patching, SSL, backup, uptime: beres. Install Ghost, WordPress, n8n satu klik. Bayar pakai QRIS."
     pill_qris: "QRIS · GoPay · OVO · DANA"
     pill_price: "Mulai Rp15K / bulan"
@@ -28,14 +24,6 @@ id:
     cta_primary: "> coba_gratis()"
     cta_secondary: "> lihat_harga()"
     cta_note: "// gratis · tanpa kartu · live ~60 detik"
-    callout_dashboard: "↘ Satu dashboard. App, db, domain, log — semua di sini."
-    sticker_region_label: "Region"
-    sticker_region_value: "jkt-1 · ~20ms"
-    anchor_pre: "nggak lagi"
-    anchor_word: "ngurusin"
-    anchor_post: "— karena kamu berhenti"
-    anchor_words: ["patching server", "renew SSL", "ping downtime weekend", "UI cPanel jadul 2008", "SSH cuma buat benerin nginx"]
-    anchor_tail: " — git push aja."
   compare:
     eyebrow: "// harga yang lain"
     headline: "Stack sama. Mulai Rp15K."

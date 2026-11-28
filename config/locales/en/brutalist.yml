@@ -15,10 +15,6 @@ en:
     get_started: "Get Started"
   hero:
     eyebrow: "// the VPS that doesn't bite back"
-    headline_pre: "Stop"
-    headline_strike: "babysitting"
-    headline_post: "servers."
-    headline_b: "Your AI can deploy this for you."
     body: "Managed app hosting for vibecoders, freelancers, and agencies. Pay for the CPU & RAM you use, from Rp15K/month — clear prices in Rupiah. Patching, SSL, backups, uptime: handled. Install Ghost, WordPress, n8n in one click. Pay with QRIS."
     pill_qris: "QRIS · GoPay · OVO · DANA"
     pill_price: "From Rp15K / mo"
@@ -28,14 +24,6 @@ en:
     cta_primary: "> start_free()"
     cta_secondary: "> see_pricing()"
     cta_note: "// free tier · no card · live in ~60s"
-    callout_dashboard: "↘ One dashboard. Apps, dbs, domains, logs — all here."
-    sticker_region_label: "Region"
-    sticker_region_value: "jkt-1 · ~20ms"
-    anchor_pre: "done"
-    anchor_word: "babysitting"
-    anchor_post: "— you stopped"
-    anchor_words: ["patching servers", "renewing SSL", "weekend downtime pings", "a cPanel UI from 2008", "SSH-ing to fix one nginx config"]
-    anchor_tail: " — git push instead."
   compare:
     eyebrow: "// what the rest cost"
     headline: "Same stack. From Rp15K."
