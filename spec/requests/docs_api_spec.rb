@@ -22,6 +22,25 @@ RSpec.describe "Docs API reference", type: :request do
     expect(body["paths"]).not_to include("/api/v1/apps/{id}/dokku")
   end
 
+  it "sets servers to the request's base URL without touching the cached slice" do
+    get "/docs/api/apps.json"
+    expect(JSON.parse(response.body)["servers"]).to eq([ { "url" => "http://www.example.com" } ])
+    expect(Docs::ApiSlice.for("apps")["servers"]).not_to eq([ { "url" => "http://www.example.com" } ])
+  end
+
+  it "404s the Email and storage group (page and JSON) unless object storage is on" do
+    allow(Wokku.config).to receive(:object_storage?).and_return(false)
+    get "/docs/api/email-storage"
+    expect(response).to have_http_status(:not_found)
+    get "/docs/api/email-storage.json"
+    expect(response).to have_http_status(:not_found)
+    get "/docs/api/apps"
+    expect(html.at_css("nav[data-docs-api-groups]").text).not_to include("Email and storage")
+    allow(Wokku.config).to receive(:object_storage?).and_return(true)
+    get "/docs/api/email-storage"
+    expect(response).to have_http_status(:ok)
+  end
+
   it "404s an unknown or empty group" do
     get "/docs/api/nope.json"
     expect(response).to have_http_status(:not_found)

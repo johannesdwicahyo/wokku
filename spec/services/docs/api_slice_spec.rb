@@ -67,6 +67,8 @@ RSpec.describe Docs::ApiSlice do
   end
 
   describe "slicing" do
+    before { allow(Wokku.config).to receive(:object_storage?).and_return(true) }
+
     let(:doc) do
       {
         "openapi" => "3.0.3", "info" => { "title" => "t", "version" => "v1" },
@@ -128,31 +130,59 @@ RSpec.describe Docs::ApiSlice do
       end
     end
 
-    it "lists only the group's tags, with their descriptions, and uses them as the intro" do
+    it "lists only the group's tags, with their descriptions, and uses the engine default intro (not tag descriptions)" do
       with_spec(doc) do
         expect(described_class.for("domains")["tags"]).to eq([ { "name" => "domains", "description" => "Domains." }, { "name" => "tunnels" } ])
-        apps = described_class.groups.find { |g| g[:key] == "apps" }
-        expect(apps[:intro_md]).to eq("Apps **live** here.")
-        expect(described_class.for("apps")["info"]).to include("title" => "Apps and deploys", "description" => "Apps **live** here.")
+        default = described_class::GROUPS.find { |g| g[:key] == "apps" }[:intro]
+        expect(described_class.groups.find { |g| g[:key] == "apps" }[:intro_md]).to eq(default)
+        expect(described_class.for("apps")["info"]).to include("title" => "Apps and deploys", "description" => default)
       end
     end
 
-    it "prefers Wokku.config.docs_api_group_intros when set" do
+    it "prefers Wokku.config.docs_api_group_intros over the engine default" do
       with_spec(doc) do
         allow(Wokku.config).to receive(:docs_api_group_intros).and_return({ "domains" => "Point a name at an app." })
         expect(described_class.for("domains")["info"]["description"]).to eq("Point a name at an app.")
         expect(described_class.groups.find { |g| g[:key] == "domains" }[:intro_md]).to eq("Point a name at an app.")
+        default = described_class::GROUPS.find { |g| g[:key] == "team-billing" }[:intro]
+        expect(described_class.for("team-billing")["info"]["description"]).to eq(default)
       end
     end
 
-    it "falls back to the group's default intro when no tag has a description" do
-      with_spec(doc) do
-        default = described_class::GROUPS.find { |g| g[:key] == "team-billing" }[:intro]
-        expect(default).to include("Authorization: Bearer")
-        expect(described_class.for("team-billing")["info"]["description"]).to eq(default)
-        # order: config intro > tag descriptions > default
-        expect(described_class.for("apps")["info"]["description"]).to eq("Apps **live** here.")
+    it "drops tunnel_authorize.* and .dokku operationIds" do
+      extra = doc.merge("paths" => doc["paths"].merge(
+        "/api/v1/tunnels/authorize" => { "post" => op("tunnels", "operationId" => "tunnel_authorize.create") },
+        "/api/v1/domains/x" => { "get" => op("domains", "operationId" => "domains.index") }
+      ))
+      with_spec(extra) do
+        paths = described_class.for("domains")["paths"]
+        expect(paths).not_to include("/api/v1/tunnels/authorize")
+        expect(paths).to include("/api/v1/domains/x")
       end
+    end
+
+    it "drops operationIds listed in Wokku.config.docs_api_hidden_operations, and re-slices when the list changes" do
+      extra = doc.merge("paths" => doc["paths"].merge("/api/v1/domains/x" => { "get" => op("domains", "operationId" => "domains.index") }))
+      with_spec(extra) do
+        expect(described_class.for("domains")["paths"]).to include("/api/v1/domains/x")
+        allow(Wokku.config).to receive(:docs_api_hidden_operations).and_return([ "domains.index" ])
+        expect(described_class.for("domains")["paths"]).not_to include("/api/v1/domains/x")
+      end
+    end
+
+    it "hides the Email and storage group unless object storage is configured" do
+      with_spec(doc) do
+        allow(Wokku.config).to receive(:object_storage?).and_return(false)
+        expect(described_class.for("email-storage")).to be_nil
+        expect(described_class.groups.map { |g| g[:key] }).not_to include("email-storage")
+        allow(Wokku.config).to receive(:object_storage?).and_return(true)
+        expect(described_class.for("email-storage")).to be_present
+        expect(described_class.groups.map { |g| g[:key] }).to include("email-storage")
+      end
+    end
+
+    it "defaults docs_api_hidden_operations to an empty array" do
+      expect(Wokku::Providers.new.docs_api_hidden_operations).to eq([])
     end
 
     it "anchors the cloud path split on whole segments" do

@@ -15,7 +15,7 @@ module Docs
         format.json do
           request.session_options[:skip] = true # publicly cached: never set a cookie
           expires_in 5.minutes, public: true
-          render json: @slice
+          render json: @slice.merge("servers" => [ { "url" => request.base_url } ]) # fresh hash: the cached slice stays shared
         end
         format.html do
           @docs_locale = resolve_locale

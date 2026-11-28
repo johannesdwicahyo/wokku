@@ -2,7 +2,7 @@
 # order Redoc lists them. A tag not listed here lands in "apps" (see
 # Docs::ApiSlice.unmapped_tags). The cloud-only `cloud` tag is split by path
 # in Docs::ApiSlice. `intro` (markdown) is the fallback group intro, used
-# when neither Wokku.config.docs_api_group_intros nor tag descriptions give one.
+# when Wokku.config.docs_api_group_intros gives none.
 - key: apps
   title: { en: "Apps and deploys", id: "Aplikasi dan deploy" }
   tags: [apps, deploys, releases, config, ps, dynos, dyno_tiers, runs, logs, previews, buildpacks, checks, scheduled_tasks, storage, servers, templates, activities, incidents, alert_mutes, notifications, doctor, ai]

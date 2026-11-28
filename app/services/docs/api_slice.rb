@@ -12,7 +12,8 @@ module Docs
     TAG_GROUP = GROUPS.flat_map { |g| g[:tags].map { |t| [ t, g[:key] ] } }.to_h.freeze
     # The cloud-only `cloud` tag carries no resource name: route it by path.
     CLOUD_PATHS = { %r{/e?mail(?:/|\z)} => "email-storage", %r{/(?:billing|invoices|plans)(?:/|\z)} => "team-billing" }.freeze
-    HIDDEN_ID = /\.dokku\z/ # retired Dokku endpoints (apps.dokku, servers.dokku)
+    # retired Dokku endpoints (apps.dokku, servers.dokku) and the frps hook (tunnel_authorize.*)
+    HIDDEN_ID = /\.dokku\z|\Atunnel_authorize\./
     METHODS = %w[get put post delete options head patch trace].freeze
 
     EMPTY = { slices: {}.freeze, unmapped: [].freeze }.freeze
@@ -23,18 +24,22 @@ module Docs
       # [{ key:, title: (current locale), intro_md: }] for groups with operations.
       def groups
         built[:slices].filter_map do |key, slice|
+          next unless available?(key)
           g = GROUPS.find { |gr| gr[:key] == key }
           { key: key, title: g[:title][I18n.locale.to_sym] || g[:title][:en], intro_md: slice["info"]["description"].to_s }
         end
       end
 
       # The group's OpenAPI document, or nil for an unknown or empty group.
-      def for(key) = built[:slices][key.to_s]
+      def for(key) = available?(key.to_s) ? built[:slices][key.to_s] : nil
 
       # Operation tags no group claims (they land in "apps"); a spec keeps it empty.
       def unmapped_tags = built[:unmapped]
 
       private
+
+      # Object storage ops are documented only where the feature is on.
+      def available?(key) = key != "email-storage" || Wokku.config.object_storage?
 
       # ponytail: one global lock; a rebuild only happens when the file changes.
       def built
@@ -43,7 +48,7 @@ module Docs
       rescue Errno::ENOENT
         EMPTY # no spec file: no groups, every page 404s
       else
-        key = [ path, mtime, Wokku.config.docs_api_group_intros ]
+        key = [ path, mtime, Wokku.config.docs_api_group_intros, Wokku.config.docs_api_hidden_operations ]
         @lock.synchronize do
           @cache = build(YAML.safe_load_file(path, aliases: true)).merge(key: key).freeze unless @cache && @cache[:key] == key
           @cache
@@ -54,11 +59,12 @@ module Docs
         tag_desc = Array(doc["tags"]).to_h { |t| [ t["name"], t["description"] ] }
         by_group = Hash.new { |h, k| h[k] = {} }
         unmapped = []
+        hidden = Wokku.config.docs_api_hidden_operations
 
         doc.fetch("paths", {}).each do |path, item|
           item.each do |verb, op|
             next unless METHODS.include?(verb) && op.is_a?(Hash)
-            next if op["x-internal"] || HIDDEN_ID.match?(op["operationId"].to_s)
+            next if op["x-internal"] || HIDDEN_ID.match?(op["operationId"].to_s) || hidden.include?(op["operationId"])
             tags = Array(op["tags"])
             unmapped.concat(tags.reject { |t| t == "cloud" || TAG_GROUP.key?(t) })
             group = group_for(path, tags)
@@ -87,8 +93,7 @@ module Docs
         tag_names = (group[:tags] & used) + (used - group[:tags])
         tags = tag_names.map { |t| tag_desc[t] ? { "name" => t, "description" => tag_desc[t] } : { "name" => t } }
         intros = Wokku.config.docs_api_group_intros || {}
-        intro = intros[group[:key]] || intros[group[:key].to_sym] ||
-                tags.filter_map { |t| t["description"] }.join("\n\n").presence || group[:intro]
+        intro = intros[group[:key]] || intros[group[:key].to_sym] || group[:intro]
 
         {
           "openapi" => doc["openapi"],
