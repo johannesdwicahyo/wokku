@@ -34,6 +34,12 @@ RSpec.describe Docs::ApiSlice do
       expect(ops.flat_map(&:values).grep(Hash).map { |o| o["operationId"] }).not_to include("apps.dokku")
     end
 
+    it "drops every operation whose operationId ends in .dokku (incl. servers.dokku)" do
+      ids = described_class::KEYS.flat_map { |k| described_class.for(k)&.dig("paths")&.values || [] }
+                                 .flat_map(&:values).grep(Hash).filter_map { |o| o["operationId"] }
+      expect(ids.grep(/\.dokku\z/)).to eq([])
+    end
+
     it "builds every group slice as a self-contained OpenAPI 3 document" do
       described_class.groups.each do |g|
         slice = described_class.for(g[:key])

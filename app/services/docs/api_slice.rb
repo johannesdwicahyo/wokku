@@ -12,7 +12,7 @@ module Docs
     TAG_GROUP = GROUPS.flat_map { |g| g[:tags].map { |t| [ t, g[:key] ] } }.to_h.freeze
     # The cloud-only `cloud` tag carries no resource name: route it by path.
     CLOUD_PATHS = { %r{/e?mail(?:/|\z)} => "email-storage", %r{/(?:billing|invoices|plans)(?:/|\z)} => "team-billing" }.freeze
-    HIDDEN_IDS = %w[apps.dokku].freeze
+    HIDDEN_ID = /\.dokku\z/ # retired Dokku endpoints (apps.dokku, servers.dokku)
     METHODS = %w[get put post delete options head patch trace].freeze
 
     EMPTY = { slices: {}.freeze, unmapped: [].freeze }.freeze
@@ -58,7 +58,7 @@ module Docs
         doc.fetch("paths", {}).each do |path, item|
           item.each do |verb, op|
             next unless METHODS.include?(verb) && op.is_a?(Hash)
-            next if op["x-internal"] || HIDDEN_IDS.include?(op["operationId"])
+            next if op["x-internal"] || HIDDEN_ID.match?(op["operationId"].to_s)
             tags = Array(op["tags"])
             unmapped.concat(tags.reject { |t| t == "cloud" || TAG_GROUP.key?(t) })
             group = group_for(path, tags)
