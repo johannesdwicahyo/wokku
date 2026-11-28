@@ -194,6 +194,7 @@ id:
       categories: "Kategori"
       all_templates: "Semua Template"
     profile:
+      email_change_support: "Untuk mengganti email masuk, hubungi support."
       title: "Pengaturan"
       subtitle: "Kelola akun, keamanan, kredensial API, dan tagihan kamu."
       subtitle_self_host: "Kelola akun, keamanan, dan kredensial API kamu."
