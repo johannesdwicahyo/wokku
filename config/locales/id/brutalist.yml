@@ -524,13 +524,8 @@ id:
       cta_primary: "> install_app_pertama()"
 
   docs:
-    sidebar:
-      label: "// docs"
     toc:
       label: "Di halaman ini"
-      shortcuts: "// shortcut"
-      search: "Cari docs"
-      cmdbar: "Command bar"
     pager:
       previous: "Sebelumnya"
       label: "Sebelumnya dan berikutnya"

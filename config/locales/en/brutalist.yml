@@ -524,13 +524,8 @@ en:
       cta_primary: "> install_first_app()"
 
   docs:
-    sidebar:
-      label: "// docs"
     toc:
       label: "On this page"
-      shortcuts: "// shortcuts"
-      search: "Search docs"
-      cmdbar: "Command bar"
     pager:
       previous: "Previous"
       label: "Previous and next"
