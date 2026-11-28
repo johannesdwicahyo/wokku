@@ -95,8 +95,12 @@ class Rack::Attack
     sign_in_code_request_email(req)
   end
 
+  # Email + IP: one IP can't grind one address all day, but a flood can't
+  # lock the victim out for 24 h either (the per-email 3/10 min, Issue's
+  # cap and the 30-min human-check bound handle victim-wide floods).
   throttle("sign_in_code/request/email/day", limit: 10, period: 1.day) do |req|
-    sign_in_code_request_email(req)
+    email = sign_in_code_request_email(req)
+    "#{email}|#{req.ip}" if email
   end
 
   throttle("sign_in_code/verify/ip", limit: 20, period: 10.minutes) do |req|

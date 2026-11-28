@@ -38,19 +38,20 @@ RSpec.describe "Email sign-in code throttles", type: :request do
     expect(s.last).to eq(429)
   end
 
-  it "allows 10 code requests per email per day (create + resend)" do
+  it "allows 10 code requests per email per IP per day, without locking the email out for other IPs" do
     t0 = Time.current.beginning_of_day + 1.hour
+    post_from = ->(ip) { post "/users/sign_in/code", params: { email: "Daily-Req@example.com" }, env: { "REMOTE_ADDR" => ip } }
     s = []
-    5.times do |w|
-      travel_to(t0 + (w * 11).minutes) do
-        s += statuses(2) { |i| post "/users/sign_in/code", params: { email: "Daily-Req@example.com" }, env: { "REMOTE_ADDR" => "10.37.#{w}.#{i}" } }
-      end
+    5.times do |w| # 2 per 11 minutes stays under the 3/10-min per-email limit
+      travel_to(t0 + (w * 11).minutes) { s += statuses(2) { post_from.call("10.37.0.1") } }
     end
     expect(s).not_to include(429)
     travel_to(t0 + 60.minutes) do
-      post "/users/sign_in/code/resend", env: { "REMOTE_ADDR" => "10.37.9.9" }
+      post_from.call("10.37.0.1")
+      expect(response).to have_http_status(:too_many_requests)
+      post_from.call("10.37.0.2")
+      expect(response).not_to have_http_status(:too_many_requests)
     end
-    expect(response).to have_http_status(:too_many_requests)
   end
 
   it "counts resends against the pending email" do
