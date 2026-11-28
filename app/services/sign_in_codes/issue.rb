@@ -14,6 +14,7 @@ module SignInCodes
     Result = Data.define(:status, :wait)
     SENT = Result.new(status: :sent, wait: 0)
     MAX_EMAIL_LENGTH = 254
+    MAX_PER_WINDOW = 3
     PAUSE_AFTER_LOCKS = 3
     PAUSE_FOR = 24.hours
 
@@ -24,6 +25,13 @@ module SignInCodes
       last = SignInCode.where(email: email).order(created_at: :desc).first
       if last && (age = Time.current - last.created_at) < SignInCode::RESEND_AFTER
         return Result.new(status: :cooldown, wait: (SignInCode::RESEND_AFTER - age).ceil)
+      end
+
+      # At most 3 codes (dummies too, so it isn't an oracle) per 10 minutes,
+      # whatever reached Rack::Attack's per-email key.
+      recent = SignInCode.where(email: email).where("created_at > ?", SignInCode::TTL.ago).order(created_at: :desc).limit(MAX_PER_WINDOW).pluck(:created_at)
+      if recent.size >= MAX_PER_WINDOW
+        return Result.new(status: :cooldown, wait: (recent.last + SignInCode::TTL - Time.current).ceil)
       end
 
       user = User.find_by(email: email)

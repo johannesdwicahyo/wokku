@@ -8,4 +8,4 @@
   <%= f.submit t("sign_in_codes.show.submit") %>
 <% end %>
 <%= button_to t("sign_in_codes.show.resend"), resend_users_sign_in_code_path, method: :post, data: { turbo: false } %>
-<%= link_to t("sign_in_codes.show.different_email"), new_user_session_path %>
+<%= button_to t("sign_in_codes.show.different_email"), users_sign_in_code_path, method: :delete, data: { turbo: false } %>

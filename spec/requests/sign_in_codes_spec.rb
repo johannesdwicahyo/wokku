@@ -34,7 +34,16 @@ RSpec.describe "Email sign-in code", type: :request do
       expect(response).to have_http_status(:not_found)
       post resend_users_sign_in_code_path
       expect(response).to have_http_status(:not_found)
+      delete users_sign_in_code_path
+      expect(response).to have_http_status(:not_found)
       expect(SignInCode.count).to eq(0)
+    end
+
+    it "404s a signed-in user too" do
+      Wokku.configure { |c| c.email_sign_in = false }
+      sign_in user
+      post users_sign_in_codes_path, params: { email: user.email }
+      expect(response).to have_http_status(:not_found)
     end
   end
 
@@ -45,11 +54,12 @@ RSpec.describe "Email sign-in code", type: :request do
       { unknown: "nobody-#{SecureRandom.hex(3)}@example.com", suspended: suspended.email }.each do |kind, email|
         Wokku.configure { |c| c.open_registration = false } if kind == :unknown # unknown + closed = no mail
         expect { request_code(email) }.not_to have_enqueued_mail(SignInCodeMailer, :code)
-        answers[kind] = [ response.status, response.location, flash[:notice], flash[:alert] ]
+        answers[kind] = [ response.status, response.location, flash[:notice], flash[:alert], session[:sign_in_code_email] == email ]
         Wokku.configure { |c| c.open_registration = true }
       end
       expect { request_code(user.email) }.to have_enqueued_mail(SignInCodeMailer, :code)
-      answers[:active] = [ response.status, response.location, flash[:notice], flash[:alert] ]
+      answers[:active] = [ response.status, response.location, flash[:notice], flash[:alert], session[:sign_in_code_email] == user.email ]
+      expect(answers[:active].last).to be(true)
 
       expect(answers.values.uniq.size).to eq(1)
       expect(response).to redirect_to(users_sign_in_code_path)
@@ -69,6 +79,28 @@ RSpec.describe "Email sign-in code", type: :request do
       request_code(" #{user.email.upcase} ")
       expect(session[:sign_in_code_email]).to eq(user.email)
       expect(response.location).not_to include("@")
+    end
+
+    it "gives the cooldown notice on a second request within 45 s" do
+      freeze_time
+      request_code(user.email)
+      travel 10.seconds do
+        expect { request_code(user.email) }.not_to have_enqueued_mail(SignInCodeMailer, :code)
+        expect(response).to redirect_to(users_sign_in_code_path)
+        expect(flash[:notice]).to eq(I18n.t("sign_in_codes.cooldown", n: 35))
+      end
+    end
+
+    it "reads the email from the form body only, not the query string" do
+      post "#{users_sign_in_codes_path}?email=#{CGI.escape("other@example.com")}", params: { email: user.email }
+      expect(session[:sign_in_code_email]).to eq(user.email)
+      expect(SignInCode.pluck(:email)).to eq([ user.email ])
+    end
+
+    it "refuses a JSON body with 422, sending nothing" do
+      expect { post users_sign_in_codes_path, params: { email: user.email }, as: :json }.not_to change(SignInCode, :count)
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(session[:sign_in_code_email]).to be_nil
     end
 
     it "redirects a signed-in user away" do
@@ -171,6 +203,46 @@ RSpec.describe "Email sign-in code", type: :request do
     end
   end
 
+  describe "resend chain" do
+    it "refuses a resend once the human check is over 30 minutes old, and resend never refreshes it" do
+      t0 = Time.current
+      request_code(user.email)
+      human_at = session[:sign_in_code_human_at]
+      expect(human_at).to be_present
+      [ 9, 18, 27 ].each do |m| # each resend keeps the pending email fresh
+        travel_to(t0 + m.minutes) do
+          expect { post resend_users_sign_in_code_path }.to have_enqueued_mail(SignInCodeMailer, :code)
+          expect(response).to redirect_to(users_sign_in_code_path)
+        end
+      end
+      expect(session[:sign_in_code_human_at]).to eq(human_at)
+      travel_to(t0 + 31.minutes) do
+        expect { post resend_users_sign_in_code_path }.not_to have_enqueued_mail(SignInCodeMailer, :code)
+        expect(response).to redirect_to(new_user_session_path)
+        expect(flash[:notice]).to eq(I18n.t("sign_in_codes.start_again"))
+        expect(session[:sign_in_code_email]).to be_nil
+      end
+    end
+  end
+
+  describe "use a different email" do
+    it "clears every pending key and goes back to sign-in" do
+      request_code(user.email)
+      delete users_sign_in_code_path
+      expect(response).to redirect_to(new_user_session_path)
+      expect(session.to_h.keys.grep(/sign_in_code/)).to be_empty
+      get users_sign_in_code_path
+      expect(response).to redirect_to(new_user_session_path)
+    end
+
+    it "is a DELETE form on step 2" do
+      request_code(user.email)
+      get users_sign_in_code_path
+      form = Nokogiri::HTML(response.body).css("form[action='#{users_sign_in_code_path}']").find { |f| f.at_css("input[name='_method'][value='delete']") }
+      expect(form).to be_present
+    end
+  end
+
   describe "CSRF" do
     around do |ex|
       old = ActionController::Base.allow_forgery_protection
@@ -247,13 +319,23 @@ RSpec.describe "Email sign-in code", type: :request do
       expect([ response.status, response.body.scan(/role="alert"[^<]*/) ]).to eq(unknown)
     end
 
-    it "gates resend too" do
+    it "does not gate resend (the create check bounds it)" do
       stub_siteverify(status: 200, body: { success: true }.to_json)
       request_code(user.email, "cf-turnstile-response" => "tok")
-      stub_siteverify(status: 200, body: { success: false }.to_json)
+      WebMock.reset!
       travel 46.seconds do
-        expect { post resend_users_sign_in_code_path, params: { "cf-turnstile-response" => "tok" } }
-          .not_to have_enqueued_mail(SignInCodeMailer, :code)
+        expect { post resend_users_sign_in_code_path }.to have_enqueued_mail(SignInCodeMailer, :code)
+        expect(response).to redirect_to(users_sign_in_code_path)
+      end
+    end
+
+    it "accepts a matching hostname and fails closed on another one" do
+      stub_siteverify(status: 200, body: { success: true, hostname: "www.example.com" }.to_json)
+      request_code(user.email, "cf-turnstile-response" => "tok")
+      expect(response).to redirect_to(users_sign_in_code_path)
+      stub_siteverify(status: 200, body: { success: true, hostname: "evil.test" }.to_json)
+      travel 46.seconds do
+        expect { request_code(user.email, "cf-turnstile-response" => "tok") }.not_to change(SignInCode, :count)
         expect(response).to have_http_status(:unprocessable_content)
       end
     end

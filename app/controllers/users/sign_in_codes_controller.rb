@@ -3,20 +3,30 @@
 # pending email lives only in the session, never in a URL. Step 1 answers
 # the same way whether or not the email has an account. Rate limits live in
 # config/initializers/rack_attack.rb.
+#
+# Turnstile gates create only. A resend rides on the human check of the
+# create that started the chain, for at most HUMAN_FOR.
 class Users::SignInCodesController < DeviseController
   include TwoFactorSignIn
 
-  SESSION_KEYS = %i[sign_in_code_email sign_in_code_started_at].freeze
+  SESSION_KEYS = %i[sign_in_code_email sign_in_code_started_at sign_in_code_human_at].freeze
+  HUMAN_FOR = 30.minutes
 
-  prepend_before_action :require_enabled
+  # prepend: last declared runs first, so the flag is checked before anything.
   prepend_before_action :require_no_authentication
+  prepend_before_action :require_enabled
   before_action :load_pending_email, only: %i[show verify resend]
 
   def create
-    email = SignInCode.normalize(params[:email])
+    # Form body only: Rack::Attack keys on req.POST["email"], so the query
+    # string or a JSON body must not be able to name a different email.
+    return head :unprocessable_content unless request.form_data?
+
+    email = SignInCode.normalize(request.request_parameters["email"])
     return render_step_one(t("sign_in_codes.invalid_email"), email) unless SignInCodes::Issue.valid_format?(email)
     return render_step_one(t("sign_in_codes.bot_check_failed"), email) unless human?
 
+    session[:sign_in_code_human_at] = Time.current.to_i
     issue(email)
   end
 
@@ -31,14 +41,23 @@ class Users::SignInCodesController < DeviseController
     end
 
     clear_pending_code
-    note_signup(result.user) if result.new_user
+    note_signup if result.new_user
     flash[:notice] = t("devise.sessions.signed_in") if sign_in_with_two_factor(result.user)
   end
 
   def resend
-    return render_step_one(t("sign_in_codes.bot_check_failed"), @email) unless human?
+    if Time.current.to_i - session[:sign_in_code_human_at].to_i >= HUMAN_FOR
+      clear_pending_code
+      return redirect_to new_user_session_path, notice: t("sign_in_codes.start_again")
+    end
 
     issue(@email)
+  end
+
+  # "Use a different email".
+  def destroy
+    clear_pending_code
+    redirect_to new_user_session_path
   end
 
   private
@@ -57,7 +76,7 @@ class Users::SignInCodesController < DeviseController
 
   # Turnstile runs before Issue, so a failed check never hints at accounts.
   def human?
-    !Turnstile.enabled? || Turnstile.verify(token: params["cf-turnstile-response"], ip: request.remote_ip)
+    !Turnstile.enabled? || Turnstile.verify(token: params["cf-turnstile-response"], ip: request.remote_ip, host: request.host)
   end
 
   def load_pending_email
@@ -80,7 +99,7 @@ class Users::SignInCodesController < DeviseController
 
   # Same as Users::OmniauthCallbacksController#finish_sign_in for a first
   # sign-up (team + welcome mail already ran in Verify).
-  def note_signup(_user)
+  def note_signup
     if (tmpl = session.delete(:pending_template)).present?
       flash[:deploy_template] = tmpl
     end

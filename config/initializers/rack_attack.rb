@@ -85,10 +85,18 @@ class Rack::Attack
     req.ip if sign_in_code_request?(req)
   end
 
+  # Form body only (req.POST), the same source the controller reads.
+  def self.sign_in_code_request_email(req)
+    return unless sign_in_code_request?(req)
+    sign_in_code_email(wokku_path(req).end_with?("/resend") ? req.session["sign_in_code_email"] : req.POST["email"])
+  end
+
   throttle("sign_in_code/request/email", limit: 3, period: 10.minutes) do |req|
-    if sign_in_code_request?(req)
-      sign_in_code_email(wokku_path(req).end_with?("/resend") ? req.session["sign_in_code_email"] : req.params["email"])
-    end
+    sign_in_code_request_email(req)
+  end
+
+  throttle("sign_in_code/request/email/day", limit: 10, period: 1.day) do |req|
+    sign_in_code_request_email(req)
   end
 
   throttle("sign_in_code/verify/ip", limit: 20, period: 10.minutes) do |req|

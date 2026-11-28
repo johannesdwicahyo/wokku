@@ -23,6 +23,7 @@ Rails.application.routes.draw do
   devise_scope :user do
     post "/users/sign_in/code", to: "users/sign_in_codes#create", as: :users_sign_in_codes
     get  "/users/sign_in/code", to: "users/sign_in_codes#show", as: :users_sign_in_code
+    delete "/users/sign_in/code", to: "users/sign_in_codes#destroy"
     post "/users/sign_in/code/verify", to: "users/sign_in_codes#verify", as: :verify_users_sign_in_code
     post "/users/sign_in/code/resend", to: "users/sign_in_codes#resend", as: :resend_users_sign_in_code
   end

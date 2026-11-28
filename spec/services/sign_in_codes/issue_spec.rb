@@ -53,6 +53,24 @@ RSpec.describe SignInCodes::Issue, type: :model do
     expect(sent_codes.last.subject).to start_with("Your Wokku")
   end
 
+  it "caps an email at 3 codes per 10 minutes (dummies included), waiting for the oldest to age out" do
+    Wokku.configure { |c| c.open_registration = false } # stranger gets unmatchable dummy rows
+    freeze_time do
+      [ user.email, "stranger@example.com" ].each do |email|
+        3.times { expect(issue(email).status).to eq(:sent); travel 46.seconds }
+        result = issue(email)
+        expect(result.status).to eq(:cooldown)
+        expect(result.wait).to eq((10.minutes - 3 * 46.seconds).to_i)
+        expect(SignInCode.where(email: email).count).to eq(3)
+        travel result.wait.seconds
+        expect(issue(email).status).to eq(:sent)
+      end
+    end
+    expect(SignInCode.where(email: "stranger@example.com").pluck(:code_digest).uniq).to eq([ SignInCode::UNMATCHABLE ])
+  ensure
+    Wokku.configure { |c| c.open_registration = true }
+  end
+
   it "enforces a 45 s cooldown with the seconds left, then kills the earlier code" do
     freeze_time do
       issue

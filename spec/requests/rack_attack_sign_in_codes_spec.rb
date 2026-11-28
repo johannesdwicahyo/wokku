@@ -30,6 +30,29 @@ RSpec.describe "Email sign-in code throttles", type: :request do
     expect(s.last).to eq(429)
   end
 
+  it "keys the per-email limit on the form body, so a different query email doesn't dodge it" do
+    s = statuses(4) do |i|
+      post "/users/sign_in/code?email=decoy#{i}%40example.com", params: { email: "split@example.com" }, env: { "REMOTE_ADDR" => "10.36.0.#{i}" }
+    end
+    expect(s.first(3)).not_to include(429)
+    expect(s.last).to eq(429)
+  end
+
+  it "allows 10 code requests per email per day (create + resend)" do
+    t0 = Time.current.beginning_of_day + 1.hour
+    s = []
+    5.times do |w|
+      travel_to(t0 + (w * 11).minutes) do
+        s += statuses(2) { |i| post "/users/sign_in/code", params: { email: "Daily-Req@example.com" }, env: { "REMOTE_ADDR" => "10.37.#{w}.#{i}" } }
+      end
+    end
+    expect(s).not_to include(429)
+    travel_to(t0 + 60.minutes) do
+      post "/users/sign_in/code/resend", env: { "REMOTE_ADDR" => "10.37.9.9" }
+    end
+    expect(response).to have_http_status(:too_many_requests)
+  end
+
   it "counts resends against the pending email" do
     post "/users/sign_in/code", params: { email: "resend@example.com" }, env: { "REMOTE_ADDR" => "10.32.0.1" }
     s = statuses(3) { |i| post "/users/sign_in/code/resend", env: { "REMOTE_ADDR" => "10.32.1.#{i}" } }
