@@ -43,10 +43,10 @@ id:
       no_codes_banner: "Kamu tidak punya kode pemulihan lagi. Jika kehilangan aplikasi autentikator, kamu tidak bisa masuk."
     two_factor_challenge:
       title: "Autentikasi dua faktor"
-      sub: "// masukkan kode dari aplikasi autentikator kamu"
+      sub: "Masukkan kode dari aplikasi autentikator kamu."
       code_label: "Kode autentikasi"
       hint: "Kode 6 digit, atau salah satu kode pemulihan kamu."
-      submit: "verify()"
+      submit: "Verifikasi"
       back: "← Kembali ke halaman masuk"
       invalid: "Kode tidak valid. Silakan coba lagi."
       expired: "Waktu masuk habis. Silakan masuk lagi."

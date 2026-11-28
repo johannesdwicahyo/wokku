@@ -43,10 +43,10 @@ en:
       no_codes_banner: "You have no recovery codes left. If you lose your authenticator you will be locked out."
     two_factor_challenge:
       title: "Two-factor authentication"
-      sub: "// enter the code from your authenticator app"
+      sub: "Enter the code from your authenticator app."
       code_label: "Authentication code"
       hint: "6-digit code, or one of your recovery codes."
-      submit: "verify()"
+      submit: "Verify"
       back: "← Back to sign in"
       invalid: "Invalid code. Please try again."
       expired: "Your sign-in timed out. Please sign in again."

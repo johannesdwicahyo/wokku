@@ -1,0 +1,6 @@
+<% if flash[:alert] %>
+  <div role="alert" class="border border-danger bg-danger-soft px-3.5 py-2.5 text-[13px] text-bad-text"><%= flash[:alert] %></div>
+<% end %>
+<% if flash[:notice] %>
+  <div role="status" class="border border-line-strong px-3.5 py-2.5 text-[13px] text-ink-soft"><%= flash[:notice] %></div>
+<% end %>

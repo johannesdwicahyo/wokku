@@ -96,7 +96,7 @@ RSpec.describe "Self-host dashboard pages", type: :request do
     sign_out :user
     get "/users/sign_in"
     expect(response.body).not_to include("no card", "you agree to our")
-    expect(response.body).to include("sign in to deploy")
+    expect(response.body).to include("Your apps are waiting.")
   end
 
   it "settings talk about this install, not billing or git push" do

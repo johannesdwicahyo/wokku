@@ -96,12 +96,21 @@ id:
   signin:
     email_label: Email
     password_label: Kata sandi
-    submit: masuk()
-    title: "Satu langkah lagi — masuk buat deploy"
-    sub: "// gratis · tanpa kartu · live ~60 detik"
-    sub_self_host: "// masuk untuk deploy"
+    submit: "Masuk"
+    title: "Masuk ke Wokku"
+    sub: "App kamu sudah menunggu."
     reassure: "Cuma baca email kamu — nggak ada akses ke repo atau kode."
     continue_with: "Lanjut pakai %{provider}"
+    new_account: "Baru di Wokku? Masuk sekaligus membuat akun gratis kamu. Tanpa kartu."
+    quote: "Push kode kamu. Langsung live di Jakarta."
+    home: "Beranda Wokku"
+    legal_html: "Dengan masuk, kamu menyetujui %{terms} dan %{privacy} kami."
+    terms: "Ketentuan"
+    privacy: "Kebijakan Privasi"
+    footer:
+      status: "Status"
+      privacy: "Privasi"
+      terms: "Ketentuan"
   footer:
     tagline: "PaaS open-source. Dibuat di Bali buat developer Indonesia."
     status_ok: "Semua sistem normal"
