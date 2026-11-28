@@ -3,6 +3,7 @@ module Organisms
   # (light-wall Stimulus controller). Purely decorative: the real closing copy is
   # HTML laid over it, so the canvas is aria-hidden.
   class LightWallComponent < ApplicationComponent
+    # `logo:` takes precedence over `text:` (the mark replaces the text).
     def initialize(text: "PUSH.", logo: false, pulse_form: nil)
       @text = text
       @logo = logo

@@ -58,6 +58,12 @@ export function readPalette(el) {
 // The Wokku mark: 7 lights on a 5x3 grid (index 3 = the green centre).
 export const LOGO = [[0, 0], [4, 0], [0, 1], [2, 1], [4, 1], [1, 2], [3, 2]]
 
+// Board indices of the mark's 7 lights (2 cells per light, centred, integer origin).
+export function logoCells(cols, rows) {
+  const x0 = Math.floor((cols - 9) / 2), y0 = Math.floor((rows - 5) / 2)
+  return LOGO.map(([cx, cy]) => (y0 + cy * 2) * cols + x0 + cx * 2)
+}
+
 const RIPPLES = 6, RIPPLE_LIFE = 2.2, RIPPLE_SPEED = 14 // cells / second
 
 export class DotBoard {
