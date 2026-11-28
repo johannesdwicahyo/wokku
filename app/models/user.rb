@@ -316,11 +316,18 @@ class User < ApplicationRecord
     # instead of failing the email uniqueness check below. Both emails must
     # be verified (a self-edited email could be a planted victim address, as
     # in from_apple). Never re-links an account that already has a provider.
+    # Cross-provider: an account from a *different* provider with the same
+    # verified email is returned as-is — no column writes, so its own
+    # provider/uid keep working. A second identity from the same provider
+    # still fails (as before).
     if Wokku.config.email_sign_in && email.present? && oauth_email_verified?(auth) && !exists?(provider: auth.provider, uid: auth.uid)
       candidate = find_by(email: email)
-      if candidate && candidate.provider.blank? && candidate.email_provider_verified
-        candidate.update_columns(provider: auth.provider, uid: auth.uid, email_provider_verified: true)
-        return candidate
+      if candidate&.email_provider_verified
+        if candidate.provider.blank?
+          candidate.update_columns(provider: auth.provider, uid: auth.uid, email_provider_verified: true)
+          return candidate
+        end
+        return candidate if candidate.provider != auth.provider.to_s
       end
     end
 
