@@ -1,0 +1,7 @@
+en:
+  sign_in_code_mailer:
+    code:
+      subject: "Your Wokku sign-in code: %{code}"
+      intro: "Your Wokku sign-in code:"
+      validity: "Works once, for 10 minutes."
+      ignore: "If you didn't ask for this, ignore this email."

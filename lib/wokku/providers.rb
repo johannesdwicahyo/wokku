@@ -39,7 +39,7 @@ module Wokku
     end
 
     attr_accessor :tls, :billing
-    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder, :host_ssh_user, :control_plane_host, :openapi_path, :object_storage, :sidebar_extra_items, :addon_path_prefixes, :app_resource_sections, :object_storage_limits, :addons_index_sections, :apps_index_readouts, :apps_index_side_sections, :object_storage_pricing_note, :image_scans
+    attr_writer :plan_enforcer, :dns_provider, :backup_store, :canonical_domain, :owned_domains, :require_admin_2fa, :open_registration, :pricing, :resource_builder, :host_ssh_user, :control_plane_host, :openapi_path, :object_storage, :sidebar_extra_items, :addon_path_prefixes, :app_resource_sections, :object_storage_limits, :addons_index_sections, :apps_index_readouts, :apps_index_side_sections, :object_storage_pricing_note, :image_scans, :email_sign_in, :email_signup_guard
 
     # The OpenAPI file GET /api/v1/openapi.yaml serves. Engine default: its
     # own derived contract; the cloud points it at the cloud superset.
@@ -155,6 +155,18 @@ module Wokku
     def open_registration
       return @open_registration unless @open_registration.nil?
       ENV["WOKKU_OPEN_REGISTRATION"] == "1"
+    end
+
+    # Sign in with a 6-digit code mailed to the address (SignInCodes::*).
+    # Off by default: the sign-in page is unchanged until a host opts in.
+    def email_sign_in
+      @email_sign_in || false
+    end
+
+    # Extra gate on creating an account from an email code (on top of
+    # open_registration): a callable (email:, ip:) -> truthy. Default allows.
+    def email_signup_guard
+      @email_signup_guard || ->(email:, ip:) { true }
     end
 
     # OSS default: one env var names the install's apex; apps live at

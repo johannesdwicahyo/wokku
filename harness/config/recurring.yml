@@ -103,3 +103,8 @@ production:
     class: ImageScanJanitorJob
     schedule: every 10 minutes
     queue: default
+
+  sign_in_code_janitor:
+    class: SignInCodeJanitorJob
+    schedule: every day at 3:20am
+    queue: default
