@@ -16,4 +16,20 @@ RSpec.describe Organisms::LightWallComponent, type: :component do
     render_inline(described_class.new(text: "LIVE"))
     expect(page.find("canvas")[:"data-light-wall-text-value"]).to eq("LIVE")
   end
+
+  it "renders neither sign-in value by default" do
+    render_inline(described_class.new)
+    canvas = page.find("canvas")
+    expect(canvas[:"data-light-wall-logo-value"]).to be_nil
+    expect(canvas[:"data-light-wall-pulse-form-value"]).to be_nil
+  end
+
+  it "renders the sign-in mode values" do
+    render_inline(described_class.new(logo: true, pulse_form: "signin-form"))
+    canvas = page.find("canvas")
+    expect(canvas[:"data-light-wall-logo-value"]).to eq("true")
+    expect(canvas[:"data-light-wall-pulse-form-value"]).to eq("signin-form")
+    expect(canvas[:"aria-hidden"]).to eq("true")
+    expect(canvas[:class]).to include("wk-light-poster")
+  end
 end

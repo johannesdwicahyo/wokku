@@ -55,6 +55,9 @@ export function readPalette(el) {
   return { live, ink, glowLive: sprite(live), glowInk: sprite(ink), fillLive: fills(live), fillInk: fills(ink) }
 }
 
+// The Wokku mark: 7 lights on a 5x3 grid (index 3 = the green centre).
+export const LOGO = [[0, 0], [4, 0], [0, 1], [2, 1], [4, 1], [1, 2], [3, 2]]
+
 const RIPPLES = 6, RIPPLE_LIFE = 2.2, RIPPLE_SPEED = 14 // cells / second
 
 export class DotBoard {

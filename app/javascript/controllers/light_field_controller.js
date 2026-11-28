@@ -1,12 +1,11 @@
 import { Controller } from "@hotwired/stimulus"
-import { readPalette } from "controllers/light_dots"
+import { LOGO, readPalette } from "controllers/light_dots"
 
 // Hero light field: a perspective grid of server lights with a slow wave,
 // data "packets" running down columns, and the Wokku mark floating above.
 // Canvas 2D, no libraries. Colours come from the CSS tokens (see wokku.css).
 const ROWS = 46, Z0 = 2.2, DZ = 0.9
 // The mark: 7 lights on a 5x3 grid (index 3 = the green centre).
-const LOGO = [[0, 0], [4, 0], [0, 1], [2, 1], [4, 1], [1, 2], [3, 2]]
 
 const LEVELS = 16 // alpha quantised to 1/16 steps; one batched fill per (colour, level)
 

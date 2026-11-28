@@ -1,12 +1,12 @@
 import { Controller } from "@hotwired/stimulus"
-import { DotBoard, readPalette } from "controllers/light_dots"
+import { DotBoard, LOGO, readPalette } from "controllers/light_dots"
 
 // Closing light wall: a 64x30 board spelling `text`, with ripples that spread from
 // the pointer / touch. Decorative (aria-hidden). Canvas 2D, no libraries.
 const COLS = 64, ROWS = 30
 
 export default class extends Controller {
-  static values = { text: { type: String, default: "PUSH." } }
+  static values = { text: { type: String, default: "PUSH." }, logo: Boolean, pulseForm: String }
 
   connect() {
     this.dpr = Math.min(window.devicePixelRatio || 1, 1.75)
@@ -16,22 +16,48 @@ export default class extends Controller {
     this.host = this.element.parentElement || this.element
     this.pal = readPalette(this.element)
     this.board = new DotBoard(COLS, ROWS)
-    const last = this.board.stamp(this.textValue, 7)
-    // the final glyph (the dot) in green
-    for (let i = 0; i < this.board.tgt.length; i++) if (this.board.tgt[i] && i % COLS >= last) this.board.green[i] = 1
+    if (this.logoValue) this.setReady(0)
+    else {
+      const last = this.board.stamp(this.textValue, 7)
+      // the final glyph (the dot) in green
+      for (let i = 0; i < this.board.tgt.length; i++) if (this.board.tgt[i] && i % COLS >= last) this.board.green[i] = 1
+    }
     this.board.snap()
     this.size()
     this.draw(0, 1) // a finished frame, synchronously
     this.resizer = new ResizeObserver(() => { this.size(); this.draw(this.t || 0, 1) })
     this.resizer.observe(this.element)
     this.mq.addEventListener("change", this.motionChanged)
+    // sign-in mode: only the input event and checkValidity() are used, never a value
+    this.form = this.hasPulseFormValue ? document.getElementById(this.pulseFormValue) : null
+    if (this.form instanceof HTMLFormElement) this.form.addEventListener("input", this.typed, { passive: true })
+    else this.form = null
     this.motionChanged()
   }
 
   disconnect() {
     this.mq.removeEventListener("change", this.motionChanged)
     this.resizer?.disconnect()
+    this.form?.removeEventListener("input", this.typed)
     this.stopLoop()
+  }
+
+  // The mark sits centred, 2 cells per light; brightness and the green centre follow `ready`.
+  setReady(ready) {
+    const b = this.board, x0 = (COLS - 9) / 2, y0 = (ROWS - 5) / 2
+    LOGO.forEach(([cx, cy], i) => {
+      const k = (y0 + cy * 2) * COLS + x0 + cx * 2
+      b.tgt[k] = 0.35 + 0.65 * ready
+      b.green[k] = i === 3 && ready > 0.5 ? 1 : 0
+    })
+  }
+
+  typed = () => {
+    this.setReady(this.form.checkValidity() ? 1 : 0)
+    if (this.reduced) { this.board.snap(); return this.draw(0, 1) }
+    const b = this.board, t = performance.now() / 1000
+    b.ripple(Math.random() * COLS, Math.random() * ROWS, t)
+    this.settled = false
   }
 
   get reduced() { return this.mq.matches }
