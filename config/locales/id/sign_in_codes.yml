@@ -6,5 +6,6 @@ id:
     start_again: "Masukkan email kamu untuk mendapat kode masuk baru."
     mismatch: "Kode itu tidak cocok. Cek email terbaru, atau kirim kode baru."
     locked: "Terlalu banyak percobaan. Kirim kode baru."
+    throttled: "Terlalu banyak percobaan. Coba lagi nanti, atau masuk dengan cara lain."
     show:
       title: "Cek email kamu"

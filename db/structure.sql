@@ -1166,7 +1166,6 @@ CREATE TABLE public.sign_in_codes (
     attempts integer DEFAULT 0 NOT NULL,
     consumed_at timestamp(6) without time zone,
     ip character varying,
-    notice_sent_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL
 );
 

@@ -88,4 +88,36 @@ RSpec.describe "Email sign-in code throttles", type: :request do
     end
     expect(response).to have_http_status(:too_many_requests)
   end
+
+  describe "429 page" do
+    def flood(headers = {})
+      4.times { post "/users/sign_in/code", params: { email: "flood@example.com" }, headers: headers, env: { "REMOTE_ADDR" => "10.40.0.1" } }
+    end
+
+    it "renders a localized HTML page for the sign-in-code paths" do
+      flood
+      expect(response).to have_http_status(:too_many_requests)
+      expect(response.media_type).to eq("text/html")
+      expect(response.headers["Retry-After"]).to eq("600")
+      expect(response.body).to include("Too many attempts. Try again later, or sign in another way.")
+      expect(Nokogiri::HTML(response.body).at_css("a[href='/users/sign_in']")).to be_present
+    end
+
+    it "speaks Indonesian from the locale cookie or Accept-Language" do
+      Rack::Attack.reset!
+      flood("Accept-Language" => "id-ID,id;q=0.9")
+      expect(response.body).to include("Terlalu banyak percobaan. Coba lagi nanti, atau masuk dengan cara lain.")
+      Rack::Attack.reset!
+      cookies[:locale] = "id"
+      flood
+      expect(response.body).to include("Terlalu banyak percobaan.")
+    end
+
+    it "keeps the JSON responder on every other path" do
+      6.times { post "/users/sign_in", params: { user: { email: "x@example.com", password: "nope" } }, env: { "REMOTE_ADDR" => "10.41.0.1" } }
+      expect(response).to have_http_status(:too_many_requests)
+      expect(response.media_type).to eq("application/json")
+      expect(JSON.parse(response.body)).to eq("error" => "Rate limit exceeded. Retry later.")
+    end
+  end
 end

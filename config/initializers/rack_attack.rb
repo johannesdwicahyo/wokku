@@ -111,7 +111,7 @@ class Rack::Attack
     sign_in_code_email(req.session["sign_in_code_email"]) if sign_in_code_verify?(req)
   end
 
-  # Defense in depth on top of the per-code attempt cap and daily lock pause.
+  # The only email-wide guess cap: 30 tries/day ~ 1.1 %/year to hit a code.
   throttle("sign_in_code/verify/email/day", limit: 30, period: 1.day) do |req|
     sign_in_code_email(req.session["sign_in_code_email"]) if sign_in_code_verify?(req)
   end
@@ -164,9 +164,32 @@ class Rack::Attack
     req.params["t"] if wokku_path(req) == "/vitals/ingest" && req.post? && req.params["t"].present?
   end
 
+  # Sign-in-code pages are browser forms: answer with a localized page
+  # (locale as Localizable picks it for a signed-out visitor). The middleware
+  # runs before any controller, so it can't render a view.
+  def self.sign_in_code_throttled_page(req)
+    locale = [ req.cookies["locale"], req.get_header("HTTP_ACCEPT_LANGUAGE").to_s[/[a-z]{2}/] ]
+               .find { |l| I18n.available_locales.map(&:to_s).include?(l) } || I18n.default_locale
+    I18n.with_locale(locale) do
+      esc = ->(key) { ERB::Util.html_escape(I18n.t(key)) }
+      <<~HTML
+        <!DOCTYPE html>
+        <html lang="#{locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>#{esc.("sign_in_codes.throttled")}</title></head>
+        <body style="font-family:system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:0 1.5rem;line-height:1.5">
+        <p>#{esc.("sign_in_codes.throttled")}</p><p><a href="/users/sign_in">#{esc.("nav.sign_in")}</a></p>
+        </body></html>
+      HTML
+    end
+  end
+
   self.throttled_responder = ->(req) {
     match_data = req.env["rack.attack.match_data"] || {}
     retry_after = match_data[:period]
+    if wokku_path(req).start_with?("/users/sign_in/code")
+      return [ 429, { "Content-Type" => "text/html; charset=utf-8", "Retry-After" => retry_after.to_s }, [ sign_in_code_throttled_page(req) ] ]
+    end
+
     [
       429,
       { "Content-Type" => "application/json", "Retry-After" => retry_after.to_s },

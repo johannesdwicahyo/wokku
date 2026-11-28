@@ -17,11 +17,6 @@ class SignInCodeMailer < ApplicationMailer
     with_locale(locale) { mail(to: email, subject: t("sign_in_code_mailer.code.subject", code: @code)) }
   end
 
-  # Code sign-in paused for the address after repeated locked codes.
-  def paused(email:, locale:)
-    with_locale(locale) { mail(to: email, subject: t("sign_in_code_mailer.paused.subject")) }
-  end
-
   private
 
   def with_locale(locale, &)

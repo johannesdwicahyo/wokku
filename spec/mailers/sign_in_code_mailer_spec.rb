@@ -37,13 +37,6 @@ RSpec.describe SignInCodeMailer, type: :mailer do
     expect(Rails.logger).to have_received(:warn).with(satisfy { |m| !m.include?(expired) }).at_least(:once)
   end
 
-  it "the paused notice is localised" do
-    mail = described_class.paused(email: "a@b.co", locale: "en")
-    body = CGI.unescapeHTML(mail.text_part.body.decoded)
-    expect(body).to include("Someone tried to sign in to your Wokku account with an email code.",
-                            "Sign-in by code is paused for 24 hours.", "If this was you, use GitHub/Google or wait.")
-  end
-
   it "never logs the job arguments" do
     expect(described_class.delivery_job.log_arguments?).to be(false)
   end

@@ -6,5 +6,6 @@ en:
     start_again: "Enter your email to get a new sign-in code."
     mismatch: "That code doesn't match. Check the latest email, or send a new one."
     locked: "Too many tries. Send a new code."
+    throttled: "Too many attempts. Try again later, or sign in another way."
     show:
       title: "Check your email"

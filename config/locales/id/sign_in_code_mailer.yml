@@ -5,8 +5,3 @@ id:
       intro: "Kode masuk Wokku kamu:"
       validity: "Berlaku sekali, selama 10 menit."
       ignore: "Kalau kamu tidak memintanya, abaikan email ini."
-    paused:
-      subject: "Masuk Wokku dengan kode dijeda"
-      tried: "Seseorang mencoba masuk ke akun Wokku kamu dengan kode email."
-      paused: "Masuk dengan kode dijeda selama 24 jam."
-      if_you: "Kalau itu kamu, pakai GitHub/Google atau tunggu."
