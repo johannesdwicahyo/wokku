@@ -1,5 +1,5 @@
 <%# Step 2 of email sign-in. The pending email comes from the session. %>
-<% remaining = [ SignInCode::RESEND_AFTER.to_i - (Time.current.to_i - session[:sign_in_code_started_at].to_i), 0 ].max %>
+<% remaining = [ session[:sign_in_code_resend_at].to_i - Time.current.to_i, 0 ].max %>
 <% error = @code_error %>
 <%= render Organisms::AuthShellComponent.new do %>
   <div>

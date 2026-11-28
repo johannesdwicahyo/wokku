@@ -4,6 +4,7 @@ require "rails_helper"
 
 RSpec.describe "Email sign-in code", type: :request do
   include Devise::Test::IntegrationHelpers
+  include ActionMailer::TestHelper
 
   let(:user) { users(:one) }
   before { user.update_columns(email_provider_verified: true) }
@@ -21,6 +22,13 @@ RSpec.describe "Email sign-in code", type: :request do
     allow(SecureRandom).to receive(:random_number).and_call_original
     allow(SecureRandom).to receive(:random_number).with(10**6).and_return(code.to_i)
     post users_sign_in_codes_path, params: { email: email, **params }
+  end
+
+  # Mails actually delivered by the jobs the block enqueued.
+  def mails_sent(&)
+    ActionMailer::Base.deliveries.clear
+    perform_enqueued_jobs(only: SignInCodeMailer::DeliveryJob, &)
+    ActionMailer::Base.deliveries
   end
 
   def verify(code) = post(verify_users_sign_in_code_path, params: { code: code })
@@ -55,11 +63,11 @@ RSpec.describe "Email sign-in code", type: :request do
       answers = {}
       { unknown: "nobody-#{SecureRandom.hex(3)}@example.com", suspended: suspended.email }.each do |kind, email|
         Wokku.configure { |c| c.open_registration = false } if kind == :unknown # unknown + closed = no mail
-        expect { request_code(email) }.not_to have_enqueued_mail(SignInCodeMailer, :code)
+        expect(mails_sent { request_code(email) }).to be_empty
         answers[kind] = [ response.status, response.location, flash[:notice], flash[:alert], session[:sign_in_code_email] == email ]
         Wokku.configure { |c| c.open_registration = true }
       end
-      expect { request_code(user.email) }.to have_enqueued_mail(SignInCodeMailer, :code)
+      expect(mails_sent { request_code(user.email) }.sole.to).to eq([ user.email ])
       answers[:active] = [ response.status, response.location, flash[:notice], flash[:alert], session[:sign_in_code_email] == user.email ]
       expect(answers[:active].last).to be(true)
 
@@ -129,6 +137,21 @@ RSpec.describe "Email sign-in code", type: :request do
       end
     end
 
+    it "counts the resend down from Issue's real wait, not a flat 45 s" do
+      freeze_time
+      request_code(user.email)
+      expect(session[:sign_in_code_resend_at]).to eq(45.seconds.from_now.to_i)
+      2.times { travel 46.seconds; post resend_users_sign_in_code_path }
+      travel 46.seconds
+      post resend_users_sign_in_code_path # 4th in 10 min: Issue's 3-per-window cooldown
+      wait = (10.minutes - 3 * 46.seconds).to_i
+      expect(flash[:notice]).to eq(I18n.t("sign_in_codes.cooldown", n: wait))
+      travel 2.seconds
+      get users_sign_in_code_path
+      remaining = Nokogiri::HTML(response.body).at_css("[data-sign-in-code-remaining-value]")["data-sign-in-code-remaining-value"]
+      expect(remaining.to_i).to eq(wait - 2)
+    end
+
     it "renders the code form with the pending email" do
       request_code(user.email)
       get users_sign_in_code_path
@@ -194,7 +217,7 @@ RSpec.describe "Email sign-in code", type: :request do
       expect(attacker.reload).to have_attributes(email: "victim@example.com", email_provider_verified: false)
       sign_out attacker
 
-      expect { request_code("victim@example.com") }.not_to have_enqueued_mail(SignInCodeMailer, :code)
+      expect(mails_sent { request_code("victim@example.com") }).to be_empty
       expect(SignInCode.sole.code_digest).to eq(SignInCode::UNMATCHABLE)
 
       allow_any_instance_of(SignInCode).to receive(:matches?).and_return(true) # as if the guess were right

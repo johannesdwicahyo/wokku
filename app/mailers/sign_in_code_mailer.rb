@@ -7,8 +7,10 @@ class SignInCodeMailer < ApplicationMailer
   self.delivery_job = DeliveryJob
 
   # token: SignInCode.encrypt_code(code). The code goes in the subject so
-  # phone notifications show it. An expired/forged token sends nothing.
+  # phone notifications show it. An expired/forged token sends nothing; a
+  # nil token is Issue's no-send path (enqueued anyway), silently nothing.
   def code(email:, token:, locale:)
+    return if token.nil?
     @code = SignInCode.decrypt_code(token)
     unless @code
       Rails.logger.warn("SignInCodeMailer#code: expired or invalid token, nothing sent")

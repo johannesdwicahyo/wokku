@@ -54,10 +54,15 @@ module SignInCodes
 
       # Fields mirror from_omniauth's create; name is the email's local part.
       user = User.create(email: email, password: Devise.friendly_token[0, 20],
-                         email_provider_verified: true, name: email.split("@").first)
+                         email_provider_verified: true, name: email.split("@").first, **request_locale)
       user.persisted? ? [ user, true ] : [ User.find_by(email: email), false ] # lost a create race
     rescue ActiveRecord::RecordNotUnique
       [ User.find_by(email: email), false ]
+    end
+
+    # The sign-in page's locale (Localizable), or the column default.
+    def self.request_locale
+      I18n.available_locales.include?(I18n.locale) ? { locale: I18n.locale.to_s } : {}
     end
   end
 end

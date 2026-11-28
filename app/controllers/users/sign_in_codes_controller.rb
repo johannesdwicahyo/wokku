@@ -9,7 +9,7 @@
 class Users::SignInCodesController < DeviseController
   include TwoFactorSignIn
 
-  SESSION_KEYS = %i[sign_in_code_email sign_in_code_started_at sign_in_code_human_at].freeze
+  SESSION_KEYS = %i[sign_in_code_email sign_in_code_started_at sign_in_code_human_at sign_in_code_resend_at].freeze
   HUMAN_FOR = 30.minutes
 
   # prepend: last declared runs first, so the flag is checked before anything.
@@ -70,6 +70,8 @@ class Users::SignInCodesController < DeviseController
     result = SignInCodes::Issue.call(email: email, ip: request.remote_ip, locale: I18n.locale)
     session[:sign_in_code_email] = email
     session[:sign_in_code_started_at] = Time.current.to_i
+    # The step-2 countdown runs to Issue's real wait (45 s after a sent code).
+    session[:sign_in_code_resend_at] = Time.current.to_i + (result.status == :cooldown ? result.wait : SignInCode::RESEND_AFTER.to_i)
     notice = t("sign_in_codes.cooldown", n: result.wait) if result.status == :cooldown
     redirect_to users_sign_in_code_path, notice: notice
   end

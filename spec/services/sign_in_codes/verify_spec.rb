@@ -93,6 +93,10 @@ RSpec.describe SignInCodes::Verify, type: :model do
       expect(user.plan).to eq(Plan.find_by(key: "free"))
     end
 
+    it "gives the new account the request locale (when it's an available one)" do
+      I18n.with_locale(:id) { expect(verify(email, code_for(email)).user.locale).to eq("id") }
+    end
+
     it "creates nobody when registration closed in the meantime" do
       code = code_for(email)
       Wokku.configure { |c| c.open_registration = false }

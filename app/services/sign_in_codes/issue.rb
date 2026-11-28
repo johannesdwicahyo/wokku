@@ -29,8 +29,7 @@ module SignInCodes
       end
 
       user = User.find_by(email: email)
-      may_sign_in = user ? may_sign_in?(user) : may_sign_up?(email, ip)
-      deliver = may_sign_in
+      deliver = user ? may_sign_in?(user) : may_sign_up?(email, ip)
       code = format("%06d", SecureRandom.random_number(10**6)) if deliver
 
       SignInCode.transaction do
@@ -39,10 +38,9 @@ module SignInCodes
                            code_digest: deliver ? SignInCode.digest(email, code) : SignInCode::UNMATCHABLE)
       end
 
-      locale = user&.locale.presence || locale.to_s
-      if deliver
-        SignInCodeMailer.code(email: email, token: SignInCode.encrypt_code(code), locale: locale).deliver_later
-      end
+      # Enqueued on every path, so the request does the same work whether or
+      # not a mail goes out; a nil token makes the mailer send nothing.
+      SignInCodeMailer.code(email: email, token: (SignInCode.encrypt_code(code) if deliver), locale: locale.to_s).deliver_later
       SENT
     end
 

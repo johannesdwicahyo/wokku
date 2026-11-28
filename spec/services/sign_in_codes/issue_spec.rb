@@ -46,10 +46,10 @@ RSpec.describe SignInCodes::Issue, type: :model do
     expect(code_in(sent_codes.sole)).to eq("000042")
   end
 
-  it "mails in the user's locale when the user exists, else the request locale" do
-    user.update!(locale: "id")
+  it "mails in the request locale, also for an existing user with another locale" do
+    user.update_columns(locale: "id")
     issue(locale: "en")
-    expect(sent_codes.last.subject).to start_with("Kode masuk")
+    expect(sent_codes.last.subject).to start_with("Your Wokku")
     issue("new-person@example.com", locale: "id")
     expect(sent_codes.last.subject).to start_with("Kode masuk")
     issue("other-person@example.com", locale: "en")
@@ -143,6 +143,17 @@ RSpec.describe SignInCodes::Issue, type: :model do
     issue("new-person@example.com")
     issue(users(:admin).email)
     expect(sent_codes.size).to eq(2)
+  end
+
+  it "enqueues the mail job on every path (same work either way); only the deliverable one sends" do
+    Wokku.configure { |c| c.open_registration = false }
+    suspended = create(:user, abuse_suspended_at: Time.current, email_provider_verified: true)
+    [ "stranger@example.com", suspended.email, user.email ].each do |email|
+      expect { issue(email) }.to have_enqueued_mail(SignInCodeMailer, :code)
+    end
+    expect(sent_codes.map(&:to)).to eq([ [ user.email ] ])
+  ensure
+    Wokku.configure { |c| c.open_registration = true }
   end
 
   it "keeps the plain code out of the queued job's arguments" do
