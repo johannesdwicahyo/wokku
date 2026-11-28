@@ -15,11 +15,18 @@ RSpec.describe Molecules::LangSwitchComponent, type: :component do
     expect(page.find_button("EN")[:class]).to include("text-ink-soft")
   end
 
-  it "gives each button a full accessible name, lang on ID, and aria-current on the current one" do
+  it "gives each button an accessible name starting with its visible text, lang on ID, and aria-current on the current one" do
     render_inline(described_class.new(current: "en"))
-    expect(page).to have_css("button[aria-label='English'][aria-current='true']")
-    expect(page).to have_css("button[aria-label='Bahasa Indonesia'][lang='id']")
-    expect(page).not_to have_css("button[aria-label='Bahasa Indonesia'][aria-current]")
+    expect(page).to have_css("button[aria-label='EN, English'][aria-current='true']")
+    expect(page).to have_css("button[aria-label='ID, Bahasa Indonesia'][lang='id']")
+    expect(page).not_to have_css("button[aria-label='ID, Bahasa Indonesia'][aria-current]")
+  end
+
+  it "keeps the visible text at the start of each accessible name (WCAG 2.5.3)" do
+    render_inline(described_class.new(current: "en"))
+    page.all("button").each do |b|
+      expect(b[:"aria-label"]).to start_with(b.text.strip)
+    end
   end
 
   it "does not clip focus outlines and keeps 24px hit targets" do
