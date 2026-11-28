@@ -451,4 +451,5 @@ kbd, .docs-kbd {
 .docs-api h2 { font-weight: 400 !important; letter-spacing: -.02em; }
 .docs-api table { border-collapse: collapse; }
 .docs-api .menu-content { border-right: 1px solid var(--color-line); }
+.docs-api h5 { color: var(--color-muted) !important; border-bottom-color: var(--color-line) !important; } /* Redoc section headers: ~1.2:1 by default */
 .docs-api .menu-content label.active { border-left: 2px solid var(--color-live); }
