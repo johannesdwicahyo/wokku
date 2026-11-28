@@ -66,6 +66,44 @@ class Rack::Attack
     req.session["two_factor_user_id"]&.to_s if wokku_path(req) == "/users/two_factor" && req.post?
   end
 
+  # Email sign-in code (Users::SignInCodesController). Per-email keys go
+  # through SignInCode.normalize so case/whitespace variants share a bucket.
+  # A resend counts as a request, keyed on the session's pending email.
+  def self.sign_in_code_request?(req)
+    req.post? && %w[/users/sign_in/code /users/sign_in/code/resend].include?(wokku_path(req))
+  end
+
+  def self.sign_in_code_verify?(req)
+    req.post? && wokku_path(req) == "/users/sign_in/code/verify"
+  end
+
+  def self.sign_in_code_email(email)
+    SignInCode.normalize(email).presence if email.is_a?(String)
+  end
+
+  throttle("sign_in_code/request/ip", limit: 10, period: 10.minutes) do |req|
+    req.ip if sign_in_code_request?(req)
+  end
+
+  throttle("sign_in_code/request/email", limit: 3, period: 10.minutes) do |req|
+    if sign_in_code_request?(req)
+      sign_in_code_email(wokku_path(req).end_with?("/resend") ? req.session["sign_in_code_email"] : req.params["email"])
+    end
+  end
+
+  throttle("sign_in_code/verify/ip", limit: 20, period: 10.minutes) do |req|
+    req.ip if sign_in_code_verify?(req)
+  end
+
+  throttle("sign_in_code/verify/email", limit: 10, period: 10.minutes) do |req|
+    sign_in_code_email(req.session["sign_in_code_email"]) if sign_in_code_verify?(req)
+  end
+
+  # Defense in depth on top of the per-code attempt cap and daily lock pause.
+  throttle("sign_in_code/verify/email/day", limit: 30, period: 1.day) do |req|
+    sign_in_code_email(req.session["sign_in_code_email"]) if sign_in_code_verify?(req)
+  end
+
   # Fail2Ban: ban an IP for 1h after 20 failed API logins in 10m. The filter
   # is invoked manually from AuthController#login on failed auth.
   blocklist("fail2ban/api_login") do |req|

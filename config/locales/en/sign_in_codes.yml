@@ -1,0 +1,15 @@
+en:
+  sign_in_codes:
+    invalid_email: "Enter a valid email address, like name@example.com."
+    bot_check_failed: "We couldn't check that you're human. Try again."
+    cooldown: "Wait %{n} s before asking for another code."
+    start_again: "Enter your email to get a new sign-in code."
+    mismatch: "That code doesn't match. Check the latest email, or send a new one."
+    locked: "Too many tries. Send a new code."
+    show:
+      title: "Check your email"
+      sent_to: "We sent a 6-digit code to %{email}."
+      code_label: "Sign-in code"
+      submit: "Sign in"
+      resend: "Send a new code"
+      different_email: "Use a different email"

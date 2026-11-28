@@ -1,0 +1,11 @@
+<%# Minimal step 2; Task 3 restyles it in the AuthShell. %>
+<h1><%= t("sign_in_codes.show.title") %></h1>
+<p><%= t("sign_in_codes.show.sent_to", email: @email) %></p>
+<%= render "devise/shared/auth_flash" %>
+<%= form_with url: verify_users_sign_in_code_path, method: :post, id: "signin-form", data: { turbo: false } do |f| %>
+  <%= f.label :code, t("sign_in_codes.show.code_label") %>
+  <%= f.text_field :code, inputmode: "numeric", autocomplete: "one-time-code", maxlength: 6, pattern: "[0-9]{6}", required: true, autofocus: true %>
+  <%= f.submit t("sign_in_codes.show.submit") %>
+<% end %>
+<%= button_to t("sign_in_codes.show.resend"), resend_users_sign_in_code_path, method: :post, data: { turbo: false } %>
+<%= link_to t("sign_in_codes.show.different_email"), new_user_session_path %>

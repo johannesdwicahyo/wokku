@@ -1,0 +1,15 @@
+id:
+  sign_in_codes:
+    invalid_email: "Masukkan alamat email yang valid, misalnya nama@contoh.com."
+    bot_check_failed: "Kami tidak bisa memastikan kamu manusia. Coba lagi."
+    cooldown: "Tunggu %{n} detik sebelum meminta kode baru."
+    start_again: "Masukkan email kamu untuk mendapat kode masuk baru."
+    mismatch: "Kode itu tidak cocok. Cek email terbaru, atau kirim kode baru."
+    locked: "Terlalu banyak percobaan. Kirim kode baru."
+    show:
+      title: "Cek email kamu"
+      sent_to: "Kami mengirim kode 6 digit ke %{email}."
+      code_label: "Kode masuk"
+      submit: "Masuk"
+      resend: "Kirim kode baru"
+      different_email: "Pakai email lain"
