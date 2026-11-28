@@ -547,6 +547,11 @@ id:
     copy:
       copy: "Salin"
       copied: "Tersalin"
+    callout:
+      note: "Catatan"
+      warn: "Hati-hati"
+      success: "Tips"
+      danger: "Bahaya"
     top:
       docs: "Docs"
       sections: "Bagian docs"

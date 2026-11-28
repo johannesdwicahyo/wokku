@@ -3,7 +3,7 @@ require "rails_helper"
 # Control-room reading layout for /docs guides (Phase 10, Task 1).
 RSpec.describe "Docs reading layout", type: :request do
   include Devise::Test::IntegrationHelpers
-  let(:html) { Nokogiri::HTML(response.body) }
+  def html = Nokogiri::HTML(response.body)
 
   it "renders the docs top bar instead of the cloud site nav" do
     get "/docs/getting-started/sign-up"
@@ -79,6 +79,29 @@ RSpec.describe "Docs reading layout", type: :request do
     get "/docs/getting-started/first-deploy", params: { locale: "id" }
     expect(html.at_css("button[data-copy-code-target='button']").text.strip).to eq("Salin")
     expect(html.at_css("[data-copy-code-copied-value]")["data-copy-code-copied-value"]).to eq("Tersalin")
+  end
+
+  it "labels callouts in the page language" do
+    get "/docs/databases/backups", params: { locale: "id" }
+    expect(html.at_css(".doc-callout-warn .doc-callout__label").text.strip).to eq("Hati-hati")
+    get "/docs/databases/backups", params: { locale: "en" }
+    expect(html.at_css(".doc-callout-warn .doc-callout__label").text.strip).to eq("Careful")
+  end
+
+  it "gives phones a scrollable row of section links" do
+    get "/docs/getting-started/sign-up"
+    row = html.at_css("header[data-docs-top-bar] nav.min-\\[900px\\]\\:hidden[aria-label]")
+    expect(row).to be_present
+    expect(row["class"]).to include("overflow-x-auto")
+    expect(row.css("a").map { |a| a["href"] }).to include("/docs", "/docs/api", "/docs/cli")
+    expect(row.at_css("a[aria-current='page']").text.strip).to eq("Guides")
+  end
+
+  it "searches the page's language" do
+    js = File.read(Wokku::Engine.root.join("app/javascript/controllers/docs_search_controller.js"))
+    expect(js).to include("search-index.json?lang=${encodeURIComponent(document.documentElement.lang")
+    get "/docs/search-index.json", params: { lang: "id" }
+    expect(response).to have_http_status(:ok)
   end
 
   it "uses Indonesian chrome labels on ?lang=id too" do

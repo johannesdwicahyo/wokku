@@ -547,6 +547,11 @@ en:
     copy:
       copy: "Copy"
       copied: "Copied"
+    callout:
+      note: "Note"
+      warn: "Careful"
+      success: "Tip"
+      danger: "Danger"
     top:
       docs: "Docs"
       sections: "Docs sections"

@@ -78,7 +78,7 @@
   color: var(--color-live);
   border-left: 2px solid var(--color-live);
   padding-left: 17px;
-  background: rgba(34, 197, 94, .06);
+  background: color-mix(in srgb, var(--color-live) 6%, transparent);
 }
 
 details.cat > summary { list-style: none; }
@@ -149,7 +149,7 @@ details.cat > summary::-webkit-details-marker { display: none; }
   height: 8px;
   border-radius: 2px;
   background: var(--color-live);
-  box-shadow: 0 0 8px rgba(34, 197, 94, .6);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-live) 60%, transparent);
 }
 .prose-doc h3 {
   font-size: 19px;
@@ -161,11 +161,14 @@ details.cat > summary::-webkit-details-marker { display: none; }
   scroll-margin-top: 80px;
 }
 
+/* Phones: the top bar adds a section-links row, so anchors land lower. */
+@media (max-width: 899px) { .prose-doc h2, .prose-doc h3 { scroll-margin-top: 110px; } }
+
 .prose-doc strong { color: var(--color-ink); font-weight: 500; }
 .prose-doc a {
   color: var(--color-ink);
   text-decoration: underline;
-  text-decoration-color: rgba(34, 197, 94, .6);
+  text-decoration-color: color-mix(in srgb, var(--color-live) 60%, transparent);
   text-underline-offset: 3px;
 }
 .prose-doc a:hover { text-decoration-color: var(--color-live); }
@@ -174,7 +177,7 @@ details.cat > summary::-webkit-details-marker { display: none; }
   font-family: var(--font-mono);
   font-size: .86em;
   color: var(--color-ink);
-  background: rgba(255, 255, 255, .06);
+  background: color-mix(in srgb, var(--color-ink) 6%, transparent);
   border: 1px solid var(--color-line);
   padding: 1px 6px;
   border-radius: 3px;
@@ -198,7 +201,7 @@ details.cat > summary::-webkit-details-marker { display: none; }
 .prose-doc .doc-code {
   margin: 18px 0 22px;
   border: 1px solid var(--color-line);
-  background: #030403;
+  background: #030403; /* no token: the mockup's --code well, a step below --color-bg */
   border-radius: 0;
   overflow: visible;
   min-width: 0;
@@ -246,16 +249,16 @@ details.cat > summary::-webkit-details-marker { display: none; }
   font-family: var(--font-mono);
   font-size: 13.5px;
   line-height: 1.7;
-  color: #D9DED6;
+  color: var(--color-ink-soft);
   background: transparent;
   border: 0;
   border-radius: 0;
 }
 .prose-doc pre code { font-family: inherit; color: inherit; }
 /* Rouge tokens, kept to four colours as in the mockup. */
-.prose-doc pre .c, .prose-doc pre .c1, .prose-doc pre .cm, .prose-doc pre .cs { color: #8A938A; }
+.prose-doc pre .c, .prose-doc pre .c1, .prose-doc pre .cm, .prose-doc pre .cs { color: var(--color-muted); }
 .prose-doc pre .s, .prose-doc pre .s1, .prose-doc pre .s2, .prose-doc pre .sb,
-.prose-doc pre .sd, .prose-doc pre .sh, .prose-doc pre .sx { color: #9BE7B4; }
+.prose-doc pre .sd, .prose-doc pre .sh, .prose-doc pre .sx { color: #9BE7B4; } /* no token: the mockup's string green, lighter than --color-live for text contrast */
 .prose-doc pre .k, .prose-doc pre .kd, .prose-doc pre .kn, .prose-doc pre .nb { color: var(--color-ink); font-weight: 500; }
 .prose-doc pre .nv, .prose-doc pre .m, .prose-doc pre .mi { color: var(--color-warn); }
 
@@ -408,7 +411,7 @@ kbd, .docs-kbd {
 }
 .docs-search-result.is-divided { border-top: 1px solid var(--color-line); }
 .docs-search-result:hover,
-.docs-search-result.is-active { background: rgba(255, 255, 255, .05); }
+.docs-search-result.is-active { background: color-mix(in srgb, var(--color-ink) 5%, transparent); }
 .docs-search-result__title { font-size: 13px; font-weight: 500; color: var(--color-ink); }
 .docs-search-result__excerpt {
   margin-top: 2px;
@@ -419,3 +422,33 @@ kbd, .docs-kbd {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ─────── API reference (/docs/api/:group; mockup wokku-docs-api.html) ─────── */
+.docs-api-groups {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--color-line);
+  background: var(--color-bg-deep);
+}
+.docs-api-groups a {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--color-muted); text-decoration: none;
+  padding: 8px 12px; min-height: 34px; display: inline-flex; align-items: center; gap: 8px;
+  border: 1px solid var(--color-line);
+}
+.docs-api-groups a:hover { color: var(--color-ink); border-color: var(--color-line-strong); }
+.docs-api-groups a[aria-current="page"] {
+  color: var(--color-live); border-color: rgba(34, 197, 94, .6); background: rgba(34, 197, 94, .07);
+}
+.docs-api-groups a i { width: 6px; height: 6px; border-radius: 1px; background: var(--color-line-strong); }
+.docs-api-groups a[aria-current="page"] i { background: var(--color-live); box-shadow: 0 0 6px var(--color-live); }
+.docs-api { display: block; min-height: 80vh; }
+.docs-api__note { padding: 40px 20px 0; color: var(--color-muted); font-family: var(--font-mono); font-size: 12px; }
+.docs-api__note a { color: var(--color-live-hover); }
+.docs-api [data-docs-api-intro] { padding: 20px; }
+/* Redoc touch-ups the theme object can't reach */
+.docs-api h1 { font-weight: 400 !important; letter-spacing: -.03em; }
+.docs-api h2 { font-weight: 400 !important; letter-spacing: -.02em; }
+.docs-api table { border-collapse: collapse; }
+.docs-api .menu-content { border-right: 1px solid var(--color-line); }
+.docs-api .menu-content label.active { border-left: 2px solid var(--color-live); }

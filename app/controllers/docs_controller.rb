@@ -175,9 +175,9 @@ class DocsController < ApplicationController
   end
 
   def code_block_html(lang, highlighted)
-    %(<div class="doc-code docs-code-block" data-controller="copy-code" data-copy-code-copied-value="#{I18n.t("docs.copy.copied")}">) +
+    %(<div class="doc-code docs-code-block" data-controller="copy-code" data-copy-code-copied-value="#{ERB::Util.h(I18n.t("docs.copy.copied"))}">) +
       %(<div class="doc-code__bar"><span class="docs-code-lang">#{ERB::Util.h(lang)}</span>) +
-      %(<button type="button" class="doc-copy" hidden data-copy-code-target="button" data-action="copy-code#copy">#{I18n.t("docs.copy.copy")}</button>) +
+      %(<button type="button" class="doc-copy" hidden data-copy-code-target="button" data-action="copy-code#copy">#{ERB::Util.h(I18n.t("docs.copy.copy"))}</button>) +
       %(<span class="sr-only" aria-live="polite" data-copy-code-target="status"></span></div>) +
       %(<pre class="doc-pre"><code>#{highlighted}</code></pre></div>)
   end

@@ -12,7 +12,7 @@ RSpec.describe Organisms::DocsTopBarComponent, type: :component do
   it "marks the API tab current when active: :api" do
     render_inline(described_class.new(active: :api, locale: :en))
     expect(page).to have_css("nav a[aria-current='page']", text: "API reference")
-    expect(page).to have_css("nav a[aria-current='page']", count: 1)
+    expect(page).to have_css("nav a[aria-current='page']", count: 2) # desktop tabs + phone row
   end
 
   it "renders brand, search with shortcuts, the EN/ID switch and Sign in" do

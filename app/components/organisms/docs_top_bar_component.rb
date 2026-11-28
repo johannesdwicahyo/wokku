@@ -20,6 +20,7 @@ module Organisms
     end
 
     def current?(key) = key == @active
+    def tab_state(key) = current?(key) ? "text-ink border-live" : "text-muted border-transparent hover:text-ink"
     def signed_in? = helpers.user_signed_in?
   end
 end

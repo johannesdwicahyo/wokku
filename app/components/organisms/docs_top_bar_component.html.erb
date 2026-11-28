@@ -1,4 +1,4 @@
-<header data-docs-top-bar class="sticky top-0 z-30 flex items-center gap-5 min-h-[60px] px-4 lg:px-5 border-b border-line bg-bg/90 backdrop-blur-md">
+<header data-docs-top-bar class="sticky top-0 z-30 flex flex-wrap items-center gap-x-5 min-h-[60px] px-4 lg:px-5 border-b border-line bg-bg/90 backdrop-blur-md">
   <a href="/docs" class="flex items-center gap-2.5 no-underline shrink-0">
     <%= render Atoms::LogoComponent.new(variant: :mark, size: :sm) %>
     <span class="font-mono text-[11px] uppercase tracking-[.12em] text-ink border-l border-line-strong pl-2.5"><%= t("docs.top.docs") %></span>
@@ -6,7 +6,7 @@
   <nav aria-label="<%= t("docs.top.sections") %>" class="hidden min-[900px]:flex gap-0.5">
     <% tabs.each do |key, label, href| %>
       <a href="<%= href %>" <%= 'aria-current="page"'.html_safe if current?(key) %>
-         class="font-mono text-[11px] uppercase tracking-[.12em] no-underline px-2.5 pt-5 pb-[18px] border-b-2 <%= current?(key) ? "text-ink border-live" : "text-muted border-transparent hover:text-ink" %>"><%= label %></a>
+         class="font-mono text-[11px] uppercase tracking-[.12em] no-underline px-2.5 pt-5 pb-[18px] border-b-2 <%= tab_state(key) %>"><%= label %></a>
     <% end %>
   </nav>
   <div class="ml-auto flex items-center gap-2.5">
@@ -34,4 +34,11 @@
       <%= render Atoms::ButtonComponent.new(href: helpers.new_user_session_path, size: :sm) do %><%= t("docs.top.sign_in") %><% end %>
     <% end %>
   </div>
+  <%# Phones: the same section links as a compact row that scrolls sideways. %>
+  <nav aria-label="<%= t("docs.top.sections") %>" class="min-[900px]:hidden basis-full flex gap-0.5 overflow-x-auto -mx-4 px-2 border-t border-line">
+    <% tabs.each do |key, label, href| %>
+      <a href="<%= href %>" <%= 'aria-current="page"'.html_safe if current?(key) %>
+         class="shrink-0 font-mono text-[11px] uppercase tracking-[.12em] no-underline whitespace-nowrap px-2.5 py-2.5 border-b-2 <%= tab_state(key) %>"><%= label %></a>
+    <% end %>
+  </nav>
 </header>

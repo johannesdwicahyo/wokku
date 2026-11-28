@@ -50,7 +50,7 @@ export default class extends Controller {
     if (query.length < 2) { this.close(); return }
 
     if (!this.index) {
-      const res = await fetch("/docs/search-index.json")
+      const res = await fetch(`/docs/search-index.json?lang=${encodeURIComponent(document.documentElement.lang || "en")}`)
       this.index = await res.json()
     }
 
