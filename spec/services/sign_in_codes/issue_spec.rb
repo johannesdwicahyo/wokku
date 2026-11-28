@@ -115,4 +115,83 @@ RSpec.describe SignInCodes::Issue, type: :model do
     issue(users(:admin).email)
     expect(sent_codes.size).to eq(2)
   end
+
+  it "keeps the plain code out of the queued job's arguments" do
+    allow(SecureRandom).to receive(:random_number).with(10**6).and_return(123456)
+    issue
+    expect(enqueued_jobs.size).to eq(1)
+    expect(enqueued_jobs.to_json).not_to include("123456")
+    expect(code_in(sent_codes.sole)).to eq("123456")
+  end
+
+  it "stores an unmatchable digest for rows it won't mail" do
+    allow(SecureRandom).to receive(:random_number).with(10**6).and_return(123456)
+    user.update_columns(abuse_suspended_at: Time.current)
+    issue
+    rec = SignInCode.sole
+    expect(rec.code_digest).to eq("-")
+    expect(rec.matches?("123456")).to be(false)
+  end
+
+  it "normalises NFKC and edge whitespace, rejects inner whitespace and invisible characters" do
+    expect(issue("\u00A0#{user.email}\u3000").status).to eq(:sent)
+    expect(SignInCode.sole.email).to eq(user.email)
+    expect(sent_codes.size).to eq(1)
+
+    [ "user-\u200Bone@example.com", "user-one@exa\u00A0mple.com", "user-one@example.com\u0000x", "us\ter@example.com" ].each do |bad|
+      expect(issue(bad).status).to eq(:sent)
+    end
+    expect(SignInCode.count).to eq(1)
+    expect(sent_codes.size).to eq(1)
+  end
+
+  describe "daily cap after 3 locked codes" do
+    def lock_code(at)
+      SignInCode.create!(email: user.email, code_digest: "x", expires_at: at + 10.minutes, attempts: 5, created_at: at)
+    end
+
+    def paused_notices = ActionMailer::Base.deliveries.select { |m| m.subject.to_s.include?("paused") || m.subject.to_s.include?("dijeda") }
+
+    it "pauses deliverable codes for 24 h from the latest lock and tells the owner once" do
+      freeze_time do
+        lock_code(20.hours.ago)
+        lock_code(10.hours.ago)
+        lock_code(2.hours.ago)
+
+        expect(issue.status).to eq(:sent)
+        expect(SignInCode.order(:created_at).last.code_digest).to eq("-")
+        expect(sent_codes).to be_empty
+        expect(paused_notices.size).to eq(1)
+        expect(paused_notices.first.to).to eq([ user.email ])
+        expect(CGI.unescapeHTML(paused_notices.first.text_part.body.decoded)).to include("Sign-in by code is paused for 24 hours")
+
+        travel 1.minute
+        expect(issue.status).to eq(:sent) # normal cooldown rules still apply in between
+        expect(paused_notices.size).to eq(1) # one notice per 24 h
+
+        travel_to(2.hours.ago + 24.hours + 1.minute) # latest lock + 24 h
+        issue
+        expect(sent_codes.size).to eq(1)
+      end
+    end
+
+    it "answers the same and mails nothing for an unknown email" do
+      SignInCode.where(email: user.email).delete_all
+      3.times { |i| SignInCode.create!(email: "ghost@example.com", code_digest: "x", expires_at: 1.hour.from_now, attempts: 5, created_at: (i + 1).hours.ago) }
+      expect(issue("ghost@example.com").status).to eq(:sent)
+      expect(ActionMailer::Base.deliveries.tap { perform_enqueued_jobs }).to be_empty
+    end
+
+    it "is not triggered by two locks" do
+      lock_code(3.hours.ago)
+      lock_code(2.hours.ago)
+      issue
+      expect(sent_codes.size).to eq(1)
+    end
+
+    it "copy exists in Indonesian" do
+      mail = SignInCodeMailer.paused(email: "a@b.co", locale: "id")
+      expect(mail.subject).to include("dijeda")
+    end
+  end
 end

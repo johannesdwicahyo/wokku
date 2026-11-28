@@ -240,6 +240,31 @@ RSpec.describe User do
       end
     end
 
+    context "with open registration and an existing unlinked account (email-code user)" do
+      let!(:code_user) { create(:user, email: "coder@example.com", email_provider_verified: true) }
+
+      it "links it on a verified GitHub email" do
+        result = nil
+        expect { result = User.from_omniauth(auth_hash(uid: "gh-code", email: "Coder@example.com")) }.not_to change(User, :count)
+        expect(result).to eq(code_user)
+        expect(code_user.reload).to have_attributes(provider: "github", uid: "gh-code", email_provider_verified: true)
+      end
+
+      it "does not link an unverified email (unpersisted, as before)" do
+        result = User.from_omniauth(auth_hash(provider: "google_oauth2", uid: "g-x", email: code_user.email,
+                                              raw_info: { "email_verified" => false }))
+        expect(result).not_to be_persisted
+        expect(code_user.reload.provider).to be_blank
+      end
+
+      it "never re-links an account that already has a provider" do
+        code_user.update_columns(provider: "google_oauth2", uid: "g-1")
+        result = User.from_omniauth(auth_hash(uid: "gh-other", email: code_user.email))
+        expect(result).not_to be_persisted
+        expect(code_user.reload).to have_attributes(provider: "google_oauth2", uid: "g-1")
+      end
+    end
+
     context "with closed registration" do
       before { allow(Wokku.config).to receive(:open_registration).and_return(false) }
 

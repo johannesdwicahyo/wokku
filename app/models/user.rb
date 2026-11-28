@@ -312,6 +312,18 @@ class User < ApplicationRecord
       return new # unpersisted — triggers the failure redirect
     end
 
+    # Open registration: same verified-email link as the closed path above,
+    # so an account made without a provider (email sign-in code, password)
+    # links instead of failing the email uniqueness check below. Never
+    # re-links an account that already has a provider.
+    if email.present? && oauth_email_verified?(auth) && !exists?(provider: auth.provider, uid: auth.uid)
+      candidate = find_by(email: email)
+      if candidate && candidate.provider.blank?
+        candidate.update_columns(provider: auth.provider, uid: auth.uid, email_provider_verified: true)
+        return candidate
+      end
+    end
+
     where(provider: auth.provider, uid: auth.uid).first_or_create do |user|
       user.email = email
       user.email_provider_verified = true

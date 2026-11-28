@@ -1,6 +1,7 @@
 module SignInCodes
   # Step 2 of email sign-in. Checks the newest unconsumed code for the
-  # email; every check counts as an attempt and the 6th is :locked. On a
+  # email; each wrong code counts as an attempt and after 5 the code is
+  # :locked (so the 6th try fails even with the right code). On a
   # match the code is consumed and the user found, or created under the
   # same rules (and with the same post-create effects) as OAuth sign-up.
   # The caller still signs in through sign_in_with_two_factor.
@@ -24,14 +25,12 @@ module SignInCodes
         if rec.attempts >= SignInCode::MAX_ATTEMPTS then :locked
         elsif rec.consumed_at then :invalid # killed by a newer code meanwhile
         elsif rec.expires_at <= Time.current then :expired
+        elsif code.match?(/\A\d{6}\z/) && rec.matches?(code)
+          rec.update!(consumed_at: Time.current)
+          nil
         else
-          rec.increment!(:attempts)
-          if code.match?(/\A\d{6}\z/) && rec.matches?(code)
-            rec.update!(consumed_at: Time.current)
-            nil
-          else
-            :invalid
-          end
+          rec.increment!(:attempts) # wrong attempts only, so attempts >= 5 always means locked
+          :invalid
         end
       end
       return Result.new(error: error) if error
@@ -41,7 +40,7 @@ module SignInCodes
 
       # Same post-create effects as Users::OmniauthCallbacksController#finish_sign_in.
       _team, first_time = user.ensure_personal_team!
-      OnboardingMailer.welcome(user).deliver_later if first_time
+      OnboardingMailer.welcome(user).deliver_later rescue nil if first_time # never block sign-in (as OAuth)
       Result.new(user: user, new_user: new_user)
     end
 

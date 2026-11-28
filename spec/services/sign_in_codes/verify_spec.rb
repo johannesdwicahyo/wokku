@@ -103,4 +103,26 @@ RSpec.describe SignInCodes::Verify, type: :model do
       expect(verify(users(:admin).email, code).user).to eq(users(:admin))
     end
   end
+
+  it "a refused or unknown email can never verify, even knowing the code" do
+    allow(SecureRandom).to receive(:random_number).with(10**6).and_return(123456)
+    Wokku.configure { |c| c.email_signup_guard = ->(email:, ip:) { false } }
+    SignInCodes::Issue.call(email: "refused@example.com", ip: "1.2.3.4", locale: "en")
+    expect { expect(verify("refused@example.com", "123456").error).to eq(:invalid) }.not_to change(User, :count)
+
+    Wokku.configure { |c| c.email_signup_guard = nil; c.open_registration = false }
+    travel 1.minute do
+      SignInCodes::Issue.call(email: "unknown@example.com", ip: "1.2.3.4", locale: "en")
+      Wokku.configure { |c| c.open_registration = true }
+      expect { expect(verify("unknown@example.com", "123456").error).to eq(:invalid) }.not_to change(User, :count)
+    end
+  ensure
+    Wokku.configure { |c| c.email_signup_guard = nil; c.open_registration = true }
+  end
+
+  it "signs a new user in even if the welcome mail can't be queued" do
+    allow(OnboardingMailer).to receive(:welcome).and_raise(StandardError, "queue down")
+    code = code_for("new-person@example.com")
+    expect(verify("new-person@example.com", code).user).to be_persisted
+  end
 end

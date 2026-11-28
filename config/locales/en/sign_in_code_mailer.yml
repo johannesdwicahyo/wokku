@@ -5,3 +5,8 @@ en:
       intro: "Your Wokku sign-in code:"
       validity: "Works once, for 10 minutes."
       ignore: "If you didn't ask for this, ignore this email."
+    paused:
+      subject: "Wokku sign-in by code is paused"
+      tried: "Someone tried to sign in to your Wokku account with an email code."
+      paused: "Sign-in by code is paused for 24 hours."
+      if_you: "If this was you, use GitHub/Google or wait."
