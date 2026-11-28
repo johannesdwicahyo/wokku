@@ -10,26 +10,31 @@ export default class extends Controller {
   connect() {
     this.gone = false
     if (this.hasStatusTarget) this.statusTarget.hidden = false
-    this.tries = 0
-    this.waitForRedoc()
+    this.onLoad = () => this.mount()
+    this.onError = () => this.fail()
+    // The script is `defer`, so it can land after this controller connects.
+    if (window.Redoc) return this.mount()
+    this.script = document.querySelector("script[data-redoc-script]")
+    this.script?.addEventListener("load", this.onLoad)
+    this.script?.addEventListener("error", this.onError)
+    // Fallback only: shows the failure note if neither event ever fired.
+    this.timer = setTimeout(() => { if (!this.mounted) this.fail() }, 30000)
   }
 
   disconnect() {
     clearTimeout(this.timer)
+    this.script?.removeEventListener("load", this.onLoad)
+    this.script?.removeEventListener("error", this.onError)
     this.gone = true
     window.Redoc?.destroy?.(this.element) // unmounts Redoc's React tree
     this.element.replaceChildren()
   }
 
-  // The script is `defer`, so it can land after this controller connects.
-  waitForRedoc() {
-    if (this.gone) return
-    if (window.Redoc) return this.mount()
-    if (++this.tries > 100) return this.fail() // ~10 s
-    this.timer = setTimeout(() => this.waitForRedoc(), 100)
-  }
-
   mount() {
+    if (this.gone || this.mounted) return
+    if (!window.Redoc) return this.fail()
+    this.mounted = true
+    clearTimeout(this.timer)
     window.Redoc.init(this.urlValue, {
       theme: this.theme(),
       hideDownloadButton: false,

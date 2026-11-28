@@ -14,8 +14,11 @@ module Docs
       respond_to do |format|
         format.json do
           request.session_options[:skip] = true # publicly cached: never set a cookie
-          expires_in 5.minutes, public: true
-          render json: @slice.merge("servers" => [ { "url" => request.base_url } ]) # fresh hash: the cached slice stays shared
+          # A host header is client-controlled, so a public cache may only see the configured origin.
+          origin = canonical_origin
+          expires_in 5.minutes, public: origin.present?
+          # fresh hash: the cached slice stays shared
+          render json: @slice.merge("servers" => [ { "url" => origin || request.base_url } ])
         end
         format.html do
           @docs_locale = resolve_locale
@@ -28,6 +31,12 @@ module Docs
     end
 
     private
+
+    # nil when no canonical domain is configured (the engine default is "localhost").
+    def canonical_origin
+      domain = Wokku.config.canonical_domain.to_s
+      "https://#{domain}" unless domain.blank? || domain == "localhost"
+    end
 
     # Same order as DocsController: ?lang= → I18n.locale (?locale=, cookie…) → en.
     def resolve_locale

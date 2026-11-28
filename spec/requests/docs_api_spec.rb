@@ -22,10 +22,20 @@ RSpec.describe "Docs API reference", type: :request do
     expect(body["paths"]).not_to include("/api/v1/apps/{id}/dokku")
   end
 
-  it "sets servers to the request's base URL without touching the cached slice" do
+  it "uses the canonical origin for servers (ignoring a spoofed host) and stays publicly cacheable" do
+    allow(Wokku.config).to receive(:canonical_domain).and_return("wokku.example")
+    get "/docs/api/apps.json", headers: { "X-Forwarded-Host" => "evil.example" }
+    expect(JSON.parse(response.body)["servers"]).to eq([ { "url" => "https://wokku.example" } ])
+    expect(response.headers["Cache-Control"]).to include("public")
+    expect(Docs::ApiSlice.for("apps")["servers"]).not_to eq([ { "url" => "https://wokku.example" } ])
+  end
+
+  it "falls back to the request origin with a private response when no canonical domain is set" do
+    allow(Wokku.config).to receive(:canonical_domain).and_return("localhost")
     get "/docs/api/apps.json"
     expect(JSON.parse(response.body)["servers"]).to eq([ { "url" => "http://www.example.com" } ])
-    expect(Docs::ApiSlice.for("apps")["servers"]).not_to eq([ { "url" => "http://www.example.com" } ])
+    expect(response.headers["Cache-Control"]).to include("private")
+    expect(response.headers["Cache-Control"]).not_to include("public")
   end
 
   it "404s the Email and storage group (page and JSON) unless object storage is on" do
@@ -75,6 +85,7 @@ RSpec.describe "Docs API reference", type: :request do
     expect(script["src"]).to eq("https://cdn.jsdelivr.net/npm/redoc@2.1.5/bundles/redoc.standalone.js")
     expect(script["integrity"]).to eq("sha384-0GrsyTQc9Oqd8h+b2dbc4XdR2T/DYpy0tLNNstyx+LBMUyiBbcWPbEs9aRmUcaxD")
     expect(script["crossorigin"]).to eq("anonymous")
+    expect(script).to have_attributes(attributes: include("data-redoc-script"))
     fallback = html.at_css("noscript").inner_html
     expect(fallback).to include("This reference needs JavaScript", "/api/v1/openapi.yaml")
   end
