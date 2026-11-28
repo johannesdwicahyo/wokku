@@ -45,6 +45,12 @@ RSpec.describe Docs::ApiSlice do
       end
     end
 
+    it "gives every group a default intro with the bearer header and an example call" do
+      described_class::GROUPS.each do |g|
+        expect(g[:intro]).to include("Authorization: Bearer", "curl -H", "/docs/api/authentication"), g[:key]
+      end
+    end
+
     it "hides a group with no operations, and returns nil for it" do
       with_spec("openapi" => "3.0.3", "info" => { "title" => "t", "version" => "v1" }, "paths" => { "/api/v1/apps" => { "get" => op("apps") } }) do
         expect(described_class.groups.map { |g| g[:key] }).to eq(%w[apps])
@@ -131,6 +137,29 @@ RSpec.describe Docs::ApiSlice do
         expect(described_class.for("domains")["info"]["description"]).to eq("Point a name at an app.")
         expect(described_class.groups.find { |g| g[:key] == "domains" }[:intro_md]).to eq("Point a name at an app.")
       end
+    end
+
+    it "falls back to the group's default intro when no tag has a description" do
+      with_spec(doc) do
+        default = described_class::GROUPS.find { |g| g[:key] == "team-billing" }[:intro]
+        expect(default).to include("Authorization: Bearer")
+        expect(described_class.for("team-billing")["info"]["description"]).to eq(default)
+        # order: config intro > tag descriptions > default
+        expect(described_class.for("apps")["info"]["description"]).to eq("Apps **live** here.")
+      end
+    end
+
+    it "anchors the cloud path split on whole segments" do
+      with_spec(doc.merge("paths" => { "/api/v1/mailer_stats" => { "get" => op("cloud") }, "/api/v1/plans_x" => { "get" => op("cloud") } })) do
+        expect(described_class.for("apps")["paths"].keys).to eq(%w[/api/v1/mailer_stats /api/v1/plans_x])
+        expect(described_class.for("email-storage")).to be_nil
+      end
+    end
+
+    it "has no groups when the spec file is missing" do
+      allow(Wokku.config).to receive(:openapi_path).and_return(Pathname("/nonexistent/v1.yaml"))
+      expect(described_class.groups).to eq([])
+      expect(described_class.for("apps")).to be_nil
     end
 
     it "memoises per file mtime" do

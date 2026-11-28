@@ -8,6 +8,7 @@ export default class extends Controller {
   static targets = ["status"]
 
   connect() {
+    this.gone = false
     if (this.hasStatusTarget) this.statusTarget.hidden = false
     this.tries = 0
     this.waitForRedoc()
@@ -45,6 +46,7 @@ export default class extends Controller {
     if (this.gone) return
     const p = document.createElement("p")
     p.className = "docs-api__note"
+    p.setAttribute("role", "alert")
     const a = document.createElement("a")
     a.href = "/api/v1/openapi.yaml"
     a.textContent = "/api/v1/openapi.yaml"

@@ -16,6 +16,7 @@ RSpec.describe "Docs API reference", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq("application/json")
     expect(response.headers["Cache-Control"]).to include("max-age=300", "public")
+    expect(response.headers["Set-Cookie"]).to be_blank
     body = JSON.parse(response.body)
     expect(body["paths"]).to include("/api/v1/apps")
     expect(body["paths"]).not_to include("/api/v1/apps/{id}/dokku")
@@ -27,6 +28,12 @@ RSpec.describe "Docs API reference", type: :request do
     allow(Docs::ApiSlice).to receive(:for).and_call_original
     allow(Docs::ApiSlice).to receive(:for).with("team-billing").and_return(nil)
     get "/docs/api/team-billing"
+    expect(response).to have_http_status(:not_found)
+  end
+
+  it "404s /docs/api when there are no groups" do
+    allow(Docs::ApiSlice).to receive(:groups).and_return([])
+    get "/docs/api"
     expect(response).to have_http_status(:not_found)
   end
 

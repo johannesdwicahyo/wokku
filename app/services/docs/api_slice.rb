@@ -5,16 +5,17 @@ module Docs
   # components they reach through $ref (plus every security scheme).
   module ApiSlice
     GROUPS = YAML.load_file(Wokku::Engine.root.join("config/docs_api_groups.yml")).map do |g|
-      { key: g["key"], title: g["title"].symbolize_keys, tags: g["tags"] }.freeze
+      { key: g["key"], title: g["title"].symbolize_keys, tags: g["tags"], intro: g["intro"].to_s }.freeze
     end.freeze
     KEYS = GROUPS.map { |g| g[:key] }.freeze
     DEFAULT_GROUP = "apps".freeze
     TAG_GROUP = GROUPS.flat_map { |g| g[:tags].map { |t| [ t, g[:key] ] } }.to_h.freeze
     # The cloud-only `cloud` tag carries no resource name: route it by path.
-    CLOUD_PATHS = { %r{/e?mail} => "email-storage", %r{/(?:billing|invoices|plans)} => "team-billing" }.freeze
+    CLOUD_PATHS = { %r{/e?mail(?:/|\z)} => "email-storage", %r{/(?:billing|invoices|plans)(?:/|\z)} => "team-billing" }.freeze
     HIDDEN_IDS = %w[apps.dokku].freeze
     METHODS = %w[get put post delete options head patch trace].freeze
 
+    EMPTY = { slices: {}.freeze, unmapped: [].freeze }.freeze
     @lock = Mutex.new
     @cache = nil
 
@@ -38,7 +39,11 @@ module Docs
       # ponytail: one global lock; a rebuild only happens when the file changes.
       def built
         path = Wokku.config.openapi_path.to_s
-        key = [ path, File.mtime(path), Wokku.config.docs_api_group_intros ]
+        mtime = File.mtime(path)
+      rescue Errno::ENOENT
+        EMPTY # no spec file: no groups, every page 404s
+      else
+        key = [ path, mtime, Wokku.config.docs_api_group_intros ]
         @lock.synchronize do
           @cache = build(YAML.safe_load_file(path, aliases: true)).merge(key: key).freeze unless @cache && @cache[:key] == key
           @cache
@@ -82,7 +87,8 @@ module Docs
         tag_names = (group[:tags] & used) + (used - group[:tags])
         tags = tag_names.map { |t| tag_desc[t] ? { "name" => t, "description" => tag_desc[t] } : { "name" => t } }
         intros = Wokku.config.docs_api_group_intros || {}
-        intro = intros[group[:key]] || intros[group[:key].to_sym] || tags.filter_map { |t| t["description"] }.join("\n\n")
+        intro = intros[group[:key]] || intros[group[:key].to_sym] ||
+                tags.filter_map { |t| t["description"] }.join("\n\n").presence || group[:intro]
 
         {
           "openapi" => doc["openapi"],
@@ -105,10 +111,10 @@ module Docs
           node = all.dig(*ref)
           queue.concat(refs(node)) if node
         end
-        out = Hash.new { |h, k| h[k] = {} }
-        seen.each_key { |sec, name| (v = all.dig(sec, name)) && out[sec][name] = v }
+        out = {}
+        seen.each_key { |sec, name| (v = all.dig(sec, name)) && (out[sec] ||= {})[name] = v }
         out["securitySchemes"] = all["securitySchemes"] if all["securitySchemes"]
-        out.to_h
+        out
       end
 
       def refs(node)

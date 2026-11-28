@@ -5,13 +5,15 @@ module Docs
     layout "docs"
 
     def index
-      redirect_to docs_api_group_path(Docs::ApiSlice.groups.first[:key], lang: params[:lang].presence)
+      first = Docs::ApiSlice.groups.first or raise ActiveRecord::RecordNotFound
+      redirect_to docs_api_group_path(first[:key], lang: params[:lang].presence)
     end
 
     def show
       @slice = Docs::ApiSlice.for(params[:group]) or raise ActiveRecord::RecordNotFound
       respond_to do |format|
         format.json do
+          request.session_options[:skip] = true # publicly cached: never set a cookie
           expires_in 5.minutes, public: true
           render json: @slice
         end
