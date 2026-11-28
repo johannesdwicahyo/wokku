@@ -11,7 +11,7 @@
           method: :post,
           form_class: "contents",
           title: t_label(loc),
-          aria: { label: t_label(loc), current: (active?(loc) ? "true" : nil) },
+          aria: { label: "#{loc.to_s.upcase}, #{t_label(loc)}", current: (active?(loc) ? "true" : nil) },
           lang: (loc == :id ? "id" : nil),
           class: "#{cell_classes(loc)} rounded-full border-0" do %><%= loc.to_s.upcase %><% end %>
   <% end %>
